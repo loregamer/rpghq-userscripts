@@ -90,7 +90,6 @@
             max-width: max-content !important; /* Ensure the link only takes up the width of the text */
         }
         .username, .username-coloured {
-            color: #9cc3db !important; /* Adjust username color */
             display: inline-block !important; /* Ensure the link only takes up the width of the text */
             text-align: left !important; /* Left align */
         }
@@ -160,6 +159,8 @@
     // Function to create the post profile
     function createPostProfile(authorElement, userId, username) {
         const postProfile = document.createElement('div');
+        const userColor = getComputedStyle(authorElement).color;
+        const userClass = authorElement.className.includes('username-coloured') ? 'username-coloured' : 'username';
         postProfile.className = 'postprofile';
         postProfile.innerHTML = `
             <div class="avatar-container">
@@ -167,7 +168,7 @@
                     <img class="avatar" src="${defaultAvatarUrl}" width="128" height="128" alt="User avatar">
                 </a>
             </div>
-            <a href="./memberlist.php?mode=viewprofile&u=${userId}" class="username ${username === 'loregamer' ? 'username-loregamer' : authorElement.className}">${username}</a>
+            <a href="./memberlist.php?mode=viewprofile&u=${userId}" class="${userClass}" style="color:${userColor};">${username}</a>
         `;
         return postProfile;
     }
@@ -281,6 +282,11 @@
             checkbox.addEventListener('change', () => {
                 syncPostSelection(post);
             });
+
+            // Apply special style for "loregamer" username
+            if (username === 'loregamer') {
+                post.querySelector('.username').classList.add('username-loregamer');
+            }
         }
     });
 
