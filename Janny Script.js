@@ -8,29 +8,34 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
-    'use strict';
+(function () {
+  "use strict";
 
-    const defaultAvatarUrl = 'https://f.rpghq.org/98ltUBUmxF3M.png?n=Vergstarion.png';
-    const avatarExtensions = ['.gif', '.jpeg', '.jpg', '.png'];
-    const postMaxHeight = '300px'; // Set the maximum height for a post before adding the fade effect
+  const defaultAvatarUrl =
+    "https://f.rpghq.org/98ltUBUmxF3M.png?n=Vergstarion.png";
+  const avatarExtensions = [".gif", ".jpeg", ".jpg", ".png"];
+  const postMaxHeight = "300px"; // Set the maximum height for a post before adding the fade effect
 
-    // Add custom styles to make the moderator control panel posts look like forum posts
-    const style = document.createElement('style');
-    style.innerHTML = `
-        .post.bg2, .post.bg1 {
-            background-color: #282828 !important; /* Match forum background color */
-            border: 1px solid #444 !important; /* Match forum border color */
+  // Add custom styles to make the moderator control panel posts look like forum posts
+  const style = document.createElement("style");
+  style.innerHTML = `
+        .post.bg2, .post.bg1, .post.bg3 {
+            background-color: #282f3c  !important; /* Match forum background color */
+            border: 1px solid #303744 !important; /* Match forum border color */
             padding: 10px !important; /* Add padding */
             margin-bottom: 10px !important; /* Add space between posts */
             border-radius: 5px !important; /* Rounded corners */
             display: flex !important;
             flex-direction: row !important;
-            position: relative; /* Ensure relative positioning for absolute children */
+            position: relative !important; /* Ensure relative positioning for absolute children */
             width: calc(100% - 20px) !important; /* Set width to 100% minus padding */
             margin-right: 10px !important; /* Ensure some space on the right */
             cursor: pointer !important; /* Pointer cursor to indicate clickable */
-            overflow: hidden; /* Hide overflow */
+            overflow: hidden !important; /* Hide overflow */
+        }
+        /* Add this new rule to override any existing styles */
+        .post.bg3 {
+            background-color: #282f3c !important;
         }
         .inner {
             width: 100% !important; /* Ensure inner div takes full width */
@@ -149,15 +154,17 @@
             font-family: 'Comic Sans MS', cursive, sans-serif;
         }
     `;
-    document.head.appendChild(style);
+  document.head.appendChild(style);
 
-    // Function to create the post profile
-    function createPostProfile(authorElement, userId, username) {
-        const postProfile = document.createElement('div');
-        const userColor = getComputedStyle(authorElement).color;
-        const userClass = authorElement.className.includes('username-coloured') ? 'username-coloured' : 'username';
-        postProfile.className = 'postprofile';
-        postProfile.innerHTML = `
+  // Function to create the post profile
+  function createPostProfile(authorElement, userId, username) {
+    const postProfile = document.createElement("div");
+    const userColor = getComputedStyle(authorElement).color;
+    const userClass = authorElement.className.includes("username-coloured")
+      ? "username-coloured"
+      : "username";
+    postProfile.className = "postprofile";
+    postProfile.innerHTML = `
             <div class="avatar-container">
                 <a href="./memberlist.php?mode=viewprofile&u=${userId}" class="avatar">
                     <img class="avatar" src="${defaultAvatarUrl}" width="128" height="128" alt="User avatar">
@@ -165,168 +172,189 @@
             </div>
             <a href="./memberlist.php?mode=viewprofile&u=${userId}" class="${userClass}" style="color:${userColor};">${username}</a>
         `;
-        return postProfile;
-    }
+    return postProfile;
+  }
 
-    // Function to find the correct avatar URL
-    async function findAvatarUrl(userId, avatarImg) {
-        for (const ext of avatarExtensions) {
-            const avatarUrl = `https://rpghq.org/forums/download/file.php?avatar=${userId}${ext}`;
-            try {
-                const response = await fetch(avatarUrl);
-                if (response.ok) {
-                    avatarImg.src = avatarUrl;
-                    avatarImg.style.display = 'block'; // Display the avatar
-                    return;
-                }
-            } catch (error) {
-                // Ignore the error and try the next extension
-            }
+  // Function to find the correct avatar URL
+  async function findAvatarUrl(userId, avatarImg) {
+    for (const ext of avatarExtensions) {
+      const avatarUrl = `https://rpghq.org/forums/download/file.php?avatar=${userId}${ext}`;
+      try {
+        const response = await fetch(avatarUrl);
+        if (response.ok) {
+          avatarImg.src = avatarUrl;
+          avatarImg.style.display = "block"; // Display the avatar
+          return;
         }
-        avatarImg.src = defaultAvatarUrl;
-        avatarImg.style.display = 'block'; // Display the default avatar
+      } catch (error) {
+        // Ignore the error and try the next extension
+      }
     }
+    avatarImg.src = defaultAvatarUrl;
+    avatarImg.style.display = "block"; // Display the default avatar
+  }
 
-    // Function to toggle the selected state of a post
-    function togglePostSelection(post, event) {
-        const checkbox = post.querySelector('input[type="checkbox"]');
-        if (!['a', 'button', 'input', 'img'].includes(event.target.tagName.toLowerCase())) {
-            post.classList.toggle('selected');
-            checkbox.click(); // Simulate a click on the checkbox
+  // Function to toggle the selected state of a post
+  function togglePostSelection(post, event) {
+    const checkbox = post.querySelector('input[type="checkbox"]');
+    if (
+      !["a", "button", "input", "img"].includes(
+        event.target.tagName.toLowerCase()
+      )
+    ) {
+      post.classList.toggle("selected");
+      checkbox.click(); // Simulate a click on the checkbox
+    }
+  }
+
+  // Synchronize the selected state of the post with the checkbox
+  function syncPostSelection(post) {
+    const checkbox = post.querySelector('input[type="checkbox"]');
+    if (checkbox.checked) {
+      post.classList.add("selected");
+    } else {
+      post.classList.remove("selected");
+    }
+  }
+
+  // Function to add the "Show More" button
+  function addShowMoreButton(post) {
+    const postbody = post.querySelector(".postbody");
+    const showMoreButton = document.createElement("div");
+    showMoreButton.className = "show-more-button";
+    showMoreButton.textContent = "Read more ...";
+    showMoreButton.onclick = function () {
+      postbody.style.maxHeight = "none";
+      showMoreButton.style.display = "none";
+    };
+    postbody.appendChild(showMoreButton);
+  }
+
+  // Modify the structure of each post to match forum posts
+  document.querySelectorAll(".post").forEach((post) => {
+    const authorElement = post.querySelector(
+      ".author strong a.username, .author strong a.username-coloured"
+    );
+    const postId = post.id.replace("p", "");
+
+    if (authorElement) {
+      const userId = authorElement.href.match(/u=(\d+)-/)[1];
+      const username = authorElement.textContent;
+
+      const postProfile = createPostProfile(authorElement, userId, username);
+      const avatarImg = postProfile.querySelector("img.avatar");
+
+      // Load the avatar lazily
+      setTimeout(() => {
+        findAvatarUrl(userId, avatarImg);
+      }, 0);
+
+      post.insertBefore(postProfile, post.firstChild);
+
+      // Adjust post content structure
+      const h3Element = post.querySelector("h3");
+      if (h3Element) {
+        h3Element.remove();
+      }
+
+      const postbody = post.querySelector(".postbody");
+      if (postbody) {
+        const postContent = postbody.querySelector(".content");
+        const postAuthor = postbody.querySelector(".author");
+        if (postContent && postAuthor) {
+          postbody.insertBefore(postAuthor, postContent);
         }
-    }
 
-    // Synchronize the selected state of the post with the checkbox
-    function syncPostSelection(post) {
-        const checkbox = post.querySelector('input[type="checkbox"]');
-        if (checkbox.checked) {
-            post.classList.add('selected');
-        } else {
-            post.classList.remove('selected');
+        // Add "Show More" button if the post is too long
+        if (postbody.scrollHeight > postbody.clientHeight) {
+          addShowMoreButton(post);
         }
+      }
+
+      // Ensure original post buttons are visible
+      const originalPostButtons = post.querySelector(".post-buttons");
+      if (originalPostButtons) {
+        originalPostButtons.style.display = "block";
+      }
+
+      // Make the whole post selectable
+      post.addEventListener("click", (event) => {
+        togglePostSelection(post, event);
+      });
+
+      // Sync the selected state with the checkbox
+      syncPostSelection(post);
+
+      // Monitor checkbox changes to sync selection
+      const checkbox = post.querySelector('input[type="checkbox"]');
+      checkbox.addEventListener("change", () => {
+        syncPostSelection(post);
+      });
+
+      // Apply special style for "loregamer" username
+      if (username === "loregamer") {
+        post.querySelector(".username").classList.add("username-loregamer");
+        post
+          .querySelector(
+            'a[href*="memberlist.php?mode=viewprofile&u=551-loregamer"]'
+          )
+          .classList.add("username-loregamer");
+      }
     }
+  });
 
-    // Function to add the "Show More" button
-    function addShowMoreButton(post) {
-        const postbody = post.querySelector('.postbody');
-        const showMoreButton = document.createElement('div');
-        showMoreButton.className = 'show-more-button';
-        showMoreButton.textContent = 'Read more ...';
-        showMoreButton.onclick = function() {
-            postbody.style.maxHeight = 'none';
-            showMoreButton.style.display = 'none';
-        };
-        postbody.appendChild(showMoreButton);
-    }
-
-    // Modify the structure of each post to match forum posts
-    document.querySelectorAll('.post').forEach(post => {
-        const authorElement = post.querySelector('.author strong a.username, .author strong a.username-coloured');
-        const postId = post.id.replace('p', '');
-
-        if (authorElement) {
-            const userId = authorElement.href.match(/u=(\d+)-/)[1];
-            const username = authorElement.textContent;
-
-            const postProfile = createPostProfile(authorElement, userId, username);
-            const avatarImg = postProfile.querySelector('img.avatar');
-
-            // Load the avatar lazily
-            setTimeout(() => {
-                findAvatarUrl(userId, avatarImg);
-            }, 0);
-
-            post.insertBefore(postProfile, post.firstChild);
-
-            // Adjust post content structure
-            const h3Element = post.querySelector('h3');
-            if (h3Element) {
-                h3Element.remove();
-            }
-
-            const postbody = post.querySelector('.postbody');
-            if (postbody) {
-                const postContent = postbody.querySelector('.content');
-                const postAuthor = postbody.querySelector('.author');
-                if (postContent && postAuthor) {
-                    postbody.insertBefore(postAuthor, postContent);
-                }
-
-                // Add "Show More" button if the post is too long
-                if (postbody.scrollHeight > postbody.clientHeight) {
-                    addShowMoreButton(post);
-                }
-            }
-
-            // Ensure original post buttons are visible
-            const originalPostButtons = post.querySelector('.post-buttons');
-            if (originalPostButtons) {
-                originalPostButtons.style.display = 'block';
-            }
-
-            // Make the whole post selectable
-            post.addEventListener('click', (event) => {
-                togglePostSelection(post, event);
-            });
-
-            // Sync the selected state with the checkbox
-            syncPostSelection(post);
-
-            // Monitor checkbox changes to sync selection
-            const checkbox = post.querySelector('input[type="checkbox"]');
-            checkbox.addEventListener('change', () => {
-                syncPostSelection(post);
-            });
-
-            // Apply special style for "loregamer" username
-            if (username === 'loregamer') {
-                post.querySelector('.username').classList.add('username-loregamer');
-                post.querySelector('a[href*="memberlist.php?mode=viewprofile&u=551-loregamer"]').classList.add('username-loregamer');
-            }
-        }
+  document
+    .querySelectorAll(".post.bg2, .post.bg1, .post.bg3")
+    .forEach((post) => {
+      post.removeAttribute("style");
+      post.style.setProperty("background-color", "#202633", "important");
+      post.style.setProperty("border", "1px solid #303744", "important");
     });
 
-    // Observe changes in the document to ensure synchronization
-    const observer = new MutationObserver(() => {
-        document.querySelectorAll('.post').forEach(post => {
-            syncPostSelection(post);
-        });
+  // Observe changes in the document to ensure synchronization
+  const observer = new MutationObserver(() => {
+    document.querySelectorAll(".post").forEach((post) => {
+      syncPostSelection(post);
     });
+  });
 
-    observer.observe(document.body, { childList: true, subtree: true });
+  observer.observe(document.body, { childList: true, subtree: true });
 
-    // Handle "Mark all" and "Unmark all" clicks
-    document.querySelectorAll('.display-actions a').forEach(actionLink => {
-        actionLink.addEventListener('click', () => {
-            setTimeout(() => {
-                document.querySelectorAll('.post').forEach(post => {
-                    syncPostSelection(post);
-                });
-            }, 0); // Delay to ensure checkboxes are updated first
+  // Handle "Mark all" and "Unmark all" clicks
+  document.querySelectorAll(".display-actions a").forEach((actionLink) => {
+    actionLink.addEventListener("click", () => {
+      setTimeout(() => {
+        document.querySelectorAll(".post").forEach((post) => {
+          syncPostSelection(post);
         });
+      }, 0); // Delay to ensure checkboxes are updated first
     });
+  });
 
-    // Click "Expand View" and hide the button
-    function clickExpandView() {
-        const expandViewButton = document.querySelector('.right-box a');
-        if (expandViewButton && expandViewButton.textContent.includes('Expand view')) {
-            expandViewButton.click();
-            expandViewButton.style.display = 'none';
-        }
+  // Click "Expand View" and hide the button
+  function clickExpandView() {
+    const expandViewButton = document.querySelector(".right-box a");
+    if (
+      expandViewButton &&
+      expandViewButton.textContent.includes("Expand view")
+    ) {
+      expandViewButton.click();
+      expandViewButton.style.display = "none";
     }
+  }
 
-    window.addEventListener('load', clickExpandView);
+  window.addEventListener("load", clickExpandView);
 
-    // Make the display actions float until they are scrolled to
-    const displayActions = document.querySelector('.display-actions');
-    if (displayActions) {
-        window.addEventListener('scroll', () => {
-            const rect = displayActions.getBoundingClientRect();
-            if (rect.top < window.innerHeight && rect.bottom >= 0) {
-                displayActions.style.position = 'static';
-            } else {
-                displayActions.style.position = 'fixed';
-            }
-        });
-    }
+  // Make the display actions float until they are scrolled to
+  const displayActions = document.querySelector(".display-actions");
+  if (displayActions) {
+    window.addEventListener("scroll", () => {
+      const rect = displayActions.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom >= 0) {
+        displayActions.style.position = "static";
+      } else {
+        displayActions.style.position = "fixed";
+      }
+    });
+  }
 })();
