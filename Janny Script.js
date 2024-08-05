@@ -65,8 +65,6 @@
             color: #aaa !important;
         }
         .postbody .content blockquote {
-            background-color: #333 !important;
-            border-left: 5px solid #555 !important;
             margin: 0 !important;
             padding: 10px !important;
             width: 100% !important; /* Make blockquotes take full width */
@@ -74,7 +72,6 @@
         }
         .postbody .content blockquote cite {
             font-weight: bold !important;
-            color: #ddd !important;
         }
         .postbody .content blockquote .imcger-quote-shadow {
             display: none !important;
@@ -83,7 +80,6 @@
             margin: 0 !important;
             padding: 5px !important;
             cursor: pointer !important;
-            color: #ccc !important;
         }
         a, .postlink {
             display: inline-block !important; /* Ensure the link only takes up the width of the text */
@@ -97,7 +93,6 @@
             color: #9cc3db !important;
         }
         .post .content {
-            display: flex;
             flex-direction: column;
             gap: 10px; /* Add gap between content elements */
         }
@@ -150,7 +145,7 @@
             box-shadow: none !important; /* Remove the box shadow */
         }
         .username-loregamer {
-            color: red !important; /* Custom style for loregamer */
+            color: #CE2F2C !important; /* Custom style for loregamer */
             font-family: 'Comic Sans MS', cursive, sans-serif;
         }
     `;
@@ -286,6 +281,7 @@
             // Apply special style for "loregamer" username
             if (username === 'loregamer') {
                 post.querySelector('.username').classList.add('username-loregamer');
+                post.querySelector('a[href*="memberlist.php?mode=viewprofile&u=551-loregamer"]').classList.add('username-loregamer');
             }
         }
     });
