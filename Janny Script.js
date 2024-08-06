@@ -676,21 +676,44 @@
 
     // Sync changes between the original panel and the floating panel
     function syncPanels() {
-      const originalInputs = originalPanel.querySelectorAll("input, select");
-      const floatingInputs = floatingPanel.querySelectorAll("input, select");
+      const originalPanel = document.querySelector(".panel:first-of-type");
+      const floatingPanel = document.querySelector(".panel.floating-panel");
 
-      originalInputs.forEach((input, index) => {
-        input.addEventListener("change", () => {
-          if (floatingInputs[index]) {
-            floatingInputs[index].value = input.value;
-          }
-        });
+      if (!originalPanel || !floatingPanel) return;
+
+      const inputSelectors = [
+        'input[name="posts_per_page"]',
+        'select[name="st"]',
+        'select[name="sk"]',
+        'select[name="sd"]',
+        'input[name="subject"]',
+        'select[name="to_forum_id"]',
+        'input[name="to_topic_id"]',
+      ];
+
+      inputSelectors.forEach((selector) => {
+        const originalInput = originalPanel.querySelector(selector);
+        const floatingInput = floatingPanel.querySelector(selector);
+
+        if (originalInput && floatingInput) {
+          originalInput.addEventListener("input", () => {
+            floatingInput.value = originalInput.value;
+          });
+          floatingInput.addEventListener("input", () => {
+            originalInput.value = floatingInput.value;
+          });
+        }
       });
 
-      floatingInputs.forEach((input, index) => {
-        input.addEventListener("change", () => {
-          if (originalInputs[index]) {
-            originalInputs[index].value = input.value;
+      // Sync radio buttons for topic icons
+      const iconRadios = floatingPanel.querySelectorAll('input[name="icon"]');
+      iconRadios.forEach((radio) => {
+        radio.addEventListener("change", () => {
+          const originalRadio = originalPanel.querySelector(
+            `input[name="icon"][value="${radio.value}"]`
+          );
+          if (originalRadio) {
+            originalRadio.checked = true;
           }
         });
       });
