@@ -541,8 +541,6 @@
 
     // Function to reorganize the panel content
     function reorganizePanelContent() {
-      const topPanel = document.querySelector(".panel:first-of-type");
-
       // Add a title to the floating panel
       let panelTitle = topPanel.querySelector("h3");
       if (!panelTitle) {
@@ -561,6 +559,12 @@
       const splitPanel = document.getElementById("split-panel");
       if (splitPanel) {
         reorganizeSplitPanel(splitPanel);
+      }
+
+      // Reorganize the form layout for merge-panel
+      const mergePanel = document.getElementById("merge-panel");
+      if (mergePanel) {
+        reorganizeMergePanel(mergePanel);
       }
 
       // Hide the "(Set to 0 to view all posts.)" text
@@ -650,6 +654,34 @@
 
       // Remove any remaining elements
       Array.from(splitPanel.children).forEach((child) => {
+        if (
+          child.tagName !== "DIV" ||
+          !child.classList.contains("form-group")
+        ) {
+          child.remove();
+        }
+      });
+    }
+
+    function reorganizeMergePanel(mergePanel) {
+      // Remove the paragraph
+      const paragraph = mergePanel.querySelector("p");
+      if (paragraph) paragraph.remove();
+
+      // Destination topic identification number
+      const toTopicIdLabel = mergePanel.querySelector(
+        'label[for="to_topic_id"]'
+      );
+      const toTopicIdInput = mergePanel.querySelector("#to_topic_id");
+      const selectTopicLink = mergePanel.querySelector("a");
+      const toTopicIdGroup = createFormGroup(toTopicIdLabel, [
+        toTopicIdInput,
+        selectTopicLink,
+      ]);
+      mergePanel.appendChild(toTopicIdGroup);
+
+      // Remove any remaining elements
+      Array.from(mergePanel.children).forEach((child) => {
         if (
           child.tagName !== "DIV" ||
           !child.classList.contains("form-group")
