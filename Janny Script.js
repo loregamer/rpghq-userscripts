@@ -537,6 +537,25 @@
       sortOptions.parentNode.insertBefore(sortByLabel, sortOptions);
     }
 
+    // Hide the "(Set to 0 to view all posts.)" text
+    const setToZeroText = topPanel.querySelector("span");
+    if (setToZeroText) {
+      setToZeroText.style.display = "none";
+    }
+
+    // Reposition the select elements
+    const displayPanel = document.getElementById("display-panel");
+    if (displayPanel) {
+      const selects = displayPanel.querySelectorAll("select");
+      const formGroups = displayPanel.querySelectorAll(".form-group");
+
+      if (selects.length > 0 && formGroups.length > 0) {
+        formGroups[0].appendChild(selects[0]); // Move the first select to the first form group
+        formGroups[1].appendChild(selects[1]); // Move the second select to the second form group
+        formGroups[1].appendChild(selects[2]); // Move the third select to the second form group
+      }
+    }
+
     window.addEventListener("scroll", () => {
       if (window.scrollY > initialTopPosition) {
         topPanel.classList.add("floating-panel");
