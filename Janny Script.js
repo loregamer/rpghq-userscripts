@@ -183,7 +183,7 @@
         .panel.floating-panel {
             position: fixed !important;
             top: 20px !important;
-            width: 220px !important;
+            width: 16% !important;
             background-color: #171B24 !important;
             border: 1px solid #171B24 !important;
             border-radius: 8px !important;
@@ -537,7 +537,7 @@
             position: fixed !important;
             top: 20px !important;
             left: 20px !important;
-            width: 250px !important;
+            width: 16% !important;
             background-color: #1e2330 !important;
             border: 1px solid #303744 !important;
             border-radius: 5px !important;
