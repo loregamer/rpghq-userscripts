@@ -182,11 +182,11 @@
 
         .panel.floating-panel {
             position: fixed !important;
-            left: 90px !important;
-            top: 10px !important;
+            left: 20px !important;
+            top: 20px !important;
             width: 220px !important;
-            background-color: #171B24 !important;
-            border: 1px solid #171B24 !important;
+            background-color: #1e2330 !important;
+            border: 1px solid #303744 !important;
             border-radius: 8px !important;
             padding: 15px !important;
             z-index: 1000 !important;
@@ -575,11 +575,6 @@
     }
 
     function reorganizeDisplayPanel(displayPanel) {
-      // Remove all existing empty form-group divs
-      displayPanel
-        .querySelectorAll(".form-group:empty")
-        .forEach((div) => div.remove());
-
       // Posts per page
       const postsPerPageLabel = displayPanel.querySelector(
         'label[for="posts_per_page"]'
@@ -615,7 +610,7 @@
       const goButtonGroup = createFormGroup(null, goButton);
       displayPanel.appendChild(goButtonGroup);
 
-      // Remove any remaining elements that are not form-groups
+      // Remove any remaining elements
       Array.from(displayPanel.children).forEach((child) => {
         if (
           child.tagName !== "DIV" ||
@@ -624,11 +619,6 @@
           child.remove();
         }
       });
-
-      // Final cleanup of any remaining empty form-groups
-      displayPanel
-        .querySelectorAll(".form-group:empty")
-        .forEach((div) => div.remove());
     }
 
     function reorganizeSplitPanel(splitPanel) {
