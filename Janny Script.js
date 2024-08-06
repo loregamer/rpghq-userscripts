@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Moderator Control Panel Enhancer
 // @namespace    https://rpghq.org/
-// @version      1.0
+// @version      2.0
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts, and adding a "Show More" button
 // @author       loregamer
 // @match        https://rpghq.org/forums/mcp.php?*
