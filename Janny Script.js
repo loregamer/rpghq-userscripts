@@ -182,7 +182,6 @@
 
         .panel.floating-panel {
             position: fixed !important;
-            left: 20px !important;
             top: 20px !important;
             width: 220px !important;
             background-color: #171B24 !important;
@@ -528,7 +527,7 @@
   function makeTopPanelFloat() {
     const topPanel = document.querySelector(".panel:first-of-type");
     const topPanelRect = topPanel.getBoundingClientRect();
-    const initialTopPosition = topPanelRect.top + window.scrollY;
+    const mainPanel = document.querySelector(".panel:not(.floating-panel)");
 
     // Function to update the panel title based on the active tab
     function updatePanelTitle() {
@@ -707,15 +706,9 @@
     }
 
     function positionFloatingPanel() {
-      const floatingPanel = document.querySelector(".panel.floating-panel");
-      const mainPanel = document.querySelector(".panel:not(.floating-panel)");
-
-      if (floatingPanel && mainPanel) {
+      if (topPanel && mainPanel) {
         const mainPanelRect = mainPanel.getBoundingClientRect();
-        floatingPanel.style.left = `${
-          mainPanelRect.left - floatingPanel.offsetWidth - 20
-        }px`;
-        floatingPanel.style.top = `${mainPanelRect.top}px`;
+        topPanel.style.left = `${mainPanelRect.left + 15}px`;
       }
     }
 
@@ -726,14 +719,11 @@
     reorganizePanelContent();
 
     window.addEventListener("scroll", () => {
+      const initialTopPosition =
+        mainPanel.getBoundingClientRect().top + window.scrollY;
       if (window.scrollY > initialTopPosition) {
         topPanel.classList.add("floating-panel");
-        // Adjust the left position based on the sidebar width
-        const sidebar = document.querySelector(".left-box");
-        if (sidebar) {
-          const sidebarRect = sidebar.getBoundingClientRect();
-          topPanel.style.left = `${sidebarRect.right + 20}px`;
-        }
+        positionFloatingPanel();
       } else {
         topPanel.classList.remove("floating-panel");
         topPanel.style.left = "";
