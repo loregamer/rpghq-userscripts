@@ -185,8 +185,8 @@
             left: 20px !important;
             top: 20px !important;
             width: 220px !important;
-            background-color: #1e2330 !important;
-            border: 1px solid #303744 !important;
+            background-color: #171B24 !important;
+            border: 1px solid #171B24 !important;
             border-radius: 8px !important;
             padding: 15px !important;
             z-index: 1000 !important;
