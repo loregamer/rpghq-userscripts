@@ -206,10 +206,29 @@
   // Function to toggle the selected state of a post
   function togglePostSelection(post, event) {
     const checkbox = post.querySelector('input[type="checkbox"]');
+    const interactiveElements = [
+      "a",
+      "button",
+      "input",
+      "img",
+      "textarea",
+      "select",
+    ];
+    const isInteractiveElement = interactiveElements.includes(
+      event.target.tagName.toLowerCase()
+    );
+    const hasInteractiveParent = event.target.closest(
+      interactiveElements.join(",")
+    );
+    const isSpoilerElement = event.target.closest(
+      ".spoilwrapper, .spoiltitle, .spoilbtn, .spoilcontent"
+    );
+
     if (
-      !["a", "button", "input", "img"].includes(
-        event.target.tagName.toLowerCase()
-      )
+      !isInteractiveElement &&
+      !hasInteractiveParent &&
+      !isSpoilerElement &&
+      event.target.className !== "show-more-button"
     ) {
       checkbox.checked = !checkbox.checked;
       syncPostSelection(post);
