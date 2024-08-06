@@ -524,222 +524,55 @@
   createPlaceholders();
 
   // Make the top panel float when scrolled past
-  function makeTopPanelFloat() {
-    const topPanel = document.querySelector(".panel:first-of-type");
-    const topPanelRect = topPanel.getBoundingClientRect();
-    const mainPanel = document.querySelector(".panel:not(.floating-panel)");
+  function createFloatingPanel() {
+    const originalPanel = document.querySelector(".panel:first-of-type");
+    const floatingPanel = originalPanel.cloneNode(true);
+    floatingPanel.classList.add("floating-panel");
+    document.body.appendChild(floatingPanel);
 
-    // Function to update the panel title based on the active tab
-    function updatePanelTitle() {
-      const activeTab = document.querySelector("#minitabs .activetab a");
-      const panelTitle = topPanel.querySelector("h3");
-      if (activeTab && panelTitle) {
-        panelTitle.textContent = activeTab.textContent;
-      }
-    }
+    // Sync changes between the original panel and the floating panel
+    function syncPanels() {
+      const originalInputs = originalPanel.querySelectorAll("input, select");
+      const floatingInputs = floatingPanel.querySelectorAll("input, select");
 
-    // Function to reorganize the panel content
-    function reorganizePanelContent() {
-      // Add a title to the floating panel
-      let panelTitle = topPanel.querySelector("h3");
-      if (!panelTitle) {
-        panelTitle = document.createElement("h3");
-        topPanel.insertBefore(panelTitle, topPanel.firstChild);
-      }
-      updatePanelTitle();
+      originalInputs.forEach((input, index) => {
+        input.addEventListener("input", () => {
+          floatingInputs[index].value = input.value;
+        });
+      });
 
-      // Reorganize the form layout for display-panel
-      const displayPanel = document.getElementById("display-panel");
-      if (displayPanel) {
-        reorganizeDisplayPanel(displayPanel);
-      }
-
-      // Reorganize the form layout for split-panel
-      const splitPanel = document.getElementById("split-panel");
-      if (splitPanel) {
-        reorganizeSplitPanel(splitPanel);
-      }
-
-      // Reorganize the form layout for merge-panel
-      const mergePanel = document.getElementById("merge-panel");
-      if (mergePanel) {
-        reorganizeMergePanel(mergePanel);
-      }
-
-      // Hide the "(Set to 0 to view all posts.)" text
-      const setToZeroText = topPanel.querySelector("span");
-      if (setToZeroText) {
-        setToZeroText.style.display = "none";
-      }
-    }
-
-    function reorganizeDisplayPanel(displayPanel) {
-      // Posts per page
-      const postsPerPageLabel = displayPanel.querySelector(
-        'label[for="posts_per_page"]'
-      );
-      const postsPerPageInput = displayPanel.querySelector("#posts_per_page");
-      const postsPerPageGroup = createFormGroup(
-        postsPerPageLabel,
-        postsPerPageInput
-      );
-      displayPanel.appendChild(postsPerPageGroup);
-
-      // Display posts from previous
-      const displayPostsLabel = Array.from(
-        displayPanel.querySelectorAll("label")
-      ).find((label) =>
-        label.textContent.includes("Display posts from previous:")
-      );
-      const stSelect = displayPanel.querySelector("#st");
-      const displayPostsGroup = createFormGroup(displayPostsLabel, stSelect);
-      displayPanel.appendChild(displayPostsGroup);
-
-      // Sort by (using existing elements)
-      const sortByLabel = Array.from(
-        displayPanel.querySelectorAll("label")
-      ).find((label) => label.textContent.trim().startsWith("Sort by"));
-      const skSelect = displayPanel.querySelector("#sk");
-      const sdSelect = displayPanel.querySelector("#sd");
-      const sortByGroup = createFormGroup(sortByLabel, [skSelect, sdSelect]);
-      displayPanel.appendChild(sortByGroup);
-
-      // Go button
-      const goButton = displayPanel.querySelector('input[type="submit"]');
-      const goButtonGroup = createFormGroup(null, goButton);
-      displayPanel.appendChild(goButtonGroup);
-
-      // Remove any remaining elements
-      Array.from(displayPanel.children).forEach((child) => {
-        if (
-          child.tagName !== "DIV" ||
-          !child.classList.contains("form-group")
-        ) {
-          child.remove();
-        }
+      floatingInputs.forEach((input, index) => {
+        input.addEventListener("input", () => {
+          originalInputs[index].value = input.value;
+        });
       });
     }
 
-    function reorganizeSplitPanel(splitPanel) {
-      // Remove the paragraph
-      const paragraph = splitPanel.querySelector("p");
-      if (paragraph) paragraph.remove();
+    syncPanels();
 
-      // Topic icon
-      const iconLabel = splitPanel.querySelector('label[for="icon"]');
-      const iconInputs = splitPanel.querySelectorAll('input[name="icon"]');
-      const iconGroup = createFormGroup(iconLabel, null);
-      const iconContainer = document.createElement("div");
-      iconContainer.className = "icon-container";
-      iconInputs.forEach((input) => {
-        const label = input.parentElement;
-        iconContainer.appendChild(label);
-      });
-      iconGroup.appendChild(iconContainer);
-      splitPanel.appendChild(iconGroup);
-
-      // New topic title
-      const subjectLabel = splitPanel.querySelector('label[for="subject"]');
-      const subjectInput = splitPanel.querySelector("#subject");
-      const subjectGroup = createFormGroup(subjectLabel, subjectInput);
-      splitPanel.appendChild(subjectGroup);
-
-      // Forum for new topic
-      const forumLabel = splitPanel.querySelector("label:not([for])");
-      const forumSelect = splitPanel.querySelector(
-        'select[name="to_forum_id"]'
-      );
-      const forumGroup = createFormGroup(forumLabel, forumSelect);
-      splitPanel.appendChild(forumGroup);
-
-      // Remove any remaining elements
-      Array.from(splitPanel.children).forEach((child) => {
-        if (
-          child.tagName !== "DIV" ||
-          !child.classList.contains("form-group")
-        ) {
-          child.remove();
-        }
-      });
-    }
-
-    function reorganizeMergePanel(mergePanel) {
-      // Remove the paragraph
-      const paragraph = mergePanel.querySelector("p");
-      if (paragraph) paragraph.remove();
-
-      // Destination topic identification number
-      const toTopicIdLabel = mergePanel.querySelector(
-        'label[for="to_topic_id"]'
-      );
-      const toTopicIdInput = mergePanel.querySelector("#to_topic_id");
-      const selectTopicLink = mergePanel.querySelector("a");
-      const toTopicIdGroup = createFormGroup(toTopicIdLabel, [
-        toTopicIdInput,
-        selectTopicLink,
-      ]);
-      mergePanel.appendChild(toTopicIdGroup);
-
-      // Remove any remaining elements
-      Array.from(mergePanel.children).forEach((child) => {
-        if (
-          child.tagName !== "DIV" ||
-          !child.classList.contains("form-group")
-        ) {
-          child.remove();
-        }
-      });
-    }
-
-    function createFormGroup(label, inputs) {
-      const formGroup = document.createElement("div");
-      formGroup.className = "form-group";
-      if (label) {
-        formGroup.appendChild(label);
-      }
-      if (Array.isArray(inputs)) {
-        inputs.forEach((input) => formGroup.appendChild(input));
-      } else if (inputs) {
-        formGroup.appendChild(inputs);
-      }
-      return formGroup;
-    }
-
+    // Position the floating panel
     function positionFloatingPanel() {
-      if (topPanel && mainPanel) {
+      const mainPanel = document.querySelector(".panel:not(.floating-panel)");
+      if (mainPanel) {
         const mainPanelRect = mainPanel.getBoundingClientRect();
-        topPanel.style.left = `${mainPanelRect.left + 15}px`;
+        floatingPanel.style.left = `${mainPanelRect.left + 15}px`;
       }
     }
 
-    // Call this function after reorganizePanelContent and on window resize
     window.addEventListener("resize", positionFloatingPanel);
-
-    // Initial organization
-    reorganizePanelContent();
+    positionFloatingPanel();
 
     window.addEventListener("scroll", () => {
+      const mainPanel = document.querySelector(".panel:not(.floating-panel)");
       const initialTopPosition =
         mainPanel.getBoundingClientRect().top + window.scrollY;
       if (window.scrollY > initialTopPosition) {
-        topPanel.classList.add("floating-panel");
-        positionFloatingPanel();
+        floatingPanel.style.display = "block";
       } else {
-        topPanel.classList.remove("floating-panel");
-        topPanel.style.left = "";
+        floatingPanel.style.display = "none";
       }
-    });
-
-    // Update the panel title and content when the tab changes
-    document.querySelectorAll("#minitabs .tab a").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        setTimeout(() => {
-          updatePanelTitle();
-          reorganizePanelContent();
-        }, 0);
-      });
     });
   }
 
-  makeTopPanelFloat();
+  createFloatingPanel();
 })();
