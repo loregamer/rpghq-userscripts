@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         RPGHQ Moderator Control Panel Enhancer
 // @namespace    https://rpghq.org/
-// @version      2.0
+// @version      2.1
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts, and adding a "Show More" button
 // @author       loregamer
-// @match        https://rpghq.org/forums/mcp.php?*
+// @match        https://rpghq.org/forums/mcp.php?i=main&mode=topic_view*
 // @updateURL    https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.js
 // @downloadURL  https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.js
 // @grant        GM_getResourceText
@@ -662,7 +662,6 @@
                     .innerHTML
                 }</select></dd>
             </dl>
-            <input type="submit" name="split_submit" value="Split topic" class="button2">
         `;
     }
 
@@ -674,7 +673,6 @@
                 <dt>Destination topic ID:</dt>
                 <dd><input type="number" name="to_topic_id" id="to_topic_id" min="0" max="9999999999"></dd>
             </dl>
-            <input type="submit" name="merge_submit" value="Move posts" class="button2">
         `;
     }
 
