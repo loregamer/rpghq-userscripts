@@ -530,25 +530,49 @@
     floatingPanel.classList.add("floating-panel");
     document.body.appendChild(floatingPanel);
 
+    // Function to show only the relevant panel
+    function updatePanelVisibility() {
+      const actionSelect = floatingPanel.querySelector('select[name="action"]');
+      const selectedAction = actionSelect ? actionSelect.value : "display";
+
+      const allPanels = floatingPanel.querySelectorAll(
+        'fieldset[id$="-panel"]'
+      );
+      allPanels.forEach((panel) => (panel.style.display = "none"));
+
+      const relevantPanel = floatingPanel.querySelector(
+        `#${selectedAction}-panel`
+      );
+      if (relevantPanel) {
+        relevantPanel.style.display = "block";
+      } else {
+        // If no specific panel, show the display panel as default
+        floatingPanel.querySelector("#display-panel").style.display = "block";
+      }
+    }
+
     // Sync changes between the original panel and the floating panel
     function syncPanels() {
       const originalInputs = originalPanel.querySelectorAll("input, select");
       const floatingInputs = floatingPanel.querySelectorAll("input, select");
 
       originalInputs.forEach((input, index) => {
-        input.addEventListener("input", () => {
+        input.addEventListener("change", () => {
           floatingInputs[index].value = input.value;
+          updatePanelVisibility();
         });
       });
 
       floatingInputs.forEach((input, index) => {
-        input.addEventListener("input", () => {
+        input.addEventListener("change", () => {
           originalInputs[index].value = input.value;
+          updatePanelVisibility();
         });
       });
     }
 
     syncPanels();
+    updatePanelVisibility(); // Initial update
 
     // Position the floating panel
     function positionFloatingPanel() {
