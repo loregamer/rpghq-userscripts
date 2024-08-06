@@ -179,6 +179,81 @@
             content: ' (Code block hidden because it is annoying)';
             font-size: 0.9em !important;
         }
+
+        .panel.floating-panel {
+            position: fixed !important;
+            left: 20px !important;
+            top: 20px !important;
+            width: 220px !important;
+            background-color: #1e2330 !important;
+            border: 1px solid #303744 !important;
+            border-radius: 8px !important;
+            padding: 15px !important;
+            z-index: 1000 !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .panel.floating-panel h3 {
+            margin-top: 0 !important;
+            margin-bottom: 15px !important;
+            font-size: 16px !important;
+            color: #9cc3db !important;
+            border-bottom: 1px solid #303744 !important;
+            padding-bottom: 5px !important;
+        }
+
+        .panel.floating-panel label {
+            display: block !important;
+            margin-bottom: 5px !important;
+            color: #9cc3db !important;
+        }
+
+        .panel.floating-panel select,
+        .panel.floating-panel input[type="number"] {
+            width: 100% !important;
+            margin-bottom: 10px !important;
+            padding: 5px !important;
+            background-color: #282f3c !important;
+            border: 1px solid #3b5a76 !important;
+            color: #9cc3db !important;
+            border-radius: 4px !important;
+        }
+
+        .panel.floating-panel .button2 {
+            width: 100% !important;
+            padding: 8px !important;
+            background-color: #3b5a76 !important;
+            color: #fff !important;
+            border: none !important;
+            border-radius: 4px !important;
+            cursor: pointer !important;
+            transition: background-color 0.2s !important;
+            margin-top: 10px !important;
+        }
+
+        .panel.floating-panel .button2:hover {
+            background-color: #4c7191 !important;
+        }
+
+        .panel.floating-panel .form-group {
+            margin-bottom: 15px !important;
+        }
+
+        .panel.floating-panel .sort-options {
+            display: flex !important;
+            gap: 10px !important;
+            margin-top: 5px !important;
+        }
+
+        .panel.floating-panel .sort-options select {
+            flex: 1 !important;
+            margin-bottom: 0 !important;
+        }
+
+        .panel.floating-panel .sort-options label {
+            margin-bottom: 0 !important;
+        }
     `;
   document.head.appendChild(style);
 
@@ -426,4 +501,57 @@
 
   // Call the function to create placeholders
   createPlaceholders();
+
+  // Make the top panel float when scrolled past
+  function makeTopPanelFloat() {
+    const topPanel = document.querySelector(".panel:first-of-type");
+    const topPanelRect = topPanel.getBoundingClientRect();
+    const initialTopPosition = topPanelRect.top + window.scrollY;
+
+    // Add a title to the floating panel
+    const panelTitle = document.createElement("h3");
+    panelTitle.textContent = "DISPLAY OPTIONS";
+    topPanel.insertBefore(panelTitle, topPanel.firstChild);
+
+    // Reorganize the form layout
+    topPanel.querySelectorAll("dl").forEach((dl) => {
+      const dt = dl.querySelector("dt");
+      const dd = dl.querySelector("dd");
+      const formGroup = document.createElement("div");
+      formGroup.className = "form-group";
+      if (dt) {
+        const label = document.createElement("label");
+        label.innerHTML = dt.innerHTML;
+        formGroup.appendChild(label);
+      }
+      if (dd) formGroup.appendChild(dd);
+      dl.parentNode.replaceChild(formGroup, dl);
+    });
+
+    // Reorganize the sort options
+    const sortOptions = topPanel.querySelector("dd:last-child");
+    if (sortOptions) {
+      sortOptions.classList.add("sort-options");
+      const sortByLabel = document.createElement("label");
+      sortByLabel.textContent = "Sort by";
+      sortOptions.parentNode.insertBefore(sortByLabel, sortOptions);
+    }
+
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > initialTopPosition) {
+        topPanel.classList.add("floating-panel");
+        // Adjust the left position based on the sidebar width
+        const sidebar = document.querySelector(".left-box");
+        if (sidebar) {
+          const sidebarRect = sidebar.getBoundingClientRect();
+          topPanel.style.left = `${sidebarRect.right + 20}px`;
+        }
+      } else {
+        topPanel.classList.remove("floating-panel");
+        topPanel.style.left = "";
+      }
+    });
+  }
+
+  makeTopPanelFloat();
 })();
