@@ -596,9 +596,10 @@
       const displayPostsGroup = createFormGroup(displayPostsLabel, stSelect);
       displayPanel.appendChild(displayPostsGroup);
 
-      // Sort by
-      const sortByLabel = document.createElement("label");
-      sortByLabel.textContent = "Sort by";
+      // Sort by (using existing elements)
+      const sortByLabel = Array.from(
+        displayPanel.querySelectorAll("label")
+      ).find((label) => label.textContent.trim().startsWith("Sort by"));
       const skSelect = displayPanel.querySelector("#sk");
       const sdSelect = displayPanel.querySelector("#sd");
       const sortByGroup = createFormGroup(sortByLabel, [skSelect, sdSelect]);
