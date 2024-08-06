@@ -230,6 +230,7 @@
             cursor: pointer !important;
             transition: background-color 0.2s !important;
             margin-top: 10px !important;
+            text-align: left !important;
         }
 
         .panel.floating-panel .button2:hover {
@@ -242,12 +243,14 @@
 
         .panel.floating-panel .sort-options {
             display: flex !important;
+            flex-direction: column !important;
             gap: 10px !important;
             margin-top: 5px !important;
+            width: 100% !important;
         }
 
         .panel.floating-panel .sort-options select {
-            flex: 1 !important;
+            width: 100% !important;
             margin-bottom: 0 !important;
         }
 
@@ -508,10 +511,19 @@
     const topPanelRect = topPanel.getBoundingClientRect();
     const initialTopPosition = topPanelRect.top + window.scrollY;
 
+    // Function to update the panel title based on the active tab
+    function updatePanelTitle() {
+      const activeTab = document.querySelector("#minitabs .activetab a");
+      const panelTitle = topPanel.querySelector("h3");
+      if (activeTab && panelTitle) {
+        panelTitle.textContent = activeTab.textContent;
+      }
+    }
+
     // Add a title to the floating panel
     const panelTitle = document.createElement("h3");
-    panelTitle.textContent = "DISPLAY OPTIONS";
     topPanel.insertBefore(panelTitle, topPanel.firstChild);
+    updatePanelTitle();
 
     // Reorganize the form layout
     topPanel.querySelectorAll("dl").forEach((dl) => {
@@ -528,14 +540,26 @@
       dl.parentNode.replaceChild(formGroup, dl);
     });
 
-    // Reorganize the sort options
-    const sortOptions = topPanel.querySelector("dd:last-child");
-    if (sortOptions) {
-      sortOptions.classList.add("sort-options");
-      const sortByLabel = document.createElement("label");
-      sortByLabel.textContent = "Sort by";
-      sortOptions.parentNode.insertBefore(sortByLabel, sortOptions);
+    // Move "Display posts from previous:" text
+    const displayPostsLabel = topPanel.querySelector('label[for="st"]');
+    if (displayPostsLabel) {
+      const sortOptionsDD = topPanel.querySelector(".sort-options");
+      if (sortOptionsDD) {
+        sortOptionsDD.parentNode.insertBefore(displayPostsLabel, sortOptionsDD);
+      }
     }
+
+    // Remove duplicate "Sort by" text
+    const labels = topPanel.querySelectorAll("label");
+    let sortByCount = 0;
+    labels.forEach((label) => {
+      if (label.textContent.trim() === "Sort by") {
+        sortByCount++;
+        if (sortByCount > 1) {
+          label.remove();
+        }
+      }
+    });
 
     // Hide the "(Set to 0 to view all posts.)" text
     const setToZeroText = topPanel.querySelector("span");
@@ -543,16 +567,18 @@
       setToZeroText.style.display = "none";
     }
 
-    // Reposition the select elements
+    // Reposition the select elements and ensure the "Go" button is last
     const displayPanel = document.getElementById("display-panel");
     if (displayPanel) {
       const selects = displayPanel.querySelectorAll("select");
       const formGroups = displayPanel.querySelectorAll(".form-group");
+      const goButton = displayPanel.querySelector('input[type="submit"]');
 
       if (selects.length > 0 && formGroups.length > 0) {
         formGroups[0].appendChild(selects[0]); // Move the first select to the first form group
         formGroups[1].appendChild(selects[1]); // Move the second select to the second form group
         formGroups[1].appendChild(selects[2]); // Move the third select to the second form group
+        formGroups[1].appendChild(goButton); // Move the "Go" button to the last position
       }
     }
 
@@ -569,6 +595,11 @@
         topPanel.classList.remove("floating-panel");
         topPanel.style.left = "";
       }
+    });
+
+    // Update the panel title when the tab changes
+    document.querySelectorAll("#minitabs .tab a").forEach((tab) => {
+      tab.addEventListener("click", updatePanelTitle);
     });
   }
 
