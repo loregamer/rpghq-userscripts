@@ -595,6 +595,8 @@
 
     // Modify the structure of the floating panel to match the desired layout
     const displayPanel = floatingPanel.querySelector("#display-panel");
+    const splitPanel = floatingPanel.querySelector("#split-panel");
+
     if (displayPanel) {
       displayPanel.innerHTML = `
                 <h3>DISPLAY OPTIONS</h3>
@@ -624,6 +626,60 @@
                 <input type="submit" name="sort" value="Go" class="button2">
             `;
     }
+
+    if (splitPanel) {
+      splitPanel.innerHTML = `
+            <h3>SPLIT TOPIC</h3>
+            <p>Using the form below you can split a topic in two, either by selecting the posts individually or by splitting at a selected post.</p>
+            <dl>
+                <dt>Topic icon:</dt>
+                <dd class="icon-options">
+                    ${splitPanel.querySelector("dd").innerHTML}
+                </dd>
+            </dl>
+            <dl>
+                <dt>New topic title:</dt>
+                <dd><input type="text" name="subject" maxlength="124" class="inputbox"></dd>
+            </dl>
+            <dl>
+                <dt>Forum for new topic:</dt>
+                <dd><select name="to_forum_id">${
+                  splitPanel.querySelector('select[name="to_forum_id"]')
+                    .innerHTML
+                }</select></dd>
+            </dl>
+            <input type="submit" name="split_submit" value="Split topic" class="button2">
+        `;
+    }
+
+    // Function to update panel content based on selected action
+    function updatePanelContent() {
+      const actionSelect = floatingPanel.querySelector('select[name="action"]');
+      const selectedAction = actionSelect ? actionSelect.value : "display";
+
+      floatingPanel.querySelectorAll("fieldset").forEach((fieldset) => {
+        fieldset.style.display = "none";
+      });
+
+      const activeFieldset = floatingPanel.querySelector(
+        `#${selectedAction}-panel`
+      );
+      if (activeFieldset) {
+        activeFieldset.style.display = "block";
+      }
+    }
+
+    // Add action select at the top of the floating panel
+    const actionSelect = document.createElement("select");
+    actionSelect.name = "action";
+    actionSelect.innerHTML = `
+        <option value="display">Display options</option>
+        <option value="split">Split topic</option>
+        <option value="merge">Move posts</option>
+    `;
+    floatingPanel.insertBefore(actionSelect, floatingPanel.firstChild);
+
+    actionSelect.addEventListener("change", updatePanelContent);
 
     // Function to show only the relevant panel
     function updatePanelVisibility() {
@@ -668,6 +724,7 @@
 
     syncPanels();
     updatePanelVisibility(); // Initial update
+    updatePanelContent(); // Initial update
 
     // Position the floating panel
     function positionFloatingPanel() {
