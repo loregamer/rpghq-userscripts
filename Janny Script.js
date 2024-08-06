@@ -155,12 +155,29 @@
             font-family: 'Comic Sans MS', cursive, sans-serif;
         }
         .table-placeholder, .codebox-placeholder {
-            background-color: #444 !important;
-            color: #fff !important;
-            padding: 10px !important;
+            background-color: #1e2330 !important;
+            color: #9cc3db !important;
+            padding: 15px !important;
             border-radius: 5px !important;
             text-align: center !important;
             margin: 10px 0 !important;
+            border: 1px solid #303744 !important;
+            font-style: italic !important;
+        }
+
+        .table-placeholder::before, .codebox-placeholder::before {
+            content: '⚠️ ';
+            font-style: normal !important;
+        }
+
+        .table-placeholder::after {
+            content: ' (Table content hidden because who cares)';
+            font-size: 0.9em !important;
+        }
+
+        .codebox-placeholder::after {
+            content: ' (Code block hidden because it is annoying)';
+            font-size: 0.9em !important;
         }
     `;
   document.head.appendChild(style);
