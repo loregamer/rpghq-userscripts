@@ -185,7 +185,7 @@
             top: 20px !important;
             width: 16% !important;
             background-color: #171B24 !important;
-            border: 1px solid #171B24 !important;
+            border: 1px solid #9CC3DB !important;
             border-radius: 8px !important;
             padding: 15px !important;
             z-index: 1000 !important;
