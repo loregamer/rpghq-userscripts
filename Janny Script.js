@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         RPGHQ Moderator Control Panel Enhancer
 // @namespace    https://rpghq.org/
-// @version      2.1
+// @version      2.1.1
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts, and adding a "Show More" button
 // @author       loregamer
-// @match        https://rpghq.org/forums/mcp.php?i=main&mode=topic_view*
+// @match        https://rpghq.org/forums/mcp.php?*i=main&mode=topic_view*
+// @match        https://rpghq.org/forums/mcp.php?*i=mcp_main&mode=topic_view*
 // @updateURL    https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.js
 // @downloadURL  https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.js
 // @grant        GM_getResourceText
@@ -194,7 +195,8 @@
             padding: 15px !important;
             z-index: 1000 !important;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-            transition: all 0.3s ease !important;
+            transition: opacity 0.3s ease !important;
+            opacity: 0;
         }
 
         .panel.floating-panel * {
