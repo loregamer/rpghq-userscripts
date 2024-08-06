@@ -19,6 +19,26 @@
   // Add custom styles to make the moderator control panel posts look like forum posts
   const style = document.createElement("style");
   style.innerHTML = `
+        .postbody .content blockquote {
+            background-color: #171b24 !important;
+            border-color: #303744 !important;
+            padding: 10px !important;
+            margin: 10px 0 !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .postbody .content blockquote blockquote {
+            background-color: #242a36 !important;
+        }
+
+        .postbody .content blockquote blockquote blockquote {
+            background-color: #171b24 !important;
+        }
+
+        .postbody .content blockquote blockquote blockquote blockquote {
+            background-color: #242a36  !important;
+        }
         .post.bg2, .post.bg1, .post.bg3 {
             background-color: #282f3c  !important; /* Match forum background color */
             border: 1px solid #303744 !important; /* Match forum border color */
@@ -69,23 +89,6 @@
             font-size: 0.9em !important;
             color: #aaa !important;
         }
-        .postbody .content blockquote {
-            margin: 0 !important;
-            padding: 10px !important;
-            width: 100% !important; /* Make blockquotes take full width */
-            box-sizing: border-box !important; /* Ensure padding is included in width */
-        }
-        .postbody .content blockquote cite {
-            font-weight: bold !important;
-        }
-        .postbody .content blockquote .imcger-quote-shadow {
-            display: none !important;
-        }
-        .postbody .content blockquote .imcger-quote-button {
-            margin: 0 !important;
-            padding: 5px !important;
-            cursor: pointer !important;
-        }
         a, .postlink {
             display: inline-block !important; /* Ensure the link only takes up the width of the text */
             max-width: max-content !important; /* Ensure the link only takes up the width of the text */
@@ -128,10 +131,10 @@
             left: 0;
             width: 100%;
             text-align: center;
-            background: rgba(23, 27, 36, 0.8);
-            padding: 10px;
+            background: linear-gradient(to bottom, rgba(23, 27, 36, 0), rgba(23, 27, 36, 0.8) 70%, rgba(23, 27, 36, 1));
+            padding: 30px 10px 10px;
             cursor: pointer;
-            z-index: 10;
+            color: #9cc3db;
         }
         .display-actions {
             position: fixed !important;
@@ -217,7 +220,7 @@
     }
   }
 
-  // Function to add the "Show More" button
+  // Function to add the "Show More" button with fade effect
   function addShowMoreButton(post) {
     const postbody = post.querySelector(".postbody");
     const showMoreButton = document.createElement("div");
