@@ -194,6 +194,10 @@
             transition: all 0.3s ease !important;
         }
 
+        .panel.floating-panel * {
+            text-align: left !important;
+        }
+
         .panel.floating-panel h3 {
             margin-top: 0 !important;
             margin-bottom: 15px !important;
@@ -210,7 +214,8 @@
         }
 
         .panel.floating-panel select,
-        .panel.floating-panel input[type="number"] {
+        .panel.floating-panel input[type="number"],
+        .panel.floating-panel input[type="text"] {
             width: 100% !important;
             margin-bottom: 10px !important;
             padding: 5px !important;
@@ -230,7 +235,6 @@
             cursor: pointer !important;
             transition: background-color 0.2s !important;
             margin-top: 10px !important;
-            text-align: left !important;
         }
 
         .panel.floating-panel .button2:hover {
@@ -239,23 +243,6 @@
 
         .panel.floating-panel .form-group {
             margin-bottom: 15px !important;
-        }
-
-        .panel.floating-panel .sort-options {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 10px !important;
-            margin-top: 5px !important;
-            width: 100% !important;
-        }
-
-        .panel.floating-panel .sort-options select {
-            width: 100% !important;
-            margin-bottom: 0 !important;
-        }
-
-        .panel.floating-panel .sort-options label {
-            margin-bottom: 0 !important;
         }
     `;
   document.head.appendChild(style);
@@ -520,67 +507,89 @@
       }
     }
 
-    // Add a title to the floating panel
-    const panelTitle = document.createElement("h3");
-    topPanel.insertBefore(panelTitle, topPanel.firstChild);
-    updatePanelTitle();
+    // Function to reorganize the panel content
+    function reorganizePanelContent() {
+      const topPanel = document.querySelector(".panel:first-of-type");
 
-    // Reorganize the form layout
-    topPanel.querySelectorAll("dl").forEach((dl) => {
-      const dt = dl.querySelector("dt");
-      const dd = dl.querySelector("dd");
+      // Add a title to the floating panel
+      let panelTitle = topPanel.querySelector("h3");
+      if (!panelTitle) {
+        panelTitle = document.createElement("h3");
+        topPanel.insertBefore(panelTitle, topPanel.firstChild);
+      }
+      updatePanelTitle();
+
+      // Reorganize the form layout
+      const displayPanel = document.getElementById("display-panel");
+      if (displayPanel) {
+        // Posts per page
+        const postsPerPageLabel = displayPanel.querySelector(
+          'label[for="posts_per_page"]'
+        );
+        const postsPerPageInput = displayPanel.querySelector("#posts_per_page");
+        const postsPerPageGroup = createFormGroup(
+          postsPerPageLabel,
+          postsPerPageInput
+        );
+        displayPanel.appendChild(postsPerPageGroup);
+
+        // Display posts from previous
+        const displayPostsLabel = Array.from(
+          displayPanel.querySelectorAll("label")
+        ).find((label) =>
+          label.textContent.includes("Display posts from previous:")
+        );
+        const stSelect = displayPanel.querySelector("#st");
+        const displayPostsGroup = createFormGroup(displayPostsLabel, stSelect);
+        displayPanel.appendChild(displayPostsGroup);
+
+        // Sort by
+        const sortByLabel = document.createElement("label");
+        sortByLabel.textContent = "Sort by";
+        const skSelect = displayPanel.querySelector("#sk");
+        const sdSelect = displayPanel.querySelector("#sd");
+        const sortByGroup = createFormGroup(sortByLabel, [skSelect, sdSelect]);
+        displayPanel.appendChild(sortByGroup);
+
+        // Go button
+        const goButton = displayPanel.querySelector('input[type="submit"]');
+        const goButtonGroup = createFormGroup(null, goButton);
+        displayPanel.appendChild(goButtonGroup);
+
+        // Remove any remaining elements
+        Array.from(displayPanel.children).forEach((child) => {
+          if (
+            child.tagName !== "DIV" ||
+            !child.classList.contains("form-group")
+          ) {
+            child.remove();
+          }
+        });
+      }
+
+      // Hide the "(Set to 0 to view all posts.)" text
+      const setToZeroText = topPanel.querySelector("span");
+      if (setToZeroText) {
+        setToZeroText.style.display = "none";
+      }
+    }
+
+    function createFormGroup(label, inputs) {
       const formGroup = document.createElement("div");
       formGroup.className = "form-group";
-      if (dt) {
-        const label = document.createElement("label");
-        label.innerHTML = dt.innerHTML;
+      if (label) {
         formGroup.appendChild(label);
       }
-      if (dd) formGroup.appendChild(dd);
-      dl.parentNode.replaceChild(formGroup, dl);
-    });
-
-    // Move "Display posts from previous:" text
-    const displayPostsLabel = topPanel.querySelector('label[for="st"]');
-    if (displayPostsLabel) {
-      const sortOptionsDD = topPanel.querySelector(".sort-options");
-      if (sortOptionsDD) {
-        sortOptionsDD.parentNode.insertBefore(displayPostsLabel, sortOptionsDD);
+      if (Array.isArray(inputs)) {
+        inputs.forEach((input) => formGroup.appendChild(input));
+      } else if (inputs) {
+        formGroup.appendChild(inputs);
       }
+      return formGroup;
     }
 
-    // Remove duplicate "Sort by" text
-    const labels = topPanel.querySelectorAll("label");
-    let sortByCount = 0;
-    labels.forEach((label) => {
-      if (label.textContent.trim() === "Sort by") {
-        sortByCount++;
-        if (sortByCount > 1) {
-          label.remove();
-        }
-      }
-    });
-
-    // Hide the "(Set to 0 to view all posts.)" text
-    const setToZeroText = topPanel.querySelector("span");
-    if (setToZeroText) {
-      setToZeroText.style.display = "none";
-    }
-
-    // Reposition the select elements and ensure the "Go" button is last
-    const displayPanel = document.getElementById("display-panel");
-    if (displayPanel) {
-      const selects = displayPanel.querySelectorAll("select");
-      const formGroups = displayPanel.querySelectorAll(".form-group");
-      const goButton = displayPanel.querySelector('input[type="submit"]');
-
-      if (selects.length > 0 && formGroups.length > 0) {
-        formGroups[0].appendChild(selects[0]); // Move the first select to the first form group
-        formGroups[1].appendChild(selects[1]); // Move the second select to the second form group
-        formGroups[1].appendChild(selects[2]); // Move the third select to the second form group
-        formGroups[1].appendChild(goButton); // Move the "Go" button to the last position
-      }
-    }
+    // Initial organization
+    reorganizePanelContent();
 
     window.addEventListener("scroll", () => {
       if (window.scrollY > initialTopPosition) {
@@ -597,9 +606,14 @@
       }
     });
 
-    // Update the panel title when the tab changes
+    // Update the panel title and content when the tab changes
     document.querySelectorAll("#minitabs .tab a").forEach((tab) => {
-      tab.addEventListener("click", updatePanelTitle);
+      tab.addEventListener("click", () => {
+        setTimeout(() => {
+          updatePanelTitle();
+          reorganizePanelContent();
+        }, 0);
+      });
     });
   }
 
