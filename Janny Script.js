@@ -533,92 +533,96 @@
     // Add custom styles for the floating panel
     const style = document.createElement("style");
     style.textContent = `
-        .floating-panel {
-            position: fixed !important;
-            top: 20px !important;
-            left: 20px !important;
-            width: 250px !important;
-            background-color: #1e2330 !important;
-            border: 1px solid #303744 !important;
-            border-radius: 5px !important;
-            padding: 15px !important;
-            z-index: 1000 !important;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-            color: #9cc3db !important;
-        }
-        .floating-panel * {
-            text-align: left !important;
-            font-size: 14px !important;
-        }
-        .floating-panel h3 {
-            margin-top: 0 !important;
-            margin-bottom: 15px !important;
-            font-size: 16px !important;
-            color: #fff !important;
-            border-bottom: 1px solid #303744 !important;
-            padding-bottom: 5px !important;
-        }
-        .floating-panel input[type="number"],
-        .floating-panel input[type="text"],
-        .floating-panel select,
-        .floating-panel .button2 {
-            width: 100% !important;
-            margin-bottom: 10px !important;
-            background-color: #282f3c !important;
-            border: 1px solid #3b5a76 !important;
-            color: #9cc3db !important;
-            padding: 5px !important;
-            border-radius: 3px !important;
-            box-sizing: border-box !important;
-        }
-        .floating-panel .button2 {
-            margin-top: 10px !important;
-            background-color: #3b5a76 !important;
-            color: #fff !important;
-            border: none !important;
-            cursor: pointer !important;
-        }
-        .floating-panel dl {
-            margin-bottom: 10px !important;
-        }
-        .floating-panel dt {
-            margin-bottom: 5px !important;
-        }
-        .floating-panel dd {
-            margin-left: 0 !important;
-        }
-    `;
+            .floating-panel {
+                position: fixed !important;
+                top: 20px !important;
+                left: 20px !important;
+                width: 250px !important;
+                background-color: #1e2330 !important;
+                border: 1px solid #303744 !important;
+                border-radius: 5px !important;
+                padding: 15px !important;
+                z-index: 1000 !important;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+                color: #9cc3db !important;
+            }
+            .floating-panel * {
+                text-align: left !important;
+                font-size: 14px !important;
+            }
+            .floating-panel h3 {
+                margin-top: 0 !important;
+                margin-bottom: 15px !important;
+                font-size: 16px !important;
+                color: #fff !important;
+                border-bottom: 1px solid #303744 !important;
+                padding-bottom: 5px !important;
+            }
+            .floating-panel input[type="number"],
+            .floating-panel input[type="text"],
+            .floating-panel select,
+            .floating-panel .button2 {
+                width: 100% !important;
+                margin-bottom: 10px !important;
+                background-color: #282f3c !important;
+                border: 1px solid #3b5a76 !important;
+                color: #9cc3db !important;
+                padding: 5px !important;
+                border-radius: 3px !important;
+                box-sizing: border-box !important;
+            }
+            .floating-panel .button2 {
+                margin-top: 10px !important;
+                background-color: #3b5a76 !important;
+                color: #fff !important;
+                border: none !important;
+                cursor: pointer !important;
+            }
+            .floating-panel dl {
+                margin-bottom: 10px !important;
+            }
+            .floating-panel dt {
+                margin-bottom: 5px !important;
+            }
+            .floating-panel dd {
+                margin-left: 0 !important;
+            }
+            .floating-panel .sort-options select {
+                margin-bottom: 2px !important;
+            }
+        `;
     document.head.appendChild(style);
 
     // Modify the structure of the floating panel to match the desired layout
     const displayPanel = floatingPanel.querySelector("#display-panel");
     if (displayPanel) {
       displayPanel.innerHTML = `
-            <h3>DISPLAY OPTIONS</h3>
-            <dl>
-                <dt>Posts per page:</dt>
-                <dd><input type="number" name="posts_per_page" value="30" min="0" max="999"></dd>
-            </dl>
-            <dl>
-                <dt>Display posts from previous:</dt>
-                <dd><select name="st">${
-                  displayPanel.querySelector('select[name="st"]').innerHTML
-                }</select></dd>
-            </dl>
-            <dl>
-                <dt>Sort by</dt>
-                <dd><select name="sk">${
-                  displayPanel.querySelector('select[name="sk"]').innerHTML
-                }</select></dd>
-            </dl>
-            <dl>
-                <dt>&nbsp;</dt>
-                <dd><select name="sd">${
-                  displayPanel.querySelector('select[name="sd"]').innerHTML
-                }</select></dd>
-            </dl>
-            <input type="submit" name="sort" value="Go" class="button2">
-        `;
+                <h3>DISPLAY OPTIONS</h3>
+                <dl>
+                    <dt>Posts per page:</dt>
+                    <dd><input type="number" name="posts_per_page" value="30" min="0" max="999"></dd>
+                </dl>
+                <dl>
+                    <dt>Display posts from previous:</dt>
+                    <dd><select name="st">${
+                      displayPanel.querySelector('select[name="st"]').innerHTML
+                    }</select></dd>
+                </dl>
+                <dl>
+                    <dt>Sort by</dt>
+                    <dd class="sort-options">
+                        <select name="sk">${
+                          displayPanel.querySelector('select[name="sk"]')
+                            .innerHTML
+                        }</select>
+                        <select name="sd">${
+                          displayPanel.querySelector('select[name="sd"]')
+                            .innerHTML
+                        }</select>
+                    </dd>
+                </dl>
+                <input type="submit" name="sort" value="Go" class="button2">
+            `;
     }
 
     // Function to show only the relevant panel
