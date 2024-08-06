@@ -37,13 +37,13 @@
         }
 
         .postbody .content blockquote blockquote blockquote blockquote {
-            background-color: #242a36  !important;
+            background-color: #242a36 !important;
         }
         .post.bg2, .post.bg1, .post.bg3 {
-            background-color: #282f3c  !important; /* Match forum background color */
+            background-color: #282f3c !important; /* Match forum background color */
             border: 1px solid #303744 !important; /* Match forum border color */
             padding: 10px !important; /* Add padding */
-            margin-bottom: 10px !important; /* Add space between posts */
+            margin-bottom: 5px !important; /* Reduced margin between posts */
             border-radius: 5px !important; /* Rounded corners */
             display: flex !important;
             flex-direction: row !important;
@@ -123,7 +123,6 @@
         }
         .post.selected {
             background-color: #ff9999 !important; /* Red highlight for selected post */
-            border-color: #ff6666 !important;
         }
         .show-more-button {
             position: absolute;
@@ -153,8 +152,15 @@
             box-shadow: none !important; /* Remove the box shadow */
         }
         .username-loregamer {
-            color: #CE2F2C !important; /* Custom style for loregamer */
             font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        .table-placeholder, .codebox-placeholder {
+            background-color: #444 !important;
+            color: #fff !important;
+            padding: 10px !important;
+            border-radius: 5px !important;
+            text-align: center !important;
+            margin: 10px 0 !important;
         }
     `;
   document.head.appendChild(style);
@@ -205,18 +211,20 @@
         event.target.tagName.toLowerCase()
       )
     ) {
-      post.classList.toggle("selected");
-      checkbox.click(); // Simulate a click on the checkbox
+      checkbox.checked = !checkbox.checked;
+      syncPostSelection(post);
     }
   }
 
-  // Synchronize the selected state of the post with the checkbox
+  // Function to sync the selected state of the post with the checkbox
   function syncPostSelection(post) {
     const checkbox = post.querySelector('input[type="checkbox"]');
     if (checkbox.checked) {
       post.classList.add("selected");
+      post.style.setProperty("border", "1px solid #ff6666", "important");
     } else {
       post.classList.remove("selected");
+      post.style.setProperty("border", "1px solid #303744", "important");
     }
   }
 
@@ -231,6 +239,25 @@
       showMoreButton.style.display = "none";
     };
     postbody.appendChild(showMoreButton);
+  }
+
+  // Function to create placeholders for tables and codeboxes
+  function createPlaceholders() {
+    document.querySelectorAll(".postbody .content table").forEach((table) => {
+      const placeholder = document.createElement("div");
+      placeholder.className = "table-placeholder";
+      placeholder.textContent = "Table placeholder";
+      table.parentNode.replaceChild(placeholder, table);
+    });
+
+    document
+      .querySelectorAll(".postbody .content .codebox")
+      .forEach((codebox) => {
+        const placeholder = document.createElement("div");
+        placeholder.className = "codebox-placeholder";
+        placeholder.textContent = "Code block placeholder";
+        codebox.parentNode.replaceChild(placeholder, codebox);
+      });
   }
 
   // Modify the structure of each post to match forum posts
@@ -360,4 +387,7 @@
       }
     });
   }
+
+  // Call the function to create placeholders
+  createPlaceholders();
 })();
