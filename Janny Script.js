@@ -533,98 +533,124 @@
     // Add custom styles for the floating panel
     const style = document.createElement("style");
     style.textContent = `
-            .floating-panel {
-                position: fixed !important;
-                top: 20px !important;
-                left: 20px !important;
-                width: 250px !important;
-                background-color: #1e2330 !important;
-                border: 1px solid #303744 !important;
-                border-radius: 5px !important;
-                padding: 15px !important;
-                z-index: 1000 !important;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-                color: #9cc3db !important;
-            }
-            .floating-panel * {
-                text-align: left !important;
-                font-size: 14px !important;
-            }
-            .floating-panel h3 {
-                margin-top: 0 !important;
-                margin-bottom: 15px !important;
-                font-size: 16px !important;
-                color: #fff !important;
-                border-bottom: 1px solid #303744 !important;
-                padding-bottom: 5px !important;
-            }
-            .floating-panel input[type="number"],
-            .floating-panel input[type="text"],
-            .floating-panel select,
-            .floating-panel .button2 {
-                width: 100% !important;
-                margin-bottom: 10px !important;
-                background-color: #282f3c !important;
-                border: 1px solid #3b5a76 !important;
-                color: #9cc3db !important;
-                padding: 5px !important;
-                border-radius: 3px !important;
-                box-sizing: border-box !important;
-            }
-            .floating-panel .button2 {
-                margin-top: 10px !important;
-                background-color: #3b5a76 !important;
-                color: #fff !important;
-                border: none !important;
-                cursor: pointer !important;
-            }
-            .floating-panel dl {
-                margin-bottom: 10px !important;
-            }
-            .floating-panel dt {
-                margin-bottom: 5px !important;
-            }
-            .floating-panel dd {
-                margin-left: 0 !important;
-            }
-            .floating-panel .sort-options select {
-                margin-bottom: 2px !important;
-            }
-        `;
+        .floating-panel {
+            position: fixed !important;
+            top: 20px !important;
+            left: 20px !important;
+            width: 250px !important;
+            background-color: #1e2330 !important;
+            border: 1px solid #303744 !important;
+            border-radius: 5px !important;
+            padding: 15px !important;
+            z-index: 1000 !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+            color: #9cc3db !important;
+        }
+        .floating-panel * {
+            text-align: left !important;
+            font-size: 14px !important;
+        }
+        .floating-panel h3 {
+            margin-top: 0 !important;
+            margin-bottom: 15px !important;
+            font-size: 16px !important;
+            color: #fff !important;
+            border-bottom: 1px solid #303744 !important;
+            padding-bottom: 5px !important;
+        }
+        .floating-panel input[type="number"],
+        .floating-panel input[type="text"],
+        .floating-panel select,
+        .floating-panel .button2 {
+            width: 100% !important;
+            margin-bottom: 10px !important;
+            background-color: #282f3c !important;
+            border: 1px solid #3b5a76 !important;
+            color: #9cc3db !important;
+            padding: 5px !important;
+            border-radius: 3px !important;
+            box-sizing: border-box !important;
+        }
+        .floating-panel .button2 {
+            margin-top: 10px !important;
+            background-color: #3b5a76 !important;
+            color: #fff !important;
+            border: none !important;
+            cursor: pointer !important;
+        }
+        .floating-panel dl {
+            margin-bottom: 10px !important;
+        }
+        .floating-panel dt {
+            margin-bottom: 5px !important;
+        }
+        .floating-panel dd {
+            margin-left: 0 !important;
+        }
+        .floating-panel .sort-options select {
+            margin-bottom: 2px !important;
+        }
+        .floating-panel .icon-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .floating-panel .icon-options label {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+    `;
     document.head.appendChild(style);
 
-    // Modify the structure of the floating panel to match the desired layout
+    // Function to update panel content based on selected tab
+    function updatePanelContent() {
+      const activeTab = document.querySelector("#minitabs .tab.activetab a");
+      const activePanel = activeTab
+        ? activeTab.getAttribute("data-subpanel")
+        : "display-panel";
+
+      floatingPanel.querySelectorAll("fieldset").forEach((fieldset) => {
+        fieldset.style.display = "none";
+      });
+
+      const activeFieldset = floatingPanel.querySelector(`#${activePanel}`);
+      if (activeFieldset) {
+        activeFieldset.style.display = "block";
+      }
+    }
+
+    // Modify the structure of the floating panel to include all options
     const displayPanel = floatingPanel.querySelector("#display-panel");
     const splitPanel = floatingPanel.querySelector("#split-panel");
+    const mergePanel = floatingPanel.querySelector("#merge-panel");
 
     if (displayPanel) {
       displayPanel.innerHTML = `
-                <h3>DISPLAY OPTIONS</h3>
-                <dl>
-                    <dt>Posts per page:</dt>
-                    <dd><input type="number" name="posts_per_page" value="30" min="0" max="999"></dd>
-                </dl>
-                <dl>
-                    <dt>Display posts from previous:</dt>
-                    <dd><select name="st">${
-                      displayPanel.querySelector('select[name="st"]').innerHTML
-                    }</select></dd>
-                </dl>
-                <dl>
-                    <dt>Sort by</dt>
-                    <dd class="sort-options">
-                        <select name="sk">${
-                          displayPanel.querySelector('select[name="sk"]')
-                            .innerHTML
-                        }</select>
-                        <select name="sd">${
-                          displayPanel.querySelector('select[name="sd"]')
-                            .innerHTML
-                        }</select>
-                    </dd>
-                </dl>
-                <input type="submit" name="sort" value="Go" class="button2">
-            `;
+            <h3>DISPLAY OPTIONS</h3>
+            <dl>
+                <dt>Posts per page:</dt>
+                <dd><input type="number" name="posts_per_page" value="30" min="0" max="999"></dd>
+            </dl>
+            <dl>
+                <dt>Display posts from previous:</dt>
+                <dd><select name="st">${
+                  displayPanel.querySelector('select[name="st"]').innerHTML
+                }</select></dd>
+            </dl>
+            <dl>
+                <dt>Sort by</dt>
+                <dd class="sort-options">
+                    <select name="sk">${
+                      displayPanel.querySelector('select[name="sk"]').innerHTML
+                    }</select>
+                    <select name="sd">${
+                      displayPanel.querySelector('select[name="sd"]').innerHTML
+                    }</select>
+                </dd>
+            </dl>
+            <input type="submit" name="sort" value="Go" class="button2">
+        `;
     }
 
     if (splitPanel) {
@@ -633,9 +659,9 @@
             <p>Using the form below you can split a topic in two, either by selecting the posts individually or by splitting at a selected post.</p>
             <dl>
                 <dt>Topic icon:</dt>
-                <dd class="icon-options">
-                    ${splitPanel.querySelector("dd").innerHTML}
-                </dd>
+                <dd class="icon-options">${
+                  splitPanel.querySelector("dd").innerHTML
+                }</dd>
             </dl>
             <dl>
                 <dt>New topic title:</dt>
@@ -652,54 +678,16 @@
         `;
     }
 
-    // Function to update panel content based on selected action
-    function updatePanelContent() {
-      const actionSelect = floatingPanel.querySelector('select[name="action"]');
-      const selectedAction = actionSelect ? actionSelect.value : "display";
-
-      floatingPanel.querySelectorAll("fieldset").forEach((fieldset) => {
-        fieldset.style.display = "none";
-      });
-
-      const activeFieldset = floatingPanel.querySelector(
-        `#${selectedAction}-panel`
-      );
-      if (activeFieldset) {
-        activeFieldset.style.display = "block";
-      }
-    }
-
-    // Add action select at the top of the floating panel
-    const actionSelect = document.createElement("select");
-    actionSelect.name = "action";
-    actionSelect.innerHTML = `
-        <option value="display">Display options</option>
-        <option value="split">Split topic</option>
-        <option value="merge">Move posts</option>
-    `;
-    floatingPanel.insertBefore(actionSelect, floatingPanel.firstChild);
-
-    actionSelect.addEventListener("change", updatePanelContent);
-
-    // Function to show only the relevant panel
-    function updatePanelVisibility() {
-      const actionSelect = floatingPanel.querySelector('select[name="action"]');
-      const selectedAction = actionSelect ? actionSelect.value : "display";
-
-      const allPanels = floatingPanel.querySelectorAll(
-        'fieldset[id$="-panel"]'
-      );
-      allPanels.forEach((panel) => (panel.style.display = "none"));
-
-      const relevantPanel = floatingPanel.querySelector(
-        `#${selectedAction}-panel`
-      );
-      if (relevantPanel) {
-        relevantPanel.style.display = "block";
-      } else {
-        // If no specific panel, show the display panel as default
-        floatingPanel.querySelector("#display-panel").style.display = "block";
-      }
+    if (mergePanel) {
+      mergePanel.innerHTML = `
+            <h3>MOVE POSTS</h3>
+            <p>Using the form below you can move selected posts into another topic. The posts will be split from this topic and merged into the other topic.</p>
+            <dl>
+                <dt>Destination topic ID:</dt>
+                <dd><input type="number" name="to_topic_id" min="0"></dd>
+            </dl>
+            <input type="submit" name="merge_submit" value="Move posts" class="button2">
+        `;
     }
 
     // Sync changes between the original panel and the floating panel
@@ -709,45 +697,58 @@
 
       originalInputs.forEach((input, index) => {
         input.addEventListener("change", () => {
-          floatingInputs[index].value = input.value;
-          updatePanelVisibility();
+          if (floatingInputs[index]) {
+            floatingInputs[index].value = input.value;
+          }
         });
       });
 
       floatingInputs.forEach((input, index) => {
         input.addEventListener("change", () => {
-          originalInputs[index].value = input.value;
-          updatePanelVisibility();
+          if (originalInputs[index]) {
+            originalInputs[index].value = input.value;
+          }
+        });
+      });
+
+      // Add click events for submit buttons
+      floatingPanel.querySelectorAll(".button2").forEach((button) => {
+        button.addEventListener("click", (e) => {
+          e.preventDefault();
+          const originalButton = originalPanel.querySelector(
+            `[name="${button.name}"]`
+          );
+          if (originalButton) {
+            originalButton.click();
+          }
         });
       });
     }
 
     syncPanels();
-    updatePanelVisibility(); // Initial update
     updatePanelContent(); // Initial update
 
-    // Position the floating panel
-    function positionFloatingPanel() {
-      const mainPanel = document.querySelector(".panel:not(.floating-panel)");
-      if (mainPanel) {
-        const mainPanelRect = mainPanel.getBoundingClientRect();
-        floatingPanel.style.left = `${mainPanelRect.left + 15}px`;
+    // Observe changes in the minitabs to update the floating panel
+    const minitabs = document.querySelector("#minitabs");
+    const observer = new MutationObserver(updatePanelContent);
+    observer.observe(minitabs, { attributes: true, subtree: true });
+
+    // Show/hide floating panel based on original panel visibility
+    function toggleFloatingPanelVisibility() {
+      const originalPanelRect = originalPanel.getBoundingClientRect();
+      if (
+        originalPanelRect.top < window.innerHeight &&
+        originalPanelRect.bottom >= 0
+      ) {
+        floatingPanel.style.display = "none";
+      } else {
+        floatingPanel.style.display = "block";
       }
     }
 
-    window.addEventListener("resize", positionFloatingPanel);
-    positionFloatingPanel();
-
-    window.addEventListener("scroll", () => {
-      const mainPanel = document.querySelector(".panel:not(.floating-panel)");
-      const initialTopPosition =
-        mainPanel.getBoundingClientRect().top + window.scrollY;
-      if (window.scrollY > initialTopPosition) {
-        floatingPanel.style.display = "block";
-      } else {
-        floatingPanel.style.display = "none";
-      }
-    });
+    window.addEventListener("scroll", toggleFloatingPanelVisibility);
+    window.addEventListener("resize", toggleFloatingPanelVisibility);
+    toggleFloatingPanelVisibility(); // Initial check
   }
 
   createFloatingPanel();
