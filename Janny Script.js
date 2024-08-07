@@ -266,12 +266,12 @@
       color: #9cc3db !important;
     }
     .floating-panel-wrapper {
-      overflow: hidden !important;
+      max-width: 95% !important;
+      width: 95% !important;
     }
     #floating-minitabs {
-      background-color: #202633 !important;
-      border-bottom: 1px solid #303744 !important;
       padding: 5px 5px 0 5px !important;
+      float: left !important;
     }
     #floating-minitabs ul {
       display: flex !important;
