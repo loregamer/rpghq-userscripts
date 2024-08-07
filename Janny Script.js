@@ -595,16 +595,51 @@
         .floating-panel .sort-options select {
             margin-bottom: 2px !important;
         }
+        .floating-panel .minitabs {
+            position: absolute !important;
+            top: -30px !important;
+            left: 0 !important;
+            width: 100% !important;
+        }
+        .floating-panel .minitabs ul {
+            display: flex !important;
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .floating-panel .minitabs li {
+            flex: 1 !important;
+        }
+        .floating-panel .minitabs a {
+            display: block !important;
+            padding: 5px 10px !important;
+            text-align: center !important;
+            background-color: #282f3c !important;
+            color: #9cc3db !important;
+            text-decoration: none !important;
+            border-radius: 5px 5px 0 0 !important;
+            font-size: 12px !important;
+        }
+        .floating-panel .minitabs .activetab a {
+            background-color: #171B24 !important;
+            color: #fff !important;
+            border: 1px solid #9CC3DB !important;
+            border-bottom: none !important;
+        }
     `;
     document.head.appendChild(style);
 
-    // Function to update panel content based on selected tab
-    function updatePanelContent() {
-      const activeTab = document.querySelector("#minitabs .tab.activetab a");
-      const activePanel = activeTab
-        ? activeTab.getAttribute("data-subpanel")
-        : "display-panel";
+    // Create minitabs for the floating panel
+    const originalMinitabs = document.querySelector("#minitabs");
+    const minitabs = originalMinitabs.cloneNode(true);
+    minitabs.id = "floating-minitabs";
+    minitabs.querySelectorAll("a").forEach((a) => {
+      a.id = "floating-" + a.id;
+    });
+    floatingPanel.insertBefore(minitabs, floatingPanel.firstChild);
 
+    // Function to update panel content based on selected tab
+    function updatePanelContent(activePanel) {
       floatingPanel.querySelectorAll("fieldset").forEach((fieldset) => {
         fieldset.style.display = "none";
       });
@@ -613,7 +648,32 @@
       if (activeFieldset) {
         activeFieldset.style.display = "block";
       }
+
+      // Update tab states
+      floatingPanel.querySelectorAll(".minitabs .tab").forEach((tab) => {
+        tab.classList.remove("activetab");
+      });
+      floatingPanel
+        .querySelector(`[data-subpanel="${activePanel}"]`)
+        .parentElement.classList.add("activetab");
     }
+
+    // Add click events for floating panel tabs
+    floatingPanel.querySelectorAll(".minitabs a").forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        e.preventDefault();
+        const subpanel = tab.getAttribute("data-subpanel");
+        updatePanelContent(subpanel);
+
+        // Click the corresponding tab in the original panel
+        const originalTab = document.querySelector(
+          `#minitabs [data-subpanel="${subpanel}"]`
+        );
+        if (originalTab) {
+          originalTab.click();
+        }
+      });
+    });
 
     // Modify the structure of the floating panel to include all options
     const displayPanel = floatingPanel.querySelector("#display-panel");
@@ -736,12 +796,17 @@
     }
 
     syncPanels();
-    updatePanelContent(); // Initial update
+    updatePanelContent("display-panel"); // Initial update
 
     // Observe changes in the minitabs to update the floating panel
-    const minitabs = document.querySelector("#minitabs");
-    const observer = new MutationObserver(updatePanelContent);
-    observer.observe(minitabs, { attributes: true, subtree: true });
+    const observer = new MutationObserver(() => {
+      const activeTab = originalMinitabs.querySelector(".tab.activetab a");
+      if (activeTab) {
+        const activePanel = activeTab.getAttribute("data-subpanel");
+        updatePanelContent(activePanel);
+      }
+    });
+    observer.observe(originalMinitabs, { attributes: true, subtree: true });
 
     // Show/hide floating panel based on original panel visibility
     function toggleFloatingPanelVisibility() {
