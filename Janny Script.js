@@ -210,7 +210,6 @@
       border-radius: 5px !important;
       color: #9cc3db !important;
       overflow: hidden !important;
-      margin-top: 10px !important;
     }
     .floating-panel * {
       text-align: left !important;
@@ -299,6 +298,23 @@
       background-color: #171b24 !important;
       color: #fff !important;
       border-bottom: 1px solid #171b24 !important;
+    }
+    .floating-minitabs-override {
+      float: none !important;
+      margin: 0 !important;
+      max-width: 100% !important;
+    }
+
+    .floating-minitabs-override ul {
+      display: flex !important;
+      width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .floating-minitabs-override li {
+      margin-right: 5px !important;
+      margin-bottom: 5px !important;
     }
   `;
   document.head.appendChild(style);
@@ -555,9 +571,12 @@
     // Create minitabs for the floating panel
     const originalMinitabs = document.querySelector("#minitabs");
     const minitabs = originalMinitabs.cloneNode(true);
+    minitabs.classList.remove("sub-panels");
     minitabs.id = "floating-minitabs";
+    minitabs.classList.add("floating-minitabs-override");
     minitabs.querySelectorAll("a").forEach((a) => {
       a.id = "floating-" + a.id;
+      a.classList.remove("tab");
     });
 
     // Clone the content of the original panel
