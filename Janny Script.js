@@ -214,13 +214,19 @@
       border: 1px solid #303744 !important;
       border-radius: 5px !important;
       color: #9cc3db !important;
+      overflow: hidden !important;
     }
     .floating-panel * {
       text-align: left !important;
       font-size: 14px !important;
     }
+    .floating-panel #floating-minitabs {
+      margin-bottom: 0 !important;
+      position: relative !important;
+    }
     .floating-panel .inner {
       padding: 10px !important;
+      box-sizing: border-box !important;
     }
     .floating-panel h3 {
       margin-top: 0 !important;
@@ -250,7 +256,7 @@
       border: none !important;
       cursor: pointer !important;
     }
-    .floating-panel dl {
+          .floating-panel dl {
       margin-bottom: 10px !important;
     }
     .floating-panel dt {
