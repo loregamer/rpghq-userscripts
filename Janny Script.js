@@ -268,10 +268,13 @@
     .floating-panel-wrapper {
       max-width: 95% !important;
       width: 95% !important;
+      display: flex !important;
+      flex-direction: column !important;
     }
     #floating-minitabs {
       padding: 5px 5px 0 5px !important;
       float: left !important;
+      width: 100% !important;
     }
     #floating-minitabs ul {
       display: flex !important;
@@ -546,7 +549,8 @@
     floatingPanelWrapper.classList.add("floating-panel-wrapper");
 
     const floatingPanel = document.createElement("div");
-    floatingPanel.classList.add("panel", "floating-panel", "inner");
+    floatingPanel.classList.add("panel", "floating-panel");
+    // Remove the "inner" class from here
 
     // Create minitabs for the floating panel
     const originalMinitabs = document.querySelector("#minitabs");
