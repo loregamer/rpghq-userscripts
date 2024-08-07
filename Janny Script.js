@@ -272,20 +272,26 @@
     }
     .floating-minitabs-override {
       margin: 0 !important;
+      padding: 0 !important;
       max-width: 100% !important;
       width: 100% !important;
       box-sizing: border-box !important;
     }
 
     .floating-minitabs-override ul {
+      display: flex !important;
       flex-wrap: nowrap !important;
       width: 100% !important;
       padding: 0 !important;
       margin: 0 !important;
+      list-style-type: none !important;
+      gap: 5px !important; 
+      justify-content: flex-end !important;
     }
 
     .floating-minitabs-override li {
-      min-width: 4px !important;
+      margin: 0 !important;
+      padding: 0 !important;
     }
 
     .floating-minitabs-override a {
@@ -295,7 +301,12 @@
       white-space: nowrap !important;
       overflow: hidden !important;
       text-overflow: ellipsis !important;
-      font-size: 0.9em !important;
+    }
+
+    .floating-minitabs-override .activetab a {
+      background-color: #171b24 !important;
+      color: #fff !important;
+      border-bottom: 1px solid #171b24 !important;
     }
   `;
   document.head.appendChild(style);
