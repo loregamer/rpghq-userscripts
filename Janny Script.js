@@ -185,19 +185,6 @@
             font-size: 0.9em !important;
         }
 
-        .panel.floating-panel {
-            position: fixed !important;
-            top: 20px !important;
-            width: 16% !important;
-            background-color: #171B24 !important;
-            border: 1px solid #9CC3DB !important;
-            border-radius: 8px !important;
-            padding: 15px !important;
-            z-index: 1000 !important;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-            transition: opacity 0.3s ease !important;
-        }
-
         .panel.floating-panel * {
             text-align: left !important;
         }
@@ -279,6 +266,97 @@
         .panel.floating-panel .icon-container img {
             width: 16px !important;
             height: 16px !important;
+        }
+
+        
+        .floating-panel {
+            position: fixed !important;
+            top: 20px !important;
+            width: 16% !important;
+            background-color: #171B24 !important;
+            border: 1px solid #9CC3DB !important;
+            border-radius: 8px !important;
+            padding: 15px !important;
+            z-index: 1000 !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+            transition: opacity 0.3s ease !important;
+            left: 20px !important;
+            color: #9cc3db !important;
+        }
+        .floating-panel * {
+            text-align: left !important;
+            font-size: 14px !important;
+        }
+        .floating-panel h3 {
+            margin-top: 0 !important;
+            margin-bottom: 15px !important;
+            font-size: 16px !important;
+            color: #fff !important;
+            border-bottom: 1px solid #303744 !important;
+            padding-bottom: 5px !important;
+        }
+        .floating-panel input[type="number"],
+        .floating-panel input[type="text"],
+        .floating-panel select,
+        .floating-panel .button2 {
+            width: 100% !important;
+            margin-bottom: 10px !important;
+            background-color: #282f3c !important;
+            border: 1px solid #3b5a76 !important;
+            color: #9cc3db !important;
+            padding: 5px !important;
+            border-radius: 3px !important;
+            box-sizing: border-box !important;
+        }
+        .floating-panel .button2 {
+            margin-top: 10px !important;
+            background-color: #3b5a76 !important;
+            color: #fff !important;
+            border: none !important;
+            cursor: pointer !important;
+        }
+        .floating-panel dl {
+            margin-bottom: 10px !important;
+        }
+        .floating-panel dt {
+            margin-bottom: 5px !important;
+        }
+        .floating-panel dd {
+            margin-left: 0 !important;
+        }
+        .floating-panel .sort-options select {
+            margin-bottom: 2px !important;
+        }
+        .floating-panel .minitabs {
+            position: absolute !important;
+            top: -30px !important;
+            left: 0 !important;
+            width: 100% !important;
+        }
+        .floating-panel .minitabs ul {
+            display: flex !important;
+            list-style: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .floating-panel .minitabs li {
+            flex: 1 !important;
+        }
+        .floating-panel .minitabs a {
+            display: block !important;
+            padding: 5px 10px !important;
+            text-align: center !important;
+            background-color: #282f3c !important;
+            color: #9cc3db !important;
+            text-decoration: none !important;
+            border-radius: 5px 5px 0 0 !important;
+            font-size: 12px !important;
+        }
+        .floating-panel .minitabs .activetab a {
+            background-color: #171B24 !important;
+            color: #fff !important;
+            border: 1px solid #9CC3DB !important;
+            border-bottom: none !important;
         }
     `;
   document.head.appendChild(style);
@@ -534,100 +612,6 @@
     const floatingPanel = originalPanel.cloneNode(true);
     floatingPanel.classList.add("floating-panel");
     document.body.appendChild(floatingPanel);
-
-    // Add custom styles for the floating panel
-    const style = document.createElement("style");
-    style.textContent = `
-        .floating-panel {
-            position: fixed !important;
-            top: 20px !important;
-            left: 20px !important;
-            width: 16% !important;
-            background-color: #1e2330 !important;
-            border: 1px solid #303744 !important;
-            border-radius: 5px !important;
-            padding: 15px !important;
-            z-index: 1000 !important;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-            color: #9cc3db !important;
-        }
-        .floating-panel * {
-            text-align: left !important;
-            font-size: 14px !important;
-        }
-        .floating-panel h3 {
-            margin-top: 0 !important;
-            margin-bottom: 15px !important;
-            font-size: 16px !important;
-            color: #fff !important;
-            border-bottom: 1px solid #303744 !important;
-            padding-bottom: 5px !important;
-        }
-        .floating-panel input[type="number"],
-        .floating-panel input[type="text"],
-        .floating-panel select,
-        .floating-panel .button2 {
-            width: 100% !important;
-            margin-bottom: 10px !important;
-            background-color: #282f3c !important;
-            border: 1px solid #3b5a76 !important;
-            color: #9cc3db !important;
-            padding: 5px !important;
-            border-radius: 3px !important;
-            box-sizing: border-box !important;
-        }
-        .floating-panel .button2 {
-            margin-top: 10px !important;
-            background-color: #3b5a76 !important;
-            color: #fff !important;
-            border: none !important;
-            cursor: pointer !important;
-        }
-        .floating-panel dl {
-            margin-bottom: 10px !important;
-        }
-        .floating-panel dt {
-            margin-bottom: 5px !important;
-        }
-        .floating-panel dd {
-            margin-left: 0 !important;
-        }
-        .floating-panel .sort-options select {
-            margin-bottom: 2px !important;
-        }
-        .floating-panel .minitabs {
-            position: absolute !important;
-            top: -30px !important;
-            left: 0 !important;
-            width: 100% !important;
-        }
-        .floating-panel .minitabs ul {
-            display: flex !important;
-            list-style: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        .floating-panel .minitabs li {
-            flex: 1 !important;
-        }
-        .floating-panel .minitabs a {
-            display: block !important;
-            padding: 5px 10px !important;
-            text-align: center !important;
-            background-color: #282f3c !important;
-            color: #9cc3db !important;
-            text-decoration: none !important;
-            border-radius: 5px 5px 0 0 !important;
-            font-size: 12px !important;
-        }
-        .floating-panel .minitabs .activetab a {
-            background-color: #171B24 !important;
-            color: #fff !important;
-            border: 1px solid #9CC3DB !important;
-            border-bottom: none !important;
-        }
-    `;
-    document.head.appendChild(style);
 
     // Create minitabs for the floating panel
     const originalMinitabs = document.querySelector("#minitabs");
