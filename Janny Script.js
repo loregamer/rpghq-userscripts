@@ -535,8 +535,6 @@
     }
   }
 
-  window.addEventListener("load", clickExpandView);
-
   // Make the display actions float until they are scrolled to
   const displayActions = document.querySelector(".display-actions");
   if (displayActions) {
@@ -551,7 +549,6 @@
   }
 
   // Call the function to create placeholders
-  createPlaceholders();
 
   // Make the top panel float when scrolled past
   function createFloatingPanel() {
@@ -775,5 +772,7 @@
     toggleFloatingPanelVisibility(); // Initial check
   }
 
-  createFloatingPanel();
+  window.addEventListener("load", clickExpandView);
+  window.addEventListener("load", createPlaceholders);
+  window.addEventListener("load", createFloatingPanel);
 })();
