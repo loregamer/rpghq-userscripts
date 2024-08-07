@@ -216,10 +216,6 @@
       text-align: left !important;
       font-size: 14px !important;
     }
-    .floating-panel #floating-minitabs {
-      margin-bottom: 0 !important;
-      position: relative !important;
-    }
     .floating-panel .inner {
       padding: 10px !important;
       box-sizing: border-box !important;
@@ -252,7 +248,7 @@
       border: none !important;
       cursor: pointer !important;
     }
-          .floating-panel dl {
+    .floating-panel dl {
       margin-bottom: 10px !important;
     }
     .floating-panel dt {
@@ -261,48 +257,45 @@
     .floating-panel dd {
       margin-left: 0 !important;
     }
-    .floating-panel #floating-minitabs {
-      margin-bottom: 0 !important;
-    }
     .floating-panel .sort-options select {
       margin-bottom: 2px !important;
-    }
-    .floating-panel .minitabs {
-      position: absolute !important;
-      top: -30px !important;
-      left: 0 !important;
-      width: 100% !important;
-    }
-    .floating-panel .minitabs ul {
-      display: flex !important;
-      list-style: none !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      border-bottom: 1px solid #303744 !important;
-    }
-    .floating-panel .minitabs li {
-      flex: 1 !important;
-    }
-    .floating-panel .minitabs a {
-      display: block !important;
-      padding: 5px 10px !important;
-      text-align: center !important;
-      background-color: #282f3c !important;
-      color: #9cc3db !important;
-      text-decoration: none !important;
-      border-radius: 5px 5px 0 0 !important;
-      font-size: 12px !important;
-    }
-    .floating-panel .minitabs .activetab a {
-      background-color: #171b24 !important;
-      color: #fff !important;
-      border: 1px solid #303744 !important;
-      border-bottom: none !important;
     }
     floating-panel label {
       display: block !important;
       margin-bottom: 5px !important;
       color: #9cc3db !important;
+    }
+    .floating-panel-wrapper {
+      overflow: hidden !important;
+    }
+    #floating-minitabs {
+      background-color: #202633 !important;
+      border-bottom: 1px solid #303744 !important;
+      padding: 5px 5px 0 5px !important;
+    }
+    #floating-minitabs ul {
+      display: flex !important;
+      list-style-type: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    #floating-minitabs li {
+      margin-right: 5px !important;
+    }
+    #floating-minitabs a {
+      display: block !important;
+      padding: 8px 12px !important;
+      background-color: #282f3c !important;
+      color: #9cc3db !important;
+      text-decoration: none !important;
+      border-radius: 5px 5px 0 0 !important;
+      border: 1px solid #303744 !important;
+      border-bottom: none !important;
+    }
+    #floating-minitabs .activetab a {
+      background-color: #171b24 !important;
+      color: #fff !important;
+      border-bottom: 1px solid #171b24 !important;
     }
   `;
   document.head.appendChild(style);
@@ -549,8 +542,11 @@
   // Make the top panel float when scrolled past
   function createFloatingPanel() {
     const originalPanel = document.querySelector(".panel:first-of-type");
+    const floatingPanelWrapper = document.createElement("div");
+    floatingPanelWrapper.classList.add("floating-panel-wrapper");
+
     const floatingPanel = document.createElement("div");
-    floatingPanel.classList.add("panel", "floating-panel");
+    floatingPanel.classList.add("panel", "floating-panel", "inner");
 
     // Create minitabs for the floating panel
     const originalMinitabs = document.querySelector("#minitabs");
@@ -560,22 +556,18 @@
       a.id = "floating-" + a.id;
     });
 
-    // Create the inner div
-    const innerDiv = document.createElement("div");
-    innerDiv.className = "inner";
-
     // Clone the content of the original panel
     const panelContent = originalPanel.querySelector(".inner").cloneNode(true);
 
-    // Append elements to the floating panel in the correct order
-    floatingPanel.appendChild(minitabs);
-    floatingPanel.appendChild(innerDiv);
-    innerDiv.appendChild(panelContent);
+    // Append elements to the floating panel wrapper in the correct order
+    floatingPanelWrapper.appendChild(minitabs);
+    floatingPanelWrapper.appendChild(floatingPanel);
+    floatingPanel.appendChild(panelContent);
 
-    // Find the first cp-menu and append the floating panel to it
+    // Find the first cp-menu and append the floating panel wrapper to it
     const firstCpMenu = document.querySelector("#cp-menu");
     if (firstCpMenu) {
-      firstCpMenu.appendChild(floatingPanel);
+      firstCpMenu.appendChild(floatingPanelWrapper);
     } else {
       console.error("Could not find #cp-menu element");
     }
@@ -753,30 +745,32 @@
     // Show/hide floating panel based on original panel visibility
     function toggleFloatingPanelVisibility() {
       const originalPanel = document.querySelector(".panel:first-of-type");
-      const floatingPanel = document.querySelector("#cp-menu .floating-panel");
+      const floatingPanelWrapper = document.querySelector(
+        "#cp-menu .floating-panel-wrapper"
+      );
       const cpMenu = document.querySelector("#cp-menu");
 
-      if (originalPanel && floatingPanel && cpMenu) {
+      if (originalPanel && floatingPanelWrapper && cpMenu) {
         const originalPanelRect = originalPanel.getBoundingClientRect();
         const cpMenuRect = cpMenu.getBoundingClientRect();
 
         if (originalPanelRect.bottom > 0) {
           // Original panel is visible
-          floatingPanel.style.display = "none";
+          floatingPanelWrapper.style.display = "none";
         } else {
           // Original panel is not visible
-          floatingPanel.style.display = "block";
+          floatingPanelWrapper.style.display = "block";
 
           if (cpMenuRect.top < 0) {
             // cp-menu is scrolled out of view
-            floatingPanel.style.position = "fixed";
-            floatingPanel.style.top = "0";
-            floatingPanel.style.left = cpMenuRect.left + "px";
-            floatingPanel.style.width = cpMenuRect.width + "px";
+            floatingPanelWrapper.style.position = "fixed";
+            floatingPanelWrapper.style.top = "0";
+            floatingPanelWrapper.style.left = cpMenuRect.left + "px";
+            floatingPanelWrapper.style.width = cpMenuRect.width + "px";
           } else {
             // cp-menu is still in view
-            floatingPanel.style.position = "static";
-            floatingPanel.style.width = "100%";
+            floatingPanelWrapper.style.position = "static";
+            floatingPanelWrapper.style.width = "100%";
           }
         }
       }
