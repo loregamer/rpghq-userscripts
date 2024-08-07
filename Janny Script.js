@@ -270,51 +270,32 @@
       display: flex !important;
       flex-direction: column !important;
     }
-    #floating-minitabs {
-      padding: 5px 5px 0 5px !important;
-      float: left !important;
-      width: 100% !important;
-    }
-    #floating-minitabs ul {
-      display: flex !important;
-      list-style-type: none !important;
-      padding: 0 !important;
-      margin: 0 !important;
-    }
-    #floating-minitabs li {
-      margin-right: 5px !important;
-    }
-    #floating-minitabs a {
-      display: block !important;
-      padding: 8px 12px !important;
-      background-color: #282f3c !important;
-      color: #9cc3db !important;
-      text-decoration: none !important;
-      border-radius: 5px 5px 0 0 !important;
-      border: 1px solid #303744 !important;
-      border-bottom: none !important;
-    }
-    #floating-minitabs .activetab a {
-      background-color: #171b24 !important;
-      color: #fff !important;
-      border-bottom: 1px solid #171b24 !important;
-    }
     .floating-minitabs-override {
-      float: none !important;
       margin: 0 !important;
       max-width: 100% !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
     }
 
     .floating-minitabs-override ul {
-      display: flex !important;
+      flex-wrap: nowrap !important;
       width: 100% !important;
       padding: 0 !important;
       margin: 0 !important;
     }
 
     .floating-minitabs-override li {
-      margin-right: 5px !important;
-      margin-bottom: 5px !important;
+      min-width: 4px !important;
+    }
+
+    .floating-minitabs-override a {
+      display: block !important;
+      padding: 8px 4px !important;
+      text-align: center !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      font-size: 0.9em !important;
     }
   `;
   document.head.appendChild(style);
