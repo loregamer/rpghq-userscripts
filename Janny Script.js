@@ -185,57 +185,6 @@
             font-size: 0.9em !important;
         }
 
-        .panel.floating-panel * {
-            text-align: left !important;
-        }
-
-        .panel.floating-panel h3 {
-            margin-top: 0 !important;
-            margin-bottom: 15px !important;
-            font-size: 16px !important;
-            color: #9cc3db !important;
-            border-bottom: 1px solid #303744 !important;
-            padding-bottom: 5px !important;
-        }
-
-        .panel.floating-panel label {
-            display: block !important;
-            margin-bottom: 5px !important;
-            color: #9cc3db !important;
-        }
-
-        .panel.floating-panel select,
-        .panel.floating-panel input[type="number"],
-        .panel.floating-panel input[type="text"] {
-            width: 100% !important;
-            margin-bottom: 10px !important;
-            padding: 5px !important;
-            background-color: #282f3c !important;
-            border: 1px solid #3b5a76 !important;
-            color: #9cc3db !important;
-            border-radius: 4px !important;
-        }
-
-        .panel.floating-panel .button2 {
-            width: 100% !important;
-            padding: 8px !important;
-            background-color: #3b5a76 !important;
-            color: #fff !important;
-            border: none !important;
-            border-radius: 4px !important;
-            cursor: pointer !important;
-            transition: background-color 0.2s !important;
-            margin-top: 10px !important;
-        }
-
-        .panel.floating-panel .button2:hover {
-            background-color: #4c7191 !important;
-        }
-
-        .panel.floating-panel .form-group {
-            margin-bottom: 15px !important;
-        }
-
         .panel.floating-panel input[type="radio"] {
             margin-right: 5px !important;
         }
@@ -291,7 +240,7 @@
             margin-top: 0 !important;
             margin-bottom: 15px !important;
             font-size: 16px !important;
-            color: #fff !important;
+            color: #9cc3db !important;
             border-bottom: 1px solid #303744 !important;
             padding-bottom: 5px !important;
         }
@@ -357,6 +306,11 @@
             color: #fff !important;
             border: 1px solid #9CC3DB !important;
             border-bottom: none !important;
+        }
+        floating-panel label {
+            display: block !important;
+            margin-bottom: 5px !important;
+            color: #9cc3db !important;
         }
     `;
   document.head.appendChild(style);
