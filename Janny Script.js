@@ -207,10 +207,12 @@
     .floating-panel {
       position: fixed !important;
       top: 20px !important;
-      width: 16% !important;
-      z-index: 1000 !important;
-      transition: opacity 0.3s ease !important;
       left: 20px !important;
+      width: 270px !important;
+      z-index: 1000 !important;
+      background-color: #171b24 !important;
+      border: 1px solid #303744 !important;
+      border-radius: 5px !important;
       color: #9cc3db !important;
     }
     .floating-panel * {
@@ -218,15 +220,11 @@
       font-size: 14px !important;
     }
     .floating-panel .inner {
-      background-color: #171b24 !important;
-      border: 1px solid #9cc3db !important;
-      border-radius: 8px !important;
-      padding: 15px !important;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+      padding: 10px !important;
     }
     .floating-panel h3 {
       margin-top: 0 !important;
-      margin-bottom: 15px !important;
+      margin-bottom: 10px !important;
       font-size: 16px !important;
       color: #9cc3db !important;
       border-bottom: 1px solid #303744 !important;
@@ -261,6 +259,9 @@
     .floating-panel dd {
       margin-left: 0 !important;
     }
+    .floating-panel #floating-minitabs {
+      margin-bottom: 0 !important;
+    }
     .floating-panel .sort-options select {
       margin-bottom: 2px !important;
     }
@@ -275,6 +276,7 @@
       list-style: none !important;
       padding: 0 !important;
       margin: 0 !important;
+      border-bottom: 1px solid #303744 !important;
     }
     .floating-panel .minitabs li {
       flex: 1 !important;
@@ -292,7 +294,7 @@
     .floating-panel .minitabs .activetab a {
       background-color: #171b24 !important;
       color: #fff !important;
-      border: 1px solid #9cc3db !important;
+      border: 1px solid #303744 !important;
       border-bottom: none !important;
     }
     floating-panel label {
@@ -562,13 +564,17 @@
       a.id = "floating-" + a.id;
     });
 
+    // Create the inner div
+    const innerDiv = document.createElement("div");
+    innerDiv.className = "inner";
+
     // Clone the content of the original panel
     const panelContent = originalPanel.querySelector(".inner").cloneNode(true);
-    panelContent.className = "inner"; // Ensure it only has the 'inner' class
 
-    // Append elements to the floating panel
+    // Append elements to the floating panel in the correct order
     floatingPanel.appendChild(minitabs);
-    floatingPanel.appendChild(panelContent);
+    floatingPanel.appendChild(innerDiv);
+    innerDiv.appendChild(panelContent);
     document.body.appendChild(floatingPanel);
 
     // Function to update panel content based on selected tab
