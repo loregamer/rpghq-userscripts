@@ -24,295 +24,281 @@
   // Add custom styles to make the moderator control panel posts look like forum posts
   const style = document.createElement("style");
   style.innerHTML = `
-        .postbody .content blockquote {
-            background-color: #171b24 !important;
-            border-color: #303744 !important;
-            padding: 10px !important;
-            margin: 10px 0 !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
+    .postbody .content blockquote {
+      background-color: #171b24 !important;
+      border-color: #303744 !important;
+      padding: 10px !important;
+      margin: 10px 0 !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
 
-        .postbody .content blockquote blockquote {
-            background-color: #242a36 !important;
-        }
+    .postbody .content blockquote blockquote {
+      background-color: #242a36 !important;
+    }
 
-        .postbody .content blockquote blockquote blockquote {
-            background-color: #171b24 !important;
-        }
+    .postbody .content blockquote blockquote blockquote {
+      background-color: #171b24 !important;
+    }
 
-        .postbody .content blockquote blockquote blockquote blockquote {
-            background-color: #242a36 !important;
-        }
-        .post.bg2, .post.bg1, .post.bg3 {
-            background-color: #282f3c !important; /* Match forum background color */
-            border: 1px solid #303744 !important; /* Match forum border color */
-            padding: 10px !important; /* Add padding */
-            margin-bottom: 5px !important; /* Reduced margin between posts */
-            border-radius: 5px !important; /* Rounded corners */
-            display: flex !important;
-            flex-direction: row !important;
-            position: relative !important; /* Ensure relative positioning for absolute children */
-            width: calc(100% - 20px) !important; /* Set width to 100% minus padding */
-            margin-right: 10px !important; /* Ensure some space on the right */
-            cursor: pointer !important; /* Pointer cursor to indicate clickable */
-            overflow: hidden !important; /* Hide overflow */
-        }
-        /* Add this new rule to override any existing styles */
-        .post.bg3 {
-            background-color: #282f3c !important;
-        }
-        .inner {
-            width: 100% !important; /* Ensure inner div takes full width */
-        }
-        .postprofile {
-            width: 150px !important; /* Fixed width for post profile */
-            text-align: left !important; /* Left align */
-            padding: 10px !important; /* Ensure padding for consistent spacing */
-        }
-        .postprofile .avatar-container {
-            margin-bottom: 10px !important;
-            text-align: center !important; /* Center the avatar */
-        }
-        .postprofile img.avatar {
-            width: 128px !important;
-            height: auto !important; /* Ensure image respects aspect ratio */
-            display: none; /* Initially hide the avatar for lazy loading */
-        }
-        .postbody {
-            flex-grow: 1 !important;
-            padding-left: 10px !important;
-            padding-right: 10px !important; /* Ensure padding on both sides */
-            max-height: ${postMaxHeight}; /* Set maximum height */
-            overflow: hidden; /* Hide overflow */
-            position: relative; /* Ensure relative positioning */
-        }
-        .postbody h3, .postbody .author, .postbody .content {
-            margin-bottom: 10px !important;
-        }
-        .postbody .author {
-            font-size: 0.9em !important;
-            color: #aaa !important;
-        }
-        a, .postlink {
-            display: inline-block !important; /* Ensure the link only takes up the width of the text */
-            max-width: max-content !important; /* Ensure the link only takes up the width of the text */
-        }
-        .username, .username-coloured {
-            display: inline-block !important; /* Ensure the link only takes up the width of the text */
-            text-align: left !important; /* Left align */
-        }
-        .post h3 a {
-            color: #9cc3db !important;
-        }
-        .post .content {
-            flex-direction: column;
-            gap: 10px; /* Add gap between content elements */
-        }
-        .post img {
-            pointer-events: none !important; /* Make images non-clickable */
-            max-width: 100% !important; /* Ensure images are not upscaled */
-            height: auto !important; /* Maintain aspect ratio */
-        }
-        .dt-layout-row, .dt-layout-table {
-            display: none !important;
-        }
-        .dt-layout-row-placeholder, .dt-layout-table-placeholder {
-            display: block !important;
-            background-color: #444 !important;
-            color: #fff !important;
-            padding: 10px !important;
-            border-radius: 5px !important;
-            text-align: center !important;
-            margin-bottom: 10px !important;
-        }
-        .post.selected {
-            background-color: #ff9999 !important; /* Red highlight for selected post */
-        }
-        .show-more-button {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            background: linear-gradient(to bottom, rgba(23, 27, 36, 0), rgba(23, 27, 36, 0.8) 70%, rgba(23, 27, 36, 1));
-            padding: 30px 10px 10px;
-            cursor: pointer;
-            color: #9cc3db;
-        }
-        .display-actions {
-            position: fixed !important;
-            bottom: 10px !important;
-            right: 20px !important; /* Add padding to the right */
-            background: rgba(0, 0, 0, 0.5) !important; /* Add semi-transparent background */
-            padding: 10px !important;
-            border-radius: 5px !important;
-            z-index: 100 !important; /* Ensure display-actions are above other elements */
-        }
-        .post-buttons {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 10;
-            box-shadow: none !important; /* Remove the box shadow */
-        }
-        .username-loregamer {
-            font-family: 'Comic Sans MS', cursive, sans-serif;
-        }
-        .table-placeholder, .codebox-placeholder {
-            background-color: #1e2330 !important;
-            color: #9cc3db !important;
-            padding: 15px !important;
-            border-radius: 5px !important;
-            text-align: center !important;
-            margin: 10px 0 !important;
-            border: 1px solid #303744 !important;
-            font-style: italic !important;
-        }
+    .postbody .content blockquote blockquote blockquote blockquote {
+      background-color: #242a36 !important;
+    }
+    .post.bg2,
+    .post.bg1,
+    .post.bg3 {
+      background-color: #282f3c !important; /* Match forum background color */
+      border: 1px solid #303744 !important; /* Match forum border color */
+      padding: 10px !important; /* Add padding */
+      margin-bottom: 5px !important; /* Reduced margin between posts */
+      border-radius: 5px !important; /* Rounded corners */
+      display: flex !important;
+      flex-direction: row !important;
+      position: relative !important; /* Ensure relative positioning for absolute children */
+      width: calc(100% - 20px) !important; /* Set width to 100% minus padding */
+      margin-right: 10px !important; /* Ensure some space on the right */
+      cursor: pointer !important; /* Pointer cursor to indicate clickable */
+      overflow: hidden !important; /* Hide overflow */
+    }
+    /* Add this new rule to override any existing styles */
+    .post.bg3 {
+      background-color: #282f3c !important;
+    }
+    .inner {
+      width: 100% !important; /* Ensure inner div takes full width */
+    }
+    .postprofile {
+      width: 150px !important; /* Fixed width for post profile */
+      text-align: left !important; /* Left align */
+      padding: 10px !important; /* Ensure padding for consistent spacing */
+    }
+    .postprofile .avatar-container {
+      margin-bottom: 10px !important;
+      text-align: center !important; /* Center the avatar */
+    }
+    .postprofile img.avatar {
+      width: 128px !important;
+      height: auto !important; /* Ensure image respects aspect ratio */
+      display: none; /* Initially hide the avatar for lazy loading */
+    }
+    .postbody {
+      flex-grow: 1 !important;
+      padding-left: 10px !important;
+      padding-right: 10px !important; /* Ensure padding on both sides */
+      max-height: ${postMaxHeight}; /* Set maximum height */
+      overflow: hidden; /* Hide overflow */
+      position: relative; /* Ensure relative positioning */
+    }
+    .postbody h3,
+    .postbody .author,
+    .postbody .content {
+      margin-bottom: 10px !important;
+    }
+    .postbody .author {
+      font-size: 0.9em !important;
+      color: #aaa !important;
+    }
+    a,
+    .postlink {
+      display: inline-block !important; /* Ensure the link only takes up the width of the text */
+      max-width: max-content !important; /* Ensure the link only takes up the width of the text */
+    }
+    .username,
+    .username-coloured {
+      display: inline-block !important; /* Ensure the link only takes up the width of the text */
+      text-align: left !important; /* Left align */
+    }
+    .post h3 a {
+      color: #9cc3db !important;
+    }
+    .post .content {
+      flex-direction: column;
+      gap: 10px; /* Add gap between content elements */
+    }
+    .post img {
+      pointer-events: none !important; /* Make images non-clickable */
+      max-width: 100% !important; /* Ensure images are not upscaled */
+      height: auto !important; /* Maintain aspect ratio */
+    }
+    .dt-layout-row,
+    .dt-layout-table {
+      display: none !important;
+    }
+    .dt-layout-row-placeholder,
+    .dt-layout-table-placeholder {
+      display: block !important;
+      background-color: #444 !important;
+      color: #fff !important;
+      padding: 10px !important;
+      border-radius: 5px !important;
+      text-align: center !important;
+      margin-bottom: 10px !important;
+    }
+    .post.selected {
+      background-color: #ff9999 !important; /* Red highlight for selected post */
+    }
+    .show-more-button {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      background: linear-gradient(
+        to bottom,
+        rgba(23, 27, 36, 0),
+        rgba(23, 27, 36, 0.8) 70%,
+        rgba(23, 27, 36, 1)
+      );
+      padding: 30px 10px 10px;
+      cursor: pointer;
+      color: #9cc3db;
+    }
+    .display-actions {
+      position: fixed !important;
+      bottom: 10px !important;
+      right: 20px !important; /* Add padding to the right */
+      background: rgba(
+        0,
+        0,
+        0,
+        0.5
+      ) !important; /* Add semi-transparent background */
+      padding: 10px !important;
+      border-radius: 5px !important;
+      z-index: 100 !important; /* Ensure display-actions are above other elements */
+    }
+    .post-buttons {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+      box-shadow: none !important; /* Remove the box shadow */
+    }
+    .username-loregamer {
+      font-family: "Comic Sans MS", cursive, sans-serif;
+    }
+    .table-placeholder,
+    .codebox-placeholder {
+      background-color: #1e2330 !important;
+      color: #9cc3db !important;
+      padding: 15px !important;
+      border-radius: 5px !important;
+      text-align: center !important;
+      margin: 10px 0 !important;
+      border: 1px solid #303744 !important;
+      font-style: italic !important;
+    }
 
-        .table-placeholder::before, .codebox-placeholder::before {
-            content: '⚠️ ';
-            font-style: normal !important;
-        }
+    .table-placeholder::before,
+    .codebox-placeholder::before {
+      content: "⚠️ ";
+      font-style: normal !important;
+    }
 
-        .table-placeholder::after {
-            content: ' (Table content hidden because who cares)';
-            font-size: 0.9em !important;
-        }
+    .table-placeholder::after {
+      content: " (Table content hidden because who cares)";
+      font-size: 0.9em !important;
+    }
 
-        .codebox-placeholder::after {
-            content: ' (Code block hidden because it is annoying)';
-            font-size: 0.9em !important;
-        }
-
-        .panel.floating-panel input[type="radio"] {
-            margin-right: 5px !important;
-        }
-
-        .panel.floating-panel input[type="radio"] + img {
-            vertical-align: middle !important;
-            margin-right: 5px !important;
-        }
-
-        .panel.floating-panel .icon-container {
-            display: flex !important;
-            flex-wrap: wrap !important;
-            gap: 5px !important;
-            margin-bottom: 10px !important;
-        }
-
-        .panel.floating-panel .icon-container label {
-            display: flex !important;
-            align-items: center !important;
-            margin-right: 5px !important;
-            margin-bottom: 5px !important;
-        }
-
-        .panel.floating-panel .icon-container input[type="radio"] {
-            margin-right: 3px !important;
-        }
-
-        .panel.floating-panel .icon-container img {
-            width: 16px !important;
-            height: 16px !important;
-        }
-
-        
-        .floating-panel {
-            position: fixed !important;
-            top: 20px !important;
-            width: 16% !important;
-            background-color: #171B24 !important;
-            border: 1px solid #9CC3DB !important;
-            border-radius: 8px !important;
-            padding: 15px !important;
-            z-index: 1000 !important;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
-            transition: opacity 0.3s ease !important;
-            left: 20px !important;
-            color: #9cc3db !important;
-        }
-        .floating-panel * {
-            text-align: left !important;
-            font-size: 14px !important;
-        }
-        .floating-panel h3 {
-            margin-top: 0 !important;
-            margin-bottom: 15px !important;
-            font-size: 16px !important;
-            color: #9cc3db !important;
-            border-bottom: 1px solid #303744 !important;
-            padding-bottom: 5px !important;
-        }
-        .floating-panel input[type="number"],
-        .floating-panel input[type="text"],
-        .floating-panel select,
-        .floating-panel .button2 {
-            width: 100% !important;
-            margin-bottom: 10px !important;
-            background-color: #282f3c !important;
-            border: 1px solid #3b5a76 !important;
-            color: #9cc3db !important;
-            padding: 5px !important;
-            border-radius: 3px !important;
-            box-sizing: border-box !important;
-        }
-        .floating-panel .button2 {
-            margin-top: 10px !important;
-            background-color: #3b5a76 !important;
-            color: #fff !important;
-            border: none !important;
-            cursor: pointer !important;
-        }
-        .floating-panel dl {
-            margin-bottom: 10px !important;
-        }
-        .floating-panel dt {
-            margin-bottom: 5px !important;
-        }
-        .floating-panel dd {
-            margin-left: 0 !important;
-        }
-        .floating-panel .sort-options select {
-            margin-bottom: 2px !important;
-        }
-        .floating-panel .minitabs {
-            position: absolute !important;
-            top: -30px !important;
-            left: 0 !important;
-            width: 100% !important;
-        }
-        .floating-panel .minitabs ul {
-            display: flex !important;
-            list-style: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        .floating-panel .minitabs li {
-            flex: 1 !important;
-        }
-        .floating-panel .minitabs a {
-            display: block !important;
-            padding: 5px 10px !important;
-            text-align: center !important;
-            background-color: #282f3c !important;
-            color: #9cc3db !important;
-            text-decoration: none !important;
-            border-radius: 5px 5px 0 0 !important;
-            font-size: 12px !important;
-        }
-        .floating-panel .minitabs .activetab a {
-            background-color: #171B24 !important;
-            color: #fff !important;
-            border: 1px solid #9CC3DB !important;
-            border-bottom: none !important;
-        }
-        floating-panel label {
-            display: block !important;
-            margin-bottom: 5px !important;
-            color: #9cc3db !important;
-        }
-    `;
+    .codebox-placeholder::after {
+      content: " (Code block hidden because it is annoying)";
+      font-size: 0.9em !important;
+    }
+    .floating-panel {
+      position: fixed !important;
+      top: 20px !important;
+      width: 16% !important;
+      background-color: #171b24 !important;
+      border: 1px solid #9cc3db !important;
+      border-radius: 8px !important;
+      padding: 15px !important;
+      z-index: 1000 !important;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+      transition: opacity 0.3s ease !important;
+      left: 20px !important;
+      color: #9cc3db !important;
+    }
+    .floating-panel * {
+      text-align: left !important;
+      font-size: 14px !important;
+    }
+    .floating-panel h3 {
+      margin-top: 0 !important;
+      margin-bottom: 15px !important;
+      font-size: 16px !important;
+      color: #9cc3db !important;
+      border-bottom: 1px solid #303744 !important;
+      padding-bottom: 5px !important;
+    }
+    .floating-panel input[type="number"],
+    .floating-panel input[type="text"],
+    .floating-panel select,
+    .floating-panel .button2 {
+      width: 100% !important;
+      margin-bottom: 10px !important;
+      background-color: #282f3c !important;
+      border: 1px solid #3b5a76 !important;
+      color: #9cc3db !important;
+      padding: 5px !important;
+      border-radius: 3px !important;
+      box-sizing: border-box !important;
+    }
+    .floating-panel .button2 {
+      margin-top: 10px !important;
+      background-color: #3b5a76 !important;
+      color: #fff !important;
+      border: none !important;
+      cursor: pointer !important;
+    }
+    .floating-panel dl {
+      margin-bottom: 10px !important;
+    }
+    .floating-panel dt {
+      margin-bottom: 5px !important;
+    }
+    .floating-panel dd {
+      margin-left: 0 !important;
+    }
+    .floating-panel .sort-options select {
+      margin-bottom: 2px !important;
+    }
+    .floating-panel .minitabs {
+      position: absolute !important;
+      top: -30px !important;
+      left: 0 !important;
+      width: 100% !important;
+    }
+    .floating-panel .minitabs ul {
+      display: flex !important;
+      list-style: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .floating-panel .minitabs li {
+      flex: 1 !important;
+    }
+    .floating-panel .minitabs a {
+      display: block !important;
+      padding: 5px 10px !important;
+      text-align: center !important;
+      background-color: #282f3c !important;
+      color: #9cc3db !important;
+      text-decoration: none !important;
+      border-radius: 5px 5px 0 0 !important;
+      font-size: 12px !important;
+    }
+    .floating-panel .minitabs .activetab a {
+      background-color: #171b24 !important;
+      color: #fff !important;
+      border: 1px solid #9cc3db !important;
+      border-bottom: none !important;
+    }
+    floating-panel label {
+      display: block !important;
+      margin-bottom: 5px !important;
+      color: #9cc3db !important;
+    }
+  `;
   document.head.appendChild(style);
 
   // Function to create the post profile
