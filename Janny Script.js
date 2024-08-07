@@ -423,105 +423,100 @@
   }
 
   // Modify the structure of each post to match forum posts
-  document.querySelectorAll(".post").forEach((post) => {
-    const authorElement = post.querySelector(
-      ".author strong a.username, .author strong a.username-coloured"
-    );
-    const postId = post.id.replace("p", "");
-
-    if (authorElement) {
-      const userId = authorElement.href.match(/u=(\d+)-/)[1];
-      const username = authorElement.textContent;
-
-      const postProfile = createPostProfile(authorElement, userId, username);
-      const avatarImg = postProfile.querySelector("img.avatar");
-
-      // Load the avatar lazily
-      setTimeout(() => {
-        findAvatarUrl(userId, avatarImg);
-      }, 0);
-
-      post.insertBefore(postProfile, post.firstChild);
-
-      // Adjust post content structure
-      const h3Element = post.querySelector("h3");
-      if (h3Element) {
-        h3Element.remove();
-      }
-
-      const postbody = post.querySelector(".postbody");
-      if (postbody) {
-        const postContent = postbody.querySelector(".content");
-        const postAuthor = postbody.querySelector(".author");
-        if (postContent && postAuthor) {
-          postbody.insertBefore(postAuthor, postContent);
-        }
-
-        // Add "Show More" button if the post is too long
-        if (postbody.scrollHeight > postbody.clientHeight) {
-          addShowMoreButton(post);
-        }
-      }
-
-      // Ensure original post buttons are visible
-      const originalPostButtons = post.querySelector(".post-buttons");
-      if (originalPostButtons) {
-        originalPostButtons.style.display = "block";
-      }
-
-      // Make the whole post selectable
-      post.addEventListener("click", (event) => {
-        togglePostSelection(post, event);
-      });
-
-      // Sync the selected state with the checkbox
-      syncPostSelection(post);
-
-      // Monitor checkbox changes to sync selection
-      const checkbox = post.querySelector('input[type="checkbox"]');
-      checkbox.addEventListener("change", () => {
-        syncPostSelection(post);
-      });
-
-      // Apply special style for "loregamer" username
-      if (username === "loregamer") {
-        post.querySelector(".username").classList.add("username-loregamer");
-        post
-          .querySelector(
-            'a[href*="memberlist.php?mode=viewprofile&u=551-loregamer"]'
-          )
-          .classList.add("username-loregamer");
-      }
-    }
-  });
-
-  document
-    .querySelectorAll(".post.bg2, .post.bg1, .post.bg3")
-    .forEach((post) => {
-      post.removeAttribute("style");
-      post.style.setProperty("background-color", "#202633", "important");
-      post.style.setProperty("border", "1px solid #303744", "important");
-    });
-
-  // Observe changes in the document to ensure synchronization
-  const observer = new MutationObserver(() => {
+  function modifyPostStructure() {
     document.querySelectorAll(".post").forEach((post) => {
-      syncPostSelection(post);
-    });
-  });
+      const authorElement = post.querySelector(
+        ".author strong a.username, .author strong a.username-coloured"
+      );
+      const postId = post.id.replace("p", "");
 
-  observer.observe(document.body, { childList: true, subtree: true });
+      if (authorElement) {
+        const userId = authorElement.href.match(/u=(\d+)-/)[1];
+        const username = authorElement.textContent;
 
-  // Handle "Mark all" and "Unmark all" clicks
-  document.querySelectorAll(".display-actions a").forEach((actionLink) => {
-    actionLink.addEventListener("click", () => {
-      setTimeout(() => {
-        document.querySelectorAll(".post").forEach((post) => {
+        const postProfile = createPostProfile(authorElement, userId, username);
+        const avatarImg = postProfile.querySelector("img.avatar");
+
+        // Load the avatar lazily
+        setTimeout(() => {
+          findAvatarUrl(userId, avatarImg);
+        }, 0);
+
+        post.insertBefore(postProfile, post.firstChild);
+
+        // Adjust post content structure
+        const h3Element = post.querySelector("h3");
+        if (h3Element) {
+          h3Element.remove();
+        }
+
+        const postbody = post.querySelector(".postbody");
+        if (postbody) {
+          const postContent = postbody.querySelector(".content");
+          const postAuthor = postbody.querySelector(".author");
+          if (postContent && postAuthor) {
+            postbody.insertBefore(postAuthor, postContent);
+          }
+
+          // Add "Show More" button if the post is too long
+          if (postbody.scrollHeight > postbody.clientHeight) {
+            addShowMoreButton(post);
+          }
+        }
+
+        // Ensure original post buttons are visible
+        const originalPostButtons = post.querySelector(".post-buttons");
+        if (originalPostButtons) {
+          originalPostButtons.style.display = "block";
+        }
+
+        // Make the whole post selectable
+        post.addEventListener("click", (event) => {
+          togglePostSelection(post, event);
+        });
+
+        // Sync the selected state with the checkbox
+        syncPostSelection(post);
+
+        // Monitor checkbox changes to sync selection
+        const checkbox = post.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener("change", () => {
           syncPostSelection(post);
         });
-      }, 0); // Delay to ensure checkboxes are updated first
+
+        // Apply special style for "loregamer" username
+        if (username === "loregamer") {
+          post.querySelector(".username").classList.add("username-loregamer");
+          post
+            .querySelector(
+              'a[href*="memberlist.php?mode=viewprofile&u=551-loregamer"]'
+            )
+            .classList.add("username-loregamer");
+        }
+      }
     });
-  });
+
+    document
+      .querySelectorAll(".post.bg2, .post.bg1, .post.bg3")
+      .forEach((post) => {
+        post.removeAttribute("style");
+        post.style.setProperty("background-color", "#202633", "important");
+        post.style.setProperty("border", "1px solid #303744", "important");
+      });
+  }
+
+  // Handle "Mark all" and "Unmark all" clicks
+  function handleMarkAllClicks() {
+    document.querySelectorAll(".display-actions a").forEach((actionLink) => {
+      actionLink.addEventListener("click", () => {
+        setTimeout(() => {
+          document.querySelectorAll(".post").forEach((post) => {
+            syncPostSelection(post);
+          });
+        }, 0); // Delay to ensure checkboxes are updated first
+      });
+    });
+  }
 
   // Click "Expand View" and hide the button
   function clickExpandView() {
@@ -536,16 +531,18 @@
   }
 
   // Make the display actions float until they are scrolled to
-  const displayActions = document.querySelector(".display-actions");
-  if (displayActions) {
-    window.addEventListener("scroll", () => {
-      const rect = displayActions.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom >= 0) {
-        displayActions.style.position = "static";
-      } else {
-        displayActions.style.position = "fixed";
-      }
-    });
+  function makeDisplayActionsFloat() {
+    const displayActions = document.querySelector(".display-actions");
+    if (displayActions) {
+      window.addEventListener("scroll", () => {
+        const rect = displayActions.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom >= 0) {
+          displayActions.style.position = "static";
+        } else {
+          displayActions.style.position = "fixed";
+        }
+      });
+    }
   }
 
   // Call the function to create placeholders
@@ -772,7 +769,25 @@
     toggleFloatingPanelVisibility(); // Initial check
   }
 
-  window.addEventListener("load", clickExpandView);
-  window.addEventListener("load", createPlaceholders);
-  window.addEventListener("load", createFloatingPanel);
+  // Observe changes in the document to ensure synchronization
+  function observeDocumentChanges() {
+    const observer = new MutationObserver(() => {
+      document.querySelectorAll(".post").forEach((post) => {
+        syncPostSelection(post);
+      });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  window.addEventListener("load", function () {
+    modifyPostStructure();
+    clickExpandView();
+    createPlaceholders();
+    createFloatingPanel();
+    makeDisplayActionsFloat();
+    handleMarkAllClicks();
+    toggleFloatingPanelVisibility();
+    observeDocumentChanges();
+  });
 })();
