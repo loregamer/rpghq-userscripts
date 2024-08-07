@@ -208,12 +208,7 @@
       position: fixed !important;
       top: 20px !important;
       width: 16% !important;
-      background-color: #171b24 !important;
-      border: 1px solid #9cc3db !important;
-      border-radius: 8px !important;
-      padding: 15px !important;
       z-index: 1000 !important;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
       transition: opacity 0.3s ease !important;
       left: 20px !important;
       color: #9cc3db !important;
@@ -221,6 +216,13 @@
     .floating-panel * {
       text-align: left !important;
       font-size: 14px !important;
+    }
+    .floating-panel .inner {
+      background-color: #171b24 !important;
+      border: 1px solid #9cc3db !important;
+      border-radius: 8px !important;
+      padding: 15px !important;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
     }
     .floating-panel h3 {
       margin-top: 0 !important;
@@ -549,9 +551,8 @@
   // Make the top panel float when scrolled past
   function createFloatingPanel() {
     const originalPanel = document.querySelector(".panel:first-of-type");
-    const floatingPanel = originalPanel.cloneNode(true);
-    floatingPanel.classList.add("floating-panel");
-    document.body.appendChild(floatingPanel);
+    const floatingPanel = document.createElement("div");
+    floatingPanel.classList.add("panel", "floating-panel");
 
     // Create minitabs for the floating panel
     const originalMinitabs = document.querySelector("#minitabs");
@@ -560,15 +561,23 @@
     minitabs.querySelectorAll("a").forEach((a) => {
       a.id = "floating-" + a.id;
     });
-    floatingPanel.insertBefore(minitabs, floatingPanel.firstChild);
+
+    // Clone the content of the original panel
+    const panelContent = originalPanel.querySelector(".inner").cloneNode(true);
+    panelContent.className = "inner"; // Ensure it only has the 'inner' class
+
+    // Append elements to the floating panel
+    floatingPanel.appendChild(minitabs);
+    floatingPanel.appendChild(panelContent);
+    document.body.appendChild(floatingPanel);
 
     // Function to update panel content based on selected tab
     function updatePanelContent(activePanel) {
-      floatingPanel.querySelectorAll("fieldset").forEach((fieldset) => {
+      panelContent.querySelectorAll("fieldset").forEach((fieldset) => {
         fieldset.style.display = "none";
       });
 
-      const activeFieldset = floatingPanel.querySelector(`#${activePanel}`);
+      const activeFieldset = panelContent.querySelector(`#${activePanel}`);
       if (activeFieldset) {
         activeFieldset.style.display = "block";
       }
