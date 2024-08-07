@@ -560,7 +560,6 @@
 
     const floatingPanel = document.createElement("div");
     floatingPanel.classList.add("panel", "floating-panel");
-    // Remove the "inner" class from here
 
     // Create minitabs for the floating panel
     const originalMinitabs = document.querySelector("#minitabs");
@@ -589,43 +588,6 @@
       console.error("Could not find #cp-menu element");
     }
 
-    // Function to update panel content based on selected tab
-    function updatePanelContent(activePanel) {
-      panelContent.querySelectorAll("fieldset").forEach((fieldset) => {
-        fieldset.style.display = "none";
-      });
-
-      const activeFieldset = panelContent.querySelector(`#${activePanel}`);
-      if (activeFieldset) {
-        activeFieldset.style.display = "block";
-      }
-
-      // Update tab states
-      floatingPanel.querySelectorAll(".minitabs .tab").forEach((tab) => {
-        tab.classList.remove("activetab");
-      });
-      floatingPanel
-        .querySelector(`[data-subpanel="${activePanel}"]`)
-        .parentElement.classList.add("activetab");
-    }
-
-    // Add click events for floating panel tabs
-    floatingPanel.querySelectorAll(".minitabs a").forEach((tab) => {
-      tab.addEventListener("click", (e) => {
-        e.preventDefault();
-        const subpanel = tab.getAttribute("data-subpanel");
-        updatePanelContent(subpanel);
-
-        // Click the corresponding tab in the original panel
-        const originalTab = document.querySelector(
-          `#minitabs [data-subpanel="${subpanel}"]`
-        );
-        if (originalTab) {
-          originalTab.click();
-        }
-      });
-    });
-
     // Modify the structure of the floating panel to include all options
     const displayPanel = floatingPanel.querySelector("#display-panel");
     const splitPanel = floatingPanel.querySelector("#split-panel");
@@ -633,68 +595,112 @@
 
     if (displayPanel) {
       displayPanel.innerHTML = `
-            <h3>DISPLAY OPTIONS</h3>
-            <dl>
-                <dt>Posts per page:</dt>
-                <dd><input type="number" name="posts_per_page" id="posts_per_page" value="5" min="0" max="999999"></dd>
-            </dl>
-            <dl>
-                <dt>Display posts from previous:</dt>
-                <dd><select name="st" id="st">${
-                  originalPanel.querySelector('select[name="st"]').innerHTML
-                }</select></dd>
-            </dl>
-            <dl>
-                <dt>Sort by</dt>
-                <dd class="sort-options">
-                    <select name="sk" id="sk">${
-                      originalPanel.querySelector('select[name="sk"]').innerHTML
-                    }</select>
-                    <select name="sd" id="sd">${
-                      originalPanel.querySelector('select[name="sd"]').innerHTML
-                    }</select>
-                </dd>
-            </dl>
-            <input type="submit" name="sort" value="Go" class="button2">
-        `;
+        <h3>DISPLAY OPTIONS</h3>
+        <dl>
+          <dt>Posts per page:</dt>
+          <dd><input type="number" name="posts_per_page" id="posts_per_page" value="5" min="0" max="999999"></dd>
+        </dl>
+        <dl>
+          <dt>Display posts from previous:</dt>
+          <dd><select name="st" id="st">${
+            originalPanel.querySelector('select[name="st"]').innerHTML
+          }</select></dd>
+        </dl>
+        <dl>
+          <dt>Sort by</dt>
+          <dd class="sort-options">
+            <select name="sk" id="sk">${
+              originalPanel.querySelector('select[name="sk"]').innerHTML
+            }</select>
+            <select name="sd" id="sd">${
+              originalPanel.querySelector('select[name="sd"]').innerHTML
+            }</select>
+          </dd>
+        </dl>
+        <input type="submit" name="sort" value="Go" class="button2">
+      `;
     }
 
     if (splitPanel) {
       splitPanel.innerHTML = `
-            <h3>SPLIT TOPIC</h3>
-            <p>Using the form below you can split a topic in two, either by selecting the posts individually or by splitting at a selected post.</p>
-            <dl>
-                <dt>New topic title:</dt>
-                <dd><input type="text" name="subject" id="subject" maxlength="124" class="inputbox"></dd>
-            </dl>
-            <dl>
-                <dt>Forum for new topic:</dt>
-                <dd><select name="to_forum_id">${
-                  originalPanel.querySelector('select[name="to_forum_id"]')
-                    .innerHTML
-                }</select></dd>
-            </dl>
-        `;
+        <h3>SPLIT TOPIC</h3>
+        <p>Using the form below you can split a topic in two, either by selecting the posts individually or by splitting at a selected post.</p>
+        <dl>
+          <dt>New topic title:</dt>
+          <dd><input type="text" name="subject" id="subject" maxlength="124" class="inputbox"></dd>
+        </dl>
+        <dl>
+          <dt>Forum for new topic:</dt>
+          <dd><select name="to_forum_id">${
+            originalPanel.querySelector('select[name="to_forum_id"]').innerHTML
+          }</select></dd>
+        </dl>
+      `;
     }
 
     if (mergePanel) {
       mergePanel.innerHTML = `
-            <h3>MOVE POSTS</h3>
-            <p>Using the form below you can move selected posts into another topic. The posts will be split from this topic and merged into the other topic.</p>
-            <dl>
-                <dt>Destination topic ID:</dt>
-                <dd><input type="number" name="to_topic_id" id="to_topic_id" min="0" max="9999999999"></dd>
-            </dl>
-        `;
+        <h3>MOVE POSTS</h3>
+        <p>Using the form below you can move selected posts into another topic. The posts will be split from this topic and merged into the other topic.</p>
+        <dl>
+          <dt>Destination topic ID:</dt>
+          <dd><input type="number" name="to_topic_id" id="to_topic_id" min="0" max="9999999999"></dd>
+        </dl>
+      `;
     }
+
+    // Function to sync tab clicks and panel visibility
+    function syncTabsAndPanels(clickedTab, isFloating) {
+      const subpanel = clickedTab.getAttribute("data-subpanel");
+      const panels = [originalPanel, floatingPanel];
+      const tabLists = [originalMinitabs, minitabs];
+
+      panels.forEach((panel) => {
+        panel.querySelectorAll("fieldset").forEach((fieldset) => {
+          fieldset.style.display = fieldset.id === subpanel ? "block" : "none";
+        });
+      });
+
+      tabLists.forEach((tabList) => {
+        tabList.querySelectorAll("li").forEach((li) => {
+          li.classList.remove("activetab");
+        });
+        const activeTab = tabList.querySelector(
+          `[data-subpanel="${subpanel}"]`
+        );
+        if (activeTab) {
+          activeTab.closest("li").classList.add("activetab");
+        }
+      });
+
+      if (isFloating) {
+        // If floating tab was clicked, trigger click on original tab
+        const originalTab = originalMinitabs.querySelector(
+          `[data-subpanel="${subpanel}"]`
+        );
+        if (originalTab) {
+          originalTab.click();
+        }
+      }
+    }
+
+    // Add click events for floating panel tabs
+    minitabs.querySelectorAll("a").forEach((tab) => {
+      tab.addEventListener("click", (e) => {
+        e.preventDefault();
+        syncTabsAndPanels(tab, true);
+      });
+    });
+
+    // Add click events for original panel tabs
+    originalMinitabs.querySelectorAll("a").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        syncTabsAndPanels(tab, false);
+      });
+    });
 
     // Sync changes between the original panel and the floating panel
     function syncPanels() {
-      const originalPanel = document.querySelector(".panel:first-of-type");
-      const floatingPanel = document.querySelector(".panel.floating-panel");
-
-      if (!originalPanel || !floatingPanel) return;
-
       const inputSelectors = [
         'input[name="posts_per_page"]',
         'select[name="st"]',
@@ -747,48 +753,29 @@
     }
 
     syncPanels();
-    updatePanelContent("display-panel"); // Initial update
-
-    // Observe changes in the minitabs to update the floating panel
-    const observer = new MutationObserver(() => {
-      const activeTab = originalMinitabs.querySelector(".tab.activetab a");
-      if (activeTab) {
-        const activePanel = activeTab.getAttribute("data-subpanel");
-        updatePanelContent(activePanel);
-      }
-    });
-    observer.observe(originalMinitabs, { attributes: true, subtree: true });
 
     // Show/hide floating panel based on original panel visibility
     function toggleFloatingPanelVisibility() {
-      const originalPanel = document.querySelector(".panel:first-of-type");
-      const floatingPanelWrapper = document.querySelector(
-        "#cp-menu .floating-panel-wrapper"
-      );
-      const cpMenu = document.querySelector("#cp-menu");
+      const originalPanelRect = originalPanel.getBoundingClientRect();
+      const cpMenuRect = firstCpMenu.getBoundingClientRect();
 
-      if (originalPanel && floatingPanelWrapper && cpMenu) {
-        const originalPanelRect = originalPanel.getBoundingClientRect();
-        const cpMenuRect = cpMenu.getBoundingClientRect();
+      if (originalPanelRect.bottom > 0) {
+        // Original panel is visible
+        floatingPanelWrapper.style.display = "none";
+      } else {
+        // Original panel is not visible
+        floatingPanelWrapper.style.display = "block";
 
-        if (originalPanelRect.bottom > 0) {
-          // Original panel is visible
-          floatingPanelWrapper.style.display = "none";
+        if (cpMenuRect.top < 0) {
+          // cp-menu is scrolled out of view
+          floatingPanelWrapper.style.position = "fixed";
+          floatingPanelWrapper.style.top = "0";
+          floatingPanelWrapper.style.left = cpMenuRect.left + "px";
+          floatingPanelWrapper.style.width = cpMenuRect.width + "px";
         } else {
-          // Original panel is not visible
-          floatingPanelWrapper.style.display = "block";
-
-          if (cpMenuRect.top < 0) {
-            // cp-menu is scrolled out of view
-            floatingPanelWrapper.style.position = "fixed";
-            floatingPanelWrapper.style.top = "0";
-            floatingPanelWrapper.style.left = cpMenuRect.left + "px";
-            floatingPanelWrapper.style.width = cpMenuRect.width + "px";
-          } else {
-            // cp-menu is still in view
-            floatingPanelWrapper.style.position = "static";
-            floatingPanelWrapper.style.width = "100%";
-          }
+          // cp-menu is still in view
+          floatingPanelWrapper.style.position = "static";
+          floatingPanelWrapper.style.width = "100%";
         }
       }
     }
@@ -796,6 +783,12 @@
     window.addEventListener("scroll", toggleFloatingPanelVisibility);
     window.addEventListener("resize", toggleFloatingPanelVisibility);
     toggleFloatingPanelVisibility(); // Initial check
+
+    // Initial sync of tab states
+    const initialActiveTab = originalMinitabs.querySelector(".activetab a");
+    if (initialActiveTab) {
+      syncTabsAndPanels(initialActiveTab, false);
+    }
   }
 
   // Observe changes in the document to ensure synchronization
