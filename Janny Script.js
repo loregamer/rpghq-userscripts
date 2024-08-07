@@ -276,6 +276,9 @@
       max-width: 100% !important;
       width: 100% !important;
       box-sizing: border-box !important;
+      position: relative !important; /* Add this */
+      top: 1px !important; /* Move down by 1px */
+      z-index: 1 !important; /* Ensure tabs are above the panel */
     }
 
     .floating-minitabs-override ul {
@@ -295,6 +298,8 @@
     }
 
     .floating-minitabs-override a {
+      position: relative !important; /* Add this */
+      top: 1px !important; /* Move active tab down slightly */
       display: block !important;
       padding: 8px 4px !important;
       text-align: center !important;
@@ -304,9 +309,6 @@
     }
 
     .floating-minitabs-override .activetab a {
-      background-color: #171b24 !important;
-      color: #fff !important;
-      border-bottom: 1px solid #171b24 !important;
     }
   `;
   document.head.appendChild(style);
