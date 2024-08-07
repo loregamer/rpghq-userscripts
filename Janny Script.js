@@ -205,16 +205,13 @@
       font-size: 0.9em !important;
     }
     .floating-panel {
-      position: fixed !important;
-      top: 20px !important;
-      left: 20px !important;
-      width: 270px !important;
-      z-index: 1000 !important;
+      width: 100% !important;
       background-color: #171b24 !important;
       border: 1px solid #303744 !important;
       border-radius: 5px !important;
       color: #9cc3db !important;
       overflow: hidden !important;
+      margin-top: 10px !important;
     }
     .floating-panel * {
       text-align: left !important;
@@ -581,7 +578,14 @@
     floatingPanel.appendChild(minitabs);
     floatingPanel.appendChild(innerDiv);
     innerDiv.appendChild(panelContent);
-    document.body.appendChild(floatingPanel);
+
+    // Find the first cp-menu and append the floating panel to it
+    const firstCpMenu = document.querySelector("#cp-menu");
+    if (firstCpMenu) {
+      firstCpMenu.appendChild(floatingPanel);
+    } else {
+      console.error("Could not find #cp-menu element");
+    }
 
     // Function to update panel content based on selected tab
     function updatePanelContent(activePanel) {
