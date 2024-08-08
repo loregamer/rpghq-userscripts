@@ -265,10 +265,18 @@
       color: #9cc3db !important;
     }
     .floating-panel-wrapper {
-      max-width: 95% !important;
-      width: 95% !important;
-      display: flex !important;
-      flex-direction: column !important;
+      display: none; /* Initially hidden */
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100%;
+      max-width: 300px; /* Adjust width as needed */
+      z-index: 1000; /* Ensure it stays on top */
+      background-color: #171b24; /* Match your theme */
+      border: 1px solid #303744;
+      border-radius: 5px;
+      padding: 10px;
+      box-sizing: border-box;
     }
     .floating-minitabs-override {
       margin: 0 !important;
@@ -555,6 +563,8 @@
   // Make the top panel float when scrolled past
   // ... existing code ...
 
+  // ... existing code ...
+
   function createFloatingPanel() {
     const originalPanel = document.querySelector(".panel:first-of-type");
     const floatingPanelWrapper = document.createElement("div");
@@ -582,7 +592,7 @@
     floatingPanelWrapper.appendChild(floatingPanel);
     floatingPanel.appendChild(panelContent);
 
-    // Find the first cp-menu and append the floating panel wrapper to it
+    // Append the floating panel wrapper to the body
     const firstCpMenu = document.querySelector("#cp-menu");
     if (firstCpMenu) {
       firstCpMenu.appendChild(floatingPanelWrapper);
@@ -766,18 +776,7 @@
       } else {
         // Original panel is not visible
         floatingPanelWrapper.style.display = "block";
-
-        if (cpMenuRect.top < 0) {
-          // cp-menu is scrolled out of view
-          floatingPanelWrapper.style.position = "fixed";
-          floatingPanelWrapper.style.top = "0";
-          floatingPanelWrapper.style.left = cpMenuRect.left + "px";
-          floatingPanelWrapper.style.width = cpMenuRect.width + "px";
-        } else {
-          // cp-menu is still in view
-          floatingPanelWrapper.style.position = "static";
-          floatingPanelWrapper.style.width = "100%";
-        }
+        floatingPanelWrapper.style.top = `${window.scrollY}px`;
       }
     }
 
@@ -791,6 +790,8 @@
       syncTabsAndPanels(initialActiveTab, false);
     }
   }
+
+  // ... existing code ...
 
   // ... existing code ...
 
