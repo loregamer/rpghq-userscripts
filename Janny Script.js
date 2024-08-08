@@ -560,13 +560,11 @@
 
   // Call the function to create placeholders
 
-  // Make the top panel float when scrolled past
-  // ... existing code ...
-
-  // ... existing code ...
+  // Make the top panel float when scrolled past// ... existing code ...
 
   function createFloatingPanel() {
     const originalPanel = document.querySelector(".panel:first-of-type");
+    const firstCpMenu = document.querySelector("#cp-menu"); // Define firstCpMenu
     const floatingPanelWrapper = document.createElement("div");
     floatingPanelWrapper.classList.add("floating-panel-wrapper");
 
@@ -592,13 +590,8 @@
     floatingPanelWrapper.appendChild(floatingPanel);
     floatingPanel.appendChild(panelContent);
 
-    // Append the floating panel wrapper to the body
-    const firstCpMenu = document.querySelector("#cp-menu");
-    if (firstCpMenu) {
-      firstCpMenu.appendChild(floatingPanelWrapper);
-    } else {
-      console.error("Could not find #cp-menu element");
-    }
+    // Append the floating panel wrapper to the cp-menu
+    firstCpMenu.appendChild(floatingPanelWrapper);
 
     // Modify the structure of the floating panel to include all options
     const displayPanel = floatingPanel.querySelector("#display-panel");
@@ -777,6 +770,8 @@
         // Original panel is not visible
         floatingPanelWrapper.style.display = "block";
         floatingPanelWrapper.style.top = `${window.scrollY}px`;
+        floatingPanelWrapper.style.left = `${cpMenuRect.left}px`;
+        floatingPanelWrapper.style.width = `${cpMenuRect.width}px`;
       }
     }
 
@@ -790,8 +785,6 @@
       syncTabsAndPanels(initialActiveTab, false);
     }
   }
-
-  // ... existing code ...
 
   // ... existing code ...
 
