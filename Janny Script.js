@@ -642,8 +642,11 @@
       mergePanel.innerHTML = `
       <h3>MOVE POSTS</h3>
       <dl>
-        <dt>Destination topic ID:</dt>
-        <dd><input type="number" name="to_topic_id" id="to_topic_id" min="0" max="9999999999"></dd>
+        <dt><label for="to_topic_id">Destination topic ID:</label></dt>
+        <dd>
+          <input type="number" name="to_topic_id" id="to_topic_id" min="0" max="9999999999">
+          <a href="#" id="floating-select-topic" class="button2">Select topic</a>
+        </dd>
       </dl>
     `;
     }
@@ -682,6 +685,20 @@
         }
       }
     }
+
+    // Add event listener for the new Select Topic button
+    const selectTopicButton = mergePanel.querySelector(
+      "#floating-select-topic"
+    );
+    selectTopicButton.addEventListener("click", (e) => {
+      e.preventDefault();
+      const originalSelectTopicButton = document.querySelector(
+        'a[href*="action=merge_select"]'
+      );
+      if (originalSelectTopicButton) {
+        originalSelectTopicButton.click();
+      }
+    });
 
     // Add click events for floating panel tabs
     minitabs.querySelectorAll("a").forEach((tab) => {
