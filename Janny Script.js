@@ -314,6 +314,64 @@
 
     .floating-minitabs-override .activetab a {
     }
+
+    .post-details-link {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.3s ease;
+      margin: 0 5px;
+    }
+    .post-details-link:hover {
+      color: #9cc3db;
+      text-decoration: underline;
+    }
+    .author {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .post-buttons {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+    }
+    .post-buttons label {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .post-buttons input[type="checkbox"] {
+      margin-left: 5px;
+    }
+    .post-details-link {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .post-details-link:hover {
+      color: #9cc3db;
+      text-decoration: underline;
+    }
+    .author {
+      display: inline;
+      white-space: nowrap;
+    }
+    .post-buttons {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+    }
+    .post-buttons label {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .post-buttons input[type="checkbox"] {
+      margin-left: 5px;
+    }
   `;
   document.head.appendChild(style);
 
@@ -479,6 +537,39 @@
     }
   }
 
+  // Function to move the post details button
+  function modifyPostAuthorLine(post) {
+    const authorLine = post.querySelector(".author");
+    if (authorLine) {
+      // Hide the "Select:" text
+      const selectLabel = post.querySelector(".post-buttons label");
+      if (selectLabel) {
+        selectLabel.innerHTML = selectLabel.innerHTML.replace("Select:", "");
+        selectLabel.style.display = "flex";
+        selectLabel.style.alignItems = "center";
+        selectLabel.style.justifyContent = "flex-end";
+      }
+
+      // Modify the date link
+      const dateRegex = /(Posted .*?) by/;
+      const match = authorLine.innerHTML.match(dateRegex);
+      if (match) {
+        const dateText = match[1];
+        const postId = post.id.replace("p", "");
+        const detailsLink = document.createElement("a");
+        detailsLink.href = `./mcp.php?f=45&t=2234&i=main&p=${postId}&mode=post_details`;
+        detailsLink.title = "Post details";
+        detailsLink.className = "post-details-link";
+        detailsLink.textContent = dateText;
+
+        authorLine.innerHTML = authorLine.innerHTML.replace(
+          dateRegex,
+          `${detailsLink.outerHTML} by`
+        );
+      }
+    }
+  }
+
   // Modify the structure of each post to match forum posts
   function modifyPostStructure() {
     document.querySelectorAll(".post").forEach((post) => {
@@ -534,6 +625,14 @@
 
         // Sync the selected state with the checkbox
         syncPostSelection(post);
+        modifyPostAuthorLine(post);
+
+        const originalPostDetailsButton = post.querySelector(
+          'a[title="Post details"]'
+        );
+        if (originalPostDetailsButton) {
+          originalPostDetailsButton.remove();
+        }
 
         // Monitor checkbox changes to sync selection
         const checkbox = post.querySelector('input[type="checkbox"]');
