@@ -834,6 +834,9 @@
           <a href="#" id="floating-select-topic" class="button2">Select topic</a>
         </dd>
       </dl>
+      <dl id="selected-topic-info" style="display: none;">
+        <dd><a href="" id="selected-topic-link"></a></dd>
+      </dl>
     `;
     }
 
@@ -918,11 +921,23 @@
         const floatingInput = floatingPanel.querySelector(selector);
 
         if (originalInput && floatingInput) {
+          // Set initial value for to_topic_id
+          if (selector === 'input[name="to_topic_id"]') {
+            floatingInput.value = originalInput.value;
+            updateSelectedTopicInfo(originalInput.value);
+          }
+
           originalInput.addEventListener("input", () => {
             floatingInput.value = originalInput.value;
+            if (selector === 'input[name="to_topic_id"]') {
+              updateSelectedTopicInfo(originalInput.value);
+            }
           });
           floatingInput.addEventListener("input", () => {
             originalInput.value = floatingInput.value;
+            if (selector === 'input[name="to_topic_id"]') {
+              updateSelectedTopicInfo(floatingInput.value);
+            }
           });
         }
       });
@@ -952,6 +967,31 @@
           }
         });
       });
+    }
+
+    function updateSelectedTopicInfo(topicId) {
+      const selectedTopicInfo = floatingPanel.querySelector(
+        "#selected-topic-info"
+      );
+      const selectedTopicLink = floatingPanel.querySelector(
+        "#selected-topic-link"
+      );
+      const originalSelectedTopicInfo = originalPanel.querySelector(
+        ".merge-select-target"
+      );
+
+      if (originalSelectedTopicInfo) {
+        const topicLink = originalSelectedTopicInfo.querySelector("a");
+        if (topicLink) {
+          selectedTopicInfo.style.display = "block";
+          selectedTopicLink.href = topicLink.href;
+          selectedTopicLink.textContent = topicLink.textContent;
+        } else {
+          selectedTopicInfo.style.display = "none";
+        }
+      } else {
+        selectedTopicInfo.style.display = "none";
+      }
     }
 
     syncPanels();
