@@ -550,22 +550,36 @@
         selectLabel.style.justifyContent = "flex-end";
       }
 
-      // Modify the date link
-      const dateRegex = /(Posted .*?) by/;
-      const match = authorLine.innerHTML.match(dateRegex);
-      if (match) {
-        const dateText = match[1];
-        const postId = post.id.replace("p", "");
-        const detailsLink = document.createElement("a");
-        detailsLink.href = `./mcp.php?f=45&t=2234&i=main&p=${postId}&mode=post_details`;
-        detailsLink.title = "Post details";
-        detailsLink.className = "post-details-link";
-        detailsLink.textContent = dateText;
+      // Find the original post details button
+      const originalPostDetailsButton = post.querySelector(
+        'a[title="Post details"]'
+      );
+      if (originalPostDetailsButton) {
+        // Modify the date link
+        const dateRegex = /(Posted .*?) by/;
+        const match = authorLine.innerHTML.match(dateRegex);
+        if (match) {
+          const dateText = match[1];
+          const detailsLink = document.createElement("a");
+          detailsLink.href = originalPostDetailsButton.href;
+          detailsLink.title = "Post details";
+          detailsLink.className = "post-details-link";
+          detailsLink.textContent = dateText;
 
-        authorLine.innerHTML = authorLine.innerHTML.replace(
-          dateRegex,
-          `${detailsLink.outerHTML} by`
-        );
+          // Copy the onclick event from the original button
+          detailsLink.onclick = function (e) {
+            e.preventDefault();
+            originalPostDetailsButton.click();
+          };
+
+          authorLine.innerHTML = authorLine.innerHTML.replace(
+            dateRegex,
+            `${detailsLink.outerHTML} by`
+          );
+        }
+
+        // Hide the original button instead of removing it
+        originalPostDetailsButton.style.display = "none";
       }
     }
   }
