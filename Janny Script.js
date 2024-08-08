@@ -484,7 +484,6 @@
       post.classList.remove("selected");
       post.style.setProperty("border", "1px solid #303744", "important");
     }
-    saveSelectedPosts();
   }
 
   // Function to add the "Show More" button with fade effect
@@ -654,9 +653,12 @@
 
         // Monitor checkbox changes to sync selection
         const checkbox = post.querySelector('input[type="checkbox"]');
-        checkbox.addEventListener("change", () => {
-          syncPostSelection(post);
-        });
+        if (checkbox) {
+          checkbox.addEventListener("change", () => {
+            syncPostSelection(post);
+            saveSelectedPosts(); // Save when checkbox is changed directly
+          });
+        }
 
         // Apply special style for "loregamer" username
         if (username === "loregamer") {
@@ -688,7 +690,8 @@
           document.querySelectorAll(".post").forEach((post) => {
             syncPostSelection(post);
           });
-        }, 0); // Delay to ensure checkboxes are updated first
+          saveSelectedPosts(); // Save after marking/unmarking all
+        }, 0);
       });
     });
   }
@@ -1009,8 +1012,8 @@
   }
 
   window.addEventListener("load", function () {
-    loadSelectedPosts();
     modifyPostStructure();
+    loadSelectedPosts();
     clickExpandView();
     createPlaceholders();
     createFloatingPanel();
