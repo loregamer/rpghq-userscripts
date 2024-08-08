@@ -319,7 +319,6 @@
       color: inherit;
       text-decoration: none;
       transition: color 0.3s ease;
-      margin: 0 5px;
     }
     .post-details-link:hover {
       color: #9cc3db;
@@ -349,14 +348,19 @@
       color: inherit;
       text-decoration: none;
       transition: color 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      vertical-align: middle;
     }
     .post-details-link:hover {
       color: #9cc3db;
       text-decoration: underline;
     }
     .author {
-      display: inline;
       white-space: nowrap;
+    }
+    .author > * {
+      vertical-align: middle;
     }
     .post-buttons {
       position: absolute;
