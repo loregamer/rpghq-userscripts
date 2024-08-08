@@ -553,6 +553,8 @@
   // Call the function to create placeholders
 
   // Make the top panel float when scrolled past
+  // ... existing code ...
+
   function createFloatingPanel() {
     const originalPanel = document.querySelector(".panel:first-of-type");
     const floatingPanelWrapper = document.createElement("div");
@@ -595,58 +597,57 @@
 
     if (displayPanel) {
       displayPanel.innerHTML = `
-        <h3>DISPLAY OPTIONS</h3>
-        <dl>
-          <dt>Posts per page:</dt>
-          <dd><input type="number" name="posts_per_page" id="posts_per_page" value="5" min="0" max="999999"></dd>
-        </dl>
-        <dl>
-          <dt>Display posts from previous:</dt>
-          <dd><select name="st" id="st">${
-            originalPanel.querySelector('select[name="st"]').innerHTML
-          }</select></dd>
-        </dl>
-        <dl>
-          <dt>Sort by</dt>
-          <dd class="sort-options">
-            <select name="sk" id="sk">${
-              originalPanel.querySelector('select[name="sk"]').innerHTML
-            }</select>
-            <select name="sd" id="sd">${
-              originalPanel.querySelector('select[name="sd"]').innerHTML
-            }</select>
-          </dd>
-        </dl>
-        <input type="submit" name="sort" value="Go" class="button2">
-      `;
+      <h3>DISPLAY OPTIONS</h3>
+      <dl>
+        <dt>Posts per page:</dt>
+        <dd><input type="number" name="posts_per_page" id="posts_per_page" value="5" min="0" max="999999"></dd>
+      </dl>
+      <dl>
+        <dt>Display posts from previous:</dt>
+        <dd><select name="st" id="st">${
+          originalPanel.querySelector('select[name="st"]').innerHTML
+        }</select></dd>
+      </dl>
+      <dl>
+        <dt>Sort by</dt>
+        <dd class="sort-options">
+          <select name="sk" id="sk">${
+            originalPanel.querySelector('select[name="sk"]').innerHTML
+          }</select>
+          <select name="sd" id="sd">${
+            originalPanel.querySelector('select[name="sd"]').innerHTML
+          }</select>
+        </dd>
+      </dl>
+      <input type="submit" name="sort" value="Go" class="button2">
+    `;
     }
 
     if (splitPanel) {
       splitPanel.innerHTML = `
-        <h3>SPLIT TOPIC</h3>
-        <p>Using the form below you can split a topic in two, either by selecting the posts individually or by splitting at a selected post.</p>
-        <dl>
-          <dt>New topic title:</dt>
-          <dd><input type="text" name="subject" id="subject" maxlength="124" class="inputbox"></dd>
-        </dl>
-        <dl>
-          <dt>Forum for new topic:</dt>
-          <dd><select name="to_forum_id">${
-            originalPanel.querySelector('select[name="to_forum_id"]').innerHTML
-          }</select></dd>
-        </dl>
+      <h3>SPLIT TOPIC</h3>
+      <p>Using the form below you can split a topic in two, either by selecting the posts individually or by splitting at a selected post.</p>
+      <dl>
+        <dt>New topic title:</dt>
+        <dd><input type="text" name="subject" id="subject" maxlength="124" class="inputbox"></dd>
+      </dl>
+      <dl>
+        <dt>Forum for new topic:</dt>
+        <dd><select name="to_forum_id">${
+          originalPanel.querySelector('select[name="to_forum_id"]').innerHTML
+        }</select></dd>
       `;
     }
 
     if (mergePanel) {
       mergePanel.innerHTML = `
-        <h3>MOVE POSTS</h3>
-        <p>Using the form below you can move selected posts into another topic. The posts will be split from this topic and merged into the other topic.</p>
-        <dl>
-          <dt>Destination topic ID:</dt>
-          <dd><input type="number" name="to_topic_id" id="to_topic_id" min="0" max="9999999999"></dd>
-        </dl>
-      `;
+      <h3>MOVE POSTS</h3>
+      <p>Using the form below you can move selected posts into another topic. The posts will be split from this topic and merged into the other topic.</p>
+      <dl>
+        <dt>Destination topic ID:</dt>
+        <dd><input type="number" name="to_topic_id" id="to_topic_id" min="0" max="9999999999"></dd>
+      </dl>
+    `;
     }
 
     // Function to sync tab clicks and panel visibility
@@ -790,6 +791,8 @@
       syncTabsAndPanels(initialActiveTab, false);
     }
   }
+
+  // ... existing code ...
 
   // Observe changes in the document to ensure synchronization
   function observeDocumentChanges() {
