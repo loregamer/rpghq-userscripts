@@ -6,6 +6,7 @@
 // @author       loregamer
 // @match        https://rpghq.org/forums/mcp.php?*i=main&mode=topic_view*
 // @match        https://rpghq.org/forums/mcp.php?*i=mcp_main&mode=topic_view*
+// @match        https://rpghq.org/forums/mcp.php?i=main&f=*&t=*&mode=topic_view*
 // @updateURL    https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.js
 // @downloadURL  https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.js
 // @grant        GM_getResourceText
