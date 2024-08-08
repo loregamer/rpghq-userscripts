@@ -826,18 +826,18 @@
 
     if (mergePanel) {
       mergePanel.innerHTML = `
-      <h3>MOVE POSTS</h3>
-      <dl>
-        <dt><label for="to_topic_id">Destination topic ID:</label></dt>
-        <dd>
-          <input type="number" name="to_topic_id" id="to_topic_id" min="0" max="9999999999">
-          <a href="#" id="floating-select-topic" class="button2">Select topic</a>
-        </dd>
-      </dl>
-      <dl id="selected-topic-info" style="display: none;">
-        <dd><a href="" id="selected-topic-link"></a></dd>
-      </dl>
-    `;
+        <h3>MOVE POSTS</h3>
+        <dl>
+          <dt><label for="to_topic_id">Destination topic ID:</label></dt>
+          <dd>
+            <input type="number" name="to_topic_id" id="to_topic_id" min="0" max="9999999999">
+            <a href="#" id="floating-select-topic" class="button2">Select topic</a>
+          </dd>
+        </dl>
+        <dl id="selected-topic-info" style="display: none;">
+          <dd><a href="" id="selected-topic-link"></a></dd>
+        </dl>
+      `;
     }
 
     // Function to sync tab clicks and panel visibility
@@ -906,6 +906,26 @@
 
     // Sync changes between the original panel and the floating panel
     function syncPanels() {
+      const originalTopicInput = originalPanel.querySelector(
+        'input[name="to_topic_id"]'
+      );
+      const floatingTopicInput = floatingPanel.querySelector(
+        'input[name="to_topic_id"]'
+      );
+
+      if (originalTopicInput && floatingTopicInput) {
+        floatingTopicInput.value = originalTopicInput.value;
+        updateSelectedTopicInfo(originalTopicInput.value);
+
+        originalTopicInput.addEventListener("input", () => {
+          floatingTopicInput.value = originalTopicInput.value;
+          updateSelectedTopicInfo(originalTopicInput.value);
+        });
+        floatingTopicInput.addEventListener("input", () => {
+          originalTopicInput.value = floatingTopicInput.value;
+          updateSelectedTopicInfo(floatingTopicInput.value);
+        });
+      }
       const inputSelectors = [
         'input[name="posts_per_page"]',
         'select[name="st"]',
@@ -990,7 +1010,15 @@
           selectedTopicInfo.style.display = "none";
         }
       } else {
-        selectedTopicInfo.style.display = "none";
+        // If there's no selected topic info in the original panel,
+        // but we have a topic ID, we can still show it
+        if (topicId) {
+          selectedTopicInfo.style.display = "block";
+          selectedTopicLink.href = `https://rpghq.org/forums/viewtopic.php?t=${topicId}`;
+          selectedTopicLink.textContent = `Topic #${topicId}`;
+        } else {
+          selectedTopicInfo.style.display = "none";
+        }
       }
     }
 
