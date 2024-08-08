@@ -356,6 +356,30 @@
     avatarImg.style.display = "block"; // Display the default avatar
   }
 
+  function saveSelectedPosts() {
+    const selectedPosts = Array.from(
+      document.querySelectorAll('.post input[type="checkbox"]:checked')
+    ).map((checkbox) => checkbox.value);
+    localStorage.setItem("selectedPosts", JSON.stringify(selectedPosts));
+  }
+
+  function loadSelectedPosts() {
+    const selectedPosts =
+      JSON.parse(localStorage.getItem("selectedPosts")) || [];
+    selectedPosts.forEach((postId) => {
+      const checkbox = document.querySelector(
+        `.post input[type="checkbox"][value="${postId}"]`
+      );
+      if (checkbox) {
+        const post = checkbox.closest(".post");
+        if (post) {
+          checkbox.checked = true;
+          syncPostSelection(post);
+        }
+      }
+    });
+  }
+
   // Function to toggle the selected state of a post
   function togglePostSelection(post, event) {
     const checkbox = post.querySelector('input[type="checkbox"]');
@@ -385,6 +409,7 @@
     ) {
       checkbox.checked = !checkbox.checked;
       syncPostSelection(post);
+      saveSelectedPosts();
     }
   }
 
@@ -398,6 +423,7 @@
       post.classList.remove("selected");
       post.style.setProperty("border", "1px solid #303744", "important");
     }
+    saveSelectedPosts();
   }
 
   // Function to add the "Show More" button with fade effect
@@ -512,6 +538,7 @@
         post.removeAttribute("style");
         post.style.setProperty("background-color", "#202633", "important");
         post.style.setProperty("border", "1px solid #303744", "important");
+        syncPostSelection(post);
       });
   }
 
@@ -812,6 +839,7 @@
   }
 
   window.addEventListener("load", function () {
+    loadSelectedPosts();
     modifyPostStructure();
     clickExpandView();
     createPlaceholders();
