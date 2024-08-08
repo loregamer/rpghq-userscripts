@@ -213,7 +213,6 @@
     }
     .floating-panel * {
       text-align: left !important;
-      font-size: 14px !important;
     }
     .floating-panel .inner {
       padding: 10px !important;
@@ -272,8 +271,6 @@
       width: 100%;
       max-width: 300px; /* Adjust width as needed */
       z-index: 1000; /* Ensure it stays on top */
-      background-color: #171b24; /* Match your theme */
-      border: 1px solid #303744;
       border-radius: 5px;
       padding: 10px;
       box-sizing: border-box;
@@ -629,7 +626,6 @@
     if (splitPanel) {
       splitPanel.innerHTML = `
       <h3>SPLIT TOPIC</h3>
-      <p>Using the form below you can split a topic in two, either by selecting the posts individually or by splitting at a selected post.</p>
       <dl>
         <dt>New topic title:</dt>
         <dd><input type="text" name="subject" id="subject" maxlength="124" class="inputbox"></dd>
@@ -645,7 +641,6 @@
     if (mergePanel) {
       mergePanel.innerHTML = `
       <h3>MOVE POSTS</h3>
-      <p>Using the form below you can move selected posts into another topic. The posts will be split from this topic and merged into the other topic.</p>
       <dl>
         <dt>Destination topic ID:</dt>
         <dd><input type="number" name="to_topic_id" id="to_topic_id" min="0" max="9999999999"></dd>
