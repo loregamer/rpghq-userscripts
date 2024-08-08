@@ -457,6 +457,28 @@
       });
   }
 
+  // Function to update the "Show More" button
+  function updateShowMoreButton(post) {
+    const postbody = post.querySelector(".postbody");
+    let showMoreButton = postbody.querySelector(".show-more-button");
+
+    if (postbody.scrollHeight > postbody.clientHeight) {
+      if (!showMoreButton) {
+        showMoreButton = document.createElement("div");
+        showMoreButton.className = "show-more-button";
+        showMoreButton.textContent = "Read more ...";
+        showMoreButton.onclick = function () {
+          postbody.style.maxHeight = "none";
+          showMoreButton.style.display = "none";
+        };
+        postbody.appendChild(showMoreButton);
+      }
+      showMoreButton.style.display = "block";
+    } else if (showMoreButton) {
+      showMoreButton.style.display = "none";
+    }
+  }
+
   // Modify the structure of each post to match forum posts
   function modifyPostStructure() {
     document.querySelectorAll(".post").forEach((post) => {
@@ -824,17 +846,49 @@
     }
   }
 
-  // ... existing code ...
-
   // Observe changes in the document to ensure synchronization
   function observeDocumentChanges() {
-    const observer = new MutationObserver(() => {
-      document.querySelectorAll(".post").forEach((post) => {
-        syncPostSelection(post);
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === "childList" || mutation.type === "subtree") {
+          // Sync post selection
+          document.querySelectorAll(".post").forEach((post) => {
+            syncPostSelection(post);
+          });
+
+          // Update "Show More" button if content height increased
+          const post = mutation.target.closest(".post");
+          if (post) {
+            const postbody = post.querySelector(".postbody");
+            if (postbody && postbody.scrollHeight > postbody.clientHeight) {
+              updateShowMoreButton(post);
+            }
+          }
+        }
       });
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+    });
+
+    // Add a window resize listener to update all posts
+    window.addEventListener("resize", () => {
+      document.querySelectorAll(".post").forEach(updateShowMoreButton);
+    });
+
+    // Add click event listener for spoiler buttons
+    document.body.addEventListener("click", (event) => {
+      if (event.target.classList.contains("spoilbtn")) {
+        const post = event.target.closest(".post");
+        if (post) {
+          setTimeout(() => updateShowMoreButton(post), 0);
+        }
+      }
+    });
   }
 
   window.addEventListener("load", function () {
