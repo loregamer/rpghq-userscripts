@@ -74,19 +74,12 @@ SOFTWARE.
             fetchReactions(postId).then((reactions) => {
               let reactionHTML = formatReactions(reactions);
 
-              let usernameMatches = titleText.match(
-                /<span[^>]*class="username(?:-coloured)?"[^>]*>([^<]+)<\/span>/g
-              );
-              let usernames = usernameMatches
-                ? usernameMatches.join(", ")
-                : "User";
-
               let newTitleText = titleText.replace(
                 /(have|has)\s+reacted.*$/,
-                ""
+                `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
               );
 
-              titleElement.innerHTML = `${newTitleText} <b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`;
+              titleElement.innerHTML = newTitleText;
             });
           }
         } else if (titleText.includes("You were mentioned by")) {
