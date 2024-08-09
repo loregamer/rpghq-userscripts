@@ -63,7 +63,7 @@ SOFTWARE.
             /<span[^>]*class="username(?:-coloured)?"[^>]*>([^<]+)<\/span>/g
           );
           let usernames = usernameMatches ? usernameMatches.join(", ") : "User";
-          titleElement.innerHTML = `${usernames} <b style="color: #3889ED;">reacted</b>`;
+          titleElement.innerHTML = `${usernames} <b style="color: #3889ED;">reacted</b> to:`;
         } else if (titleText.includes("You were mentioned by")) {
           let topicMatch = titleText.match(/in "(.*)"/);
           let topicName = topicMatch ? topicMatch[1] : "";
@@ -84,10 +84,15 @@ SOFTWARE.
           );
         }
 
-        titleElement.innerHTML = titleElement.innerHTML.replace(
-          /<strong>Quoted<\/strong>/,
-          '<strong style="color: #FF4A66;">Quoted</strong>'
-        );
+        titleElement.innerHTML = titleElement.innerHTML
+          .replace(
+            /<strong>Quoted<\/strong>/,
+            '<strong style="color: #FF4A66;">Quoted</strong>'
+          )
+          .replace(
+            /<strong>Reply<\/strong>/,
+            '<strong style="color: #FFD866;">Reply</strong>'
+          );
       }
 
       block.querySelectorAll(".notification-reference").forEach((ref) => {
@@ -112,16 +117,21 @@ SOFTWARE.
     });
   }
 
-  customizeNotifications();
+  function observeDocumentChanges() {
+    const observer = new MutationObserver((mutations) => {
+      if (mutations.some((mutation) => mutation.addedNodes.length > 0)) {
+        customizeNotifications();
+      }
+    });
 
-  const observer = new MutationObserver((mutations) => {
-    if (mutations.some((mutation) => mutation.addedNodes.length > 0)) {
-      customizeNotifications();
-    }
-  });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  }
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
+  window.addEventListener("load", function () {
+    customizeNotifications();
+    observeDocumentChanges();
   });
 })();
