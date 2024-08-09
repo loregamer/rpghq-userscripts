@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      4.2
+// @version      4.2.1
 // @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
@@ -56,8 +56,6 @@ SOFTWARE.
     "https://f.rpghq.org/GsWJAucvHZpr.png?n=joe-handshake.png",
     // Add more custom smiley URLs here
   ];
-
-  console.log("Userscript is running!");
 
   // Add custom CSS to highlight BBCode tags with multiple colors
   const style = document.createElement("style");
@@ -915,11 +913,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
   }
 
   function initialize() {
-    console.log("Initialize function called");
     const originalTextarea = document.getElementById("message");
     if (originalTextarea) {
-      console.log("Textarea found");
-
       // Create a new textarea element
       const newTextarea = document.createElement("textarea");
       newTextarea.id = "message";
@@ -1061,14 +1056,12 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         positionEditorHeader();
       });
     } else {
-      console.log("Textarea not found, checking again in 500ms");
       setTimeout(initialize, 500);
     }
   }
 
   // Run the initialize function on page load
   window.addEventListener("load", function () {
-    console.log("Window load event triggered");
     initialize();
   });
 })();
