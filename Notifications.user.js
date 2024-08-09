@@ -183,7 +183,35 @@ SOFTWARE.
     });
   }
 
+  // Add this function to handle local storage operations
+  function getStoredReactions(postId) {
+    const storedReactions = localStorage.getItem(`reactions_${postId}`);
+    if (storedReactions) {
+      const { reactions, timestamp } = JSON.parse(storedReactions);
+      // Check if the stored data is less than 24 hours old
+      if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+        return reactions;
+      }
+    }
+    return null;
+  }
+
+  function storeReactions(postId, reactions) {
+    localStorage.setItem(
+      `reactions_${postId}`,
+      JSON.stringify({
+        reactions,
+        timestamp: Date.now(),
+      })
+    );
+  }
+
   function fetchReactions(postId) {
+    const storedReactions = getStoredReactions(postId);
+    if (storedReactions) {
+      return Promise.resolve(storedReactions);
+    }
+
     return fetch(
       `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
       {
@@ -206,6 +234,7 @@ SOFTWARE.
             name: li.querySelector(".reaction-image").alt,
           });
         });
+        storeReactions(postId, reactions);
         return reactions;
       });
   }
