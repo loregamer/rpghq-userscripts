@@ -39,22 +39,36 @@ SOFTWARE.
 (function () {
   "use strict";
 
-  function customizeNotifications() {
+  function customizeNotificationPanel() {
     let notificationBlocks = document.querySelectorAll(".notification-block");
+    customizeNotifications(notificationBlocks, true);
+  }
 
+  function customizeNotificationPage() {
+    let notificationBlocks = document.querySelectorAll(
+      ".cplist .row .notifications"
+    );
+    customizeNotifications(notificationBlocks, false);
+  }
+
+  function customizeNotifications(notificationBlocks, isPanel) {
     notificationBlocks.forEach((block) => {
       if (block.dataset.customized === "true") return;
 
-      let titleElement = block.querySelector(".notification-title");
+      let titleElement = block.querySelector(
+        isPanel ? ".notification-title" : ".notifications_title"
+      );
       let referenceElement = block.querySelector(".notification-reference");
 
       if (titleElement) {
         let titleText = titleElement.innerHTML;
 
         if (titleText.includes("reacted to a message you posted")) {
-          let postIdMatch = block.getAttribute("data-real-url")
-            ? block.getAttribute("data-real-url").match(/p=(\d+)/)
-            : block.href.match(/p=(\d+)/);
+          let anchorTag = isPanel ? block : block.querySelector("a");
+          let postIdMatch =
+            anchorTag && anchorTag.href
+              ? anchorTag.href.match(/p=(\d+)/)
+              : null;
           if (postIdMatch && postIdMatch[1]) {
             let postId = postIdMatch[1];
             fetchReactions(postId).then((reactions) => {
@@ -66,14 +80,17 @@ SOFTWARE.
               let usernames = usernameMatches
                 ? usernameMatches.join(", ")
                 : "User";
-              titleElement.innerHTML = `${titleText.replace(
+
+              let newTitleText = titleText.replace(
                 /(have|has)\s+reacted.*$/,
                 ""
-              )} <b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`;
+              );
+
+              titleElement.innerHTML = `${newTitleText} <b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`;
             });
           }
         } else if (titleText.includes("You were mentioned by")) {
-          let topicMatch = titleText.match(/in "(.*)"/);
+          let topicMatch = titleText.match(/in:?\s*"(.*)"/);
           let topicName = topicMatch ? topicMatch[1] : "";
           titleElement.innerHTML = `You were <b style="color: #FFC107;">mentioned</b><br>in <span class="notification-reference">${topicName}</span>`;
         } else if (titleText.includes("Private Message")) {
@@ -103,8 +120,8 @@ SOFTWARE.
           );
       }
 
-      block.querySelectorAll(".notification-reference").forEach((ref) => {
-        Object.assign(ref.style, {
+      if (referenceElement) {
+        Object.assign(referenceElement.style, {
           background: "rgba(23, 27, 36, 0.5)",
           color: "#ffffff",
           padding: "2px 4px",
@@ -113,7 +130,7 @@ SOFTWARE.
           display: "inline-block",
           whiteSpace: "nowrap",
         });
-      });
+      }
 
       block.querySelectorAll(".username-coloured").forEach((el) => {
         el.classList.remove("username-coloured");
@@ -157,29 +174,35 @@ SOFTWARE.
       '<span style="display: inline-flex; margin-left: 2px; vertical-align: middle;">';
     reactions.forEach((reaction) => {
       reactionHTML += `
-        <img src="${reaction.image}" alt="${reaction.name}" title="${reaction.name}" 
-             style="height: 1em !important; width: auto !important; vertical-align: middle !important; margin-right: 2px !important;">
-      `;
+                <img src="${reaction.image}" alt="${reaction.name}" title="${reaction.name}" 
+                     style="height: 1em !important; width: auto !important; vertical-align: middle !important; margin-right: 2px !important;">
+            `;
     });
     reactionHTML += "</span>";
     return reactionHTML;
   }
 
-  function observeDocumentChanges() {
+  function init() {
+    customizeNotificationPanel();
+
+    // Check if we're on the full notifications page
+    if (window.location.href.includes("ucp.php?i=ucp_notifications")) {
+      customizeNotificationPage();
+    }
+
+    // Set up a MutationObserver to handle dynamically loaded notifications
     const observer = new MutationObserver((mutations) => {
-      if (mutations.some((mutation) => mutation.addedNodes.length > 0)) {
-        customizeNotifications();
-      }
+      mutations.forEach((mutation) => {
+        if (mutation.type === "childList") {
+          customizeNotificationPanel();
+        }
+      });
     });
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
+    const config = { childList: true, subtree: true };
+    observer.observe(document.body, config);
   }
 
-  window.addEventListener("load", function () {
-    customizeNotifications();
-    observeDocumentChanges();
-  });
+  // Run the init function when the page loads
+  window.addEventListener("load", init);
 })();
