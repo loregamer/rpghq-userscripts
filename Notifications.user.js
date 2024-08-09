@@ -154,11 +154,11 @@ SOFTWARE.
 
   function formatReactions(reactions) {
     let reactionHTML =
-      '<span style="display: inline-flex; margin-left: 5px; vertical-align: middle;">';
+      '<span style="display: inline-flex; margin-left: 2px; vertical-align: middle;">';
     reactions.forEach((reaction) => {
       reactionHTML += `
         <img src="${reaction.image}" alt="${reaction.name}" title="${reaction.name}" 
-             style="width: 16px; height: 16px; vertical-align: middle; margin-right: 2px;">
+             style="height: 1em !important; width: auto !important; vertical-align: middle !important; margin-right: 2px !important;">
       `;
     });
     reactionHTML += "</span>";
