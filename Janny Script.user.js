@@ -1,16 +1,17 @@
 // ==UserScript==
 // @name         RPGHQ Moderator Control Panel Enhancer
 // @namespace    https://rpghq.org/
-// @version      3.0.1
+// @version      3.1
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts, and adding a "Show More" button
 // @author       loregamer
 // @match        https://rpghq.org/forums/mcp.php?*mode=topic_view*
 // @grant        GM_getResourceText
 // @grant        GM_xmlhttpRequest
 // @grant        GM_info
-// @license     MIT
-// @updateURL    https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.js
-// @downloadURL  https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.js
+// @license      MIT
+// @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABmUExURQCqAQCqAACwDHKocgCrAipPBRggKidQBjgvEkIzDDkvEihQBjkuEjouESpQBTwuEUAtEUMtEEcsEEosEA9fAUsrEEssEEUsEEEtET0uESIkIipOBUItESxOBSUjIitOBS8qHAAAAGMEP4sAAAAidFJOU////////////////////////////////////////////wAN0MNxAAAACXBIWXMAAA7CAAAOwgEVKEqAAAABJklEQVRIS92V6U7DMBCEy+GFBChXucrp939JNju701CxYCNVqphfnsl8iew4zqJ26l8Ai4NJ7mo1d4jx0VchRH8LOMbYiyGE3wJuvRhC6EARgYc9kVOUhhEaYFPgTM7RGAUaYVOgyAUarcBSLtFQADlt9oQrNpDTZsA1G8hpM+CGDeS0GXDLBnJaB1al4AJskTs2kNM6sKU/APdsNAINczCtYJtWyVTCPrDRCHS/uEc2kNNmQOdeWspTNNbIw6YAt/f0JewAKL3A82YO/nFCPwBcpVbgBY0hDhgoBV7lTcfeCukZtc6Ad7NeDOntVf2AXtBt/RGAam7n56QCmkyAkRtgbm3oC9UN6KQ1afoDAVDpeE8AlS2XvTgPfpPNftLOAGrvgFo/AYmjmfleeiNOAAAAAElFTkSuQmCC
+// @updateURL    https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.user.js
+// @downloadURL  https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.user.js
 // ==/UserScript==
 
 /*
