@@ -40,30 +40,33 @@ SOFTWARE.
   "use strict";
 
   function customizeNotifications() {
-    let notificationBlocks = document.querySelectorAll(
-      ".notification-block, .notifications"
-    );
+    let notificationBlocks = document.querySelectorAll(".notification-block");
 
     notificationBlocks.forEach((block) => {
       if (block.dataset.customized) return;
 
-      let titleElement = block.querySelector(
-        ".notification-title, .notifications_title"
-      );
+      let titleElement = block.querySelector(".notification-title");
       let referenceElement = block.querySelector(".notification-reference");
 
       if (titleElement) {
         let titleText = titleElement.innerHTML;
 
-        if (
-          titleText.includes("has reacted to a message you posted") ||
-          titleText.includes("have reacted to a message you posted")
-        ) {
-          let usernameMatches = titleText.match(
-            /<span[^>]*class="username(?:-coloured)?"[^>]*>([^<]+)<\/span>/g
-          );
-          let usernames = usernameMatches ? usernameMatches.join(", ") : "User";
-          titleElement.innerHTML = `${usernames} <b style="color: #3889ED;">reacted</b> to:`;
+        if (titleText.includes("reacted to a message you posted")) {
+          let postIdMatch = block.href.match(/p=(\d+)/);
+          if (postIdMatch && postIdMatch[1]) {
+            let postId = postIdMatch[1];
+            fetchReactions(postId).then((reactions) => {
+              let reactionHTML = formatReactions(reactions);
+
+              let usernameMatches = titleText.match(
+                /<span[^>]*class="username(?:-coloured)?"[^>]*>([^<]+)<\/span>/g
+              );
+              let usernames = usernameMatches
+                ? usernameMatches.join(", ")
+                : "User";
+              titleElement.innerHTML = `${usernames} <b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`;
+            });
+          }
         } else if (titleText.includes("You were mentioned by")) {
           let topicMatch = titleText.match(/in "(.*)"/);
           let topicName = topicMatch ? topicMatch[1] : "";
@@ -115,6 +118,46 @@ SOFTWARE.
 
       block.dataset.customized = "true";
     });
+  }
+
+  function fetchReactions(postId) {
+    return fetch(
+      `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json, text/javascript, */*; q=0.01",
+          "x-requested-with": "XMLHttpRequest",
+        },
+        credentials: "include",
+      }
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        let parser = new DOMParser();
+        let doc = parser.parseFromString(data.htmlContent, "text/html");
+        let reactions = [];
+        doc.querySelectorAll('.tab-content[data-id="0"] li').forEach((li) => {
+          reactions.push({
+            image: li.querySelector(".reaction-image").src,
+            name: li.querySelector(".reaction-image").alt,
+          });
+        });
+        return reactions;
+      });
+  }
+
+  function formatReactions(reactions) {
+    let reactionHTML =
+      '<span style="display: inline-flex; margin-left: 5px; vertical-align: middle;">';
+    reactions.forEach((reaction) => {
+      reactionHTML += `
+        <img src="${reaction.image}" alt="${reaction.name}" title="${reaction.name}" 
+             style="width: 16px; height: 16px; vertical-align: middle; margin-right: 2px;">
+      `;
+    });
+    reactionHTML += "</span>";
+    return reactionHTML;
   }
 
   function observeDocumentChanges() {
