@@ -5,12 +5,12 @@
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts, and adding a "Show More" button
 // @author       loregamer
 // @match        https://rpghq.org/forums/mcp.php?*mode=topic_view*
-// @updateURL    https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.js
-// @downloadURL  https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.js
 // @grant        GM_getResourceText
 // @grant        GM_xmlhttpRequest
 // @grant        GM_info
 // @license     MIT
+// @updateURL    https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.js
+// @downloadURL  https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Janny%20Script.js
 // ==/UserScript==
 
 /*
