@@ -43,71 +43,11 @@ SOFTWARE.
     let notificationBlocks = document.querySelectorAll(
       ".notification-block, a.notification-block"
     );
-    customizeNotifications(notificationBlocks, true);
-  }
 
-  function customizeNotificationPage() {
-    let notificationRows = document.querySelectorAll(".cplist .row");
-    notificationRows.forEach((row) => {
-      if (row.dataset.customized === "true") return;
-
-      let notificationBlock = row.querySelector(".notifications");
-      let anchorElement = notificationBlock.querySelector("a");
-
-      if (anchorElement) {
-        let titleElement = anchorElement.querySelector(".notifications_title");
-        let titleText = titleElement.innerHTML; // Use innerHTML to preserve existing HTML elements
-
-        // Process the title text
-        titleText = titleText
-          .replace(/\bReply\b/g, '<b style="color: #FFD866;">Reply</b>')
-          .replace(/\bQuoted\b/g, '<b style="color: #FF4A66;">Quoted</b>')
-          .replace(/\breacted\b/g, '<b style="color: #3889ED;">reacted</b>')
-          .replace(
-            /\bReport closed\b/g,
-            '<b style="color: #f58c05;">Report closed</b>'
-          );
-
-        // Handle quoted text
-        let quoteMatch = titleText.match(/in topic: "([^"]*)"/);
-        if (quoteMatch) {
-          let quote = quoteMatch[1];
-          let trimmedQuote =
-            quote.length > 50 ? quote.substring(0, 50) + "..." : quote;
-          titleText = titleText.replace(
-            /in topic: "([^"]*)"/,
-            `<br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"${trimmedQuote}"</span>`
-          );
-        }
-
-        // Handle "to a message you posted" text
-        titleText = titleText.replace(
-          /(to a message you posted) "([^"]*)"/g,
-          '$1 <br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"$2"</span>'
-        );
-
-        // Create new content
-        let newContent = `
-                <div class="notification-block">
-                    <div class="notification-title">${titleText}</div>
-                </div>
-            `;
-
-        // Replace the entire content of the anchor element
-        anchorElement.innerHTML = newContent;
-      }
-
-      row.dataset.customized = "true";
-    });
-  }
-
-  function customizeNotifications(notificationBlocks, isPanel) {
     notificationBlocks.forEach((block) => {
       if (block.dataset.customized === "true") return;
 
-      let titleElement = block.querySelector(
-        isPanel ? ".notification-title" : ".notifications_title"
-      );
+      let titleElement = block.querySelector(".notification-title");
       let referenceElement = block.querySelector(".notification-reference");
 
       if (titleElement) {
@@ -121,7 +61,7 @@ SOFTWARE.
             postId = match ? match[1] : null;
           } else {
             // Use existing method for read notifications
-            let anchorTag = isPanel ? block : block.querySelector("a");
+            let anchorTag = block;
             let postIdMatch =
               anchorTag && anchorTag.href
                 ? anchorTag.href.match(/p=(\d+)/)
@@ -189,6 +129,61 @@ SOFTWARE.
       });
 
       block.dataset.customized = "true";
+    });
+  }
+
+  function customizeNotificationPage() {
+    let notificationRows = document.querySelectorAll(".cplist .row");
+    notificationRows.forEach((row) => {
+      if (row.dataset.customized === "true") return;
+
+      let notificationBlock = row.querySelector(".notifications");
+      let anchorElement = notificationBlock.querySelector("a");
+
+      if (anchorElement) {
+        let titleElement = anchorElement.querySelector(".notifications_title");
+        let titleText = titleElement.innerHTML; // Use innerHTML to preserve existing HTML elements
+
+        // Process the title text
+        titleText = titleText
+          .replace(/\bReply\b/g, '<b style="color: #FFD866;">Reply</b>')
+          .replace(/\bQuoted\b/g, '<b style="color: #FF4A66;">Quoted</b>')
+          .replace(/\breacted\b/g, '<b style="color: #3889ED;">reacted</b>')
+          .replace(
+            /\bReport closed\b/g,
+            '<b style="color: #f58c05;">Report closed</b>'
+          );
+
+        // Handle quoted text
+        let quoteMatch = titleText.match(/in topic: "([^"]*)"/);
+        if (quoteMatch) {
+          let quote = quoteMatch[1];
+          let trimmedQuote =
+            quote.length > 50 ? quote.substring(0, 50) + "..." : quote;
+          titleText = titleText.replace(
+            /in topic: "([^"]*)"/,
+            `<br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"${trimmedQuote}"</span>`
+          );
+        }
+
+        // Handle "to a message you posted" text
+        titleText = titleText.replace(
+          /(to a message you posted) "([^"]*)"/g,
+          '$1 <br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"$2"</span>'
+        );
+
+        // Create new content
+        let newContent = `
+                <div class="notification-block">
+                    <div class="notification-title">${titleText}</div>
+                </div>
+            `;
+
+        // Replace the entire content of the anchor element
+        anchorElement.innerHTML = newContent;
+      }
+
+      row.dataset.customized = "true";
     });
   }
 
