@@ -55,7 +55,6 @@ SOFTWARE.
       if (anchorElement) {
         let titleElement = anchorElement.querySelector(".notifications_title");
         let titleText = titleElement.innerHTML; // Use innerHTML to preserve existing HTML elements
-        let linkHref = anchorElement.href;
 
         // Process the title text
         titleText = titleText
