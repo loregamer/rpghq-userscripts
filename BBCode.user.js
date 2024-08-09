@@ -42,18 +42,19 @@ SOFTWARE.
   // Simplified customSmileys array
   const customSmileys = [
     "📥",
-    "https://f.rpghq.org/ZCwL8DUzfCeg.png?n=pepe-classy.png",
+    "https://f.rpghq.org/Z7NDrB79GqGA.png?n=classy.png",
     "https://f.rpghq.org/1O52kDUFh8s5.png?n=nexus.png",
     "https://f.rpghq.org/5Niz8ii3t0cN.png?n=HQ%20Official.png",
     "https://f.rpghq.org/ZgRYx3ztDLyD.png?n=cancel_forum.png",
     "https://f.rpghq.org/W5kvLDYCwg8G.png",
-    "https://f.rpghq.org/Ww4ZA0bBUxKL.png?n=lorecoffee.png",
-    "https://f.rpghq.org/bZCN2SzMvb9G.png?n=vault-boy-sad.png",
-    "https://f.rpghq.org/sxb076pVcR8l.png?n=grr.png",
-    "https://f.rpghq.org/AhUt723RJSgS.png?n=mhm.png",
+    "https://f.rpghq.org/pzZ8ahRyIi0J.png?n=loregamer%20coffee.png",
+    "https://f.rpghq.org/Z6RIUgsiP5is.png",
+    "https://f.rpghq.org/6FeAQQz5oOly.png?n=grr%20(1).png",
+    "https://f.rpghq.org/6KVsHU0jse33.png?n=mhm%20(1).png",
     "https://f.rpghq.org/FzMC7rrQZBh0.gif?n=waving.gif",
-    "https://f.rpghq.org/2cuorF4EWm0a.png?n=copium.png",
-    "https://f.rpghq.org/GsWJAucvHZpr.png?n=joe-handshake.png",
+    "https://f.rpghq.org/E9Zz7UA5Nnh9.png?n=copium%20(1).png",
+    "https://f.rpghq.org/8oRjBRJP8mdp.gif?n=pepe-copium-overdose.gif",
+    "https://f.rpghq.org/5ZGCa1oUm428.png?n=joe-handshake%20(1).png",
     // Add more custom smiley URLs here
   ];
 
