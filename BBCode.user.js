@@ -973,12 +973,190 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       originalTextarea.parentNode.replaceChild(container, originalTextarea);
       container.appendChild(newTextarea);
 
-      // Function to adjust textarea height
-      function adjustTextareaHeight() {
-        newTextarea.style.height = "auto";
-        newTextarea.style.height = newTextarea.scrollHeight + "px";
-        highlightDiv.style.height = newTextarea.style.height;
+      // Add mention functionality
+      let mentionTimeout;
+      let mentionBox;
+
+      newTextarea.addEventListener("input", function (e) {
+        clearTimeout(updateTimer);
+        checkForUpdates();
+
+        // Check for mention
+        const cursorPosition = this.selectionStart;
+        const textBeforeCursor = this.value.substring(0, cursorPosition);
+        const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+
+        if (mentionMatch) {
+          clearTimeout(mentionTimeout);
+          mentionTimeout = setTimeout(
+            () => fetchMentions(mentionMatch[1]),
+            300
+          );
+        } else {
+          closeMentionBox();
+        }
+      });
+
+      newTextarea.addEventListener("keydown", function (e) {
+        if (mentionBox && mentionBox.style.display !== "none") {
+          const activeItem = mentionBox.querySelector(".mention-item.active");
+          switch (e.key) {
+            case "ArrowDown":
+              e.preventDefault();
+              selectNextMention(activeItem);
+              break;
+            case "ArrowUp":
+              e.preventDefault();
+              selectPreviousMention(activeItem);
+              break;
+            case "Enter":
+              e.preventDefault();
+              if (activeItem) {
+                insertMention(
+                  activeItem.dataset.userId,
+                  activeItem.textContent
+                );
+              }
+              break;
+            case "Escape":
+              closeMentionBox();
+              break;
+          }
+        }
+      });
+
+      function fetchMentions(query) {
+        fetch(`https://rpghq.org/forums/mentionloc?q=${query}`, {
+          headers: {
+            accept: "application/json, text/javascript, */*; q=0.01",
+            "x-requested-with": "XMLHttpRequest",
+          },
+          credentials: "include",
+        })
+          .then((response) => response.json())
+          .then((data) => displayMentions(data, query));
       }
+
+      // Modify the displayMentions function
+      function displayMentions(mentions, query) {
+        if (!mentionBox) {
+          mentionBox = document.createElement("div");
+          mentionBox.className = "mention-box";
+          document.body.appendChild(mentionBox); // Append to body instead of container
+        }
+
+        mentionBox.innerHTML = "";
+        mentionBox.style.display = mentions.length ? "block" : "none";
+
+        mentions.forEach((mention, index) => {
+          const item = document.createElement("div");
+          item.className = "mention-item";
+          item.textContent = mention.value;
+          item.dataset.userId = mention.user_id;
+          if (index === 0) item.classList.add("active");
+          item.addEventListener("click", () =>
+            insertMention(mention.user_id, mention.value)
+          );
+          mentionBox.appendChild(item);
+        });
+
+        positionMentionBox();
+      }
+
+      // Modify the positionMentionBox function
+      function positionMentionBox() {
+        if (mentionBox && mentionBox.style.display !== "none") {
+          const cursorPosition = newTextarea.selectionStart;
+          const textBeforeCursor = newTextarea.value.substring(
+            0,
+            cursorPosition
+          );
+          const lines = textBeforeCursor.split("\n");
+          const currentLine = lines.length;
+          const currentColumn = lines[lines.length - 1].length;
+
+          const textareaRect = newTextarea.getBoundingClientRect();
+          const lineHeight = parseInt(
+            window.getComputedStyle(newTextarea).lineHeight
+          );
+
+          const left = textareaRect.left + currentColumn * 7; // Approximate character width
+          const top =
+            textareaRect.top +
+            (currentLine - 1) * lineHeight -
+            newTextarea.scrollTop;
+
+          mentionBox.style.left = `${left}px`;
+          mentionBox.style.top = `${top + lineHeight}px`; // Position below the current line
+          mentionBox.style.position = "fixed"; // Use fixed positioning
+          mentionBox.style.zIndex = "9999"; // Ensure it's above other elements
+        }
+      }
+
+      function selectNextMention(activeItem) {
+        if (activeItem && activeItem.nextElementSibling) {
+          activeItem.classList.remove("active");
+          activeItem.nextElementSibling.classList.add("active");
+        }
+      }
+
+      function selectPreviousMention(activeItem) {
+        if (activeItem && activeItem.previousElementSibling) {
+          activeItem.classList.remove("active");
+          activeItem.previousElementSibling.classList.add("active");
+        }
+      }
+
+      function insertMention(userId, username) {
+        const cursorPosition = newTextarea.selectionStart;
+        const textBeforeCursor = newTextarea.value.substring(0, cursorPosition);
+        const textAfterCursor = newTextarea.value.substring(cursorPosition);
+        const mentionText = `[smention u=${userId}]${username}[/smention] `;
+        const mentionStart = textBeforeCursor.lastIndexOf("@");
+        const newText =
+          textBeforeCursor.substring(0, mentionStart) +
+          mentionText +
+          textAfterCursor;
+
+        newTextarea.value = newText;
+        newTextarea.setSelectionRange(
+          mentionStart + mentionText.length,
+          mentionStart + mentionText.length
+        );
+        closeMentionBox();
+        updateHighlight();
+        adjustTextareaAndHighlight();
+      }
+
+      function closeMentionBox() {
+        if (mentionBox) {
+          mentionBox.style.display = "none";
+        }
+      }
+
+      // Add CSS for mention box
+      const mentionStyle = document.createElement("style");
+      mentionStyle.textContent = `
+        .mention-box {
+          position: fixed;
+          background-color: #2b2b2b;
+          border: 1px solid #444;
+          max-height: 200px;
+          overflow-y: auto;
+          z-index: 9999;
+          width: 200px; // Set a fixed width
+          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .mention-item {
+          padding: 5px 10px;
+          cursor: pointer;
+          color: #fff; // Ensure text is visible
+        }
+        .mention-item:hover, .mention-item.active {
+          background-color: #3a3a3a;
+        }
+      `;
+      document.head.appendChild(mentionStyle);
 
       let lastContent = "";
       let updateTimer = null;
