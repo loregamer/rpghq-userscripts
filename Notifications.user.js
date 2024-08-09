@@ -40,7 +40,9 @@ SOFTWARE.
   "use strict";
 
   function customizeNotificationPanel() {
-    let notificationBlocks = document.querySelectorAll(".notification-block");
+    let notificationBlocks = document.querySelectorAll(
+      ".notification-block, a.notification-block"
+    );
     customizeNotifications(notificationBlocks, true);
   }
 
@@ -112,24 +114,31 @@ SOFTWARE.
         let titleText = titleElement.innerHTML;
 
         if (titleText.includes("reacted to a message you posted")) {
-          let anchorTag = isPanel ? block : block.querySelector("a");
-          let postIdMatch =
-            anchorTag && anchorTag.href
-              ? anchorTag.href.match(/p=(\d+)/)
-              : null;
-          if (postIdMatch && postIdMatch[1]) {
-            let postId = postIdMatch[1];
-            fetchReactions(postId).then((reactions) => {
-              let reactionHTML = formatReactions(reactions);
-
-              let newTitleText = titleText.replace(
-                /(have|has)\s+reacted.*$/,
-                `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
-              );
-
-              titleElement.innerHTML = newTitleText;
-            });
+          let postId;
+          if (block.hasAttribute("data-real-url")) {
+            // Extract postId from data-real-url for unread notifications
+            let match = block.getAttribute("data-real-url").match(/p=(\d+)/);
+            postId = match ? match[1] : null;
+          } else {
+            // Use existing method for read notifications
+            let anchorTag = isPanel ? block : block.querySelector("a");
+            let postIdMatch =
+              anchorTag && anchorTag.href
+                ? anchorTag.href.match(/p=(\d+)/)
+                : null;
+            postId = postIdMatch ? postIdMatch[1] : null;
           }
+
+          fetchReactions(postId).then((reactions) => {
+            let reactionHTML = formatReactions(reactions);
+
+            let newTitleText = titleText.replace(
+              /(have|has)\s+reacted.*$/,
+              `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
+            );
+
+            titleElement.innerHTML = newTitleText;
+          });
         } else if (titleText.includes("You were mentioned by")) {
           let topicMatch = titleText.match(/in:?\s*"(.*)"/);
           let topicName = topicMatch ? topicMatch[1] : "";
