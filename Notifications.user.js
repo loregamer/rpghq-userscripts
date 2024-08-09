@@ -43,7 +43,7 @@ SOFTWARE.
     let notificationBlocks = document.querySelectorAll(".notification-block");
 
     notificationBlocks.forEach((block) => {
-      if (block.dataset.customized) return;
+      if (block.dataset.customized === "true") return;
 
       let titleElement = block.querySelector(".notification-title");
       let referenceElement = block.querySelector(".notification-reference");
@@ -52,7 +52,9 @@ SOFTWARE.
         let titleText = titleElement.innerHTML;
 
         if (titleText.includes("reacted to a message you posted")) {
-          let postIdMatch = block.href.match(/p=(\d+)/);
+          let postIdMatch = block.getAttribute("data-real-url")
+            ? block.getAttribute("data-real-url").match(/p=(\d+)/)
+            : block.href.match(/p=(\d+)/);
           if (postIdMatch && postIdMatch[1]) {
             let postId = postIdMatch[1];
             fetchReactions(postId).then((reactions) => {
@@ -64,7 +66,10 @@ SOFTWARE.
               let usernames = usernameMatches
                 ? usernameMatches.join(", ")
                 : "User";
-              titleElement.innerHTML = `${usernames} <b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`;
+              titleElement.innerHTML = `${titleText.replace(
+                /(have|has)\s+reacted.*$/,
+                ""
+              )} <b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`;
             });
           }
         } else if (titleText.includes("You were mentioned by")) {
