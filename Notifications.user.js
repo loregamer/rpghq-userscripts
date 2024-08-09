@@ -54,7 +54,7 @@ SOFTWARE.
 
       if (anchorElement) {
         let titleElement = anchorElement.querySelector(".notifications_title");
-        let titleText = titleElement.textContent.trim();
+        let titleText = titleElement.innerHTML; // Use innerHTML to preserve existing HTML elements
         let linkHref = anchorElement.href;
 
         // Process the title text
@@ -78,6 +78,12 @@ SOFTWARE.
             `<br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"${trimmedQuote}"</span>`
           );
         }
+
+        // Handle "to a message you posted" text
+        titleText = titleText.replace(
+          /(to a message you posted) "([^"]*)"/g,
+          '$1 <br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"$2"</span>'
+        );
 
         // Create new content
         let newContent = `
