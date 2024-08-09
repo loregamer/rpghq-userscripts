@@ -5,6 +5,8 @@
 // @description  Colorize specific text in titles on RPGHQ forums, including sticky topics
 // @match        https://rpghq.org/forums/*
 // @grant        none
+// @updateURL    https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Notifications.user.js
+// @downloadURL  https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Notifications.user.js
 // ==/UserScript==
 
 (function () {
