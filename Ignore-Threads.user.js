@@ -204,14 +204,96 @@ SOFTWARE.
     }
   }
 
+  let ignoreModeActive = GM_getValue("ignoreModeActive", false);
+
+  function toggleIgnoreMode() {
+    ignoreModeActive = !ignoreModeActive;
+    GM_setValue("ignoreModeActive", ignoreModeActive);
+    const toggleButton = document.getElementById("toggle-ignore-mode-button");
+    if (toggleButton) {
+      toggleButton.querySelector("i").className = ignoreModeActive
+        ? "icon fa-toggle-on fa-fw"
+        : "icon fa-toggle-off fa-fw";
+      toggleButton.querySelector("span").textContent = ignoreModeActive
+        ? "Disable Ignore Mode"
+        : "Enable Ignore Mode";
+    }
+    updateIgnoreButtons();
+  }
+
+  function addToggleIgnoreModeButton() {
+    const dropdown = document.querySelector(
+      "#username_logged_in .dropdown-contents"
+    );
+    if (dropdown && !document.getElementById("toggle-ignore-mode-button")) {
+      const listItem = document.createElement("li");
+      const toggleButton = document.createElement("a");
+      toggleButton.id = "toggle-ignore-mode-button";
+      toggleButton.href = "#";
+      toggleButton.title = "Toggle Ignore Mode";
+      toggleButton.role = "menuitem";
+      toggleButton.innerHTML = ignoreModeActive
+        ? '<i class="icon fa-toggle-on fa-fw" aria-hidden="true"></i><span>Disable Ignore Mode</span>'
+        : '<i class="icon fa-toggle-off fa-fw" aria-hidden="true"></i><span>Enable Ignore Mode</span>';
+
+      toggleButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        toggleIgnoreMode();
+      });
+
+      listItem.appendChild(toggleButton);
+      dropdown.insertBefore(listItem, dropdown.lastElementChild);
+    }
+  }
+
+  function updateIgnoreButtons() {
+    const threadItems = document.querySelectorAll(
+      ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
+    );
+    threadItems.forEach((item) => {
+      const existingButton = item.querySelector(".quick-ignore-button");
+      if (ignoreModeActive) {
+        if (!existingButton) {
+          const ignoreButton = document.createElement("button");
+          ignoreButton.className = "quick-ignore-button";
+          ignoreButton.innerHTML =
+            '<img src="https://rpghq.org/forums/ext/canidev/reactions/images/reaction/cancel.svg" alt="Ignore" width="16" height="16">';
+          ignoreButton.style.cssText =
+            "background: none; border: none; cursor: pointer; position: absolute; right: 5px; top: 5px;";
+          ignoreButton.addEventListener("click", function (e) {
+            e.stopPropagation();
+            const threadLink = item.querySelector("a.topictitle");
+            if (threadLink) {
+              const threadId = threadLink.href.match(/[?&]t=(\d+)/)[1];
+              const threadTitle = threadLink.textContent.trim();
+              ignoreThread(threadId, threadTitle);
+              item.style.display = "none";
+            }
+          });
+          item.style.position = "relative";
+          item.appendChild(ignoreButton);
+        }
+      } else if (existingButton) {
+        existingButton.remove();
+      }
+    });
+  }
+
   function initializeScript() {
     addIgnoreButton();
     hideIgnoredThreads();
     addUnignoreAllButton();
+    addToggleIgnoreModeButton();
+    if (ignoreModeActive) {
+      updateIgnoreButtons();
+    }
   }
 
   // Try to run immediately
-  initializeScript();
+  document.addEventListener("DOMContentLoaded", () => {
+    initializeScript();
+    updateIgnoreButtons();
+  });
 
   // If immediate execution fails, wait for DOM content to be loaded
   if (
@@ -226,4 +308,15 @@ SOFTWARE.
 
   // Register menu commands
   GM_registerMenuCommand("Show Ignored Threads", showIgnoredThreads);
+
+  // Add a MutationObserver to handle dynamically loaded content
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === "childList") {
+        updateIgnoreButtons();
+      }
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
 })();
