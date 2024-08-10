@@ -372,22 +372,38 @@ SOFTWARE.
       background-color: #2a2e36;
       border: 1px solid #3a3f4b;
       border-radius: 5px;
-      padding: 20px;
-      max-width: 80%;
-      max-height: 80%;
-      overflow-y: auto;
+      width: 80%;
+      max-width: 600px;
+      height: 80%;
+      max-height: 600px;
+      display: flex;
+      flex-direction: column;
       z-index: 9999;
-      color: #c5d0db;
       font-family: 'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif;
     `;
 
-    // Create close button
+    // Create header
+    const header = document.createElement("div");
+    header.style.cssText = `
+      padding: 20px;
+      background-color: #2a2e36;
+      border-bottom: 1px solid #3a3f4b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    `;
+
+    const title = document.createElement("h2");
+    title.textContent = "Ignored Threads";
+    title.style.margin = "0";
+    title.style.color = "#c5d0db";
+
     const closeButton = document.createElement("button");
     closeButton.textContent = "Close";
     closeButton.style.cssText = `
-      position: absolute;
-      top: 10px;
-      right: 10px;
       background-color: #4a5464;
       color: #c5d0db;
       border: none;
@@ -397,55 +413,73 @@ SOFTWARE.
     `;
     closeButton.onclick = () => document.body.removeChild(popup);
 
+    header.appendChild(title);
+    header.appendChild(closeButton);
+
     // Create content
     const content = document.createElement("div");
-    content.innerHTML = '<h2 style="margin-top: 0;">Ignored Threads</h2>';
-
-    // Add ignored threads list
-    const threadList = document.createElement("ul");
-    threadList.style.cssText = `
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
+    content.style.cssText = `
+      padding: 20px;
+      overflow-y: auto;
+      flex-grow: 1;
     `;
 
-    for (const [threadId, title] of Object.entries(ignoredThreads)) {
-      const listItem = document.createElement("li");
-      listItem.style.marginBottom = "10px";
+    // Sort ignored threads alphabetically
+    const sortedThreads = Object.entries(ignoredThreads).sort((a, b) =>
+      a[1].localeCompare(b[1])
+    );
 
-      const threadLink = document.createElement("a");
-      threadLink.href = `https://rpghq.org/forums/viewtopic.php?t=${threadId}`;
-      threadLink.textContent = title;
-      threadLink.style.color = "#4a90e2";
-      threadLink.style.textDecoration = "none";
-
-      const unignoreButton = document.createElement("button");
-      unignoreButton.textContent = "Unignore";
-      unignoreButton.style.cssText = `
-        margin-left: 10px;
-        background-color: #4a5464;
-        color: #c5d0db;
-        border: none;
-        padding: 2px 5px;
-        border-radius: 3px;
-        cursor: pointer;
-      `;
-      unignoreButton.onclick = () => {
-        unignoreThread(threadId);
-        listItem.remove();
-        if (threadList.children.length === 0) {
-          content.innerHTML += "<p>No threads are currently ignored.</p>";
-        }
-      };
-
-      listItem.appendChild(threadLink);
-      listItem.appendChild(unignoreButton);
-      threadList.appendChild(listItem);
-    }
-
-    if (Object.keys(ignoredThreads).length === 0) {
-      content.innerHTML += "<p>No threads are currently ignored.</p>";
+    if (sortedThreads.length === 0) {
+      content.innerHTML =
+        '<p style="color: #c5d0db;">No threads are currently ignored.</p>';
     } else {
+      const threadList = document.createElement("ul");
+      threadList.style.cssText = `
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+      `;
+
+      for (const [threadId, title] of sortedThreads) {
+        const listItem = document.createElement("li");
+        listItem.style.cssText = `
+          margin-bottom: 10px;
+          display: flex;
+          align-items: center;
+        `;
+
+        const unignoreButton = document.createElement("button");
+        unignoreButton.textContent = "Unignore";
+        unignoreButton.style.cssText = `
+          background-color: #4a5464;
+          color: #c5d0db;
+          border: none;
+          padding: 2px 5px;
+          border-radius: 3px;
+          cursor: pointer;
+          margin-right: 10px;
+          font-size: 0.8em;
+        `;
+        unignoreButton.onclick = () => {
+          unignoreThread(threadId);
+          listItem.remove();
+          if (threadList.children.length === 0) {
+            content.innerHTML =
+              '<p style="color: #c5d0db;">No threads are currently ignored.</p>';
+          }
+        };
+
+        const threadLink = document.createElement("a");
+        threadLink.href = `https://rpghq.org/forums/viewtopic.php?t=${threadId}`;
+        threadLink.textContent = title;
+        threadLink.style.color = "#4a90e2";
+        threadLink.style.textDecoration = "none";
+
+        listItem.appendChild(unignoreButton);
+        listItem.appendChild(threadLink);
+        threadList.appendChild(listItem);
+      }
+
       content.appendChild(threadList);
 
       // Add mass unignore button
@@ -473,7 +507,7 @@ SOFTWARE.
     }
 
     // Assemble popup
-    popup.appendChild(closeButton);
+    popup.appendChild(header);
     popup.appendChild(content);
     document.body.appendChild(popup);
   }
