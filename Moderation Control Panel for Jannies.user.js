@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Moderator Control Panel Enhancer
 // @namespace    https://rpghq.org/
-// @version      3.2
+// @version      3.2.1
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts, and adding a "Show More" button
 // @author       loregamer
 // @match        https://rpghq.org/forums/mcp.php?*mode=topic_view*
@@ -451,6 +451,18 @@ SOFTWARE.
   }
 
   function loadSelectedPosts() {
+    // Unselect all posts first
+    document
+      .querySelectorAll('.post input[type="checkbox"]')
+      .forEach((checkbox) => {
+        checkbox.checked = false;
+        const post = checkbox.closest(".post");
+        if (post) {
+          syncPostSelection(post);
+        }
+      });
+
+    // Load and apply selected posts from local storage
     const selectedPosts =
       JSON.parse(localStorage.getItem("selectedPosts")) || [];
     selectedPosts.forEach((postId) => {
