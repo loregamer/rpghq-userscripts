@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -102,14 +102,29 @@ SOFTWARE.
   }
 
   function ignoreThread(threadId, threadTitle) {
-    ignoredThreads[threadId] = threadTitle;
-    GM_setValue("ignoredThreads", ignoredThreads);
+    // Fetch the latest data from storage
+    let currentIgnoredThreads = GM_getValue("ignoredThreads", {});
+
+    // Add the new thread to the current list
+    currentIgnoredThreads[threadId] = threadTitle;
+
+    // Save the updated list back to storage
+    GM_setValue("ignoredThreads", currentIgnoredThreads);
+
+    // Update the local ignoredThreads object
+    ignoredThreads = currentIgnoredThreads;
   }
 
   function unignoreThread(threadId) {
-    if (ignoredThreads.hasOwnProperty(threadId)) {
-      delete ignoredThreads[threadId];
-      GM_setValue("ignoredThreads", ignoredThreads);
+    // Fetch the latest data from storage
+    let currentIgnoredThreads = GM_getValue("ignoredThreads", {});
+
+    if (currentIgnoredThreads.hasOwnProperty(threadId)) {
+      delete currentIgnoredThreads[threadId];
+      GM_setValue("ignoredThreads", currentIgnoredThreads);
+
+      // Update the local ignoredThreads object
+      ignoredThreads = currentIgnoredThreads;
     }
   }
 
