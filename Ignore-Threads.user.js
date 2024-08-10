@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         RPG HQ Thread Ignorer
+// @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
 // @version      1.0
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
@@ -7,7 +7,33 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
+// @license      MIT
+// @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABmUExURQCqAQCqAACwDHKocgCrAipPBRggKidQBjgvEkIzDDkvEihQBjkuEjouESpQBTwuEUAtEUMtEEcsEEosEA9fAUsrEEssEEUsEEEtET0uESIkIipOBUItESxOBSUjIitOBS8qHAAAAGMEP4sAAAAidFJOU////////////////////////////////////////////wAN0MNxAAAACXBIWXMAAA7CAAAOwgEVKEqAAAABJklEQVRIS92V6U7DMBCEy+GFBChXucrp939JNju701CxYCNVqphfnsl8iew4zqJ26l8Ai4NJ7mo1d4jx0VchRH8LOMbYiyGE3wJuvRhC6EARgYc9kVOUhhEaYFPgTM7RGAUaYVOgyAUarcBSLtFQADlt9oQrNpDTZsA1G8hpM+CGDeS0GXDLBnJaB1al4AJskTs2kNM6sKU/APdsNAINczCtYJtWyVTCPrDRCHS/uEc2kNNmQOdeWspTNNbIw6YAt/f0JewAKL3A82YO/nFCPwBcpVbgBY0hDhgoBV7lTcfeCukZtc6Ad7NeDOntVf2AXtBt/RGAam7n56QCmkyAkRtgbm3oC9UN6KQ1afoDAVDpeE8AlS2XvTgPfpPNftLOAGrvgFo/AYmjmfleeiNOAAAAAElFTkSuQmCC
 // ==/UserScript==
+
+/*
+MIT License
+
+Copyright (c) 2024 loregamer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
 (function () {
   "use strict";
