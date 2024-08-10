@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -279,11 +279,95 @@ SOFTWARE.
     });
   }
 
+  function exportIgnoredThreads() {
+    const exportData = JSON.stringify(ignoredThreads);
+    const blob = new Blob([exportData], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ignored_threads.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function importIgnoredThreads() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = function (event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          ignoredThreads = importedData;
+          GM_setValue("ignoredThreads", ignoredThreads);
+          alert(
+            "Ignored threads imported successfully. Refresh the page to see the changes."
+          );
+          window.location.reload();
+        } catch (error) {
+          alert(
+            "Error importing ignored threads. Please make sure the file is valid."
+          );
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+
+  function addExportImportButtons() {
+    const dropdown = document.querySelector(
+      "#username_logged_in .dropdown-contents"
+    );
+    if (dropdown) {
+      // Export button
+      if (!document.getElementById("export-ignored-threads-button")) {
+        const exportListItem = document.createElement("li");
+        const exportButton = document.createElement("a");
+        exportButton.id = "export-ignored-threads-button";
+        exportButton.href = "#";
+        exportButton.title = "Export Ignored Threads";
+        exportButton.role = "menuitem";
+        exportButton.innerHTML =
+          '<i class="icon fa-download fa-fw" aria-hidden="true"></i><span>Export Ignored Threads</span>';
+        exportButton.addEventListener("click", function (e) {
+          e.preventDefault();
+          exportIgnoredThreads();
+        });
+        exportListItem.appendChild(exportButton);
+        dropdown.insertBefore(exportListItem, dropdown.lastElementChild);
+      }
+
+      // Import button
+      if (!document.getElementById("import-ignored-threads-button")) {
+        const importListItem = document.createElement("li");
+        const importButton = document.createElement("a");
+        importButton.id = "import-ignored-threads-button";
+        importButton.href = "#";
+        importButton.title = "Import Ignored Threads";
+        importButton.role = "menuitem";
+        importButton.innerHTML =
+          '<i class="icon fa-upload fa-fw" aria-hidden="true"></i><span>Import Ignored Threads</span>';
+        importButton.addEventListener("click", function (e) {
+          e.preventDefault();
+          importIgnoredThreads();
+        });
+        importListItem.appendChild(importButton);
+        dropdown.insertBefore(importListItem, dropdown.lastElementChild);
+      }
+    }
+  }
+
   function initializeScript() {
     addIgnoreButton();
     hideIgnoredThreads();
     addUnignoreAllButton();
     addToggleIgnoreModeButton();
+    addExportImportButtons();
     if (ignoreModeActive) {
       updateIgnoreButtons();
     }
@@ -308,6 +392,8 @@ SOFTWARE.
 
   // Register menu commands
   GM_registerMenuCommand("Show Ignored Threads", showIgnoredThreads);
+  GM_registerMenuCommand("Export Ignored Threads", exportIgnoredThreads);
+  GM_registerMenuCommand("Import Ignored Threads", importIgnoredThreads);
 
   // Add a MutationObserver to handle dynamically loaded content
   const observer = new MutationObserver((mutations) => {
