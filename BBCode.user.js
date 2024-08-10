@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      4.3.1
+// @version      4.4
 // @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php*
