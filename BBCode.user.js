@@ -997,17 +997,17 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     // Create content
     const content = document.createElement("div");
     content.style.cssText = `
-      padding: 20px;
-      overflow-y: auto;
-      flex-grow: 1;
-    `;
+    padding: 20px;
+    overflow-y: auto;
+    flex-grow: 1;
+  `;
 
     const smileyList = document.createElement("ul");
     smileyList.style.cssText = `
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
-    `;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  `;
 
     function updateSmileyList() {
       smileyList.innerHTML = "";
@@ -1015,10 +1015,10 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       customSmileys.forEach((smiley, index) => {
         const listItem = document.createElement("li");
         listItem.style.cssText = `
-          margin-bottom: 10px;
-          display: flex;
-          align-items: center;
-        `;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+      `;
 
         if (isSingleEmoji(smiley)) {
           const emojiSpan = document.createElement("span");
@@ -1031,10 +1031,10 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
           smileyPreview.src = smiley;
           smileyPreview.alt = "Smiley";
           smileyPreview.style.cssText = `
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-          `;
+          width: 20px;
+          height: 20px;
+          margin-right: 10px;
+        `;
           listItem.appendChild(smileyPreview);
         }
 
@@ -1043,25 +1043,25 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         smileyInput.value = smiley;
         smileyInput.disabled = true;
         smileyInput.style.cssText = `
-          flex-grow: 1;
-          margin-right: 10px;
-          padding: 5px;
-          background-color: #2a2e36;
-          color: #a0a0a0;
-          border: 1px solid #3a3f4b;
-          border-radius: 3px;
-          cursor: default;
-        `;
+        flex-grow: 1;
+        margin-right: 10px;
+        padding: 5px;
+        background-color: #2a2e36;
+        color: #a0a0a0;
+        border: 1px solid #3a3f4b;
+        border-radius: 3px;
+        cursor: default;
+      `;
 
         const buttonStyle = `
-          background-color: #4a5464;
-          color: #c5d0db;
-          border: none;
-          padding: 5px 10px;
-          margin-left: 5px;
-          border-radius: 3px;
-          cursor: pointer;
-        `;
+        background-color: #4a5464;
+        color: #c5d0db;
+        border: none;
+        padding: 5px 10px;
+        margin-left: 5px;
+        border-radius: 3px;
+        cursor: pointer;
+      `;
 
         const upButton = document.createElement("button");
         upButton.textContent = "↑";
@@ -1109,45 +1109,35 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       });
     }
 
+    content.appendChild(smileyList);
+
     // Add new smiley input
     const newSmileyInput = document.createElement("input");
     newSmileyInput.type = "text";
-    newSmileyInput.placeholder = "Enter new smiley or emoji";
+    newSmileyInput.placeholder = "Enter new smiley or emoji and press Enter";
     newSmileyInput.style.cssText = `
-      width: 100%;
-      margin-top: 15px;
-      padding: 5px;
-      background-color: #3a3f4b;
-      color: #c5d0db;
-      border: 1px solid #4a5464;
-      border-radius: 3px;
-    `;
+    width: 100%;
+    margin-top: 15px;
+    padding: 5px;
+    background-color: #3a3f4b;
+    color: #c5d0db;
+    border: 1px solid #4a5464;
+    border-radius: 3px;
+  `;
 
-    const addButton = document.createElement("button");
-    addButton.textContent = "Add New Smiley";
-    addButton.style.cssText = `
-      margin-top: 10px;
-      background-color: #4a5464;
-      color: #c5d0db;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 3px;
-      cursor: pointer;
-    `;
-    addButton.onclick = () => {
-      if (newSmileyInput.value) {
-        customSmileys.push(newSmileyInput.value);
-        saveCustomSmileys();
-        newSmileyInput.value = "";
-        updateSmileyList();
+    newSmileyInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (newSmileyInput.value.trim()) {
+          customSmileys.push(newSmileyInput.value.trim());
+          saveCustomSmileys();
+          newSmileyInput.value = "";
+          updateSmileyList();
+        }
       }
-    };
+    });
 
-    content.appendChild(smileyList);
     content.appendChild(newSmileyInput);
-    content.appendChild(addButton);
-
-    // Add new smiley input (keep the existing code for adding new smileys)
 
     // Initial update of smiley list
     updateSmileyList();
