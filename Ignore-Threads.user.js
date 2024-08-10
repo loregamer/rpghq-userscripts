@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RPG HQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      0.7
-// @description  Add ignore button to threads on rpghq.org and hide ignored threads
+// @version      0.9
+// @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -16,31 +16,51 @@
 
   function addIgnoreButton() {
     const actionBar = document.querySelector(".action-bar.bar-top");
-    if (actionBar && !document.getElementById("ignore-thread-button")) {
+    const threadId = getThreadId();
+    if (
+      actionBar &&
+      threadId &&
+      !document.getElementById("ignore-thread-button")
+    ) {
       const ignoreButton = document.createElement("a");
       ignoreButton.id = "ignore-thread-button";
       ignoreButton.className = "button button-secondary";
-      ignoreButton.innerHTML =
-        '<span>Ignore Thread</span> <i class="icon fa-ban fa-fw" aria-hidden="true"></i>';
-      ignoreButton.title = "Ignore Thread";
-      ignoreButton.style.marginLeft = "5px";
+
+      let isIgnored = ignoredThreads.hasOwnProperty(threadId);
+      updateButtonState(ignoreButton, isIgnored);
 
       ignoreButton.addEventListener("click", function (e) {
         e.preventDefault();
-        const threadId = getThreadId();
         const threadTitle = document
           .querySelector(".topic-title")
           .textContent.trim();
-        if (
-          threadId &&
-          confirm("Are you sure you want to ignore this thread?")
-        ) {
-          ignoreThread(threadId, threadTitle);
-          window.location.href = "https://rpghq.org/forums/";
+        if (isIgnored) {
+          unignoreThread(threadId);
+          updateButtonState(ignoreButton, false);
+          isIgnored = false;
+        } else {
+          if (confirm("Are you sure you want to ignore this thread?")) {
+            ignoreThread(threadId, threadTitle);
+            updateButtonState(ignoreButton, true);
+            isIgnored = true;
+            window.location.href = "https://rpghq.org/forums/index.php";
+          }
         }
       });
 
       actionBar.appendChild(ignoreButton);
+    }
+  }
+
+  function updateButtonState(button, isIgnored) {
+    if (isIgnored) {
+      button.innerHTML =
+        '<span>Unignore Thread</span> <i class="icon fa-check fa-fw" aria-hidden="true"></i>';
+      button.title = "Unignore Thread";
+    } else {
+      button.innerHTML =
+        '<span>Ignore Thread</span> <i class="icon fa-ban fa-fw" aria-hidden="true"></i>';
+      button.title = "Ignore Thread";
     }
   }
 
@@ -56,6 +76,15 @@
   function ignoreThread(threadId, threadTitle) {
     ignoredThreads[threadId] = threadTitle;
     GM_setValue("ignoredThreads", ignoredThreads);
+    hideIgnoredThreads();
+  }
+
+  function unignoreThread(threadId) {
+    if (ignoredThreads.hasOwnProperty(threadId)) {
+      delete ignoredThreads[threadId];
+      GM_setValue("ignoredThreads", ignoredThreads);
+      hideIgnoredThreads();
+    }
   }
 
   function hideIgnoredThreads() {
@@ -68,6 +97,8 @@
         const threadId = threadLink.href.split("t=")[1].split("&")[0];
         if (ignoredThreads.hasOwnProperty(threadId)) {
           item.style.display = "none";
+        } else {
+          item.style.display = "";
         }
       }
     });
@@ -81,28 +112,11 @@
     alert(message || "No threads are currently ignored.");
   }
 
-  function unignoreThread() {
-    const threadId = prompt("Enter the thread ID you want to un-ignore:");
-    if (threadId) {
-      if (ignoredThreads.hasOwnProperty(threadId)) {
-        delete ignoredThreads[threadId];
-        GM_setValue("ignoredThreads", ignoredThreads);
-        alert("Thread un-ignored. Refresh the page to see the changes.");
-      } else {
-        alert("This thread is not in your ignore list.");
-      }
-    }
-  }
-
   // Register menu commands
   GM_registerMenuCommand("Show Ignored Threads", showIgnoredThreads);
-  GM_registerMenuCommand("Un-ignore Thread", unignoreThread);
 
-  // Run functions
-  addIgnoreButton();
-  hideIgnoredThreads();
-
-  // Re-run functions periodically in case of dynamic content loading
-  setInterval(addIgnoreButton, 5000);
-  setInterval(hideIgnoredThreads, 5000);
+  window.addEventListener("load", function () {
+    addIgnoreButton();
+    hideIgnoredThreads();
+  });
 })();
