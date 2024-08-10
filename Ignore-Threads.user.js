@@ -165,41 +165,39 @@ SOFTWARE.
     );
   }
 
-  function showIgnoredThreads() {
-    let message = "Ignored Threads:\n\n";
-    for (const [threadId, title] of Object.entries(ignoredThreads)) {
-      message += `${title}\nhttps://rpghq.org/forums/viewtopic.php?t=${threadId}\n\n`;
+  function resetIgnoredThreads() {
+    if (
+      confirm(
+        "Are you sure you want to reset all ignored threads? This action cannot be undone."
+      )
+    ) {
+      ignoredThreads = {};
+      GM_setValue("ignoredThreads", ignoredThreads);
+      alert("All ignored threads have been reset.");
+      window.location.reload(); // Reload the page to reflect changes
     }
-    alert(message || "No threads are currently ignored.");
   }
 
-  function addUnignoreAllButton() {
+  function addResetIgnoredThreadsButton() {
     const dropdown = document.querySelector(
       "#username_logged_in .dropdown-contents"
     );
-    if (dropdown && !document.getElementById("unignore-all-button")) {
+    if (dropdown && !document.getElementById("reset-ignored-threads-button")) {
       const listItem = document.createElement("li");
-      const unignoreAllButton = document.createElement("a");
-      unignoreAllButton.id = "unignore-all-button";
-      unignoreAllButton.href = "#";
-      unignoreAllButton.title = "Unignore all threads";
-      unignoreAllButton.role = "menuitem";
-      unignoreAllButton.innerHTML =
-        '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>Unignore all threads</span>';
+      const resetButton = document.createElement("a");
+      resetButton.id = "reset-ignored-threads-button";
+      resetButton.href = "#";
+      resetButton.title = "Reset Ignored Threads";
+      resetButton.role = "menuitem";
+      resetButton.innerHTML =
+        '<i class="icon fa-refresh fa-fw" aria-hidden="true"></i><span>Reset Ignored Threads</span>';
 
-      unignoreAllButton.addEventListener("click", function (e) {
+      resetButton.addEventListener("click", function (e) {
         e.preventDefault();
-        if (confirm("Are you sure you want to unignore all threads?")) {
-          ignoredThreads = {};
-          GM_setValue("ignoredThreads", ignoredThreads);
-          alert(
-            "All threads have been unignored. Refresh the page to see the changes."
-          );
-          window.location.reload();
-        }
+        resetIgnoredThreads();
       });
 
-      listItem.appendChild(unignoreAllButton);
+      listItem.appendChild(resetButton);
       dropdown.insertBefore(listItem, dropdown.lastElementChild);
     }
   }
@@ -362,10 +360,153 @@ SOFTWARE.
     }
   }
 
+  function showIgnoredThreadsPopup() {
+    // Create popup container
+    const popup = document.createElement("div");
+    popup.id = "ignored-threads-popup";
+    popup.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #2a2e36;
+      border: 1px solid #3a3f4b;
+      border-radius: 5px;
+      padding: 20px;
+      max-width: 80%;
+      max-height: 80%;
+      overflow-y: auto;
+      z-index: 9999;
+      color: #c5d0db;
+      font-family: 'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif;
+    `;
+
+    // Create close button
+    const closeButton = document.createElement("button");
+    closeButton.textContent = "Close";
+    closeButton.style.cssText = `
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: #4a5464;
+      color: #c5d0db;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    `;
+    closeButton.onclick = () => document.body.removeChild(popup);
+
+    // Create content
+    const content = document.createElement("div");
+    content.innerHTML = '<h2 style="margin-top: 0;">Ignored Threads</h2>';
+
+    // Add ignored threads list
+    const threadList = document.createElement("ul");
+    threadList.style.cssText = `
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    `;
+
+    for (const [threadId, title] of Object.entries(ignoredThreads)) {
+      const listItem = document.createElement("li");
+      listItem.style.marginBottom = "10px";
+
+      const threadLink = document.createElement("a");
+      threadLink.href = `https://rpghq.org/forums/viewtopic.php?t=${threadId}`;
+      threadLink.textContent = title;
+      threadLink.style.color = "#4a90e2";
+      threadLink.style.textDecoration = "none";
+
+      const unignoreButton = document.createElement("button");
+      unignoreButton.textContent = "Unignore";
+      unignoreButton.style.cssText = `
+        margin-left: 10px;
+        background-color: #4a5464;
+        color: #c5d0db;
+        border: none;
+        padding: 2px 5px;
+        border-radius: 3px;
+        cursor: pointer;
+      `;
+      unignoreButton.onclick = () => {
+        unignoreThread(threadId);
+        listItem.remove();
+        if (threadList.children.length === 0) {
+          content.innerHTML += "<p>No threads are currently ignored.</p>";
+        }
+      };
+
+      listItem.appendChild(threadLink);
+      listItem.appendChild(unignoreButton);
+      threadList.appendChild(listItem);
+    }
+
+    if (Object.keys(ignoredThreads).length === 0) {
+      content.innerHTML += "<p>No threads are currently ignored.</p>";
+    } else {
+      content.appendChild(threadList);
+
+      // Add mass unignore button
+      const massUnignoreButton = document.createElement("button");
+      massUnignoreButton.textContent = "Unignore All Threads";
+      massUnignoreButton.style.cssText = `
+        margin-top: 15px;
+        background-color: #4a5464;
+        color: #c5d0db;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+      `;
+      massUnignoreButton.onclick = () => {
+        if (confirm("Are you sure you want to unignore all threads?")) {
+          ignoredThreads = {};
+          GM_setValue("ignoredThreads", ignoredThreads);
+          alert("All threads have been unignored.");
+          document.body.removeChild(popup);
+          window.location.reload(); // Reload the page to reflect changes
+        }
+      };
+      content.appendChild(massUnignoreButton);
+    }
+
+    // Assemble popup
+    popup.appendChild(closeButton);
+    popup.appendChild(content);
+    document.body.appendChild(popup);
+  }
+
+  function addShowIgnoredThreadsButton() {
+    const dropdown = document.querySelector(
+      "#username_logged_in .dropdown-contents"
+    );
+    if (dropdown && !document.getElementById("show-ignored-threads-button")) {
+      const listItem = document.createElement("li");
+      const showButton = document.createElement("a");
+      showButton.id = "show-ignored-threads-button";
+      showButton.href = "#";
+      showButton.title = "Show Ignored Threads";
+      showButton.role = "menuitem";
+      showButton.innerHTML =
+        '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>Show Ignored Threads</span>';
+
+      showButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        showIgnoredThreadsPopup();
+      });
+
+      listItem.appendChild(showButton);
+      dropdown.insertBefore(listItem, dropdown.lastElementChild);
+    }
+  }
+
   function initializeScript() {
     addIgnoreButton();
     hideIgnoredThreads();
-    addUnignoreAllButton();
+    addResetIgnoredThreadsButton();
+    addShowIgnoredThreadsButton();
     addToggleIgnoreModeButton();
     addExportImportButtons();
     if (ignoreModeActive) {
@@ -391,9 +532,10 @@ SOFTWARE.
   setTimeout(initializeScript, 500);
 
   // Register menu commands
-  GM_registerMenuCommand("Show Ignored Threads", showIgnoredThreads);
+  GM_registerMenuCommand("Reset Ignored Threads", resetIgnoredThreads);
   GM_registerMenuCommand("Export Ignored Threads", exportIgnoredThreads);
   GM_registerMenuCommand("Import Ignored Threads", importIgnoredThreads);
+  GM_registerMenuCommand("Show Ignored Threads", showIgnoredThreadsPopup);
 
   // Add a MutationObserver to handle dynamically loaded content
   const observer = new MutationObserver((mutations) => {
