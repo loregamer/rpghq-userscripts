@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -256,8 +256,20 @@ SOFTWARE.
           ignoreButton.className = "quick-ignore-button";
           ignoreButton.innerHTML =
             '<img src="https://rpghq.org/forums/ext/canidev/reactions/images/reaction/cancel.svg" alt="Ignore" width="16" height="16">';
-          ignoreButton.style.cssText =
-            "background: none; border: none; cursor: pointer; position: absolute; right: 5px; top: 5px;";
+          ignoreButton.style.cssText = `
+            background: none;
+            border: none;
+            cursor: pointer;
+            position: absolute;
+            right: 5px;
+            bottom: 5px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+          `;
           ignoreButton.addEventListener("click", function (e) {
             e.stopPropagation();
             const threadLink = item.querySelector("a.topictitle");
