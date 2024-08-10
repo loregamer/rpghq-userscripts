@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPG HQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.7
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -87,16 +87,19 @@
 
   function hideIgnoredThreads() {
     const threadItems = document.querySelectorAll(
-      ".topiclist.topics > li, #recent-topics > ul > li"
+      ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
     );
     threadItems.forEach((item) => {
       const threadLink = item.querySelector("a.topictitle");
       if (threadLink) {
-        const threadId = threadLink.href.match(/[?&]t=(\d+)/)[1];
-        if (ignoredThreads.hasOwnProperty(threadId)) {
-          item.style.display = "none";
-        } else {
-          item.style.display = "";
+        const threadIdMatch = threadLink.href.match(/[?&]t=(\d+)/);
+        if (threadIdMatch) {
+          const threadId = threadIdMatch[1];
+          if (ignoredThreads.hasOwnProperty(threadId)) {
+            item.style.display = "none";
+          } else {
+            item.style.display = "";
+          }
         }
       }
     });
@@ -141,11 +144,25 @@
     }
   }
 
-  window.addEventListener("load", function () {
+  function initializeScript() {
     addIgnoreButton();
     hideIgnoredThreads();
     addUnignoreAllButton();
-  });
+  }
+
+  // Try to run immediately
+  initializeScript();
+
+  // If immediate execution fails, wait for DOM content to be loaded
+  if (
+    !document.querySelector(".topiclist.topics") &&
+    !document.querySelector("#recent-topics")
+  ) {
+    document.addEventListener("DOMContentLoaded", initializeScript);
+  }
+
+  // Fallback: If still not loaded, use a short timeout
+  setTimeout(initializeScript, 500);
 
   // Register menu commands
   GM_registerMenuCommand("Show Ignored Threads", showIgnoredThreads);
