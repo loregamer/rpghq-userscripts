@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.5.1
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -567,8 +567,8 @@ SOFTWARE.
   }
 
   function initializeScript() {
-    addIgnoreButton();
     hideIgnoredThreads();
+    addIgnoreButton();
     addResetIgnoredThreadsButton();
     addShowIgnoredThreadsButton();
     addToggleIgnoreModeButton();
@@ -578,11 +578,7 @@ SOFTWARE.
     }
   }
 
-  // Try to run immediately
-  document.addEventListener("DOMContentLoaded", () => {
-    initializeScript();
-    updateIgnoreButtons();
-  });
+  hideIgnoredThreads();
 
   // If immediate execution fails, wait for DOM content to be loaded
   if (
