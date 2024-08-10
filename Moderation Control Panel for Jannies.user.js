@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Moderator Control Panel Enhancer
 // @namespace    https://rpghq.org/
-// @version      3.1.2
+// @version      3.2
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts, and adding a "Show More" button
 // @author       loregamer
 // @match        https://rpghq.org/forums/mcp.php?*mode=topic_view*
@@ -93,18 +93,18 @@ SOFTWARE.
       width: 100% !important; /* Ensure inner div takes full width */
     }
     .postprofile {
-      width: 150px !important; /* Fixed width for post profile */
-      text-align: left !important; /* Left align */
-      padding: 10px !important; /* Ensure padding for consistent spacing */
+      min-width: 150px;
+      width: 150px;
+      flex-shrink: 0;
     }
     .postprofile .avatar-container {
-      margin-bottom: 10px !important;
-      text-align: center !important; /* Center the avatar */
+      margin: 0 auto;
+      overflow: hidden;
     }
     .postprofile img.avatar {
-      width: 128px !important;
-      height: auto !important; /* Ensure image respects aspect ratio */
-      display: none; /* Initially hide the avatar for lazy loading */
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
     .postbody {
       flex-grow: 1 !important;
@@ -414,13 +414,13 @@ SOFTWARE.
       : "username";
     postProfile.className = "postprofile";
     postProfile.innerHTML = `
-            <div class="avatar-container">
-                <a href="./memberlist.php?mode=viewprofile&u=${userId}" class="avatar">
-                    <img class="avatar" src="${defaultAvatarUrl}" width="128" height="128" alt="User avatar">
-                </a>
-            </div>
-            <a href="./memberlist.php?mode=viewprofile&u=${userId}" class="${userClass}" style="color:${userColor};">${username}</a>
-        `;
+      <div class="avatar-container">
+        <a href="./memberlist.php?mode=viewprofile&u=${userId}" class="avatar">
+          <img class="avatar" src="${defaultAvatarUrl}" alt="User avatar">
+        </a>
+      </div>
+      <a href="./memberlist.php?mode=viewprofile&u=${userId}" class="${userClass}" style="color:${userColor};">${username}</a>
+    `;
     return postProfile;
   }
 
@@ -1055,7 +1055,7 @@ SOFTWARE.
       const originalPanelRect = originalPanel.getBoundingClientRect();
       const cpMenuRect = firstCpMenu.getBoundingClientRect();
 
-      if (originalPanelRect.bottom > 0) {
+      if (originalPanelRect.bottom > 0 || window.innerWidth < 1300) {
         // Original panel is visible
         floatingPanelWrapper.style.display = "none";
       } else {
