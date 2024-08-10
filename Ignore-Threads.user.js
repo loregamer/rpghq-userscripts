@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -287,24 +287,22 @@ SOFTWARE.
     const button = document.createElement("button");
     button.className = "quick-ignore-button";
     button.style.cssText = `
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
     `;
 
-    const img = document.createElement("img");
-    img.src =
-      "https://rpghq.org/forums/ext/canidev/reactions/images/reaction/cancel.svg";
-    img.alt = "Ignore";
-    img.width = 16;
-    img.height = 16;
-    button.appendChild(img);
+    button.textContent = "×"; // Using the multiplication symbol as a close icon
+
+    button.addEventListener("mouseover", () => {
+      button.style.opacity = "1";
+    });
+
+    button.addEventListener("mouseout", () => {
+      button.style.opacity = "0.8";
+    });
 
     return button;
   }
@@ -553,10 +551,10 @@ SOFTWARE.
       const showButton = document.createElement("a");
       showButton.id = "show-ignored-threads-button";
       showButton.href = "#";
-      showButton.title = "Show Ignored Threads";
+      showButton.title = "View Ignored Threads";
       showButton.role = "menuitem";
       showButton.innerHTML =
-        '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>Show Ignored Threads</span>';
+        '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>View Ignored Threads</span>';
 
       showButton.addEventListener("click", function (e) {
         e.preventDefault();
@@ -596,12 +594,6 @@ SOFTWARE.
 
   // Fallback: If still not loaded, use a short timeout
   setTimeout(initializeScript, 500);
-
-  // Register menu commands
-  GM_registerMenuCommand("Reset Ignored Threads", resetIgnoredThreads);
-  GM_registerMenuCommand("Export Ignored Threads", exportIgnoredThreads);
-  GM_registerMenuCommand("Import Ignored Threads", importIgnoredThreads);
-  GM_registerMenuCommand("Show Ignored Threads", showIgnoredThreadsPopup);
 
   // Add a MutationObserver to handle dynamically loaded content
   const observer = new MutationObserver((mutations) => {
