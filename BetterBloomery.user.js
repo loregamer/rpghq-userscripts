@@ -18,6 +18,7 @@
     "【 Resource 】": "#3889ED",
     "【 Project 】": "#FF4A66",
     "【 Tutorial 】": "#FFC107",
+    "[ Select for merge ]": "#A50000",
   };
 
   function colorizeTopicTitles() {
