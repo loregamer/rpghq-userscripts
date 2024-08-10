@@ -129,6 +129,10 @@ SOFTWARE.
       baseImageUrl:
         "https://rpghq.org/forums/download/file.php?avatar=3607_1722022475",
     },
+    {
+      userId: "@irc_wunderbar:rpghq.org",
+      baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=90",
+    },
   ];
 
   function setImageSource(img, baseImageUrl) {
