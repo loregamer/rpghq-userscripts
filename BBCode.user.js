@@ -666,14 +666,9 @@ SOFTWARE.
       for (const [directory, smileys] of Object.entries(groupedSmileys)) {
         if (!isFirstGroup) {
           // Add a horizontal line between groups (except before the first group)
-          let groupSeparator = smileyBox.querySelector(
-            ".smiley-group-separator"
-          );
-          if (!groupSeparator) {
-            groupSeparator = document.createElement("hr");
-            groupSeparator.className = "smiley-group-separator";
-            smileyBox.insertBefore(groupSeparator, viewMoreLink);
-          }
+          const groupSeparator = document.createElement("hr");
+          groupSeparator.className = "smiley-group-separator";
+          smileyBox.insertBefore(groupSeparator, viewMoreLink);
         }
         isFirstGroup = false;
 
