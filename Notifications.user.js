@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Notifications Customization
 // @namespace    http://tampermonkey.net/
-// @version      2.0.2
+// @version      2.0.3
 // @description  Customize RPGHQ notifications display
 // @author       LOREGAMER
 // @match        https://rpghq.org/*/*
@@ -278,5 +278,14 @@ SOFTWARE.
   }
 
   // Run the init function when the page loads
-  window.addEventListener("load", init);
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
+    // If the document is already ready, execute the function immediately
+    init();
+  } else {
+    // Otherwise, wait for the DOM to be fully loaded
+    window.addEventListener("load", init);
+  }
 })();
