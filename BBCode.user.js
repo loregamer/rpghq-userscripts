@@ -661,9 +661,14 @@ SOFTWARE.
       for (const [directory, smileys] of Object.entries(groupedSmileys)) {
         if (!isFirstGroup) {
           // Add a horizontal line between groups (except before the first group)
-          const hr = document.createElement("hr");
-          hr.className = "smiley-group-separator";
-          smileyBox.insertBefore(hr, viewMoreLink);
+          let groupSeparator = smileyBox.querySelector(
+            ".smiley-group-separator"
+          );
+          if (!groupSeparator) {
+            groupSeparator = document.createElement("hr");
+            groupSeparator.className = "smiley-group-separator";
+            smileyBox.insertBefore(groupSeparator, viewMoreLink);
+          }
         }
         isFirstGroup = false;
 
@@ -683,50 +688,51 @@ SOFTWARE.
         smileyBox.insertBefore(groupContainer, viewMoreLink);
       }
 
-      // Add a horizontal line before custom smileys
-      let customSmileyHr = smileyBox.querySelector(
-        ".smiley-group-separator:last-of-type"
-      );
-      if (!customSmileyHr) {
-        customSmileyHr = document.createElement("hr");
-        customSmileyHr.className = "smiley-group-separator";
-        smileyBox.insertBefore(customSmileyHr, viewMoreLink);
-      }
-
-      // Create or update the container for custom smileys
+      // Handle custom smileys
       let customSmileyContainer = smileyBox.querySelector(
         ".custom-smiley-container"
       );
-      if (!customSmileyContainer) {
-        customSmileyContainer = document.createElement("div");
-        customSmileyContainer.className = "custom-smiley-container";
-        smileyBox.insertBefore(customSmileyContainer, viewMoreLink);
-      } else {
-        customSmileyContainer.innerHTML = ""; // Clear existing custom smileys
-      }
+      let customSmileyHr = smileyBox.querySelector(".custom-smiley-separator");
 
-      // Add custom smileys
-      for (const smiley of customSmileys) {
-        const smileyButton = document.createElement("a");
-        smileyButton.href = "#";
-        smileyButton.className = "custom-smiley-button";
-        if (smiley.startsWith("http")) {
-          smileyButton.innerHTML = `<img src="${smiley}" alt="Custom Smiley" title="Custom Smiley">`;
-        } else {
-          smileyButton.innerHTML = `<span class="emoji-smiley">${smiley}</span>`;
+      if (customSmileys.length > 0) {
+        // Add a horizontal line before custom smileys if it doesn't exist
+        if (!customSmileyHr) {
+          customSmileyHr = document.createElement("hr");
+          customSmileyHr.className = "custom-smiley-separator";
+          smileyBox.insertBefore(customSmileyHr, viewMoreLink);
         }
-        smileyButton.addEventListener("click", function (e) {
-          e.preventDefault();
-          e.stopPropagation(); // Stop event bubbling
-          insertSmiley(smiley);
-        });
 
-        customSmileyContainer.appendChild(smileyButton);
-      }
+        // Create or update the container for custom smileys
+        if (!customSmileyContainer) {
+          customSmileyContainer = document.createElement("div");
+          customSmileyContainer.className = "custom-smiley-container";
+          smileyBox.insertBefore(customSmileyContainer, viewMoreLink);
+        } else {
+          customSmileyContainer.innerHTML = ""; // Clear existing custom smileys
+        }
 
-      // Ensure the custom smiley container is before the "View more smilies" link
-      if (viewMoreLink && customSmileyContainer.nextSibling !== viewMoreLink) {
-        smileyBox.insertBefore(customSmileyContainer, viewMoreLink);
+        // Add custom smileys
+        for (const smiley of customSmileys) {
+          const smileyButton = document.createElement("a");
+          smileyButton.href = "#";
+          smileyButton.className = "custom-smiley-button";
+          if (smiley.startsWith("http")) {
+            smileyButton.innerHTML = `<img src="${smiley}" alt="Custom Smiley" title="Custom Smiley">`;
+          } else {
+            smileyButton.innerHTML = `<span class="emoji-smiley">${smiley}</span>`;
+          }
+          smileyButton.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation(); // Stop event bubbling
+            insertSmiley(smiley);
+          });
+
+          customSmileyContainer.appendChild(smileyButton);
+        }
+      } else {
+        // Remove custom smiley container and separator if no custom smileys exist
+        if (customSmileyContainer) customSmileyContainer.remove();
+        if (customSmileyHr) customSmileyHr.remove();
       }
     }
   }
