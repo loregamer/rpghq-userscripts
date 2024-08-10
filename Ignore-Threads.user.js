@@ -212,9 +212,6 @@ SOFTWARE.
       toggleButton.querySelector("i").className = ignoreModeActive
         ? "icon fa-toggle-on fa-fw"
         : "icon fa-toggle-off fa-fw";
-      toggleButton.querySelector("span").textContent = ignoreModeActive
-        ? "Disable Ignore Mode"
-        : "Enable Ignore Mode";
     }
     updateIgnoreButtons();
   }
@@ -228,11 +225,14 @@ SOFTWARE.
       const toggleButton = document.createElement("a");
       toggleButton.id = "toggle-ignore-mode-button";
       toggleButton.href = "#";
-      toggleButton.title = "Toggle Ignore Mode";
+      toggleButton.title = "Toggle Mass Ignore Mode";
       toggleButton.role = "menuitem";
-      toggleButton.innerHTML = ignoreModeActive
-        ? '<i class="icon fa-toggle-on fa-fw" aria-hidden="true"></i><span>Disable Ignore Mode</span>'
-        : '<i class="icon fa-toggle-off fa-fw" aria-hidden="true"></i><span>Enable Ignore Mode</span>';
+      toggleButton.innerHTML = `
+        <i class="icon ${
+          ignoreModeActive ? "fa-toggle-on" : "fa-toggle-off"
+        } fa-fw" aria-hidden="true"></i>
+        <span>Mass Ignore Mode</span>
+      `;
 
       toggleButton.addEventListener("click", function (e) {
         e.preventDefault();
@@ -252,25 +252,21 @@ SOFTWARE.
       const existingButton = item.querySelector(".quick-ignore-button");
       if (ignoreModeActive) {
         if (!existingButton) {
-          const ignoreButton = document.createElement("button");
-          ignoreButton.className = "quick-ignore-button";
-          ignoreButton.innerHTML =
-            '<img src="https://rpghq.org/forums/ext/canidev/reactions/images/reaction/cancel.svg" alt="Ignore" width="16" height="16">';
-          ignoreButton.style.cssText = `
-            background: none;
-            border: none;
-            cursor: pointer;
+          const button = createIgnoreButton();
+
+          // Position the button in the center vertically and on the right
+          button.style.cssText = `
             position: absolute;
             right: 5px;
-            bottom: 5px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
           `;
-          ignoreButton.addEventListener("click", function (e) {
+
+          item.style.position = "relative";
+          item.appendChild(button);
+
+          button.addEventListener("click", function (e) {
             e.stopPropagation();
             const threadLink = item.querySelector("a.topictitle");
             if (threadLink) {
@@ -280,13 +276,37 @@ SOFTWARE.
               item.style.display = "none";
             }
           });
-          item.style.position = "relative";
-          item.appendChild(ignoreButton);
         }
       } else if (existingButton) {
         existingButton.remove();
       }
     });
+  }
+
+  function createIgnoreButton() {
+    const button = document.createElement("button");
+    button.className = "quick-ignore-button";
+    button.style.cssText = `
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+    `;
+
+    const img = document.createElement("img");
+    img.src =
+      "https://rpghq.org/forums/ext/canidev/reactions/images/reaction/cancel.svg";
+    img.alt = "Ignore";
+    img.width = 16;
+    img.height = 16;
+    button.appendChild(img);
+
+    return button;
   }
 
   function exportIgnoredThreads() {
