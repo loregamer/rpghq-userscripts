@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPG HQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      2.1
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -92,17 +92,34 @@
     threadItems.forEach((item) => {
       const threadLink = item.querySelector("a.topictitle");
       if (threadLink) {
-        const threadIdMatch = threadLink.href.match(/[?&]t=(\d+)/);
-        if (threadIdMatch) {
-          const threadId = threadIdMatch[1];
-          if (ignoredThreads.hasOwnProperty(threadId)) {
-            item.style.display = "none";
-          } else {
-            item.style.display = "";
-          }
+        const threadTitle = threadLink.textContent.trim();
+        if (isThreadIgnored(threadTitle)) {
+          item.style.display = "none";
+        } else {
+          item.style.display = "";
         }
       }
     });
+
+    // Hide lastpost information if it's from an ignored thread
+    const lastPosts = document.querySelectorAll(".lastpost");
+    lastPosts.forEach((lastPost) => {
+      const lastPostLink = lastPost.querySelector("a.lastsubject");
+      if (lastPostLink) {
+        const threadTitle = lastPostLink.textContent.trim();
+        if (isThreadIgnored(threadTitle)) {
+          lastPost.style.display = "none";
+        } else {
+          lastPost.style.display = "";
+        }
+      }
+    });
+  }
+
+  function isThreadIgnored(threadTitle) {
+    return Object.values(ignoredThreads).some(
+      (ignoredTitle) => ignoredTitle.toLowerCase() === threadTitle.toLowerCase()
+    );
   }
 
   function showIgnoredThreads() {
