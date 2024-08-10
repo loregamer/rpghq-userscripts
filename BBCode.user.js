@@ -6,7 +6,8 @@
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php*
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
-// @grant        none
+// @grant        GM_setValue
+// @grant        GM_getValue
 // @license     MIT
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/BBCode.user.js
 // @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/BBCode.user.js
@@ -40,21 +41,10 @@ SOFTWARE.
   "use strict";
 
   // Simplified customSmileys array
-  const customSmileys = [
+  let customSmileys = [
     "📥",
-    "https://f.rpghq.org/Z7NDrB79GqGA.png?n=classy.png",
-    "https://f.rpghq.org/1O52kDUFh8s5.png?n=nexus.png",
-    "https://f.rpghq.org/5Niz8ii3t0cN.png?n=HQ%20Official.png",
     "https://f.rpghq.org/ZgRYx3ztDLyD.png?n=cancel_forum.png",
     "https://f.rpghq.org/W5kvLDYCwg8G.png",
-    "https://f.rpghq.org/pzZ8ahRyIi0J.png?n=loregamer%20coffee.png",
-    "https://f.rpghq.org/Z6RIUgsiP5is.png",
-    "https://f.rpghq.org/6FeAQQz5oOly.png?n=grr%20(1).png",
-    "https://f.rpghq.org/6KVsHU0jse33.png?n=mhm%20(1).png",
-    "https://f.rpghq.org/FzMC7rrQZBh0.gif?n=waving.gif",
-    "https://f.rpghq.org/E9Zz7UA5Nnh9.png?n=copium%20(1).png",
-    "https://f.rpghq.org/8oRjBRJP8mdp.gif?n=pepe-copium-overdose.gif",
-    "https://f.rpghq.org/5ZGCa1oUm428.png?n=joe-handshake%20(1).png",
     // Add more custom smiley URLs here
   ];
 
@@ -694,13 +684,26 @@ SOFTWARE.
       }
 
       // Add a horizontal line before custom smileys
-      const customSmileyHr = document.createElement("hr");
-      customSmileyHr.className = "smiley-group-separator";
-      smileyBox.insertBefore(customSmileyHr, viewMoreLink);
+      let customSmileyHr = smileyBox.querySelector(
+        ".smiley-group-separator:last-of-type"
+      );
+      if (!customSmileyHr) {
+        customSmileyHr = document.createElement("hr");
+        customSmileyHr.className = "smiley-group-separator";
+        smileyBox.insertBefore(customSmileyHr, viewMoreLink);
+      }
 
-      // Create a container for custom smileys
-      const customSmileyContainer = document.createElement("div");
-      customSmileyContainer.className = "custom-smiley-container";
+      // Create or update the container for custom smileys
+      let customSmileyContainer = smileyBox.querySelector(
+        ".custom-smiley-container"
+      );
+      if (!customSmileyContainer) {
+        customSmileyContainer = document.createElement("div");
+        customSmileyContainer.className = "custom-smiley-container";
+        smileyBox.insertBefore(customSmileyContainer, viewMoreLink);
+      } else {
+        customSmileyContainer.innerHTML = ""; // Clear existing custom smileys
+      }
 
       // Add custom smileys
       for (const smiley of customSmileys) {
@@ -721,12 +724,9 @@ SOFTWARE.
         customSmileyContainer.appendChild(smileyButton);
       }
 
-      // Insert the custom smiley container before the "View more smilies" link
-      if (viewMoreLink) {
+      // Ensure the custom smiley container is before the "View more smilies" link
+      if (viewMoreLink && customSmileyContainer.nextSibling !== viewMoreLink) {
         smileyBox.insertBefore(customSmileyContainer, viewMoreLink);
-      } else {
-        // If the "View more smilies" link is not found, append to the end
-        smileyBox.appendChild(customSmileyContainer);
       }
     }
   }
@@ -920,6 +920,207 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     // Update the highlight and adjust textarea size
     updateHighlight();
     adjustTextareaAndHighlight();
+  }
+
+  function showCustomSmileysPopup(event) {
+    event.preventDefault();
+
+    // Create popup container
+    const popup = document.createElement("div");
+    popup.id = "custom-smileys-popup";
+    popup.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #2a2e36;
+      border: 1px solid #3a3f4b;
+      border-radius: 5px;
+      width: 80%;
+      max-width: 600px;
+      height: 80%;
+      max-height: 600px;
+      display: flex;
+      flex-direction: column;
+      z-index: 9999;
+      font-family: 'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif;
+    `;
+
+    // Create header
+    const header = document.createElement("div");
+    header.style.cssText = `
+      padding: 20px;
+      background-color: #2a2e36;
+      border-bottom: 1px solid #3a3f4b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    `;
+
+    const title = document.createElement("h2");
+    title.textContent = "Manage Custom Smileys";
+    title.style.margin = "0";
+    title.style.color = "#c5d0db";
+
+    const closeButton = document.createElement("button");
+    closeButton.textContent = "Close";
+    closeButton.style.cssText = `
+      background-color: #4a5464;
+      color: #c5d0db;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    `;
+    closeButton.onclick = (e) => {
+      e.preventDefault();
+      document.body.removeChild(popup);
+    };
+
+    header.appendChild(title);
+    header.appendChild(closeButton);
+
+    // Create content
+    const content = document.createElement("div");
+    content.style.cssText = `
+      padding: 20px;
+      overflow-y: auto;
+      flex-grow: 1;
+    `;
+
+    const smileyList = document.createElement("ul");
+    smileyList.style.cssText = `
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    `;
+    content.appendChild(smileyList);
+
+    function updateSmileyList() {
+      smileyList.innerHTML = "";
+
+      customSmileys.forEach((smiley, index) => {
+        const listItem = document.createElement("li");
+        listItem.style.cssText = `
+          margin-bottom: 10px;
+          display: flex;
+          align-items: center;
+        `;
+
+        if (isSingleEmoji(smiley)) {
+          const emojiSpan = document.createElement("span");
+          emojiSpan.textContent = smiley;
+          emojiSpan.style.fontSize = "18px";
+          emojiSpan.style.marginRight = "10px";
+          listItem.appendChild(emojiSpan);
+        } else {
+          const smileyPreview = document.createElement("img");
+          smileyPreview.src = smiley;
+          smileyPreview.alt = "Smiley";
+          smileyPreview.style.cssText = `
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+          `;
+          listItem.appendChild(smileyPreview);
+        }
+
+        const smileyInput = document.createElement("input");
+        smileyInput.type = "text";
+        smileyInput.value = smiley;
+        smileyInput.disabled = true;
+        smileyInput.style.cssText = `
+          flex-grow: 1;
+          margin-right: 10px;
+          padding: 5px;
+          background-color: #2a2e36;
+          color: #a0a0a0;
+          border: 1px solid #3a3f4b;
+          border-radius: 3px;
+          cursor: default;
+        `;
+
+        const removeButton = document.createElement("button");
+        removeButton.textContent = "Remove";
+        removeButton.style.cssText = `
+          background-color: #4a5464;
+          color: #c5d0db;
+          border: none;
+          padding: 5px 10px;
+          border-radius: 3px;
+          cursor: pointer;
+        `;
+        removeButton.onclick = () => {
+          customSmileys.splice(index, 1);
+          saveCustomSmileys();
+          updateSmileyList();
+        };
+
+        listItem.appendChild(smileyInput);
+        listItem.appendChild(removeButton);
+        smileyList.appendChild(listItem);
+      });
+    }
+
+    // Add new smiley input
+    const newSmileyInput = document.createElement("input");
+    newSmileyInput.type = "text";
+    newSmileyInput.placeholder = "Enter new smiley or emoji";
+    newSmileyInput.style.cssText = `
+      width: 100%;
+      margin-top: 15px;
+      padding: 5px;
+      background-color: #3a3f4b;
+      color: #c5d0db;
+      border: 1px solid #4a5464;
+      border-radius: 3px;
+    `;
+
+    const addButton = document.createElement("button");
+    addButton.textContent = "Add New Smiley";
+    addButton.style.cssText = `
+      margin-top: 10px;
+      background-color: #4a5464;
+      color: #c5d0db;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    `;
+    addButton.onclick = () => {
+      if (newSmileyInput.value) {
+        customSmileys.push(newSmileyInput.value);
+        saveCustomSmileys();
+        newSmileyInput.value = "";
+        updateSmileyList();
+      }
+    };
+
+    content.appendChild(newSmileyInput);
+    content.appendChild(addButton);
+
+    // Initial update of smiley list
+    updateSmileyList();
+
+    // Assemble popup
+    popup.appendChild(header);
+    popup.appendChild(content);
+    document.body.appendChild(popup);
+  }
+
+  function isSingleEmoji(str) {
+    const emojiRegex =
+      /^(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])$/;
+    return emojiRegex.test(str);
+  }
+
+  // Add this function to save custom smileys
+  function saveCustomSmileys() {
+    GM_setValue("customSmileys", JSON.stringify(customSmileys));
+    addCustomSmileyButtons(); // Refresh the smiley buttons
   }
 
   function initialize() {
@@ -1170,6 +1371,28 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
 
       let lastContent = "";
       let updateTimer = null;
+
+      const storedSmileys = GM_getValue("customSmileys");
+      if (storedSmileys) {
+        customSmileys = JSON.parse(storedSmileys);
+      }
+
+      const smileyBox = document.getElementById("smiley-box");
+      if (smileyBox) {
+        const manageButton = document.createElement("button");
+        manageButton.textContent = "Manage Custom Smileys";
+        manageButton.style.cssText = `
+      margin-top: 10px;
+      background-color: #4a5464;
+      color: #c5d0db;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    `;
+        manageButton.onclick = showCustomSmileysPopup;
+        smileyBox.appendChild(manageButton);
+      }
 
       function checkForUpdates() {
         const currentContent = newTextarea.value;
