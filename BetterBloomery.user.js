@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Title Colorizer
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.0.1
 // @description  Colorize specific text in titles on RPGHQ forums, including sticky topics
 // @match        https://rpghq.org/forums/*
 // @grant        none
@@ -38,7 +38,16 @@
   // Uncomment the following line if needed:
   // setInterval(colorizeTopicTitles, 2000);
 
-  window.addEventListener("load", function () {
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
+    // If the document is already ready, execute the function immediately
     colorizeTopicTitles();
-  });
+  } else {
+    // Otherwise, wait for the DOM to be fully loaded
+    window.addEventListener("load", function () {
+      colorizeTopicTitles();
+    });
+  }
 })();
