@@ -1008,7 +1008,6 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       padding: 0;
       margin: 0;
     `;
-    content.appendChild(smileyList);
 
     function updateSmileyList() {
       smileyList.innerHTML = "";
@@ -1054,16 +1053,47 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
           cursor: default;
         `;
 
-        const removeButton = document.createElement("button");
-        removeButton.textContent = "Remove";
-        removeButton.style.cssText = `
+        const buttonStyle = `
           background-color: #4a5464;
           color: #c5d0db;
           border: none;
           padding: 5px 10px;
+          margin-left: 5px;
           border-radius: 3px;
           cursor: pointer;
         `;
+
+        const upButton = document.createElement("button");
+        upButton.textContent = "↑";
+        upButton.style.cssText = buttonStyle;
+        upButton.onclick = () => {
+          if (index > 0) {
+            [customSmileys[index - 1], customSmileys[index]] = [
+              customSmileys[index],
+              customSmileys[index - 1],
+            ];
+            saveCustomSmileys();
+            updateSmileyList();
+          }
+        };
+
+        const downButton = document.createElement("button");
+        downButton.textContent = "↓";
+        downButton.style.cssText = buttonStyle;
+        downButton.onclick = () => {
+          if (index < customSmileys.length - 1) {
+            [customSmileys[index], customSmileys[index + 1]] = [
+              customSmileys[index + 1],
+              customSmileys[index],
+            ];
+            saveCustomSmileys();
+            updateSmileyList();
+          }
+        };
+
+        const removeButton = document.createElement("button");
+        removeButton.textContent = "Remove";
+        removeButton.style.cssText = buttonStyle;
         removeButton.onclick = () => {
           customSmileys.splice(index, 1);
           saveCustomSmileys();
@@ -1071,7 +1101,10 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         };
 
         listItem.appendChild(smileyInput);
+        listItem.appendChild(upButton);
+        listItem.appendChild(downButton);
         listItem.appendChild(removeButton);
+
         smileyList.appendChild(listItem);
       });
     }
@@ -1110,8 +1143,11 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       }
     };
 
+    content.appendChild(smileyList);
     content.appendChild(newSmileyInput);
     content.appendChild(addButton);
+
+    // Add new smiley input (keep the existing code for adding new smileys)
 
     // Initial update of smiley list
     updateSmileyList();
