@@ -635,7 +635,12 @@ SOFTWARE.
   function addCustomSmileyButtons() {
     const smileyBox = document.getElementById("smiley-box");
     if (smileyBox) {
-      // Find the "View more smilies" link
+      // Hide the "Topic review" link
+      const topicReviewLink = smileyBox.querySelector('a[href="#review"]');
+      if (topicReviewLink) {
+        topicReviewLink.parentElement.style.display = "none";
+      }
+
       const viewMoreLink = smileyBox.querySelector('a[href*="mode=smilies"]');
 
       // Group existing smileys
