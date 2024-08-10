@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPG HQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      0.9
+// @version      1.3
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -12,7 +12,7 @@
 (function () {
   "use strict";
 
-  const ignoredThreads = GM_getValue("ignoredThreads", {});
+  let ignoredThreads = GM_getValue("ignoredThreads", {});
 
   function addIgnoreButton() {
     const actionBar = document.querySelector(".action-bar.bar-top");
@@ -76,14 +76,12 @@
   function ignoreThread(threadId, threadTitle) {
     ignoredThreads[threadId] = threadTitle;
     GM_setValue("ignoredThreads", ignoredThreads);
-    hideIgnoredThreads();
   }
 
   function unignoreThread(threadId) {
     if (ignoredThreads.hasOwnProperty(threadId)) {
       delete ignoredThreads[threadId];
       GM_setValue("ignoredThreads", ignoredThreads);
-      hideIgnoredThreads();
     }
   }
 
@@ -94,7 +92,7 @@
     threadItems.forEach((item) => {
       const threadLink = item.querySelector("a.topictitle");
       if (threadLink) {
-        const threadId = threadLink.href.split("t=")[1].split("&")[0];
+        const threadId = threadLink.href.match(/[?&]t=(\d+)/)[1];
         if (ignoredThreads.hasOwnProperty(threadId)) {
           item.style.display = "none";
         } else {
@@ -112,11 +110,43 @@
     alert(message || "No threads are currently ignored.");
   }
 
-  // Register menu commands
-  GM_registerMenuCommand("Show Ignored Threads", showIgnoredThreads);
+  function addUnignoreAllButton() {
+    const dropdown = document.querySelector(
+      "#username_logged_in .dropdown-contents"
+    );
+    if (dropdown && !document.getElementById("unignore-all-button")) {
+      const listItem = document.createElement("li");
+      const unignoreAllButton = document.createElement("a");
+      unignoreAllButton.id = "unignore-all-button";
+      unignoreAllButton.href = "#";
+      unignoreAllButton.title = "Unignore all threads";
+      unignoreAllButton.role = "menuitem";
+      unignoreAllButton.innerHTML =
+        '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>Unignore all threads</span>';
+
+      unignoreAllButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        if (confirm("Are you sure you want to unignore all threads?")) {
+          ignoredThreads = {};
+          GM_setValue("ignoredThreads", ignoredThreads);
+          alert(
+            "All threads have been unignored. Refresh the page to see the changes."
+          );
+          window.location.reload();
+        }
+      });
+
+      listItem.appendChild(unignoreAllButton);
+      dropdown.insertBefore(listItem, dropdown.lastElementChild);
+    }
+  }
 
   window.addEventListener("load", function () {
     addIgnoreButton();
     hideIgnoredThreads();
+    addUnignoreAllButton();
   });
+
+  // Register menu commands
+  GM_registerMenuCommand("Show Ignored Threads", showIgnoredThreads);
 })();
