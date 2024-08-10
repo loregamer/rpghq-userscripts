@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Title Colorizer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.2
+// @version      1.0.3
 // @description  Colorize specific text in titles on RPGHQ forums, including sticky topics
 // @match        https://rpghq.org/forums/*
 // @grant        none
@@ -22,9 +22,9 @@
   };
 
   function colorizeTopicTitles() {
-    // Select all topic titles, including those in sticky rows, h2, h3, and dd elements
+    // Select all topic titles, including those in sticky rows, h2, h3, dd elements, and the tabs-container
     const topicTitles = document.querySelectorAll(
-      "a.topictitle, h2.topic-title a, h3.first a, dd.lastpost a.lastsubject"
+      "a.topictitle, h2.topic-title a, h3.first a, dd.lastpost a.lastsubject, .tabs-container h2 a"
     );
 
     topicTitles.forEach((title) => {
