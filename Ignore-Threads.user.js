@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPG HQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -87,7 +87,7 @@
 
   function hideIgnoredThreads() {
     const threadItems = document.querySelectorAll(
-      ".topiclist.topics > li, #recent-topics .row-item"
+      ".topiclist.topics > li, #recent-topics > ul > li"
     );
     threadItems.forEach((item) => {
       const threadLink = item.querySelector("a.topictitle");
