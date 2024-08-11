@@ -39,6 +39,11 @@
               byTextNode.remove();
               // Remove the mas-wrap element (avatar and username)
               nextElement.remove();
+              // Remove the <br> element
+              const br = spanElement.querySelector("br");
+              if (br) {
+                br.remove();
+              }
               // Remove any extra spaces
               spanElement.normalize();
             }
