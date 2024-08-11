@@ -21,6 +21,9 @@
       .ghosted-post {
         display: none;
       }
+      .ghosted-post.show {
+        display: block;
+      }
     `;
   document.head.appendChild(style);
 
@@ -39,10 +42,16 @@
         const markReadLink = item.getAttribute("data-mark-read-url");
         if (markReadLink) {
           markAsRead(markReadLink);
+        } else {
+          // For read notifications that don't have data-mark-read-url
+          const href = item.getAttribute("href");
+          if (href) {
+            markAsRead(href);
+          }
         }
         const listItem = item.closest("li");
         if (listItem) {
-          listItem.remove();
+          listItem.style.display = "none";
         }
       }
     });
@@ -169,7 +178,7 @@
       method: "GET",
       url: "https://rpghq.org/forums/" + href,
       onload: function (response) {
-        console.log("Notification marked as read:", response.status);
+        console.log("Ghosted notification marked as read:", response.status);
       },
     });
   }
