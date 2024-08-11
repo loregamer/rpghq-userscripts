@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.5.1
+// @version      1.5.2
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -44,15 +44,22 @@ SOFTWARE.
 
   function addIgnoreButton() {
     const actionBar = document.querySelector(".action-bar.bar-top");
+    const paginationDiv = actionBar.querySelector(".pagination");
     const threadId = getThreadId();
     if (
       actionBar &&
+      paginationDiv &&
       threadId &&
       !document.getElementById("ignore-thread-button")
     ) {
-      const ignoreButton = document.createElement("a");
+      const dropdownContainer = document.createElement("div");
+      dropdownContainer.className =
+        "dropdown-container dropdown-button-control topic-tools";
+
+      const ignoreButton = document.createElement("span");
       ignoreButton.id = "ignore-thread-button";
-      ignoreButton.className = "button button-secondary";
+      ignoreButton.className = "button button-secondary dropdown-trigger";
+      ignoreButton.title = "Ignore Thread";
 
       let isIgnored = ignoredThreads.hasOwnProperty(threadId);
       updateButtonState(ignoreButton, isIgnored);
@@ -76,18 +83,30 @@ SOFTWARE.
         }
       });
 
-      actionBar.appendChild(ignoreButton);
+      dropdownContainer.appendChild(ignoreButton);
+      actionBar.insertBefore(dropdownContainer, paginationDiv);
+
+      // Add media query for responsive design
+      const style = document.createElement("style");
+      style.textContent = `
+        @media (max-width: 700px) {
+          #ignore-thread-button span {
+            display: none;
+          }
+        }
+      `;
+      document.head.appendChild(style);
     }
   }
 
   function updateButtonState(button, isIgnored) {
     if (isIgnored) {
       button.innerHTML =
-        '<span>Unignore Thread</span> <i class="icon fa-check fa-fw" aria-hidden="true"></i>';
+        '<i class="icon fa-check fa-fw" aria-hidden="true"></i><span>Unignore Thread</span>';
       button.title = "Unignore Thread";
     } else {
       button.innerHTML =
-        '<span>Ignore Thread</span> <i class="icon fa-ban fa-fw" aria-hidden="true"></i>';
+        '<i class="icon fa-ban fa-fw" aria-hidden="true"></i><span>Ignore Thread</span>';
       button.title = "Ignore Thread";
     }
   }
