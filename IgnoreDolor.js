@@ -140,6 +140,18 @@
         }
       }
     });
+
+    // Process posts
+    const posts = document.querySelectorAll(".post");
+    posts.forEach((post) => {
+      const usernameElement = post.querySelector(".username");
+      if (
+        usernameElement &&
+        isUserIgnored(usernameElement.textContent.trim())
+      ) {
+        post.style.display = "none";
+      }
+    });
   }
 
   function markAsRead(href) {
@@ -378,8 +390,60 @@
     });
   }
 
+  function addShowGhostedPostsButton() {
+    if (!document.getElementById("show-ghosted-posts")) {
+      const button = document.createElement("a");
+      button.id = "show-ghosted-posts";
+      button.className = "button";
+      button.href = "#";
+      button.style.marginRight = "5px";
+      button.innerHTML =
+        '<span>Show Ghosted Posts</span> <i class="icon fa-eye fa-fw" aria-hidden="true"></i>';
+
+      button.addEventListener("click", function (e) {
+        e.preventDefault();
+        toggleGhostedPosts();
+      });
+
+      const actionBar = document.querySelector(".action-bar.bar-top");
+      if (actionBar) {
+        const firstButton = actionBar.querySelector(".button");
+        if (firstButton) {
+          actionBar.insertBefore(button, firstButton);
+        } else {
+          actionBar.appendChild(button);
+        }
+      }
+    }
+  }
+
+  function toggleGhostedPosts() {
+    const button = document.getElementById("show-ghosted-posts");
+    const isShowing =
+      button.querySelector("span").textContent === "Hide Ghosted Posts";
+
+    button.querySelector("span").textContent = isShowing
+      ? "Show Ghosted Posts"
+      : "Hide Ghosted Posts";
+    button.querySelector("i").className = isShowing
+      ? "icon fa-eye fa-fw"
+      : "icon fa-eye-slash fa-fw";
+
+    const posts = document.querySelectorAll(".post");
+    posts.forEach((post) => {
+      const usernameElement = post.querySelector(".username");
+      if (
+        usernameElement &&
+        isUserIgnored(usernameElement.textContent.trim())
+      ) {
+        post.style.display = isShowing ? "none" : "block";
+      }
+    });
+  }
+
   function init() {
     processIgnoredContent();
+    addShowGhostedPostsButton();
     replaceUserAvatar();
     addGhostButton();
     moveExternalLinkIcon();
