@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ignore Dolor
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.9
 // @description  Remove "by dolor" in recent topics and lastpost while keeping timestamp and button
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -9,64 +9,78 @@
 // @license      MIT
 // ==/UserScript==
 
-(function() {
-    "use strict";
+(function () {
+  "use strict";
 
-    function processDolorContent() {
-        // Process notifications
-        const notificationItems = document.querySelectorAll('.notification-block');
-        notificationItems.forEach(item => {
-            const usernameElement = item.querySelector('.username');
-            if (usernameElement && usernameElement.textContent.trim().toLowerCase() === 'dolor') {
-                const markReadLink = item.getAttribute('href');
-                if (markReadLink) {
-                    markAsRead(markReadLink);
-                }
-                const listItem = item.closest('li');
-                if (listItem) {
-                    listItem.remove();
-                }
+  function processDolorContent() {
+    // Process recent topics and lastpost
+    const lastpostElements = document.querySelectorAll(
+      "dd.lastpost, #recent-topics li dd.lastpost"
+    );
+    lastpostElements.forEach((lastpostElement) => {
+      const spanElement = lastpostElement.querySelector("span");
+      if (spanElement) {
+        // Find the "by" text node
+        const byTextNode = Array.from(spanElement.childNodes).find(
+          (node) =>
+            node.nodeType === Node.TEXT_NODE && node.textContent.trim() === "by"
+        );
+
+        if (byTextNode) {
+          // Check if the next element is the username
+          const nextElement = byTextNode.nextElementSibling;
+          if (nextElement && nextElement.classList.contains("mas-wrap")) {
+            const usernameElement = nextElement.querySelector(".username");
+            if (
+              usernameElement &&
+              usernameElement.textContent.trim().toLowerCase() === "dolor"
+            ) {
+              // Remove the "by" text node
+              byTextNode.remove();
+              // Remove the mas-wrap element (avatar and username)
+              nextElement.remove();
+              // Remove any extra spaces
+              spanElement.normalize();
             }
-        });
+          }
+        }
+      }
+    });
+  }
 
-        // Process recent topics and lastpost
-        const topicElements = document.querySelectorAll('#recent-topics li, dd.lastpost');
-        topicElements.forEach(element => {
-            const usernameElement = element.querySelector('.username');
-            if (usernameElement && usernameElement.textContent.trim().toLowerCase() === 'dolor') {
-                // Replace the "by" text with an empty string
-                element.childNodes.forEach(node => {
-                    if (node.nodeType === Node.TEXT_NODE) {
-                        node.textContent = node.textContent.replace(/\s*by\s*/i, '');
-                    }
-                });
+  function markAsRead(href) {
+    GM_xmlhttpRequest({
+      method: "GET",
+      url: "https://rpghq.org/forums/" + href,
+      onload: function (response) {
+        console.log("Dolor notification marked as read:", response.status);
+      },
+    });
+  }
 
-                // Remove the line break after "by"
-                const br = element.querySelector('br');
-                if (br) {
-                    br.remove();
-                }
+  function init() {
+    processDolorContent();
 
-                // Remove the mas-wrap element (avatar and username)
-                const masWrap = element.querySelector('.mas-wrap');
-                if (masWrap) {
-                    masWrap.remove();
-                }
-            }
-        });
-    }
+    // Set up a MutationObserver to handle dynamically loaded content
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === "childList") {
+          processDolorContent();
+        }
+      });
+    });
 
-    function markAsRead(href) {
-        GM_xmlhttpRequest({
-            method: "GET",
-            url: "https://rpghq.org/forums/" + href,
-            onload: function(response) {
-                console.log("Dolor notification marked as read:", response.status);
-            }
-        });
-    }
+    const config = { childList: true, subtree: true };
+    observer.observe(document.body, config);
+  }
 
-    function init() {
-        processDolorContent();
-
-        // Set up a MutationObserver to handle dynamically
+  // Run the init function when the page loads
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
+    init();
+  } else {
+    window.addEventListener("load", init);
+  }
+})();
