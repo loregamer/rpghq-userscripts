@@ -447,7 +447,6 @@
   function init() {
     processIgnoredContent();
     addShowGhostedPostsButton();
-    toggleGhostedPosts();
     replaceUserAvatar();
     addGhostButton();
     moveExternalLinkIcon();
