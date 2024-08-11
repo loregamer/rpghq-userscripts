@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Ignore Users
 // @namespace    http://tampermonkey.net/
-// @version      3.0
-// @description  Add Ghost User button to profiles and hide content from ghosted users
+// @version      3.1
+// @description  Add Ghost User button to profiles, hide content from ghosted users, and replace avatars
 // @author       You
 // @match        https://rpghq.org/*/*
 // @grant        GM_xmlhttpRequest
@@ -119,7 +119,7 @@
 
         replaceAvatarButton.addEventListener("click", function (e) {
           e.preventDefault();
-          promptReplaceAvatar(userId);
+          showReplaceAvatarPopup(userId);
         });
 
         buttonContainer.appendChild(ghostButton);
@@ -141,13 +141,99 @@
     return button;
   }
 
-  function promptReplaceAvatar(userId) {
-    const imageUrl = prompt(
-      "Enter the URL of the replacement avatar image (128x128 or smaller):"
-    );
-    if (imageUrl) {
-      validateAndReplaceAvatar(userId, imageUrl);
-    }
+  function showReplaceAvatarPopup(userId) {
+    const popup = document.createElement("div");
+    popup.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #2a2a2a;
+        color: #e0e0e0;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        z-index: 9999;
+        width: 300px;
+    `;
+
+    const title = document.createElement("h3");
+    title.textContent = "Replace Avatar";
+    title.style.cssText = `
+        margin-top: 0;
+        margin-bottom: 15px;
+        color: #e0e0e0;
+        font-size: 18px;
+    `;
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = "Enter image URL (128x128 or smaller)";
+    input.style.cssText = `
+        width: 100%;
+        padding: 5px;
+        margin-bottom: 15px;
+        background-color: #3a3a3a;
+        border: 1px solid #4a4a4a;
+        color: #e0e0e0;
+        border-radius: 3px;
+    `;
+
+    const buttonContainer = document.createElement("div");
+    buttonContainer.style.display = "flex";
+    buttonContainer.style.justifyContent = "space-between";
+
+    const replaceButton = createPopupButton("Replace");
+    const resetButton = createPopupButton("Reset to Default");
+    const cancelButton = createPopupButton("Cancel");
+
+    replaceButton.addEventListener("click", function () {
+      validateAndReplaceAvatar(userId, input.value);
+      document.body.removeChild(popup);
+    });
+
+    resetButton.addEventListener("click", function () {
+      delete replacedAvatars[userId];
+      GM_setValue("replacedAvatars", replacedAvatars);
+      alert("Avatar reset to default.");
+      replaceUserAvatar();
+      document.body.removeChild(popup);
+    });
+
+    cancelButton.addEventListener("click", function () {
+      document.body.removeChild(popup);
+    });
+
+    buttonContainer.appendChild(replaceButton);
+    buttonContainer.appendChild(resetButton);
+    buttonContainer.appendChild(cancelButton);
+
+    popup.appendChild(title);
+    popup.appendChild(input);
+    popup.appendChild(buttonContainer);
+
+    document.body.appendChild(popup);
+  }
+
+  function createPopupButton(text) {
+    const button = document.createElement("button");
+    button.textContent = text;
+    button.style.cssText = `
+        background-color: #3a3a3a;
+        color: #e0e0e0;
+        border: none;
+        padding: 5px 10px;
+        margin: 0 5px;
+        border-radius: 3px;
+        cursor: pointer;
+    `;
+    button.addEventListener("mouseover", function () {
+      this.style.backgroundColor = "#4a4a4a";
+    });
+    button.addEventListener("mouseout", function () {
+      this.style.backgroundColor = "#3a3a3a";
+    });
+    return button;
   }
 
   function validateAndReplaceAvatar(userId, imageUrl) {
