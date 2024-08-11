@@ -354,10 +354,35 @@
     GM_setValue("ignoredUsers", ignoredUsers);
   }
 
+  function moveExternalLinkIcon() {
+    const lastPostSpans = document.querySelectorAll(
+      "dd.lastpost span:not(.icon-moved)"
+    );
+    lastPostSpans.forEach((span) => {
+      const externalLinkIcon = span.querySelector('a[title="Go to last post"]');
+      const timeElement = span.querySelector("time");
+
+      if (externalLinkIcon && timeElement) {
+        // Remove the icon from its current position
+        externalLinkIcon.remove();
+
+        // Insert the icon after the time element
+        timeElement.insertAdjacentElement("afterend", externalLinkIcon);
+
+        // Add a small margin to separate the time and the icon
+        externalLinkIcon.style.marginLeft = "5px";
+
+        // Mark this span as processed
+        span.classList.add("icon-moved");
+      }
+    });
+  }
+
   function init() {
     processIgnoredContent();
     replaceUserAvatar();
     addGhostButton();
+    moveExternalLinkIcon();
 
     // Set up a MutationObserver to handle dynamically loaded content
     const observer = new MutationObserver((mutations) => {
