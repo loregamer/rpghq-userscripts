@@ -15,6 +15,7 @@
   "use strict";
 
   let ignoredUsers = GM_getValue("ignoredUsers", {});
+  let replacedAvatars = GM_getValue("replacedAvatars", {});
 
   function processIgnoredContent() {
     // Process notifications
@@ -76,16 +77,6 @@
     });
   }
 
-  function replaceIgnoredUserAvatar() {
-    const avatars = document.querySelectorAll("img.avatar");
-    avatars.forEach((avatar) => {
-      const srcMatch = avatar.src.match(/avatar=(\d+)/);
-      if (srcMatch && isUserIgnored(srcMatch[1])) {
-        avatar.src = "https://f.rpghq.org/sVKSQ0VE3PJW.png?n=pasted-file.png";
-      }
-    });
-  }
-
   function markAsRead(href) {
     GM_xmlhttpRequest({
       method: "GET",
@@ -110,13 +101,15 @@
       const username = memberlistTitle.textContent.split("-")[1].trim();
 
       if (userId) {
-        const ghostButton = document.createElement("a");
-        ghostButton.id = "ghost-user-button";
-        ghostButton.className = "button button-secondary";
-        ghostButton.style.marginLeft = "10px";
-        ghostButton.href = "#";
+        const buttonContainer = document.createElement("div");
+        buttonContainer.style.display = "inline-block";
+        buttonContainer.style.marginLeft = "10px";
 
-        updateGhostButtonState(ghostButton, userId);
+        const ghostButton = createButton("ghost-user-button", "Ghost User");
+        const replaceAvatarButton = createButton(
+          "replace-avatar-button",
+          "Replace Avatar"
+        );
 
         ghostButton.addEventListener("click", function (e) {
           e.preventDefault();
@@ -124,9 +117,70 @@
           updateGhostButtonState(ghostButton, userId);
         });
 
-        memberlistTitle.appendChild(ghostButton);
+        replaceAvatarButton.addEventListener("click", function (e) {
+          e.preventDefault();
+          promptReplaceAvatar(userId);
+        });
+
+        buttonContainer.appendChild(ghostButton);
+        buttonContainer.appendChild(replaceAvatarButton);
+        memberlistTitle.appendChild(buttonContainer);
+
+        updateGhostButtonState(ghostButton, userId);
       }
     }
+  }
+
+  function createButton(id, text) {
+    const button = document.createElement("a");
+    button.id = id;
+    button.className = "button button-secondary";
+    button.href = "#";
+    button.textContent = text;
+    button.style.marginRight = "5px";
+    return button;
+  }
+
+  function promptReplaceAvatar(userId) {
+    const imageUrl = prompt(
+      "Enter the URL of the replacement avatar image (128x128 or smaller):"
+    );
+    if (imageUrl) {
+      validateAndReplaceAvatar(userId, imageUrl);
+    }
+  }
+
+  function validateAndReplaceAvatar(userId, imageUrl) {
+    const img = new Image();
+    img.onload = function () {
+      if (this.width <= 128 && this.height <= 128) {
+        replacedAvatars[userId] = imageUrl;
+        GM_setValue("replacedAvatars", replacedAvatars);
+        alert("Avatar replacement saved successfully!");
+        replaceUserAvatar();
+      } else {
+        alert("Image must be 128x128 pixels or smaller. Please try again.");
+      }
+    };
+    img.onerror = function () {
+      alert("Failed to load the image. Please check the URL and try again.");
+    };
+    img.src = imageUrl;
+  }
+
+  function replaceUserAvatar() {
+    const avatars = document.querySelectorAll("img.avatar");
+    avatars.forEach((avatar) => {
+      const srcMatch = avatar.src.match(/avatar=(\d+)/);
+      if (srcMatch) {
+        const userId = srcMatch[1];
+        if (replacedAvatars.hasOwnProperty(userId)) {
+          avatar.src = replacedAvatars[userId];
+        } else if (isUserIgnored(userId)) {
+          avatar.src = "https://f.rpghq.org/sVKSQ0VE3PJW.png?n=pasted-file.png";
+        }
+      }
+    });
   }
 
   function updateGhostButtonState(button, userId) {
@@ -151,7 +205,7 @@
 
   function init() {
     processIgnoredContent();
-    replaceIgnoredUserAvatar();
+    replaceUserAvatar();
     addGhostButton();
 
     // Set up a MutationObserver to handle dynamically loaded content
@@ -159,7 +213,7 @@
       mutations.forEach((mutation) => {
         if (mutation.type === "childList") {
           processIgnoredContent();
-          replaceIgnoredUserAvatar();
+          replaceUserAvatar();
           addGhostButton();
         }
       });
