@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Ignore Dolor
 // @namespace    http://tampermonkey.net/
-// @version      1.9
-// @description  Remove "by dolor" in recent topics and lastpost while keeping timestamp and button
+// @version      2.2
+// @description  Remove "by dolor" in recent topics and lastpost, ignore dolor's notifications
 // @author       You
 // @match        https://rpghq.org/*/*
 // @grant        GM_xmlhttpRequest
@@ -13,6 +13,25 @@
   "use strict";
 
   function processDolorContent() {
+    // Process notifications
+    const notificationItems = document.querySelectorAll(".notification-block");
+    notificationItems.forEach((item) => {
+      const usernameElement = item.querySelector(".username");
+      if (
+        usernameElement &&
+        usernameElement.textContent.trim().toLowerCase() === "dolor"
+      ) {
+        const markReadLink = item.getAttribute("data-mark-read-url");
+        if (markReadLink) {
+          markAsRead(markReadLink);
+        }
+        const listItem = item.closest("li");
+        if (listItem) {
+          listItem.remove();
+        }
+      }
+    });
+
     // Process recent topics and lastpost
     const lastpostElements = document.querySelectorAll(
       "dd.lastpost, #recent-topics li dd.lastpost"
@@ -56,7 +75,7 @@
   function markAsRead(href) {
     GM_xmlhttpRequest({
       method: "GET",
-      url: "https://rpghq.org/forums/" + href,
+      url: "https://rpghq.org" + href,
       onload: function (response) {
         console.log("Dolor notification marked as read:", response.status);
       },
