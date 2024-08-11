@@ -440,7 +440,7 @@
 
     const ghostedPosts = document.querySelectorAll(".post.ghosted-post");
     ghostedPosts.forEach((post) => {
-      post.classList.toggle("ghosted-post");
+      post.classList.toggle("show");
     });
   }
 
