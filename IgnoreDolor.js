@@ -72,6 +72,16 @@
     });
   }
 
+  function replaceDolorAvatar() {
+    const avatars = document.querySelectorAll("img.avatar");
+    avatars.forEach((avatar) => {
+      const srcMatch = avatar.src.match(/avatar=(\d+)/);
+      if (srcMatch && srcMatch[1] === "3114") {
+        avatar.src = "https://f.rpghq.org/sVKSQ0VE3PJW.png?n=pasted-file.png";
+      }
+    });
+  }
+
   function markAsRead(href) {
     GM_xmlhttpRequest({
       method: "GET",
@@ -97,6 +107,7 @@
     const config = { childList: true, subtree: true };
     observer.observe(document.body, config);
   }
+  replaceDolorAvatar();
 
   // Run the init function when the page loads
   if (
