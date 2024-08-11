@@ -104,16 +104,17 @@
   }
 
   function addGhostButton() {
-    const profileHeader = document.querySelector(".profile-info h2");
-    if (profileHeader && !document.getElementById("ghost-user-button")) {
+    const memberlistTitle = document.querySelector(".memberlist-title");
+    if (memberlistTitle && !document.getElementById("ghost-user-button")) {
       const userId = getUserIdFromUrl();
-      const username = profileHeader.textContent.trim();
+      const username = memberlistTitle.textContent.split("-")[1].trim();
 
       if (userId) {
-        const ghostButton = document.createElement("button");
+        const ghostButton = document.createElement("a");
         ghostButton.id = "ghost-user-button";
-        ghostButton.className = "button";
+        ghostButton.className = "button button-secondary";
         ghostButton.style.marginLeft = "10px";
+        ghostButton.href = "#";
 
         updateGhostButtonState(ghostButton, userId);
 
@@ -123,7 +124,7 @@
           updateGhostButtonState(ghostButton, userId);
         });
 
-        profileHeader.appendChild(ghostButton);
+        memberlistTitle.appendChild(ghostButton);
       }
     }
   }
