@@ -2,7 +2,7 @@
 // @name         RPGHQ Moderator Control Panel Enhancer
 // @namespace    https://rpghq.org/
 // @version      3.2.1
-// @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts, and adding a "Show More" button
+// @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts
 // @author       loregamer
 // @match        https://rpghq.org/forums/mcp.php?*mode=topic_view*
 // @grant        GM_getResourceText
@@ -110,7 +110,6 @@ SOFTWARE.
       flex-grow: 1 !important;
       padding-left: 10px !important;
       padding-right: 10px !important; /* Ensure padding on both sides */
-      max-height: ${postMaxHeight}; /* Set maximum height */
       overflow: hidden; /* Hide overflow */
       position: relative; /* Ensure relative positioning */
     }
@@ -524,19 +523,6 @@ SOFTWARE.
     }
   }
 
-  // Function to add the "Show More" button with fade effect
-  function addShowMoreButton(post) {
-    const postbody = post.querySelector(".postbody");
-    const showMoreButton = document.createElement("div");
-    showMoreButton.className = "show-more-button";
-    showMoreButton.textContent = "Read more ...";
-    showMoreButton.onclick = function () {
-      postbody.style.maxHeight = "none";
-      showMoreButton.style.display = "none";
-    };
-    postbody.appendChild(showMoreButton);
-  }
-
   // Function to create placeholders for tables and codeboxes
   function createPlaceholders() {
     document.querySelectorAll(".postbody .content table").forEach((table) => {
@@ -554,28 +540,6 @@ SOFTWARE.
         placeholder.textContent = "Code block placeholder";
         codebox.parentNode.replaceChild(placeholder, codebox);
       });
-  }
-
-  // Function to update the "Show More" button
-  function updateShowMoreButton(post) {
-    const postbody = post.querySelector(".postbody");
-    let showMoreButton = postbody.querySelector(".show-more-button");
-
-    if (postbody.scrollHeight > postbody.clientHeight) {
-      if (!showMoreButton) {
-        showMoreButton = document.createElement("div");
-        showMoreButton.className = "show-more-button";
-        showMoreButton.textContent = "Read more ...";
-        showMoreButton.onclick = function () {
-          postbody.style.maxHeight = "none";
-          showMoreButton.style.display = "none";
-        };
-        postbody.appendChild(showMoreButton);
-      }
-      showMoreButton.style.display = "block";
-    } else if (showMoreButton) {
-      showMoreButton.style.display = "none";
-    }
   }
 
   // Function to move the post details button
@@ -659,11 +623,6 @@ SOFTWARE.
           const postAuthor = postbody.querySelector(".author");
           if (postContent && postAuthor) {
             postbody.insertBefore(postAuthor, postContent);
-          }
-
-          // Add "Show More" button if the post is too long
-          if (postbody.scrollHeight > postbody.clientHeight) {
-            addShowMoreButton(post);
           }
         }
 
@@ -1099,15 +1058,6 @@ SOFTWARE.
           document.querySelectorAll(".post").forEach((post) => {
             syncPostSelection(post);
           });
-
-          // Update "Show More" button if content height increased
-          const post = mutation.target.closest(".post");
-          if (post) {
-            const postbody = post.querySelector(".postbody");
-            if (postbody && postbody.scrollHeight > postbody.clientHeight) {
-              updateShowMoreButton(post);
-            }
-          }
         }
       });
     });
@@ -1117,21 +1067,6 @@ SOFTWARE.
       subtree: true,
       characterData: true,
       attributes: true,
-    });
-
-    // Add a window resize listener to update all posts
-    window.addEventListener("resize", () => {
-      document.querySelectorAll(".post").forEach(updateShowMoreButton);
-    });
-
-    // Add click event listener for spoiler buttons
-    document.body.addEventListener("click", (event) => {
-      if (event.target.classList.contains("spoilbtn")) {
-        const post = event.target.closest(".post");
-        if (post) {
-          setTimeout(() => updateShowMoreButton(post), 0);
-        }
-      }
     });
   }
 
