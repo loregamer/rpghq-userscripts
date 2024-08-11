@@ -14,6 +14,15 @@
 (function () {
   "use strict";
 
+  // Add CSS for ghosted posts
+  const style = document.createElement("style");
+  style.textContent = `
+      .ghosted-post {
+        display: none;
+      }
+    `;
+  document.head.appendChild(style);
+
   let ignoredUsers = GM_getValue("ignoredUsers", {});
   let replacedAvatars = GM_getValue("replacedAvatars", {});
 
@@ -149,7 +158,7 @@
         usernameElement &&
         isUserIgnored(usernameElement.textContent.trim())
       ) {
-        post.style.display = "none";
+        post.classList.add("ghosted-post");
       }
     });
   }
@@ -429,21 +438,16 @@
       ? "icon fa-eye fa-fw"
       : "icon fa-eye-slash fa-fw";
 
-    const posts = document.querySelectorAll(".post");
-    posts.forEach((post) => {
-      const usernameElement = post.querySelector(".username");
-      if (
-        usernameElement &&
-        isUserIgnored(usernameElement.textContent.trim())
-      ) {
-        post.style.display = isShowing ? "none" : "block";
-      }
+    const ghostedPosts = document.querySelectorAll(".post.ghosted-post");
+    ghostedPosts.forEach((post) => {
+      post.classList.toggle("ghosted-post");
     });
   }
 
   function init() {
     processIgnoredContent();
     addShowGhostedPostsButton();
+    toggleGhostedPosts();
     replaceUserAvatar();
     addGhostButton();
     moveExternalLinkIcon();
