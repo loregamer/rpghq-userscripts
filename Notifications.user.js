@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         RPGHQ Notifications Customization
 // @namespace    http://tampermonkey.net/
-// @version      2.0.3
+// @version      2.1
 // @description  Customize RPGHQ notifications display
 // @author       LOREGAMER
 // @match        https://rpghq.org/*/*
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
-// @grant        none
+// @grant        GM_xmlhttpRequest
 // @license     MIT
 // @updateURL    https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Notifications.user.js
 // @downloadURL  https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Notifications.user.js
@@ -256,8 +256,55 @@ SOFTWARE.
     return reactionHTML;
   }
 
+  // Function to extract post IDs from the page
+  function getDisplayedPostIds() {
+    const postElements = document.querySelectorAll('div[id^="p"]');
+    return Array.from(postElements).map((el) => el.id.substring(1));
+  }
+
+  // Function to extract notification data
+  function getNotificationData() {
+    const notificationLinks = document.querySelectorAll(".notification-block");
+    return Array.from(notificationLinks)
+      .map((link) => {
+        const href = link.getAttribute("href");
+        let postId = null;
+        const realUrl = link.getAttribute("data-real-url");
+        if (realUrl) {
+          const match = realUrl.match(/p=(\d+)/);
+          postId = match ? match[1] : null;
+        }
+        return { href, postId };
+      })
+      .filter((data) => data.href && data.postId); // Only keep notifications with both href and postId
+  }
+
+  // Function to mark a notification as read
+  function markNotificationAsRead(href) {
+    GM_xmlhttpRequest({
+      method: "GET",
+      url: "https://rpghq.org/forums/" + href,
+      onload: function (response) {
+        console.log("Notification marked as read:", response.status);
+      },
+    });
+  }
+
+  // Main function
+  function checkAndMarkNotifications() {
+    const displayedPostIds = getDisplayedPostIds();
+    const notificationData = getNotificationData();
+
+    notificationData.forEach((notification) => {
+      if (displayedPostIds.includes(notification.postId)) {
+        markNotificationAsRead(notification.href);
+      }
+    });
+  }
+
   function init() {
     customizeNotificationPanel();
+    checkAndMarkNotifications();
 
     // Check if we're on the full notifications page
     if (window.location.href.includes("ucp.php?i=ucp_notifications")) {
