@@ -75,6 +75,71 @@
         }
       }
     });
+
+    // NEW: Process topic list items
+    const topicListItems = document.querySelectorAll("dl.row-item");
+    topicListItems.forEach((item) => {
+      const lastpostElement = item.querySelector("dd.lastpost");
+      if (lastpostElement) {
+        const spanElement = lastpostElement.querySelector("span");
+        if (spanElement) {
+          // Find the "by" text node
+          const byTextNode = Array.from(spanElement.childNodes).find(
+            (node) =>
+              node.nodeType === Node.TEXT_NODE &&
+              node.textContent.trim() === "by"
+          );
+
+          if (byTextNode) {
+            // Check if the next element is the username
+            const nextElement = byTextNode.nextElementSibling;
+            if (nextElement && nextElement.classList.contains("username")) {
+              const usernameElement = nextElement;
+              if (
+                usernameElement &&
+                isUserIgnored(usernameElement.textContent.trim())
+              ) {
+                // Remove the "by" text node
+                byTextNode.remove();
+                // Remove the username element
+                usernameElement.remove();
+                // Remove the <br> element if it exists
+                const br = spanElement.querySelector("br");
+                if (br) {
+                  br.remove();
+                }
+                // Remove any extra spaces
+                spanElement.normalize();
+              }
+            }
+          }
+        }
+
+        // Process the responsive-show element if it exists
+        const responsiveShow = item.querySelector(".responsive-show");
+        if (responsiveShow) {
+          const usernameElement = responsiveShow.querySelector(".username");
+          if (
+            usernameElement &&
+            isUserIgnored(usernameElement.textContent.trim())
+          ) {
+            // Find and remove the "Last post by" text
+            const lastPostByText = Array.from(responsiveShow.childNodes).find(
+              (node) =>
+                node.nodeType === Node.TEXT_NODE &&
+                node.textContent.trim().startsWith("Last post by")
+            );
+            if (lastPostByText) {
+              lastPostByText.remove();
+            }
+            // Remove the username element
+            usernameElement.remove();
+            // Remove any extra spaces
+            responsiveShow.normalize();
+          }
+        }
+      }
+    });
   }
 
   function markAsRead(href) {
