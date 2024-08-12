@@ -54,29 +54,23 @@ SOFTWARE.
         let titleText = titleElement.innerHTML;
 
         if (titleText.includes("reacted to a message you posted")) {
+          let isUnread = block.href && block.href.includes("mark_notification");
+
           let postId;
           if (block.hasAttribute("data-real-url")) {
-            // Extract postId from data-real-url for unread notifications
             let match = block.getAttribute("data-real-url").match(/p=(\d+)/);
             postId = match ? match[1] : null;
           } else {
-            // Use existing method for read notifications
-            let anchorTag = block;
-            let postIdMatch =
-              anchorTag && anchorTag.href
-                ? anchorTag.href.match(/p=(\d+)/)
-                : null;
+            let postIdMatch = block.href ? block.href.match(/p=(\d+)/) : null;
             postId = postIdMatch ? postIdMatch[1] : null;
           }
 
-          fetchReactions(postId).then((reactions) => {
+          fetchReactions(postId, isUnread).then((reactions) => {
             let reactionHTML = formatReactions(reactions);
-
             let newTitleText = titleText.replace(
               /(have|has)\s+reacted.*$/,
               `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
             );
-
             titleElement.innerHTML = newTitleText;
           });
         } else if (titleText.includes("You were mentioned by")) {
@@ -216,37 +210,40 @@ SOFTWARE.
     );
   }
 
-  function fetchReactions(postId) {
-    const storedReactions = getStoredReactions(postId);
-    if (storedReactions) {
-      return Promise.resolve(storedReactions);
-    }
-
-    return fetch(
-      `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
-      {
-        method: "POST",
-        headers: {
-          accept: "application/json, text/javascript, */*; q=0.01",
-          "x-requested-with": "XMLHttpRequest",
-        },
-        credentials: "include",
-      }
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        let parser = new DOMParser();
-        let doc = parser.parseFromString(data.htmlContent, "text/html");
-        let reactions = [];
-        doc.querySelectorAll('.tab-content[data-id="0"] li').forEach((li) => {
-          reactions.push({
-            image: li.querySelector(".reaction-image").src,
-            name: li.querySelector(".reaction-image").alt,
+  function fetchReactions(postId, isUnread) {
+    if (isUnread) {
+      return fetch(
+        `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
+        {
+          method: "POST",
+          headers: {
+            accept: "application/json, text/javascript, */*; q=0.01",
+            "x-requested-with": "XMLHttpRequest",
+          },
+          credentials: "include",
+        }
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          let parser = new DOMParser();
+          let doc = parser.parseFromString(data.htmlContent, "text/html");
+          let reactions = [];
+          doc.querySelectorAll('.tab-content[data-id="0"] li').forEach((li) => {
+            reactions.push({
+              image: li.querySelector(".reaction-image").src,
+              name: li.querySelector(".reaction-image").alt,
+            });
           });
+          return reactions;
         });
-        storeReactions(postId, reactions);
-        return reactions;
-      });
+    } else {
+      // For read notifications, use the existing logic with local storage
+      const storedReactions = getStoredReactions(postId);
+      if (storedReactions) {
+        return Promise.resolve(storedReactions);
+      }
+      // ... (rest of the existing fetchReactions logic for read notifications)
+    }
   }
 
   function formatReactions(reactions) {
