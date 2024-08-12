@@ -84,14 +84,20 @@ SOFTWARE.
           let topicName = topicMatch ? topicMatch[1] : "";
           titleElement.innerHTML = `You were <b style="color: #FFC107;">mentioned</b><br>in <span class="notification-reference">${topicName}</span>`;
         } else if (titleText.includes("Private Message")) {
-          titleElement.innerHTML = titleText
-            .replace(
-              /<strong>Private Message<\/strong>/,
-              '<strong style="color: #D31141;">Board warning issued</strong>'
-            )
-            .replace(/from/, "by")
-            .replace(/:$/, "");
-          if (referenceElement) referenceElement.remove();
+          let subject = referenceElement
+            ? referenceElement.textContent.trim().replace(/^"(.*)"$/, "$1")
+            : "";
+
+          if (subject === "Board warning issued") {
+            titleElement.innerHTML = titleText
+              .replace(
+                /<strong>Private Message<\/strong>/,
+                '<strong style="color: #D31141;">Board warning issued</strong>'
+              )
+              .replace(/from/, "by")
+              .replace(/:$/, "");
+            if (referenceElement) referenceElement.remove();
+          }
         } else if (titleText.includes("Report closed")) {
           titleElement.innerHTML = titleText.replace(
             /Report closed/,
