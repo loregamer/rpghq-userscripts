@@ -54,6 +54,24 @@
       a.role = "menuitem";
       a.innerHTML =
         '<i class="icon fa-random fa-fw" aria-hidden="true"></i><span>Random Topic</span>';
+
+      // Add custom styles to the anchor and icon
+      a.style.cssText = `
+            display: flex;
+            align-items: center;
+            height: 100%;
+        `;
+
+      // Apply styles after a short delay to ensure the icon is loaded
+      setTimeout(() => {
+        const icon = a.querySelector(".icon");
+        if (icon) {
+          icon.style.cssText = `
+                    font-size: 14px;
+                `;
+        }
+      }, 100);
+
       a.onclick = async function (e) {
         e.preventDefault();
         a.innerHTML =
