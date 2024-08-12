@@ -82,8 +82,10 @@ SOFTWARE.
       });
 
       dropdownContainer.appendChild(ignoreButton);
+
       const paginationDiv = actionBar.querySelector(".pagination");
-      if (paginationDiv) {
+      const topicTitle = document.querySelector("h2.topic-title");
+      if (paginationDiv && topicTitle) {
         actionBar.insertBefore(dropdownContainer, paginationDiv);
       }
 
