@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.0.1
 // @description  Add Ghost User button to profiles, hide content from ghosted users, and replace avatars
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -408,40 +408,57 @@
 
   function addShowGhostedPostsButton() {
     if (!document.getElementById("show-ghosted-posts")) {
-      const button = document.createElement("a");
+      const dropdownContainer = document.createElement("div");
+      dropdownContainer.className =
+        "dropdown-container dropdown-button-control topic-tools";
+
+      const button = document.createElement("span");
       button.id = "show-ghosted-posts";
-      button.className = "button";
-      button.href = "#";
-      button.style.marginRight = "5px";
+      button.className = "button button-secondary dropdown-trigger";
+      button.title = "Show Ghosted Posts";
       button.innerHTML =
-        '<span>Show Ghosted Posts</span> <i class="icon fa-eye fa-fw" aria-hidden="true"></i>';
+        '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>Show Ghosted Posts</span>';
 
       button.addEventListener("click", function (e) {
         e.preventDefault();
         toggleGhostedPosts();
       });
 
+      dropdownContainer.appendChild(button);
+
       const actionBar = document.querySelector(".action-bar.bar-top");
       if (actionBar) {
         const firstButton = actionBar.querySelector(".button");
         if (firstButton) {
-          actionBar.insertBefore(button, firstButton);
+          actionBar.insertBefore(dropdownContainer, firstButton);
         } else {
-          actionBar.appendChild(button);
+          actionBar.appendChild(dropdownContainer);
         }
       }
+
+      // Add media query for responsive design
+      const style = document.createElement("style");
+      style.textContent = `
+        @media (max-width: 700px) {
+          #show-ghosted-posts span:not(.icon) {
+            display: none;
+          }
+        }
+      `;
+      document.head.appendChild(style);
     }
   }
 
   function toggleGhostedPosts() {
     const button = document.getElementById("show-ghosted-posts");
-    const isShowing =
-      button.querySelector("span").textContent === "Hide Ghosted Posts";
+    const textSpan = button.querySelector("span:not(.icon)");
+    const icon = button.querySelector("i");
+    const isShowing = textSpan.textContent === "Hide Ghosted Posts";
 
-    button.querySelector("span").textContent = isShowing
+    textSpan.textContent = isShowing
       ? "Show Ghosted Posts"
       : "Hide Ghosted Posts";
-    button.querySelector("i").className = isShowing
+    icon.className = isShowing
       ? "icon fa-eye fa-fw"
       : "icon fa-eye-slash fa-fw";
 
