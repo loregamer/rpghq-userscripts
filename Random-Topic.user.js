@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Random Topic (Improved)
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      1.0
 // @description  Adds a Random Topic button to RPGHQ that ensures the topic exists
 // @match        https://rpghq.org/forums/*
 // @grant        GM_xmlhttpRequest
@@ -60,6 +60,7 @@
             display: flex;
             align-items: center;
             height: 100%;
+            text-decoration: none;
         `;
 
       // Apply styles after a short delay to ensure the icon is loaded
@@ -74,14 +75,15 @@
 
       a.onclick = async function (e) {
         e.preventDefault();
-        a.innerHTML =
+        this.style.textDecoration = "none";
+        this.innerHTML =
           '<i class="icon fa-spinner fa-spin fa-fw" aria-hidden="true"></i><span>Loading...</span>';
         try {
           const validTopic = await getValidRandomTopic();
           window.location.href = validTopic;
         } catch (error) {
           console.error("Error finding random topic:", error);
-          a.innerHTML =
+          this.innerHTML =
             '<i class="icon fa-random fa-fw" aria-hidden="true"></i><span>Random Topic</span>';
         }
       };
