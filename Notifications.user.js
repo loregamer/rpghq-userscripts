@@ -234,6 +234,8 @@ SOFTWARE.
               name: li.querySelector(".reaction-image").alt,
             });
           });
+          // Store the reactions in local storage
+          storeReactions(postId, reactions);
           return reactions;
         });
     } else {
