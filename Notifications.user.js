@@ -65,8 +65,17 @@ SOFTWARE.
             postId = postIdMatch ? postIdMatch[1] : null;
           }
 
+          // Extract usernames from the title
+          let usernames = Array.from(
+            titleElement.querySelectorAll(".username, .username-coloured")
+          ).map((el) => el.textContent.trim());
+
           fetchReactions(postId, isUnread).then((reactions) => {
-            let reactionHTML = formatReactions(reactions);
+            // Filter reactions to only include those from mentioned usernames
+            let filteredReactions = reactions.filter((reaction) =>
+              usernames.includes(reaction.username)
+            );
+            let reactionHTML = formatReactions(filteredReactions);
             let newTitleText = titleText.replace(
               /(have|has)\s+reacted.*$/,
               `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
@@ -211,7 +220,7 @@ SOFTWARE.
   }
 
   function fetchReactions(postId, isUnread) {
-    if (isUnread) {
+    const fetchAndProcessReactions = () => {
       return fetch(
         `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
         {
@@ -230,21 +239,25 @@ SOFTWARE.
           let reactions = [];
           doc.querySelectorAll('.tab-content[data-id="0"] li').forEach((li) => {
             reactions.push({
+              username: li.querySelector(".cbb-helper-text a").textContent,
               image: li.querySelector(".reaction-image").src,
               name: li.querySelector(".reaction-image").alt,
             });
           });
-          // Store the reactions in local storage
+          // Store all reactions in local storage
           storeReactions(postId, reactions);
           return reactions;
         });
+    };
+
+    if (isUnread) {
+      return fetchAndProcessReactions();
     } else {
-      // For read notifications, use the existing logic with local storage
       const storedReactions = getStoredReactions(postId);
       if (storedReactions) {
         return Promise.resolve(storedReactions);
       }
-      // ... (rest of the existing fetchReactions logic for read notifications)
+      return fetchAndProcessReactions();
     }
   }
 
@@ -253,9 +266,9 @@ SOFTWARE.
       '<span style="display: inline-flex; margin-left: 2px; vertical-align: middle;">';
     reactions.forEach((reaction) => {
       reactionHTML += `
-                <img src="${reaction.image}" alt="${reaction.name}" title="${reaction.name}" 
-                     style="height: 1em !important; width: auto !important; vertical-align: middle !important; margin-right: 2px !important;">
-            `;
+        <img src="${reaction.image}" alt="${reaction.name}" title="${reaction.name}" 
+             style="height: 1em !important; width: auto !important; vertical-align: middle !important; margin-right: 2px !important;">
+      `;
     });
     reactionHTML += "</span>";
     return reactionHTML;
