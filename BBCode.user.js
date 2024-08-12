@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      4.4
+// @version      4.4.1
 // @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php*
@@ -1462,31 +1462,45 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       positionEditorHeader();
 
       // Modify the "Add image to post" link
+      // Modify the "Add image to post" link and add "Open Vault" button
       const addImageContainer = document.querySelector(
         'div[style*="margin-bottom: 0.5em; margin-top: 0.5em;"]'
       );
       if (addImageContainer) {
-        // Update the image
-        const img = addImageContainer.querySelector("img");
-        if (img) {
-          img.src = `https://f.rpghq.org/V4gHDnvTTgpf.webp`;
-          img.alt = "Vault";
-        }
+        // Create a new container for both elements
+        const container = document.createElement("div");
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+        container.style.alignItems = "flex-start";
+        container.style.gap = "5px";
 
-        // Update the link
-        const link = addImageContainer.querySelector("a");
-        if (link) {
-          link.textContent = "Open Vault";
-          link.href = "javascript:void(0);";
-          link.onclick = function (e) {
-            e.preventDefault();
-            window.open(
-              "https://vault.rpghq.org/",
-              "RPGHQVault",
-              "width=800,height=600,resizable=yes,scrollbars=yes"
-            );
-          };
-        }
+        // Move the existing "Add image to post" link to the new container
+        const existingContent = addImageContainer.innerHTML;
+        const existingDiv = document.createElement("div");
+        existingDiv.innerHTML = existingContent;
+        container.appendChild(existingDiv);
+
+        // Create the new "Open Vault" link
+        const vaultDiv = document.createElement("div");
+        vaultDiv.innerHTML = `
+    <img src="https://f.rpghq.org/V4gHDnvTTgpf.webp" width="16" height="16" style="vertical-align: middle; margin-left: 0.5em;">
+    <a href="javascript:void(0);" style="color: rgb(58, 128, 234); vertical-align: middle; font-size: 1em;">Open Vault</a>
+  `;
+        vaultDiv.querySelector("a").onclick = function (e) {
+          e.preventDefault();
+          window.open(
+            "https://vault.rpghq.org/",
+            "RPGHQVault",
+            "width=800,height=800,resizable=yes,scrollbars=yes"
+          );
+        };
+
+        // Add the new link to the container
+        container.appendChild(vaultDiv);
+
+        // Replace the content of addImageContainer with the new container
+        addImageContainer.innerHTML = "";
+        addImageContainer.appendChild(container);
       }
 
       // Add event listeners for repositioning
