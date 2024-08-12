@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Random Topic (Improved)
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.0.1
 // @description  Adds a Random Topic button to RPGHQ that ensures the topic exists
 // @match        https://rpghq.org/forums/*
 // @grant        GM_xmlhttpRequest
@@ -12,7 +12,7 @@
 
   // Function to get a random topic ID
   function getRandomTopicId() {
-    return Math.floor(Math.random() * 10000) + 1;
+    return Math.floor(Math.random() * 2800) + 1;
   }
 
   // Function to check if a topic exists
