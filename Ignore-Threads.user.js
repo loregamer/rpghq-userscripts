@@ -44,11 +44,9 @@ SOFTWARE.
 
   function addIgnoreButton() {
     const actionBar = document.querySelector(".action-bar.bar-top");
-    const paginationDiv = actionBar.querySelector(".pagination");
     const threadId = getThreadId();
     if (
       actionBar &&
-      paginationDiv &&
       threadId &&
       !document.getElementById("ignore-thread-button")
     ) {
@@ -84,7 +82,10 @@ SOFTWARE.
       });
 
       dropdownContainer.appendChild(ignoreButton);
-      actionBar.insertBefore(dropdownContainer, paginationDiv);
+      const paginationDiv = actionBar.querySelector(".pagination");
+      if (paginationDiv) {
+        actionBar.insertBefore(dropdownContainer, paginationDiv);
+      }
 
       // Add media query for responsive design
       const style = document.createElement("style");
