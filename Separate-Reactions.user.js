@@ -37,11 +37,13 @@
                                   .map(
                                     (user) => `
                                     <div style="display: flex; align-items: center;">
-                                        ${
-                                          user.avatar
-                                            ? `<img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; object-fit: cover;">`
-                                            : ""
-                                        }
+                                        <div style="width: 24px; height: 24px; margin-right: 8px; flex-shrink: 0;">
+                                            ${
+                                              user.avatar
+                                                ? `<img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">`
+                                                : ""
+                                            }
+                                        </div>
                                         <a href="${user.profileUrl}" style="${
                                       user.isColoured
                                         ? `color: ${user.color};`
