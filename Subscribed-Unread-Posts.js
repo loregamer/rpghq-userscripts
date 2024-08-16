@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Subscribed Threads with Unread Posts
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      2.0
 // @description  Display subscribed threads with unread posts on RPGHQ
 // @match        https://rpghq.org/forums/search.php?search_id=subscribed
 // @grant        GM_xmlhttpRequest
@@ -23,6 +23,7 @@
           replaceContent(topicRows);
           filterUnreadTopics();
           addToggleButton();
+          updatePagination(topicRows.length);
         }
       },
     });
@@ -58,9 +59,19 @@
     if (actionBar) {
       const button = document.createElement("button");
       button.textContent = "Show All Topics";
+      button.className = "button";
       button.style.float = "right";
       button.onclick = toggleTopics;
       actionBar.appendChild(button);
+    }
+  }
+
+  function updatePagination(topicCount) {
+    const paginationDiv = document.querySelector(
+      ".action-bar.bar-top .pagination"
+    );
+    if (paginationDiv) {
+      paginationDiv.innerHTML = `Search found ${topicCount} matches • Page <strong>1</strong> of <strong>1</strong>`;
     }
   }
 
