@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Reaction List
 // @namespace    http://tampermonkey.net/
-// @version      1.3.1
+// @version      1.4
 // @description  Display a list of reactions for RPGHQ posts in a Discord-style with hover popups
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
@@ -152,33 +152,51 @@
             .querySelectorAll(".reaction-group")
             .forEach((group) => {
               const popup = group.querySelector(".reaction-users-popup");
+              let isHovering = false;
 
               group.addEventListener("mouseenter", (e) => {
-                // Show the popup
-                popup.style.display = "block";
-
-                // Position the popup
-                const rect = group.getBoundingClientRect();
-
-                let top = rect.bottom;
-                let left = rect.left;
-
-                // Adjust if popup goes off-screen
-                if (left + popup.offsetWidth > window.innerWidth) {
-                  left = window.innerWidth - popup.offsetWidth;
-                }
-
-                popup.style.top = `${top}px`;
-                popup.style.left = `${left}px`;
+                isHovering = true;
+                showPopup(group, popup);
               });
 
               group.addEventListener("mouseleave", () => {
-                popup.style.display = "none";
+                isHovering = false;
+                hidePopup(popup);
+              });
+
+              // Add scroll event listener
+              window.addEventListener("scroll", () => {
+                if (isHovering) {
+                  showPopup(group, popup);
+                }
               });
             });
         }
       })
       .catch((error) => console.error("Error fetching reactions:", error));
+  }
+
+  function showPopup(group, popup) {
+    // Show the popup
+    popup.style.display = "block";
+
+    // Position the popup
+    const rect = group.getBoundingClientRect();
+
+    let top = rect.bottom;
+    let left = rect.left;
+
+    // Adjust if popup goes off-screen
+    if (left + popup.offsetWidth > window.innerWidth) {
+      left = window.innerWidth - popup.offsetWidth;
+    }
+
+    popup.style.top = `${top}px`;
+    popup.style.left = `${left}px`;
+  }
+
+  function hidePopup(popup) {
+    popup.style.display = "none";
   }
 
   function observePosts() {
