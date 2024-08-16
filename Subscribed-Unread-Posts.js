@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Subscribed Threads with Unread Posts
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Display subscribed threads with unread posts on RPGHQ
 // @match        https://rpghq.org/forums/search.php?search_id=subscribed
 // @grant        GM_xmlhttpRequest
@@ -10,20 +10,28 @@
 (function () {
   "use strict";
 
-  function fetchSubscribedTopics() {
+  let allTopicRows = [];
+
+  function fetchSubscribedTopics(start = 0) {
     GM_xmlhttpRequest({
       method: "GET",
-      url: "https://rpghq.org/forums/ucp.php?i=ucp_main&mode=subscribed",
+      url: `https://rpghq.org/forums/ucp.php?i=ucp_main&mode=subscribed&start=${start}`,
       onload: function (response) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(response.responseText, "text/html");
         const topicRows = doc.querySelectorAll("li.row");
 
-        if (topicRows.length > 0) {
-          replaceContent(topicRows);
+        allTopicRows = allTopicRows.concat(Array.from(topicRows));
+
+        const nextPageLink = doc.querySelector(".pagination .next a");
+        if (nextPageLink) {
+          const nextStart = new URLSearchParams(nextPageLink.href).get("start");
+          fetchSubscribedTopics(nextStart);
+        } else {
+          replaceContent(allTopicRows);
           filterUnreadTopics();
           addToggleButton();
-          updatePagination(topicRows.length);
+          updatePagination(allTopicRows.length);
         }
       },
     });
