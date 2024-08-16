@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         RPGHQ - Subscribed Threads with Unread Posts
 // @namespace    http://tampermonkey.net/
-// @version      2.3
+// @version      2.4
 // @description  Display subscribed threads with unread posts on RPGHQ
-// @match        https://rpghq.org/forums/search.php?search_id=subscribed
+// @match        https://rpghq.org/forums/*
 // @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
@@ -11,6 +11,27 @@
   "use strict";
 
   let allTopicRows = [];
+
+  function addSubscribedTopicsButton() {
+    const navMain = document.querySelector("#nav-main");
+    if (navMain) {
+      const listItem = document.createElement("li");
+      listItem.setAttribute("data-skip-responsive", "true");
+      listItem.innerHTML = `
+            <a href="https://rpghq.org/forums/search.php?search_id=subscribed" role="menuitem">
+                <i class="icon fa-check-square-o fa-fw" aria-hidden="true"></i><span>Subscribed topics</span>
+            </a>
+        `;
+      // Insert the new button after the "Unread posts" button
+      const unreadPostsItem = navMain
+        .querySelector('a[href*="search_id=unreadposts"]')
+        .closest("li");
+      unreadPostsItem.parentNode.insertBefore(
+        listItem,
+        unreadPostsItem.nextSibling
+      );
+    }
+  }
 
   function fetchSubscribedTopics(start = 0) {
     GM_xmlhttpRequest({
@@ -80,9 +101,9 @@
       const button = document.createElement("button");
       button.textContent = "Show All Topics";
       button.className = "button";
-      button.style.float = "right";
       button.onclick = toggleTopics;
-      actionBar.appendChild(button);
+      // Insert the button at the beginning of the action bar
+      actionBar.insertBefore(button, actionBar.firstChild);
     }
   }
 
@@ -117,5 +138,22 @@
     button.textContent = showAll ? "Show Only Unread" : "Show All Topics";
   }
 
-  fetchSubscribedTopics();
+  // Add the "Subscribed topics" button to the navigation bar
+
+  // Run the init function when the page loads
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
+    // If the document is already ready, execute the function immediately
+    addSubscribedTopicsButton();
+  } else {
+    // Otherwise, wait for the DOM to be fully loaded
+    window.addEventListener("load", addSubscribedTopicsButton);
+  }
+
+  // Only run the main script on the subscribed topics page
+  if (window.location.href.includes("search.php?search_id=subscribed")) {
+    fetchSubscribedTopics();
+  }
 })();
