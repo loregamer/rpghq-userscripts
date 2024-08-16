@@ -121,6 +121,13 @@
         // Remove the checkmark row
         const markDD = clonedRow.querySelector("dd.mark");
         if (markDD) markDD.remove();
+
+        // Modify the topic link
+        const topicLink = clonedRow.querySelector("a.topictitle");
+        if (topicLink) {
+          topicLink.href += "&view=unread#unread";
+        }
+
         ul.appendChild(clonedRow);
       });
       panel.appendChild(ul);
