@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Subscribed Threads with Unread Posts
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.8
 // @description  Display subscribed threads with unread posts on RPGHQ
 // @match        https://rpghq.org/forums/search.php?search_id=subscribed
 // @grant        GM_xmlhttpRequest
@@ -17,10 +17,10 @@
       onload: function (response) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(response.responseText, "text/html");
-        const topiclist = doc.querySelector(".topiclist.cplist.missing-column");
+        const topicRows = doc.querySelectorAll("li.row");
 
-        if (topiclist) {
-          replaceContent(topiclist);
+        if (topicRows.length > 0) {
+          replaceContent(topicRows);
           filterUnreadTopics();
           addToggleButton();
         }
@@ -28,18 +28,21 @@
     });
   }
 
-  function replaceContent(topiclist) {
+  function replaceContent(topicRows) {
     const panel = document.querySelector(".panel");
     if (panel) {
       panel.innerHTML = "";
-      panel.appendChild(topiclist);
+      const ul = document.createElement("ul");
+      ul.className = "topiclist cplist missing-column";
+      topicRows.forEach((row) => {
+        ul.appendChild(row.cloneNode(true));
+      });
+      panel.appendChild(ul);
     }
   }
 
   function filterUnreadTopics() {
-    const topics = document.querySelectorAll(
-      ".topiclist.cplist.missing-column li.row"
-    );
+    const topics = document.querySelectorAll(".panel li.row");
     topics.forEach((topic) => {
       const isUnread = topic.querySelector(
         ".topic_unread, .topic_unread_mine, .topic_unread_hot, .topic_unread_hot_mine"
@@ -62,9 +65,7 @@
   }
 
   function toggleTopics() {
-    const topics = document.querySelectorAll(
-      ".topiclist.cplist.missing-column li.row"
-    );
+    const topics = document.querySelectorAll(".panel li.row");
     const button = document.querySelector(".action-bar.bar-top button");
     const showAll = button.textContent === "Show All Topics";
 
