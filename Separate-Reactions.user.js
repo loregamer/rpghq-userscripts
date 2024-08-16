@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Reaction List
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.3.1
 // @description  Display a list of reactions for RPGHQ posts in a Discord-style with hover popups
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
@@ -194,6 +194,15 @@
     document.querySelectorAll(".post").forEach(processPost);
   }
 
-  // Run the script when the page is fully loaded
-  window.addEventListener("load", observePosts);
+  // Run the init function when the page loads
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
+    // If the document is already ready, execute the function immediately
+    observePosts();
+  } else {
+    // Otherwise, wait for the DOM to be fully loaded
+    window.addEventListener("load", observePosts);
+  }
 })();
