@@ -209,6 +209,6 @@
     init();
   } else {
     // Otherwise, wait for the DOM to be fully loaded
-    window.addEventListener("DOMContentLoaded", init);
+    window.addEventListener("load", init);
   }
 })();
