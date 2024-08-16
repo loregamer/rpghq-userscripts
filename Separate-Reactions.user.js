@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Reaction List
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  Display a list of reactions for RPGHQ posts in a Discord-style with hover popups
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
@@ -96,36 +96,37 @@
   function processPost(post) {
     const postId = post.id.substring(1);
     const existingReactionList = post.querySelector(".reaction-score-list");
-    if (existingReactionList) {
+    if (existingReactionList && !existingReactionList.dataset.processed) {
       updateReactions(post, postId);
     }
   }
 
   function updateReactions(post, postId) {
+    const existingReactionList = post.querySelector(".reaction-score-list");
+    if (existingReactionList.dataset.processed) return;
+
     fetchReactions(postId)
       .then((reactions) => {
         if (reactions.length > 0) {
           const reactionListHtml = createReactionList(postId, reactions);
-          const existingReactionList = post.querySelector(
-            ".reaction-score-list"
-          );
-          if (existingReactionList) {
-            existingReactionList.outerHTML = reactionListHtml;
-          } else {
-            post.querySelector(".postbody").appendChild(reactionListHtml);
-          }
+          existingReactionList.outerHTML = reactionListHtml;
+
+          const newReactionList = post.querySelector(".reaction-score-list");
+          newReactionList.dataset.processed = "true";
 
           // Add hover effect to reaction groups
-          post.querySelectorAll(".reaction-group").forEach((group) => {
-            group.addEventListener("mouseenter", () => {
-              group.querySelector(".reaction-users-popup").style.display =
-                "block";
+          newReactionList
+            .querySelectorAll(".reaction-group")
+            .forEach((group) => {
+              group.addEventListener("mouseenter", () => {
+                group.querySelector(".reaction-users-popup").style.display =
+                  "block";
+              });
+              group.addEventListener("mouseleave", () => {
+                group.querySelector(".reaction-users-popup").style.display =
+                  "none";
+              });
             });
-            group.addEventListener("mouseleave", () => {
-              group.querySelector(".reaction-users-popup").style.display =
-                "none";
-            });
-          });
         }
       })
       .catch((error) => console.error("Error fetching reactions:", error));
@@ -142,21 +143,11 @@
               } else if (node.classList.contains("reaction-score-list")) {
                 const post = node.closest(".post");
                 if (post) {
-                  const postId = post.id.substring(1);
-                  updateReactions(post, postId);
+                  processPost(post);
                 }
               }
             }
           });
-        } else if (
-          mutation.type === "attributes" &&
-          mutation.target.classList.contains("reaction-score-list")
-        ) {
-          const post = mutation.target.closest(".post");
-          if (post) {
-            const postId = post.id.substring(1);
-            updateReactions(post, postId);
-          }
         }
       });
     });
@@ -164,8 +155,6 @@
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-      attributes: true,
-      attributeFilter: ["class"],
     });
 
     // Process existing posts
