@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Subscribed Threads with Unread Posts
 // @namespace    http://tampermonkey.net/
-// @version      2.4
+// @version      1.0
 // @description  Display subscribed threads with unread posts on RPGHQ
 // @match        https://rpghq.org/forums/*
 // @grant        GM_xmlhttpRequest
