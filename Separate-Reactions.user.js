@@ -16,42 +16,42 @@
 
   function createReactionList(postId, reactions) {
     return `
-            <div class="reaction-score-list" data-post-id="${postId}" data-title="Reactions">
-                <div class="list-scores" style="display: flex; flex-wrap: wrap; gap: 4px;">
-                    ${reactions
-                      .map(
-                        (reaction) => `
-                        <div class="reaction-group" style="display: flex; align-items: center; background-color: rgba(255,255,255,0.1); border-radius: 8px; padding: 2px 6px; position: relative;">
-                            <img src="${reaction.image}" alt="${
-                          reaction.title
-                        }" style="width: auto; height: 16px; margin-right: 4px; object-fit: contain;">
-                            <span style="font-size: 12px; color: #dcddde;">${
-                              reaction.count
-                            }</span>
-                            <div class="reaction-users-popup" style="display: none; position: fixed; background-color: #191919; border: 1px solid #202225; border-radius: 4px; padding: 8px; z-index: 1000; color: #dcddde; font-size: 12px; width: 200px; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                <div style="font-weight: bold; margin-bottom: 4px;">${
-                                  reaction.title
-                                }</div>
-                                <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                                    ${reaction.users
-                                      .map(
-                                        (user) => `
-                                        <div style="display: flex; align-items: center; width: 100%; margin-bottom: 4px;">
-                                            <img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; object-fit: cover;">
-                                            <span style="flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.username}</span>
-                                        </div>
-                                    `
-                                      )
-                                      .join("")}
-                                </div>
+        <div class="reaction-score-list" data-post-id="${postId}" data-title="Reactions">
+            <div class="list-scores" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                ${reactions
+                  .map(
+                    (reaction) => `
+                    <div class="reaction-group" style="display: flex; align-items: center; background-color: rgba(255,255,255,0.1); border-radius: 8px; padding: 2px 6px; position: relative;">
+                        <img src="${reaction.image}" alt="${
+                      reaction.title
+                    }" style="width: auto; height: 16px; margin-right: 4px; object-fit: contain;">
+                        <span style="font-size: 12px; color: #dcddde;">${
+                          reaction.count
+                        }</span>
+                        <div class="reaction-users-popup" style="display: none; position: fixed; background-color: #191919; border: 1px solid #202225; border-radius: 4px; padding: 8px; z-index: 1000; color: #dcddde; font-size: 12px; width: 200px; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <div style="font-weight: bold; margin-bottom: 8px;">${
+                              reaction.title
+                            }</div>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                ${reaction.users
+                                  .map(
+                                    (user) => `
+                                    <div style="display: flex; align-items: center;">
+                                        <img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; object-fit: cover;">
+                                        <a href="${user.profileUrl}" class="username">${user.username}</a>
+                                    </div>
+                                `
+                                  )
+                                  .join("")}
                             </div>
                         </div>
-                    `
-                      )
-                      .join("")}
-                </div>
+                    </div>
+                `
+                  )
+                  .join("")}
             </div>
-        `;
+        </div>
+    `;
   }
 
   function parseReactions(htmlContent) {
@@ -69,9 +69,11 @@
         doc
           .querySelectorAll(`.tab-content[data-id="${dataId}"] li`)
           .forEach((li) => {
-            const username = li.querySelector(".cbb-helper-text a").textContent;
+            const userLink = li.querySelector(".cbb-helper-text a");
+            const username = userLink.textContent;
+            const profileUrl = userLink.href;
             const avatar = li.querySelector(".user-avatar img").src;
-            users.push({ username, avatar });
+            users.push({ username, avatar, profileUrl });
           });
         reactions.push({ image, title, count, users });
       }
