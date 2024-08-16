@@ -37,9 +37,11 @@
                                   .map(
                                     (user) => `
                                     <div style="display: flex; align-items: center;">
-                                        <img src="${user.avatar}" alt="${
-                                      user.username
-                                    }" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; object-fit: cover;">
+                                        ${
+                                          user.avatar
+                                            ? `<img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; object-fit: cover;">`
+                                            : ""
+                                        }
                                         <a href="${user.profileUrl}" style="${
                                       user.isColoured
                                         ? `color: ${user.color};`
@@ -70,22 +72,26 @@
     const reactions = [];
 
     doc.querySelectorAll(".tab-header a:not(.active)").forEach((a) => {
-      const image = a.querySelector("img")?.src;
-      const title = a.getAttribute("title");
-      const count = a.querySelector(".tab-counter")?.textContent;
+      const image = a.querySelector("img")?.src || "";
+      const title = a.getAttribute("title") || "";
+      const count = a.querySelector(".tab-counter")?.textContent || "0";
       const dataId = a.getAttribute("data-id");
-      if (image && title && count && dataId) {
+      if (dataId) {
         const users = [];
         doc
           .querySelectorAll(`.tab-content[data-id="${dataId}"] li`)
           .forEach((li) => {
             const userLink = li.querySelector(".cbb-helper-text a");
-            const username = userLink.textContent;
-            const profileUrl = userLink.href;
-            const avatar = li.querySelector(".user-avatar img").src;
-            const isColoured = userLink.classList.contains("username-coloured");
-            const color = isColoured ? userLink.style.color : null;
-            users.push({ username, avatar, profileUrl, isColoured, color });
+            if (userLink) {
+              const username = userLink.textContent || "";
+              const profileUrl = userLink.href || "";
+              const avatarImg = li.querySelector(".user-avatar img");
+              const avatar = avatarImg ? avatarImg.src : "";
+              const isColoured =
+                userLink.classList.contains("username-coloured");
+              const color = isColoured ? userLink.style.color : null;
+              users.push({ username, avatar, profileUrl, isColoured, color });
+            }
           });
         reactions.push({ image, title, count, users });
       }
@@ -107,7 +113,17 @@
       }
     )
       .then((response) => response.json())
-      .then((data) => parseReactions(data.htmlContent));
+      .then((data) => {
+        if (!data.htmlContent) {
+          console.error("No HTML content in response:", data);
+          return [];
+        }
+        return parseReactions(data.htmlContent);
+      })
+      .catch((error) => {
+        console.error("Error fetching reactions:", error);
+        return [];
+      });
   }
 
   function processPost(post) {
