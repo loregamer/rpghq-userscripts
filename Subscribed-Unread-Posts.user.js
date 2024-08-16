@@ -94,16 +94,18 @@
 
         allTopicRows = allTopicRows.concat(topicRows);
 
+        // Display content immediately
+        replaceContent(allTopicRows);
+        filterUnreadTopics();
+        addToggleButton();
+        updatePagination(allTopicRows.length);
+        updateTitle();
+
+        // Check for next page and fetch if available
         const nextPageLink = doc.querySelector(".pagination .next a");
         if (nextPageLink) {
           const nextStart = new URLSearchParams(nextPageLink.href).get("start");
           fetchSubscribedTopics(nextStart);
-        } else {
-          replaceContent(allTopicRows);
-          filterUnreadTopics();
-          addToggleButton();
-          updatePagination(allTopicRows.length);
-          updateTitle();
         }
       },
     });
