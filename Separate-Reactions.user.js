@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Reaction List (Discord-style)
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  Display a list of reactions for RPGHQ posts in a Discord-like style
 // @author       YourName
 // @match        https://rpghq.org/forums/*
@@ -17,12 +17,30 @@
                 ${reactions
                   .map(
                     (reaction) => `
-                    <div class="reaction-group" style="display: flex; align-items: center; background-color: rgba(255,255,255,0.1); border-radius: 8px; padding: 2px 6px; cursor: pointer;">
-                        <img src="${reaction.image}" alt="${reaction.title}" style="width: 16px; height: 16px; margin-right: 4px;">
-                        <span style="font-size: 12px; color: #dcddde;">${reaction.count}</span>
-                        <span class="reaction-users" style="display: none; position: absolute; background-color: #36393f; border: 1px solid #202225; border-radius: 4px; padding: 8px; z-index: 1000; color: #dcddde; font-size: 12px; max-width: 200px; word-wrap: break-word;">
-                            ${reaction.title}
-                        </span>
+                    <div class="reaction-group" style="display: flex; align-items: center; background-color: rgba(255,255,255,0.1); border-radius: 8px; padding: 2px 6px; cursor: pointer; position: relative;">
+                        <img src="${reaction.image}" alt="${
+                      reaction.title
+                    }" style="width: 16px; height: 16px; margin-right: 4px;">
+                        <span style="font-size: 12px; color: #dcddde;">${
+                          reaction.count
+                        }</span>
+                        <div class="reaction-users-popup" style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background-color: #36393f; border: 1px solid #202225; border-radius: 4px; padding: 8px; z-index: 1000; color: #dcddde; font-size: 12px; width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <div style="font-weight: bold; margin-bottom: 4px;">${
+                              reaction.title
+                            }</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                ${reaction.users
+                                  .map(
+                                    (user) => `
+                                    <div style="display: flex; align-items: center; margin-right: 4px;">
+                                        <img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 4px;">
+                                        <span>${user.username}</span>
+                                    </div>
+                                `
+                                  )
+                                  .join("")}
+                            </div>
+                        </div>
                     </div>
                 `
                   )
@@ -42,8 +60,17 @@
       const image = a.querySelector("img")?.src;
       const title = a.getAttribute("title");
       const count = a.querySelector(".tab-counter")?.textContent;
-      if (image && title && count) {
-        reactions.push({ image, title, count });
+      const dataId = a.getAttribute("data-id");
+      if (image && title && count && dataId) {
+        const users = [];
+        doc
+          .querySelectorAll(`.tab-content[data-id="${dataId}"] li`)
+          .forEach((li) => {
+            const username = li.querySelector(".cbb-helper-text a").textContent;
+            const avatar = li.querySelector(".user-avatar img").src;
+            users.push({ username, avatar });
+          });
+        reactions.push({ image, title, count, users });
       }
     });
 
@@ -77,13 +104,15 @@
             const reactionListHtml = createReactionList(postId, reactions);
             existingReactionList.outerHTML = reactionListHtml;
 
-            // Add hover effect to show reaction titles
+            // Add hover effect to show reaction users popup
             post.querySelectorAll(".reaction-group").forEach((group) => {
               group.addEventListener("mouseenter", () => {
-                group.querySelector(".reaction-users").style.display = "block";
+                group.querySelector(".reaction-users-popup").style.display =
+                  "block";
               });
               group.addEventListener("mouseleave", () => {
-                group.querySelector(".reaction-users").style.display = "none";
+                group.querySelector(".reaction-users-popup").style.display =
+                  "none";
               });
             });
           }
