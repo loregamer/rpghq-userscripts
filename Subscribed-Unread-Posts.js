@@ -13,23 +13,63 @@
   let allTopicRows = [];
 
   function addSubscribedTopicsButton() {
-    const navMain = document.querySelector("#nav-main");
-    if (navMain) {
+    // Add to quick links dropdown
+    const quickLinks = document.querySelector(
+      "#quick-links .dropdown-contents"
+    );
+    if (quickLinks) {
       const listItem = document.createElement("li");
-      listItem.setAttribute("data-skip-responsive", "true");
       listItem.innerHTML = `
             <a href="https://rpghq.org/forums/search.php?search_id=subscribed" role="menuitem">
                 <i class="icon fa-check-square-o fa-fw" aria-hidden="true"></i><span>Subscribed topics</span>
             </a>
         `;
-      // Insert the new button after the "Unread posts" button
-      const unreadPostsItem = navMain
+      // Insert after "Unread posts" in the dropdown
+      const unreadPostsItem = quickLinks
         .querySelector('a[href*="search_id=unreadposts"]')
         .closest("li");
       unreadPostsItem.parentNode.insertBefore(
         listItem,
         unreadPostsItem.nextSibling
       );
+    }
+
+    // Add as a separate button in the main navigation
+    const navMain = document.getElementById("nav-main");
+    if (navMain) {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = "https://rpghq.org/forums/search.php?search_id=subscribed";
+      a.role = "menuitem";
+      a.innerHTML =
+        '<i class="icon fa-check-square-o fa-fw" aria-hidden="true"></i><span>Subscribed topics</span>';
+
+      // Add custom styles to the anchor and icon
+      a.style.cssText = `
+            display: flex;
+            align-items: center;
+            height: 100%;
+            text-decoration: none;
+        `;
+
+      // Apply styles after a short delay to ensure the icon is loaded
+      setTimeout(() => {
+        const icon = a.querySelector(".icon");
+        if (icon) {
+          icon.style.cssText = `
+                    font-size: 14px;
+                `;
+        }
+      }, 100);
+
+      li.appendChild(a);
+
+      // Insert after "Unread posts" and before "Chat (IRC)" in the main navigation
+      const unreadPostsItem = navMain
+        .querySelector('a[href*="search_id=unreadposts"]')
+        .closest("li");
+      const chatItem = navMain.querySelector('a[href*="/chat"]').closest("li");
+      navMain.insertBefore(li, chatItem);
     }
   }
 
@@ -139,18 +179,7 @@
   }
 
   // Add the "Subscribed topics" button to the navigation bar
-
-  // Run the init function when the page loads
-  if (
-    document.readyState === "complete" ||
-    document.readyState === "interactive"
-  ) {
-    // If the document is already ready, execute the function immediately
-    addSubscribedTopicsButton();
-  } else {
-    // Otherwise, wait for the DOM to be fully loaded
-    window.addEventListener("load", addSubscribedTopicsButton);
-  }
+  addSubscribedTopicsButton();
 
   // Only run the main script on the subscribed topics page
   if (window.location.href.includes("search.php?search_id=subscribed")) {
