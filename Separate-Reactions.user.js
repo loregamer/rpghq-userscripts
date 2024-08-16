@@ -21,7 +21,7 @@
                         <div class="reaction-group" style="display: flex; align-items: center; background-color: rgba(255,255,255,0.1); border-radius: 8px; padding: 2px 6px; position: relative;">
                             <img src="${reaction.image}" alt="${
                           reaction.title
-                        }" style="width: 16px; height: 16px; margin-right: 4px;">
+                        }" style="width: auto; height: 16px; margin-right: 4px; object-fit: contain;">
                             <span style="font-size: 12px; color: #dcddde;">${
                               reaction.count
                             }</span>
@@ -33,9 +33,9 @@
                                     ${reaction.users
                                       .map(
                                         (user) => `
-                                        <div style="display: flex; align-items: center; margin-right: 4px;">
-                                            <img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 4px;">
-                                            <span>${user.username}</span>
+                                        <div style="display: flex; align-items: center; width: 100%; margin-bottom: 4px;">
+                                            <img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; object-fit: cover;">
+                                            <span style="flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${user.username}</span>
                                         </div>
                                     `
                                       )
