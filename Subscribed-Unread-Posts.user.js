@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Subscribed Threads with Unread Posts
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.0.1
 // @description  Display subscribed threads with unread posts on RPGHQ
 // @match        https://rpghq.org/forums/*
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
@@ -23,10 +23,10 @@
     if (quickLinks) {
       const listItem = document.createElement("li");
       listItem.innerHTML = `
-            <a href="https://rpghq.org/forums/search.php?search_id=subscribed" role="menuitem">
-                <i class="icon fa-check-square-o fa-fw" aria-hidden="true"></i><span>Subscribed topics</span>
-            </a>
-        `;
+                <a href="https://rpghq.org/forums/search.php?search_id=subscribed" role="menuitem">
+                    <i class="icon fa-check-square-o fa-fw" aria-hidden="true"></i><span>Subscribed topics</span>
+                </a>
+            `;
       // Insert after "Unread posts" in the dropdown
       const unreadPostsItem = quickLinks
         .querySelector('a[href*="search_id=unreadposts"]')
@@ -49,19 +49,19 @@
 
       // Add custom styles to the anchor and icon
       a.style.cssText = `
-            display: flex;
-            align-items: center;
-            height: 100%;
-            text-decoration: none;
-        `;
+                display: flex;
+                align-items: center;
+                height: 100%;
+                text-decoration: none;
+            `;
 
       // Apply styles after a short delay to ensure the icon is loaded
       setTimeout(() => {
         const icon = a.querySelector(".icon");
         if (icon) {
           icon.style.cssText = `
-                    font-size: 14px;
-                `;
+                        font-size: 14px;
+                    `;
         }
       }, 100);
 
@@ -181,11 +181,25 @@
     button.textContent = showAll ? "Show Only Unread" : "Show All Topics";
   }
 
-  // Add the "Subscribed topics" button to the navigation bar
-  addSubscribedTopicsButton();
+  function init() {
+    // Add the "Subscribed topics" button to the navigation bar and quick links
+    addSubscribedTopicsButton();
 
-  // Only run the main script on the subscribed topics page
-  if (window.location.href.includes("search.php?search_id=subscribed")) {
-    fetchSubscribedTopics();
+    // Only run the main script on the subscribed topics page
+    if (window.location.href.includes("search.php?search_id=subscribed")) {
+      fetchSubscribedTopics();
+    }
+  }
+
+  // Run the init function when the page loads
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
+    // If the document is already ready, execute the function immediately
+    init();
+  } else {
+    // Otherwise, wait for the DOM to be fully loaded
+    window.addEventListener("DOMContentLoaded", init);
   }
 })();
