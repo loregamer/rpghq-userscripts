@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Subscribed Threads with Unread Posts
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  Display subscribed threads with unread posts on RPGHQ
 // @match        https://rpghq.org/forums/search.php?search_id=subscribed
 // @grant        GM_xmlhttpRequest
@@ -19,9 +19,16 @@
       onload: function (response) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(response.responseText, "text/html");
-        const topicRows = doc.querySelectorAll("li.row");
+        const topicRows = Array.from(doc.querySelectorAll("li.row")).filter(
+          (row) => {
+            // Exclude forum sections
+            return !row.querySelector(
+              ".row-item.forum_read, .row-item.forum_unread"
+            );
+          }
+        );
 
-        allTopicRows = allTopicRows.concat(Array.from(topicRows));
+        allTopicRows = allTopicRows.concat(topicRows);
 
         const nextPageLink = doc.querySelector(".pagination .next a");
         if (nextPageLink) {
@@ -44,7 +51,11 @@
       const ul = document.createElement("ul");
       ul.className = "topiclist cplist missing-column";
       topicRows.forEach((row) => {
-        ul.appendChild(row.cloneNode(true));
+        const clonedRow = row.cloneNode(true);
+        // Remove the checkmark row
+        const markDD = clonedRow.querySelector("dd.mark");
+        if (markDD) markDD.remove();
+        ul.appendChild(clonedRow);
       });
       panel.appendChild(ul);
     }
