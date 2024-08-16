@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RPGHQ Reaction List (Discord-style)
 // @namespace    http://tampermonkey.net/
-// @version      1.7
-// @description  Display a list of reactions for RPGHQ posts in a Discord-like style
+// @version      2.1
+// @description  Display a list of reactions for RPGHQ posts in a Discord-style
 // @author       YourName
 // @match        https://rpghq.org/forums/*
 // @grant        none
@@ -11,13 +11,19 @@
 (function () {
   "use strict";
 
-  function createReactionList(postId, reactions) {
+  function createReactionList(postId, reactions, userReaction) {
     const reactionListHtml = `
             <div class="reaction-list" data-post-id="${postId}" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 8px;">
                 ${reactions
                   .map(
                     (reaction) => `
-                    <div class="reaction-group" style="display: flex; align-items: center; background-color: rgba(255,255,255,0.1); border-radius: 8px; padding: 2px 6px; cursor: pointer; position: relative;">
+                    <div class="reaction-group ${
+                      reaction.title === userReaction ? "selected" : ""
+                    }" style="display: flex; align-items: center; background-color: ${
+                      reaction.title === userReaction
+                        ? "rgba(255,255,255,0.3)"
+                        : "rgba(255,255,255,0.1)"
+                    }; border-radius: 8px; padding: 2px 6px; cursor: pointer; position: relative;">
                         <img src="${reaction.image}" alt="${
                       reaction.title
                     }" style="width: 16px; height: 16px; margin-right: 4px;">
@@ -55,6 +61,7 @@
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContent, "text/html");
     const reactions = [];
+    let userReaction = null;
 
     doc.querySelectorAll(".tab-header a:not(.active)").forEach((a) => {
       const image = a.querySelector("img")?.src;
@@ -74,7 +81,15 @@
       }
     });
 
-    return reactions;
+    // Check for user's reaction
+    const userReactionElement = doc.querySelector(
+      ".reactions-launcher .reaction-button:not(.default-icon)"
+    );
+    if (userReactionElement) {
+      userReaction = userReactionElement.querySelector("span").textContent;
+    }
+
+    return { reactions, userReaction };
   }
 
   function fetchReactions(postId) {
@@ -98,11 +113,20 @@
     posts.forEach((post) => {
       const postId = post.id.substring(1);
       const existingReactionList = post.querySelector(".reaction-score-list");
-      if (existingReactionList) {
-        fetchReactions(postId).then((reactions) => {
+      const existingLauncher = post.querySelector(".reactions-launcher");
+      if (existingReactionList && existingLauncher) {
+        fetchReactions(postId).then(({ reactions, userReaction }) => {
           if (reactions.length > 0) {
-            const reactionListHtml = createReactionList(postId, reactions);
+            const reactionListHtml = createReactionList(
+              postId,
+              reactions,
+              userReaction
+            );
             existingReactionList.outerHTML = reactionListHtml;
+
+            // Move the existing launcher to the end of the reaction list
+            const newReactionList = post.querySelector(".reaction-list");
+            newReactionList.appendChild(existingLauncher);
 
             // Add hover effect to show reaction users popup
             post.querySelectorAll(".reaction-group").forEach((group) => {
