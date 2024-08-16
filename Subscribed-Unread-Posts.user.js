@@ -92,11 +92,16 @@
           }
         );
 
+        console.log(
+          `Fetched ${topicRows.length} topic rows from start=${start}`
+        );
+
         allTopicRows = allTopicRows.concat(topicRows);
+
+        console.log(`Total topic rows: ${allTopicRows.length}`);
 
         // Display content immediately
         replaceContent(allTopicRows);
-        filterUnreadTopics();
         updatePagination(allTopicRows.length);
         updateTitle();
 
@@ -105,7 +110,12 @@
         if (nextPageLink) {
           const nextStart = new URLSearchParams(nextPageLink.href).get("start");
           fetchSubscribedTopics(nextStart);
+        } else {
+          console.log("No more pages to fetch");
         }
+      },
+      onerror: function (error) {
+        console.error("Error fetching subscribed topics:", error);
       },
     });
   }
@@ -118,32 +128,26 @@
       ul.className = "topiclist cplist missing-column";
       topicRows.forEach((row) => {
         const clonedRow = row.cloneNode(true);
-        // Remove the checkmark row
         const markDD = clonedRow.querySelector("dd.mark");
         if (markDD) markDD.remove();
 
-        // Modify the topic link
         const topicLink = clonedRow.querySelector("a.topictitle");
         if (topicLink) {
           topicLink.href += "&view=unread#unread";
+        }
+
+        // Add display: none to read topics
+        const isUnread = clonedRow.querySelector(
+          ".topic_unread, .topic_unread_mine, .topic_unread_hot, .topic_unread_hot_mine"
+        );
+        if (!isUnread) {
+          clonedRow.style.display = "none";
         }
 
         ul.appendChild(clonedRow);
       });
       panel.appendChild(ul);
     }
-  }
-
-  function filterUnreadTopics() {
-    const topics = document.querySelectorAll(".panel li.row");
-    topics.forEach((topic) => {
-      const isUnread = topic.querySelector(
-        ".topic_unread, .topic_unread_mine, .topic_unread_hot, .topic_unread_hot_mine"
-      );
-      if (!isUnread) {
-        topic.style.display = "none";
-      }
-    });
   }
 
   function addToggleButton() {
@@ -189,11 +193,21 @@
     button.textContent = showAll ? "Show Only Unread" : "Show All Topics";
   }
 
+  function checkContentLoaded() {
+    const panel = document.querySelector(".panel");
+    if (panel && panel.innerHTML.trim() === "") {
+      console.warn("Panel is empty. Attempting to reload content...");
+      fetchSubscribedTopics();
+    }
+  }
+
   function init() {
     // Only run the main script on the subscribed topics page
     if (window.location.href.includes("search.php?search_id=subscribed")) {
       fetchSubscribedTopics();
       addToggleButton();
+      // Check if content was loaded after a short delay
+      setTimeout(checkContentLoaded, 2000);
     }
 
     // Add the "Subscribed topics" button to the navigation bar and quick links
