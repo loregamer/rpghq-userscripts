@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Reaction List
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.3
 // @description  Display a list of reactions for RPGHQ posts in a Discord-style with hover popups
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
@@ -97,27 +97,38 @@
     const postId = post.id.substring(1);
     const existingReactionList = post.querySelector(".reaction-score-list");
     if (existingReactionList) {
-      fetchReactions(postId)
-        .then((reactions) => {
-          if (reactions.length > 0) {
-            const reactionListHtml = createReactionList(postId, reactions);
-            existingReactionList.outerHTML = reactionListHtml;
-
-            // Add hover effect to reaction groups
-            post.querySelectorAll(".reaction-group").forEach((group) => {
-              group.addEventListener("mouseenter", () => {
-                group.querySelector(".reaction-users-popup").style.display =
-                  "block";
-              });
-              group.addEventListener("mouseleave", () => {
-                group.querySelector(".reaction-users-popup").style.display =
-                  "none";
-              });
-            });
-          }
-        })
-        .catch((error) => console.error("Error fetching reactions:", error));
+      updateReactions(post, postId);
     }
+  }
+
+  function updateReactions(post, postId) {
+    fetchReactions(postId)
+      .then((reactions) => {
+        if (reactions.length > 0) {
+          const reactionListHtml = createReactionList(postId, reactions);
+          const existingReactionList = post.querySelector(
+            ".reaction-score-list"
+          );
+          if (existingReactionList) {
+            existingReactionList.outerHTML = reactionListHtml;
+          } else {
+            post.querySelector(".postbody").appendChild(reactionListHtml);
+          }
+
+          // Add hover effect to reaction groups
+          post.querySelectorAll(".reaction-group").forEach((group) => {
+            group.addEventListener("mouseenter", () => {
+              group.querySelector(".reaction-users-popup").style.display =
+                "block";
+            });
+            group.addEventListener("mouseleave", () => {
+              group.querySelector(".reaction-users-popup").style.display =
+                "none";
+            });
+          });
+        }
+      })
+      .catch((error) => console.error("Error fetching reactions:", error));
   }
 
   function observePosts() {
@@ -125,18 +136,37 @@
       mutations.forEach((mutation) => {
         if (mutation.type === "childList") {
           mutation.addedNodes.forEach((node) => {
-            if (
-              node.nodeType === Node.ELEMENT_NODE &&
-              node.classList.contains("post")
-            ) {
-              processPost(node);
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              if (node.classList.contains("post")) {
+                processPost(node);
+              } else if (node.classList.contains("reaction-score-list")) {
+                const post = node.closest(".post");
+                if (post) {
+                  const postId = post.id.substring(1);
+                  updateReactions(post, postId);
+                }
+              }
             }
           });
+        } else if (
+          mutation.type === "attributes" &&
+          mutation.target.classList.contains("reaction-score-list")
+        ) {
+          const post = mutation.target.closest(".post");
+          if (post) {
+            const postId = post.id.substring(1);
+            updateReactions(post, postId);
+          }
         }
       });
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class"],
+    });
 
     // Process existing posts
     document.querySelectorAll(".post").forEach(processPost);
