@@ -2,7 +2,7 @@
 // @name         RPGHQ Reaction List
 // @namespace    http://tampermonkey.net/
 // @version      1.0
-// @description  Display a list of reactions for RPGHQ posts in a Discord-style with click functionality
+// @description  Display a list of reactions for RPGHQ posts in a Discord-style with hover popups
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
 // @grant        none
@@ -11,74 +11,50 @@
 (function () {
   "use strict";
 
-  const reactionMap = {
-    Care: "3",
-    Watermelon: "8",
-    Thanks: "10",
-    Agree: "11",
-    Disagree: "12",
-    Informative: "13",
-    Mad: "14",
-    Funny: "15",
-    Sad: "16",
-    "Hmm...": "18",
-    Toot: "19",
-    404: "20",
-  };
-
-  function createReactionList(postId, reactions, userReaction) {
-    const reactionListHtml = `
-              <div class="reaction-list" data-post-id="${postId}" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-top: 8px;">
-                  ${reactions
-                    .map(
-                      (reaction) => `
-                      <div class="reaction-group ${
-                        reaction.title === userReaction ? "selected" : ""
-                      }" data-reaction-id="${
-                        reactionMap[reaction.title]
-                      }" style="display: flex; align-items: center; background-color: ${
-                        reaction.title === userReaction
-                          ? "rgba(255,255,255,0.3)"
-                          : "rgba(255,255,255,0.1)"
-                      }; border-radius: 8px; padding: 2px 6px; cursor: pointer; position: relative;">
-                          <img src="${reaction.image}" alt="${
-                        reaction.title
-                      }" style="width: 16px; height: 16px; margin-right: 4px;">
-                          <span style="font-size: 12px; color: #dcddde;">${
-                            reaction.count
-                          }</span>
-                          <div class="reaction-users-popup" style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background-color: #36393f; border: 1px solid #202225; border-radius: 4px; padding: 8px; z-index: 1000; color: #dcddde; font-size: 12px; width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                              <div style="font-weight: bold; margin-bottom: 4px;">${
-                                reaction.title
-                              }</div>
-                              <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                                  ${reaction.users
-                                    .map(
-                                      (user) => `
-                                      <div style="display: flex; align-items: center; margin-right: 4px;">
-                                          <img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 4px;">
-                                          <span>${user.username}</span>
-                                      </div>
-                                  `
-                                    )
-                                    .join("")}
-                              </div>
-                          </div>
-                      </div>
-                  `
-                    )
-                    .join("")}
-              </div>
-          `;
-
-    return reactionListHtml;
+  function createReactionList(postId, reactions) {
+    return `
+            <div class="reaction-score-list" data-post-id="${postId}" data-title="Reactions">
+                <div class="list-scores" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    ${reactions
+                      .map(
+                        (reaction) => `
+                        <div class="reaction-group" style="display: flex; align-items: center; background-color: rgba(255,255,255,0.1); border-radius: 8px; padding: 2px 6px; position: relative;">
+                            <img src="${reaction.image}" alt="${
+                          reaction.title
+                        }" style="width: 16px; height: 16px; margin-right: 4px;">
+                            <span style="font-size: 12px; color: #dcddde;">${
+                              reaction.count
+                            }</span>
+                            <div class="reaction-users-popup" style="display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background-color: #36393f; border: 1px solid #202225; border-radius: 4px; padding: 8px; z-index: 1000; color: #dcddde; font-size: 12px; width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <div style="font-weight: bold; margin-bottom: 4px;">${
+                                  reaction.title
+                                }</div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                    ${reaction.users
+                                      .map(
+                                        (user) => `
+                                        <div style="display: flex; align-items: center; margin-right: 4px;">
+                                            <img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 4px;">
+                                            <span>${user.username}</span>
+                                        </div>
+                                    `
+                                      )
+                                      .join("")}
+                                </div>
+                            </div>
+                        </div>
+                    `
+                      )
+                      .join("")}
+                </div>
+            </div>
+        `;
   }
 
   function parseReactions(htmlContent) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContent, "text/html");
     const reactions = [];
-    let userReaction = null;
 
     doc.querySelectorAll(".tab-header a:not(.active)").forEach((a) => {
       const image = a.querySelector("img")?.src;
@@ -98,15 +74,7 @@
       }
     });
 
-    // Check for user's reaction
-    const userReactionElement = doc.querySelector(
-      ".reactions-launcher .reaction-button:not(.default-icon)"
-    );
-    if (userReactionElement) {
-      userReaction = userReactionElement.querySelector("span").textContent;
-    }
-
-    return { reactions, userReaction };
+    return reactions;
   }
 
   function fetchReactions(postId) {
@@ -125,79 +93,27 @@
       .then((data) => parseReactions(data.htmlContent));
   }
 
-  function addReaction(postId, reactionId) {
-    return fetch(`https://rpghq.org/forums/reactions?post=${postId}&user=551`, {
-      method: "POST",
-      headers: {
-        accept: "application/json, text/javascript, */*; q=0.01",
-        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "x-requested-with": "XMLHttpRequest",
-      },
-      body: `mode=add_reaction&reaction=${reactionId}`,
-      credentials: "include",
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          return fetchReactions(postId);
-        } else {
-          throw new Error("Failed to add reaction");
-        }
-      });
-  }
-
   function processPost(post) {
     const postId = post.id.substring(1);
     const existingReactionList = post.querySelector(".reaction-score-list");
-    const existingLauncher = post.querySelector(".reactions-launcher");
-    if (existingReactionList && existingLauncher) {
+    if (existingReactionList) {
       fetchReactions(postId)
-        .then(({ reactions, userReaction }) => {
+        .then((reactions) => {
           if (reactions.length > 0) {
-            const reactionListHtml = createReactionList(
-              postId,
-              reactions,
-              userReaction
-            );
+            const reactionListHtml = createReactionList(postId, reactions);
             existingReactionList.outerHTML = reactionListHtml;
 
-            // Move the existing launcher to the end of the reaction list
-            const newReactionList = post.querySelector(".reaction-list");
-            newReactionList.appendChild(existingLauncher);
-
-            // Add hover effect and click event to reaction groups
-            newReactionList
-              .querySelectorAll(".reaction-group")
-              .forEach((group) => {
-                group.addEventListener("mouseenter", () => {
-                  group.querySelector(".reaction-users-popup").style.display =
-                    "block";
-                });
-                group.addEventListener("mouseleave", () => {
-                  group.querySelector(".reaction-users-popup").style.display =
-                    "none";
-                });
-
-                // Add click event to set reaction
-                group.addEventListener("click", (e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const reactionId = group.dataset.reactionId;
-                  addReaction(postId, reactionId)
-                    .then(({ reactions, userReaction }) => {
-                      const updatedReactionListHtml = createReactionList(
-                        postId,
-                        reactions,
-                        userReaction
-                      );
-                      newReactionList.outerHTML = updatedReactionListHtml;
-                      processPost(post); // Reprocess the post to add event listeners
-                    })
-                    .catch((error) =>
-                      console.error("Error adding reaction:", error)
-                    );
-                });
+            // Add hover effect to reaction groups
+            post.querySelectorAll(".reaction-group").forEach((group) => {
+              group.addEventListener("mouseenter", () => {
+                group.querySelector(".reaction-users-popup").style.display =
+                  "block";
               });
+              group.addEventListener("mouseleave", () => {
+                group.querySelector(".reaction-users-popup").style.display =
+                  "none";
+              });
+            });
           }
         })
         .catch((error) => console.error("Error fetching reactions:", error));
