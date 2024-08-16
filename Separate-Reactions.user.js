@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Reaction List
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Display a list of reactions for RPGHQ posts in a Discord-style with hover popups
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
