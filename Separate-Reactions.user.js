@@ -37,8 +37,18 @@
                                   .map(
                                     (user) => `
                                     <div style="display: flex; align-items: center;">
-                                        <img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; object-fit: cover;">
-                                        <a href="${user.profileUrl}" class="username">${user.username}</a>
+                                        <img src="${user.avatar}" alt="${
+                                      user.username
+                                    }" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px; object-fit: cover;">
+                                        <a href="${user.profileUrl}" style="${
+                                      user.isColoured
+                                        ? `color: ${user.color};`
+                                        : ""
+                                    }" class="${
+                                      user.isColoured
+                                        ? "username-coloured"
+                                        : "username"
+                                    }">${user.username}</a>
                                     </div>
                                 `
                                   )
@@ -73,7 +83,9 @@
             const username = userLink.textContent;
             const profileUrl = userLink.href;
             const avatar = li.querySelector(".user-avatar img").src;
-            users.push({ username, avatar, profileUrl });
+            const isColoured = userLink.classList.contains("username-coloured");
+            const color = isColoured ? userLink.style.color : null;
+            users.push({ username, avatar, profileUrl, isColoured, color });
           });
         reactions.push({ image, title, count, users });
       }
