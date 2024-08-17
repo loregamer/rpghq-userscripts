@@ -2428,14 +2428,6 @@
   }
 
   // Run the init function when the page loads
-  if (
-    // document.readyState === "complete" ||
-    document.readyState === "interactive"
-  ) {
-    console.log("Complete State");
-    initAllScripts();
-  } else {
-    console.log("Loaded State");
-    window.addEventListener("load", initAllScripts);
-  }
+
+  window.addEventListener("load", initAllScripts);
 })();
