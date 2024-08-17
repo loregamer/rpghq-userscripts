@@ -9,7 +9,8 @@
 // @grant        GM_getValue
 // @grant        GM_xmlhttpRequest
 // @grant        GM_registerMenuCommand
-// ... (add all other necessary @grant permissions)
+// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/ALL_IN_ONE.user.js
+// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/ALL_IN_ONE.user.js
 // ==/UserScript==
 
 (function () {
