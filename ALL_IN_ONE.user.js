@@ -21,8 +21,9 @@
     return new RegExp(pattern.replace(/\*/g, ".*")).test(window.location.href);
   }
 
-  function initBBCode() {
-    if (urlMatches("https://rpghq.org/forums/*")) {
+  async function initBBCode() {
+    console.log("initBBCode");
+    if (urlMatches("https://rpghq.org/forums/posting.php*")) {
       // Simplified customSmileys array
       let customSmileys = [
         "📥",
@@ -34,239 +35,239 @@
       // Add custom CSS to highlight BBCode tags with multiple colors
       const style = document.createElement("style");
       style.textContent = `
-            .bbcode-bracket {
-                color: #D4D4D4; /* Light grey */
-            }
-            .bbcode-tag-0 {
-                color: #569CD6; /* Blue */
-            }
-            .bbcode-tag-1 {
-                color: #CE9178; /* Light orange */
-            }
-            .bbcode-tag-2 {
-                color: #DCDCAA; /* Yellow */
-            }
-            .bbcode-tag-3 {
-                color: #C586C0; /* Light purple */
-            }
-            .bbcode-tag-4 {
-                color: #4EC9B0; /* Light green */
-            }
-            .bbcode-attribute {
-                color: #9CDCFE; /* Light blue */
-            }
-            .bbcode-list-item {
-                color: #FFD700; /* Gold color for list items */
-            }
-            .bbcode-smiley {
-                color: #FFD700; /* Gold color for smileys */
-            }
-            #bbcode-highlight {
-                white-space: pre-wrap;
-                word-wrap: break-word;
-                position: absolute;
-                top: 0;
-                left: 0;
-                z-index: 3; /* Ensure it is above the textarea */
-                width: 100%;
-                height: 100%;
-                overflow: hidden;
-                pointer-events: none; /* Allow interaction with textarea */
-                box-sizing: border-box;
-                padding: 3px;
-                font-family: Verdana, Helvetica, Arial, sans-serif;
-                font-size: 11px;
-                font-style: normal;
-                font-variant-caps: normal;
-                font-variant-east-asian: normal;
-                font-variant-ligatures: normal;
-                font-variant-numeric: normal;
-                font-weight: 400;
-                line-height: 15.4px;
-                background-color: transparent; /* Make background transparent */
-                color: transparent; /* Make text color transparent */
-                transition: all 0.5s ease, height 0.001s linear;
-            }
-            #message {
-                position: relative;
-                z-index: 2;
-                background: transparent;
-                color: rgb(204, 204, 204);
-                caret-color: white; /* Change cursor color to white */
-                width: 100%;
-                height: 100%;
-                padding: 3px;
-                box-sizing: border-box;
-                resize: none;
-                overflow: auto;
-                font-family: Verdana, Helvetica, Arial, sans-serif;
-                font-size: 11px;
-                font-style: normal;
-                font-variant-caps: normal;
-                font-variant-east-asian: normal;
-                font-variant-ligatures: normal;
-                font-variant-numeric: normal;
-                font-weight: 400;
-                line-height: 15.4px;
-            }
-            .editor-container {
-                position: relative;
-                width: 100%;
-                height: auto; /* Allow dynamic height */
-            }
-            .bbcode-link {
-                color: #5D8FBD; /* Light blue */
-            }
-
-            .smiley-button {
-              display: inline-block;
-              justify-content: center;
-              align-items: center;
-              width: 22px;
-              height: 22px;
-              margin: 2px;
-              text-decoration: none;
-              vertical-align: middle;
-              line-height: 1;
-              overflow: hidden;
-            }
-
-            .smiley-button img {
-              width: 80%;
-              height: 80%;
-              object-fit: contain;
-            }
-
-            .custom-smiley-container {
-              margin-top: 5px;
-              margin-bottom: 5px;
-            }
-
-            .custom-smiley-button {
-              display: inline-block;
-              justify-content: center;
-              align-items: center;
-              width: 22px;
-              height: 22px;
-              margin: 2px;
-              text-decoration: none;
-              vertical-align: middle;
-              line-height: 1;
-              overflow: hidden;
-            }
-
-            .custom-smiley-button img {
-              max-width: 80%;
-              max-height: 80%;
-              object-fit: contain;
-            }
-
-            .custom-smiley-button:hover {
-              text-decoration: none;
-            }
-
-            .emoji-smiley {
-              font-size: 18px;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              width: 80%;
-              height: 80%;
-            }
-
-            #smiley-box {
-              position: absolute;
-              max-height: 80vh; /* Adjust this value as needed */
-              width: 17%;
-              overflow-y: auto;
-              padding: 10px;
-              border-radius: 5px;
-              z-index: 1000;
-            }
-
-            .smiley-group {
-              margin-bottom: 10px;
-            }
-
-            #smiley-box a {
-              color: #5D8FBD; /* Light blue color for links, adjust as needed */
-              text-decoration: none;
-            }
-
-            #smiley-box a:hover {
-              text-decoration: underline;
-            }
-
-            #abbc3_buttons.fixed {
-              position: fixed;
-              top: 0;
-              z-index: 1000;
-              margin-top: 0;
-              padding-top: 0;
-              background-color: #3A404A !important;
-            }
-
-            .abbc3_buttons_row {
-              margin: 0;
-              padding: 0;
-              background-color: #3A404A !important;
-            }
-
-            .abbc3_buttons_row.fixed {
-              background-color: #3A404A !important;
-              position: fixed;
-              top: 0;
-              z-index: 1000;
-              margin-top: 0;
-              padding-top: 0;
-            }
-
-            .custom-buttons-container {
-              margin-top: 10px;
-            }
-
-            .custom-buttons-container button {
-              margin: 5px;
-            }
-
-            .custom-button {
-              margin-bottom: 5px;
-              margin-right: 5px;
-            }
-
-            .custom-button:hover {
-            }
-
-            .smiley-group {
-              margin-bottom: 10px;
-            }
-
-            .smiley-group-separator {
-              margin: 10px 0;
-            }
-
-            #smiley-box {
-            }
-
-            .smiley-button, .custom-smiley-button {
-              display: inline-flex;
-              justify-content: center;
-              align-items: center;
-              width: 22px;
-              height: 22px;
-              margin: 2px;
-              text-decoration: none;
-              vertical-align: middle;
-              line-height: 1;
-              overflow: hidden;
-            }
-
-            .smiley-button img, .custom-smiley-button img {
-              max-width: 80%;
-              max-height: 80%;
-              object-fit: contain;
-            } 
-        `;
+                  .bbcode-bracket {
+                      color: #D4D4D4; /* Light grey */
+                  }
+                  .bbcode-tag-0 {
+                      color: #569CD6; /* Blue */
+                  }
+                  .bbcode-tag-1 {
+                      color: #CE9178; /* Light orange */
+                  }
+                  .bbcode-tag-2 {
+                      color: #DCDCAA; /* Yellow */
+                  }
+                  .bbcode-tag-3 {
+                      color: #C586C0; /* Light purple */
+                  }
+                  .bbcode-tag-4 {
+                      color: #4EC9B0; /* Light green */
+                  }
+                  .bbcode-attribute {
+                      color: #9CDCFE; /* Light blue */
+                  }
+                  .bbcode-list-item {
+                      color: #FFD700; /* Gold color for list items */
+                  }
+                  .bbcode-smiley {
+                      color: #FFD700; /* Gold color for smileys */
+                  }
+                  #bbcode-highlight {
+                      white-space: pre-wrap;
+                      word-wrap: break-word;
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                      z-index: 3; /* Ensure it is above the textarea */
+                      width: 100%;
+                      height: 100%;
+                      overflow: hidden;
+                      pointer-events: none; /* Allow interaction with textarea */
+                      box-sizing: border-box;
+                      padding: 3px;
+                      font-family: Verdana, Helvetica, Arial, sans-serif;
+                      font-size: 11px;
+                      font-style: normal;
+                      font-variant-caps: normal;
+                      font-variant-east-asian: normal;
+                      font-variant-ligatures: normal;
+                      font-variant-numeric: normal;
+                      font-weight: 400;
+                      line-height: 15.4px;
+                      background-color: transparent; /* Make background transparent */
+                      color: transparent; /* Make text color transparent */
+                      transition: all 0.5s ease, height 0.001s linear;
+                  }
+                  #message {
+                      position: relative;
+                      z-index: 2;
+                      background: transparent;
+                      color: rgb(204, 204, 204);
+                      caret-color: white; /* Change cursor color to white */
+                      width: 100%;
+                      height: 100%;
+                      padding: 3px;
+                      box-sizing: border-box;
+                      resize: none;
+                      overflow: auto;
+                      font-family: Verdana, Helvetica, Arial, sans-serif;
+                      font-size: 11px;
+                      font-style: normal;
+                      font-variant-caps: normal;
+                      font-variant-east-asian: normal;
+                      font-variant-ligatures: normal;
+                      font-variant-numeric: normal;
+                      font-weight: 400;
+                      line-height: 15.4px;
+                  }
+                  .editor-container {
+                      position: relative;
+                      width: 100%;
+                      height: auto; /* Allow dynamic height */
+                  }
+                  .bbcode-link {
+                      color: #5D8FBD; /* Light blue */
+                  }
+      
+                  .smiley-button {
+                    display: inline-block;
+                    justify-content: center;
+                    align-items: center;
+                    width: 22px;
+                    height: 22px;
+                    margin: 2px;
+                    text-decoration: none;
+                    vertical-align: middle;
+                    line-height: 1;
+                    overflow: hidden;
+                  }
+      
+                  .smiley-button img {
+                    width: 80%;
+                    height: 80%;
+                    object-fit: contain;
+                  }
+      
+                  .custom-smiley-container {
+                    margin-top: 5px;
+                    margin-bottom: 5px;
+                  }
+      
+                  .custom-smiley-button {
+                    display: inline-block;
+                    justify-content: center;
+                    align-items: center;
+                    width: 22px;
+                    height: 22px;
+                    margin: 2px;
+                    text-decoration: none;
+                    vertical-align: middle;
+                    line-height: 1;
+                    overflow: hidden;
+                  }
+      
+                  .custom-smiley-button img {
+                    max-width: 80%;
+                    max-height: 80%;
+                    object-fit: contain;
+                  }
+      
+                  .custom-smiley-button:hover {
+                    text-decoration: none;
+                  }
+      
+                  .emoji-smiley {
+                    font-size: 18px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    width: 80%;
+                    height: 80%;
+                  }
+      
+                  #smiley-box {
+                    position: absolute;
+                    max-height: 80vh; /* Adjust this value as needed */
+                    width: 17%;
+                    overflow-y: auto;
+                    padding: 10px;
+                    border-radius: 5px;
+                    z-index: 1000;
+                  }
+      
+                  .smiley-group {
+                    margin-bottom: 10px;
+                  }
+      
+                  #smiley-box a {
+                    color: #5D8FBD; /* Light blue color for links, adjust as needed */
+                    text-decoration: none;
+                  }
+      
+                  #smiley-box a:hover {
+                    text-decoration: underline;
+                  }
+      
+                  #abbc3_buttons.fixed {
+                    position: fixed;
+                    top: 0;
+                    z-index: 1000;
+                    margin-top: 0;
+                    padding-top: 0;
+                    background-color: #3A404A !important;
+                  }
+      
+                  .abbc3_buttons_row {
+                    margin: 0;
+                    padding: 0;
+                    background-color: #3A404A !important;
+                  }
+      
+                  .abbc3_buttons_row.fixed {
+                    background-color: #3A404A !important;
+                    position: fixed;
+                    top: 0;
+                    z-index: 1000;
+                    margin-top: 0;
+                    padding-top: 0;
+                  }
+      
+                  .custom-buttons-container {
+                    margin-top: 10px;
+                  }
+      
+                  .custom-buttons-container button {
+                    margin: 5px;
+                  }
+      
+                  .custom-button {
+                    margin-bottom: 5px;
+                    margin-right: 5px;
+                  }
+      
+                  .custom-button:hover {
+                  }
+      
+                  .smiley-group {
+                    margin-bottom: 10px;
+                  }
+      
+                  .smiley-group-separator {
+                    margin: 10px 0;
+                  }
+      
+                  #smiley-box {
+                  }
+      
+                  .smiley-button, .custom-smiley-button {
+                    display: inline-flex;
+                    justify-content: center;
+                    align-items: center;
+                    width: 22px;
+                    height: 22px;
+                    margin: 2px;
+                    text-decoration: none;
+                    vertical-align: middle;
+                    line-height: 1;
+                    overflow: hidden;
+                  }
+      
+                  .smiley-button img, .custom-smiley-button img {
+                    max-width: 80%;
+                    max-height: 80%;
+                    object-fit: contain;
+                  } 
+              `;
       document.head.appendChild(style);
 
       // Function to get a consistent color index for each tag name
@@ -743,15 +744,15 @@
 
           if (bbcodeStatus) {
             bbcodeStatus.innerHTML = `
-            <hr>
-          <button type="button" class="button button-secondary custom-button" id="insert-mod-template">Insert Mod Template</button>
-          <button type="button" class="button button-secondary custom-button" id="insert-table">Insert Table</button>
-        `;
+                  <hr>
+                <button type="button" class="button button-secondary custom-button" id="insert-mod-template">Insert Mod Template</button>
+                <button type="button" class="button button-secondary custom-button" id="insert-table">Insert Table</button>
+              `;
 
             if (isLoregamer) {
               bbcodeStatus.innerHTML += `
-            <button type="button" class="button button-secondary custom-button" id="ping-bloomery">Ping Bloomery</button>
-          `;
+                  <button type="button" class="button button-secondary custom-button" id="ping-bloomery">Ping Bloomery</button>
+                `;
             }
 
             document
@@ -780,120 +781,120 @@
 
       function insertModTemplate() {
         const template = `[align=center][img] MOD IMAGE URL HERE [/img][/align]
-
-
-[hr]
-
-
-[size=150][b][color=#FE545D] Overview [/color][/b][/size]
-MOD DESCRIPTION HERE
-
-
-[hr]
-
-
-[size=150][b][color=#FE545D] Downloads [/color][/b][/size]
-| Files | Version | Type | Description |
-|-------|-----------|-------|---------------|
-|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
-|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
-|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
-|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
-
-
-[hr]
-
-
-[size=150][b][color=#FE545D] Installation Instructions [/color][/b][/size]
-[list=1]
-[*] Instruction Number 1
-[*] Instruction Number 2
-[*] Instruction Number 3
-[/list]
-
-
-[hr]
-
-
-[size=150][b][color=#FE545D] Changelog [/color][/b][/size]
-[spoiler]
-[b]VERSION NUMBER HERE[/b]
-[list]
-[*] CHANGE HERE
-[*] CHANGE HERE
-[*] CHANGE HERE
-[/list]
-
-[b]VERSION NUMBER HERE[/b]
-[list]
-[*] CHANGE HERE
-[*] CHANGE HERE
-[*] CHANGE HERE
-[/list]
-[/spoiler]
-
-
-[hr]
-
-
-[size=150][b][color=#FE545D] To Do [/color][/b][/size]
-[list]
-[*] TO DO
-[*] TO DO
-[*] TO DO
-[/list]
-
-
-[hr]
-
-[size=150][b][color=#FE545D] Reporting Bugs [/color][/b][/size]
-To report any bugs, please submit a post in the [url=https://rpghq.org/forums/posting.php?mode=post&f=40]Mod Support section[/url] and mention my username.
-
-
-[hr]
-
-
-[size=150][b][color=#FE545D]Credits[/color][/b][/size]
-[list]
-[*] CREDIT
-[*] CREDIT
-[*] CREDIT
-[/list]
-
-
-[hr]
-
-
-[size=150][b][color=#FE545D] My Other Mods [/color][/b][/size]
-[list]
-[*] [url=MOD URL] MOD NAME [/url]
-[*] [url=MOD URL] MOD NAME [/url]
-[*] [url=MOD URL] MOD NAME [/url]
-[*] [url=MOD URL] MOD NAME [/url]
-[*] [url=MOD URL] MOD NAME [/url]
-[/list]
-
-
-[hr]
-`;
+      
+      
+      [hr]
+      
+      
+      [size=150][b][color=#FE545D] Overview [/color][/b][/size]
+      MOD DESCRIPTION HERE
+      
+      
+      [hr]
+      
+      
+      [size=150][b][color=#FE545D] Downloads [/color][/b][/size]
+      | Files | Version | Type | Description |
+      |-------|-----------|-------|---------------|
+      |[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
+      |[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
+      |[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
+      |[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
+      
+      
+      [hr]
+      
+      
+      [size=150][b][color=#FE545D] Installation Instructions [/color][/b][/size]
+      [list=1]
+      [*] Instruction Number 1
+      [*] Instruction Number 2
+      [*] Instruction Number 3
+      [/list]
+      
+      
+      [hr]
+      
+      
+      [size=150][b][color=#FE545D] Changelog [/color][/b][/size]
+      [spoiler]
+      [b]VERSION NUMBER HERE[/b]
+      [list]
+      [*] CHANGE HERE
+      [*] CHANGE HERE
+      [*] CHANGE HERE
+      [/list]
+      
+      [b]VERSION NUMBER HERE[/b]
+      [list]
+      [*] CHANGE HERE
+      [*] CHANGE HERE
+      [*] CHANGE HERE
+      [/list]
+      [/spoiler]
+      
+      
+      [hr]
+      
+      
+      [size=150][b][color=#FE545D] To Do [/color][/b][/size]
+      [list]
+      [*] TO DO
+      [*] TO DO
+      [*] TO DO
+      [/list]
+      
+      
+      [hr]
+      
+      [size=150][b][color=#FE545D] Reporting Bugs [/color][/b][/size]
+      To report any bugs, please submit a post in the [url=https://rpghq.org/forums/posting.php?mode=post&f=40]Mod Support section[/url] and mention my username.
+      
+      
+      [hr]
+      
+      
+      [size=150][b][color=#FE545D]Credits[/color][/b][/size]
+      [list]
+      [*] CREDIT
+      [*] CREDIT
+      [*] CREDIT
+      [/list]
+      
+      
+      [hr]
+      
+      
+      [size=150][b][color=#FE545D] My Other Mods [/color][/b][/size]
+      [list]
+      [*] [url=MOD URL] MOD NAME [/url]
+      [*] [url=MOD URL] MOD NAME [/url]
+      [*] [url=MOD URL] MOD NAME [/url]
+      [*] [url=MOD URL] MOD NAME [/url]
+      [*] [url=MOD URL] MOD NAME [/url]
+      [/list]
+      
+      
+      [hr]
+      `;
         insertTextAtCursor(template);
       }
 
       function insertTable() {
         const table = `| Files | Version | Type | Description |
-|-------|-----------|-------|---------------|
-|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
-|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
-|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
-|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
-`;
+      |-------|-----------|-------|---------------|
+      |[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
+      |[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
+      |[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
+      |[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |
+      `;
 
         insertTextAtCursor(table);
       }
 
       function insertBloomeryPing() {
         const pingText = `[smention]Bloomery[/smention]
-    [size=1] [smention u=459][/smention] [smention u=510][/smention] [smention u=897][/smention] [smention u=515][/smention] [smention u=548][/smention] [smention u=555][/smention] [smention u=615][/smention] [smention u=753][/smention] [smention u=918][/smention] [smention u=919][/smention] [smention u=3114][/smention] [smention u=58][/smention] [smention u=256][/smention] [smention u=63][/smention]  [/size]`;
+          [size=1] [smention u=459][/smention] [smention u=510][/smention] [smention u=897][/smention] [smention u=515][/smention] [smention u=548][/smention] [smention u=555][/smention] [smention u=615][/smention] [smention u=753][/smention] [smention u=918][/smention] [smention u=919][/smention] [smention u=3114][/smention] [smention u=58][/smention] [smention u=256][/smention] [smention u=63][/smention]  [/size]`;
 
         insertTextAtCursor(pingText);
       }
@@ -931,36 +932,36 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         const popup = document.createElement("div");
         popup.id = "custom-smileys-popup";
         popup.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: #2a2e36;
-      border: 1px solid #3a3f4b;
-      border-radius: 5px;
-      width: 80%;
-      max-width: 600px;
-      height: 80%;
-      max-height: 600px;
-      display: flex;
-      flex-direction: column;
-      z-index: 9999;
-      font-family: 'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif;
-    `;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #2a2e36;
+            border: 1px solid #3a3f4b;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 600px;
+            height: 80%;
+            max-height: 600px;
+            display: flex;
+            flex-direction: column;
+            z-index: 9999;
+            font-family: 'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif;
+          `;
 
         // Create header
         const header = document.createElement("div");
         header.style.cssText = `
-      padding: 20px;
-      background-color: #2a2e36;
-      border-bottom: 1px solid #3a3f4b;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-    `;
+            padding: 20px;
+            background-color: #2a2e36;
+            border-bottom: 1px solid #3a3f4b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+          `;
 
         const title = document.createElement("h2");
         title.textContent = "Manage Custom Smileys";
@@ -970,13 +971,13 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         const closeButton = document.createElement("button");
         closeButton.textContent = "Close";
         closeButton.style.cssText = `
-      background-color: #4a5464;
-      color: #c5d0db;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 3px;
-      cursor: pointer;
-    `;
+            background-color: #4a5464;
+            color: #c5d0db;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+          `;
         closeButton.onclick = (e) => {
           e.preventDefault();
           document.body.removeChild(popup);
@@ -988,17 +989,17 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         // Create content
         const content = document.createElement("div");
         content.style.cssText = `
-    padding: 20px;
-    overflow-y: auto;
-    flex-grow: 1;
-  `;
+          padding: 20px;
+          overflow-y: auto;
+          flex-grow: 1;
+        `;
 
         const smileyList = document.createElement("ul");
         smileyList.style.cssText = `
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-  `;
+          list-style-type: none;
+          padding: 0;
+          margin: 0;
+        `;
 
         function updateSmileyList() {
           smileyList.innerHTML = "";
@@ -1006,10 +1007,10 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
           customSmileys.forEach((smiley, index) => {
             const listItem = document.createElement("li");
             listItem.style.cssText = `
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-      `;
+              margin-bottom: 10px;
+              display: flex;
+              align-items: center;
+            `;
 
             if (isSingleEmoji(smiley)) {
               const emojiSpan = document.createElement("span");
@@ -1022,10 +1023,10 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
               smileyPreview.src = smiley;
               smileyPreview.alt = "Smiley";
               smileyPreview.style.cssText = `
-          width: 20px;
-          height: 20px;
-          margin-right: 10px;
-        `;
+                width: 20px;
+                height: 20px;
+                margin-right: 10px;
+              `;
               listItem.appendChild(smileyPreview);
             }
 
@@ -1034,25 +1035,25 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
             smileyInput.value = smiley;
             smileyInput.disabled = true;
             smileyInput.style.cssText = `
-        flex-grow: 1;
-        margin-right: 10px;
-        padding: 5px;
-        background-color: #2a2e36;
-        color: #a0a0a0;
-        border: 1px solid #3a3f4b;
-        border-radius: 3px;
-        cursor: default;
-      `;
+              flex-grow: 1;
+              margin-right: 10px;
+              padding: 5px;
+              background-color: #2a2e36;
+              color: #a0a0a0;
+              border: 1px solid #3a3f4b;
+              border-radius: 3px;
+              cursor: default;
+            `;
 
             const buttonStyle = `
-        background-color: #4a5464;
-        color: #c5d0db;
-        border: none;
-        padding: 5px 10px;
-        margin-left: 5px;
-        border-radius: 3px;
-        cursor: pointer;
-      `;
+              background-color: #4a5464;
+              color: #c5d0db;
+              border: none;
+              padding: 5px 10px;
+              margin-left: 5px;
+              border-radius: 3px;
+              cursor: pointer;
+            `;
 
             const upButton = document.createElement("button");
             upButton.textContent = "↑";
@@ -1108,14 +1109,14 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         newSmileyInput.placeholder =
           "Enter new smiley or emoji and press Enter";
         newSmileyInput.style.cssText = `
-    width: 100%;
-    margin-top: 15px;
-    padding: 5px;
-    background-color: #3a3f4b;
-    color: #c5d0db;
-    border: 1px solid #4a5464;
-    border-radius: 3px;
-  `;
+          width: 100%;
+          margin-top: 15px;
+          padding: 5px;
+          background-color: #3a3f4b;
+          color: #c5d0db;
+          border: 1px solid #4a5464;
+          border-radius: 3px;
+        `;
 
         newSmileyInput.addEventListener("keypress", function (e) {
           if (e.key === "Enter") {
@@ -1382,25 +1383,25 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
           // Add CSS for mention box
           const mentionStyle = document.createElement("style");
           mentionStyle.textContent = `
-        .mention-box {
-          position: fixed;
-          background-color: #2b2b2b;
-          border: 1px solid #444;
-          max-height: 200px;
-          overflow-y: auto;
-          z-index: 9999;
-          width: 200px; // Set a fixed width
-          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .mention-item {
-          padding: 5px 10px;
-          cursor: pointer;
-          color: #fff; // Ensure text is visible
-        }
-        .mention-item:hover, .mention-item.active {
-          background-color: #3a3a3a;
-        }
-      `;
+              .mention-box {
+                position: fixed;
+                background-color: #2b2b2b;
+                border: 1px solid #444;
+                max-height: 200px;
+                overflow-y: auto;
+                z-index: 9999;
+                width: 200px; // Set a fixed width
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+              }
+              .mention-item {
+                padding: 5px 10px;
+                cursor: pointer;
+                color: #fff; // Ensure text is visible
+              }
+              .mention-item:hover, .mention-item.active {
+                background-color: #3a3a3a;
+              }
+            `;
           document.head.appendChild(mentionStyle);
 
           let lastContent = "";
@@ -1416,14 +1417,14 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
             const manageButton = document.createElement("button");
             manageButton.textContent = "Manage Custom Smileys";
             manageButton.style.cssText = `
-      margin-top: 10px;
-      background-color: #4a5464;
-      color: #c5d0db;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 3px;
-      cursor: pointer;
-    `;
+            margin-top: 10px;
+            background-color: #4a5464;
+            color: #c5d0db;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+          `;
             manageButton.onclick = showCustomSmileysPopup;
             smileyBox.appendChild(manageButton);
           }
@@ -1485,9 +1486,9 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
             // Create the new "Open Vault" link
             const vaultDiv = document.createElement("div");
             vaultDiv.innerHTML = `
-    <img src="https://f.rpghq.org/V4gHDnvTTgpf.webp" width="16" height="16" style="vertical-align: middle; margin-left: 0.5em;">
-    <a href="javascript:void(0);" style="color: rgb(58, 128, 234); vertical-align: middle; font-size: 1em;">Open Vault</a>
-  `;
+          <img src="https://f.rpghq.org/V4gHDnvTTgpf.webp" width="16" height="16" style="vertical-align: middle; margin-left: 0.5em;">
+          <a href="javascript:void(0);" style="color: rgb(58, 128, 234); vertical-align: middle; font-size: 1em;">Open Vault</a>
+        `;
             vaultDiv.querySelector("a").onclick = function (e) {
               e.preventDefault();
               window.open(
@@ -1523,7 +1524,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     }
   }
 
-  function initBetterBloomery() {
+  async function initBetterBloomery() {
+    console.log("initBetterBloomery");
     if (urlMatches("https://rpghq.org/forums/*")) {
       const colorMap = {
         "【 Userscript 】": "#00AA00",
@@ -1553,7 +1555,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     }
   }
 
-  function initNotifications() {
+  async function initNotifications() {
+    console.log("initNotifications");
     if (urlMatches("https://rpghq.org/*/*")) {
       function customizeNotificationPanel() {
         let notificationBlocks = document.querySelectorAll(
@@ -1874,7 +1877,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     }
   }
 
-  function initRandomTopic() {
+  async function initRandomTopic() {
+    console.log("initRandomTopic");
     if (urlMatches("https://rpghq.org/forums/*")) {
       // Function to get a random topic ID
       function getRandomTopicId() {
@@ -1962,7 +1966,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     }
   }
 
-  function initSeparateReactions() {
+  async function initSeparateReactions() {
+    console.log("initSeparateReactions");
     if (urlMatches("https://rpghq.org/forums/*")) {
       function createReactionList(postId, reactions) {
         return `
@@ -2194,7 +2199,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     }
   }
 
-  function initSubscribedUnreadPosts() {
+  async function initSubscribedUnreadPosts() {
+    console.log("initSubscribedUnreadPosts");
     if (urlMatches("https://rpghq.org/forums/*")) {
       function addSubscribedTopicsButton() {
         // Add to quick links dropdown
@@ -2406,22 +2412,30 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     }
   }
 
-  function initAllScripts() {
-    initNotifications();
-    initBetterBloomery();
-    initBBCode();
-    initRandomTopic();
-    initSeparateReactions();
-    // initSubscribedUnreadPosts();
+  async function initAllScripts() {
+    try {
+      await Promise.all([
+        initNotifications(),
+        initBetterBloomery(),
+        initSeparateReactions(),
+        initBBCode(),
+        initRandomTopic(),
+      ]);
+      console.log("All scripts initialized successfully");
+    } catch (error) {
+      console.error("Error initializing scripts:", error);
+    }
   }
 
   // Run the init function when the page loads
   if (
-    document.readyState === "complete" ||
+    // document.readyState === "complete" ||
     document.readyState === "interactive"
   ) {
+    console.log("Complete State");
     initAllScripts();
   } else {
+    console.log("Loaded State");
     window.addEventListener("load", initAllScripts);
   }
 })();
