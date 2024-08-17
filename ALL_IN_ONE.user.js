@@ -2412,7 +2412,7 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     initBBCode();
     initRandomTopic();
     initSeparateReactions();
-    initSubscribedUnreadPosts();
+    // initSubscribedUnreadPosts();
   }
 
   // Run the init function when the page loads
