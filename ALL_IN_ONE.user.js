@@ -1516,6 +1516,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
           setTimeout(initialize, 500);
         }
       }
+
+      initialize();
     }
   }
 
@@ -1544,6 +1546,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
           }
         });
       }
+
+      colorizeTopicTitles();
     }
   }
 
@@ -1863,6 +1867,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         const config = { childList: true, subtree: true };
         observer.observe(document.body, config);
       }
+
+      init();
     }
   }
 
@@ -1949,6 +1955,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
           navMain.appendChild(li);
         }
       }
+
+      addRandomTopicButton();
     }
   }
 
@@ -2179,6 +2187,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         // Process existing posts
         document.querySelectorAll(".post").forEach(processPost);
       }
+
+      observePosts();
     }
   }
 
@@ -2389,6 +2399,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         // Add the "Subscribed topics" button to the navigation bar and quick links
         addSubscribedTopicsButton();
       }
+
+      init();
     }
   }
 
