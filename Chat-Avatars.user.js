@@ -174,6 +174,12 @@ SOFTWARE.
   }
 
   function setImageSource(img, baseImageUrl) {
+    // Check if the URL already ends with an image extension
+    if (/\.(jpg|jpeg|png|gif)$/i.test(baseImageUrl)) {
+      img.src = baseImageUrl;
+      return;
+    }
+
     const extensions = ["jpg", "jpeg", "png", "gif"];
     let imageSet = false;
 
@@ -191,8 +197,8 @@ SOFTWARE.
         };
 
         testerImg.onerror = () => {
-          if (!imageSet) {
-            img.src = `${baseImageUrl}.jpg`; // Fallback
+          if (!imageSet && ext === extensions[extensions.length - 1]) {
+            img.src = baseImageUrl; // Use the original URL as a fallback
           }
         };
       }
@@ -201,7 +207,7 @@ SOFTWARE.
 
   function addUserPictures() {
     const allUserElements = document.querySelectorAll(
-      "[data-user-id], .profile-viewer__user__info, .prxiv40, ._13tt0gb6"
+      "[data-user-id], .profile-viewer__user__info, .prxiv40, ._13tt0gb6, ._1684mq51"
     );
 
     allUserElements.forEach(function (element) {
@@ -209,9 +215,15 @@ SOFTWARE.
         element.getAttribute("data-user-id") ||
         element.querySelector("p.text.text-b2.text-normal, p._1xny9xlc")
           ?.textContent;
-      const avatarContainer = element.querySelector(
+      let avatarContainer = element.querySelector(
         "span._1684mq5d, .avatar__border, span._1684mq51"
       );
+
+      // If avatarContainer is not found, the element itself might be the avatar container
+      if (!avatarContainer && element.classList.contains("_1684mq51")) {
+        avatarContainer = element;
+      }
+
       const displayNameElement = element.querySelector(
         "span._1xny9xl0 b, h4.text.text-s1.text-medium, p._1xny9xl0, span._1xny9xl1"
       );
