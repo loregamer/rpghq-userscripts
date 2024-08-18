@@ -149,6 +149,8 @@ SOFTWARE.
     },
   ]);
 
+  console.log("Loaded userPictures:", userPictures); // Add this line
+
   function setImageSource(img, baseImageUrl) {
     const extensions = ["jpg", "jpeg", "png", "gif"];
     let imageSet = false;
@@ -326,11 +328,12 @@ SOFTWARE.
 
     if (userIdElement) {
       const userId = userIdElement.textContent.trim(); // This will get "@vergil:rpghq.org"
-      const newAvatarUrl = prompt("Enter the new avatar URL:", "");
+      const newAvatarUrl = prompt(
+        "Enter the new avatar URL (leave empty to reset):",
+        ""
+      );
 
-      if (newAvatarUrl) {
-        updateUserAvatar(userId, newAvatarUrl);
-      }
+      updateUserAvatar(userId, newAvatarUrl);
     } else {
       console.error("Could not find user ID element");
     }
@@ -341,10 +344,21 @@ SOFTWARE.
       (user) => user.userId === userId
     );
 
-    if (existingUserIndex !== -1) {
-      userPictures[existingUserIndex].baseImageUrl = newAvatarUrl;
+    if (newAvatarUrl === "") {
+      // Remove the user from userPictures if the URL is empty (reset to default)
+      if (existingUserIndex !== -1) {
+        userPictures.splice(existingUserIndex, 1);
+      }
+    } else if (newAvatarUrl) {
+      // Update or add the user with the new avatar URL
+      if (existingUserIndex !== -1) {
+        userPictures[existingUserIndex].baseImageUrl = newAvatarUrl;
+      } else {
+        userPictures.push({ userId, baseImageUrl: newAvatarUrl });
+      }
     } else {
-      userPictures.push({ userId, baseImageUrl: newAvatarUrl });
+      // If newAvatarUrl is null (user cancelled the prompt), do nothing
+      return;
     }
 
     // Save the updated userPictures
@@ -360,7 +374,12 @@ SOFTWARE.
       img.draggable = false;
       img.alt = userId;
       img.style.backgroundColor = "transparent";
-      setImageSource(img, newAvatarUrl);
+      if (newAvatarUrl === "") {
+        // Reset to default avatar (you may need to adjust this based on how default avatars are handled)
+        img.src = ""; // Or set to a default avatar URL if you have one
+      } else {
+        setImageSource(img, newAvatarUrl);
+      }
       avatarContainer.innerHTML = "";
       avatarContainer.appendChild(img);
     }
