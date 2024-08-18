@@ -40,6 +40,16 @@ SOFTWARE.
 (function () {
   "use strict";
 
+  // Initialize userPictureOverrides as an empty array if it doesn't exist
+  let userPictureOverrides = GM_getValue("userPictureOverrides", []);
+
+  // Ensure userPictureOverrides is always an array
+  if (!Array.isArray(userPictureOverrides)) {
+    userPictureOverrides = [];
+  }
+
+  console.log("Loaded userPictureOverrides:", userPictureOverrides);
+
   // Default avatars
   const defaultUserPictures = [
     {
@@ -149,11 +159,6 @@ SOFTWARE.
     },
   ];
 
-  // Load saved overrides or use an empty array if not found
-  let userPictureOverrides = GM_getValue("userPictureOverrides", []);
-
-  console.log("Loaded userPictureOverrides:", userPictureOverrides);
-
   // Function to get the avatar URL for a user
   function getAvatarUrl(userId) {
     const override = userPictureOverrides.find(
@@ -214,17 +219,18 @@ SOFTWARE.
       const avatarUrl = getAvatarUrl(userId);
 
       if (avatarUrl && avatarContainer) {
-        if (!avatarContainer.querySelector("img")) {
-          const img = document.createElement("img");
+        let img = avatarContainer.querySelector("img");
+        if (!img) {
+          img = document.createElement("img");
           img.alt = userId;
           img.classList.add("_1684mq5c", "_1mqalmd1", "_1mqalmd0", "awo2r00");
           img.style.width = "100%";
           img.style.height = "100%";
-          setImageSource(img, avatarUrl);
-
           avatarContainer.innerHTML = "";
           avatarContainer.appendChild(img);
         }
+        // Always update the image source, even if the img element already exists
+        setImageSource(img, avatarUrl);
       }
 
       if (
@@ -279,15 +285,16 @@ SOFTWARE.
         const avatarUrl = getAvatarUrl(userId);
 
         if (avatarUrl && avatarContainer) {
-          if (!avatarContainer.querySelector("img")) {
-            const img = document.createElement("img");
+          let img = avatarContainer.querySelector("img");
+          if (!img) {
+            img = document.createElement("img");
             img.draggable = false;
             img.alt = userId;
             img.style.backgroundColor = "transparent";
-            setImageSource(img, avatarUrl);
             avatarContainer.innerHTML = "";
             avatarContainer.appendChild(img);
           }
+          setImageSource(img, avatarUrl);
         }
       }
     });
@@ -359,6 +366,11 @@ SOFTWARE.
   }
 
   function updateUserAvatar(userId, newAvatarUrl) {
+    // Ensure userPictureOverrides is an array
+    if (!Array.isArray(userPictureOverrides)) {
+      userPictureOverrides = [];
+    }
+
     const existingOverrideIndex = userPictureOverrides.findIndex(
       (user) => user.userId === userId
     );
