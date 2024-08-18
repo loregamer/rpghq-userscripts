@@ -54,121 +54,147 @@ SOFTWARE.
   const defaultUserPictures = [
     {
       userId: "@irc_Gregz:rpghq.org",
+      displayName: "Gregz",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=87",
     },
     {
       userId: "@irc_Kalarion:rpghq.org",
+      displayName: "Kalarion",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=71",
     },
     {
       userId: "@irc_Kalarion1:rpghq.org",
+      displayName: "Kalarion1",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=71",
     },
     {
       userId: "@irc_Kalarion7:rpghq.org",
+      displayName: "Kalarion7",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=71",
     },
     {
       userId: "@irc_Kalarionis:rpghq.org",
+      displayName: "Kalarionis",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=71",
     },
     {
       userId: "@irc_Tweed:rpghq.org",
+      displayName: "Tweed",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=68",
     },
     {
       userId: "@irc_Tweedagain:rpghq.org",
+      displayName: "Tweedagain",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=68",
     },
     {
       userId: "@irc_WhiteShark:rpghq.org",
+      displayName: "WhiteShark",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=63",
     },
     {
       userId: "@irc_decline:rpghq.org",
+      displayName: "decline",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=225",
     },
     {
       userId: "@irc_Norfleet:rpghq.org",
+      displayName: "Norfleet",
       baseImageUrl: "https://i.postimg.cc/T2z1mDLK/image",
     },
     {
       userId: "@irc_Sex_Cult_Leader:rpghq.org",
+      displayName: "Sex_Cult_Leader",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=65",
     },
     {
       userId: "@irc_stackofturtles:rpghq.org",
+      displayName: "stackofturtles",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=3301",
     },
     {
       userId: "@irc_twig:rpghq.org",
+      displayName: "twig",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=2",
     },
     {
       userId: "@irc_Roguey:rpghq.org",
+      displayName: "Roguey",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=86",
     },
     {
       userId: "@irc_Chonkem:rpghq.org",
+      displayName: "Chonkem",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=69",
     },
     {
       userId: "@irc_Chonkem:rpghq.org",
+      displayName: "Chonkem",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=69",
     },
     {
       userId: "@irc_herkzter:rpghq.org",
+      displayName: "herkzter",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=289",
     },
     {
       userId: "@irc_The_Mask:rpghq.org",
+      displayName: "The_Mask",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=113",
     },
     {
       userId: "@irc_Eyestabber:rpghq.org",
+      displayName: "Eyestabber",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=85",
     },
     {
       userId: "@irc_wraith:rpghq.org",
+      displayName: "wraith",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=62",
     },
     {
       userId: "@irc_rusty_mobile:rpghq.org",
+      displayName: "rusty_mobile",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=58",
     },
     {
       userId: "@irc_[Classix]:rpghq.org",
+      displayName: "[Classix]",
       baseImageUrl:
         "https://rpghq.org/forums/download/file.php?avatar=3607_1722022475",
     },
     {
       userId: "@irc_wunderbar:rpghq.org",
+      displayName: "wunderbar",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=90",
     },
     {
       userId: "@irc_tars:rpghq.org",
+      displayName: "tars",
       baseImageUrl: "https://f.rpghq.org/Zuzzdn8HsDAA.png?n=pasted-file.png",
     },
     {
       userId: "@irc_Ammazzaratti:rpghq.org",
+      displayName: "Ammazzaratti",
       baseImageUrl: "https://f.rpghq.org/SUqopfrg82m2.png?n=404.png",
     },
     {
       userId: "@irc_Dedd:rpghq.org",
+      displayName: "Dedd",
       baseImageUrl: "https://f.rpghq.org/SUqopfrg82m2.png?n=404.png",
     },
   ];
 
   // Function to get the avatar URL for a user
-  function getAvatarUrl(userId) {
+  function getAvatarUrl(identifier) {
     const override = userPictureOverrides.find(
-      (user) => user.userId === userId
+      (user) => user.userId === identifier || user.displayName === identifier
     );
     if (override) {
       return override.baseImageUrl;
     }
     const defaultAvatar = defaultUserPictures.find(
-      (user) => user.userId === userId
+      (user) => user.userId === identifier || user.displayName === identifier
     );
     return defaultAvatar ? defaultAvatar.baseImageUrl : null;
   }
@@ -215,6 +241,10 @@ SOFTWARE.
         element.getAttribute("data-user-id") ||
         element.querySelector("p.text.text-b2.text-normal, p._1xny9xlc")
           ?.textContent;
+      const displayNameElement = element.querySelector(
+        "span._1xny9xl0 b, h4.text.text-s1.text-medium, p._1xny9xl0, span._1xny9xl1"
+      );
+      const displayName = displayNameElement?.textContent.trim();
       let avatarContainer = element.querySelector(
         "span._1684mq5d, .avatar__border, span._1684mq51"
       );
@@ -224,17 +254,13 @@ SOFTWARE.
         avatarContainer = element;
       }
 
-      const displayNameElement = element.querySelector(
-        "span._1xny9xl0 b, h4.text.text-s1.text-medium, p._1xny9xl0, span._1xny9xl1"
-      );
-
-      const avatarUrl = getAvatarUrl(userId);
+      const avatarUrl = getAvatarUrl(displayName) || getAvatarUrl(userId);
 
       if (avatarUrl && avatarContainer) {
         let img = avatarContainer.querySelector("img");
         if (!img) {
           img = document.createElement("img");
-          img.alt = userId;
+          img.alt = displayName || userId;
           img.classList.add("_1684mq5c", "_1mqalmd1", "_1mqalmd0", "awo2r00");
           img.style.width = "100%";
           img.style.height = "100%";
@@ -245,6 +271,7 @@ SOFTWARE.
         setImageSource(img, avatarUrl);
       }
 
+      // Add [irc] to names
       if (
         userId &&
         userId.includes("@irc") &&
@@ -252,7 +279,8 @@ SOFTWARE.
         !displayNameElement.textContent.includes("[irc]") &&
         !element.classList.contains("_13tt0gb6")
       ) {
-        displayNameElement.textContent += " [irc]";
+        displayNameElement.textContent =
+          displayNameElement.textContent + " [irc]";
       }
     });
   }
@@ -363,28 +391,32 @@ SOFTWARE.
     const userIdElement = profileViewer.querySelector(
       ".profile-viewer__user__info p.text.text-b2.text-normal"
     );
+    const displayNameElement = profileViewer.querySelector(
+      ".profile-viewer__user__info h4.text.text-s1.text-medium"
+    );
 
-    if (userIdElement) {
-      const userId = userIdElement.textContent.trim(); // This will get "@vergil:rpghq.org"
+    if (userIdElement && displayNameElement) {
+      const userId = userIdElement.textContent.trim();
+      const displayName = displayNameElement.textContent.trim();
       const newAvatarUrl = prompt(
         "Enter the new avatar URL (leave empty to reset):",
         ""
       );
 
-      updateUserAvatar(userId, newAvatarUrl);
+      updateUserAvatar(userId, displayName, newAvatarUrl);
     } else {
-      console.error("Could not find user ID element");
+      console.error("Could not find user ID or display name element");
     }
   }
 
-  function updateUserAvatar(userId, newAvatarUrl) {
+  function updateUserAvatar(userId, displayName, newAvatarUrl) {
     // Ensure userPictureOverrides is an array
     if (!Array.isArray(userPictureOverrides)) {
       userPictureOverrides = [];
     }
 
     const existingOverrideIndex = userPictureOverrides.findIndex(
-      (user) => user.userId === userId
+      (user) => user.userId === userId || user.displayName === displayName
     );
 
     if (newAvatarUrl === "") {
@@ -397,7 +429,11 @@ SOFTWARE.
       if (existingOverrideIndex !== -1) {
         userPictureOverrides[existingOverrideIndex].baseImageUrl = newAvatarUrl;
       } else {
-        userPictureOverrides.push({ userId, baseImageUrl: newAvatarUrl });
+        userPictureOverrides.push({
+          userId,
+          displayName,
+          baseImageUrl: newAvatarUrl,
+        });
       }
     } else {
       // If newAvatarUrl is null (user cancelled the prompt), do nothing
@@ -415,9 +451,9 @@ SOFTWARE.
       const img =
         avatarContainer.querySelector("img") || document.createElement("img");
       img.draggable = false;
-      img.alt = userId;
+      img.alt = displayName || userId;
       img.style.backgroundColor = "transparent";
-      const avatarUrl = getAvatarUrl(userId);
+      const avatarUrl = getAvatarUrl(displayName) || getAvatarUrl(userId);
       if (avatarUrl) {
         setImageSource(img, avatarUrl);
       } else {
