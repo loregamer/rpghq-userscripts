@@ -39,7 +39,8 @@ SOFTWARE.
 (function () {
   "use strict";
 
-  const userPictures = [
+  // Load saved userPictures or use the default if not found
+  let userPictures = GM_getValue("userPictures", [
     {
       userId: "@irc_Gregz:rpghq.org",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=87",
@@ -145,7 +146,7 @@ SOFTWARE.
       userId: "@irc_Dedd:rpghq.org",
       baseImageUrl: "https://f.rpghq.org/SUqopfrg82m2.png?n=404.png",
     },
-  ];
+  ]);
 
   function setImageSource(img, baseImageUrl) {
     const extensions = ["jpg", "jpeg", "png", "gif"];
@@ -300,40 +301,182 @@ SOFTWARE.
     });
   }
 
-  const observer = new MutationObserver((mutations) => {
+  function addReplaceAvatarButton() {
+    const profileViewer = document.querySelector(
+      ".ReactModal__Content .profile-viewer"
+    );
+    if (profileViewer && !profileViewer.querySelector("#replaceAvatarBtn")) {
+      const replaceBtn = document.createElement("button");
+      replaceBtn.id = "replaceAvatarBtn";
+      replaceBtn.className = "btn-primary noselect";
+      replaceBtn.innerHTML =
+        '<p class="text text-b1 text-normal">Replace Avatar</p>';
+      replaceBtn.addEventListener("click", handleReplaceAvatar);
+
+      const buttonContainer = profileViewer.querySelector(
+        ".profile-viewer__buttons"
+      );
+      if (buttonContainer) {
+        buttonContainer.appendChild(replaceBtn);
+      } else {
+        console.error("Button container not found in profile viewer");
+      }
+    }
+  }
+
+  function handleReplaceAvatar() {
+    const profileViewer = document.querySelector(".profile-viewer");
+    const userId = profileViewer.querySelector(
+      ".profile-viewer__user__info p.text.text-b2.text-normal"
+    ).textContent;
+    const newAvatarUrl = prompt("Enter the new avatar URL:", "");
+
+    if (newAvatarUrl) {
+      const existingUserIndex = userPictures.findIndex(
+        (user) => user.userId === userId
+      );
+
+      if (existingUserIndex !== -1) {
+        userPictures[existingUserIndex].baseImageUrl = newAvatarUrl;
+      } else {
+        userPictures.push({ userId, baseImageUrl: newAvatarUrl });
+      }
+
+      // Save the updated userPictures
+      GM_setValue("userPictures", userPictures);
+
+      // Update the avatar immediately
+      const avatarContainer = profileViewer.querySelector(".avatar-container");
+      if (avatarContainer) {
+        const img =
+          avatarContainer.querySelector("img") || document.createElement("img");
+        img.draggable = false;
+        img.alt = userId;
+        img.style.backgroundColor = "transparent";
+        setImageSource(img, newAvatarUrl);
+        avatarContainer.innerHTML = "";
+        avatarContainer.appendChild(img);
+      }
+
+      // Refresh all avatars on the page
+      addUserPictures();
+      updateProfileViewer();
+      updatePingUserBox();
+    }
+  }
+
+  function makeProfilePictureClickable() {
+    const profileViewer = document.querySelector(
+      ".ReactModal__Content .profile-viewer"
+    );
+    if (profileViewer) {
+      const avatarContainer = profileViewer.querySelector(".avatar-container");
+      if (avatarContainer && !avatarContainer.hasAttribute("data-clickable")) {
+        avatarContainer.style.cursor = "pointer";
+        avatarContainer.setAttribute("data-clickable", "true");
+        avatarContainer.addEventListener("click", handleAvatarClick);
+      }
+    }
+  }
+
+  function handleAvatarClick() {
+    const profileViewer = document.querySelector(
+      ".ReactModal__Content .profile-viewer"
+    );
+    const userId = profileViewer.querySelector(
+      ".profile-viewer__user__info p.text.text-b2.text-normal"
+    ).textContent;
+    const newAvatarUrl = prompt("Enter the new avatar URL:", "");
+
+    if (newAvatarUrl) {
+      updateUserAvatar(userId, newAvatarUrl);
+    }
+  }
+
+  function updateUserAvatar(userId, newAvatarUrl) {
+    const existingUserIndex = userPictures.findIndex(
+      (user) => user.userId === userId
+    );
+
+    if (existingUserIndex !== -1) {
+      userPictures[existingUserIndex].baseImageUrl = newAvatarUrl;
+    } else {
+      userPictures.push({ userId, baseImageUrl: newAvatarUrl });
+    }
+
+    // Save the updated userPictures
+    GM_setValue("userPictures", userPictures);
+
+    // Update the avatar immediately
+    const avatarContainer = document.querySelector(
+      ".ReactModal__Content .profile-viewer .avatar-container"
+    );
+    if (avatarContainer) {
+      const img =
+        avatarContainer.querySelector("img") || document.createElement("img");
+      img.draggable = false;
+      img.alt = userId;
+      img.style.backgroundColor = "transparent";
+      setImageSource(img, newAvatarUrl);
+      avatarContainer.innerHTML = "";
+      avatarContainer.appendChild(img);
+    }
+
+    // Refresh all avatars on the page
+    addUserPictures();
+    updateProfileViewer();
+    updatePingUserBox();
+  }
+
+  function observeProfileViewer() {
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === "childList") {
+          const profileViewer = document.querySelector(
+            ".ReactModal__Content .profile-viewer"
+          );
+          if (profileViewer) {
+            makeProfilePictureClickable();
+            observer.disconnect(); // Stop observing once the avatar is made clickable
+            break;
+          }
+        }
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  }
+
+  // Modify the existing observer
+  const mainObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       if (mutation.addedNodes.length > 0) {
-        addUserPictures();
-        addSidebarNames();
-        updateProfileViewer();
-        updatePingUserBox();
+        const profileViewer = document.querySelector(
+          ".ReactModal__Content .profile-viewer"
+        );
+        if (profileViewer) {
+          addUserPictures();
+          addSidebarNames();
+          updateProfileViewer();
+          updatePingUserBox();
+          observeProfileViewer(); // Start observing for the profile viewer
+        }
       }
     });
   });
 
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  window.addEventListener("load", function () {
+  function initializeScript() {
     addUserPictures();
     addSidebarNames();
     updateProfileViewer();
     updatePingUserBox();
-  });
-
-  function handleDynamicElements() {
-    document.body.addEventListener("DOMNodeInserted", function (event) {
-      if (
-        event.target &&
-        event.target.classList &&
-        event.target.classList.contains("ReactModal__Content")
-      ) {
-        addUserPictures();
-        addSidebarNames();
-        updateProfileViewer();
-        updatePingUserBox();
-      }
-    });
+    observeProfileViewer(); // Start observing for the profile viewer
   }
 
-  handleDynamicElements();
+  // Run the initialization
+  initializeScript();
+  mainObserver.observe(document.body, { childList: true, subtree: true });
 })();
