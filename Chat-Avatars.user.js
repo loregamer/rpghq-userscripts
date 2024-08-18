@@ -40,8 +40,8 @@ SOFTWARE.
 (function () {
   "use strict";
 
-  // Load saved userPictures or use the default if not found
-  let userPictures = GM_getValue("userPictures", [
+  // Default avatars
+  const defaultUserPictures = [
     {
       userId: "@irc_Gregz:rpghq.org",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=87",
@@ -147,9 +147,26 @@ SOFTWARE.
       userId: "@irc_Dedd:rpghq.org",
       baseImageUrl: "https://f.rpghq.org/SUqopfrg82m2.png?n=404.png",
     },
-  ]);
+  ];
 
-  console.log("Loaded userPictures:", userPictures); // Add this line
+  // Load saved overrides or use an empty array if not found
+  let userPictureOverrides = GM_getValue("userPictureOverrides", []);
+
+  console.log("Loaded userPictureOverrides:", userPictureOverrides);
+
+  // Function to get the avatar URL for a user
+  function getAvatarUrl(userId) {
+    const override = userPictureOverrides.find(
+      (user) => user.userId === userId
+    );
+    if (override) {
+      return override.baseImageUrl;
+    }
+    const defaultAvatar = defaultUserPictures.find(
+      (user) => user.userId === userId
+    );
+    return defaultAvatar ? defaultAvatar.baseImageUrl : null;
+  }
 
   function setImageSource(img, baseImageUrl) {
     const extensions = ["jpg", "jpeg", "png", "gif"];
@@ -194,16 +211,16 @@ SOFTWARE.
         "span._1xny9xl0 b, h4.text.text-s1.text-medium, p._1xny9xl0, span._1xny9xl1"
       );
 
-      const user = userPictures.find((user) => user.userId === userId);
+      const avatarUrl = getAvatarUrl(userId);
 
-      if (user && avatarContainer) {
+      if (avatarUrl && avatarContainer) {
         if (!avatarContainer.querySelector("img")) {
           const img = document.createElement("img");
-          img.alt = user.userId;
+          img.alt = userId;
           img.classList.add("_1684mq5c", "_1mqalmd1", "_1mqalmd0", "awo2r00");
           img.style.width = "100%";
           img.style.height = "100%";
-          setImageSource(img, user.baseImageUrl);
+          setImageSource(img, avatarUrl);
 
           avatarContainer.innerHTML = "";
           avatarContainer.appendChild(img);
@@ -255,18 +272,19 @@ SOFTWARE.
       const userIdElement = element.querySelector("p.text.text-b2.text-normal");
       if (userIdElement) {
         const userId = userIdElement.textContent;
-        const user = userPictures.find((user) => user.userId === userId);
         const avatarContainer = element
           .closest(".profile-viewer__user")
           .querySelector(".avatar-container");
 
-        if (user && avatarContainer) {
+        const avatarUrl = getAvatarUrl(userId);
+
+        if (avatarUrl && avatarContainer) {
           if (!avatarContainer.querySelector("img")) {
             const img = document.createElement("img");
             img.draggable = false;
-            img.alt = user.userId;
+            img.alt = userId;
             img.style.backgroundColor = "transparent";
-            setImageSource(img, user.baseImageUrl);
+            setImageSource(img, avatarUrl);
             avatarContainer.innerHTML = "";
             avatarContainer.appendChild(img);
           }
@@ -282,20 +300,21 @@ SOFTWARE.
       const userIdElement = element.querySelector("p._1xny9xlc");
       if (userIdElement) {
         const userId = userIdElement.textContent;
-        const user = userPictures.find((user) => user.userId === userId);
         const avatarContainer = element.querySelector(
           "span._1684mq5d, span._1684mq51"
         );
 
-        if (user && avatarContainer) {
+        const avatarUrl = getAvatarUrl(userId);
+
+        if (avatarUrl && avatarContainer) {
           if (!avatarContainer.querySelector("img")) {
             const img = document.createElement("img");
             img.draggable = false;
-            img.alt = user.userId;
+            img.alt = userId;
             img.classList.add("_1684mq5c", "_1mqalmd1", "_1mqalmd0", "awo2r00");
             img.style.width = "32px";
             img.style.height = "32px";
-            setImageSource(img, user.baseImageUrl);
+            setImageSource(img, avatarUrl);
             avatarContainer.innerHTML = "";
             avatarContainer.appendChild(img);
           }
@@ -340,29 +359,29 @@ SOFTWARE.
   }
 
   function updateUserAvatar(userId, newAvatarUrl) {
-    const existingUserIndex = userPictures.findIndex(
+    const existingOverrideIndex = userPictureOverrides.findIndex(
       (user) => user.userId === userId
     );
 
     if (newAvatarUrl === "") {
-      // Remove the user from userPictures if the URL is empty (reset to default)
-      if (existingUserIndex !== -1) {
-        userPictures.splice(existingUserIndex, 1);
+      // Remove the override if the URL is empty (reset to default)
+      if (existingOverrideIndex !== -1) {
+        userPictureOverrides.splice(existingOverrideIndex, 1);
       }
     } else if (newAvatarUrl) {
-      // Update or add the user with the new avatar URL
-      if (existingUserIndex !== -1) {
-        userPictures[existingUserIndex].baseImageUrl = newAvatarUrl;
+      // Update or add the override with the new avatar URL
+      if (existingOverrideIndex !== -1) {
+        userPictureOverrides[existingOverrideIndex].baseImageUrl = newAvatarUrl;
       } else {
-        userPictures.push({ userId, baseImageUrl: newAvatarUrl });
+        userPictureOverrides.push({ userId, baseImageUrl: newAvatarUrl });
       }
     } else {
       // If newAvatarUrl is null (user cancelled the prompt), do nothing
       return;
     }
 
-    // Save the updated userPictures
-    GM_setValue("userPictures", userPictures);
+    // Save the updated overrides
+    GM_setValue("userPictureOverrides", userPictureOverrides);
 
     // Update the avatar immediately
     const avatarContainer = document.querySelector(
@@ -374,11 +393,12 @@ SOFTWARE.
       img.draggable = false;
       img.alt = userId;
       img.style.backgroundColor = "transparent";
-      if (newAvatarUrl === "") {
-        // Reset to default avatar (you may need to adjust this based on how default avatars are handled)
-        img.src = ""; // Or set to a default avatar URL if you have one
+      const avatarUrl = getAvatarUrl(userId);
+      if (avatarUrl) {
+        setImageSource(img, avatarUrl);
       } else {
-        setImageSource(img, newAvatarUrl);
+        // Set to a default avatar if no custom or default avatar is found
+        img.src = ""; // Or set to a generic default avatar URL
       }
       avatarContainer.innerHTML = "";
       avatarContainer.appendChild(img);
@@ -389,7 +409,7 @@ SOFTWARE.
     updateProfileViewer();
     updatePingUserBox();
 
-    console.log("Updated userPictures:", userPictures); // Add this line for debugging
+    console.log("Updated userPictureOverrides:", userPictureOverrides);
   }
 
   function observeProfileViewer() {
