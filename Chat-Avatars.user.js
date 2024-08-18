@@ -5,6 +5,8 @@
 // @description  Add pictures to users in Cinny Matrix client by user ID and add [irc] to their display names
 // @author       loregamer
 // @match        https://chat.rpghq.org/*
+// @grant        GM_setValue
+// @grant        GM_getValue
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Chat-Avatars.user.js
 // @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Chat-Avatars.user.js
 // @grant        none
@@ -300,70 +302,6 @@ SOFTWARE.
     });
   }
 
-  function addReplaceAvatarButton() {
-    const profileViewer = document.querySelector(
-      ".ReactModal__Content .profile-viewer"
-    );
-    if (profileViewer && !profileViewer.querySelector("#replaceAvatarBtn")) {
-      const replaceBtn = document.createElement("button");
-      replaceBtn.id = "replaceAvatarBtn";
-      replaceBtn.className = "btn-primary noselect";
-      replaceBtn.innerHTML =
-        '<p class="text text-b1 text-normal">Replace Avatar</p>';
-      replaceBtn.addEventListener("click", handleReplaceAvatar);
-
-      const buttonContainer = profileViewer.querySelector(
-        ".profile-viewer__buttons"
-      );
-      if (buttonContainer) {
-        buttonContainer.appendChild(replaceBtn);
-      } else {
-        console.error("Button container not found in profile viewer");
-      }
-    }
-  }
-
-  function handleReplaceAvatar() {
-    const profileViewer = document.querySelector(".profile-viewer");
-    const userId = profileViewer.querySelector(
-      ".profile-viewer__user__info p.text.text-b2.text-normal"
-    ).textContent;
-    const newAvatarUrl = prompt("Enter the new avatar URL:", "");
-
-    if (newAvatarUrl) {
-      const existingUserIndex = userPictures.findIndex(
-        (user) => user.userId === userId
-      );
-
-      if (existingUserIndex !== -1) {
-        userPictures[existingUserIndex].baseImageUrl = newAvatarUrl;
-      } else {
-        userPictures.push({ userId, baseImageUrl: newAvatarUrl });
-      }
-
-      // Save the updated userPictures
-      GM_setValue("userPictures", userPictures);
-
-      // Update the avatar immediately
-      const avatarContainer = profileViewer.querySelector(".avatar-container");
-      if (avatarContainer) {
-        const img =
-          avatarContainer.querySelector("img") || document.createElement("img");
-        img.draggable = false;
-        img.alt = userId;
-        img.style.backgroundColor = "transparent";
-        setImageSource(img, newAvatarUrl);
-        avatarContainer.innerHTML = "";
-        avatarContainer.appendChild(img);
-      }
-
-      // Refresh all avatars on the page
-      addUserPictures();
-      updateProfileViewer();
-      updatePingUserBox();
-    }
-  }
-
   function makeProfilePictureClickable() {
     const profileViewer = document.querySelector(
       ".ReactModal__Content .profile-viewer"
@@ -382,13 +320,19 @@ SOFTWARE.
     const profileViewer = document.querySelector(
       ".ReactModal__Content .profile-viewer"
     );
-    const userId = profileViewer.querySelector(
+    const userIdElement = profileViewer.querySelector(
       ".profile-viewer__user__info p.text.text-b2.text-normal"
-    ).textContent;
-    const newAvatarUrl = prompt("Enter the new avatar URL:", "");
+    );
 
-    if (newAvatarUrl) {
-      updateUserAvatar(userId, newAvatarUrl);
+    if (userIdElement) {
+      const userId = userIdElement.textContent.trim(); // This will get "@vergil:rpghq.org"
+      const newAvatarUrl = prompt("Enter the new avatar URL:", "");
+
+      if (newAvatarUrl) {
+        updateUserAvatar(userId, newAvatarUrl);
+      }
+    } else {
+      console.error("Could not find user ID element");
     }
   }
 
@@ -425,6 +369,8 @@ SOFTWARE.
     addUserPictures();
     updateProfileViewer();
     updatePingUserBox();
+
+    console.log("Updated userPictures:", userPictures); // Add this line for debugging
   }
 
   function observeProfileViewer() {
@@ -453,14 +399,15 @@ SOFTWARE.
   const mainObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       if (mutation.addedNodes.length > 0) {
+        addUserPictures();
+        addSidebarNames();
+        updateProfileViewer();
+        updatePingUserBox();
+
         const profileViewer = document.querySelector(
           ".ReactModal__Content .profile-viewer"
         );
         if (profileViewer) {
-          addUserPictures();
-          addSidebarNames();
-          updateProfileViewer();
-          updatePingUserBox();
           observeProfileViewer(); // Start observing for the profile viewer
         }
       }
