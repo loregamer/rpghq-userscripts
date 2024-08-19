@@ -504,33 +504,46 @@ SOFTWARE.
     const smileyBox = document.getElementById("smiley-box");
     const textarea = document.getElementById("message");
     if (smileyBox && textarea) {
-      const textareaRect = textarea.getBoundingClientRect();
-      const windowWidth = window.innerWidth;
-      const scrollTop =
-        window.pageYOffset || document.documentElement.scrollTop;
+      const isMobile = window.innerWidth <= 768; // Adjust this breakpoint as needed
 
-      // Define the point at which the smiley box should start scrolling
-      const scrollStartPoint = textareaRect.top + scrollTop;
-
-      // Calculate the left position to avoid overlap
-      const smileyBoxWidth = 220; // Width of the smiley box plus some padding
-      const leftPosition = Math.min(
-        textareaRect.right + 10,
-        windowWidth - smileyBoxWidth
-      );
-
-      if (scrollTop >= scrollStartPoint) {
-        const scrollDistance = scrollTop - scrollStartPoint;
-        const maxScroll = textarea.offsetHeight - smileyBox.offsetHeight;
-        const newTop = Math.min(scrollDistance, maxScroll);
-
-        smileyBox.style.position = "absolute";
-        smileyBox.style.top = scrollStartPoint + newTop + "px";
-        smileyBox.style.left = leftPosition + "px";
+      if (isMobile) {
+        // Mobile styling
+        smileyBox.style.position = "static";
+        smileyBox.style.width = "100%";
+        smileyBox.style.maxHeight = "none";
+        smileyBox.style.overflowY = "visible";
+        smileyBox.style.marginBottom = "10px";
       } else {
-        smileyBox.style.position = "absolute";
-        smileyBox.style.top = scrollStartPoint + "px";
-        smileyBox.style.left = leftPosition + "px";
+        // Desktop styling
+        const textareaRect = textarea.getBoundingClientRect();
+        const windowWidth = window.innerWidth;
+        const scrollTop =
+          window.pageYOffset || document.documentElement.scrollTop;
+
+        const scrollStartPoint = textareaRect.top + scrollTop;
+        const smileyBoxWidth = 220;
+        const leftPosition = Math.min(
+          textareaRect.right + 10,
+          windowWidth - smileyBoxWidth
+        );
+
+        if (scrollTop >= scrollStartPoint) {
+          const scrollDistance = scrollTop - scrollStartPoint;
+          const maxScroll = textarea.offsetHeight - smileyBox.offsetHeight;
+          const newTop = Math.min(scrollDistance, maxScroll);
+
+          smileyBox.style.position = "absolute";
+          smileyBox.style.top = scrollStartPoint + newTop + "px";
+          smileyBox.style.left = leftPosition + "px";
+        } else {
+          smileyBox.style.position = "absolute";
+          smileyBox.style.top = scrollStartPoint + "px";
+          smileyBox.style.left = leftPosition + "px";
+        }
+
+        smileyBox.style.width = smileyBoxWidth + "px";
+        smileyBox.style.maxHeight = "80vh";
+        smileyBox.style.overflowY = "auto";
       }
     }
   }
@@ -729,6 +742,25 @@ SOFTWARE.
 
           customSmileyContainer.appendChild(smileyButton);
         }
+
+        // Add responsive styling
+        const responsiveStyle = document.createElement("style");
+        responsiveStyle.textContent = `
+      @media (max-width: 768px) {
+        #smiley-box {
+          position: static !important;
+          width: 100% !important;
+          max-height: none !important;
+          overflow-y: visible !important;
+          margin-bottom: 10px;
+        }
+        .smiley-button, .custom-smiley-button {
+          width: 30px;
+          height: 30px;
+        }
+      }
+    `;
+        document.head.appendChild(responsiveStyle);
       } else {
         // Remove custom smiley container and separator if no custom smileys exist
         if (customSmileyContainer) customSmileyContainer.remove();
