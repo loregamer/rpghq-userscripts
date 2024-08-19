@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      4.4.2
+// @version      4.5
 // @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php*
@@ -196,7 +196,6 @@ SOFTWARE.
               max-height: 80vh; /* Adjust this value as needed */
               width: 17%;
               overflow-y: auto;
-              padding: 10px;
               border-radius: 5px;
               z-index: 1000;
             }
@@ -541,7 +540,7 @@ SOFTWARE.
           smileyBox.style.left = leftPosition + "px";
         }
 
-        smileyBox.style.width = smileyBoxWidth + "px";
+        // smileyBox.style.width = smileyBoxWidth + "px";
         smileyBox.style.maxHeight = "80vh";
         smileyBox.style.overflowY = "auto";
       }
@@ -1150,7 +1149,6 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     newSmileyInput.type = "text";
     newSmileyInput.placeholder = "Enter new smiley or emoji and press Enter";
     newSmileyInput.style.cssText = `
-    width: 100%;
     margin-top: 15px;
     padding: 5px;
     background-color: #3a3f4b;
