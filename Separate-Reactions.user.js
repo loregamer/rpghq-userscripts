@@ -202,6 +202,16 @@
   }
 
   function observePosts() {
+    const style = document.createElement("style");
+    style.textContent = `
+      @media screen and (min-width: 768px) {
+        .post .content {
+          min-height: 125px;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === "childList") {
