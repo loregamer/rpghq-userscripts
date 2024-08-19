@@ -1172,7 +1172,7 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
   }
 
   function convertBBCodeToHTML(bbcode) {
-    // First, handle code blocks
+    // Handle code blocks
     bbcode = bbcode.replace(
       /\[code(?:=([a-z]+))?\]([\s\S]*?)\[\/code\]/gi,
       function (match, lang, code) {
@@ -1207,9 +1207,41 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
 
     // Wrap the table
     bbcode = bbcode.replace(/(<tr>.*<\/tr>\n)+/s, function (match) {
-      return `<table class="pipe-table">\n<thead>\n${
-        match.split("\n")[0]
-      }\n</thead>\n<tbody>\n${match.split("\n").slice(1).join("\n")}</tbody>\n</table>`;
+      const rows = match.split("\n").filter((row) => row.trim() !== "");
+      const headerRow = rows[0];
+      const bodyRows = rows.slice(1).join("\n");
+      return `
+        <div id="DataTables_Table_0_wrapper" class="dt-container dt-empty-footer">
+          <div class="dt-layout-row">
+            <div class="dt-layout-cell dt-start "></div>
+            <div class="dt-layout-cell dt-end ">
+              <div class="dt-search">
+                <label for="dt-search-0">Search:</label>
+                <input type="search" class="dt-input" id="dt-search-0" placeholder="" aria-controls="DataTables_Table_0">
+              </div>
+            </div>
+          </div>
+          <div class="dt-layout-row dt-layout-table">
+            <div class="dt-layout-cell ">
+              <div class="dt-scroll">
+                <div class="dt-scroll-head" style="overflow: hidden; position: relative; border: 0px; width: 100%;">
+                  <div class="dt-scroll-headInner" style="box-sizing: content-box; width: 100%; padding-right: 0px;">
+                    <table class="pipe-table dataTable" style="margin-left: 0px; width: 100%;">
+                      <thead>${headerRow}</thead>
+                    </table>
+                  </div>
+                </div>
+                <div class="dt-scroll-body" style="position: relative; overflow: auto; max-height: 800px;">
+                  <table class="pipe-table dataTable" id="DataTables_Table_0" style="width: 100%;">
+                    <thead>${headerRow}</thead>
+                    <tbody>${bodyRows}</tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
     });
 
     return (
@@ -1223,25 +1255,25 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         // Handle images with size
         .replace(
           /\[img size=(\d+)\](.*?)\[\/img\]/gi,
-          '<img class="postimage" alt="Image" src="$2" style="width:$1%;">'
+          '<a href="$2" data-lightbox="post-gallery0" data-title=""><img class="postimage" alt="Image" srcset="$2 1x" loading="lazy" style="width:$1%; border: 3px solid transparent; border-radius: 6px; transition: border-color 0.1s ease-out; cursor: pointer;"></a>'
         )
 
         // Handle regular images
         .replace(
           /\[img\](.*?)\[\/img\]/gi,
-          '<img class="postimage" alt="Image" src="$1">'
+          '<img src="$1" class="postimage" alt="Image" loading="lazy">'
         )
 
         // Handle horizontal rule
         .replace(
           /\[hr\]/gi,
-          '<hr class="dashed" style="border-top: 1px dashed #808080;">'
+          '<hr style="border-color: rgba(255,255,255,0.08);">'
         )
 
         // Handle size and color
         .replace(
           /\[size=(\d+)\]([\s\S]*?)\[\/size\]/gi,
-          '<span style="font-size:$1%;line-height:normal">$2</span>'
+          '<span style="font-size:$1%;line-height:116%">$2</span>'
         )
         .replace(
           /\[color=(#[A-Fa-f0-9]{6}|[a-z]+)\]([\s\S]*?)\[\/color\]/gi,
@@ -1251,11 +1283,14 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         // Handle URLs
         .replace(
           /\[url=(.*?)\](.*?)\[\/url\]/gi,
-          '<a href="$1" class="postlink">$2</a>'
+          '<a href="$1" class="postlink" title="Opens in new window">$2</a>'
         )
 
         // Handle bold text
-        .replace(/\[b\]([\s\S]*?)\[\/b\]/gi, "<strong>$1</strong>")
+        .replace(
+          /\[b\]([\s\S]*?)\[\/b\]/gi,
+          '<strong class="text-strong">$1</strong>'
+        )
 
         // Handle italic text
         .replace(/\[i\]([\s\S]*?)\[\/i\]/gi, "<em>$1</em>")
@@ -1302,12 +1337,20 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         <head>
           <title>BBCode Preview</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            #preview-content { border: 1px solid #ccc; padding: 10px; }
+            body { font-family: Arial, sans-serif; padding: 20px; background-color: #2a2e36; color: #c5d0db; }
+            .content { border: 1px solid #3a3f4b; padding: 10px; }
+            .pipe-table { border-collapse: collapse; width: 100%; }
+            .pipe-table th, .pipe-table td { border: 1px solid #3a3f4b; padding: 8px; text-align: left; }
+            .pipe-table th { background-color: #3a3f4b; }
+            .postlink { color: #4a90e2; text-decoration: none; }
+            .postlink:hover { text-decoration: underline; }
+            .dt-search { margin-bottom: 10px; }
+            .dt-input { background-color: #3a3f4b; color: #c5d0db; border: 1px solid #4a5464; padding: 5px; }
+            .emoji { height: 1em; width: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; }
           </style>
         </head>
         <body>
-          <div id="preview-content">Loading preview...</div>
+          <div class="content"></div>
         </body>
       </html>
     `);
@@ -1315,7 +1358,20 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     function updatePreview() {
       const bbcode = textarea.value;
       const html = convertBBCodeToHTML(bbcode);
-      previewWindow.document.getElementById("preview-content").innerHTML = html;
+      previewWindow.document.querySelector(".content").innerHTML = html;
+
+      // Replace emoji placeholders with actual emojis
+      previewWindow.document.querySelectorAll(".emoji").forEach((emoji) => {
+        const img = document.createElement("img");
+        img.src = emoji.src;
+        img.alt = emoji.alt;
+        img.className = emoji.className;
+        img.style.height = "1em";
+        img.style.width = "1em";
+        img.style.margin = "0 .05em 0 .1em";
+        img.style.verticalAlign = "-0.1em";
+        emoji.parentNode.replaceChild(img, emoji);
+      });
     }
 
     let debounceTimer;
