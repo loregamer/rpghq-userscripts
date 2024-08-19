@@ -1187,31 +1187,6 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       }
     );
 
-    // Handle tables
-    bbcode = bbcode.replace(/\|(.*?)\|\n/g, function (match, content) {
-      const cells = content.split("|").map((cell) => cell.trim());
-      const isHeader = cells.every(
-        (cell) => cell.startsWith("-") && cell.endsWith("-")
-      );
-
-      if (isHeader) {
-        return ""; // Remove the separator row
-      }
-
-      const cellType = isHeader ? "th" : "td";
-      const cellsHtml = cells
-        .map((cell) => `<${cellType}>${cell}</${cellType}>`)
-        .join("");
-      return `<tr>${cellsHtml}</tr>\n`;
-    });
-
-    // Wrap the table
-    bbcode = bbcode.replace(/(<tr>.*<\/tr>\n)+/s, function (match) {
-      return `<table class="pipe-table">\n<thead>\n${
-        match.split("\n")[0]
-      }\n</thead>\n<tbody>\n${match.split("\n").slice(1).join("\n")}</tbody>\n</table>`;
-    });
-
     return (
       bbcode
         // Handle alignment
