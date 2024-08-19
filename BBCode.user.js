@@ -746,20 +746,27 @@ SOFTWARE.
         // Add responsive styling
         const responsiveStyle = document.createElement("style");
         responsiveStyle.textContent = `
-      @media (max-width: 768px) {
-        #smiley-box {
-          position: static !important;
-          width: 100% !important;
-          max-height: none !important;
-          overflow-y: visible !important;
-          margin-bottom: 10px;
-        }
-        .smiley-button, .custom-smiley-button {
-          width: 30px;
-          height: 30px;
-        }
-      }
-    `;
+          @media (max-width: 768px) {
+            #smiley-box {
+              position: static !important;
+              width: 100% !important;
+              max-height: none !important;
+              overflow-y: visible !important;
+              margin-bottom: 10px;
+            }
+            .smiley-button, .custom-smiley-button {
+              width: 36px;
+              height: 36px;
+            }
+            .smiley-button img, .custom-smiley-button img {
+              width: 30px;
+              height: 30px;
+            }
+            .emoji-smiley {
+              font-size: 24px;
+            }
+          }
+        `;
         document.head.appendChild(responsiveStyle);
       } else {
         // Remove custom smiley container and separator if no custom smileys exist
