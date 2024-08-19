@@ -8,8 +8,6 @@
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
 // @grant        GM_setValue
 // @grant        GM_getValue
-// @grant        GM_xmlhttpRequest
-// @connect      rpghq.org
 // @license     MIT
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/BBCode.user.js
 // @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/BBCode.user.js
@@ -1172,27 +1170,12 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
   }
 
   function convertBBCodeToHTML(bbcode) {
-    // First, handle code blocks
-    bbcode = bbcode.replace(
-      /\[code(?:=([a-z]+))?\]([\s\S]*?)\[\/code\]/gi,
-      function (match, lang, code) {
-        code = code.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        return (
-          "<pre><code" +
-          (lang ? ' class="language-' + lang + '"' : "") +
-          ">" +
-          code +
-          "</code></pre>"
-        );
-      }
-    );
-
     return (
       bbcode
         // Handle alignment
         .replace(
-          /\[align=(left|center|right)\]([\s\S]*?)\[\/align\]/gi,
-          '<div style="text-align:$1">$2</div>'
+          /\[align=center\]([\s\S]*?)\[\/align\]/gi,
+          '<div style="text-align:center">$1</div>'
         )
 
         // Handle images with size
@@ -1241,24 +1224,6 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
           '<span style="text-decoration: underline;">$1</span>'
         )
 
-        // Handle quotes
-        .replace(
-          /\[quote(?:=&quot;(.*?)&quot;)?\]([\s\S]*?)\[\/quote\]/gi,
-          function (match, author, content) {
-            return (
-              "<blockquote>" +
-              (author ? "<cite>" + author + " wrote:</cite>" : "") +
-              content +
-              "</blockquote>"
-            );
-          }
-        )
-
-        // Handle lists
-        .replace(/\[list\]([\s\S]*?)\[\/list\]/gi, "<ul>$1</ul>")
-        .replace(/\[list=1\]([\s\S]*?)\[\/list\]/gi, "<ol>$1</ol>")
-        .replace(/\[\*\](.+)/gi, "<li>$1</li>")
-
         // Handle line breaks
         .replace(/\n/g, "<br>")
     );
@@ -1277,30 +1242,96 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         <head>
           <title>BBCode Preview</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            #preview-content { border: 1px solid #ccc; padding: 10px; }
+            body { 
+              font-family: Verdana, Helvetica, Arial, sans-serif;
+              font-size: 10pt;
+              line-height: normal;
+              margin: 0;
+              padding: 10px;
+              background-color: #2b2b2b; 
+              color: #c5c5c5; 
+            }
+            .postimage { 
+              max-width: 100%;
+              height: auto;
+              border: none;
+            }
+            a.postlink { 
+              color: #368AD2;
+              text-decoration: none;
+            }
+            a.postlink:hover { 
+              color: #0D4473;
+              text-decoration: underline;
+            }
+            hr.dashed {
+              border: none;
+              border-top: 1px dashed #808080;
+              margin: 10px 0;
+            }
+            strong { font-weight: bold; }
+            em { font-style: italic; }
           </style>
         </head>
         <body>
-          <div id="preview-content">Loading preview...</div>
+          <div id="preview-content"></div>
+          <script>
+            function convertBBCodeToHTML(bbcode) {
+              return bbcode
+                .replace(/\\[align=center\\]([\\s\\S]*?)\\[\\/align\\]/gi, '<div style="text-align:center">$1</div>')
+                .replace(/\\[img size=(\\d+)\\](.*?)\\[\\/img\\]/gi, '<img class="postimage" alt="Image" src="$2" style="width:$1%;">')
+                .replace(/\\[img\\](.*?)\\[\\/img\\]/gi, '<img class="postimage" alt="Image" src="$1">')
+                .replace(/\\[hr\\]/gi, '<hr class="dashed" style="border-top: 1px dashed #808080;">')
+                .replace(/\\[size=(\\d+)\\]([\\s\\S]*?)\\[\\/size\\]/gi, '<span style="font-size:$1%;line-height:normal">$2</span>')
+                .replace(/\\[color=(#[A-Fa-f0-9]{6}|[a-z]+)\\]([\\s\\S]*?)\\[\\/color\\]/gi, '<span style="color:$1">$2</span>')
+                .replace(/\\[url=(.*?)\\](.*?)\\[\\/url\\]/gi, '<a href="$1" class="postlink">$2</a>')
+                .replace(/\\[b\\]([\\s\\S]*?)\\[\\/b\\]/gi, '<strong>$1</strong>')
+                .replace(/\\[i\\]([\\s\\S]*?)\\[\\/i\\]/gi, '<em>$1</em>')
+                .replace(/\\[u\\]([\\s\\S]*?)\\[\\/u\\]/gi, '<span style="text-decoration: underline;">$1</span>')
+                .replace(/\\n/g, '<br>');
+            }
+  
+            function updatePreview(bbcode) {
+              try {
+                document.getElementById('preview-content').innerHTML = convertBBCodeToHTML(bbcode);
+              } catch (error) {
+                console.error('Error updating preview:', error);
+                document.getElementById('preview-content').innerHTML = '<p style="color: red;">Error updating preview. Please check the console for details.</p>';
+              }
+            }
+  
+            // Set up communication with the parent window
+            window.addEventListener('message', function(event) {
+              if (event.data && event.data.type === 'updatePreview') {
+                updatePreview(event.data.bbcode);
+              }
+            });
+  
+            // Signal that the preview window is ready
+            window.opener.postMessage({ type: 'previewReady' }, '*');
+          </script>
         </body>
       </html>
     `);
 
-    function updatePreview() {
-      const bbcode = textarea.value;
-      const html = convertBBCodeToHTML(bbcode);
-      previewWindow.document.getElementById("preview-content").innerHTML = html;
-    }
+    previewWindow.document.close(); // Close the document to finish loading
 
-    let debounceTimer;
-    textarea.addEventListener("input", () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(updatePreview, 500);
+    // Set up communication with the preview window
+    window.addEventListener("message", function (event) {
+      if (event.data && event.data.type === "previewReady") {
+        updatePreview();
+      }
     });
 
-    // Initial update
-    updatePreview();
+    function updatePreview() {
+      const bbcode = textarea.value;
+      previewWindow.postMessage({ type: "updatePreview", bbcode: bbcode }, "*");
+    }
+
+    textarea.addEventListener("input", updatePreview);
+
+    // Initial preview update
+    setTimeout(updatePreview, 100); // Short delay to ensure the preview window is ready
   }
 
   function initialize() {
