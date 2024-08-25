@@ -21,24 +21,24 @@
                 ${reactions
                   .map(
                     (reaction) => `
-                    <div class="reaction-group" style="display: flex; align-items: center; background-color: rgba(255,255,255,0.1); border-radius: 8px; padding: 2px 6px; position: relative;">
+                    <div class="reaction-group" style="display: flex; align-items: center; background-color: rgba(255,255,255,0.1); border-radius: 8px; padding: 2px 6px; position: relative; margin-bottom: 8px;">
                         <img src="${reaction.image}" alt="${
                       reaction.title
                     }" style="width: auto; height: 16px; margin-right: 4px; object-fit: contain;">
                         <span style="font-size: 12px; color: #dcddde;">${
                           reaction.count
                         }</span>
-                        <div class="user-avatars" style="position: absolute; bottom: -6px; right: -2px; display: flex; flex-direction: row-reverse;">
+                        <div class="user-avatars" style="position: absolute; bottom: -10px; right: 0; display: flex; flex-direction: row-reverse;">
                             ${reaction.users
                               .slice(0, 3)
                               .map(
                                 (user, index) => `
-                                <div style="width: 12px; height: 12px; border-radius: 50%; overflow: hidden; border: 1px solid #191919; margin-left: ${
+                                <div style="width: 12px; height: 12px; border-radius: 50%; overflow: hidden; margin-left: ${
                                   index * -6
                                 }px; z-index: ${3 - index};">
                                     <img src="${user.avatar}" alt="${
                                   user.username
-                                }" style="width: 100%; height: 100%; object-fit: cover;">
+                                }" style="width: 100%; height: 100%; object-fit: cover; transform: scale(1.2);">
                                 </div>
                             `
                               )
