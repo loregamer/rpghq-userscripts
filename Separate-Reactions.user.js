@@ -213,7 +213,26 @@
       ? `
       .reaction-score-list, .reactions-launcher {
         float: left !important;
-        margin-right: 10px !important;
+        margin-right: 4px !important;
+        padding-top: 10px !important;
+      }
+      .reactions-launcher {
+        display: flex !important;
+        align-items: center !important;
+      }
+      .reactions-launcher a.reaction-button {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: auto !important;
+        height: 16px !important;
+        padding: 0 !important;
+        background: none !important;
+      }
+      .reactions-launcher a.reaction-button svg {
+        width: 16px !important;
+        height: 16px !important;
+        fill: #dcddde !important;
       }
     `
       : "";
