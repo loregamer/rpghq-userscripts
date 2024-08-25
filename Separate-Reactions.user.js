@@ -203,56 +203,6 @@
     popup.style.display = "none";
   }
 
-  function observePosts() {
-    const style = document.createElement("style");
-    style.textContent = `
-      @media screen and (min-width: 768px) {
-        .post .content {
-          min-height: 125px;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Apply the left mode on initial load
-    applyLeftMode();
-
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === "childList") {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              if (node.classList.contains("post")) {
-                processPost(node);
-              } else if (node.classList.contains("reaction-score-list")) {
-                const post = node.closest(".post");
-                if (post) {
-                  processPost(post);
-                }
-              }
-            }
-          });
-        }
-      });
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-
-    // Process existing posts
-    document.querySelectorAll(".post").forEach(processPost);
-  }
-
-  // Add this function to toggle the left mode setting
-  function toggleLeftMode() {
-    const currentMode = GM_getValue("leftMode", false);
-    GM_setValue("leftMode", !currentMode);
-    applyLeftMode();
-  }
-
-  // Add this function to apply the left mode styles
   function applyLeftMode() {
     const leftMode = GM_getValue("leftMode", false);
     const style =
@@ -268,20 +218,83 @@
     `
       : "";
     document.head.appendChild(style);
+
+    if (leftMode) {
+      document.querySelectorAll(".postbody").forEach((postbody) => {
+        const reactionLauncher = postbody.querySelector(".reactions-launcher");
+        const reactionScoreList = postbody.querySelector(
+          ".reaction-score-list"
+        );
+        if (
+          reactionLauncher &&
+          reactionScoreList &&
+          reactionLauncher.previousElementSibling !== reactionScoreList
+        ) {
+          reactionLauncher.parentNode.insertBefore(
+            reactionScoreList,
+            reactionLauncher
+          );
+        }
+      });
+    }
   }
 
-  // Add this line to register the menu command
+  function toggleLeftMode() {
+    const currentMode = GM_getValue("leftMode", false);
+    GM_setValue("leftMode", !currentMode);
+    applyLeftMode();
+  }
+
   GM_registerMenuCommand("Toggle Left Mode", toggleLeftMode);
 
-  // Run the init function when the page loads
+  function observePosts() {
+    const style = document.createElement("style");
+    style.textContent = `
+      @media screen and (min-width: 768px) {
+        .post .content {
+          min-height: 125px;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    applyLeftMode();
+
+    const observer = new MutationObserver((mutations) => {
+      let shouldApplyLeftMode = false;
+      mutations.forEach((mutation) => {
+        if (mutation.type === "childList") {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              if (
+                node.classList.contains("post") ||
+                node.classList.contains("reaction-score-list")
+              ) {
+                shouldApplyLeftMode = true;
+              }
+            }
+          });
+        }
+      });
+      if (shouldApplyLeftMode) {
+        applyLeftMode();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    document.querySelectorAll(".post").forEach(processPost);
+  }
+
   if (
     document.readyState === "complete" ||
     document.readyState === "interactive"
   ) {
-    // If the document is already ready, execute the function immediately
     observePosts();
   } else {
-    // Otherwise, wait for the DOM to be fully loaded
     window.addEventListener("load", observePosts);
   }
 })();
