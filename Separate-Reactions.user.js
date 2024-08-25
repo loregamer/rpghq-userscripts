@@ -28,6 +28,22 @@
                         <span style="font-size: 12px; color: #dcddde;">${
                           reaction.count
                         }</span>
+                        <div class="user-avatars" style="position: absolute; bottom: -6px; right: -2px; display: flex; flex-direction: row-reverse;">
+                            ${reaction.users
+                              .slice(0, 3)
+                              .map(
+                                (user, index) => `
+                                <div style="width: 12px; height: 12px; border-radius: 50%; overflow: hidden; border: 1px solid #191919; margin-left: ${
+                                  index * -6
+                                }px; z-index: ${3 - index};">
+                                    <img src="${user.avatar}" alt="${
+                                  user.username
+                                }" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                            `
+                              )
+                              .join("")}
+                        </div>
                         <div class="reaction-users-popup" style="display: none; position: fixed; background-color: #191919; border: 1px solid #202225; border-radius: 4px; padding: 8px; z-index: 1000; color: #dcddde; font-size: 12px; width: 200px; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                             <div style="font-weight: bold; margin-bottom: 8px;">${
                               reaction.title
