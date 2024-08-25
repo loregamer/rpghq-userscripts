@@ -8,7 +8,9 @@
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Separate-Reactions.user.js
 // @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Separate-Reactions.user.js
-// @grant        none
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_registerMenuCommand
 // ==/UserScript==
 
 (function () {
@@ -212,6 +214,9 @@
     `;
     document.head.appendChild(style);
 
+    // Apply the left mode on initial load
+    applyLeftMode();
+
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === "childList") {
@@ -239,6 +244,34 @@
     // Process existing posts
     document.querySelectorAll(".post").forEach(processPost);
   }
+
+  // Add this function to toggle the left mode setting
+  function toggleLeftMode() {
+    const currentMode = GM_getValue("leftMode", false);
+    GM_setValue("leftMode", !currentMode);
+    applyLeftMode();
+  }
+
+  // Add this function to apply the left mode styles
+  function applyLeftMode() {
+    const leftMode = GM_getValue("leftMode", false);
+    const style =
+      document.getElementById("rpghq-reaction-list-style") ||
+      document.createElement("style");
+    style.id = "rpghq-reaction-list-style";
+    style.textContent = leftMode
+      ? `
+      .reaction-score-list, .reactions-launcher {
+        float: left !important;
+        margin-right: 10px !important;
+      }
+    `
+      : "";
+    document.head.appendChild(style);
+  }
+
+  // Add this line to register the menu command
+  GM_registerMenuCommand("Toggle Left Mode", toggleLeftMode);
 
   // Run the init function when the page loads
   if (
