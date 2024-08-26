@@ -306,25 +306,11 @@
           min-height: 125px;
         }
       }
-      .reactions-launcher .reaction-button.remove-reaction {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        width: 24px !important;
-        height: 24px !important;
-        padding: 0 !important;
-        background: none !important;
-      }
       .reactions-launcher .reaction-button.remove-reaction .icon {
         font-size: 16px !important;
         line-height: 1 !important;
         margin: 0 !important;
         height: auto !important; /* Override the fixed height */
-      }
-      /* Ensure the SVG icon (if present) is also properly sized */
-      .reactions-launcher .reaction-button.remove-reaction .icon svg {
-        width: 16px !important;
-        height: 16px !important;
       }
     `;
     document.head.appendChild(style);
