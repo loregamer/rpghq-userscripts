@@ -196,7 +196,7 @@
           if (reactionButton) {
             // Check if a reaction is selected
             const selectedReaction = reactionButton.querySelector("img");
-            if (selectedReaction) {
+            if (selectedReaction && GM_getValue("leftMode", true)) {
               // Replace the button content with an "X" icon and center-align it
               reactionButton.innerHTML = `
                 <svg class="icon" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000" xml:space="preserve">
@@ -314,7 +314,7 @@
   function toggleLeftMode() {
     const currentMode = GM_getValue("leftMode", false);
     GM_setValue("leftMode", !currentMode);
-    applyLeftMode();
+    window.location.reload();
   }
 
   GM_registerMenuCommand("Toggle Left Mode", toggleLeftMode);
