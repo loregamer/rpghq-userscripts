@@ -291,24 +291,22 @@
     applyLeftMode();
 
     const observer = new MutationObserver((mutations) => {
-      let shouldApplyLeftMode = false;
       mutations.forEach((mutation) => {
         if (mutation.type === "childList") {
           mutation.addedNodes.forEach((node) => {
             if (node.nodeType === Node.ELEMENT_NODE) {
-              if (
-                node.classList.contains("post") ||
-                node.classList.contains("reaction-score-list")
-              ) {
-                shouldApplyLeftMode = true;
+              if (node.classList.contains("post")) {
+                processPost(node);
+              } else if (node.classList.contains("reaction-score-list")) {
+                const post = node.closest(".post");
+                if (post) {
+                  processPost(post);
+                }
               }
             }
           });
         }
       });
-      if (shouldApplyLeftMode) {
-        applyLeftMode();
-      }
     });
 
     observer.observe(document.body, {
@@ -316,6 +314,7 @@
       subtree: true,
     });
 
+    // Process existing posts
     document.querySelectorAll(".post").forEach(processPost);
   }
 
