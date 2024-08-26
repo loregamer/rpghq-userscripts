@@ -205,6 +205,17 @@
 
               // Remove any existing inline styles that might interfere
               reactionButton.style.cssText = "";
+
+              // Highlight the user's reaction in the reaction list
+              const userReactionImage = selectedReaction.src;
+              const userReactionGroup = newReactionList.querySelector(
+                `.reaction-group img[src="${userReactionImage}"]`
+              );
+              if (userReactionGroup) {
+                userReactionGroup
+                  .closest(".reaction-group")
+                  .classList.add("user-reacted");
+              }
             }
           }
         }
@@ -311,6 +322,12 @@
         line-height: 1 !important;
         margin: 0 !important;
         height: auto !important; /* Override the fixed height */
+      }
+      .reaction-group.user-reacted {
+        background-color: #4A5A6A !important;
+      }
+      .reaction-group.user-reacted span {
+        color: #ffffff !important;
       }
     `;
     document.head.appendChild(style);
