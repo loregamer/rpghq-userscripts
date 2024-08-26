@@ -17,8 +17,9 @@
   "use strict";
 
   function createReactionList(postId, reactions) {
+    const displayStyle = reactions.length === 0 ? "display: none;" : "";
     return `
-        <div class="reaction-score-list" data-post-id="${postId}" data-title="Reactions" style="padding-top: 10px;">
+        <div class="reaction-score-list" data-post-id="${postId}" data-title="Reactions" style="padding-top: 10px; ${displayStyle}">
             <div class="list-scores" style="display: flex; flex-wrap: wrap; gap: 4px;">
                 ${reactions
                   .map(
@@ -140,15 +141,25 @@
 
   function updateReactions(post, postId) {
     const existingReactionList = post.querySelector(".reaction-score-list");
-    if (existingReactionList.dataset.processed) return;
+    if (existingReactionList && existingReactionList.dataset.processed) return;
 
     fetchReactions(postId)
       .then((reactions) => {
-        if (reactions.length > 0) {
-          const reactionListHtml = createReactionList(postId, reactions);
+        const reactionListHtml = createReactionList(postId, reactions);
+        if (existingReactionList) {
           existingReactionList.outerHTML = reactionListHtml;
+        } else {
+          const reactionLauncher = post.querySelector(".reactions-launcher");
+          if (reactionLauncher) {
+            reactionLauncher.insertAdjacentHTML(
+              "beforebegin",
+              reactionListHtml
+            );
+          }
+        }
 
-          const newReactionList = post.querySelector(".reaction-score-list");
+        const newReactionList = post.querySelector(".reaction-score-list");
+        if (newReactionList) {
           newReactionList.dataset.processed = "true";
 
           // Add hover effect to reaction groups
