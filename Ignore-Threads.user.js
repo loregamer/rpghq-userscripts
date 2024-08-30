@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.6.1
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -329,6 +329,12 @@ SOFTWARE.
     return button;
   }
 
+  function escapeForUblock(str) {
+    return str
+      .replace(/[\\^$.*+?()[\]{}|]/g, "\\$&") // Escape special regex characters
+      .replace(/"/g, '\\"'); // Escape double quotes
+  }
+
   function exportIgnoredThreads() {
     // Export JSON
     const exportData = JSON.stringify(ignoredThreads);
@@ -345,7 +351,7 @@ SOFTWARE.
     // Export uBlock Origin filters
     let uBlockFilters = "! RPGHQ Thread Ignorer - Ignored Threads\n";
     for (const threadId in ignoredThreads) {
-      const threadTitle = ignoredThreads[threadId];
+      const threadTitle = escapeForUblock(ignoredThreads[threadId]);
       uBlockFilters += `
   ! Thread ID: ${threadId}
   ! Thread Title: ${threadTitle}
