@@ -183,36 +183,63 @@
 
     const pinnedList = pinnedSection.querySelector("#pinned-threads-list");
 
+    // Create placeholder rows with loading animation
+    for (const threadId in pinnedThreads) {
+      const listItem = document.createElement("li");
+      listItem.className = "row bg1";
+      listItem.innerHTML = `
+                  <dl class="row-item topic_read">
+                      <dt>
+                          <div class="list-inner">
+                              <span class="topic-title">
+                                  <i class="fa fa-spinner fa-spin"></i> Loading...
+                              </span>
+                          </div>
+                      </dt>
+                  </dl>
+              `;
+      pinnedList.appendChild(listItem);
+    }
+
+    indexLeft.insertBefore(pinnedSection, indexLeft.firstChild);
+
+    // Asynchronously fetch and update thread titles
     for (const [threadId, threadInfo] of Object.entries(pinnedThreads)) {
       try {
         const threadTitle = await fetchThreadTitle(threadId);
-        const listItem = document.createElement("li");
-        listItem.className = "row bg1";
+        const listItem =
+          pinnedList.children[Object.keys(pinnedThreads).indexOf(threadId)];
         listItem.innerHTML = `
-                    <dl class="row-item topic_read">
-                        <dt title="No unread posts">
-                            <div class="list-inner">
-                                <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}&view=unread#unread" class="topictitle">${threadTitle}</a>
-                                <br>
-                                <div class="topic-poster responsive-hide left-box">
-                                    <span class="by">${
-                                      threadInfo.author || "Unknown"
-                                    }</span>
-                                </div>
-                            </div>
-                        </dt>
-                    </dl>
-                `;
-        pinnedList.appendChild(listItem);
+          <dl class="row-item topic_read">
+            <dt title="No unread posts">
+              <div class="list-inner">
+                <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}&view=unread#unread" class="topictitle">${threadTitle}</a>
+                <br>
+                <div class="topic-poster responsive-hide left-box">
+                  <span class="by">${threadInfo.author || "Unknown"}</span>
+                </div>
+              </div>
+            </dt>
+          </dl>
+        `;
       } catch (error) {
         console.error(
           `Error fetching thread title for thread ${threadId}:`,
           error
         );
+        const listItem =
+          pinnedList.children[Object.keys(pinnedThreads).indexOf(threadId)];
+        listItem.innerHTML = `
+          <dl class="row-item topic_read">
+            <dt>
+              <div class="list-inner">
+                <span class="topic-title">Error loading thread</span>
+              </div>
+            </dt>
+          </dl>
+        `;
       }
     }
-
-    indexLeft.insertBefore(pinnedSection, indexLeft.firstChild);
   }
 
   // Main execution
