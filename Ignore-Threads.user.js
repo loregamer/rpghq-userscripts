@@ -330,16 +330,42 @@ SOFTWARE.
   }
 
   function exportIgnoredThreads() {
+    // Export JSON
     const exportData = JSON.stringify(ignoredThreads);
-    const blob = new Blob([exportData], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "ignored_threads.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const jsonBlob = new Blob([exportData], { type: "application/json" });
+    const jsonUrl = URL.createObjectURL(jsonBlob);
+    const jsonLink = document.createElement("a");
+    jsonLink.href = jsonUrl;
+    jsonLink.download = "ignored_threads.json";
+    document.body.appendChild(jsonLink);
+    jsonLink.click();
+    document.body.removeChild(jsonLink);
+    URL.revokeObjectURL(jsonUrl);
+
+    // Export uBlock Origin filters
+    let uBlockFilters = "! RPGHQ Thread Ignorer - Ignored Threads\n";
+    for (const threadId in ignoredThreads) {
+      const threadTitle = ignoredThreads[threadId];
+      uBlockFilters += `
+  ! Thread ID: ${threadId}
+  ! Thread Title: ${threadTitle}
+  rpghq.org##li:has(a.topictitle[href*="t=${threadId}"])
+  rpghq.org##li:has(a.topictitle:has-text("${threadTitle}"))
+  rpghq.org##.lastpost:has(a[href*="t=${threadId}"])
+  rpghq.org##.lastpost:has(a:has-text("${threadTitle}"))
+  rpghq.org##dd.lastpost:has(a[href*="t=${threadId}"])
+  rpghq.org##dd.lastpost:has(a:has-text("${threadTitle}"))
+  `;
+    }
+    const textBlob = new Blob([uBlockFilters], { type: "text/plain" });
+    const textUrl = URL.createObjectURL(textBlob);
+    const textLink = document.createElement("a");
+    textLink.href = textUrl;
+    textLink.download = "ignored_threads_ublock.txt";
+    document.body.appendChild(textLink);
+    textLink.click();
+    document.body.removeChild(textLink);
+    URL.revokeObjectURL(textUrl);
   }
 
   function importIgnoredThreads() {
