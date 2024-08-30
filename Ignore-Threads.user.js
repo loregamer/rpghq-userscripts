@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.6.1
+// @version      1.6.2
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -355,12 +355,12 @@ SOFTWARE.
       uBlockFilters += `
   ! Thread ID: ${threadId}
   ! Thread Title: ${threadTitle}
-  rpghq.org##li:has(a.topictitle[href*="t=${threadId}"])
-  rpghq.org##li:has(a.topictitle:has-text("${threadTitle}"))
-  rpghq.org##.lastpost:has(a[href*="t=${threadId}"])
-  rpghq.org##.lastpost:has(a:has-text("${threadTitle}"))
-  rpghq.org##dd.lastpost:has(a[href*="t=${threadId}"])
-  rpghq.org##dd.lastpost:has(a:has-text("${threadTitle}"))
+  rpghq.org##li:has(a.topictitle[href$="t=${threadId}"])
+  rpghq.org##li:has(a.topictitle[title="${threadTitle}"])
+  rpghq.org##.lastpost:has(a[href$="t=${threadId}"])
+  rpghq.org##.lastpost:has(span:has-text("^${threadTitle}$"))
+  rpghq.org##dd.lastpost:has(a[href$="t=${threadId}"])
+  rpghq.org##dd.lastpost:has(span:has-text("^${threadTitle}$"))
   `;
     }
     const textBlob = new Blob([uBlockFilters], { type: "text/plain" });
