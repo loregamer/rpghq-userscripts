@@ -332,7 +332,8 @@ SOFTWARE.
   function escapeForUblock(str) {
     return str
       .replace(/[\\^$.*+?()[\]{}|]/g, "\\$&") // Escape special regex characters
-      .replace(/"/g, '\\"'); // Escape double quotes
+      .replace(/"/g, '\\"') // Escape double quotes
+      .replace(/'/g, "\\'"); // Escape single quotes (apostrophes)
   }
 
   function exportIgnoredThreads() {
@@ -353,15 +354,11 @@ SOFTWARE.
     for (const threadId in ignoredThreads) {
       const threadTitle = escapeForUblock(ignoredThreads[threadId]);
       uBlockFilters += `
-! Main topic list
-rpghq.org##li:has(> dl > dt > div > a.topictitle[href*="t=${threadId}&"])
-rpghq.org##li:has(> dl > dt > div > a.topictitle[title="${threadTitle}"])
-! Lastpost sections
-rpghq.org##dd.lastpost:has(> span > a[href*="t=${threadId}&"])
-rpghq.org##dd.lastpost:has(> span > a[title="${threadTitle}"])
-! Recent topics section
-rpghq.org##div#recent-topics li:has(> dl > dt > div > a.topictitle[href*="t=${threadId}&"])
-rpghq.org##div#recent-topics li:has(> dl > dt > div > a.topictitle:contains("${threadTitle}"))
+! Thread ID: ${threadId}
+! Thread Title: ${threadTitle}
+
+rpghq.org##ul.topiclist li:has(a:has-text(/${threadTitle}/))
+rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
 `;
     }
     const textBlob = new Blob([uBlockFilters], { type: "text/plain" });
