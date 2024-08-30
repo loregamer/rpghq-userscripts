@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -179,7 +179,6 @@
             if (isZomboidServer) {
               console.log("Attempting to scrape Project Zomboid Server status");
 
-              // Find the player count element
               const playerCountElement = doc.querySelector(
                 'span[style="background-color:black"] strong.text-strong'
               );
@@ -196,7 +195,7 @@
                 );
 
                 try {
-                  const onlinePlayersElement = statusDiv.querySelector(
+                  const onlinePlayersElements = statusDiv.querySelectorAll(
                     'span[style="font-size:85%;line-height:116%"]'
                   );
                   const lastUpdatedElement = statusDiv.querySelector(
@@ -204,10 +203,8 @@
                   );
 
                   console.log(
-                    "Online players element:",
-                    onlinePlayersElement
-                      ? onlinePlayersElement.outerHTML
-                      : "Not found"
+                    "Online players elements:",
+                    onlinePlayersElements.length
                   );
                   console.log(
                     "Last updated element:",
@@ -218,15 +215,19 @@
 
                   if (
                     playerCountElement &&
-                    onlinePlayersElement &&
+                    onlinePlayersElements.length > 0 &&
                     lastUpdatedElement
                   ) {
                     const playerCount = playerCountElement.textContent;
-                    const onlinePlayers = onlinePlayersElement.textContent;
+                    const onlinePlayers = Array.from(onlinePlayersElements).map(
+                      (el) => el.textContent
+                    );
                     const lastUpdated = lastUpdatedElement.textContent;
 
                     console.log(
-                      `Scraped data: ${playerCount} | ${onlinePlayers} | ${lastUpdated}`
+                      `Scraped data: ${playerCount} | ${onlinePlayers.join(
+                        ", "
+                      )} | ${lastUpdated}`
                     );
 
                     resolve({
@@ -327,30 +328,33 @@
         let additionalInfo = "";
         if (threadId === "2756" && threadData.status) {
           console.log("Generating additional info for Project Zomboid Server");
+          const onlinePlayersList = threadData.status.onlinePlayers
+            .map((player) => `• ${player}`)
+            .join("<br>");
           additionalInfo = `
-              <div class="zomboid-status">
-                <span class="online-players">• ${threadData.status.onlinePlayers}</span><br>
-                <span class="last-updated">${threadData.status.lastUpdated}</span>
-              </div>
-            `;
+            <div class="zomboid-status">
+              <span class="online-players">${onlinePlayersList}</span><br>
+              <span class="last-updated">${threadData.status.lastUpdated}</span>
+            </div>
+          `;
         }
 
         listItem.innerHTML = `
-            <dl class="row-item topic_read">
-              <dt title="No unread posts">
-                <div class="list-inner">
-                  <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}&view=unread#unread" class="topictitle">${
+          <dl class="row-item topic_read">
+            <dt title="No unread posts">
+              <div class="list-inner">
+                <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}&view=unread#unread" class="topictitle">${
           threadData.title
         }</a>
-                  <br>
-                  <div class="topic-poster responsive-hide left-box">
-                    <span class="by">${threadInfo.author || "Unknown"}</span>
-                  </div>
-                  ${additionalInfo}
+                <br>
+                <div class="topic-poster responsive-hide left-box">
+                  <span class="by">${threadInfo.author || "Unknown"}</span>
                 </div>
-              </dt>
-            </dl>
-          `;
+                ${additionalInfo}
+              </div>
+            </dt>
+          </dl>
+        `;
         console.log(`Updated HTML for thread ${threadId}`);
       } catch (error) {
         console.error(`Error processing thread ${threadId}:`, error);
