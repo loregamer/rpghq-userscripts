@@ -42,26 +42,66 @@
   }
 
   function addPinButton() {
-    const threadTitle = document.querySelector(".topic-title");
-    if (threadTitle) {
+    const actionBar = document.querySelector(".action-bar.bar-top");
+    const threadId = getThreadId();
+    if (
+      actionBar &&
+      threadId &&
+      !document.getElementById("pin-thread-button")
+    ) {
+      const dropdownContainer = document.createElement("div");
+      dropdownContainer.className =
+        "dropdown-container dropdown-button-control topic-tools";
+
       const pinButton = document.createElement("span");
-      pinButton.className = "pin-button";
-      const threadId = getThreadId();
+      pinButton.id = "pin-thread-button";
+      pinButton.className = "button button-secondary dropdown-trigger";
+      pinButton.title = "Pin Thread";
+
       const pinnedThreads = getPinnedThreads();
       const isPinned = pinnedThreads.hasOwnProperty(threadId);
-
       updatePinButtonState(pinButton, isPinned);
 
-      pinButton.addEventListener("click", () =>
-        togglePinThread(threadId, pinButton)
-      );
-      threadTitle.parentNode.insertBefore(pinButton, threadTitle.nextSibling);
+      pinButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        const threadTitle = document
+          .querySelector(".topic-title")
+          .textContent.trim();
+        togglePinThread(threadId, pinButton);
+      });
+
+      dropdownContainer.appendChild(pinButton);
+
+      // Insert the pin button as the first item in the action bar
+      if (actionBar.firstChild) {
+        actionBar.insertBefore(dropdownContainer, actionBar.firstChild);
+      } else {
+        actionBar.appendChild(dropdownContainer);
+      }
+
+      // Add media query for responsive design
+      const style = document.createElement("style");
+      style.textContent = `
+        @media (max-width: 700px) {
+          #pin-thread-button span {
+            display: none;
+          }
+        }
+      `;
+      document.head.appendChild(style);
     }
   }
 
   function updatePinButtonState(button, isPinned) {
-    button.textContent = isPinned ? "📌 Unpin" : "📌 Pin";
-    button.title = isPinned ? "Unpin this thread" : "Pin this thread";
+    if (isPinned) {
+      button.innerHTML =
+        '<i class="icon fa-thumb-tack fa-fw" aria-hidden="true"></i><span>Unpin</span>';
+      button.title = "Unpin";
+    } else {
+      button.innerHTML =
+        '<i class="icon fa-thumb-tack fa-fw" aria-hidden="true"></i><span>Pin</span>';
+      button.title = "Pin";
+    }
   }
 
   function togglePinThread(threadId, button) {
