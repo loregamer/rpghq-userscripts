@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -16,146 +16,151 @@
   const PINNED_THREADS_KEY = "rpghq_pinned_threads";
 
   GM_addStyle(`
-        .pin-button {
-            margin-left: 5px;
-            cursor: pointer;
-        }
         #pinned-threads {
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
-        #pinned-threads .header {
-            background-color: #4a5a73;
-            color: #fff;
-            padding: 5px 10px;
+        #pinned-threads .topiclist.topics {
+            margin-top: 0;
         }
-        #pinned-threads ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-        }
-        #pinned-threads li {
-            padding: 5px 10px;
-            border-bottom: 1px solid #ddd;
+        .pin-button {
+            margin-left: 10px;
+            cursor: pointer;
         }
     `);
 
   function getPinnedThreads() {
-    return GM_getValue(PINNED_THREADS_KEY, []);
+    return GM_getValue(PINNED_THREADS_KEY, {});
   }
 
   function setPinnedThreads(threads) {
     GM_setValue(PINNED_THREADS_KEY, threads);
   }
 
-  function addPinButton(threadRow) {
-    const titleElement = threadRow.querySelector(".topictitle");
-    if (!titleElement) return;
+  function addPinButton() {
+    const threadTitle = document.querySelector(".topic-title");
+    if (threadTitle) {
+      const pinButton = document.createElement("span");
+      pinButton.className = "pin-button";
+      const threadId = getThreadId();
+      const pinnedThreads = getPinnedThreads();
+      const isPinned = pinnedThreads.hasOwnProperty(threadId);
 
-    const threadId = titleElement.href.match(/t=(\d+)/)[1];
-    const isPinned = getPinnedThreads().includes(threadId);
+      updatePinButtonState(pinButton, isPinned);
 
-    const pinButton = document.createElement("span");
-    pinButton.className = "pin-button";
-    pinButton.textContent = isPinned ? "📌 Unpin" : "📌 Pin";
-    pinButton.onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      togglePinThread(threadId);
-      pinButton.textContent = isPinned ? "📌 Pin" : "📌 Unpin";
-    };
-
-    titleElement.parentNode.insertBefore(pinButton, titleElement.nextSibling);
+      pinButton.addEventListener("click", () =>
+        togglePinThread(threadId, pinButton)
+      );
+      threadTitle.parentNode.insertBefore(pinButton, threadTitle.nextSibling);
+    }
   }
 
-  function togglePinThread(threadId) {
-    const pinnedThreads = getPinnedThreads();
-    const index = pinnedThreads.indexOf(threadId);
+  function updatePinButtonState(button, isPinned) {
+    button.textContent = isPinned ? "📌 Unpin" : "📌 Pin";
+    button.title = isPinned ? "Unpin this thread" : "Pin this thread";
+  }
 
-    if (index === -1) {
-      pinnedThreads.push(threadId);
+  function togglePinThread(threadId, button) {
+    const pinnedThreads = getPinnedThreads();
+    const threadTitle = document
+      .querySelector(".topic-title")
+      .textContent.trim();
+    const author = document.querySelector(".author").textContent.trim();
+    const postTime = document
+      .querySelector(".author time")
+      .getAttribute("datetime");
+
+    if (pinnedThreads.hasOwnProperty(threadId)) {
+      delete pinnedThreads[threadId];
     } else {
-      pinnedThreads.splice(index, 1);
+      pinnedThreads[threadId] = {
+        title: threadTitle,
+        author: author,
+        postTime: postTime,
+      };
     }
 
     setPinnedThreads(pinnedThreads);
-    if (window.location.href.includes("/index.php")) {
-      location.reload();
-    }
+    updatePinButtonState(button, pinnedThreads.hasOwnProperty(threadId));
+  }
+
+  function getThreadId() {
+    const match = window.location.href.match(/[?&]t=(\d+)/);
+    return match ? match[1] : null;
   }
 
   function createPinnedThreadsSection() {
-    const pinnedThreads = getPinnedThreads();
-    if (pinnedThreads.length === 0) return;
-
     const indexLeft = document.querySelector(".index-left");
     if (!indexLeft) return;
 
+    const pinnedThreads = getPinnedThreads();
+    if (Object.keys(pinnedThreads).length === 0) return;
+
     const pinnedSection = document.createElement("div");
     pinnedSection.id = "pinned-threads";
+    pinnedSection.className = "forabg";
     pinnedSection.innerHTML = `
-            <div class="forabg">
-                <div class="inner">
-                    <ul class="topiclist">
-                        <li class="header">
-                            <dl class="row-item">
-                                <dt><div class="list-inner">Pinned Threads</div></dt>
-                                <dd class="lastpost"><span>Last post</span></dd>
-                            </dl>
-                        </li>
-                    </ul>
-                    <ul class="topiclist forums" id="pinned-threads-list"></ul>
-                </div>
+            <div class="inner">
+                <ul class="topiclist">
+                    <li class="header">
+                        <dl class="row-item">
+                            <dt><div class="list-inner">Pinned Topics</div></dt>
+                            <dd class="posts">Replies</dd>
+                            <dd class="views">Views</dd>
+                            <dd class="lastpost"><span>Last post</span></dd>
+                        </dl>
+                    </li>
+                </ul>
+                <ul class="topiclist topics" id="pinned-threads-list"></ul>
             </div>
         `;
 
+    const pinnedList = pinnedSection.querySelector("#pinned-threads-list");
+
+    Object.entries(pinnedThreads).forEach(([threadId, threadInfo]) => {
+      const listItem = document.createElement("li");
+      listItem.className = "row bg1";
+      listItem.innerHTML = `
+                <dl class="row-item topic_read">
+                    <dt title="No unread posts">
+                        <div class="list-inner">
+                            <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}" class="topictitle">${
+        threadInfo.title
+      }</a>
+                            <br>
+                            <div class="topic-poster responsive-hide left-box">
+                                by ${threadInfo.author} » <time datetime="${
+        threadInfo.postTime
+      }">${new Date(threadInfo.postTime).toLocaleString()}</time>
+                            </div>
+                        </div>
+                    </dt>
+                    <dd class="posts">-</dd>
+                    <dd class="views">-</dd>
+                    <dd class="lastpost">
+                        <span>
+                            <dfn>Last post</dfn> by ${threadInfo.author}
+                            <br><time datetime="${
+                              threadInfo.postTime
+                            }">${new Date(
+        threadInfo.postTime
+      ).toLocaleString()}</time>
+                        </span>
+                    </dd>
+                </dl>
+            `;
+      pinnedList.appendChild(listItem);
+    });
+
     indexLeft.insertBefore(pinnedSection, indexLeft.firstChild);
-
-    const pinnedList = document.getElementById("pinned-threads-list");
-    pinnedThreads.forEach((threadId) => fetchThreadInfo(threadId, pinnedList));
-  }
-
-  function fetchThreadInfo(threadId, pinnedList) {
-    fetch(`https://rpghq.org/forums/viewtopic.php?t=${threadId}`)
-      .then((response) => response.text())
-      .then((html) => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-        const title = doc.querySelector(".topic-title").textContent.trim();
-        const lastPost = doc.querySelector(".author").innerHTML;
-        addPinnedThread(threadId, title, lastPost, pinnedList);
-      });
-  }
-
-  function addPinnedThread(threadId, title, lastPost, pinnedList) {
-    const listItem = document.createElement("li");
-    listItem.className = "row";
-    listItem.innerHTML = `
-            <dl class="row-item forum_read">
-                <dt title="No unread posts">
-                    <div class="list-inner">
-                        <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}" class="forumtitle">${title}</a>
-                    </div>
-                </dt>
-                <dd class="lastpost">
-                    <span>
-                        <dfn>Last post</dfn>
-                        ${lastPost}
-                    </span>
-                </dd>
-            </dl>
-        `;
-    pinnedList.appendChild(listItem);
   }
 
   // Main execution
   if (window.location.href.includes("/viewtopic.php")) {
-    const threadRow = document.querySelector(".topic-title").closest("li");
-    addPinButton(threadRow);
+    addPinButton();
   } else if (
     window.location.href.includes("/index.php") ||
     window.location.href.endsWith("/forums/")
   ) {
     createPinnedThreadsSection();
-    document.querySelectorAll(".topiclist.topics .row").forEach(addPinButton);
   }
 })();
