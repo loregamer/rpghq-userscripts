@@ -1,12 +1,14 @@
 // ==UserScript==
 // @name         RPGHQ Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.3
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addStyle
+// @grant        GM_xmlhttpRequest
+// @connect      rpghq.org
 // @license      MIT
 // ==/UserScript==
 
@@ -25,6 +27,9 @@
         .pin-button {
             margin-left: 10px;
             cursor: pointer;
+        }
+        #pinned-threads .topic-poster .by {
+            display: none;
         }
     `);
 
@@ -88,7 +93,32 @@
     return match ? match[1] : null;
   }
 
-  function createPinnedThreadsSection() {
+  function fetchThreadTitle(threadId) {
+    return new Promise((resolve, reject) => {
+      GM_xmlhttpRequest({
+        method: "GET",
+        url: `https://rpghq.org/forums/viewtopic.php?t=${threadId}`,
+        onload: function (response) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(
+            response.responseText,
+            "text/html"
+          );
+          const titleElement = doc.querySelector("h2.topic-title a");
+          if (titleElement) {
+            resolve(titleElement.textContent.trim());
+          } else {
+            reject("Thread title not found");
+          }
+        },
+        onerror: function (error) {
+          reject(error);
+        },
+      });
+    });
+  }
+
+  async function createPinnedThreadsSection() {
     const indexLeft = document.querySelector(".index-left");
     if (!indexLeft) return;
 
@@ -104,9 +134,6 @@
                     <li class="header">
                         <dl class="row-item">
                             <dt><div class="list-inner">Pinned Topics</div></dt>
-                            <dd class="posts">Replies</dd>
-                            <dd class="views">Views</dd>
-                            <dd class="lastpost"><span>Last post</span></dd>
                         </dl>
                     </li>
                 </ul>
@@ -116,40 +143,34 @@
 
     const pinnedList = pinnedSection.querySelector("#pinned-threads-list");
 
-    Object.entries(pinnedThreads).forEach(([threadId, threadInfo]) => {
-      const listItem = document.createElement("li");
-      listItem.className = "row bg1";
-      listItem.innerHTML = `
-                <dl class="row-item topic_read">
-                    <dt title="No unread posts">
-                        <div class="list-inner">
-                            <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}" class="topictitle">${
-        threadInfo.title
-      }</a>
-                            <br>
-                            <div class="topic-poster responsive-hide left-box">
-                                by ${threadInfo.author} » <time datetime="${
-        threadInfo.postTime
-      }">${new Date(threadInfo.postTime).toLocaleString()}</time>
+    for (const [threadId, threadInfo] of Object.entries(pinnedThreads)) {
+      try {
+        const threadTitle = await fetchThreadTitle(threadId);
+        const listItem = document.createElement("li");
+        listItem.className = "row bg1";
+        listItem.innerHTML = `
+                    <dl class="row-item topic_read">
+                        <dt title="No unread posts">
+                            <div class="list-inner">
+                                <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}&view=unread#unread" class="topictitle">${threadTitle}</a>
+                                <br>
+                                <div class="topic-poster responsive-hide left-box">
+                                    <span class="by">${
+                                      threadInfo.author || "Unknown"
+                                    }</span>
+                                </div>
                             </div>
-                        </div>
-                    </dt>
-                    <dd class="posts">-</dd>
-                    <dd class="views">-</dd>
-                    <dd class="lastpost">
-                        <span>
-                            <dfn>Last post</dfn> by ${threadInfo.author}
-                            <br><time datetime="${
-                              threadInfo.postTime
-                            }">${new Date(
-        threadInfo.postTime
-      ).toLocaleString()}</time>
-                        </span>
-                    </dd>
-                </dl>
-            `;
-      pinnedList.appendChild(listItem);
-    });
+                        </dt>
+                    </dl>
+                `;
+        pinnedList.appendChild(listItem);
+      } catch (error) {
+        console.error(
+          `Error fetching thread title for thread ${threadId}:`,
+          error
+        );
+      }
+    }
 
     indexLeft.insertBefore(pinnedSection, indexLeft.firstChild);
   }
