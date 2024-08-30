@@ -34,6 +34,22 @@
         #pinned-threads .topic-poster .by {
             display: none;
         }
+        .zomboid-status {
+            margin-top: 10px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        .zomboid-status .player-count {
+            background-color: black;
+            color: white;
+            font-weight: bold;
+            padding: 2px 4px;
+        }
+        .zomboid-status .last-updated {
+            font-size: 0.8em;
+            font-style: italic;
+            color: #777;
+        }
     `);
 
   function getPinnedThreads() {
@@ -138,9 +154,19 @@
 
   function fetchThreadTitle(threadId) {
     return new Promise((resolve, reject) => {
+      console.log(`Fetching thread with ID: ${threadId}`);
+      console.log(`Thread ID type: ${typeof threadId}`);
+
+      const isZomboidServer = threadId === "2756";
+      const url = isZomboidServer
+        ? "https://rpghq.org/forums/viewtopic.php?p=132576-project-zomboid-server-1-10"
+        : `https://rpghq.org/forums/viewtopic.php?t=${threadId}`;
+
+      console.log(`Fetching URL: ${url}`);
+
       GM_xmlhttpRequest({
         method: "GET",
-        url: `https://rpghq.org/forums/viewtopic.php?t=${threadId}`,
+        url: url,
         onload: function (response) {
           const parser = new DOMParser();
           const doc = parser.parseFromString(
@@ -149,12 +175,94 @@
           );
           const titleElement = doc.querySelector("h2.topic-title a");
           if (titleElement) {
-            resolve(titleElement.textContent.trim());
+            const title = titleElement.textContent.trim();
+            console.log(`Thread title found: ${title}`);
+
+            if (isZomboidServer) {
+              console.log("Attempting to scrape Project Zomboid Server status");
+              const statusDiv = doc.querySelector(
+                'div[style="text-align:center"]'
+              );
+              if (statusDiv) {
+                console.log("Status div found:", statusDiv.innerHTML);
+                try {
+                  const playerCountElement =
+                    statusDiv.querySelector("strong.text-strong");
+                  const onlinePlayersElement = statusDiv.querySelector(
+                    'span[style="font-size:85%;line-height:116%"]'
+                  );
+                  const lastUpdatedElement = statusDiv.querySelector(
+                    'span[style="font-size:55%;line-height:116%"] em'
+                  );
+
+                  console.log(
+                    "Player count element:",
+                    playerCountElement
+                      ? playerCountElement.outerHTML
+                      : "Not found"
+                  );
+                  console.log(
+                    "Online players element:",
+                    onlinePlayersElement
+                      ? onlinePlayersElement.outerHTML
+                      : "Not found"
+                  );
+                  console.log(
+                    "Last updated element:",
+                    lastUpdatedElement
+                      ? lastUpdatedElement.outerHTML
+                      : "Not found"
+                  );
+
+                  if (
+                    playerCountElement &&
+                    onlinePlayersElement &&
+                    lastUpdatedElement
+                  ) {
+                    const playerCount = playerCountElement.textContent;
+                    const onlinePlayers = onlinePlayersElement.textContent;
+                    const lastUpdated = lastUpdatedElement.textContent;
+
+                    console.log(
+                      `Scraped data: ${playerCount} | ${onlinePlayers} | ${lastUpdated}`
+                    );
+
+                    resolve({
+                      title: title,
+                      status: {
+                        playerCount: playerCount,
+                        onlinePlayers: onlinePlayers,
+                        lastUpdated: lastUpdated,
+                      },
+                    });
+                  } else {
+                    console.warn("Some status elements not found");
+                    resolve({ title: title });
+                  }
+                } catch (error) {
+                  console.error(
+                    "Error scraping Project Zomboid Server status:",
+                    error
+                  );
+                  resolve({ title: title });
+                }
+              } else {
+                console.warn(
+                  "Status div not found for Project Zomboid Server thread"
+                );
+                resolve({ title: title });
+              }
+            } else {
+              console.log("This is not the Project Zomboid Server thread");
+              resolve({ title: title });
+            }
           } else {
+            console.error("Thread title not found");
             reject("Thread title not found");
           }
         },
         onerror: function (error) {
+          console.error("Error fetching thread:", error);
           reject(error);
         },
       });
@@ -209,27 +317,47 @@
     // Asynchronously fetch and update thread titles
     for (const [threadId, threadInfo] of Object.entries(pinnedThreads)) {
       try {
-        const threadTitle = await fetchThreadTitle(threadId);
+        console.log(`Fetching data for thread ${threadId}`);
+        const threadData = await fetchThreadTitle(threadId);
+        console.log(`Received data for thread ${threadId}:`, threadData);
+
         const listItem =
           pinnedList.children[Object.keys(pinnedThreads).indexOf(threadId)];
+
+        let additionalInfo = "";
+        if (
+          threadId === "2756-project-zomboid-server-1-10" &&
+          threadData.status
+        ) {
+          console.log("Generating additional info for Project Zomboid Server");
+          additionalInfo = `
+            <div class="zomboid-status">
+              <span class="player-count">${threadData.status.playerCount}</span> Players Online<br>
+              • ${threadData.status.onlinePlayers}<br>
+              <span class="last-updated">${threadData.status.lastUpdated}</span>
+            </div>
+          `;
+        }
+
         listItem.innerHTML = `
           <dl class="row-item topic_read">
             <dt title="No unread posts">
               <div class="list-inner">
-                <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}&view=unread#unread" class="topictitle">${threadTitle}</a>
+                <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}&view=unread#unread" class="topictitle">${
+          threadData.title
+        }</a>
                 <br>
                 <div class="topic-poster responsive-hide left-box">
                   <span class="by">${threadInfo.author || "Unknown"}</span>
                 </div>
+                ${additionalInfo}
               </div>
             </dt>
           </dl>
         `;
+        console.log(`Updated HTML for thread ${threadId}`);
       } catch (error) {
-        console.error(
-          `Error fetching thread title for thread ${threadId}:`,
-          error
-        );
+        console.error(`Error processing thread ${threadId}:`, error);
         const listItem =
           pinnedList.children[Object.keys(pinnedThreads).indexOf(threadId)];
         listItem.innerHTML = `
