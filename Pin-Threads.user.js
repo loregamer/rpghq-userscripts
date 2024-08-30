@@ -35,20 +35,18 @@
             display: none;
         }
         .zomboid-status {
-            margin-top: 10px;
+            margin-top: 5px;
             font-size: 0.9em;
-            text-align: center;
+            text-align: left;
+            color: #8c8c8c;
         }
-        .zomboid-status .player-count {
-            background-color: black;
-            color: white;
+        .zomboid-status .online-players {
             font-weight: bold;
-            padding: 2px 4px;
+            color: #BFC0C5;
         }
         .zomboid-status .last-updated {
             font-size: 0.8em;
             font-style: italic;
-            color: #777;
         }
     `);
 
@@ -327,36 +325,32 @@
           pinnedList.children[Object.keys(pinnedThreads).indexOf(threadId)];
 
         let additionalInfo = "";
-        if (
-          threadId === "2756-project-zomboid-server-1-10" &&
-          threadData.status
-        ) {
+        if (threadId === "2756" && threadData.status) {
           console.log("Generating additional info for Project Zomboid Server");
           additionalInfo = `
-            <div class="zomboid-status">
-              <span class="player-count">${threadData.status.playerCount}</span> Players Online<br>
-              • ${threadData.status.onlinePlayers}<br>
-              <span class="last-updated">${threadData.status.lastUpdated}</span>
-            </div>
-          `;
+              <div class="zomboid-status">
+                <span class="online-players">• ${threadData.status.onlinePlayers}</span><br>
+                <span class="last-updated">${threadData.status.lastUpdated}</span>
+              </div>
+            `;
         }
 
         listItem.innerHTML = `
-          <dl class="row-item topic_read">
-            <dt title="No unread posts">
-              <div class="list-inner">
-                <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}&view=unread#unread" class="topictitle">${
+            <dl class="row-item topic_read">
+              <dt title="No unread posts">
+                <div class="list-inner">
+                  <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}&view=unread#unread" class="topictitle">${
           threadData.title
         }</a>
-                <br>
-                <div class="topic-poster responsive-hide left-box">
-                  <span class="by">${threadInfo.author || "Unknown"}</span>
+                  <br>
+                  <div class="topic-poster responsive-hide left-box">
+                    <span class="by">${threadInfo.author || "Unknown"}</span>
+                  </div>
+                  ${additionalInfo}
                 </div>
-                ${additionalInfo}
-              </div>
-            </dt>
-          </dl>
-        `;
+              </dt>
+            </dl>
+          `;
         console.log(`Updated HTML for thread ${threadId}`);
       } catch (error) {
         console.error(`Error processing thread ${threadId}:`, error);
