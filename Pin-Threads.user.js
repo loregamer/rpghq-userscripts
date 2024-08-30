@@ -180,14 +180,24 @@
 
             if (isZomboidServer) {
               console.log("Attempting to scrape Project Zomboid Server status");
-              const statusDiv = doc.querySelector(
-                'div[style="text-align:center"]'
+
+              // Find the player count element
+              const playerCountElement = doc.querySelector(
+                'span[style="background-color:black"] strong.text-strong'
               );
-              if (statusDiv) {
-                console.log("Status div found:", statusDiv.innerHTML);
+              console.log(
+                "Player count element:",
+                playerCountElement ? playerCountElement.outerHTML : "Not found"
+              );
+
+              if (playerCountElement) {
+                const statusDiv = playerCountElement.closest("div");
+                console.log(
+                  "Status div found:",
+                  statusDiv ? statusDiv.innerHTML : "Not found"
+                );
+
                 try {
-                  const playerCountElement =
-                    statusDiv.querySelector("strong.text-strong");
                   const onlinePlayersElement = statusDiv.querySelector(
                     'span[style="font-size:85%;line-height:116%"]'
                   );
@@ -195,12 +205,6 @@
                     'span[style="font-size:55%;line-height:116%"] em'
                   );
 
-                  console.log(
-                    "Player count element:",
-                    playerCountElement
-                      ? playerCountElement.outerHTML
-                      : "Not found"
-                  );
                   console.log(
                     "Online players element:",
                     onlinePlayersElement
@@ -247,9 +251,7 @@
                   resolve({ title: title });
                 }
               } else {
-                console.warn(
-                  "Status div not found for Project Zomboid Server thread"
-                );
+                console.warn("Player count element not found");
                 resolve({ title: title });
               }
             } else {
