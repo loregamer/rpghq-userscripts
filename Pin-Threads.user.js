@@ -341,15 +341,10 @@ SOFTWARE.
 
     while (attempts < maxAttempts) {
       try {
-        console.log(
-          `Fetching data for thread ${threadId} (Attempt ${attempts + 1})`
-        );
         const threadData = await fetchThreadTitle(threadId);
-        console.log(`Received data for thread ${threadId}:`, threadData);
 
         // Fetch additional thread information
         const rowHTML = await fetchAdditionalThreadInfo(threadData.title);
-        console.log(`Row HTML for thread ${threadId}:`, rowHTML);
 
         if (rowHTML) {
           // Replace the entire listItem content with the fetched row HTML
@@ -365,8 +360,6 @@ SOFTWARE.
               listInner.insertAdjacentHTML("beforeend", zomboidStatusHTML);
             }
           }
-
-          console.log(`Updated HTML for thread ${threadId}`);
           return; // Success, exit the function
         } else {
           throw new Error(`No row HTML found for thread ${threadId}`);
