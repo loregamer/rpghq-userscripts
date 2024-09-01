@@ -20,6 +20,16 @@
 
   const PINNED_THREADS_KEY = "rpghq_pinned_threads";
 
+  // Add the colorMap
+  const colorMap = {
+    "【 Userscript 】": "#00AA00",
+    "【 Resource 】": "#3889ED",
+    "【 Project 】": "#FF4A66",
+    "【 Tutorial 】": "#FFC107",
+    "【 Backups 】": "#BC2A4D",
+    "[ Select for merge ]": "#A50000",
+  };
+
   GM_addStyle(`
         #pinned-threads {
             margin-bottom: 20px;
@@ -47,6 +57,9 @@
         .zomboid-status .last-updated {
             font-size: 0.8em;
             font-style: italic;
+        }
+        .colored-title {
+            display: inline;
         }
     `);
 
@@ -270,6 +283,17 @@
     });
   }
 
+  function colorizeTitle(title) {
+    let coloredTitle = title;
+    for (const [text, color] of Object.entries(colorMap)) {
+      if (title.includes(text)) {
+        const coloredText = `<span class="colored-title" style="color: ${color};">${text}</span>`;
+        coloredTitle = coloredTitle.replace(text, coloredText);
+      }
+    }
+    return coloredTitle;
+  }
+
   async function createPinnedThreadsSection() {
     const indexLeft = document.querySelector(".index-left");
     if (!indexLeft) return;
@@ -293,94 +317,109 @@
             </div>
         `;
 
+    indexLeft.insertBefore(pinnedSection, indexLeft.firstChild);
+
     const pinnedList = pinnedSection.querySelector("#pinned-threads-list");
 
     // Create placeholder rows with loading animation
-    for (const threadId in pinnedThreads) {
+    Object.keys(pinnedThreads).forEach(() => {
       const listItem = document.createElement("li");
       listItem.className = "row bg1";
       listItem.innerHTML = `
-                  <dl class="row-item topic_read">
-                      <dt>
-                          <div class="list-inner">
-                              <span class="topic-title">
-                                  <i class="fa fa-spinner fa-spin"></i> Loading...
-                              </span>
-                          </div>
-                      </dt>
-                  </dl>
-              `;
-      pinnedList.appendChild(listItem);
-    }
-
-    indexLeft.insertBefore(pinnedSection, indexLeft.firstChild);
-
-    // Asynchronously fetch and update thread titles
-    for (const [threadId, threadInfo] of Object.entries(pinnedThreads)) {
-      try {
-        console.log(`Fetching data for thread ${threadId}`);
-        const threadData = await fetchThreadTitle(threadId);
-        console.log(`Received data for thread ${threadId}:`, threadData);
-
-        const listItem =
-          pinnedList.children[Object.keys(pinnedThreads).indexOf(threadId)];
-
-        let additionalInfo = "";
-        if (threadId === "2756" && threadData.status) {
-          console.log("Generating additional info for Project Zomboid Server");
-          const onlinePlayersList = threadData.status.onlinePlayers
-            .map((player) => `• ${player}`)
-            .join("<br>");
-          additionalInfo = `
-            <div class="zomboid-status">
-              <span class="online-players">${onlinePlayersList}</span><br>
-              <span class="last-updated">${threadData.status.lastUpdated}</span>
+        <dl class="row-item topic_read">
+          <dt>
+            <div class="list-inner">
+              <span class="topic-title">
+                <i class="fa fa-spinner fa-spin"></i> Loading...
+              </span>
             </div>
-          `;
-        }
+          </dt>
+        </dl>
+      `;
+      pinnedList.appendChild(listItem);
+    });
 
-        listItem.innerHTML = `
-          <dl class="row-item topic_read">
-            <dt title="No unread posts">
-              <div class="list-inner">
-                <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}&view=unread#unread" class="topictitle">${
-          threadData.title
-        }</a>
-                <br>
-                <div class="topic-poster responsive-hide left-box">
-                  <span class="by">${threadInfo.author || "Unknown"}</span>
-                </div>
-                ${additionalInfo}
-              </div>
-            </dt>
-          </dl>
-        `;
-        console.log(`Updated HTML for thread ${threadId}`);
-      } catch (error) {
-        console.error(`Error processing thread ${threadId}:`, error);
-        const listItem =
-          pinnedList.children[Object.keys(pinnedThreads).indexOf(threadId)];
-        listItem.innerHTML = `
-          <dl class="row-item topic_read">
-            <dt>
-              <div class="list-inner">
-                <span class="topic-title">Error loading thread</span>
-              </div>
-            </dt>
-          </dl>
+    // Fetch thread data asynchronously
+    const threadPromises = Object.entries(pinnedThreads).map(
+      ([threadId, threadInfo], index) =>
+        fetchThreadData(threadId, threadInfo, pinnedList.children[index])
+    );
+
+    // Wait for all threads to load
+    await Promise.all(threadPromises);
+  }
+
+  async function fetchThreadData(threadId, threadInfo, listItem) {
+    try {
+      console.log(`Fetching data for thread ${threadId}`);
+      const threadData = await fetchThreadTitle(threadId);
+      console.log(`Received data for thread ${threadId}:`, threadData);
+
+      let additionalInfo = "";
+      if (threadId === "2756" && threadData.status) {
+        console.log("Generating additional info for Project Zomboid Server");
+        const onlinePlayersList = threadData.status.onlinePlayers
+          .map((player) => `• ${player}`)
+          .join("<br>");
+        additionalInfo = `
+          <div class="zomboid-status">
+            <span class="online-players">${onlinePlayersList}</span><br>
+            <span class="last-updated">${threadData.status.lastUpdated}</span>
+          </div>
         `;
       }
+
+      const coloredTitle = colorizeTitle(threadData.title);
+
+      listItem.innerHTML = `
+        <dl class="row-item topic_read">
+          <dt title="No unread posts">
+            <div class="list-inner">
+              <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}&view=unread#unread" class="topictitle">${coloredTitle}</a>
+              <br>
+              <div class="topic-poster responsive-hide left-box">
+                <span class="by">${threadInfo.author || "Unknown"}</span>
+              </div>
+              ${additionalInfo}
+            </div>
+          </dt>
+        </dl>
+      `;
+      console.log(`Updated HTML for thread ${threadId}`);
+    } catch (error) {
+      console.error(`Error processing thread ${threadId}:`, error);
+      listItem.innerHTML = `
+        <dl class="row-item topic_read">
+          <dt>
+            <div class="list-inner">
+              <span class="topic-title">Error loading thread</span>
+            </div>
+          </dt>
+        </dl>
+      `;
     }
+  }
+
+  function colorizeTopicTitles() {
+    const topicTitles = document.querySelectorAll(
+      "a.topictitle, h2.topic-title a, h3.first a, dd.lastpost a.lastsubject, .tabs-container h2 a"
+    );
+
+    topicTitles.forEach((title) => {
+      title.innerHTML = colorizeTitle(title.innerHTML);
+    });
   }
 
   // Main execution
   if (window.location.href.includes("/viewtopic.php")) {
     addPinButton();
+    colorizeTopicTitles();
   } else if (
     window.location.href.includes("/index.php") ||
     window.location.href.endsWith("/forums/") ||
     window.location.href.includes("/forums/home")
   ) {
     createPinnedThreadsSection();
+    colorizeTopicTitles();
   }
 })();
