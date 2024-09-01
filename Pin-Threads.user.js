@@ -75,6 +75,14 @@ SOFTWARE.
         #pinned-threads .pagination {
             display: none !important;
         }
+        @media (max-width: 700px) {
+          #pinned-threads .responsive-show {
+            display: none !important;
+          }
+          #pinned-threads .responsive-hide {
+            display: none !important;
+          }
+        }
     `);
 
   function getPinnedThreads() {
