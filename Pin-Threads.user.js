@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      2.0
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -15,20 +15,34 @@
 // @license      MIT
 // ==/UserScript==
 
+/*
+MIT License
+
+Copyright (c) 2024 loregamer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 (function () {
   "use strict";
 
   const PINNED_THREADS_KEY = "rpghq_pinned_threads";
-
-  // Add the colorMap
-  const colorMap = {
-    "【 Userscript 】": "#00AA00",
-    "【 Resource 】": "#3889ED",
-    "【 Project 】": "#FF4A66",
-    "【 Tutorial 】": "#FFC107",
-    "【 Backups 】": "#BC2A4D",
-    "[ Select for merge ]": "#A50000",
-  };
 
   GM_addStyle(`
         #pinned-threads {
@@ -57,9 +71,6 @@
         .zomboid-status .last-updated {
             font-size: 0.8em;
             font-style: italic;
-        }
-        .colored-title {
-            display: inline;
         }
         #pinned-threads .pagination {
             display: none !important;
@@ -252,17 +263,6 @@
     });
   }
 
-  function colorizeTitle(title) {
-    let coloredTitle = title;
-    for (const [text, color] of Object.entries(colorMap)) {
-      if (title.includes(text)) {
-        const coloredText = `<span class="colored-title" style="color: ${color};">${text}</span>`;
-        coloredTitle = coloredTitle.replace(text, coloredText);
-      }
-    }
-    return coloredTitle;
-  }
-
   async function createPinnedThreadsSection() {
     const indexLeft = document.querySelector(".index-left");
     if (!indexLeft) return;
@@ -293,8 +293,20 @@
 
     const pinnedList = pinnedSection.querySelector("#pinned-threads-list");
 
-    // Create placeholder rows with loading animation
-    Object.keys(pinnedThreads).forEach(() => {
+    // Fetch thread data for all pinned threads
+    const threadDataPromises = Object.entries(pinnedThreads).map(
+      ([threadId, threadInfo]) =>
+        fetchThreadTitle(threadId).then((data) => ({ threadId, ...data }))
+    );
+
+    // Wait for all thread data to be fetched
+    const threadsData = await Promise.all(threadDataPromises);
+
+    // Sort threads alphabetically by title
+    threadsData.sort((a, b) => a.title.localeCompare(b.title));
+
+    // Create and append list items in sorted order
+    for (const threadData of threadsData) {
       const listItem = document.createElement("li");
       listItem.className = "row bg1";
       listItem.innerHTML = `
@@ -312,16 +324,15 @@
         </dl>
       `;
       pinnedList.appendChild(listItem);
-    });
 
-    // Fetch thread data asynchronously
-    const threadPromises = Object.entries(pinnedThreads).map(
-      ([threadId, threadInfo], index) =>
-        fetchThreadData(threadId, threadInfo, pinnedList.children[index])
-    );
-
-    // Wait for all threads to load
-    Promise.all(threadPromises);
+      // Fetch additional thread info and update the list item
+      fetchThreadData(
+        threadData.threadId,
+        pinnedThreads[threadData.threadId],
+        listItem,
+        threadData
+      );
+    }
   }
 
   async function fetchThreadData(threadId, threadInfo, listItem) {
@@ -345,12 +356,6 @@
           if (listInner) {
             listInner.insertAdjacentHTML("beforeend", zomboidStatusHTML);
           }
-        }
-
-        // Recolor the title
-        const titleElement = listItem.querySelector(".topictitle");
-        if (titleElement) {
-          titleElement.innerHTML = colorizeTitle(titleElement.textContent);
         }
       } else {
         console.error(`No row HTML found for thread ${threadId}`);
@@ -423,26 +428,14 @@
     `;
   }
 
-  function colorizeTopicTitles() {
-    const topicTitles = document.querySelectorAll(
-      "a.topictitle, h2.topic-title a, h3.first a, dd.lastpost a.lastsubject, .tabs-container h2 a"
-    );
-
-    topicTitles.forEach((title) => {
-      title.innerHTML = colorizeTitle(title.innerHTML);
-    });
-  }
-
   // Main execution
   if (window.location.href.includes("/viewtopic.php")) {
     addPinButton();
-    colorizeTopicTitles();
   } else if (
     window.location.href.includes("/index.php") ||
     window.location.href.endsWith("/forums/") ||
     window.location.href.includes("/forums/home")
   ) {
     createPinnedThreadsSection();
-    colorizeTopicTitles();
   }
 })();
