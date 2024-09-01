@@ -165,15 +165,10 @@
 
   function fetchThreadTitle(threadId) {
     return new Promise((resolve, reject) => {
-      console.log(`Fetching thread with ID: ${threadId}`);
-      console.log(`Thread ID type: ${typeof threadId}`);
-
       const isZomboidServer = threadId === "2756";
       const url = isZomboidServer
         ? "https://rpghq.org/forums/viewtopic.php?p=132576-project-zomboid-server-1-10"
         : `https://rpghq.org/forums/viewtopic.php?t=${threadId}`;
-
-      console.log(`Fetching URL: ${url}`);
 
       GM_xmlhttpRequest({
         method: "GET",
@@ -187,25 +182,14 @@
           const titleElement = doc.querySelector("h2.topic-title a");
           if (titleElement) {
             const title = titleElement.textContent.trim();
-            console.log(`Thread title found: ${title}`);
 
             if (isZomboidServer) {
-              console.log("Attempting to scrape Project Zomboid Server status");
-
               const playerCountElement = doc.querySelector(
                 'span[style="background-color:black"] strong.text-strong'
-              );
-              console.log(
-                "Player count element:",
-                playerCountElement ? playerCountElement.outerHTML : "Not found"
               );
 
               if (playerCountElement) {
                 const statusDiv = playerCountElement.closest("div");
-                console.log(
-                  "Status div found:",
-                  statusDiv ? statusDiv.innerHTML : "Not found"
-                );
 
                 try {
                   const onlinePlayersElements = statusDiv.querySelectorAll(
@@ -213,17 +197,6 @@
                   );
                   const lastUpdatedElement = statusDiv.querySelector(
                     'span[style="font-size:55%;line-height:116%"] em'
-                  );
-
-                  console.log(
-                    "Online players elements:",
-                    onlinePlayersElements.length
-                  );
-                  console.log(
-                    "Last updated element:",
-                    lastUpdatedElement
-                      ? lastUpdatedElement.outerHTML
-                      : "Not found"
                   );
 
                   if (
@@ -236,12 +209,6 @@
                       (el) => el.textContent
                     );
                     const lastUpdated = lastUpdatedElement.textContent;
-
-                    console.log(
-                      `Scraped data: ${playerCount} | ${onlinePlayers.join(
-                        ", "
-                      )} | ${lastUpdated}`
-                    );
 
                     resolve({
                       title: title,
@@ -267,7 +234,6 @@
                 resolve({ title: title });
               }
             } else {
-              console.log("This is not the Project Zomboid Server thread");
               resolve({ title: title });
             }
           } else {
@@ -305,17 +271,20 @@
     pinnedSection.id = "pinned-threads";
     pinnedSection.className = "forabg";
     pinnedSection.innerHTML = `
-            <div class="inner">
-                <ul class="topiclist">
-                    <li class="header">
-                        <dl class="row-item">
-                            <dt><div class="list-inner">Pinned Topics</div></dt>
-                        </dl>
-                    </li>
-                </ul>
-                <ul class="topiclist topics" id="pinned-threads-list"></ul>
-            </div>
-        `;
+      <div class="inner">
+        <ul class="topiclist">
+          <li class="header">
+            <dl class="row-item">
+              <dt><div class="list-inner">Pinned Topics</div></dt>
+              <dd class="posts">Replies</dd>
+              <dd class="views">Views</dd>
+              <dd class="lastpost"><span>Last post</span></dd>
+            </dl>
+          </li>
+        </ul>
+        <ul class="topiclist topics" id="pinned-threads-list"></ul>
+      </div>
+    `;
 
     indexLeft.insertBefore(pinnedSection, indexLeft.firstChild);
 
@@ -334,6 +303,9 @@
               </span>
             </div>
           </dt>
+          <dd class="posts">-</dd>
+          <dd class="views">-</dd>
+          <dd class="lastpost"><span>-</span></dd>
         </dl>
       `;
       pinnedList.appendChild(listItem);
@@ -346,7 +318,7 @@
     );
 
     // Wait for all threads to load
-    await Promise.all(threadPromises);
+    Promise.all(threadPromises);
   }
 
   async function fetchThreadData(threadId, threadInfo, listItem) {
@@ -355,36 +327,41 @@
       const threadData = await fetchThreadTitle(threadId);
       console.log(`Received data for thread ${threadId}:`, threadData);
 
-      let additionalInfo = "";
-      if (threadId === "2756" && threadData.status) {
-        console.log("Generating additional info for Project Zomboid Server");
-        const onlinePlayersList = threadData.status.onlinePlayers
-          .map((player) => `• ${player}`)
-          .join("<br>");
-        additionalInfo = `
-          <div class="zomboid-status">
-            <span class="online-players">${onlinePlayersList}</span><br>
-            <span class="last-updated">${threadData.status.lastUpdated}</span>
-          </div>
+      // Fetch additional thread information
+      const rowHTML = await fetchAdditionalThreadInfo(threadData.title);
+      console.log(`Row HTML for thread ${threadId}:`, rowHTML);
+
+      if (rowHTML) {
+        // Replace the entire listItem content with the fetched row HTML
+        listItem.outerHTML = rowHTML;
+
+        // If it's the Zomboid server thread, add the special status
+        if (threadId === "2756" && threadData.status) {
+          const zomboidStatusHTML = createZomboidStatusHTML(threadData.status);
+          const listInner = listItem.querySelector(".list-inner");
+          if (listInner) {
+            listInner.insertAdjacentHTML("beforeend", zomboidStatusHTML);
+          }
+        }
+
+        // Recolor the title
+        const titleElement = listItem.querySelector(".topictitle");
+        if (titleElement) {
+          titleElement.innerHTML = colorizeTitle(titleElement.textContent);
+        }
+      } else {
+        console.error(`No row HTML found for thread ${threadId}`);
+        listItem.innerHTML = `
+          <dl class="row-item topic_read">
+            <dt>
+              <div class="list-inner">
+                <span class="topic-title">Error loading thread</span>
+              </div>
+            </dt>
+          </dl>
         `;
       }
 
-      const coloredTitle = colorizeTitle(threadData.title);
-
-      listItem.innerHTML = `
-        <dl class="row-item topic_read">
-          <dt title="No unread posts">
-            <div class="list-inner">
-              <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}&view=unread#unread" class="topictitle">${coloredTitle}</a>
-              <br>
-              <div class="topic-poster responsive-hide left-box">
-                <span class="by">${threadInfo.author || "Unknown"}</span>
-              </div>
-              ${additionalInfo}
-            </div>
-          </dt>
-        </dl>
-      `;
       console.log(`Updated HTML for thread ${threadId}`);
     } catch (error) {
       console.error(`Error processing thread ${threadId}:`, error);
@@ -398,6 +375,49 @@
         </dl>
       `;
     }
+  }
+
+  async function fetchAdditionalThreadInfo(threadTitle) {
+    return new Promise((resolve, reject) => {
+      const encodedTitle = encodeURIComponent(threadTitle);
+      const searchUrl = `https://rpghq.org/forums/search.php?keywords=${encodedTitle}&terms=all&author=&sc=1&sf=all&sr=topics&sk=t&sd=d&st=0&ch=1000&t=0&submit=Search`;
+
+      GM_xmlhttpRequest({
+        method: "GET",
+        url: searchUrl,
+        onload: function (response) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(
+            response.responseText,
+            "text/html"
+          );
+          const topicRow = doc.querySelector(".topiclist.topics .row");
+
+          if (topicRow) {
+            resolve(topicRow.outerHTML);
+          } else {
+            console.warn("Topic row not found in search results");
+            resolve(null);
+          }
+        },
+        onerror: function (error) {
+          console.error("Error fetching additional thread info:", error);
+          reject(error);
+        },
+      });
+    });
+  }
+
+  function createZomboidStatusHTML(status) {
+    const onlinePlayersList = status.onlinePlayers
+      .map((player) => `• ${player}`)
+      .join("<br>");
+    return `
+      <div class="zomboid-status">
+        <span class="online-players">${onlinePlayersList}</span><br>
+        <span class="last-updated">${status.lastUpdated}</span>
+      </div>
+    `;
   }
 
   function colorizeTopicTitles() {
