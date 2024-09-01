@@ -61,6 +61,9 @@
         .colored-title {
             display: inline;
         }
+        #pinned-threads .pagination {
+            display: none !important;
+        }
     `);
 
   function getPinnedThreads() {
