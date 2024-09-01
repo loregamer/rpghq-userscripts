@@ -388,7 +388,7 @@ SOFTWARE.
   async function fetchAdditionalThreadInfo(threadTitle) {
     return new Promise((resolve, reject) => {
       const encodedTitle = encodeURIComponent(threadTitle);
-      const searchUrl = `https://rpghq.org/forums/search.php?keywords=${encodedTitle}&terms=all&author=&sc=1&sf=all&sr=topics&sk=t&sd=d&st=0&ch=1000&t=0&submit=Search`;
+      const searchUrl = `https://rpghq.org/forums/search.php?keywords=${encodedTitle}&terms=all&author=&sc=1&sf=titleonly&sr=topics&sk=t&sd=d&st=0&ch=1000&t=0&submit=Search`;
 
       GM_xmlhttpRequest({
         method: "GET",
