@@ -336,52 +336,66 @@ SOFTWARE.
   }
 
   async function fetchThreadData(threadId, threadInfo, listItem) {
-    try {
-      console.log(`Fetching data for thread ${threadId}`);
-      const threadData = await fetchThreadTitle(threadId);
-      console.log(`Received data for thread ${threadId}:`, threadData);
+    let attempts = 0;
+    const maxAttempts = 3;
 
-      // Fetch additional thread information
-      const rowHTML = await fetchAdditionalThreadInfo(threadData.title);
-      console.log(`Row HTML for thread ${threadId}:`, rowHTML);
+    while (attempts < maxAttempts) {
+      try {
+        console.log(
+          `Fetching data for thread ${threadId} (Attempt ${attempts + 1})`
+        );
+        const threadData = await fetchThreadTitle(threadId);
+        console.log(`Received data for thread ${threadId}:`, threadData);
 
-      if (rowHTML) {
-        // Replace the entire listItem content with the fetched row HTML
-        listItem.outerHTML = rowHTML;
+        // Fetch additional thread information
+        const rowHTML = await fetchAdditionalThreadInfo(threadData.title);
+        console.log(`Row HTML for thread ${threadId}:`, rowHTML);
 
-        // If it's the Zomboid server thread, add the special status
-        if (threadId === "2756" && threadData.status) {
-          const zomboidStatusHTML = createZomboidStatusHTML(threadData.status);
-          const listInner = listItem.querySelector(".list-inner");
-          if (listInner) {
-            listInner.insertAdjacentHTML("beforeend", zomboidStatusHTML);
+        if (rowHTML) {
+          // Replace the entire listItem content with the fetched row HTML
+          listItem.outerHTML = rowHTML;
+
+          // If it's the Zomboid server thread, add the special status
+          if (threadId === "2756" && threadData.status) {
+            const zomboidStatusHTML = createZomboidStatusHTML(
+              threadData.status
+            );
+            const listInner = listItem.querySelector(".list-inner");
+            if (listInner) {
+              listInner.insertAdjacentHTML("beforeend", zomboidStatusHTML);
+            }
           }
-        }
-      } else {
-        console.error(`No row HTML found for thread ${threadId}`);
-        listItem.innerHTML = `
-          <dl class="row-item topic_read">
-            <dt>
-              <div class="list-inner">
-                <span class="topic-title">Error loading thread</span>
-              </div>
-            </dt>
-          </dl>
-        `;
-      }
 
-      console.log(`Updated HTML for thread ${threadId}`);
-    } catch (error) {
-      console.error(`Error processing thread ${threadId}:`, error);
-      listItem.innerHTML = `
-        <dl class="row-item topic_read">
-          <dt>
-            <div class="list-inner">
-              <span class="topic-title">Error loading thread</span>
-            </div>
-          </dt>
-        </dl>
-      `;
+          console.log(`Updated HTML for thread ${threadId}`);
+          return; // Success, exit the function
+        } else {
+          throw new Error(`No row HTML found for thread ${threadId}`);
+        }
+      } catch (error) {
+        console.error(
+          `Error processing thread ${threadId} (Attempt ${attempts + 1}):`,
+          error
+        );
+        attempts++;
+
+        if (attempts >= maxAttempts) {
+          console.error(
+            `Failed to fetch data for thread ${threadId} after ${maxAttempts} attempts`
+          );
+          listItem.innerHTML = `
+            <dl class="row-item topic_read">
+              <dt>
+                <div class="list-inner">
+                  <span class="topic-title">Error loading thread after ${maxAttempts} attempts</span>
+                </div>
+              </dt>
+            </dl>
+          `;
+        } else {
+          // Wait for a short time before retrying
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
     }
   }
 
