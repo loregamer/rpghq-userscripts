@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Title Colorizer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.3
+// @version      1.0.4
 // @description  Colorize specific text in titles on RPGHQ forums, including sticky topics
 // @match        https://rpghq.org/forums/*
 // @grant        none
@@ -18,6 +18,7 @@
     "【 Resource 】": "#3889ED",
     "【 Project 】": "#FF4A66",
     "【 Tutorial 】": "#FFC107",
+    "【 Backups 】": "#BC2A4D",
     "[ Select for merge ]": "#A50000",
   };
 
