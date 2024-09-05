@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Add User Pictures and Add [irc] to Names
 // @namespace    http://tampermonkey.net/
-// @version      3.0.2
+// @version      3.0.3
 // @description  Add pictures to users in Cinny Matrix client by user ID and add [irc] to their display names
 // @author       loregamer
 // @match        https://chat.rpghq.org/*
@@ -198,6 +198,11 @@ SOFTWARE.
       userId: "@irc_madbringer:rpghq.org",
       displayName: "madbringer",
       baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=230",
+    },
+    {
+      userId: "@irc_gerey:rpghq.org",
+      displayName: "gerey",
+      baseImageUrl: "https://rpghq.org/forums/download/file.php?avatar=64",
     },
   ];
 
