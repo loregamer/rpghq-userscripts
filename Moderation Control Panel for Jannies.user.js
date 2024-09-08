@@ -593,14 +593,11 @@ SOFTWARE.
   // Modify the structure of each post to match forum posts
   function modifyPostStructure() {
     document.querySelectorAll(".post").forEach((post, index) => {
-      console.log(`Processing post ${index + 1}`);
-
       const authorElement = post.querySelector(
         ".author strong a.username, .author strong a.username-coloured"
       );
 
       if (!authorElement) {
-        console.log(`No author element found for post ${index + 1}`);
         return; // Skip this post and continue with the next one
       }
 
@@ -609,11 +606,8 @@ SOFTWARE.
       const username = authorElement.textContent;
 
       if (!userId) {
-        console.log(`No user ID found for post ${index + 1}`);
         return; // Skip this post and continue with the next one
       }
-
-      console.log(`Creating post profile for user ${username} (ID: ${userId})`);
       const postProfile = createPostProfile(authorElement, userId, username);
       const avatarImg = postProfile.querySelector("img.avatar");
 
