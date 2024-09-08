@@ -151,28 +151,51 @@ SOFTWARE.
     }
   };
 
-  const customizeMentionNotification = (notificationText) => {
-    const originalHTML = notificationText.innerHTML;
+  const customizeMentionNotification = (notificationBlock) => {
+    console.log("Notification block:", notificationBlock);
+
+    const notificationText =
+      notificationBlock.querySelector(".notification_text");
+    console.log("Notification text element:", notificationText);
+
+    const titleElement = notificationText.querySelector(".notification-title");
+    console.log("Title element:", titleElement);
+
+    const originalHTML = titleElement.innerHTML;
+    console.log("Original HTML:", originalHTML);
 
     // Extract usernames
-    const usernameElements = notificationText.querySelectorAll(
+    const usernameElements = titleElement.querySelectorAll(
       ".username, .username-coloured"
     );
+    console.log("Username elements:", usernameElements);
+
     const usernames = Array.from(usernameElements)
       .map((el) => el.outerHTML)
       .join(", ");
+    console.log("Extracted usernames:", usernames);
 
     // Extract topic name
-    const topicNameMatch = originalHTML.match(/in "(.*?)"/);
-    const topicName = topicNameMatch ? topicNameMatch[1] : "";
+    const parts = originalHTML.split("<br>in ");
+    console.log("Split parts:", parts);
+    let topicName = "Unknown Topic";
+    if (parts.length > 1) {
+      topicName = parts[1].replace(/^"|"$/g, "").trim();
+    }
+    console.log("Extracted topic name:", topicName);
+
+    if (topicName.length > 50) {
+      topicName = topicName.substring(0, 50) + "...";
+    }
 
     // Construct new HTML
-    notificationText.innerHTML = `
-      <p class="notification-title">
-        You were <b style="color: #FFC107;">mentioned</b> by ${usernames}
-        <br>in <span class="notification-reference">${topicName}</span>
-      </p>
+    const newHTML = `
+      You were <b style="color: #FFC107;">mentioned</b> by ${usernames}
+      <br>in <span class="notification-reference">${topicName}</span>
     `;
+    console.log("New HTML:", newHTML);
+
+    titleElement.innerHTML = newHTML;
 
     // Reattach the time element if it exists
     const timeElement = notificationText.querySelector(".notification-time");
@@ -210,7 +233,7 @@ SOFTWARE.
       const titleText = titleElement.innerHTML;
 
       if (titleText.includes("You were mentioned by")) {
-        customizeMentionNotification(notificationText);
+        customizeMentionNotification(block);
       } else if (titleText.includes("reacted to a message you posted")) {
         await customizeReactionNotification(titleElement, block);
       } else if (titleText.includes("Private Message")) {
