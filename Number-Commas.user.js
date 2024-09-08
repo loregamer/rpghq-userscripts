@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RPGHQ - Thousands Comma Formatter
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
+// @version      2.0
+// @description  Add commas to numbers
 // @match        https://rpghq.org/forums/*
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Number-Commas.user.js
@@ -34,34 +34,69 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-(function() {
-    'use strict';
+(function () {
+  "use strict";
 
-    // Regular expression to match numbers with 5 or more digits
-    const numberRegex = /\b\d{5,}\b/g;
+  // Regular expression to match numbers with 4 or more digits
+  const numberRegex = /\b\d{4,}\b/g;
 
-    // Function to format a number with commas
-    function formatNumberWithCommas(number) {
-        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    }
+  // Function to format a number with commas
+  function formatNumberWithCommas(number) {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
 
-    // Function to process and format all text nodes in the document
-    function processTextNodes() {
-        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
-        let node;
-        while (node = walker.nextNode()) {
-            if (numberRegex.test(node.nodeValue)) {
-                node.nodeValue = node.nodeValue.replace(numberRegex, function(match) {
-                    return formatNumberWithCommas(match);
-                });
-            }
+  // Function to process and format numbers in specific elements
+  function processElements() {
+    // Target <dd> elements with class "posts", "profile-posts", or "views", and spans with class "responsive-show left-box"
+    const elements = document.querySelectorAll(
+      "dd.posts, dd.profile-posts, dd.views, span.responsive-show.left-box"
+    );
+
+    elements.forEach((element) => {
+      if (
+        element.classList.contains("posts") ||
+        element.classList.contains("views")
+      ) {
+        element.childNodes.forEach((node) => {
+          if (
+            node.nodeType === Node.TEXT_NODE &&
+            numberRegex.test(node.nodeValue)
+          ) {
+            node.nodeValue = node.nodeValue.replace(numberRegex, (match) =>
+              formatNumberWithCommas(match)
+            );
+          }
+        });
+      } else if (element.classList.contains("profile-posts")) {
+        const anchor = element.querySelector("a");
+        if (anchor && numberRegex.test(anchor.textContent)) {
+          anchor.textContent = anchor.textContent.replace(
+            numberRegex,
+            (match) => formatNumberWithCommas(match)
+          );
         }
-    }
+      } else if (element.classList.contains("responsive-show")) {
+        const strong = element.querySelector("strong");
+        if (strong && numberRegex.test(strong.textContent)) {
+          strong.textContent = strong.textContent.replace(
+            numberRegex,
+            (match) => formatNumberWithCommas(match)
+          );
+        }
+      }
+    });
+  }
 
-    // Run the function to format numbers when the page loads
-    processTextNodes();
+  // Run the function to format numbers when the page loads
+  processElements();
 
-    // Optionally, you can add a mutation observer to handle dynamically added content
-    const observer = new MutationObserver(processTextNodes);
-    observer.observe(document.body, { childList: true, subtree: true });
+  // Add a mutation observer to handle dynamically added content
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === "childList") {
+        processElements();
+      }
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 })();
