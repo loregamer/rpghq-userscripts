@@ -592,80 +592,95 @@ SOFTWARE.
 
   // Modify the structure of each post to match forum posts
   function modifyPostStructure() {
-    document.querySelectorAll(".post").forEach((post) => {
+    document.querySelectorAll(".post").forEach((post, index) => {
+      console.log(`Processing post ${index + 1}`);
+
       const authorElement = post.querySelector(
         ".author strong a.username, .author strong a.username-coloured"
       );
+
+      if (!authorElement) {
+        console.log(`No author element found for post ${index + 1}`);
+        return; // Skip this post and continue with the next one
+      }
+
       const postId = post.id.replace("p", "");
+      const userId = authorElement.href.match(/u=(\d+)-/)?.[1];
+      const username = authorElement.textContent;
 
-      if (authorElement) {
-        const userId = authorElement.href.match(/u=(\d+)-/)[1];
-        const username = authorElement.textContent;
+      if (!userId) {
+        console.log(`No user ID found for post ${index + 1}`);
+        return; // Skip this post and continue with the next one
+      }
 
-        const postProfile = createPostProfile(authorElement, userId, username);
-        const avatarImg = postProfile.querySelector("img.avatar");
+      console.log(`Creating post profile for user ${username} (ID: ${userId})`);
+      const postProfile = createPostProfile(authorElement, userId, username);
+      const avatarImg = postProfile.querySelector("img.avatar");
 
-        // Load the avatar lazily
-        setTimeout(() => {
-          findAvatarUrl(userId, avatarImg);
-        }, 0);
+      // Load the avatar lazily
+      setTimeout(() => {
+        findAvatarUrl(userId, avatarImg);
+      }, 0);
 
-        post.insertBefore(postProfile, post.firstChild);
+      post.insertBefore(postProfile, post.firstChild);
 
-        // Adjust post content structure
-        const h3Element = post.querySelector("h3");
-        if (h3Element) {
-          h3Element.remove();
+      // Adjust post content structure
+      const h3Element = post.querySelector("h3");
+      if (h3Element) {
+        h3Element.remove();
+      }
+
+      const postbody = post.querySelector(".postbody");
+      if (postbody) {
+        const postContent = postbody.querySelector(".content");
+        const postAuthor = postbody.querySelector(".author");
+        if (postContent && postAuthor) {
+          postbody.insertBefore(postAuthor, postContent);
         }
+      }
 
-        const postbody = post.querySelector(".postbody");
-        if (postbody) {
-          const postContent = postbody.querySelector(".content");
-          const postAuthor = postbody.querySelector(".author");
-          if (postContent && postAuthor) {
-            postbody.insertBefore(postAuthor, postContent);
-          }
-        }
+      // Ensure original post buttons are visible
+      const originalPostButtons = post.querySelector(".post-buttons");
+      if (originalPostButtons) {
+        originalPostButtons.style.display = "block";
+      }
 
-        // Ensure original post buttons are visible
-        const originalPostButtons = post.querySelector(".post-buttons");
-        if (originalPostButtons) {
-          originalPostButtons.style.display = "block";
-        }
+      // Make the whole post selectable
+      post.addEventListener("click", (event) => {
+        togglePostSelection(post, event);
+      });
 
-        // Make the whole post selectable
-        post.addEventListener("click", (event) => {
-          togglePostSelection(post, event);
+      // Sync the selected state with the checkbox
+      syncPostSelection(post);
+      modifyPostAuthorLine(post);
+
+      const originalPostDetailsButton = post.querySelector(
+        'a[title="Post details"]'
+      );
+      if (originalPostDetailsButton) {
+        originalPostDetailsButton.remove();
+      }
+
+      // Monitor checkbox changes to sync selection
+      const checkbox = post.querySelector('input[type="checkbox"]');
+      if (checkbox) {
+        checkbox.addEventListener("change", () => {
+          syncPostSelection(post);
+          saveSelectedPosts(); // Save when checkbox is changed directly
         });
+      }
 
-        // Sync the selected state with the checkbox
-        syncPostSelection(post);
-        modifyPostAuthorLine(post);
-
-        const originalPostDetailsButton = post.querySelector(
-          'a[title="Post details"]'
+      // Apply special style for "loregamer" username
+      if (username === "loregamer") {
+        const usernameElement = post.querySelector(".username");
+        if (usernameElement) {
+          usernameElement.classList.add("username-loregamer");
+        }
+        const profileLink = post.querySelector(
+          'a[href*="memberlist.php?mode=viewprofile&u=551-loregamer"]'
         );
-        if (originalPostDetailsButton) {
-          originalPostDetailsButton.remove();
-        }
-
-        // Monitor checkbox changes to sync selection
-        const checkbox = post.querySelector('input[type="checkbox"]');
-        if (checkbox) {
-          checkbox.addEventListener("change", () => {
-            syncPostSelection(post);
-            saveSelectedPosts(); // Save when checkbox is changed directly
-          });
-        }
-
-        // Apply special style for "loregamer" username
-        if (username === "loregamer") {
-          post.querySelector(".username").classList.add("username-loregamer");
-          post
-            .querySelector(
-              'a[href*="memberlist.php?mode=viewprofile&u=551-loregamer"]'
-            )
-            .classList.add("username-loregamer");
+        if (profileLink) {
+          profileLink.classList.add("username-loregamer");
         }
       }
     });
@@ -679,7 +694,6 @@ SOFTWARE.
         syncPostSelection(post);
       });
   }
-
   // Handle "Mark all" and "Unmark all" clicks
   function handleMarkAllClicks() {
     document.querySelectorAll(".display-actions a").forEach((actionLink) => {
