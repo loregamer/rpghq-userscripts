@@ -1,13 +1,17 @@
 // ==UserScript==
 // @name         RPGHQ - Thousands Comma Formatter
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Add commas to numbers
 // @match        https://rpghq.org/forums/*
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Number-Commas.user.js
 // @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Number-Commas.user.js
 // @license      MIT
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_unregisterMenuCommand
 // ==/UserScript==
 
 /*
@@ -37,8 +41,11 @@ SOFTWARE.
 (function () {
   "use strict";
 
-  // Regular expression to match numbers with 4 or more digits
-  const numberRegex = /\b\d{4,}\b/g;
+  // Get the user's preference for formatting 4-digit numbers (default: false)
+  const formatFourDigits = GM_getValue("formatFourDigits", false);
+
+  // Regular expression to match numbers with 4 or more digits, or 5 or more digits
+  const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
 
   // Function to format a number with commas
   function formatNumberWithCommas(number) {
@@ -86,6 +93,26 @@ SOFTWARE.
       }
     });
   }
+
+  // Function to toggle formatting for 4-digit numbers
+  function toggleFourDigitFormatting() {
+    const newValue = !GM_getValue("formatFourDigits", false);
+    GM_setValue("formatFourDigits", newValue);
+    updateMenuLabel(newValue);
+    location.reload(); // Reload the page to apply the new setting
+  }
+
+  // Function to update the menu label
+  function updateMenuLabel(formatFourDigits) {
+    const label = formatFourDigits
+      ? "Disable 4-digit formatting"
+      : "Enable 4-digit formatting";
+    GM_unregisterMenuCommand("Toggle 4-digit formatting");
+    GM_registerMenuCommand(label, toggleFourDigitFormatting);
+  }
+
+  // Initial menu setup
+  updateMenuLabel(formatFourDigits);
 
   // Run the function to format numbers when the page loads
   processElements();
