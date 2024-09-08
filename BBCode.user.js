@@ -779,22 +779,36 @@ SOFTWARE.
     const smileyBox = document.getElementById("smiley-box");
     if (smileyBox) {
       const bbcodeStatus = smileyBox.querySelector(".bbcode-status");
-      const usernameElement = document.querySelector("span.username");
+      const usernameElement = document.querySelector(".username-coloured");
       const isLoregamer =
         usernameElement && usernameElement.textContent.trim() === "loregamer";
 
       if (bbcodeStatus) {
         bbcodeStatus.innerHTML = `
-            <hr>
-          <button type="button" class="button button-secondary custom-button" id="insert-mod-template">Insert Mod Template</button>
-          <button type="button" class="button button-secondary custom-button" id="insert-table">Insert Table</button>
+          <hr />
+          <button
+            type="button"
+            class="button button-secondary custom-button"
+            id="insert-mod-template"
+          >
+            Insert Mod Template
+          </button>
+          <button
+            type="button"
+            class="button button-secondary custom-button"
+            id="insert-table"
+          >
+            Insert Table
+          </button>
+          <button
+            type="button"
+            class="button button-secondary custom-button"
+            id="ping-bloomery"
+            style="display: ${isLoregamer ? "inline-block" : "none"};"
+          >
+            Ping Bloomery
+          </button>
         `;
-
-        if (isLoregamer) {
-          bbcodeStatus.innerHTML += `
-            <button type="button" class="button button-secondary custom-button" id="ping-bloomery">Ping Bloomery</button>
-          `;
-        }
 
         document
           .getElementById("insert-mod-template")
