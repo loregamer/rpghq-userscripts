@@ -151,9 +151,34 @@ SOFTWARE.
     }
   };
 
-  const customizeMentionNotification = (titleElement) => {
-    const topicName = titleElement.innerHTML.match(/in:?\s*"(.*)"/)?.[1] || "";
-    titleElement.innerHTML = `You were <b style="color: #FFC107;">mentioned</b><br>in <span class="notification-reference">${topicName}</span>`;
+  const customizeMentionNotification = (notificationText) => {
+    const originalHTML = notificationText.innerHTML;
+
+    // Extract usernames
+    const usernameElements = notificationText.querySelectorAll(
+      ".username, .username-coloured"
+    );
+    const usernames = Array.from(usernameElements)
+      .map((el) => el.outerHTML)
+      .join(", ");
+
+    // Extract topic name
+    const topicNameMatch = originalHTML.match(/in "(.*?)"/);
+    const topicName = topicNameMatch ? topicNameMatch[1] : "";
+
+    // Construct new HTML
+    notificationText.innerHTML = `
+      <p class="notification-title">
+        You were <b style="color: #FFC107;">mentioned</b> by ${usernames}
+        <br>in <span class="notification-reference">${topicName}</span>
+      </p>
+    `;
+
+    // Reattach the time element if it exists
+    const timeElement = notificationText.querySelector(".notification-time");
+    if (timeElement) {
+      notificationText.appendChild(timeElement);
+    }
   };
 
   const customizePrivateMessageNotification = (
@@ -178,23 +203,28 @@ SOFTWARE.
   const customizeNotificationBlock = async (block) => {
     if (block.dataset.customized === "true") return;
 
-    const titleElement = block.querySelector(".notification-title");
-    const referenceElement = block.querySelector(".notification-reference");
+    const notificationText = block.querySelector(".notification_text");
+    const titleElement = notificationText.querySelector(".notification-title");
 
     if (titleElement) {
       const titleText = titleElement.innerHTML;
 
-      if (titleText.includes("reacted to a message you posted")) {
+      if (titleText.includes("You were mentioned by")) {
+        customizeMentionNotification(notificationText);
+      } else if (titleText.includes("reacted to a message you posted")) {
         await customizeReactionNotification(titleElement, block);
-      } else if (titleText.includes("You were mentioned by")) {
-        customizeMentionNotification(titleElement);
       } else if (titleText.includes("Private Message")) {
-        customizePrivateMessageNotification(titleElement, referenceElement);
+        customizePrivateMessageNotification(
+          titleElement,
+          notificationText.querySelector(".notification-reference")
+        );
       } else if (titleText.includes("Report closed")) {
         titleElement.innerHTML = titleText.replace(
           /Report closed/,
           '<strong style="color: #f58c05;">Report closed</strong>'
         );
+      } else if (titleText.includes("Quoted")) {
+        // Handle Quoted notifications if needed
       }
 
       titleElement.innerHTML = titleElement.innerHTML
@@ -208,6 +238,7 @@ SOFTWARE.
         );
     }
 
+    const referenceElement = block.querySelector(".notification-reference");
     if (referenceElement) {
       styleReference(referenceElement);
     }
