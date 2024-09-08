@@ -39,7 +39,6 @@ SOFTWARE.
 (function () {
   "use strict";
 
-  // Utility functions
   const Utils = {
     createElement: (tag, attributes = {}, innerHTML = "") => {
       const element = document.createElement(tag);
@@ -74,7 +73,6 @@ SOFTWARE.
     },
   };
 
-  // Storage functions
   const Storage = {
     getStoredReactions: (postId) => {
       const storedData = localStorage.getItem(`reactions_${postId}`);
@@ -98,7 +96,6 @@ SOFTWARE.
     },
   };
 
-  // Reaction handling
   const ReactionHandler = {
     fetchReactions: async (postId, isUnread) => {
       if (!isUnread) {
@@ -136,7 +133,6 @@ SOFTWARE.
     },
   };
 
-  // Notification customization
   const NotificationCustomizer = {
     customizeReactionNotification: async (titleElement, block) => {
       let titleText = titleElement.innerHTML;
@@ -190,7 +186,7 @@ SOFTWARE.
       }
 
       const newHTML = `
-        You were <b style="color: #FFC107;">mentioned</b> by ${usernames}
+        <b style="color: #FFC107;">Mentioned</b> by ${usernames}
         <br>in <span class="notification-reference">${topicName}</span>
       `;
 
@@ -255,7 +251,7 @@ SOFTWARE.
           )
           .replace(
             /<strong>Reply<\/strong>/,
-            '<strong style="color: #FFD866;">Reply</strong>'
+            '<strong style="color: #95DB00;">Reply</strong>'
           );
       }
 
@@ -328,7 +324,6 @@ SOFTWARE.
     },
   };
 
-  // Notification marking
   const NotificationMarker = {
     getDisplayedPostIds: () => {
       return Array.from(document.querySelectorAll('div[id^="p"]')).map((el) =>
@@ -369,7 +364,6 @@ SOFTWARE.
     },
   };
 
-  // Main function
   const init = () => {
     NotificationCustomizer.customizeNotificationPanel();
     NotificationMarker.checkAndMarkNotifications();
@@ -389,7 +383,6 @@ SOFTWARE.
     observer.observe(document.body, { childList: true, subtree: true });
   };
 
-  // Run the init function when the page loads
   if (
     document.readyState === "complete" ||
     document.readyState === "interactive"
