@@ -186,8 +186,8 @@ SOFTWARE.
       }
 
       const newHTML = `
-        <b style="color: #FFC107;">Mentioned</b> by ${usernames}
-        <br>in <span class="notification-reference">${topicName}</span>
+        <b style="color: #FFC107;">Mentioned</b> by ${usernames} in topic:
+        <br><span class="notification-reference">${topicName}</span>
       `;
 
       titleElement.innerHTML = newHTML;
