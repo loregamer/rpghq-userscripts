@@ -39,121 +39,206 @@ SOFTWARE.
 (function () {
   "use strict";
 
-  function customizeNotificationPanel() {
-    let notificationBlocks = document.querySelectorAll(
-      ".notification-block, a.notification-block"
+  // Utility functions
+  const createElement = (tag, attributes = {}, innerHTML = "") => {
+    const element = document.createElement(tag);
+    Object.assign(element, attributes);
+    element.innerHTML = innerHTML;
+    return element;
+  };
+
+  const formatReactions = (reactions) => {
+    return `<span style="display: inline-flex; margin-left: 2px; vertical-align: middle;">
+      ${reactions
+        .map(
+          (reaction) => `
+        <img src="${reaction.image}" alt="${reaction.name}" title="${reaction.name}" 
+             style="height: 1em !important; width: auto !important; vertical-align: middle !important; margin-right: 2px !important;">
+      `
+        )
+        .join("")}
+    </span>`;
+  };
+
+  const styleReference = (element) => {
+    Object.assign(element.style, {
+      background: "rgba(23, 27, 36, 0.5)",
+      color: "#ffffff",
+      padding: "2px 4px",
+      borderRadius: "2px",
+      zIndex: "-1",
+      display: "inline-block",
+      whiteSpace: "nowrap",
+    });
+  };
+
+  // Local storage functions
+  const getStoredReactions = (postId) => {
+    const storedData = localStorage.getItem(`reactions_${postId}`);
+    if (storedData) {
+      const { reactions, timestamp } = JSON.parse(storedData);
+      if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+        return reactions;
+      }
+    }
+    return null;
+  };
+
+  const storeReactions = (postId, reactions) => {
+    localStorage.setItem(
+      `reactions_${postId}`,
+      JSON.stringify({
+        reactions,
+        timestamp: Date.now(),
+      })
+    );
+  };
+
+  // Fetch reactions
+  const fetchReactions = async (postId, isUnread) => {
+    if (!isUnread) {
+      const storedReactions = getStoredReactions(postId);
+      if (storedReactions) return storedReactions;
+    }
+
+    const response = await fetch(
+      `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json, text/javascript, */*; q=0.01",
+          "x-requested-with": "XMLHttpRequest",
+        },
+        credentials: "include",
+      }
     );
 
-    notificationBlocks.forEach((block) => {
-      if (block.dataset.customized === "true") return;
+    const data = await response.json();
+    const doc = new DOMParser().parseFromString(data.htmlContent, "text/html");
+    const reactions = Array.from(
+      doc.querySelectorAll('.tab-content[data-id="0"] li')
+    ).map((li) => ({
+      username: li.querySelector(".cbb-helper-text a").textContent,
+      image: li.querySelector(".reaction-image").src,
+      name: li.querySelector(".reaction-image").alt,
+    }));
 
-      let titleElement = block.querySelector(".notification-title");
-      let referenceElement = block.querySelector(".notification-reference");
+    storeReactions(postId, reactions);
+    return reactions;
+  };
 
-      if (titleElement) {
-        let titleText = titleElement.innerHTML;
+  // Customize notification functions
+  const customizeReactionNotification = async (titleElement, block) => {
+    let titleText = titleElement.innerHTML;
+    const isUnread = block.href && block.href.includes("mark_notification");
+    const postId = (block.getAttribute("data-real-url") || block.href).match(
+      /p=(\d+)/
+    )?.[1];
 
-        if (titleText.includes("reacted to a message you posted")) {
-          let isUnread = block.href && block.href.includes("mark_notification");
+    if (postId) {
+      const usernames = Array.from(
+        titleElement.querySelectorAll(".username, .username-coloured")
+      ).map((el) => el.textContent.trim());
+      const reactions = await fetchReactions(postId, isUnread);
+      const filteredReactions = reactions.filter((reaction) =>
+        usernames.includes(reaction.username)
+      );
+      const reactionHTML = formatReactions(filteredReactions);
+      titleElement.innerHTML = titleText.replace(
+        /(have|has)\s+reacted.*$/,
+        `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
+      );
+    }
+  };
 
-          let postId;
-          if (block.hasAttribute("data-real-url")) {
-            let match = block.getAttribute("data-real-url").match(/p=(\d+)/);
-            postId = match ? match[1] : null;
-          } else {
-            let postIdMatch = block.href ? block.href.match(/p=(\d+)/) : null;
-            postId = postIdMatch ? postIdMatch[1] : null;
-          }
+  const customizeMentionNotification = (titleElement) => {
+    const topicName = titleElement.innerHTML.match(/in:?\s*"(.*)"/)?.[1] || "";
+    titleElement.innerHTML = `You were <b style="color: #FFC107;">mentioned</b><br>in <span class="notification-reference">${topicName}</span>`;
+  };
 
-          // Extract usernames from the title
-          let usernames = Array.from(
-            titleElement.querySelectorAll(".username, .username-coloured")
-          ).map((el) => el.textContent.trim());
+  const customizePrivateMessageNotification = (
+    titleElement,
+    referenceElement
+  ) => {
+    const subject = referenceElement?.textContent
+      .trim()
+      .replace(/^"(.*)"$/, "$1");
+    if (subject === "Board warning issued") {
+      titleElement.innerHTML = titleElement.innerHTML
+        .replace(
+          /<strong>Private Message<\/strong>/,
+          '<strong style="color: #D31141;">Board warning issued</strong>'
+        )
+        .replace(/from/, "by")
+        .replace(/:$/, "");
+      referenceElement?.remove();
+    }
+  };
 
-          fetchReactions(postId, isUnread).then((reactions) => {
-            // Filter reactions to only include those from mentioned usernames
-            let filteredReactions = reactions.filter((reaction) =>
-              usernames.includes(reaction.username)
-            );
-            let reactionHTML = formatReactions(filteredReactions);
-            let newTitleText = titleText.replace(
-              /(have|has)\s+reacted.*$/,
-              `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
-            );
-            titleElement.innerHTML = newTitleText;
-          });
-        } else if (titleText.includes("You were mentioned by")) {
-          let topicMatch = titleText.match(/in:?\s*"(.*)"/);
-          let topicName = topicMatch ? topicMatch[1] : "";
-          titleElement.innerHTML = `You were <b style="color: #FFC107;">mentioned</b><br>in <span class="notification-reference">${topicName}</span>`;
-        } else if (titleText.includes("Private Message")) {
-          let subject = referenceElement
-            ? referenceElement.textContent.trim().replace(/^"(.*)"$/, "$1")
-            : "";
+  const customizeNotificationBlock = async (block) => {
+    if (block.dataset.customized === "true") return;
 
-          if (subject === "Board warning issued") {
-            titleElement.innerHTML = titleText
-              .replace(
-                /<strong>Private Message<\/strong>/,
-                '<strong style="color: #D31141;">Board warning issued</strong>'
-              )
-              .replace(/from/, "by")
-              .replace(/:$/, "");
-            if (referenceElement) referenceElement.remove();
-          }
-        } else if (titleText.includes("Report closed")) {
-          titleElement.innerHTML = titleText.replace(
-            /Report closed/,
-            '<strong style="color: #f58c05;">Report closed</strong>'
-          );
-        }
+    const titleElement = block.querySelector(".notification-title");
+    const referenceElement = block.querySelector(".notification-reference");
 
-        titleElement.innerHTML = titleElement.innerHTML
-          .replace(
-            /<strong>Quoted<\/strong>/,
-            '<strong style="color: #FF4A66;">Quoted</strong>'
-          )
-          .replace(
-            /<strong>Reply<\/strong>/,
-            '<strong style="color: #FFD866;">Reply</strong>'
-          );
+    if (titleElement) {
+      const titleText = titleElement.innerHTML;
+
+      if (titleText.includes("reacted to a message you posted")) {
+        await customizeReactionNotification(titleElement, block);
+      } else if (titleText.includes("You were mentioned by")) {
+        customizeMentionNotification(titleElement);
+      } else if (titleText.includes("Private Message")) {
+        customizePrivateMessageNotification(titleElement, referenceElement);
+      } else if (titleText.includes("Report closed")) {
+        titleElement.innerHTML = titleText.replace(
+          /Report closed/,
+          '<strong style="color: #f58c05;">Report closed</strong>'
+        );
       }
 
-      if (referenceElement) {
-        Object.assign(referenceElement.style, {
-          background: "rgba(23, 27, 36, 0.5)",
-          color: "#ffffff",
-          padding: "2px 4px",
-          borderRadius: "2px",
-          zIndex: "-1",
-          display: "inline-block",
-          whiteSpace: "nowrap",
-        });
-      }
+      titleElement.innerHTML = titleElement.innerHTML
+        .replace(
+          /<strong>Quoted<\/strong>/,
+          '<strong style="color: #FF4A66;">Quoted</strong>'
+        )
+        .replace(
+          /<strong>Reply<\/strong>/,
+          '<strong style="color: #FFD866;">Reply</strong>'
+        );
+    }
 
-      block.querySelectorAll(".username-coloured").forEach((el) => {
-        el.classList.remove("username-coloured");
-        el.classList.add("username");
-        el.style.color = "";
-      });
+    if (referenceElement) {
+      styleReference(referenceElement);
+    }
 
-      block.dataset.customized = "true";
+    block.querySelectorAll(".username-coloured").forEach((el) => {
+      el.classList.replace("username-coloured", "username");
+      el.style.color = "";
     });
-  }
 
-  function customizeNotificationPage() {
-    let notificationRows = document.querySelectorAll(".cplist .row");
-    notificationRows.forEach((row) => {
+    block.dataset.customized = "true";
+  };
+
+  const customizeNotificationPanel = () => {
+    document
+      .querySelectorAll(".notification-block, a.notification-block")
+      .forEach(customizeNotificationBlock);
+  };
+
+  const customizeNotificationPage = () => {
+    document.querySelectorAll(".cplist .row").forEach((row) => {
       if (row.dataset.customized === "true") return;
 
-      let notificationBlock = row.querySelector(".notifications");
-      let anchorElement = notificationBlock.querySelector("a");
+      const notificationBlock = row.querySelector(".notifications");
+      const anchorElement = notificationBlock.querySelector("a");
 
       if (anchorElement) {
-        let titleElement = anchorElement.querySelector(".notifications_title");
-        let titleText = titleElement.innerHTML; // Use innerHTML to preserve existing HTML elements
+        const titleElement = anchorElement.querySelector(
+          ".notifications_title"
+        );
+        let titleText = titleElement.innerHTML;
 
-        // Process the title text
         titleText = titleText
           .replace(/\bReply\b/g, '<b style="color: #FFD866;">Reply</b>')
           .replace(/\bQuoted\b/g, '<b style="color: #FF4A66;">Quoted</b>')
@@ -163,11 +248,10 @@ SOFTWARE.
             '<b style="color: #f58c05;">Report closed</b>'
           );
 
-        // Handle quoted text
-        let quoteMatch = titleText.match(/in topic: "([^"]*)"/);
+        const quoteMatch = titleText.match(/"([^"]*)"/);
         if (quoteMatch) {
-          let quote = quoteMatch[1];
-          let trimmedQuote =
+          const quote = quoteMatch[1];
+          const trimmedQuote =
             quote.length > 50 ? quote.substring(0, 50) + "..." : quote;
           titleText = titleText.replace(
             /in topic: "([^"]*)"/,
@@ -175,141 +259,51 @@ SOFTWARE.
           );
         }
 
-        // Handle "to a message you posted" text
         titleText = titleText.replace(
           /(to a message you posted) "([^"]*)"/g,
           '$1 <br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"$2"</span>'
         );
 
-        // Create new content
-        let newContent = `
-                <div class="notification-block">
-                    <div class="notification-title">${titleText}</div>
-                </div>
-            `;
-
-        // Replace the entire content of the anchor element
-        anchorElement.innerHTML = newContent;
+        anchorElement.innerHTML = `
+          <div class="notification-block">
+            <div class="notification-title">${titleText}</div>
+          </div>
+        `;
       }
 
       row.dataset.customized = "true";
     });
-  }
+  };
 
-  // Add this function to handle local storage operations
-  function getStoredReactions(postId) {
-    const storedReactions = localStorage.getItem(`reactions_${postId}`);
-    if (storedReactions) {
-      const { reactions, timestamp } = JSON.parse(storedReactions);
-      // Check if the stored data is less than 24 hours old
-      if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-        return reactions;
-      }
-    }
-    return null;
-  }
-
-  function storeReactions(postId, reactions) {
-    localStorage.setItem(
-      `reactions_${postId}`,
-      JSON.stringify({
-        reactions,
-        timestamp: Date.now(),
-      })
+  // Mark notifications as read
+  const getDisplayedPostIds = () => {
+    return Array.from(document.querySelectorAll('div[id^="p"]')).map((el) =>
+      el.id.substring(1)
     );
-  }
+  };
 
-  function fetchReactions(postId, isUnread) {
-    const fetchAndProcessReactions = () => {
-      return fetch(
-        `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
-        {
-          method: "POST",
-          headers: {
-            accept: "application/json, text/javascript, */*; q=0.01",
-            "x-requested-with": "XMLHttpRequest",
-          },
-          credentials: "include",
-        }
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          let parser = new DOMParser();
-          let doc = parser.parseFromString(data.htmlContent, "text/html");
-          let reactions = [];
-          doc.querySelectorAll('.tab-content[data-id="0"] li').forEach((li) => {
-            reactions.push({
-              username: li.querySelector(".cbb-helper-text a").textContent,
-              image: li.querySelector(".reaction-image").src,
-              name: li.querySelector(".reaction-image").alt,
-            });
-          });
-          // Store all reactions in local storage
-          storeReactions(postId, reactions);
-          return reactions;
-        });
-    };
-
-    if (isUnread) {
-      return fetchAndProcessReactions();
-    } else {
-      const storedReactions = getStoredReactions(postId);
-      if (storedReactions) {
-        return Promise.resolve(storedReactions);
-      }
-      return fetchAndProcessReactions();
-    }
-  }
-
-  function formatReactions(reactions) {
-    let reactionHTML =
-      '<span style="display: inline-flex; margin-left: 2px; vertical-align: middle;">';
-    reactions.forEach((reaction) => {
-      reactionHTML += `
-        <img src="${reaction.image}" alt="${reaction.name}" title="${reaction.name}" 
-             style="height: 1em !important; width: auto !important; vertical-align: middle !important; margin-right: 2px !important;">
-      `;
-    });
-    reactionHTML += "</span>";
-    return reactionHTML;
-  }
-
-  // Function to extract post IDs from the page
-  function getDisplayedPostIds() {
-    const postElements = document.querySelectorAll('div[id^="p"]');
-    return Array.from(postElements).map((el) => el.id.substring(1));
-  }
-
-  // Function to extract notification data
-  function getNotificationData() {
-    const notificationLinks = document.querySelectorAll(".notification-block");
-    return Array.from(notificationLinks)
+  const getNotificationData = () => {
+    return Array.from(document.querySelectorAll(".notification-block"))
       .map((link) => {
         const href = link.getAttribute("href");
-        let postId = null;
-        const realUrl = link.getAttribute("data-real-url");
-        if (realUrl) {
-          const match = realUrl.match(/p=(\d+)/);
-          postId = match ? match[1] : null;
-        }
+        const postId = (link.getAttribute("data-real-url") || href)?.match(
+          /p=(\d+)/
+        )?.[1];
         return { href, postId };
       })
-      .filter((data) => data.href && data.postId); // Only keep notifications with both href and postId
-  }
+      .filter((data) => data.href && data.postId);
+  };
 
-  // Function to mark a notification as read
-  function markNotificationAsRead(href) {
+  const markNotificationAsRead = (href) => {
     GM_xmlhttpRequest({
       method: "GET",
       url: "https://rpghq.org/forums/" + href,
-      onload: function (response) {
-        console.log("Notification marked as read:", response.status);
-      },
+      onload: (response) =>
+        console.log("Notification marked as read:", response.status),
     });
-  }
+  };
 
-  // Main function
-  function checkAndMarkNotifications() {
+  const checkAndMarkNotifications = () => {
     const displayedPostIds = getDisplayedPostIds();
     const notificationData = getNotificationData();
 
@@ -318,18 +312,17 @@ SOFTWARE.
         markNotificationAsRead(notification.href);
       }
     });
-  }
+  };
 
-  function init() {
+  // Main function
+  const init = () => {
     customizeNotificationPanel();
     checkAndMarkNotifications();
 
-    // Check if we're on the full notifications page
     if (window.location.href.includes("ucp.php?i=ucp_notifications")) {
       customizeNotificationPage();
     }
 
-    // Set up a MutationObserver to handle dynamically loaded notifications
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === "childList") {
@@ -338,19 +331,16 @@ SOFTWARE.
       });
     });
 
-    const config = { childList: true, subtree: true };
-    observer.observe(document.body, config);
-  }
+    observer.observe(document.body, { childList: true, subtree: true });
+  };
 
   // Run the init function when the page loads
   if (
     document.readyState === "complete" ||
     document.readyState === "interactive"
   ) {
-    // If the document is already ready, execute the function immediately
     init();
   } else {
-    // Otherwise, wait for the DOM to be fully loaded
     window.addEventListener("load", init);
   }
 })();
