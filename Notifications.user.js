@@ -152,37 +152,28 @@ SOFTWARE.
   };
 
   const customizeMentionNotification = (notificationBlock) => {
-    console.log("Notification block:", notificationBlock);
-
     const notificationText =
       notificationBlock.querySelector(".notification_text");
-    console.log("Notification text element:", notificationText);
 
     const titleElement = notificationText.querySelector(".notification-title");
-    console.log("Title element:", titleElement);
 
     const originalHTML = titleElement.innerHTML;
-    console.log("Original HTML:", originalHTML);
 
     // Extract usernames
     const usernameElements = titleElement.querySelectorAll(
       ".username, .username-coloured"
     );
-    console.log("Username elements:", usernameElements);
 
     const usernames = Array.from(usernameElements)
       .map((el) => el.outerHTML)
       .join(", ");
-    console.log("Extracted usernames:", usernames);
 
     // Extract topic name
     const parts = originalHTML.split("<br>in ");
-    console.log("Split parts:", parts);
     let topicName = "Unknown Topic";
     if (parts.length > 1) {
       topicName = parts[1].replace(/^"|"$/g, "").trim();
     }
-    console.log("Extracted topic name:", topicName);
 
     if (topicName.length > 50) {
       topicName = topicName.substring(0, 50) + "...";
@@ -193,7 +184,6 @@ SOFTWARE.
       You were <b style="color: #FFC107;">mentioned</b> by ${usernames}
       <br>in <span class="notification-reference">${topicName}</span>
     `;
-    console.log("New HTML:", newHTML);
 
     titleElement.innerHTML = newHTML;
 
