@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Title Colorizer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.4
+// @version      1.0.5
 // @description  Colorize specific text in titles on RPGHQ forums, including sticky topics
 // @match        https://rpghq.org/forums/*
 // @grant        none
@@ -16,6 +16,7 @@
   const colorMap = {
     "【 Userscript 】": "#00AA00",
     "【 Resource 】": "#3889ED",
+    "【 BG3 Toolkit 】": "#3889ED",
     "【 Project 】": "#FF4A66",
     "【 Tutorial 】": "#FFC107",
     "【 Backups 】": "#BC2A4D",

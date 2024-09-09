@@ -394,11 +394,21 @@ SOFTWARE.
           `;
         } else {
           // Wait for 5 seconds before retrying
-          await new Promise((resolve) => setTimeout(resolve, 5000));
+          await new Promise((resolve) => setTimeout(resolve, 2500));
         }
       }
     }
   }
+
+  const colorMap = {
+    "【 Userscript 】": "#00AA00",
+    "【 Resource 】": "#3889ED",
+    "【 BG3 Toolkit 】": "#3889ED",
+    "【 Project 】": "#FF4A66",
+    "【 Tutorial 】": "#FFC107",
+    "【 Backups 】": "#BC2A4D",
+    "[ Select for merge ]": "#A50000",
+  };
 
   async function fetchAdditionalThreadInfo(threadTitle) {
     return new Promise((resolve, reject) => {
@@ -421,6 +431,18 @@ SOFTWARE.
             const links = topicRow.querySelectorAll("a");
             links.forEach((link) => {
               link.href = link.href.replace(/&hilit=[^&]+/, "");
+
+              // Apply colorizing logic
+              for (const [text, color] of Object.entries(colorMap)) {
+                if (link.textContent.includes(text)) {
+                  const regex = new RegExp(`(${text})`, "g");
+                  link.innerHTML = link.innerHTML.replace(
+                    regex,
+                    `<span style="color: ${color};">$1</span>`
+                  );
+                  break; // Stop after first match to prevent overwriting
+                }
+              }
             });
 
             resolve(topicRow.outerHTML);
