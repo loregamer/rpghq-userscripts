@@ -316,6 +316,16 @@ SOFTWARE.
       if (topicTitle) {
         const zomboidStatus = createZomboidStatusHTML(status);
         topicTitle.insertAdjacentHTML("afterend", zomboidStatus);
+
+        // Remove the <br> after zomboid-status
+        const zomboidStatusElement = row.querySelector(".zomboid-status");
+        if (
+          zomboidStatusElement &&
+          zomboidStatusElement.nextElementSibling &&
+          zomboidStatusElement.nextElementSibling.tagName === "BR"
+        ) {
+          zomboidStatusElement.nextElementSibling.remove();
+        }
       }
     }
 
