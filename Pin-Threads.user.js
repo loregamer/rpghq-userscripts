@@ -219,216 +219,147 @@ SOFTWARE.
 
   async function fetchAllThreadsData(pinnedThreads) {
     const threadDataPromises = Object.entries(pinnedThreads).map(
-      ([threadId, threadInfo]) =>
-        fetchThreadData(threadId, threadInfo).then((data) => ({
-          threadId,
-          ...data,
-        }))
+      ([threadId, threadInfo]) => fetchThreadData(threadId, threadInfo)
     );
     return Promise.all(threadDataPromises);
   }
 
   async function fetchThreadData(threadId, threadInfo) {
-    let attempts = 0;
-    const maxAttempts = 3;
+    try {
+      const { title, forumUrl, status } = await fetchThreadTitleAndForum(
+        threadId
+      );
+      let rowHTML = await fetchThreadRowFromForum(title, forumUrl);
 
-    while (attempts < maxAttempts) {
-      try {
-        const threadData = await fetchThreadTitle(threadId);
-        let rowHTML = await fetchAdditionalThreadInfo(threadData.title);
-
-        if (rowHTML) {
-          if (threadId === ZOMBOID_THREAD_ID && threadData.status) {
-            rowHTML = addZomboidStatus(rowHTML, threadData.status);
-          }
-
-          return { threadId, title: threadData.title, rowHTML };
-        } else {
-          throw new Error(`No row HTML found for thread ${threadId}`);
-        }
-      } catch (error) {
-        console.error(
-          `Error processing thread ${threadId} (Attempt ${attempts + 1}):`,
-          error
-        );
-        attempts++;
-
-        if (attempts >= maxAttempts) {
-          console.error(
-            `Failed to fetch data for thread ${threadId} after ${maxAttempts} attempts`
-          );
-          return {
-            threadId,
-            title: `Error loading thread ${threadId}`,
-            rowHTML: createErrorListItemHTML(threadId),
-          };
-        } else {
-          await new Promise((resolve) => setTimeout(resolve, 3500));
-        }
+      if (rowHTML) {
+        rowHTML = modifyRowHTML(rowHTML, threadId, status);
+        const sortableTitle = title.replace(/^[【】\[\]\s]+/, "");
+        return { threadId, title, sortableTitle, rowHTML };
+      } else {
+        throw new Error(`No row HTML found for thread ${threadId}`);
       }
+    } catch (error) {
+      console.error(`Error processing thread ${threadId}:`, error);
+      return {
+        threadId,
+        title: `Error loading thread ${threadId}`,
+        sortableTitle: `Error loading thread ${threadId}`,
+        rowHTML: createErrorListItemHTML(threadId),
+      };
     }
   }
 
-  async function fetchThreadTitle(threadId) {
-    const isZomboidServer = threadId === ZOMBOID_THREAD_ID;
-    const url = isZomboidServer
-      ? "https://rpghq.org/forums/viewtopic.php?p=132576-project-zomboid-server-1-10"
-      : `https://rpghq.org/forums/viewtopic.php?t=${threadId}`;
-
+  async function fetchThreadTitleAndForum(threadId) {
+    const url = `https://rpghq.org/forums/viewtopic.php?t=${threadId}`;
     const html = await util.fetchHtml(url);
     const doc = util.parseHtml(html);
+
     const titleElement = doc.querySelector("h2.topic-title a");
+    const breadcrumbs = doc.querySelectorAll("#nav-breadcrumbs .crumb");
+    const lastBreadcrumb = breadcrumbs[breadcrumbs.length - 1];
 
-    if (titleElement) {
-      const title = titleElement.textContent.trim();
-
-      if (isZomboidServer) {
-        const playerCountElement = doc.querySelector(
-          'span[style="background-color:black"] strong.text-strong'
-        );
-
-        if (playerCountElement) {
-          const statusDiv = playerCountElement.closest("div");
-
-          try {
-            const onlinePlayersElements = statusDiv.querySelectorAll(
-              'span[style="font-size:85%;line-height:116%"]'
-            );
-            const lastUpdatedElement = statusDiv.querySelector(
-              'span[style="font-size:55%;line-height:116%"] em'
-            );
-
-            if (playerCountElement && lastUpdatedElement) {
-              const playerCount = playerCountElement.textContent;
-              const onlinePlayers = Array.from(onlinePlayersElements).map(
-                (el) => el.textContent
-              );
-              const lastUpdated = lastUpdatedElement.textContent;
-
-              return {
-                title: title,
-                status: {
-                  playerCount: playerCount,
-                  onlinePlayers: onlinePlayers,
-                  lastUpdated: lastUpdated,
-                },
-              };
-            } else {
-              console.warn("Some status elements not found");
-              return { title: title };
-            }
-          } catch (error) {
-            console.error(
-              "Error scraping Project Zomboid Server status:",
-              error
-            );
-            return { title: title };
-          }
-        } else {
-          console.warn("Player count element not found");
-          return { title: title };
-        }
-      } else {
-        return { title: title };
-      }
-    } else {
-      console.error("Thread title not found");
-      throw new Error("Thread title not found");
+    if (!titleElement || !lastBreadcrumb) {
+      throw new Error("Thread title or forum not found");
     }
+
+    const title = titleElement.textContent.trim();
+    const forumUrl = lastBreadcrumb.querySelector("a").href;
+
+    let status = null;
+    if (threadId === ZOMBOID_THREAD_ID) {
+      status = fetchZomboidStatus(doc);
+    }
+
+    return { title, forumUrl, status };
   }
 
-  async function fetchAdditionalThreadInfo(threadTitle) {
-    const encodedTitle = encodeURIComponent(threadTitle);
-    const searchUrl = `https://rpghq.org/forums/search.php?keywords=${encodedTitle}&terms=all&author=&sc=1&sf=titleonly&sr=topics&sk=t&sd=d&st=0&ch=1000&t=0&submit=Search`;
-
-    const html = await util.fetchHtml(searchUrl);
+  async function fetchThreadRowFromForum(threadTitle, forumUrl, page = 1) {
+    const url = `${forumUrl}&start=${(page - 1) * 25}`;
+    const html = await util.fetchHtml(url);
     const doc = util.parseHtml(html);
-    const topicRow = doc.querySelector(".topiclist.topics .row");
 
-    if (topicRow) {
-      const links = topicRow.querySelectorAll("a");
-      links.forEach((link) => {
-        link.href = link.href.replace(/&hilit=[^&]+/, "");
-
-        const colorMap = {
-          "【 Userscript 】": "#00AA00",
-          "【 Resource 】": "#3889ED",
-          "【 BG3 Toolkit 】": "#3889ED",
-          "【 Project 】": "#FF4A66",
-          "【 Tutorial 】": "#FFC107",
-          "【 Backups 】": "#BC2A4D",
-          "[ Select for merge ]": "#A50000",
-        };
-
-        for (const [text, color] of Object.entries(colorMap)) {
-          if (link.textContent.includes(text)) {
-            const regex = new RegExp(`(${text})`, "g");
-            link.innerHTML = link.innerHTML.replace(
-              regex,
-              `<span style="color: ${color};">$1</span>`
-            );
-            break;
-          }
-        }
-      });
-
-      return topicRow.outerHTML;
-    } else {
-      console.warn("Topic row not found in search results");
-      return null;
+    const threadRows = doc.querySelectorAll(".topiclist.topics .row");
+    for (const row of threadRows) {
+      const rowTitle = row.querySelector(".topictitle").textContent.trim();
+      if (rowTitle === threadTitle) {
+        return row.outerHTML;
+      }
     }
+
+    // If thread not found on this page, check the next page
+    const nextPageLink = doc.querySelector(".pagination .next a");
+    if (nextPageLink) {
+      return fetchThreadRowFromForum(threadTitle, forumUrl, page + 1);
+    }
+
+    // If no next page, thread not found
+    return null;
   }
 
-  function addZomboidStatus(rowHTML, status) {
-    const zomboidStatusHTML = createZomboidStatusHTML(status);
+  function modifyRowHTML(rowHTML, threadId, status) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(rowHTML, "text/html");
-    const topicTitle = doc.querySelector(".topictitle");
-    if (topicTitle) {
-      topicTitle.insertAdjacentHTML("afterend", zomboidStatusHTML);
-      return doc.body.innerHTML;
-    } else {
-      console.error("Topic title not found in rowHTML");
-      return rowHTML;
+
+    // Hide pagination
+    const pagination = doc.querySelector(".pagination");
+    if (pagination) {
+      pagination.style.display = "none";
     }
+
+    // Add Project Zomboid Server text if applicable
+    if (threadId === ZOMBOID_THREAD_ID && status) {
+      const topicTitle = doc.querySelector(".topictitle");
+      if (topicTitle) {
+        const zomboidStatus = createZomboidStatusHTML(status);
+        topicTitle.insertAdjacentHTML("afterend", zomboidStatus);
+      }
+    }
+
+    return doc.body.innerHTML;
+  }
+
+  function fetchZomboidStatus(doc) {
+    const playerCountElement = doc.querySelector(
+      'span[style="background-color:black"] strong.text-strong'
+    );
+
+    if (playerCountElement) {
+      const statusDiv = playerCountElement.closest("div");
+      const onlinePlayersElements = statusDiv.querySelectorAll(
+        'span[style="font-size:85%;line-height:116%"]'
+      );
+      const lastUpdatedElement = statusDiv.querySelector(
+        'span[style="font-size:55%;line-height:116%"] em'
+      );
+
+      if (playerCountElement && lastUpdatedElement) {
+        return {
+          playerCount: playerCountElement.textContent,
+          onlinePlayers: Array.from(onlinePlayersElements).map(
+            (el) => el.textContent
+          ),
+          lastUpdated: lastUpdatedElement.textContent,
+        };
+      }
+    }
+
+    return null;
   }
 
   function createZomboidStatusHTML(status) {
-    if (!status || typeof status !== "object") {
-      console.error("Invalid status object");
-      return "";
-    }
-
-    if (!status.playerCount) {
-      console.warn("Missing playerCount in status");
-      return "";
-    }
+    if (!status) return "";
 
     const onlinePlayersList =
-      status.onlinePlayers &&
-      Array.isArray(status.onlinePlayers) &&
       status.onlinePlayers.length > 0
         ? status.onlinePlayers.join(", ")
         : "No players online";
 
-    const lastUpdated = status.lastUpdated || "";
-
-    const statusHTML = `
+    return `
       <div class="zomboid-status" style="font-size: 0.9em; color: #CCCCCC; margin-top: 5px;">
         • ${onlinePlayersList}<br>
-        <span style="font-style: italic; color: #8c8c8c;">${lastUpdated}</span>
+        <span style="font-style: italic; color: #8c8c8c;">${status.lastUpdated}</span>
       </div>
     `;
-    return statusHTML;
-  }
-
-  function updateListItem(threadId, threadData) {
-    const listItem = document.getElementById(`pinned-thread-${threadId}`);
-    if (listItem) {
-      listItem.outerHTML = threadData.rowHTML;
-    } else {
-      console.error(`List item for thread ${threadId} not found`);
-    }
   }
 
   function createErrorListItemHTML(threadId) {
