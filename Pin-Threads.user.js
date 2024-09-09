@@ -501,9 +501,9 @@ SOFTWARE.
     const lastUpdated = status.lastUpdated || "";
 
     const statusHTML = `
-      <div class="zomboid-status" style="font-size: 0.9em; color: #8c8c8c; margin-top: 5px;">
+      <div class="zomboid-status" style="font-size: 0.9em; color: #CCCCCC; margin-top: 5px;">
         • ${onlinePlayersList}<br>
-        <span style="font-style: italic;">${lastUpdated}</span>
+        <span style="font-style: italic; color: #8c8c8c;">${lastUpdated}</span>
       </div>
     `;
 
