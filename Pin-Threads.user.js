@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.1.1
+// @version      3.1.2
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -373,12 +373,16 @@ SOFTWARE.
     // Check if the thread is unread
     const dlElement = row.querySelector("dl");
     const isUnread =
-      dlElement && dlElement.classList.contains("topic_unread_hot");
+      dlElement &&
+      (dlElement.classList.contains("topic_unread") ||
+        dlElement.classList.contains("topic_unread_hot") ||
+        dlElement.classList.contains("topic_unread_mine") ||
+        dlElement.classList.contains("topic_unread_hot_mine"));
 
     // Change icon for unread threads
     const iconElement = row.querySelector(".icon.fa-file");
     if (iconElement) {
-      iconElement.classList.remove("icon-lightgray");
+      iconElement.classList.remove("icon-lightgray", "icon-red");
       iconElement.classList.add(isUnread ? "icon-red" : "icon-lightgray");
     }
 
