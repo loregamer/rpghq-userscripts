@@ -209,19 +209,40 @@ SOFTWARE.
     }
 
     // Fetch thread data asynchronously
-    threadIds.forEach(async (threadId) => {
+    const threadDataPromises = threadIds.map(async (threadId) => {
       try {
         const threadData = await fetchThreadData(
           threadId,
           pinnedThreads[threadId]
         );
-        const listItem = pinnedList.querySelector(`#pinned-thread-${threadId}`);
-        if (listItem) {
-          listItem.outerHTML = threadData.rowHTML;
-        }
+        return threadData;
       } catch (error) {
         console.error(`Error loading thread ${threadId}:`, error);
+        return {
+          threadId,
+          title: `Error loading thread ${threadId}`,
+          sortableTitle: `error loading thread ${threadId}`,
+          rowHTML: createErrorListItemHTML(threadId),
+        };
       }
+    });
+
+    // Wait for all thread data to be fetched
+    const threadsData = await Promise.all(threadDataPromises);
+
+    // Sort threads using localeCompare with options
+    threadsData.sort((a, b) =>
+      a.title.localeCompare(b.title, undefined, {
+        numeric: true,
+        sensitivity: "base",
+        ignorePunctuation: false,
+      })
+    );
+
+    // Clear the list and add sorted threads
+    pinnedList.innerHTML = "";
+    threadsData.forEach((threadData) => {
+      pinnedList.insertAdjacentHTML("beforeend", threadData.rowHTML);
     });
   }
 
