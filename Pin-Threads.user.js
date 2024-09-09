@@ -13,6 +13,9 @@
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Pin-Threads.user.js
 // @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Pin-Threads.user.js
 // @license      MIT
+// @grant        GM_registerMenuCommand
+// @grant        GM_getValue
+// @grant        GM_setValue
 // ==/UserScript==
 
 /*
@@ -43,12 +46,17 @@ SOFTWARE.
   "use strict";
 
   const PINNED_THREADS_KEY = "rpghq_pinned_threads";
+  const SHOW_ON_NEW_POSTS_KEY = "rpghq_show_pinned_on_new_posts";
   const ZOMBOID_THREAD_ID = "2756";
+
+  let menuCommandId = null;
 
   // Utility functions
   const util = {
     getPinnedThreads: () => GM_getValue(PINNED_THREADS_KEY, {}),
     setPinnedThreads: (threads) => GM_setValue(PINNED_THREADS_KEY, threads),
+    getShowOnNewPosts: () => GM_getValue(SHOW_ON_NEW_POSTS_KEY, true),
+    setShowOnNewPosts: (value) => GM_setValue(SHOW_ON_NEW_POSTS_KEY, value),
     getThreadId: () => {
       const match = window.location.href.match(/[?&]t=(\d+)/);
       return match ? match[1] : null;
@@ -66,6 +74,24 @@ SOFTWARE.
     },
     parseHtml: (html) => new DOMParser().parseFromString(html, "text/html"),
   };
+
+  function toggleNewPostsDisplay() {
+    const currentState = util.getShowOnNewPosts();
+    util.setShowOnNewPosts(!currentState);
+    updateMenuCommand();
+    location.reload();
+  }
+
+  function updateMenuCommand() {
+    if (menuCommandId !== null) {
+      GM_unregisterMenuCommand(menuCommandId);
+    }
+    const currentState = util.getShowOnNewPosts();
+    const label = currentState
+      ? "Disable Pinned Threads on New Posts"
+      : "Enable Pinned Threads on New Posts";
+    menuCommandId = GM_registerMenuCommand(label, toggleNewPostsDisplay);
+  }
 
   // Main functions
   function addPinButton() {
@@ -475,6 +501,8 @@ SOFTWARE.
     `);
   }
 
+  updateMenuCommand();
+
   // Main execution
   if (window.location.href.includes("/viewtopic.php")) {
     addPinButton();
@@ -482,7 +510,8 @@ SOFTWARE.
     window.location.href.includes("/index.php") ||
     window.location.href.endsWith("/forums/") ||
     window.location.href.includes("/forums/home") ||
-    window.location.href.includes("/search.php?search_id=newposts")
+    (window.location.href.includes("/search.php?search_id=newposts") &&
+      util.getShowOnNewPosts())
   ) {
     createPinnedThreadsSection();
   }
