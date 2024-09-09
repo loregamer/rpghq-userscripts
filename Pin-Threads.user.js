@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -43,246 +43,142 @@ SOFTWARE.
   "use strict";
 
   const PINNED_THREADS_KEY = "rpghq_pinned_threads";
-  const ZOMBOID_THREAD_ID = "2756"; // Define the Zomboid server thread ID
+  const ZOMBOID_THREAD_ID = "2756";
 
-  GM_addStyle(`
-        #pinned-threads {
-            margin-bottom: 20px;
-        }
-        #pinned-threads .topiclist.topics {
-            margin-top: 0;
-        }
-        .pin-button {
-            margin-left: 10px;
-            cursor: pointer;
-        }
-        #pinned-threads .topic-poster .by {
-            display: none;
-        }
-        .zomboid-status {
-            margin-top: 5px;
-            font-size: 0.9em;
-            text-align: left;
-            color: #8c8c8c;
-        }
-        .zomboid-status .online-players {
-            font-weight: bold;
-            color: #BFC0C5;
-        }
-        .zomboid-status .last-updated {
-            font-size: 0.8em;
-            font-style: italic;
-        }
-        #pinned-threads .pagination {
-            display: none !important;
-        }
-        @media (max-width: 700px) {
-          #pinned-threads .responsive-show {
-            display: none !important;
-          }
-          #pinned-threads .responsive-hide {
-            display: none !important;
-          }
-        }
-    `);
+  // Utility functions
+  const util = {
+    getPinnedThreads: () => GM_getValue(PINNED_THREADS_KEY, {}),
+    setPinnedThreads: (threads) => GM_setValue(PINNED_THREADS_KEY, threads),
+    getThreadId: () => {
+      const match = window.location.href.match(/[?&]t=(\d+)/);
+      return match ? match[1] : null;
+    },
+    addStyle: (css) => GM_addStyle(css),
+    fetchHtml: (url) => {
+      return new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+          method: "GET",
+          url: url,
+          onload: (response) => resolve(response.responseText),
+          onerror: (error) => reject(error),
+        });
+      });
+    },
+    parseHtml: (html) => new DOMParser().parseFromString(html, "text/html"),
+  };
 
-  function getPinnedThreads() {
-    return GM_getValue(PINNED_THREADS_KEY, {});
-  }
-
-  function setPinnedThreads(threads) {
-    GM_setValue(PINNED_THREADS_KEY, threads);
-  }
-
+  // Main functions
   function addPinButton() {
     const actionBar = document.querySelector(".action-bar.bar-top");
-    const threadId = getThreadId();
+    const threadId = util.getThreadId();
     if (
       actionBar &&
       threadId &&
       !document.getElementById("pin-thread-button")
     ) {
-      const dropdownContainer = document.createElement("div");
-      dropdownContainer.className =
-        "dropdown-container dropdown-button-control topic-tools";
-
-      const pinButton = document.createElement("span");
-      pinButton.id = "pin-thread-button";
-      pinButton.className = "button button-secondary dropdown-trigger";
-      pinButton.title = "Pin Thread";
-
-      const pinnedThreads = getPinnedThreads();
-      const isPinned = pinnedThreads.hasOwnProperty(threadId);
-      updatePinButtonState(pinButton, isPinned);
-
-      pinButton.addEventListener("click", function (e) {
-        e.preventDefault();
-        const threadTitle = document
-          .querySelector(".topic-title")
-          .textContent.trim();
-        togglePinThread(threadId, pinButton);
-      });
-
+      const dropdownContainer = createDropdownContainer();
+      const pinButton = createPinButton(threadId);
       dropdownContainer.appendChild(pinButton);
-
-      // Insert the pin button as the first item in the action bar
-      if (actionBar.firstChild) {
-        actionBar.insertBefore(dropdownContainer, actionBar.firstChild);
-      } else {
-        actionBar.appendChild(dropdownContainer);
-      }
-
-      // Add media query for responsive design
-      const style = document.createElement("style");
-      style.textContent = `
-        @media (max-width: 700px) {
-          #pin-thread-button span {
-            display: none;
-          }
-        }
-      `;
-      document.head.appendChild(style);
+      actionBar.insertBefore(dropdownContainer, actionBar.firstChild);
+      addResponsiveStyle();
     }
+  }
+
+  function createDropdownContainer() {
+    const container = document.createElement("div");
+    container.className =
+      "dropdown-container dropdown-button-control topic-tools";
+    return container;
+  }
+
+  function createPinButton(threadId) {
+    const button = document.createElement("span");
+    button.id = "pin-thread-button";
+    button.className = "button button-secondary dropdown-trigger";
+
+    const pinnedThreads = util.getPinnedThreads();
+    const isPinned = pinnedThreads.hasOwnProperty(threadId);
+    updatePinButtonState(button, isPinned);
+
+    button.addEventListener("click", (e) => {
+      e.preventDefault();
+      togglePinThread(threadId, button);
+    });
+
+    return button;
   }
 
   function updatePinButtonState(button, isPinned) {
-    if (isPinned) {
-      button.innerHTML =
-        '<i class="icon fa-thumb-tack fa-fw" aria-hidden="true"></i><span>Unpin</span>';
-      button.title = "Unpin";
-    } else {
-      button.innerHTML =
-        '<i class="icon fa-thumb-tack fa-fw" aria-hidden="true"></i><span>Pin</span>';
-      button.title = "Pin";
-    }
+    button.innerHTML = isPinned
+      ? '<i class="icon fa-thumb-tack fa-fw" aria-hidden="true"></i><span>Unpin</span>'
+      : '<i class="icon fa-thumb-tack fa-fw" aria-hidden="true"></i><span>Pin</span>';
+    button.title = isPinned ? "Unpin" : "Pin";
   }
 
   function togglePinThread(threadId, button) {
-    const pinnedThreads = getPinnedThreads();
-    const threadTitle = document
-      .querySelector(".topic-title")
-      .textContent.trim();
-    const author = document.querySelector(".author").textContent.trim();
-    const postTime = document
-      .querySelector(".author time")
-      .getAttribute("datetime");
+    const pinnedThreads = util.getPinnedThreads();
+    const threadInfo = getThreadInfo();
 
     if (pinnedThreads.hasOwnProperty(threadId)) {
       delete pinnedThreads[threadId];
     } else {
-      pinnedThreads[threadId] = {
-        title: threadTitle,
-        author: author,
-        postTime: postTime,
-      };
+      pinnedThreads[threadId] = threadInfo;
     }
 
-    setPinnedThreads(pinnedThreads);
+    util.setPinnedThreads(pinnedThreads);
     updatePinButtonState(button, pinnedThreads.hasOwnProperty(threadId));
   }
 
-  function getThreadId() {
-    const match = window.location.href.match(/[?&]t=(\d+)/);
-    return match ? match[1] : null;
-  }
-
-  function fetchThreadTitle(threadId) {
-    return new Promise((resolve, reject) => {
-      const isZomboidServer = threadId === ZOMBOID_THREAD_ID;
-      const url = isZomboidServer
-        ? "https://rpghq.org/forums/viewtopic.php?p=132576-project-zomboid-server-1-10"
-        : `https://rpghq.org/forums/viewtopic.php?t=${threadId}`;
-
-      GM_xmlhttpRequest({
-        method: "GET",
-        url: url,
-        onload: function (response) {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(
-            response.responseText,
-            "text/html"
-          );
-          const titleElement = doc.querySelector("h2.topic-title a");
-          if (titleElement) {
-            const title = titleElement.textContent.trim();
-
-            if (isZomboidServer) {
-              const playerCountElement = doc.querySelector(
-                'span[style="background-color:black"] strong.text-strong'
-              );
-
-              if (playerCountElement) {
-                const statusDiv = playerCountElement.closest("div");
-
-                try {
-                  const onlinePlayersElements = statusDiv.querySelectorAll(
-                    'span[style="font-size:85%;line-height:116%"]'
-                  );
-                  const lastUpdatedElement = statusDiv.querySelector(
-                    'span[style="font-size:55%;line-height:116%"] em'
-                  );
-
-                  if (
-                    playerCountElement &&
-                    // onlinePlayersElements.length > 0 &&
-                    lastUpdatedElement
-                  ) {
-                    const playerCount = playerCountElement.textContent;
-                    const onlinePlayers = Array.from(onlinePlayersElements).map(
-                      (el) => el.textContent
-                    );
-                    const lastUpdated = lastUpdatedElement.textContent;
-
-                    resolve({
-                      title: title,
-                      status: {
-                        playerCount: playerCount,
-                        onlinePlayers: onlinePlayers,
-                        lastUpdated: lastUpdated,
-                      },
-                    });
-                  } else {
-                    console.warn("Some status elements not found");
-                    resolve({ title: title });
-                  }
-                } catch (error) {
-                  console.error(
-                    "Error scraping Project Zomboid Server status:",
-                    error
-                  );
-                  resolve({ title: title });
-                }
-              } else {
-                console.warn("Player count element not found");
-                resolve({ title: title });
-              }
-            } else {
-              resolve({ title: title });
-            }
-          } else {
-            console.error("Thread title not found");
-            reject("Thread title not found");
-          }
-        },
-        onerror: function (error) {
-          console.error("Error fetching thread:", error);
-          reject(error);
-        },
-      });
-    });
+  function getThreadInfo() {
+    return {
+      title: document.querySelector(".topic-title").textContent.trim(),
+      author: document.querySelector(".author").textContent.trim(),
+      postTime: document.querySelector(".author time").getAttribute("datetime"),
+    };
   }
 
   async function createPinnedThreadsSection() {
     const indexLeft = document.querySelector(".index-left");
     if (!indexLeft) return;
 
-    const pinnedThreads = getPinnedThreads();
+    const pinnedThreads = util.getPinnedThreads();
     if (Object.keys(pinnedThreads).length === 0) return;
 
-    const pinnedSection = document.createElement("div");
-    pinnedSection.id = "pinned-threads";
-    pinnedSection.className = "forabg";
-    pinnedSection.innerHTML = `
+    const pinnedSection = createPinnedSection();
+    indexLeft.insertBefore(pinnedSection, indexLeft.firstChild);
+
+    const pinnedList = pinnedSection.querySelector("#pinned-threads-list");
+    const threadIds = Object.keys(pinnedThreads);
+
+    // Create loading placeholders
+    for (const threadId of threadIds) {
+      const listItem = createLoadingListItem(threadId);
+      pinnedList.appendChild(listItem);
+    }
+
+    // Fetch thread data
+    let threadsData = await fetchAllThreadsData(pinnedThreads);
+
+    // Sort threads alphabetically by title
+    threadsData.sort((a, b) => a.sortableTitle.localeCompare(b.sortableTitle));
+
+    // Clear the list
+    pinnedList.innerHTML = "";
+
+    // Update list items with sorted data
+    for (const threadData of threadsData) {
+      const listItem = document.createElement("li");
+      listItem.id = `pinned-thread-${threadData.threadId}`;
+      listItem.innerHTML = threadData.rowHTML;
+      pinnedList.appendChild(listItem);
+    }
+  }
+
+  function createPinnedSection() {
+    const section = document.createElement("div");
+    section.id = "pinned-threads";
+    section.className = "forabg";
+    section.innerHTML = `
       <div class="inner">
         <ul class="topiclist">
           <li class="header">
@@ -297,87 +193,56 @@ SOFTWARE.
         <ul class="topiclist topics" id="pinned-threads-list"></ul>
       </div>
     `;
-
-    indexLeft.insertBefore(pinnedSection, indexLeft.firstChild);
-
-    const pinnedList = pinnedSection.querySelector("#pinned-threads-list");
-
-    // Fetch thread data for all pinned threads
-    const threadDataPromises = Object.entries(pinnedThreads).map(
-      ([threadId, threadInfo]) =>
-        fetchThreadTitle(threadId).then((data) => ({ threadId, ...data }))
-    );
-
-    // Wait for all thread data to be fetched
-    const threadsData = await Promise.all(threadDataPromises);
-
-    // Sort threads alphabetically by title
-    threadsData.sort((a, b) => a.title.localeCompare(b.title));
-
-    // Create and append list items in sorted order
-    for (const threadData of threadsData) {
-      const listItem = document.createElement("li");
-      listItem.className = "row bg1";
-      listItem.innerHTML = `
-        <dl class="row-item topic_read">
-          <dt>
-            <div class="list-inner">
-              <span class="topic-title">
-                <i class="fa fa-spinner fa-spin"></i> Loading...
-              </span>
-            </div>
-          </dt>
-          <dd class="posts">-</dd>
-          <dd class="views">-</dd>
-          <dd class="lastpost"><span>-</span></dd>
-        </dl>
-      `;
-      pinnedList.appendChild(listItem);
-
-      // Fetch additional thread info and update the list item
-      fetchThreadData(
-        threadData.threadId,
-        pinnedThreads[threadData.threadId],
-        listItem,
-        threadData
-      );
-    }
+    return section;
   }
 
-  async function fetchThreadData(threadId, threadInfo, listItem) {
+  function createLoadingListItem(threadId) {
+    const listItem = document.createElement("li");
+    listItem.className = "row bg1";
+    listItem.id = `pinned-thread-${threadId}`;
+    listItem.innerHTML = `
+      <dl class="row-item topic_read">
+        <dt>
+          <div class="list-inner">
+            <span class="topic-title">
+              <i class="fa fa-spinner fa-spin"></i> Loading...
+            </span>
+          </div>
+        </dt>
+        <dd class="posts">-</dd>
+        <dd class="views">-</dd>
+        <dd class="lastpost"><span>-</span></dd>
+      </dl>
+    `;
+    return listItem;
+  }
+
+  async function fetchAllThreadsData(pinnedThreads) {
+    const threadDataPromises = Object.entries(pinnedThreads).map(
+      ([threadId, threadInfo]) =>
+        fetchThreadData(threadId, threadInfo).then((data) => ({
+          threadId,
+          ...data,
+        }))
+    );
+    return Promise.all(threadDataPromises);
+  }
+
+  async function fetchThreadData(threadId, threadInfo) {
     let attempts = 0;
     const maxAttempts = 3;
 
     while (attempts < maxAttempts) {
       try {
         const threadData = await fetchThreadTitle(threadId);
-
-        // Fetch additional thread information
         let rowHTML = await fetchAdditionalThreadInfo(threadData.title);
 
         if (rowHTML) {
-          // If it's the Zomboid server thread and status is available, add the special status
           if (threadId === ZOMBOID_THREAD_ID && threadData.status) {
-            const zomboidStatusHTML = createZomboidStatusHTML(
-              threadData.status
-            );
-
-            // Insert the Zomboid status HTML after the topictitle
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(rowHTML, "text/html");
-            const topicTitle = doc.querySelector(".topictitle");
-            if (topicTitle) {
-              topicTitle.insertAdjacentHTML("afterend", zomboidStatusHTML);
-              rowHTML = doc.body.innerHTML;
-            } else {
-              console.error("Topic title not found in rowHTML");
-            }
+            rowHTML = addZomboidStatus(rowHTML, threadData.status);
           }
 
-          // Replace the entire listItem content with the updated rowHTML
-          listItem.outerHTML = rowHTML;
-
-          return; // Success, exit the function
+          return { threadId, title: threadData.title, rowHTML };
         } else {
           throw new Error(`No row HTML found for thread ${threadId}`);
         }
@@ -392,80 +257,140 @@ SOFTWARE.
           console.error(
             `Failed to fetch data for thread ${threadId} after ${maxAttempts} attempts`
           );
-          listItem.innerHTML = `
-            <dl class="row-item topic_read">
-              <dt>
-                <div class="list-inner">
-                  <span class="topic-title">Error loading thread after ${maxAttempts} attempts</span>
-                </div>
-              </dt>
-            </dl>
-          `;
+          return {
+            threadId,
+            title: `Error loading thread ${threadId}`,
+            rowHTML: createErrorListItemHTML(threadId),
+          };
         } else {
-          // Wait for 2.5 seconds before retrying
           await new Promise((resolve) => setTimeout(resolve, 3500));
         }
       }
     }
   }
 
-  const colorMap = {
-    "【 Userscript 】": "#00AA00",
-    "【 Resource 】": "#3889ED",
-    "【 BG3 Toolkit 】": "#3889ED",
-    "【 Project 】": "#FF4A66",
-    "【 Tutorial 】": "#FFC107",
-    "【 Backups 】": "#BC2A4D",
-    "[ Select for merge ]": "#A50000",
-  };
+  async function fetchThreadTitle(threadId) {
+    const isZomboidServer = threadId === ZOMBOID_THREAD_ID;
+    const url = isZomboidServer
+      ? "https://rpghq.org/forums/viewtopic.php?p=132576-project-zomboid-server-1-10"
+      : `https://rpghq.org/forums/viewtopic.php?t=${threadId}`;
+
+    const html = await util.fetchHtml(url);
+    const doc = util.parseHtml(html);
+    const titleElement = doc.querySelector("h2.topic-title a");
+
+    if (titleElement) {
+      const title = titleElement.textContent.trim();
+
+      if (isZomboidServer) {
+        const playerCountElement = doc.querySelector(
+          'span[style="background-color:black"] strong.text-strong'
+        );
+
+        if (playerCountElement) {
+          const statusDiv = playerCountElement.closest("div");
+
+          try {
+            const onlinePlayersElements = statusDiv.querySelectorAll(
+              'span[style="font-size:85%;line-height:116%"]'
+            );
+            const lastUpdatedElement = statusDiv.querySelector(
+              'span[style="font-size:55%;line-height:116%"] em'
+            );
+
+            if (playerCountElement && lastUpdatedElement) {
+              const playerCount = playerCountElement.textContent;
+              const onlinePlayers = Array.from(onlinePlayersElements).map(
+                (el) => el.textContent
+              );
+              const lastUpdated = lastUpdatedElement.textContent;
+
+              return {
+                title: title,
+                status: {
+                  playerCount: playerCount,
+                  onlinePlayers: onlinePlayers,
+                  lastUpdated: lastUpdated,
+                },
+              };
+            } else {
+              console.warn("Some status elements not found");
+              return { title: title };
+            }
+          } catch (error) {
+            console.error(
+              "Error scraping Project Zomboid Server status:",
+              error
+            );
+            return { title: title };
+          }
+        } else {
+          console.warn("Player count element not found");
+          return { title: title };
+        }
+      } else {
+        return { title: title };
+      }
+    } else {
+      console.error("Thread title not found");
+      throw new Error("Thread title not found");
+    }
+  }
 
   async function fetchAdditionalThreadInfo(threadTitle) {
-    return new Promise((resolve, reject) => {
-      const encodedTitle = encodeURIComponent(threadTitle);
-      const searchUrl = `https://rpghq.org/forums/search.php?keywords=${encodedTitle}&terms=all&author=&sc=1&sf=titleonly&sr=topics&sk=t&sd=d&st=0&ch=1000&t=0&submit=Search`;
+    const encodedTitle = encodeURIComponent(threadTitle);
+    const searchUrl = `https://rpghq.org/forums/search.php?keywords=${encodedTitle}&terms=all&author=&sc=1&sf=titleonly&sr=topics&sk=t&sd=d&st=0&ch=1000&t=0&submit=Search`;
 
-      GM_xmlhttpRequest({
-        method: "GET",
-        url: searchUrl,
-        onload: function (response) {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(
-            response.responseText,
-            "text/html"
-          );
-          const topicRow = doc.querySelector(".topiclist.topics .row");
+    const html = await util.fetchHtml(searchUrl);
+    const doc = util.parseHtml(html);
+    const topicRow = doc.querySelector(".topiclist.topics .row");
 
-          if (topicRow) {
-            // Remove &hilit= from all URLs in the row
-            const links = topicRow.querySelectorAll("a");
-            links.forEach((link) => {
-              link.href = link.href.replace(/&hilit=[^&]+/, "");
+    if (topicRow) {
+      const links = topicRow.querySelectorAll("a");
+      links.forEach((link) => {
+        link.href = link.href.replace(/&hilit=[^&]+/, "");
 
-              // Apply colorizing logic
-              for (const [text, color] of Object.entries(colorMap)) {
-                if (link.textContent.includes(text)) {
-                  const regex = new RegExp(`(${text})`, "g");
-                  link.innerHTML = link.innerHTML.replace(
-                    regex,
-                    `<span style="color: ${color};">$1</span>`
-                  );
-                  break; // Stop after first match to prevent overwriting
-                }
-              }
-            });
+        const colorMap = {
+          "【 Userscript 】": "#00AA00",
+          "【 Resource 】": "#3889ED",
+          "【 BG3 Toolkit 】": "#3889ED",
+          "【 Project 】": "#FF4A66",
+          "【 Tutorial 】": "#FFC107",
+          "【 Backups 】": "#BC2A4D",
+          "[ Select for merge ]": "#A50000",
+        };
 
-            resolve(topicRow.outerHTML);
-          } else {
-            console.warn("Topic row not found in search results");
-            resolve(null);
+        for (const [text, color] of Object.entries(colorMap)) {
+          if (link.textContent.includes(text)) {
+            const regex = new RegExp(`(${text})`, "g");
+            link.innerHTML = link.innerHTML.replace(
+              regex,
+              `<span style="color: ${color};">$1</span>`
+            );
+            break;
           }
-        },
-        onerror: function (error) {
-          console.error("Error fetching additional thread info:", error);
-          reject(error);
-        },
+        }
       });
-    });
+
+      return topicRow.outerHTML;
+    } else {
+      console.warn("Topic row not found in search results");
+      return null;
+    }
+  }
+
+  function addZomboidStatus(rowHTML, status) {
+    const zomboidStatusHTML = createZomboidStatusHTML(status);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(rowHTML, "text/html");
+    const topicTitle = doc.querySelector(".topictitle");
+    if (topicTitle) {
+      topicTitle.insertAdjacentHTML("afterend", zomboidStatusHTML);
+      return doc.body.innerHTML;
+    } else {
+      console.error("Topic title not found in rowHTML");
+      return rowHTML;
+    }
   }
 
   function createZomboidStatusHTML(status) {
@@ -495,6 +420,77 @@ SOFTWARE.
       </div>
     `;
     return statusHTML;
+  }
+
+  function updateListItem(threadId, threadData) {
+    const listItem = document.getElementById(`pinned-thread-${threadId}`);
+    if (listItem) {
+      listItem.outerHTML = threadData.rowHTML;
+    } else {
+      console.error(`List item for thread ${threadId} not found`);
+    }
+  }
+
+  function createErrorListItemHTML(threadId) {
+    return `
+      <li class="row bg1" id="pinned-thread-${threadId}">
+        <dl class="row-item topic_read">
+          <dt>
+            <div class="list-inner">
+              <span class="topic-title">
+                Error loading thread
+              </span>
+            </div>
+          </dt>
+          <dd class="posts">-</dd>
+          <dd class="views">-</dd>
+          <dd class="lastpost"><span>-</span></dd>
+        </dl>
+      </li>
+    `;
+  }
+
+  function addResponsiveStyle() {
+    util.addStyle(`
+      #pinned-threads {
+        margin-bottom: 20px;
+      }
+      #pinned-threads .topiclist.topics {
+        margin-top: 0;
+      }
+      .pin-button {
+        margin-left: 10px;
+        cursor: pointer;
+      }
+      #pinned-threads .topic-poster .by {
+        display: none;
+      }
+      .zomboid-status {
+        margin-top: 5px;
+        font-size: 0.9em;
+        text-align: left;
+        color: #8c8c8c;
+      }
+      .zomboid-status .online-players {
+        font-weight: bold;
+        color: #BFC0C5;
+      }
+      .zomboid-status .last-updated {
+        font-size: 0.8em;
+        font-style: italic;
+      }
+      #pinned-threads .pagination {
+        display: none !important;
+      }
+      @media (max-width: 700px) {
+        #pinned-threads .responsive-show {
+          display: none !important;
+        }
+        #pinned-threads .responsive-hide {
+          display: none !important;
+        }
+      }
+    `);
   }
 
   // Main execution
