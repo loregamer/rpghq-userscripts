@@ -351,21 +351,16 @@ SOFTWARE.
     while (attempts < maxAttempts) {
       try {
         const threadData = await fetchThreadTitle(threadId);
-        console.log(`Thread data received:`, threadData);
 
         // Fetch additional thread information
         let rowHTML = await fetchAdditionalThreadInfo(threadData.title);
 
         if (rowHTML) {
-          console.log(`Row HTML found for thread ${threadId}`);
-
           // If it's the Zomboid server thread and status is available, add the special status
           if (threadId === ZOMBOID_THREAD_ID && threadData.status) {
-            console.log("Attempting to add Zomboid status");
             const zomboidStatusHTML = createZomboidStatusHTML(
               threadData.status
             );
-            console.log("Zomboid status HTML created:", zomboidStatusHTML);
 
             // Insert the Zomboid status HTML after the topictitle
             const parser = new DOMParser();
@@ -374,7 +369,6 @@ SOFTWARE.
             if (topicTitle) {
               topicTitle.insertAdjacentHTML("afterend", zomboidStatusHTML);
               rowHTML = doc.body.innerHTML;
-              console.log("Zomboid status inserted into rowHTML");
             } else {
               console.error("Topic title not found in rowHTML");
             }
@@ -382,7 +376,6 @@ SOFTWARE.
 
           // Replace the entire listItem content with the updated rowHTML
           listItem.outerHTML = rowHTML;
-          console.log("List item updated with new rowHTML");
 
           return; // Success, exit the function
         } else {
@@ -476,11 +469,6 @@ SOFTWARE.
   }
 
   function createZomboidStatusHTML(status) {
-    console.log(
-      "Creating Zomboid status HTML with status:",
-      JSON.stringify(status, null, 2)
-    );
-
     if (!status || typeof status !== "object") {
       console.error("Invalid status object");
       return "";
@@ -506,8 +494,6 @@ SOFTWARE.
         <span style="font-style: italic; color: #8c8c8c;">${lastUpdated}</span>
       </div>
     `;
-
-    console.log("Generated Zomboid status HTML:", statusHTML);
     return statusHTML;
   }
 
