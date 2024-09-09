@@ -410,7 +410,7 @@ SOFTWARE.
           `;
         } else {
           // Wait for 2.5 seconds before retrying
-          await new Promise((resolve) => setTimeout(resolve, 2500));
+          await new Promise((resolve) => setTimeout(resolve, 3500));
         }
       }
     }
