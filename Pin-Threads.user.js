@@ -152,8 +152,10 @@ SOFTWARE.
 
     // Create loading placeholders
     for (const threadId of threadIds) {
-      const listItem = createLoadingListItem(threadId);
-      pinnedList.appendChild(listItem);
+      pinnedList.insertAdjacentHTML(
+        "beforeend",
+        createLoadingListItem(threadId)
+      );
     }
 
     // Fetch thread data
@@ -167,10 +169,7 @@ SOFTWARE.
 
     // Update list items with sorted data
     for (const threadData of threadsData) {
-      const listItem = document.createElement("li");
-      listItem.id = `pinned-thread-${threadData.threadId}`;
-      listItem.innerHTML = threadData.rowHTML;
-      pinnedList.appendChild(listItem);
+      pinnedList.insertAdjacentHTML("beforeend", threadData.rowHTML);
     }
   }
 
@@ -197,24 +196,22 @@ SOFTWARE.
   }
 
   function createLoadingListItem(threadId) {
-    const listItem = document.createElement("li");
-    listItem.className = "row bg1";
-    listItem.id = `pinned-thread-${threadId}`;
-    listItem.innerHTML = `
-      <dl class="row-item topic_read">
-        <dt>
-          <div class="list-inner">
-            <span class="topic-title">
-              <i class="fa fa-spinner fa-spin"></i> Loading...
-            </span>
-          </div>
-        </dt>
-        <dd class="posts">-</dd>
-        <dd class="views">-</dd>
-        <dd class="lastpost"><span>-</span></dd>
-      </dl>
+    return `
+      <li class="row bg1" id="pinned-thread-${threadId}">
+        <dl class="row-item topic_read">
+          <dt>
+            <div class="list-inner">
+              <span class="topic-title">
+                <i class="fa fa-spinner fa-spin"></i> Loading...
+              </span>
+            </div>
+          </dt>
+          <dd class="posts">-</dd>
+          <dd class="views">-</dd>
+          <dd class="lastpost"><span>Loading...</span></dd>
+        </dl>
+      </li>
     `;
-    return listItem;
   }
 
   async function fetchAllThreadsData(pinnedThreads) {
@@ -300,22 +297,28 @@ SOFTWARE.
     const parser = new DOMParser();
     const doc = parser.parseFromString(rowHTML, "text/html");
 
+    const row = doc.querySelector(".row");
+    if (!row) return rowHTML; // Return original if no row found
+
     // Hide pagination
-    const pagination = doc.querySelector(".pagination");
+    const pagination = row.querySelector(".pagination");
     if (pagination) {
       pagination.style.display = "none";
     }
 
     // Add Project Zomboid Server text if applicable
     if (threadId === ZOMBOID_THREAD_ID && status) {
-      const topicTitle = doc.querySelector(".topictitle");
+      const topicTitle = row.querySelector(".topictitle");
       if (topicTitle) {
         const zomboidStatus = createZomboidStatusHTML(status);
         topicTitle.insertAdjacentHTML("afterend", zomboidStatus);
       }
     }
 
-    return doc.body.innerHTML;
+    // Add id to the row for easier manipulation later if needed
+    row.id = `pinned-thread-${threadId}`;
+
+    return row.outerHTML;
   }
 
   function fetchZomboidStatus(doc) {
