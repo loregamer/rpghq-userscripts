@@ -138,14 +138,38 @@ SOFTWARE.
   }
 
   async function createPinnedThreadsSection() {
-    const indexLeft = document.querySelector(".index-left");
-    if (!indexLeft) return;
+    const pageBody = document.querySelector("#page-body");
+    if (!pageBody) return;
 
     const pinnedThreads = util.getPinnedThreads();
     if (Object.keys(pinnedThreads).length === 0) return;
 
     const pinnedSection = createPinnedSection();
-    indexLeft.insertBefore(pinnedSection, indexLeft.firstChild);
+
+    // Determine the correct insertion point based on the current page
+    let insertionPoint;
+    if (window.location.href.includes("/search.php")) {
+      const actionBar = pageBody.querySelector(".action-bar.bar-top");
+      insertionPoint = actionBar
+        ? actionBar.nextElementSibling
+        : pageBody.querySelector(".forumbg");
+      if (insertionPoint) {
+        insertionPoint.parentNode.insertBefore(pinnedSection, insertionPoint);
+      }
+    } else {
+      const indexLeft = pageBody.querySelector(".index-left");
+      if (indexLeft) {
+        indexLeft.insertAdjacentElement("afterbegin", pinnedSection);
+      } else {
+        insertionPoint = pageBody.querySelector(".forumbg");
+        if (insertionPoint) {
+          insertionPoint.parentNode.insertBefore(pinnedSection, insertionPoint);
+        }
+      }
+    }
+
+    // If we couldn't insert the section anywhere, return
+    if (!pinnedSection.parentNode) return;
 
     const pinnedList = pinnedSection.querySelector("#pinned-threads-list");
     const threadIds = Object.keys(pinnedThreads);
@@ -158,19 +182,29 @@ SOFTWARE.
       );
     }
 
-    // Fetch thread data
-    let threadsData = await fetchAllThreadsData(pinnedThreads);
+    // Fetch thread data asynchronously
+    threadIds.forEach(async (threadId) => {
+      try {
+        const threadData = await fetchThreadData(
+          threadId,
+          pinnedThreads[threadId]
+        );
+        const listItem = pinnedList.querySelector(`#pinned-thread-${threadId}`);
+        if (listItem) {
+          listItem.outerHTML = threadData.rowHTML;
+        }
+      } catch (error) {
+        console.error(`Error loading thread ${threadId}:`, error);
+      }
+    });
+  }
 
-    // Sort threads alphabetically by title
-    threadsData.sort((a, b) => a.sortableTitle.localeCompare(b.sortableTitle));
-
-    // Clear the list
-    pinnedList.innerHTML = "";
-
-    // Update list items with sorted data
-    for (const threadData of threadsData) {
-      pinnedList.insertAdjacentHTML("beforeend", threadData.rowHTML);
+  function findSearchPageInsertionPoint(pageBody) {
+    const actionBar = pageBody.querySelector(".action-bar.bar-top");
+    if (actionBar) {
+      return actionBar.nextElementSibling;
     }
+    return pageBody.querySelector(".forumbg");
   }
 
   function createPinnedSection() {
@@ -447,7 +481,8 @@ SOFTWARE.
   } else if (
     window.location.href.includes("/index.php") ||
     window.location.href.endsWith("/forums/") ||
-    window.location.href.includes("/forums/home")
+    window.location.href.includes("/forums/home") ||
+    window.location.href.includes("/search.php?search_id=newposts")
   ) {
     createPinnedThreadsSection();
   }
