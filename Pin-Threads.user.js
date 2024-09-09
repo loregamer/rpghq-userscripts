@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -393,8 +393,8 @@ SOFTWARE.
             </dl>
           `;
         } else {
-          // Wait for a short time before retrying
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          // Wait for 5 seconds before retrying
+          await new Promise((resolve) => setTimeout(resolve, 5000));
         }
       }
     }
@@ -417,6 +417,12 @@ SOFTWARE.
           const topicRow = doc.querySelector(".topiclist.topics .row");
 
           if (topicRow) {
+            // Remove &hilit= from all URLs in the row
+            const links = topicRow.querySelectorAll("a");
+            links.forEach((link) => {
+              link.href = link.href.replace(/&hilit=[^&]+/, "");
+            });
+
             resolve(topicRow.outerHTML);
           } else {
             console.warn("Topic row not found in search results");
