@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.1.2
+// @version      3.2
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -380,6 +380,11 @@ SOFTWARE.
 
     const row = doc.querySelector(".row");
     if (!row) return rowHTML; // Return original if no row found
+
+    // Change "sticky_" classes to "topic_"
+    row.querySelectorAll('*[class*="sticky_"]').forEach((element) => {
+      element.className = element.className.replace(/\bsticky_/g, "topic_");
+    });
 
     // Hide pagination
     const pagination = row.querySelector(".pagination");
