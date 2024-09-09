@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Title Colorizer
 // @namespace    http://tampermonkey.net/
-// @version      1.0.5
+// @version      1.1
 // @description  Colorize specific text in titles on RPGHQ forums, including sticky topics
 // @match        https://rpghq.org/forums/*
 // @grant        none
@@ -39,9 +39,21 @@
     });
   }
 
-  // If the forum uses AJAX to load new content, you might need to run the function periodically
-  // Uncomment the following line if needed:
-  // setInterval(colorizeTopicTitles, 2000);
+  let previousTitleCount = 0;
+
+  function checkForChanges() {
+    const currentTitleCount = document.querySelectorAll(
+      "a.topictitle, h2.topic-title a, h3.first a, dd.lastpost a.lastsubject, .tabs-container h2 a"
+    ).length;
+
+    if (currentTitleCount !== previousTitleCount) {
+      colorizeTopicTitles();
+      previousTitleCount = currentTitleCount;
+    }
+  }
+
+  // Run the check every 1000ms (1 second)
+  setInterval(checkForChanges, 500);
 
   if (
     document.readyState === "complete" ||
@@ -49,10 +61,16 @@
   ) {
     // If the document is already ready, execute the function immediately
     colorizeTopicTitles();
+    previousTitleCount = document.querySelectorAll(
+      "a.topictitle, h2.topic-title a, h3.first a, dd.lastpost a.lastsubject, .tabs-container h2 a"
+    ).length;
   } else {
     // Otherwise, wait for the DOM to be fully loaded
     window.addEventListener("load", function () {
       colorizeTopicTitles();
+      previousTitleCount = document.querySelectorAll(
+        "a.topictitle, h2.topic-title a, h3.first a, dd.lastpost a.lastsubject, .tabs-container h2 a"
+      ).length;
     });
   }
 })();
