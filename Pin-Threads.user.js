@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.2
+// @version      3.2.1
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -59,7 +59,15 @@ SOFTWARE.
     setShowOnNewPosts: (value) => GM_setValue(SHOW_ON_NEW_POSTS_KEY, value),
     getThreadId: () => {
       const match = window.location.href.match(/[?&]t=(\d+)/);
-      return match ? match[1] : null;
+      if (match) return match[1];
+
+      const topicTitleLink = document.querySelector("h2.topic-title a");
+      if (topicTitleLink) {
+        const topicUrlMatch = topicTitleLink.href.match(/[?&]t=(\d+)/);
+        return topicUrlMatch ? topicUrlMatch[1] : null;
+      }
+
+      return null;
     },
     addStyle: (css) => GM_addStyle(css),
     fetchHtml: (url) => {
