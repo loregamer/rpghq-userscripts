@@ -306,6 +306,10 @@ SOFTWARE.
       pagination.style.display = "none";
     }
 
+    // Remove rh_tag elements
+    const rhTags = row.querySelectorAll(".rh_tag");
+    rhTags.forEach((tag) => tag.remove());
+
     // Add Project Zomboid Server text if applicable
     if (threadId === ZOMBOID_THREAD_ID && status) {
       const topicTitle = row.querySelector(".topictitle");
