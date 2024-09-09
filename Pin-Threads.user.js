@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.1
+// @version      3.1.1
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -369,6 +369,35 @@ SOFTWARE.
     // Remove rh_tag elements
     const rhTags = row.querySelectorAll(".rh_tag");
     rhTags.forEach((tag) => tag.remove());
+
+    // Check if the thread is unread
+    const dlElement = row.querySelector("dl");
+    const isUnread =
+      dlElement && dlElement.classList.contains("topic_unread_hot");
+
+    // Change icon for unread threads
+    const iconElement = row.querySelector(".icon.fa-file");
+    if (iconElement) {
+      iconElement.classList.remove("icon-lightgray");
+      iconElement.classList.add(isUnread ? "icon-red" : "icon-lightgray");
+    }
+
+    // Modify the external link icon
+    const lastpostLink = row.querySelector(
+      ".lastpost a[title='Go to last post']"
+    );
+    if (lastpostLink) {
+      const externalLinkIcon =
+        lastpostLink.querySelector("i") || document.createElement("i");
+      externalLinkIcon.className = `icon fa-external-link-square fa-fw icon-${
+        isUnread ? "red" : "lightgray"
+      } icon-md`;
+      externalLinkIcon.setAttribute("aria-hidden", "true");
+      if (!lastpostLink.contains(externalLinkIcon)) {
+        lastpostLink.innerHTML = "";
+        lastpostLink.appendChild(externalLinkIcon);
+      }
+    }
 
     // Add Project Zomboid Server text if applicable
     if (threadId === ZOMBOID_THREAD_ID && status) {
