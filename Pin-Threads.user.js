@@ -43,6 +43,7 @@ SOFTWARE.
   "use strict";
 
   const PINNED_THREADS_KEY = "rpghq_pinned_threads";
+  const ZOMBOID_THREAD_ID = "2756"; // Define the Zomboid server thread ID
 
   GM_addStyle(`
         #pinned-threads {
@@ -187,7 +188,7 @@ SOFTWARE.
 
   function fetchThreadTitle(threadId) {
     return new Promise((resolve, reject) => {
-      const isZomboidServer = threadId === "2756";
+      const isZomboidServer = threadId === ZOMBOID_THREAD_ID;
       const url = isZomboidServer
         ? "https://rpghq.org/forums/viewtopic.php?p=132576-project-zomboid-server-1-10"
         : `https://rpghq.org/forums/viewtopic.php?t=${threadId}`;
@@ -209,6 +210,7 @@ SOFTWARE.
               const playerCountElement = doc.querySelector(
                 'span[style="background-color:black"] strong.text-strong'
               );
+              console.log("Player count element found:", playerCountElement);
 
               if (playerCountElement) {
                 const statusDiv = playerCountElement.closest("div");
@@ -217,13 +219,21 @@ SOFTWARE.
                   const onlinePlayersElements = statusDiv.querySelectorAll(
                     'span[style="font-size:85%;line-height:116%"]'
                   );
+                  console.log(
+                    "Online players elements found:",
+                    onlinePlayersElements
+                  );
                   const lastUpdatedElement = statusDiv.querySelector(
                     'span[style="font-size:55%;line-height:116%"] em'
+                  );
+                  console.log(
+                    "Last updated element found:",
+                    lastUpdatedElement
                   );
 
                   if (
                     playerCountElement &&
-                    onlinePlayersElements.length > 0 &&
+                    // onlinePlayersElements.length > 0 &&
                     lastUpdatedElement
                   ) {
                     const playerCount = playerCountElement.textContent;
@@ -231,6 +241,10 @@ SOFTWARE.
                       (el) => el.textContent
                     );
                     const lastUpdated = lastUpdatedElement.textContent;
+
+                    console.log("Player count:", playerCount);
+                    console.log("Online players:", onlinePlayers);
+                    console.log("Last updated:", lastUpdated);
 
                     resolve({
                       title: title,
@@ -358,8 +372,9 @@ SOFTWARE.
           // Replace the entire listItem content with the fetched row HTML
           listItem.outerHTML = rowHTML;
 
-          // If it's the Zomboid server thread, add the special status
+          // If it's the Zomboid server thread and status is available, add the special status
           if (threadId === "2756" && threadData.status) {
+            console.log("Thread data:", threadData);
             const zomboidStatusHTML = createZomboidStatusHTML(
               threadData.status
             );
@@ -393,7 +408,7 @@ SOFTWARE.
             </dl>
           `;
         } else {
-          // Wait for 5 seconds before retrying
+          // Wait for 2.5 seconds before retrying
           await new Promise((resolve) => setTimeout(resolve, 2500));
         }
       }
@@ -460,13 +475,16 @@ SOFTWARE.
   }
 
   function createZomboidStatusHTML(status) {
+    if (!status || !status.onlinePlayers) {
+      return ""; // Return empty string if status or onlinePlayers is not available
+    }
     const onlinePlayersList = status.onlinePlayers
       .map((player) => `• ${player}`)
       .join("<br>");
     return `
       <div class="zomboid-status">
         <span class="online-players">${onlinePlayersList}</span><br>
-        <span class="last-updated">${status.lastUpdated}</span>
+        <span class="last-updated">${status.lastUpdated || ""}</span>
       </div>
     `;
   }
