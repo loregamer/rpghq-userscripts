@@ -210,7 +210,6 @@ SOFTWARE.
               const playerCountElement = doc.querySelector(
                 'span[style="background-color:black"] strong.text-strong'
               );
-              console.log("Player count element found:", playerCountElement);
 
               if (playerCountElement) {
                 const statusDiv = playerCountElement.closest("div");
@@ -219,16 +218,8 @@ SOFTWARE.
                   const onlinePlayersElements = statusDiv.querySelectorAll(
                     'span[style="font-size:85%;line-height:116%"]'
                   );
-                  console.log(
-                    "Online players elements found:",
-                    onlinePlayersElements
-                  );
                   const lastUpdatedElement = statusDiv.querySelector(
                     'span[style="font-size:55%;line-height:116%"] em'
-                  );
-                  console.log(
-                    "Last updated element found:",
-                    lastUpdatedElement
                   );
 
                   if (
@@ -241,10 +232,6 @@ SOFTWARE.
                       (el) => el.textContent
                     );
                     const lastUpdated = lastUpdatedElement.textContent;
-
-                    console.log("Player count:", playerCount);
-                    console.log("Online players:", onlinePlayers);
-                    console.log("Last updated:", lastUpdated);
 
                     resolve({
                       title: title,
@@ -364,25 +351,39 @@ SOFTWARE.
     while (attempts < maxAttempts) {
       try {
         const threadData = await fetchThreadTitle(threadId);
+        console.log(`Thread data received:`, threadData);
 
         // Fetch additional thread information
-        const rowHTML = await fetchAdditionalThreadInfo(threadData.title);
+        let rowHTML = await fetchAdditionalThreadInfo(threadData.title);
 
         if (rowHTML) {
-          // Replace the entire listItem content with the fetched row HTML
-          listItem.outerHTML = rowHTML;
+          console.log(`Row HTML found for thread ${threadId}`);
 
           // If it's the Zomboid server thread and status is available, add the special status
-          if (threadId === "2756" && threadData.status) {
-            console.log("Thread data:", threadData);
+          if (threadId === ZOMBOID_THREAD_ID && threadData.status) {
+            console.log("Attempting to add Zomboid status");
             const zomboidStatusHTML = createZomboidStatusHTML(
               threadData.status
             );
-            const listInner = listItem.querySelector(".list-inner");
-            if (listInner) {
-              listInner.insertAdjacentHTML("beforeend", zomboidStatusHTML);
+            console.log("Zomboid status HTML created:", zomboidStatusHTML);
+
+            // Insert the Zomboid status HTML after the topictitle
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(rowHTML, "text/html");
+            const topicTitle = doc.querySelector(".topictitle");
+            if (topicTitle) {
+              topicTitle.insertAdjacentHTML("afterend", zomboidStatusHTML);
+              rowHTML = doc.body.innerHTML;
+              console.log("Zomboid status inserted into rowHTML");
+            } else {
+              console.error("Topic title not found in rowHTML");
             }
           }
+
+          // Replace the entire listItem content with the updated rowHTML
+          listItem.outerHTML = rowHTML;
+          console.log("List item updated with new rowHTML");
+
           return; // Success, exit the function
         } else {
           throw new Error(`No row HTML found for thread ${threadId}`);
@@ -475,18 +476,39 @@ SOFTWARE.
   }
 
   function createZomboidStatusHTML(status) {
-    if (!status || !status.onlinePlayers) {
-      return ""; // Return empty string if status or onlinePlayers is not available
+    console.log(
+      "Creating Zomboid status HTML with status:",
+      JSON.stringify(status, null, 2)
+    );
+
+    if (!status || typeof status !== "object") {
+      console.error("Invalid status object");
+      return "";
     }
-    const onlinePlayersList = status.onlinePlayers
-      .map((player) => `• ${player}`)
-      .join("<br>");
-    return `
-      <div class="zomboid-status">
-        <span class="online-players">${onlinePlayersList}</span><br>
-        <span class="last-updated">${status.lastUpdated || ""}</span>
+
+    if (!status.playerCount) {
+      console.warn("Missing playerCount in status");
+      return "";
+    }
+
+    const onlinePlayersList =
+      status.onlinePlayers &&
+      Array.isArray(status.onlinePlayers) &&
+      status.onlinePlayers.length > 0
+        ? status.onlinePlayers.join(", ")
+        : "No players online";
+
+    const lastUpdated = status.lastUpdated || "";
+
+    const statusHTML = `
+      <div class="zomboid-status" style="font-size: 0.9em; color: #8c8c8c; margin-top: 5px;">
+        • ${onlinePlayersList}<br>
+        <span style="font-style: italic;">${lastUpdated}</span>
       </div>
     `;
+
+    console.log("Generated Zomboid status HTML:", statusHTML);
+    return statusHTML;
   }
 
   // Main execution
