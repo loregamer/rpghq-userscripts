@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Reaction List
 // @namespace    http://tampermonkey.net/
-// @version      1.5.1
+// @version      1.5.2
 // @description  Display a list of reactions for RPGHQ posts in a Discord-style with hover popups
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
@@ -326,17 +326,17 @@
       const dropdown = document.querySelector(
         "#username_logged_in .dropdown-contents"
       );
-      if (dropdown && !document.getElementById("toggle-left-mode")) {
+      if (dropdown && !document.getElementById("toggle-left-reactions-mode")) {
         const leftModeEnabled = GM_getValue("leftMode", false);
         const listItem = document.createElement("li");
         const toggleButton = document.createElement("a");
-        toggleButton.id = "toggle-left-mode";
+        toggleButton.id = "toggle-left-reactions-mode";
         toggleButton.href = "#";
-        toggleButton.title = "Toggle Left Mode";
+        toggleButton.title = "Toggle Left Reactions Mode";
         toggleButton.role = "menuitem";
         toggleButton.innerHTML = `
           <i class="icon fa-align-left fa-fw" aria-hidden="true"></i>
-          <span>Toggle Left Mode (${leftModeEnabled ? "On" : "Off"})</span>
+          <span>Left Reactions Mode (${leftModeEnabled ? "On" : "Off"})</span>
         `;
 
         toggleButton.addEventListener("click", function (e) {
