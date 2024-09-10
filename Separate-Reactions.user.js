@@ -320,6 +320,36 @@
     window.location.reload();
   }
 
+  function addToggleLeftModeOption() {
+    if (window.innerWidth <= 768) {
+      // Mobile view check
+      const dropdown = document.querySelector(
+        "#username_logged_in .dropdown-contents"
+      );
+      if (dropdown && !document.getElementById("toggle-left-mode")) {
+        const leftModeEnabled = GM_getValue("leftMode", false);
+        const listItem = document.createElement("li");
+        const toggleButton = document.createElement("a");
+        toggleButton.id = "toggle-left-mode";
+        toggleButton.href = "#";
+        toggleButton.title = "Toggle Left Mode";
+        toggleButton.role = "menuitem";
+        toggleButton.innerHTML = `
+          <i class="icon fa-align-left fa-fw" aria-hidden="true"></i>
+          <span>Toggle Left Mode (${leftModeEnabled ? "On" : "Off"})</span>
+        `;
+
+        toggleButton.addEventListener("click", function (e) {
+          e.preventDefault();
+          toggleLeftMode();
+        });
+
+        listItem.appendChild(toggleButton);
+        dropdown.insertBefore(listItem, dropdown.lastElementChild);
+      }
+    }
+  }
+
   GM_registerMenuCommand("Toggle Left Mode", toggleLeftMode);
 
   function observePosts() {
@@ -346,6 +376,7 @@
     document.head.appendChild(style);
 
     applyLeftMode();
+    addToggleLeftModeOption();
 
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
