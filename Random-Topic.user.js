@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Random Topic Button
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
+// @version      1.1
 // @description  Adds a Random Topic button to RPGHQ that ensures the topic exists
 // @match        https://rpghq.org/forums/*
 // @grant        GM_xmlhttpRequest
@@ -49,6 +49,34 @@
 
   // Function to create and add the button
   function addRandomTopicButton() {
+    // Add to quick links dropdown
+    const quickLinks = document.querySelector(
+      "#quick-links .dropdown-contents"
+    );
+    if (quickLinks) {
+      const listItem = document.createElement("li");
+      listItem.innerHTML = `
+        <a href="#" role="menuitem">
+          <i class="icon fa-random fa-fw" aria-hidden="true"></i><span>Random Topic</span>
+        </a>
+      `;
+      // Insert after "Active topics" in the dropdown
+      const activeTopicsItem = quickLinks.querySelector(
+        'a[href*="search_id=active_topics"]'
+      );
+      if (activeTopicsItem) {
+        const insertAfter = activeTopicsItem.closest("li");
+        insertAfter.parentNode.insertBefore(listItem, insertAfter.nextSibling);
+      } else {
+        // If "Active topics" is not found, append to the end of the list
+        quickLinks.appendChild(listItem);
+      }
+
+      // Add click event to the dropdown item
+      listItem.querySelector("a").onclick = handleRandomTopicClick;
+    }
+
+    // Add as a separate button in the main navigation (existing code)
     const navMain = document.getElementById("nav-main");
     if (navMain) {
       const li = document.createElement("li");
@@ -93,6 +121,22 @@
       li.appendChild(a);
       navMain.appendChild(li);
     }
+  }
+
+  function handleRandomTopicClick(e) {
+    e.preventDefault();
+    this.style.textDecoration = "none";
+    this.innerHTML =
+      '<i class="icon fa-spinner fa-spin fa-fw" aria-hidden="true"></i><span>Loading...</span>';
+    getValidRandomTopic()
+      .then((validTopic) => {
+        window.location.href = validTopic;
+      })
+      .catch((error) => {
+        console.error("Error finding random topic:", error);
+        this.innerHTML =
+          '<i class="icon fa-random fa-fw" aria-hidden="true"></i><span>Random Topic</span>';
+      });
   }
 
   // Run the function when the page is loaded
