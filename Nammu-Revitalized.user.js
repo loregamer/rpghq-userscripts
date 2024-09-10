@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Nammu Revitalized
-// @version      1.0
+// @version      1.1
 // @description  Changes displayed "Serjo" references to "Nammu Archag" on rpghq.org and adds a custom rank
 // @match        https://rpghq.org/*
 // @grant        none
@@ -17,7 +17,11 @@
   function replaceSerjoReferences() {
     const elements = document.querySelectorAll("a:not([data-nammu-processed])");
     elements.forEach((element) => {
-      if (element.textContent.includes("Serjo")) {
+      if (
+        element.childNodes.length === 1 &&
+        element.childNodes[0].nodeType === Node.TEXT_NODE &&
+        element.textContent.includes("Serjo")
+      ) {
         const clone = element.cloneNode(true);
         clone.textContent = clone.textContent.replace(/Serjo/g, "Nammu Archag");
         clone.style.display = "";
