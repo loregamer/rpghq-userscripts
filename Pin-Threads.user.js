@@ -312,13 +312,12 @@ SOFTWARE.
 
   async function fetchThreadData(threadId, threadInfo) {
     try {
-      const { title, forumUrl, status } = await fetchThreadTitleAndForum(
-        threadId
-      );
+      const { title, forumUrl, status, forumName } =
+        await fetchThreadTitleAndForum(threadId);
       let rowHTML = await fetchThreadRowFromForum(title, forumUrl);
 
       if (rowHTML) {
-        rowHTML = modifyRowHTML(rowHTML, threadId, status);
+        rowHTML = modifyRowHTML(rowHTML, threadId, status, forumName);
         const sortableTitle = title.replace(/^[【】\[\]\s]+/, "");
         return { threadId, title, sortableTitle, rowHTML };
       } else {
@@ -350,13 +349,14 @@ SOFTWARE.
 
     const title = titleElement.textContent.trim();
     const forumUrl = lastBreadcrumb.querySelector("a").href;
+    const forumName = lastBreadcrumb.querySelector("a").textContent.trim();
 
     let status = null;
     if (threadId === ZOMBOID_THREAD_ID) {
       status = fetchZomboidStatus(doc);
     }
 
-    return { title, forumUrl, status };
+    return { title, forumUrl, status, forumName };
   }
 
   async function fetchThreadRowFromForum(threadTitle, forumUrl, page = 1) {
@@ -382,12 +382,12 @@ SOFTWARE.
     return null;
   }
 
-  function modifyRowHTML(rowHTML, threadId, status) {
+  function modifyRowHTML(rowHTML, threadId, status, forumName) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(rowHTML, "text/html");
 
     const row = doc.querySelector(".row");
-    if (!row) return rowHTML; // Return original if no row found
+    if (!row) return rowHTML;
 
     // Change "sticky_" classes to "topic_"
     row.querySelectorAll('*[class*="sticky_"]').forEach((element) => {
@@ -453,6 +453,22 @@ SOFTWARE.
         ) {
           zomboidStatusElement.nextElementSibling.remove();
         }
+      }
+    }
+
+    // Add forum section information
+    const leftBox = row.querySelector(".responsive-hide.left-box");
+    if (leftBox) {
+      const lastTimeElement = leftBox.querySelector("time");
+      if (lastTimeElement) {
+        const forumLink = document.createElement("a");
+        forumLink.href = `https://rpghq.org/forums/viewforum.php?f=${forumName}`;
+        forumLink.textContent = forumName;
+
+        const inText = document.createTextNode("  » in ");
+
+        lastTimeElement.insertAdjacentElement("afterend", forumLink);
+        lastTimeElement.insertAdjacentText("afterend", "  » in ");
       }
     }
 
