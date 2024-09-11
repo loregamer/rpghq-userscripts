@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.2.1
+// @version      3.3
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -312,12 +312,12 @@ SOFTWARE.
 
   async function fetchThreadData(threadId, threadInfo) {
     try {
-      const { title, forumUrl, status, forumName } =
+      const { title, forumUrl, forumName, status } =
         await fetchThreadTitleAndForum(threadId);
       let rowHTML = await fetchThreadRowFromForum(title, forumUrl);
 
       if (rowHTML) {
-        rowHTML = modifyRowHTML(rowHTML, threadId, status, forumName);
+        rowHTML = modifyRowHTML(rowHTML, threadId, status, forumName, forumUrl);
         const sortableTitle = title.replace(/^[【】\[\]\s]+/, "");
         return { threadId, title, sortableTitle, rowHTML };
       } else {
@@ -356,7 +356,7 @@ SOFTWARE.
       status = fetchZomboidStatus(doc);
     }
 
-    return { title, forumUrl, status, forumName };
+    return { title, forumUrl, forumName, status };
   }
 
   async function fetchThreadRowFromForum(threadTitle, forumUrl, page = 1) {
@@ -382,7 +382,7 @@ SOFTWARE.
     return null;
   }
 
-  function modifyRowHTML(rowHTML, threadId, status, forumName) {
+  function modifyRowHTML(rowHTML, threadId, status, forumName, forumUrl) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(rowHTML, "text/html");
 
@@ -462,7 +462,7 @@ SOFTWARE.
       const lastTimeElement = leftBox.querySelector("time");
       if (lastTimeElement) {
         const forumLink = document.createElement("a");
-        forumLink.href = `https://rpghq.org/forums/viewforum.php?f=${forumName}`;
+        forumLink.href = forumUrl;
         forumLink.textContent = forumName;
 
         const inText = document.createTextNode("  » in ");
