@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      4.6
+// @version      4.6.1
 // @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php*
@@ -488,15 +488,22 @@ SOFTWARE.
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = textarea.value.substring(start, end);
-    const replacement = `[${tag}]${selectedText}[/${tag}]`;
+    let replacement;
+
+    if (tag.includes("=")) {
+      const [tagName, attribute] = tag.split("=");
+      replacement = `[${tagName}=${attribute}]${selectedText}[/${tagName}]`;
+    } else {
+      replacement = `[${tag}]${selectedText}[/${tag}]`;
+    }
+
     textarea.value =
       textarea.value.substring(0, start) +
       replacement +
       textarea.value.substring(end);
-    textarea.setSelectionRange(
-      start + tag.length + 2,
-      start + replacement.length - tag.length - 3
-    );
+
+    const newCursorPos = start + tag.length + 2;
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
   }
 
   function positionSmileyBox() {
@@ -1254,6 +1261,13 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
             updateHighlight();
             adjustTextareaAndHighlight();
           }
+        }
+
+        if (e.altKey && e.key === "g") {
+          e.preventDefault();
+          wrapSelectedText(this, "color=#80BF00");
+          updateHighlight();
+          adjustTextareaAndHighlight();
         }
       });
 
