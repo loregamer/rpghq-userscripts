@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.3
+// @version      3.4
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -395,10 +395,10 @@ SOFTWARE.
     });
 
     // Hide pagination
-    const pagination = row.querySelector(".pagination");
-    if (pagination) {
-      pagination.style.display = "none";
-    }
+    // const pagination = row.querySelector(".pagination");
+    // if (pagination) {
+    //   pagination.style.display = "none";
+    // }
 
     // Remove rh_tag elements
     const rhTags = row.querySelectorAll(".rh_tag");
@@ -437,21 +437,40 @@ SOFTWARE.
       }
     }
 
-    // Add Project Zomboid Server text if applicable
-    if (threadId === ZOMBOID_THREAD_ID && status) {
-      const topicTitle = row.querySelector(".topictitle");
-      if (topicTitle) {
-        const zomboidStatus = createZomboidStatusHTML(status);
-        topicTitle.insertAdjacentHTML("afterend", zomboidStatus);
+    // Modify the topic hyperlink
+    const topicLink = row.querySelector(".topictitle");
+    if (topicLink) {
+      const dlElement = row.querySelector("dl");
+      const isUnread =
+        dlElement &&
+        (dlElement.classList.contains("topic_unread") ||
+          dlElement.classList.contains("topic_unread_hot") ||
+          dlElement.classList.contains("topic_unread_mine") ||
+          dlElement.classList.contains("topic_unread_hot_mine"));
 
-        // Remove the <br> after zomboid-status
-        const zomboidStatusElement = row.querySelector(".zomboid-status");
-        if (
-          zomboidStatusElement &&
-          zomboidStatusElement.nextElementSibling &&
-          zomboidStatusElement.nextElementSibling.tagName === "BR"
-        ) {
-          zomboidStatusElement.nextElementSibling.remove();
+      if (!isUnread) {
+        const currentHref = topicLink.getAttribute("href");
+        const lastPostLink = row.querySelector(
+          ".lastpost a[title='Go to last post']"
+        );
+
+        if (lastPostLink) {
+          const lastPostId = lastPostLink.getAttribute("href").split("#p")[1];
+          const newHref = `${currentHref}&view=unread#p${lastPostId}`;
+          topicLink.setAttribute("href", newHref);
+
+          // Add click event listener to scroll to last post
+          topicLink.addEventListener("click", function (e) {
+            e.preventDefault();
+            const targetUrl = this.getAttribute("href");
+            window.location.href = targetUrl;
+            setTimeout(() => {
+              const lastPost = document.querySelector(".post:last-of-type");
+              if (lastPost) {
+                lastPost.scrollIntoView({ behavior: "smooth" });
+              }
+            }, 100);
+          });
         }
       }
     }
