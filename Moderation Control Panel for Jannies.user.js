@@ -1257,6 +1257,24 @@ SOFTWARE.
           }
           postbody.appendChild(authorBlock);
 
+          // Add delete reason if present
+          const deleteNotice = tempDiv.querySelector(".notice");
+          if (deleteNotice) {
+            const deleteReasonDiv = document.createElement("div");
+            deleteReasonDiv.className = "delete-reason";
+            deleteReasonDiv.innerHTML = deleteNotice.innerHTML;
+            deleteReasonDiv.style.cssText = `
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.2);
+            border-radius: 5px;
+            padding: 5px;
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #ff6666;
+          `;
+            postbody.appendChild(deleteReasonDiv);
+          }
+
           const contentDiv = document.createElement("div");
           contentDiv.className = "content";
           contentDiv.id = `message_${postId}`;
