@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Moderator Control Panel Enhancer
 // @namespace    https://rpghq.org/
-// @version      4.1
+// @version      4.1.1
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts
 // @author       loregamer
 // @match        https://rpghq.org/forums/mcp*
@@ -105,6 +105,46 @@ SOFTWARE.
       width: 100%;
       height: 100%;
       object-fit: cover;
+    }
+    @media (max-width: 768px) {
+      .postprofile {
+        min-width: 80px;
+        width: 80px;
+      }
+      .postprofile .avatar-container {
+        width: 60px;
+        height: 60px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .postprofile {
+        min-width: 60px;
+        width: 60px;
+      }
+      .postprofile .avatar-container {
+        width: 50px;
+        height: 50px;
+      }
+      .postprofile a.username,
+      .postprofile a.username-coloured {
+        font-size: 0.8em;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .postprofile {
+        min-width: 40px;
+        width: 40px;
+      }
+      .postprofile .avatar-container {
+        width: 40px;
+        height: 40px;
+      }
+      .postprofile a.username,
+      .postprofile a.username-coloured {
+        font-size: 0.7em;
+      }
     }
     .postbody {
       flex-grow: 1 !important;
@@ -317,7 +357,7 @@ SOFTWARE.
       padding: 0 !important;
       margin: 0 !important;
       list-style-type: none !important;
-      gap: 5px !important; 
+      gap: 5px !important;
       justify-content: flex-end !important;
     }
 
@@ -402,28 +442,28 @@ SOFTWARE.
       margin-left: 5px;
     }
 
-  li.row {
-    display: flex;
-    align-items: flex-start;
-    padding: 10px;
-    border: 1px solid #303744;
-    margin-bottom: 10px;
-    background-color: #282f3c;
-  }
-  
-  .mcp-queue-post {
-    flex: 1;
-    min-width: 0;
-    margin-right: 10px;
-  }
-  
-  .mcp-queue-post .postbody {
-    width: 100%;
-  }
-  
-  li.row .mark {
-    flex-shrink: 0;
-  }
+    li.row {
+      display: flex;
+      align-items: flex-start;
+      padding: 10px;
+      border: 1px solid #303744;
+      margin-bottom: 10px;
+      background-color: #282f3c;
+    }
+
+    .mcp-queue-post {
+      flex: 1;
+      min-width: 0;
+      margin-right: 10px;
+    }
+
+    .mcp-queue-post .postbody {
+      width: 100%;
+    }
+
+    li.row .mark {
+      flex-shrink: 0;
+    }
   `;
   document.head.appendChild(style);
 
