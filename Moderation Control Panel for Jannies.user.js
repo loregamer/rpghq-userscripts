@@ -4,8 +4,7 @@
 // @version      3.2.3
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts
 // @author       loregamer
-// @match        https://rpghq.org/forums/mcp.php?*mode=topic_view*
-// @match        https://rpghq.org/forums/mcp.php?*viewtopic*
+// @match        https://rpghq.org/forums/mcp*
 // @grant        GM_getResourceText
 // @grant        GM_xmlhttpRequest
 // @grant        GM_info
@@ -1079,7 +1078,7 @@ SOFTWARE.
     });
   }
 
-  function init() {
+  function enhanceTopicView() {
     modifyPostStructure();
     loadSelectedPosts();
     clickExpandView();
@@ -1088,6 +1087,16 @@ SOFTWARE.
     makeDisplayActionsFloat();
     handleMarkAllClicks();
     observeDocumentChanges();
+  }
+
+  function init() {
+    if (
+      window.location.href.includes("/forums/mcp.php") &&
+      (window.location.href.includes("mode=topic_view") ||
+        window.location.href.includes("viewtopic"))
+    ) {
+      enhanceTopicView();
+    }
   }
 
   // Run the init function when the page loads
