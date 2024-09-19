@@ -1157,6 +1157,20 @@ SOFTWARE.
             postNotice.remove();
           }
 
+          // Remove the "Expand view" link
+          const expandLink = postDiv.querySelector("#expand");
+          if (expandLink) {
+            expandLink.remove();
+          }
+
+          // Ensure the post content is fully visible
+          const postDetails = postDiv.querySelector("#post_details");
+          if (postDetails) {
+            postDetails.style.display = "block";
+            postDetails.style.maxHeight = "none";
+            postDetails.style.overflow = "visible";
+          }
+
           // Modify the author line
           const authorP = postDiv.querySelector(".postbody .author");
           if (authorP && topicLink && forumLink) {
