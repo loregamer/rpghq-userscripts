@@ -4,7 +4,7 @@
 // @version      4.1.1
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts
 // @author       loregamer
-// @match        https://rpghq.org/forums/mcp*
+// @match        https://rpghq.org/*
 // @grant        GM_getResourceText
 // @grant        GM_xmlhttpRequest
 // @grant        GM_info
@@ -44,11 +44,11 @@ SOFTWARE.
   const defaultAvatarUrl =
     "https://f.rpghq.org/98ltUBUmxF3M.png?n=Vergstarion.png";
   const avatarExtensions = [".gif", ".jpeg", ".jpg", ".png"];
-  const postMaxHeight = "300px"; // Set the maximum height for a post before adding the fade effect
+  const postMaxHeight = "300px";
 
-  // Add custom styles to make the moderator control panel posts look like forum posts
-  const style = document.createElement("style");
-  style.innerHTML = `
+  function createStylingForMCP() {
+    const style = document.createElement("style");
+    style.innerHTML = `
     .postbody .content blockquote {
       background-color: #171b24 !important;
       border-color: #303744 !important;
@@ -465,7 +465,8 @@ SOFTWARE.
       flex-shrink: 0;
     }
   `;
-  document.head.appendChild(style);
+    document.head.appendChild(style);
+  }
 
   // Function to create the post profile
   function createPostProfile(authorElement, userId, username) {
@@ -1409,15 +1410,52 @@ SOFTWARE.
     });
   }
 
+  function makeWarningsClickable() {
+    const warningsElements = document.querySelectorAll(".profile-warnings");
+
+    warningsElements.forEach((element) => {
+      const warningsText = element.textContent;
+      const warningsMatch = warningsText.match(/Warnings:\s*(\d+)/);
+
+      if (warningsMatch) {
+        const warningsCount = warningsMatch[1];
+        const profileLink = element
+          .closest(".postprofile")
+          .querySelector("a.username-coloured, a.username");
+        const userId = profileLink
+          ? profileLink.href.match(/u=(\d+)/)?.[1]
+          : null;
+
+        if (userId) {
+          const warningsLink = document.createElement("a");
+          warningsLink.href = `https://rpghq.org/forums/mcp.php?i=notes&mode=user_notes&u=${userId}`;
+          warningsLink.textContent = warningsCount;
+          warningsLink.style.color = "inherit";
+          warningsLink.style.textDecoration = "none"; // Remove underline
+
+          element.innerHTML = element.innerHTML.replace(
+            warningsCount,
+            warningsLink.outerHTML
+          );
+        }
+      }
+    });
+  }
+
   function init() {
-    if (
-      window.location.href.includes("/forums/mcp.php") &&
-      (window.location.href.includes("mode=topic_view") ||
-        window.location.href.includes("viewtopic"))
-    ) {
-      enhanceTopicView();
-    } else if (window.location.href.includes("mcp_queue")) {
-      enhanceMcpQueue();
+    const url = window.location.href;
+
+    if (url.includes("/forums/mcp.php")) {
+      createStylingForMCP();
+      if (url.includes("mode=topic_view") || url.includes("viewtopic")) {
+        enhanceTopicView();
+      } else if (url.includes("mcp_queue")) {
+        enhanceMcpQueue();
+      }
+    }
+
+    if (url.includes("viewtopic.php")) {
+      makeWarningsClickable();
     }
   }
 
