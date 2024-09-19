@@ -1171,10 +1171,10 @@ SOFTWARE.
             postDetails.style.overflow = "visible";
           }
 
-          // Modify the author line
-          const authorP = postDiv.querySelector(".postbody .author");
-          if (authorP && topicLink && forumLink) {
-            authorP.innerHTML += ` | Topic: ${topicLink.outerHTML} | Forum: ${forumLink.outerHTML}`;
+          // Replace the h3 content with topic and forum links
+          const h3 = postDiv.querySelector("h3");
+          if (h3 && topicLink && forumLink) {
+            h3.innerHTML = `Topic: ${topicLink.outerHTML} | Forum: ${forumLink.outerHTML}`;
           }
 
           // Replace the content of the li.row
