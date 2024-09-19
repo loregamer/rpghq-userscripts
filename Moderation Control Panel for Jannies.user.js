@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Moderator Control Panel Enhancer
 // @namespace    https://rpghq.org/
-// @version      3.2.3
+// @version      4.0
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts
 // @author       loregamer
 // @match        https://rpghq.org/forums/mcp*
@@ -1286,12 +1286,18 @@ SOFTWARE.
             if (moderationInfo) {
               const topicInfo = moderationInfo.querySelector("span");
               if (topicInfo) {
-                const topicLink = topicInfo.querySelector(
+                let topicLink = topicInfo.querySelector(
                   'a[href*="viewtopic.php"]'
                 );
                 const forumLink = topicInfo.querySelector(
                   'a[href*="viewforum.php"]'
                 );
+
+                if (!topicLink) {
+                  topicLink = row.querySelector(
+                    'a.topictitle[href*="mode=approve_details"]'
+                  );
+                }
                 if (topicLink && forumLink) {
                   authorBlock.innerHTML += ` » Topic: ${topicLink.outerHTML} » Forum: ${forumLink.outerHTML}`;
                 }
