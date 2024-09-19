@@ -1127,6 +1127,64 @@ SOFTWARE.
     observeDocumentChanges();
   }
 
+  function toggleQueuePostSelection(post, event) {
+    const checkbox = post.querySelector('input[type="checkbox"]');
+    const interactiveElements = [
+      "a",
+      "button",
+      "input",
+      "img",
+      "textarea",
+      "select",
+    ];
+    const isInteractiveElement = interactiveElements.includes(
+      event.target.tagName.toLowerCase()
+    );
+    const hasInteractiveParent = event.target.closest(
+      interactiveElements.join(",")
+    );
+    const isSpoilerElement = event.target.closest(
+      ".spoilwrapper, .spoiltitle, .spoilbtn, .spoilcontent"
+    );
+
+    if (
+      !isInteractiveElement &&
+      !hasInteractiveParent &&
+      !isSpoilerElement &&
+      event.target.className !== "show-more-button"
+    ) {
+      checkbox.checked = !checkbox.checked;
+      syncQueuePostSelection(post);
+    }
+  }
+
+  function syncQueuePostSelection(post) {
+    const checkbox = post.querySelector('input[type="checkbox"]');
+    if (checkbox.checked) {
+      post.classList.add("selected");
+      post.style.setProperty("border", "1px solid #ff6666", "important");
+    } else {
+      post.classList.remove("selected");
+      post.style.setProperty("border", "1px solid #303744", "important");
+    }
+  }
+
+  function handleQueueMarkAllClicks() {
+    document.querySelectorAll('a[onclick*="marklist"]').forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const markAll = link.textContent.trim() === "Mark all";
+        document.querySelectorAll(".post").forEach((post) => {
+          const checkbox = post.querySelector('input[type="checkbox"]');
+          if (checkbox) {
+            checkbox.checked = markAll;
+            syncQueuePostSelection(post);
+          }
+        });
+      });
+    });
+  }
+
   function enhanceMcpQueue() {
     document.querySelectorAll("li.row").forEach(async (row, index) => {
       const approveLink = row.querySelector('a[href*="mode=approve_details"]');
@@ -1289,6 +1347,20 @@ SOFTWARE.
 
           modifyPostAuthorLine(postDiv);
           createPlaceholders(postDiv);
+
+          postDiv.addEventListener("click", (event) => {
+            toggleQueuePostSelection(postDiv, event);
+          });
+
+          // Sync the selected state with the checkbox
+          syncQueuePostSelection(postDiv);
+
+          row.innerHTML = "";
+          row.appendChild(postDiv);
+
+          modifyPostAuthorLine(postDiv);
+          createPlaceholders(postDiv);
+          handleQueueMarkAllClicks();
         }
       }
     });
