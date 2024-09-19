@@ -478,13 +478,13 @@ SOFTWARE.
       }
       .flair-tile {
         background-color: #242A36;
-        border: 1px solid #2D323E;
+        border: 1px solid #3e4247;
         border-radius: 5px;
         padding: 10px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        height: 150px;
+        height: 180px; /* Increased height to accommodate longer names */
       }
       .flair-tile th {
         width: 80px;
@@ -506,6 +506,11 @@ SOFTWARE.
         line-height: 1.2;
         word-wrap: break-word;
         max-width: 100%;
+        height: 2.4em; /* Set a fixed height for two lines of text */
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
       }
       .flair-buttons {
         display: flex;
