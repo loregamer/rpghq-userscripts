@@ -1222,6 +1222,38 @@ SOFTWARE.
           const postDate = tempDiv.querySelector(".author");
           if (postDate) {
             authorBlock.innerHTML = postDate.innerHTML;
+
+            // Add Topic and Forum info
+            const moderationInfo = row.querySelector(".responsive-show");
+            if (moderationInfo) {
+              const topicInfo = moderationInfo.querySelector("span");
+              if (topicInfo) {
+                const topicLink = topicInfo.querySelector(
+                  'a[href*="viewtopic.php"]'
+                );
+                const forumLink = topicInfo.querySelector(
+                  'a[href*="viewforum.php"]'
+                );
+                if (topicLink && forumLink) {
+                  authorBlock.innerHTML += ` » Topic: ${topicLink.outerHTML} » Forum: ${forumLink.outerHTML}`;
+                }
+              }
+            }
+
+            // Add hyperlink to post time
+            const postTimeLink = row.querySelector(
+              '.list-inner > span > a[href*="mode=approve_details"]'
+            );
+            if (postTimeLink) {
+              const postTimeText =
+                authorBlock.innerHTML.match(/»\s*(.*?)(?:\s*»|$)/);
+              if (postTimeText && postTimeText[1]) {
+                authorBlock.innerHTML = authorBlock.innerHTML.replace(
+                  postTimeText[1],
+                  `<a href="${postTimeLink.href}">${postTimeText[1]}</a>`
+                );
+              }
+            }
           }
           postbody.appendChild(authorBlock);
 
