@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.4
+// @version      3.4.1
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -75,8 +75,21 @@ SOFTWARE.
         GM_xmlhttpRequest({
           method: "GET",
           url: url,
+          headers: {
+            "User-Agent": navigator.userAgent,
+            Accept:
+              "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            Referer: "https://rpghq.org/forums/",
+            DNT: "1",
+            Connection: "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+          },
+          withCredentials: true,
+          timeout: 30000,
           onload: (response) => resolve(response.responseText),
           onerror: (error) => reject(error),
+          ontimeout: () => reject(new Error("Request timed out")),
         });
       });
     },
