@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Moderator Control Panel Enhancer
 // @namespace    https://rpghq.org/
-// @version      4.0
+// @version      4.1
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts
 // @author       loregamer
 // @match        https://rpghq.org/forums/mcp*
@@ -1273,7 +1273,7 @@ SOFTWARE.
               </label>
             </li>
           `;
-          innerDiv.appendChild(postButtons); // Append to innerDiv instead of postbody
+          innerDiv.appendChild(postButtons);
 
           const authorBlock = document.createElement("p");
           authorBlock.className = "author";
@@ -1281,30 +1281,28 @@ SOFTWARE.
           if (postDate) {
             authorBlock.innerHTML = postDate.innerHTML;
 
-            // Add Topic and Forum info
             const moderationInfo = row.querySelector(".responsive-show");
             if (moderationInfo) {
               const topicInfo = moderationInfo.querySelector("span");
-              if (topicInfo) {
-                let topicLink = topicInfo.querySelector(
-                  'a[href*="viewtopic.php"]'
-                );
-                const forumLink = topicInfo.querySelector(
-                  'a[href*="viewforum.php"]'
-                );
+              const forumLink = topicInfo.querySelector(
+                'a[href*="viewforum.php"]'
+              );
+              const postHyperlink = row.querySelector(
+                'a.topictitle[href*="mode=approve_details"]'
+              );
 
-                if (!topicLink) {
-                  topicLink = row.querySelector(
-                    'a.topictitle[href*="mode=approve_details"]'
-                  );
-                }
-                if (topicLink && forumLink) {
-                  authorBlock.innerHTML += ` » Topic: ${topicLink.outerHTML} » Forum: ${forumLink.outerHTML}`;
+              if (topicInfo && postHyperlink) {
+                const postMatch = postHyperlink.href.match(/p=(\d+)/);
+                const postNumber = postMatch ? postMatch[1] : null;
+
+                if (postNumber) {
+                  const topicLink = `<a href="https://rpghq.org/forums/viewtopic.php?p=${postNumber}#p${postNumber}">${postHyperlink.textContent}</a>`;
+
+                  authorBlock.innerHTML += ` » Topic: ${topicLink} » Forum: ${forumLink.outerHTML}`;
                 }
               }
             }
 
-            // Add hyperlink to post time
             const postTimeLink = row.querySelector(
               '.list-inner > span > a[href*="mode=approve_details"]'
             );
@@ -1321,7 +1319,6 @@ SOFTWARE.
           }
           postbody.appendChild(authorBlock);
 
-          // Add delete reason if present
           const deleteNotice = tempDiv.querySelector(".notice");
           if (deleteNotice) {
             const deleteReasonDiv = document.createElement("div");
