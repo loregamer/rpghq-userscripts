@@ -1127,7 +1127,7 @@ SOFTWARE.
   }
 
   function enhanceMcpQueue() {
-    document.querySelectorAll("li.row").forEach(async (row) => {
+    document.querySelectorAll("li.row").forEach(async (row, index) => {
       const approveLink = row.querySelector('a[href*="mode=approve_details"]');
       if (approveLink) {
         const postId = approveLink.href.match(/p=(\d+)/)[1];
@@ -1148,7 +1148,7 @@ SOFTWARE.
 
           // Create a new div for the post content
           const postDiv = document.createElement("div");
-          postDiv.className = "mcp-queue-post";
+          postDiv.className = "post bg1";
           postDiv.innerHTML = postContent;
 
           // Remove the unwanted content
@@ -1174,11 +1174,8 @@ SOFTWARE.
           row.appendChild(checkboxDD);
 
           // Apply existing styles and modifications
-          const post = postDiv.querySelector(".postbody");
-          if (post) {
-            modifyPostStructure(post);
-            createPlaceholders(post);
-          }
+          modifyPostStructure(postDiv);
+          createPlaceholders(postDiv);
         }
       }
     });
