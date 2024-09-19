@@ -1078,6 +1078,20 @@ SOFTWARE.
     });
   }
 
+  async function fetchPostContent(url) {
+    try {
+      const response = await fetch(url);
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const postbody = doc.querySelector(".postbody");
+      return postbody ? postbody.outerHTML : null;
+    } catch (error) {
+      console.error("Error fetching post content:", error);
+      return null;
+    }
+  }
+
   function enhanceTopicView() {
     modifyPostStructure();
     loadSelectedPosts();
@@ -1089,6 +1103,28 @@ SOFTWARE.
     observeDocumentChanges();
   }
 
+  function enhanceMcpQueue() {
+    document.querySelectorAll("li.row").forEach(async (row) => {
+      const approveLink = row.querySelector('a[href*="mode=approve_details"]');
+      if (approveLink) {
+        const postId = approveLink.href.match(/p=(\d+)/)[1];
+        const postContent = await fetchPostContent(approveLink.href);
+
+        if (postContent) {
+          const dt = row.querySelector("dt");
+          dt.innerHTML = postContent;
+
+          // Apply existing styles and modifications
+          const post = dt.querySelector(".postbody");
+          if (post) {
+            modifyPostStructure(post);
+            createPlaceholders(post);
+          }
+        }
+      }
+    });
+  }
+
   function init() {
     if (
       window.location.href.includes("/forums/mcp.php") &&
@@ -1096,6 +1132,8 @@ SOFTWARE.
         window.location.href.includes("viewtopic"))
     ) {
       enhanceTopicView();
+    } else if (window.location.href.includes("mcp_queue")) {
+      enhanceMcpQueue();
     }
   }
 
