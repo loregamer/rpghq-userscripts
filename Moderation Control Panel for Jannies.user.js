@@ -477,8 +477,8 @@ SOFTWARE.
         gap: 15px;
       }
       .flair-tile {
-        background-color: #36393f;
-        border: 1px solid #3e4247;
+        background-color: #242A36;
+        border: 1px solid #2D323E;
         border-radius: 5px;
         padding: 10px;
         display: flex;
@@ -520,8 +520,22 @@ SOFTWARE.
     `;
     document.head.appendChild(style);
 
-    // Simplify the flair tiles
-    document.querySelectorAll(".flair-tile").forEach((tile) => {
+    // Get all flair tiles and convert to array
+    const flairTiles = Array.from(document.querySelectorAll(".flair-tile"));
+
+    // Sort flair tiles alphabetically by title
+    flairTiles.sort((a, b) => {
+      const titleA = a.querySelector("h5").textContent.trim().toLowerCase();
+      const titleB = b.querySelector("h5").textContent.trim().toLowerCase();
+      return titleA.localeCompare(titleB);
+    });
+
+    // Get the parent container
+    const flairContainer = document.querySelector(".flair");
+
+    // Remove existing tiles and append sorted tiles
+    flairContainer.innerHTML = "";
+    flairTiles.forEach((tile) => {
       const title = tile.querySelector("h5").textContent;
       const icon = tile.querySelector(".flair-icon");
       const input = tile.querySelector('input[type="number"]');
@@ -535,6 +549,7 @@ SOFTWARE.
           ${button.outerHTML}
         </div>
       `;
+      flairContainer.appendChild(tile);
     });
   }
 
