@@ -401,6 +401,29 @@ SOFTWARE.
     .post-buttons input[type="checkbox"] {
       margin-left: 5px;
     }
+
+  li.row {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px;
+    border: 1px solid #303744;
+    margin-bottom: 10px;
+    background-color: #282f3c;
+  }
+  
+  .mcp-queue-post {
+    flex: 1;
+    min-width: 0;
+    margin-right: 10px;
+  }
+  
+  .mcp-queue-post .postbody {
+    width: 100%;
+  }
+  
+  li.row .mark {
+    flex-shrink: 0;
+  }
   `;
   document.head.appendChild(style);
 
@@ -1111,11 +1134,47 @@ SOFTWARE.
         const postContent = await fetchPostContent(approveLink.href);
 
         if (postContent) {
-          const dt = row.querySelector("dt");
-          dt.innerHTML = postContent;
+          // Extract topic and forum links
+          const moderationDD = row.querySelector("dd.moderation");
+          const topicLink = moderationDD.querySelector(
+            'a[href*="viewtopic.php"]'
+          );
+          const forumLink = moderationDD.querySelector(
+            'a[href*="viewforum.php"]'
+          );
+
+          // Remove the moderation dd
+          moderationDD.remove();
+
+          // Create a new div for the post content
+          const postDiv = document.createElement("div");
+          postDiv.className = "mcp-queue-post";
+          postDiv.innerHTML = postContent;
+
+          // Remove the unwanted content
+          const postNotice = postDiv.querySelector(".post-notice.deleted");
+          if (postNotice) {
+            postNotice.remove();
+          }
+
+          // Modify the author line
+          const authorP = postDiv.querySelector(".postbody .author");
+          if (authorP && topicLink && forumLink) {
+            authorP.innerHTML += ` | Topic: ${topicLink.outerHTML} | Forum: ${forumLink.outerHTML}`;
+          }
+
+          // Replace the content of the li.row
+          row.innerHTML = "";
+          row.appendChild(postDiv);
+
+          // Add the checkbox back
+          const checkboxDD = document.createElement("dd");
+          checkboxDD.className = "mark";
+          checkboxDD.innerHTML = `<input type="checkbox" name="post_id_list[]" value="${postId}">`;
+          row.appendChild(checkboxDD);
 
           // Apply existing styles and modifications
-          const post = dt.querySelector(".postbody");
+          const post = postDiv.querySelector(".postbody");
           if (post) {
             modifyPostStructure(post);
             createPlaceholders(post);
