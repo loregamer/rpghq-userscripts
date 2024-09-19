@@ -500,7 +500,6 @@ SOFTWARE.
       }
       .flair-tile h5 {
         margin: 5px 0;
-        color: #ffffff;
         text-align: center;
         font-size: 0.9em;
         line-height: 1.2;
@@ -525,51 +524,63 @@ SOFTWARE.
     `;
     document.head.appendChild(style);
 
-    // Get all flair tiles and convert to array
-    const flairTiles = Array.from(document.querySelectorAll(".flair-tile"));
+    function enhanceFlairSection(container) {
+      const flairTiles = Array.from(container.querySelectorAll(".flair-tile"));
 
-    // Sort flair tiles alphabetically by title
-    flairTiles.sort((a, b) => {
-      const titleA = a.querySelector("h5").textContent.trim().toLowerCase();
-      const titleB = b.querySelector("h5").textContent.trim().toLowerCase();
-      return titleA.localeCompare(titleB);
-    });
+      flairTiles.sort((a, b) => {
+        const titleA = a.querySelector("h5").textContent.trim().toLowerCase();
+        const titleB = b.querySelector("h5").textContent.trim().toLowerCase();
+        return titleA.localeCompare(titleB);
+      });
 
-    // Get the parent container
-    const flairContainer = document.querySelector(".flair");
+      container.innerHTML = "";
+      flairTiles.forEach((tile) => {
+        tile.style.display = "flex";
+        tile.style.flexDirection = "column";
+        tile.style.alignItems = "center";
+        tile.style.height = "180px";
 
-    // Clear the container
-    flairContainer.innerHTML = "";
+        const title = tile.querySelector("h5");
+        const icon = tile.querySelector(".flair-icon");
+        const buttonsContainer =
+          tile.querySelector(".flair-buttons") || document.createElement("div");
 
-    // Append sorted tiles
-    flairTiles.forEach((tile) => {
-      // Adjust the layout of the existing tile without recreating it
-      tile.style.display = "flex";
-      tile.style.flexDirection = "column";
-      tile.style.alignItems = "center";
-      tile.style.height = "180px";
+        if (!buttonsContainer.classList.contains("flair-buttons")) {
+          buttonsContainer.className = "flair-buttons";
+          const input = tile.querySelector('input[type="number"]');
+          const setButton = tile.querySelector('input[name^="set_flair"]');
+          const removeButton = tile.querySelector(
+            'input[name^="remove_flair"]'
+          );
+          if (input) buttonsContainer.appendChild(input);
+          if (setButton) buttonsContainer.appendChild(setButton);
+          if (removeButton) buttonsContainer.appendChild(removeButton);
+        }
 
-      const title = tile.querySelector("h5");
-      const icon = tile.querySelector(".flair-icon");
-      const buttonsContainer =
-        tile.querySelector(".flair-buttons") || document.createElement("div");
+        tile.innerHTML = "";
+        tile.appendChild(icon.closest("th"));
+        tile.appendChild(title);
+        tile.appendChild(buttonsContainer);
 
-      if (!buttonsContainer.classList.contains("flair-buttons")) {
-        buttonsContainer.className = "flair-buttons";
-        const input = tile.querySelector('input[type="number"]');
-        const button = tile.querySelector('input[type="submit"]');
-        buttonsContainer.appendChild(input);
-        buttonsContainer.appendChild(button);
-      }
+        container.appendChild(tile);
+      });
+    }
 
-      // Reorder elements
-      tile.innerHTML = "";
-      tile.appendChild(icon.closest("th"));
-      tile.appendChild(title);
-      tile.appendChild(buttonsContainer);
+    // Enhance user's existing flair section
+    const userFlairSection = document.querySelector(
+      ".panel:nth-of-type(2) .flair"
+    );
+    if (userFlairSection) {
+      enhanceFlairSection(userFlairSection);
+    }
 
-      flairContainer.appendChild(tile);
-    });
+    // Enhance available flair section
+    const availableFlairSection = document.querySelector(
+      ".panel:nth-of-type(3) .flair"
+    );
+    if (availableFlairSection) {
+      enhanceFlairSection(availableFlairSection);
+    }
   }
 
   // Function to create the post profile
