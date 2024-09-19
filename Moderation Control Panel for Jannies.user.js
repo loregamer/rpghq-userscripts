@@ -468,6 +468,76 @@ SOFTWARE.
     document.head.appendChild(style);
   }
 
+  function enhanceUserFlairPage() {
+    const style = document.createElement("style");
+    style.innerHTML = `
+      .flair {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+      }
+      .flair-tile {
+        background-color: #36393f;
+        border: 1px solid #3e4247;
+        border-radius: 5px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 150px;
+      }
+      .flair-tile th {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .flair-tile .flair-icon {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+      .flair-tile h5 {
+        margin: 5px 0;
+        color: #ffffff;
+        text-align: center;
+        font-size: 0.9em;
+        line-height: 1.2;
+        word-wrap: break-word;
+        max-width: 100%;
+      }
+      .flair-buttons {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-top: auto;
+      }
+      .flair-buttons input[type="number"] {
+        width: 40px;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Simplify the flair tiles
+    document.querySelectorAll(".flair-tile").forEach((tile) => {
+      const title = tile.querySelector("h5").textContent;
+      const icon = tile.querySelector(".flair-icon");
+      const input = tile.querySelector('input[type="number"]');
+      const button = tile.querySelector('input[type="submit"]');
+
+      tile.innerHTML = `
+        <th>${icon.outerHTML}</th>
+        <h5>${title}</h5>
+        <div class="flair-buttons">
+          ${input.outerHTML}
+          ${button.outerHTML}
+        </div>
+      `;
+    });
+  }
+
   // Function to create the post profile
   function createPostProfile(authorElement, userId, username) {
     const postProfile = document.createElement("div");
@@ -1451,6 +1521,8 @@ SOFTWARE.
         enhanceTopicView();
       } else if (url.includes("mcp_queue")) {
         enhanceMcpQueue();
+      } else if (url.includes("mode=user_flair")) {
+        enhanceUserFlairPage();
       }
     }
 
