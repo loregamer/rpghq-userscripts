@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Moderator Control Panel Enhancer
 // @namespace    https://rpghq.org/
-// @version      4.2.1
+// @version      4.2.2
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -1557,6 +1557,32 @@ SOFTWARE.
     });
   }
 
+  function makeNotesUrlsClickable() {
+    function convertUrlsToLinks(element) {
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      element.innerHTML = element.innerHTML.replace(urlRegex, function (url) {
+        return `<a href="${url}" target="_blank">${url}</a>`;
+      });
+    }
+
+    function walkTextNodes(node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const container = document.createElement("span");
+        container.innerHTML = node.textContent;
+        convertUrlsToLinks(container);
+        if (container.innerHTML !== node.textContent) {
+          node.parentNode.replaceChild(container, node);
+        }
+      } else {
+        for (let child of node.childNodes) {
+          walkTextNodes(child);
+        }
+      }
+    }
+
+    walkTextNodes(document.body);
+  }
+
   function init() {
     const url = window.location.href;
 
@@ -1568,6 +1594,8 @@ SOFTWARE.
         enhanceMcpQueue();
       } else if (url.includes("mode=user_flair")) {
         enhanceUserFlairPage();
+      } else if (url.includes("i=notes")) {
+        makeNotesUrlsClickable();
       }
     }
 
