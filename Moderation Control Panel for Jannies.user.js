@@ -1134,48 +1134,75 @@ SOFTWARE.
         const postContent = await fetchPostContent(approveLink.href);
 
         if (postContent) {
-          // Extract topic and forum links
-          const moderationDD = row.querySelector("dd.moderation");
-          const topicLink = moderationDD.querySelector(
-            'a[href*="viewtopic.php"]'
-          );
-          const forumLink = moderationDD.querySelector(
-            'a[href*="viewforum.php"]'
-          );
-
-          // Remove the moderation dd
-          moderationDD.remove();
+          // Create a temporary div to parse the fetched HTML content
+          const tempDiv = document.createElement("div");
+          tempDiv.innerHTML = postContent;
 
           // Create a new div for the post content
           const postDiv = document.createElement("div");
-          postDiv.className = "post bg1";
-          postDiv.innerHTML = postContent;
+          postDiv.className = "post bg2";
+          postDiv.style.cssText = `
+            background-color: #282f3c !important;
+            border: 1px solid #303744 !important;
+            padding: 10px !important;
+            margin-bottom: 5px !important;
+            border-radius: 5px !important;
+            display: flex !important;
+            flex-direction: row !important;
+            position: relative !important;
+            width: calc(100% - 20px) !important;
+            margin-right: 10px !important;
+            overflow: hidden !important;
+          `;
 
-          // Remove the unwanted content
-          const postNotice = postDiv.querySelector(".post-notice.deleted");
-          if (postNotice) {
-            postNotice.remove();
+          // Create post profile
+          const authorElement = tempDiv.querySelector(".author a.username");
+          if (authorElement) {
+            const userId = authorElement.href.match(/u=(\d+)/)?.[1];
+            const username = authorElement.textContent;
+            const postProfile = createPostProfile(
+              authorElement,
+              userId,
+              username
+            );
+            postDiv.appendChild(postProfile);
           }
 
-          // Remove the "Expand view" link
-          const expandLink = postDiv.querySelector("#expand");
-          if (expandLink) {
-            expandLink.remove();
-          }
+          // Create inner div
+          const innerDiv = document.createElement("div");
+          innerDiv.className = "inner";
+          postDiv.appendChild(innerDiv);
 
-          // Ensure the post content is fully visible
-          const postDetails = postDiv.querySelector("#post_details");
-          if (postDetails) {
-            postDetails.style.display = "block";
-            postDetails.style.maxHeight = "none";
-            postDetails.style.overflow = "visible";
-          }
+          // Create postbody
+          const postbody = document.createElement("div");
+          postbody.className = "postbody";
+          postbody.id = `pr${postId}`;
+          postbody.style.cssText = `
+            flex-grow: 1 !important;
+            padding-left: 10px !important;
+            padding-right: 10px !important;
+            overflow: hidden;
+            position: relative;
+          `;
+          innerDiv.appendChild(postbody);
 
-          // Replace the h3 content with topic and forum links
-          const h3 = postDiv.querySelector("h3");
-          if (h3 && topicLink && forumLink) {
-            h3.innerHTML = `Topic: ${topicLink.outerHTML} | Forum: ${forumLink.outerHTML}`;
+          // Create author block
+          const authorBlock = document.createElement("p");
+          authorBlock.className = "author";
+          const postDate = tempDiv.querySelector(".author");
+          if (postDate) {
+            authorBlock.innerHTML = postDate.innerHTML;
           }
+          postbody.appendChild(authorBlock);
+
+          // Create content
+          const contentDiv = document.createElement("div");
+          contentDiv.className = "content";
+          const originalContent = tempDiv.querySelector(".content");
+          if (originalContent) {
+            contentDiv.innerHTML = originalContent.innerHTML;
+          }
+          postbody.appendChild(contentDiv);
 
           // Replace the content of the li.row
           row.innerHTML = "";
@@ -1188,7 +1215,7 @@ SOFTWARE.
           row.appendChild(checkboxDD);
 
           // Apply existing styles and modifications
-          modifyPostStructure(postDiv);
+          modifyPostAuthorLine(postDiv);
           createPlaceholders(postDiv);
         }
       }
