@@ -635,6 +635,7 @@ SOFTWARE.
 
       // Load the avatar lazily
       setTimeout(() => {
+        console.log("Loading avatar for user ID:", userId);
         findAvatarUrl(userId, avatarImg);
       }, 0);
 
@@ -1153,16 +1154,27 @@ SOFTWARE.
             overflow: hidden !important;
           `;
 
-          const authorElement = tempDiv.querySelector(".author a.username");
+          const authorElement = tempDiv.querySelector(
+            ".author a.username, .author a.username-coloured"
+          );
           if (authorElement) {
             const userId = authorElement.href.match(/u=(\d+)/)?.[1];
             const username = authorElement.textContent;
+
             const postProfile = createPostProfile(
               authorElement,
               userId,
               username
             );
             postDiv.appendChild(postProfile);
+
+            const avatarImg = postProfile.querySelector("img.avatar");
+
+            // Load the avatar lazily
+            setTimeout(() => {
+              console.log("Loading avatar for user ID:", userId);
+              findAvatarUrl(userId, avatarImg);
+            }, 0);
           }
 
           const innerDiv = document.createElement("div");
