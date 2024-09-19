@@ -484,7 +484,7 @@ SOFTWARE.
         display: flex;
         flex-direction: column;
         align-items: center;
-        height: 180px; /* Increased height to accommodate longer names */
+        height: 180px;
       }
       .flair-tile th {
         width: 80px;
@@ -506,7 +506,7 @@ SOFTWARE.
         line-height: 1.2;
         word-wrap: break-word;
         max-width: 100%;
-        height: 2.4em; /* Set a fixed height for two lines of text */
+        height: 2.4em;
         overflow: hidden;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -538,22 +538,36 @@ SOFTWARE.
     // Get the parent container
     const flairContainer = document.querySelector(".flair");
 
-    // Remove existing tiles and append sorted tiles
+    // Clear the container
     flairContainer.innerHTML = "";
-    flairTiles.forEach((tile) => {
-      const title = tile.querySelector("h5").textContent;
-      const icon = tile.querySelector(".flair-icon");
-      const input = tile.querySelector('input[type="number"]');
-      const button = tile.querySelector('input[type="submit"]');
 
-      tile.innerHTML = `
-        <th>${icon.outerHTML}</th>
-        <h5>${title}</h5>
-        <div class="flair-buttons">
-          ${input.outerHTML}
-          ${button.outerHTML}
-        </div>
-      `;
+    // Append sorted tiles
+    flairTiles.forEach((tile) => {
+      // Adjust the layout of the existing tile without recreating it
+      tile.style.display = "flex";
+      tile.style.flexDirection = "column";
+      tile.style.alignItems = "center";
+      tile.style.height = "180px";
+
+      const title = tile.querySelector("h5");
+      const icon = tile.querySelector(".flair-icon");
+      const buttonsContainer =
+        tile.querySelector(".flair-buttons") || document.createElement("div");
+
+      if (!buttonsContainer.classList.contains("flair-buttons")) {
+        buttonsContainer.className = "flair-buttons";
+        const input = tile.querySelector('input[type="number"]');
+        const button = tile.querySelector('input[type="submit"]');
+        buttonsContainer.appendChild(input);
+        buttonsContainer.appendChild(button);
+      }
+
+      // Reorder elements
+      tile.innerHTML = "";
+      tile.appendChild(icon.closest("th"));
+      tile.appendChild(title);
+      tile.appendChild(buttonsContainer);
+
       flairContainer.appendChild(tile);
     });
   }
