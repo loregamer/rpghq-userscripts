@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.4.1
+// @version      3.4.2
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -323,6 +323,40 @@ SOFTWARE.
     return Promise.all(threadDataPromises);
   }
 
+  function createCustomThreadRowHTML(
+    threadId,
+    title,
+    forumName,
+    forumUrl,
+    errorMessage = ""
+  ) {
+    const titleWithError = errorMessage ? `${title} (${errorMessage})` : title;
+    const forumInfo =
+      forumName && forumUrl
+        ? `» in <a href="${forumUrl}">${forumName}</a>`
+        : "";
+
+    return `
+      <li class="row bg1" id="pinned-thread-${threadId}">
+        <dl class="row-item topic_read">
+          <dt>
+            <div class="list-inner">
+              <a href="https://rpghq.org/forums/viewtopic.php?t=${threadId}" class="topictitle">${titleWithError}</a>
+              ${
+                forumInfo
+                  ? `<br><span class="responsive-hide">${forumInfo}</span>`
+                  : ""
+              }
+            </div>
+          </dt>
+          <dd class="posts">-</dd>
+          <dd class="views">-</dd>
+          <dd class="lastpost"><span>-</span></dd>
+        </dl>
+      </li>
+    `;
+  }
+
   async function fetchThreadData(threadId, threadInfo) {
     try {
       const { title, forumUrl, forumName, status } =
@@ -334,15 +368,30 @@ SOFTWARE.
         const sortableTitle = title.replace(/^[【】\[\]\s]+/, "");
         return { threadId, title, sortableTitle, rowHTML };
       } else {
-        throw new Error(`No row HTML found for thread ${threadId}`);
+        // Create a custom row HTML for threads that can't be found in the forum list
+        rowHTML = createCustomThreadRowHTML(
+          threadId,
+          title,
+          forumName,
+          forumUrl,
+          "Thread not found in forum list"
+        );
+        const sortableTitle = title.replace(/^[【】\[\]\s]+/, "");
+        return { threadId, title, sortableTitle, rowHTML };
       }
     } catch (error) {
-      console.error(`Error processing thread ${threadId}:`, error);
+      const errorMessage = `Error: ${error.message || "Unknown error"}`;
       return {
         threadId,
         title: `Error loading thread ${threadId}`,
         sortableTitle: `Error loading thread ${threadId}`,
-        rowHTML: createErrorListItemHTML(threadId),
+        rowHTML: createCustomThreadRowHTML(
+          threadId,
+          `Error loading thread ${threadId}`,
+          "",
+          "",
+          errorMessage
+        ),
       };
     }
   }
@@ -372,27 +421,56 @@ SOFTWARE.
     return { title, forumUrl, forumName, status };
   }
 
-  async function fetchThreadRowFromForum(threadTitle, forumUrl, page = 1) {
+  async function fetchThreadRowFromForum(
+    threadTitle,
+    forumUrl,
+    page = 1,
+    maxPages = 5
+  ) {
     const url = `${forumUrl}&start=${(page - 1) * 25}`;
-    const html = await util.fetchHtml(url);
-    const doc = util.parseHtml(html);
 
-    const threadRows = doc.querySelectorAll(".topiclist.topics .row");
-    for (const row of threadRows) {
-      const rowTitle = row.querySelector(".topictitle").textContent.trim();
-      if (rowTitle === threadTitle) {
-        return row.outerHTML;
+    try {
+      const html = await util.fetchHtml(url);
+      const doc = util.parseHtml(html);
+
+      // Check if we're redirected to a login page or error page
+      const loginForm = doc.querySelector(
+        'form[action="./ucp.php?mode=login"]'
+      );
+      if (loginForm) {
+        throw new Error(
+          "Redirected to login page. User might not be authenticated."
+        );
       }
-    }
 
-    // If thread not found on this page, check the next page
-    const nextPageLink = doc.querySelector(".pagination .next a");
-    if (nextPageLink) {
-      return fetchThreadRowFromForum(threadTitle, forumUrl, page + 1);
-    }
+      const threadRows = doc.querySelectorAll(".topiclist.topics .row");
 
-    // If no next page, thread not found
-    return null;
+      for (const row of threadRows) {
+        const rowTitleElement = row.querySelector(".topictitle");
+        if (rowTitleElement) {
+          const rowTitle = rowTitleElement.textContent.trim();
+          if (rowTitle === threadTitle) {
+            return row.outerHTML;
+          }
+        }
+      }
+
+      // If thread not found on this page, check the next page
+      const nextPageLink = doc.querySelector(".pagination .next a");
+      if (nextPageLink && page < maxPages) {
+        return fetchThreadRowFromForum(
+          threadTitle,
+          forumUrl,
+          page + 1,
+          maxPages
+        );
+      }
+
+      // If no next page or max pages reached, thread not found
+      throw new Error(`Thread not found after checking ${page} pages`);
+    } catch (error) {
+      throw new Error(`Error fetching thread row: ${error.message}`);
+    }
   }
 
   function modifyRowHTML(rowHTML, threadId, status, forumName, forumUrl) {
