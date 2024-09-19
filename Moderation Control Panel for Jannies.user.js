@@ -1182,6 +1182,7 @@ SOFTWARE.
             width: 100%;
             overflow: hidden;
             position: relative;
+            padding-right: 30px; /* Add right padding to make room for the checkbox */
           `;
           innerDiv.appendChild(postbody);
 
@@ -1192,16 +1193,17 @@ SOFTWARE.
             position: absolute;
             top: 0;
             right: 0;
+            margin: 0;
+            padding: 0;
           `;
           postButtons.innerHTML = `
-            <li></li>
             <li>
               <label for="post_id_list_select_${postId}" style="display: flex; align-items: center; justify-content: flex-end;">
                 <input type="checkbox" id="post_id_list_select_${postId}" name="post_id_list[]" value="${postId}">
               </label>
             </li>
           `;
-          postbody.appendChild(postButtons);
+          innerDiv.appendChild(postButtons); // Append to innerDiv instead of postbody
 
           const authorBlock = document.createElement("p");
           authorBlock.className = "author";
