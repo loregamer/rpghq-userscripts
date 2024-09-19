@@ -1134,16 +1134,14 @@ SOFTWARE.
         const postContent = await fetchPostContent(approveLink.href);
 
         if (postContent) {
-          // Create a temporary div to parse the fetched HTML content
           const tempDiv = document.createElement("div");
           tempDiv.innerHTML = postContent;
 
-          // Create a new div for the post content
           const postDiv = document.createElement("div");
           postDiv.className = "post bg2";
           postDiv.style.cssText = `
-            background-color: #282f3c !important;
-            border: 1px solid #303744 !important;
+            background-color: rgb(32, 38, 51) !important;
+            border: 1px solid rgb(48, 55, 68) !important;
             padding: 10px !important;
             margin-bottom: 5px !important;
             border-radius: 5px !important;
@@ -1155,7 +1153,6 @@ SOFTWARE.
             overflow: hidden !important;
           `;
 
-          // Create post profile
           const authorElement = tempDiv.querySelector(".author a.username");
           if (authorElement) {
             const userId = authorElement.href.match(/u=(\d+)/)?.[1];
@@ -1168,25 +1165,44 @@ SOFTWARE.
             postDiv.appendChild(postProfile);
           }
 
-          // Create inner div
           const innerDiv = document.createElement("div");
           innerDiv.className = "inner";
+          innerDiv.style.cssText = `
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding-left: 10px;
+          `;
           postDiv.appendChild(innerDiv);
 
-          // Create postbody
           const postbody = document.createElement("div");
           postbody.className = "postbody";
           postbody.id = `pr${postId}`;
           postbody.style.cssText = `
-            flex-grow: 1 !important;
-            padding-left: 10px !important;
-            padding-right: 10px !important;
+            width: 100%;
             overflow: hidden;
             position: relative;
           `;
           innerDiv.appendChild(postbody);
 
-          // Create author block
+          const postButtons = document.createElement("ul");
+          postButtons.className = "post-buttons";
+          postButtons.style.cssText = `
+            display: block;
+            position: absolute;
+            top: 0;
+            right: 0;
+          `;
+          postButtons.innerHTML = `
+            <li></li>
+            <li>
+              <label for="post_id_list_select_${postId}" style="display: flex; align-items: center; justify-content: flex-end;">
+                <input type="checkbox" id="post_id_list_select_${postId}" name="post_id_list[]" value="${postId}">
+              </label>
+            </li>
+          `;
+          postbody.appendChild(postButtons);
+
           const authorBlock = document.createElement("p");
           authorBlock.className = "author";
           const postDate = tempDiv.querySelector(".author");
@@ -1195,26 +1211,18 @@ SOFTWARE.
           }
           postbody.appendChild(authorBlock);
 
-          // Create content
           const contentDiv = document.createElement("div");
           contentDiv.className = "content";
+          contentDiv.id = `message_${postId}`;
           const originalContent = tempDiv.querySelector(".content");
           if (originalContent) {
             contentDiv.innerHTML = originalContent.innerHTML;
           }
           postbody.appendChild(contentDiv);
 
-          // Replace the content of the li.row
           row.innerHTML = "";
           row.appendChild(postDiv);
 
-          // Add the checkbox back
-          const checkboxDD = document.createElement("dd");
-          checkboxDD.className = "mark";
-          checkboxDD.innerHTML = `<input type="checkbox" name="post_id_list[]" value="${postId}">`;
-          row.appendChild(checkboxDD);
-
-          // Apply existing styles and modifications
           modifyPostAuthorLine(postDiv);
           createPlaceholders(postDiv);
         }
