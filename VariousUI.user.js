@@ -332,8 +332,11 @@ SOFTWARE.
 
   const uiTweaks = {
     init() {
-      this.addUITweaksDropdown();
-      this.applyCustomStyles();
+      // Only add the UI Tweaks dropdown if the URL contains "ucp.php"
+      if (window.location.href.includes("ucp.php")) {
+        this.addUITweaksDropdown();
+        this.applyCustomStyles();
+      }
     },
 
     addUITweaksDropdown() {
