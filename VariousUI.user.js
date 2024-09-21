@@ -44,6 +44,39 @@
         }
       }
     },
+
+    createToggleItem(id, text, isEnabled, onClickHandler) {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <a href="#" role="menuitem" class="ui-tweak-toggle">
+          <span class="toggle-switch">
+            <i class="icon ${
+              isEnabled ? "fa-toggle-on" : "fa-toggle-off"
+            } fa-fw" aria-hidden="true"></i>
+          </span>
+          <span class="toggle-text">${text}</span>
+        </a>
+      `;
+      const link = li.querySelector("a");
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        onClickHandler();
+        this.updateToggleUI(link, !isEnabled);
+      });
+      return li;
+    },
+
+    updateToggleUI(element, isEnabled) {
+      const icon = element.querySelector(".toggle-switch i");
+      if (icon) {
+        icon.className = `icon ${
+          isEnabled ? "fa-toggle-on" : "fa-toggle-off"
+        } fa-fw`;
+      }
+      element.title = isEnabled
+        ? `Disable ${element.textContent.trim()}`
+        : `Enable ${element.textContent.trim()}`;
+    },
   };
 
   const betterQuotes = {
@@ -55,37 +88,37 @@
 
     applyStyles() {
       utils.applyStyles(`
-          blockquote {
-            background-color: #2a2e36;
-            border-left: 3px solid #4a90e2;
-            padding: 10px;
-            margin: 10px 0;
-            font-size: 0.9em;
-            line-height: 1.4;
-          }
-          blockquote cite {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #4a90e2;
-          }
-          .quote-divider {
-            border: none;
-            border-top: 1px solid #3a3f4c;
-            margin: 10px 0;
-          }
-          .quote-toggle {
-            cursor: pointer;
-            color: #4a90e2;
-            font-size: 0.8em;
-            margin-top: 5px;
-            display: block;
-          }
-          .nested-quote-content {
-            margin-top: 5px;
-            margin-bottom: 5px;
-          }
-        `);
+        blockquote {
+          background-color: #2a2e36;
+          border-left: 3px solid #4a90e2;
+          padding: 10px;
+          margin: 10px 0;
+          font-size: 0.9em;
+          line-height: 1.4;
+        }
+        blockquote cite {
+          display: block;
+          margin-bottom: 5px;
+          font-weight: bold;
+          color: #4a90e2;
+        }
+        .quote-divider {
+          border: none;
+          border-top: 1px solid #3a3f4c;
+          margin: 10px 0;
+        }
+        .quote-toggle {
+          cursor: pointer;
+          color: #4a90e2;
+          font-size: 0.8em;
+          margin-top: 5px;
+          display: block;
+        }
+        .nested-quote-content {
+          margin-top: 5px;
+          margin-bottom: 5px;
+        }
+      `);
     },
 
     processQuoteBoxes() {
@@ -167,41 +200,46 @@
       dropdownLi.className = "dropdown-container dropdown-right rightside";
       dropdownLi.style.marginRight = "5px";
       dropdownLi.innerHTML = `
-          <a href="#" class="dropdown-trigger">
-            <i class="icon fa-cogs fa-fw" aria-hidden="true"></i
-            ><span>UI Tweaks</span>
-          </a>
-          <div class="dropdown">
-            <div class="pointer"><div class="pointer-inner"></div></div>
-            <ul class="dropdown-contents" role="menu">
-              <li>
-                <a id="toggle-better-quote-boxes" href="#" role="menuitem">
-                  <i class="icon fa-fw" aria-hidden="true"></i>
-                  <span></span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        `;
+        <a href="#" class="dropdown-trigger">
+          <i class="icon fa-cogs fa-fw" aria-hidden="true"></i>
+          <span>UI Tweaks</span>
+        </a>
+        <div class="dropdown">
+          <div class="pointer"><div class="pointer-inner"></div></div>
+          <ul class="dropdown-contents" role="menu">
+          </ul>
+        </div>
+      `;
 
-      navMain.insertBefore(dropdownLi, notificationsLi);
+      const dropdownContents = dropdownLi.querySelector(".dropdown-contents");
 
-      const toggleButton = dropdownLi.querySelector(
-        "#toggle-better-quote-boxes"
-      );
-      toggleButton.addEventListener(
-        "click",
+      // Add toggle items for each setting
+      this.addToggleItem(
+        dropdownContents,
+        "betterQuoteBoxes",
+        "Better Quote Boxes",
         this.toggleBetterQuoteBoxes.bind(this)
       );
+      // Add more toggle items here as needed
 
-      this.updateToggleUI();
+      navMain.insertBefore(dropdownLi, notificationsLi);
     },
 
-    toggleBetterQuoteBoxes(e) {
-      e.preventDefault();
-      settings.betterQuoteBoxes = !settings.betterQuoteBoxes;
-      utils.saveSettings();
-      this.updateToggleUI();
+    addToggleItem(container, settingKey, text, toggleFunction) {
+      const toggleItem = utils.createToggleItem(
+        `toggle-${settingKey}`,
+        text,
+        settings[settingKey],
+        () => {
+          settings[settingKey] = !settings[settingKey];
+          utils.saveSettings();
+          toggleFunction();
+        }
+      );
+      container.appendChild(toggleItem);
+    },
+
+    toggleBetterQuoteBoxes() {
       if (settings.betterQuoteBoxes) {
         betterQuotes.init();
       } else {
@@ -209,70 +247,23 @@
       }
     },
 
-    updateToggleUI() {
-      const toggleButton = document.getElementById("toggle-better-quote-boxes");
-      if (toggleButton) {
-        const icon = toggleButton.querySelector("i");
-        const text = toggleButton.querySelector("span");
-        if (icon && text) {
-          icon.className = settings.betterQuoteBoxes
-            ? "icon fa-toggle-on fa-fw"
-            : "icon fa-toggle-off fa-fw";
-          text.textContent = "Better Quote Boxes";
-          toggleButton.title = settings.betterQuoteBoxes
-            ? "Disable Better Quote Boxes"
-            : "Enable Better Quote Boxes";
-        }
-      }
-    },
-
     applyCustomStyles() {
       utils.applyStyles(`
-          .toggle-setting {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-          }
-          .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 30px;
-            height: 17px;
-          }
-          .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-          }
-          .toggle-switch .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-          }
-          .toggle-switch .slider:before {
-            position: absolute;
-            content: "";
-            height: 13px;
-            width: 13px;
-            left: 2px;
-            bottom: 2px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-          }
-          .toggle-switch input:checked + .slider {
-            background-color: #2196F3;
-          }
-          .toggle-switch input:checked + .slider:before {
-            transform: translateX(13px);
-          }
-        `);
+        .ui-tweak-toggle {
+          display: flex !important;
+          align-items: center;
+          padding: 5px 10px;
+        }
+        .ui-tweak-toggle .toggle-switch {
+          margin-right: 10px;
+        }
+        .ui-tweak-toggle .toggle-text {
+          flex-grow: 1;
+        }
+        .ui-tweak-toggle:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+      `);
     },
   };
 
