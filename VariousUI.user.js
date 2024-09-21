@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.2.1
+// @version      1.2.2
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        GM_setValue
@@ -282,8 +282,10 @@ SOFTWARE.
 
     checkForumLastPost(forumRow) {
       const forumLink = forumRow.querySelector("a.forumtitle");
-      if (forumLink) {
+      const lastPostTitle = forumRow.querySelector(".lastpost .lastsubject");
+      if (forumLink && lastPostTitle) {
         const forumUrl = forumLink.href;
+        const lastPostText = lastPostTitle.textContent.trim();
         fetch(forumUrl)
           .then((response) => response.text())
           .then((html) => {
@@ -292,9 +294,14 @@ SOFTWARE.
             const topicRows = doc.querySelectorAll(
               '.row-item[class*="topic_"]'
             );
-            const hasUnreadTopic = Array.from(topicRows).some((row) =>
-              this.isUnreadTopic(row)
-            );
+            const hasUnreadTopic = Array.from(topicRows).some((row) => {
+              const topicTitle = row.querySelector(".topictitle");
+              return (
+                this.isUnreadTopic(row) &&
+                topicTitle &&
+                topicTitle.textContent.trim() === lastPostText
+              );
+            });
             if (hasUnreadTopic) {
               this.updateLastPostButton(forumRow);
             }
