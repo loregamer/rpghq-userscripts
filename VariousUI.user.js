@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        GM_setValue
@@ -42,7 +42,8 @@ SOFTWARE.
   const settings = {
     betterQuoteBoxes: true,
     betterFileLinks: true,
-    unreadLastPostButton: true, // Add this new setting
+    unreadLastPostButton: true,
+    replaceReadTopicLinks: true,
   };
 
   const utils = {
@@ -305,6 +306,30 @@ SOFTWARE.
     },
   };
 
+  const replaceReadTopicLinks = {
+    init() {
+      this.processTopicRows();
+    },
+
+    processTopicRows() {
+      const topicRows = document.querySelectorAll(
+        '.row-item[class*="topic_read"]'
+      );
+      topicRows.forEach(this.replaceLink);
+    },
+
+    replaceLink(row) {
+      const topicLink = row.querySelector(".topictitle");
+      const lastPostLink = row.querySelector(
+        '.lastpost a[title="Go to last post"]'
+      );
+
+      if (topicLink && lastPostLink) {
+        topicLink.href = lastPostLink.href;
+      }
+    },
+  };
+
   const uiTweaks = {
     init() {
       this.addUITweaksDropdown();
@@ -357,6 +382,12 @@ SOFTWARE.
         "unreadLastPostButton",
         "Unread Last Post Button",
         this.toggleUnreadLastPostButton.bind(this)
+      );
+      this.addToggleItem(
+        dropdownContents,
+        "replaceReadTopicLinks",
+        "Jump to Last Read",
+        this.toggleReplaceReadTopicLinks.bind(this)
       );
       // Add more toggle items here as needed
 
@@ -423,6 +454,15 @@ SOFTWARE.
     toggleUnreadLastPostButton() {
       if (settings.unreadLastPostButton) {
         unreadLastPostButton.init();
+      } else {
+        // Revert changes if needed
+        window.location.reload();
+      }
+    },
+
+    toggleReplaceReadTopicLinks() {
+      if (settings.replaceReadTopicLinks) {
+        replaceReadTopicLinks.init();
       } else {
         // Revert changes if needed
         window.location.reload();
@@ -503,6 +543,9 @@ SOFTWARE.
     }
     if (settings.unreadLastPostButton) {
       unreadLastPostButton.init();
+    }
+    if (settings.replaceReadTopicLinks) {
+      replaceReadTopicLinks.init();
     }
   }
 
