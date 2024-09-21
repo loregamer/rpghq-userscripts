@@ -28,7 +28,8 @@
     dropdownLi.style.marginRight = "5px"; // Add some space between UI Tweaks and Notifications
     dropdownLi.innerHTML = `
       <a href="#" class="dropdown-trigger">
-        <i class="icon fa-cogs fa-fw" aria-hidden="true"></i><span>UI Tweaks</span>
+        <i class="icon fa-cogs fa-fw" aria-hidden="true"></i
+        ><span>UI Tweaks</span>
       </a>
       <div class="dropdown">
         <div class="pointer"><div class="pointer-inner"></div></div>
@@ -36,10 +37,10 @@
           <li>
             <a href="#" id="toggle-better-quote-boxes" class="toggle-setting">
               <span class="setting-name">Better Quote Boxes</span>
-              <span class="toggle-switch">
-                <input type="checkbox" id="better-quote-boxes-checkbox">
-                <label for="better-quote-boxes-checkbox"></label>
-              </span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="better-quote-boxes-checkbox" />
+                <span class="slider"></span>
+              </label>
             </a>
           </li>
         </ul>
@@ -68,8 +69,6 @@
       processQuoteBoxes();
       removeReadMoreButtons();
       applyCustomStyles();
-    } else {
-      // Implement reverting changes if needed
     }
     updateToggleUI(checkbox, settings.betterQuoteBoxes);
   }
@@ -77,6 +76,17 @@
   function updateToggleUI(checkbox, enabled) {
     if (checkbox) {
       checkbox.checked = enabled;
+    }
+  }
+
+  function saveSettings() {
+    GM_setValue("rpghqUITweaks", JSON.stringify(settings));
+  }
+
+  function loadSettings() {
+    const savedSettings = GM_getValue("rpghqUITweaks");
+    if (savedSettings) {
+      settings = JSON.parse(savedSettings);
     }
   }
 
@@ -91,54 +101,9 @@
     }
   }
 
-  function applyCustomStyles() {
+  function applyQuoteBoxStyles() {
     const style = document.createElement("style");
     style.textContent = `
-      .toggle-setting {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 40px;
-        height: 20px;
-      }
-      .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-      }
-      .toggle-switch label {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #ccc;
-        transition: .4s;
-        border-radius: 34px;
-      }
-      .toggle-switch label:before {
-        position: absolute;
-        content: "";
-        height: 16px;
-        width: 16px;
-        left: 2px;
-        bottom: 2px;
-        background-color: white;
-        transition: .4s;
-        border-radius: 50%;
-      }
-      .toggle-switch input:checked + label {
-        background-color: #2196F3;
-      }
-      .toggle-switch input:checked + label:before {
-        transform: translateX(20px);
-      }
-      /* Existing styles for quote boxes */
       blockquote {
         background-color: #2a2e36;
         border-left: 3px solid #4a90e2;
@@ -168,6 +133,57 @@
       .nested-quote-content {
         margin-top: 5px;
         margin-bottom: 5px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function applyCustomStyles() {
+    const style = document.createElement("style");
+    style.textContent = `
+      .toggle-setting {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 30px;
+        height: 17px;
+      }
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .toggle-switch .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+      }
+      .toggle-switch .slider:before {
+        position: absolute;
+        content: "";
+        height: 13px;
+        width: 13px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+      }
+      .toggle-switch input:checked + .slider {
+        background-color: #2196F3;
+      }
+      .toggle-switch input:checked + .slider:before {
+        transform: translateX(13px);
       }
     `;
     document.head.appendChild(style);
@@ -257,10 +273,11 @@
     addUITweaksDropdown();
     applyCustomStyles();
     if (settings.betterQuoteBoxes) {
+      applyQuoteBoxStyles();
       processQuoteBoxes();
       removeReadMoreButtons();
+      scrollToPost();
     }
-    scrollToPost();
   }
 
   if (
