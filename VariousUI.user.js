@@ -35,12 +35,9 @@
         <div class="pointer"><div class="pointer-inner"></div></div>
         <ul class="dropdown-contents" role="menu">
           <li>
-            <a href="#" id="toggle-better-quote-boxes" class="toggle-setting">
-              <span class="setting-name">Better Quote Boxes</span>
-              <label class="toggle-switch">
-                <input type="checkbox" id="better-quote-boxes-checkbox" />
-                <span class="slider"></span>
-              </label>
+            <a id="toggle-better-quote-boxes" href="#" role="menuitem">
+              <i class="icon fa-fw" aria-hidden="true"></i>
+              <span></span>
             </a>
           </li>
         </ul>
@@ -49,33 +46,46 @@
 
     navMain.insertBefore(dropdownLi, notificationsLi);
 
-    document
-      .getElementById("toggle-better-quote-boxes")
-      .addEventListener("click", toggleBetterQuoteBoxes);
+    // Add event listener to the toggle button
+    const toggleButton = dropdownLi.querySelector("#toggle-better-quote-boxes");
+    toggleButton.addEventListener("click", toggleBetterQuoteBoxes);
 
-    // Apply initial state
-    updateToggleUI(
-      document.getElementById("better-quote-boxes-checkbox"),
-      settings.betterQuoteBoxes
-    );
+    updateToggleUI(); // Call this to set the initial state
+    console.log("UI Tweaks dropdown added");
   }
 
   function toggleBetterQuoteBoxes(e) {
     e.preventDefault();
-    const checkbox = document.getElementById("better-quote-boxes-checkbox");
     settings.betterQuoteBoxes = !settings.betterQuoteBoxes;
     saveSettings();
+    updateToggleUI(); // Update UI immediately
     if (settings.betterQuoteBoxes) {
       processQuoteBoxes();
       removeReadMoreButtons();
-      applyCustomStyles();
+    } else {
+      // Implement reverting changes if needed
     }
-    updateToggleUI(checkbox, settings.betterQuoteBoxes);
+    console.log("Better Quote Boxes toggled:", settings.betterQuoteBoxes);
   }
 
-  function updateToggleUI(checkbox, enabled) {
-    if (checkbox) {
-      checkbox.checked = enabled;
+  function updateToggleUI() {
+    const toggleButton = document.getElementById("toggle-better-quote-boxes");
+    if (toggleButton) {
+      const icon = toggleButton.querySelector("i");
+      const text = toggleButton.querySelector("span");
+      if (icon && text) {
+        if (settings.betterQuoteBoxes) {
+          icon.className = "icon fa-toggle-on fa-fw";
+          text.textContent = "Better Quote Boxes";
+          toggleButton.title = "Disable Better Quote Boxes";
+        } else {
+          icon.className = "icon fa-toggle-off fa-fw";
+          text.textContent = "Better Quote Boxes";
+          toggleButton.title = "Enable Better Quote Boxes";
+        }
+      }
+    } else {
+      console.log("Toggle button not found in updateToggleUI");
     }
   }
 
