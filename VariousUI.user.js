@@ -10,283 +10,278 @@
 (function () {
   "use strict";
 
-  let settings = {
+  const settings = {
     betterQuoteBoxes: false,
   };
 
-  function addUITweaksDropdown() {
-    const navMain = document.getElementById("nav-main");
-    if (!navMain) return;
+  const utils = {
+    saveSettings() {
+      localStorage.setItem("rpghqUITweaks", JSON.stringify(settings));
+    },
 
-    const notificationsLi = document.querySelector(
-      "#nav-main .dropdown-container.dropdown-right.rightside"
-    );
-    if (!notificationsLi) return;
+    loadSettings() {
+      const savedSettings = localStorage.getItem("rpghqUITweaks");
+      if (savedSettings) {
+        Object.assign(settings, JSON.parse(savedSettings));
+      }
+    },
 
-    const dropdownLi = document.createElement("li");
-    dropdownLi.className = "dropdown-container dropdown-right rightside";
-    dropdownLi.style.marginRight = "5px"; // Add some space between UI Tweaks and Notifications
-    dropdownLi.innerHTML = `
-      <a href="#" class="dropdown-trigger">
-        <i class="icon fa-cogs fa-fw" aria-hidden="true"></i
-        ><span>UI Tweaks</span>
-      </a>
-      <div class="dropdown">
-        <div class="pointer"><div class="pointer-inner"></div></div>
-        <ul class="dropdown-contents" role="menu">
-          <li>
-            <a id="toggle-better-quote-boxes" href="#" role="menuitem">
-              <i class="icon fa-fw" aria-hidden="true"></i>
-              <span></span>
-            </a>
-          </li>
-        </ul>
-      </div>
-    `;
+    applyStyles(styles) {
+      const style = document.createElement("style");
+      style.textContent = styles;
+      document.head.appendChild(style);
+    },
 
-    navMain.insertBefore(dropdownLi, notificationsLi);
-
-    // Add event listener to the toggle button
-    const toggleButton = dropdownLi.querySelector("#toggle-better-quote-boxes");
-    toggleButton.addEventListener("click", toggleBetterQuoteBoxes);
-
-    updateToggleUI(); // Call this to set the initial state
-    console.log("UI Tweaks dropdown added");
-  }
-
-  function toggleBetterQuoteBoxes(e) {
-    e.preventDefault();
-    settings.betterQuoteBoxes = !settings.betterQuoteBoxes;
-    saveSettings();
-    updateToggleUI(); // Update UI immediately
-    if (settings.betterQuoteBoxes) {
-      processQuoteBoxes();
-      removeReadMoreButtons();
-    } else {
-      // Implement reverting changes if needed
-    }
-    console.log("Better Quote Boxes toggled:", settings.betterQuoteBoxes);
-  }
-
-  function updateToggleUI() {
-    const toggleButton = document.getElementById("toggle-better-quote-boxes");
-    if (toggleButton) {
-      const icon = toggleButton.querySelector("i");
-      const text = toggleButton.querySelector("span");
-      if (icon && text) {
-        if (settings.betterQuoteBoxes) {
-          icon.className = "icon fa-toggle-on fa-fw";
-          text.textContent = "Better Quote Boxes";
-          toggleButton.title = "Disable Better Quote Boxes";
-        } else {
-          icon.className = "icon fa-toggle-off fa-fw";
-          text.textContent = "Better Quote Boxes";
-          toggleButton.title = "Enable Better Quote Boxes";
+    scrollToPost() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const postId = urlParams.get("p") || window.location.hash.slice(1);
+      if (postId) {
+        const postElement = document.getElementById(postId);
+        if (postElement) {
+          setTimeout(() => {
+            postElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          }, 100);
         }
       }
-    } else {
-      console.log("Toggle button not found in updateToggleUI");
-    }
-  }
+    },
+  };
 
-  function saveSettings() {
-    GM_setValue("rpghqUITweaks", JSON.stringify(settings));
-  }
+  const betterQuotes = {
+    init() {
+      this.applyStyles();
+      this.processQuoteBoxes();
+      this.removeReadMoreButtons();
+    },
 
-  function loadSettings() {
-    const savedSettings = GM_getValue("rpghqUITweaks");
-    if (savedSettings) {
-      settings = JSON.parse(savedSettings);
-    }
-  }
+    applyStyles() {
+      utils.applyStyles(`
+          blockquote {
+            background-color: #2a2e36;
+            border-left: 3px solid #4a90e2;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 0.9em;
+            line-height: 1.4;
+          }
+          blockquote cite {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #4a90e2;
+          }
+          .quote-divider {
+            border: none;
+            border-top: 1px solid #3a3f4c;
+            margin: 10px 0;
+          }
+          .quote-toggle {
+            cursor: pointer;
+            color: #4a90e2;
+            font-size: 0.8em;
+            margin-top: 5px;
+            display: block;
+          }
+          .nested-quote-content {
+            margin-top: 5px;
+            margin-bottom: 5px;
+          }
+        `);
+    },
 
-  function saveSettings() {
-    localStorage.setItem("rpghqUITweaks", JSON.stringify(settings));
-  }
+    processQuoteBoxes() {
+      const allQuotes = document.querySelectorAll("blockquote");
+      allQuotes.forEach(this.processQuote.bind(this));
+    },
 
-  function loadSettings() {
-    const savedSettings = localStorage.getItem("rpghqUITweaks");
-    if (savedSettings) {
-      settings = JSON.parse(savedSettings);
-    }
-  }
+    processQuote(quoteBox) {
+      const isNested = quoteBox.closest("blockquote blockquote") !== null;
+      if (isNested) {
+        const citation = quoteBox.querySelector("cite");
+        const nestedContent = document.createElement("div");
+        nestedContent.className = "nested-quote-content";
 
-  function applyQuoteBoxStyles() {
-    const style = document.createElement("style");
-    style.textContent = `
-      blockquote {
-        background-color: #2a2e36;
-        border-left: 3px solid #4a90e2;
-        padding: 10px;
-        margin: 10px 0;
-        font-size: 0.9em;
-        line-height: 1.4;
-      }
-      blockquote cite {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-        color: #4a90e2;
-      }
-      .quote-divider {
-        border: none;
-        border-top: 1px solid #3a3f4c;
-        margin: 10px 0;
-      }
-      .quote-toggle {
-        cursor: pointer;
-        color: #4a90e2;
-        font-size: 0.8em;
-        margin-top: 5px;
-        display: block;
-      }
-      .nested-quote-content {
-        margin-top: 5px;
-        margin-bottom: 5px;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  function applyCustomStyles() {
-    const style = document.createElement("style");
-    style.textContent = `
-      .toggle-setting {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 30px;
-        height: 17px;
-      }
-      .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-      }
-      .toggle-switch .slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #ccc;
-        transition: .4s;
-        border-radius: 34px;
-      }
-      .toggle-switch .slider:before {
-        position: absolute;
-        content: "";
-        height: 13px;
-        width: 13px;
-        left: 2px;
-        bottom: 2px;
-        background-color: white;
-        transition: .4s;
-        border-radius: 50%;
-      }
-      .toggle-switch input:checked + .slider {
-        background-color: #2196F3;
-      }
-      .toggle-switch input:checked + .slider:before {
-        transform: translateX(13px);
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  function processQuoteBoxes() {
-    const allQuotes = document.querySelectorAll("blockquote");
-    allQuotes.forEach((quoteBox) => {
-      try {
-        processQuote(quoteBox);
-      } catch (error) {
-        console.error("Error processing quote box:", error);
-      }
-    });
-  }
-
-  function processQuote(quoteBox) {
-    const isNested = quoteBox.closest("blockquote blockquote") !== null;
-    if (isNested) {
-      const citation = quoteBox.querySelector("cite");
-      const nestedContent = document.createElement("div");
-      nestedContent.className = "nested-quote-content";
-
-      while (quoteBox.firstChild) {
-        if (quoteBox.firstChild !== citation) {
-          nestedContent.appendChild(quoteBox.firstChild);
-        } else {
-          quoteBox.removeChild(quoteBox.firstChild);
+        while (quoteBox.firstChild) {
+          if (quoteBox.firstChild !== citation) {
+            nestedContent.appendChild(quoteBox.firstChild);
+          } else {
+            quoteBox.removeChild(quoteBox.firstChild);
+          }
         }
+
+        if (citation) {
+          quoteBox.appendChild(citation);
+        }
+        quoteBox.appendChild(nestedContent);
+        this.addQuoteToggle(quoteBox, nestedContent);
       }
+    },
 
-      if (citation) {
-        quoteBox.appendChild(citation);
-      }
-      quoteBox.appendChild(nestedContent);
-      addQuoteToggle(quoteBox, nestedContent);
-    }
-  }
+    addQuoteToggle(quoteBox, nestedContent) {
+      const toggle = document.createElement("span");
+      toggle.className = "quote-toggle";
+      toggle.textContent = "Expand Quote";
+      nestedContent.style.display = "none";
 
-  function removeReadMoreButtons() {
-    const readMoreButtons = document.querySelectorAll(".imcger-quote-button");
-    readMoreButtons.forEach((button) => button.remove());
+      toggle.onclick = function () {
+        if (nestedContent.style.display === "none") {
+          nestedContent.style.display = "block";
+          this.textContent = "Collapse Quote";
+        } else {
+          nestedContent.style.display = "none";
+          this.textContent = "Expand Quote";
+        }
+      };
+      quoteBox.appendChild(toggle);
+    },
 
-    const quoteShadows = document.querySelectorAll(".imcger-quote-shadow");
-    quoteShadows.forEach((shadow) => shadow.remove());
+    removeReadMoreButtons() {
+      document
+        .querySelectorAll(".imcger-quote-button")
+        .forEach((button) => button.remove());
+      document
+        .querySelectorAll(".imcger-quote-shadow")
+        .forEach((shadow) => shadow.remove());
+      document.querySelectorAll(".imcger-quote-text").forEach((text) => {
+        text.style.maxHeight = "none";
+        text.style.overflow = "visible";
+      });
+    },
+  };
 
-    const quoteTexts = document.querySelectorAll(".imcger-quote-text");
-    quoteTexts.forEach((text) => {
-      text.style.maxHeight = "none";
-      text.style.overflow = "visible";
-    });
-  }
+  const uiTweaks = {
+    init() {
+      this.addUITweaksDropdown();
+      this.applyCustomStyles();
+    },
 
-  function addQuoteToggle(quoteBox, nestedContent) {
-    const toggle = document.createElement("span");
-    toggle.className = "quote-toggle";
-    toggle.textContent = "Expand Quote";
-    nestedContent.style.display = "none";
+    addUITweaksDropdown() {
+      const navMain = document.getElementById("nav-main");
+      if (!navMain) return;
 
-    toggle.onclick = function () {
-      if (nestedContent.style.display === "none") {
-        nestedContent.style.display = "block";
-        this.textContent = "Collapse Quote";
+      const notificationsLi = document.querySelector(
+        "#nav-main .dropdown-container.dropdown-right.rightside"
+      );
+      if (!notificationsLi) return;
+
+      const dropdownLi = document.createElement("li");
+      dropdownLi.className = "dropdown-container dropdown-right rightside";
+      dropdownLi.style.marginRight = "5px";
+      dropdownLi.innerHTML = `
+          <a href="#" class="dropdown-trigger">
+            <i class="icon fa-cogs fa-fw" aria-hidden="true"></i
+            ><span>UI Tweaks</span>
+          </a>
+          <div class="dropdown">
+            <div class="pointer"><div class="pointer-inner"></div></div>
+            <ul class="dropdown-contents" role="menu">
+              <li>
+                <a id="toggle-better-quote-boxes" href="#" role="menuitem">
+                  <i class="icon fa-fw" aria-hidden="true"></i>
+                  <span></span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        `;
+
+      navMain.insertBefore(dropdownLi, notificationsLi);
+
+      const toggleButton = dropdownLi.querySelector(
+        "#toggle-better-quote-boxes"
+      );
+      toggleButton.addEventListener(
+        "click",
+        this.toggleBetterQuoteBoxes.bind(this)
+      );
+
+      this.updateToggleUI();
+    },
+
+    toggleBetterQuoteBoxes(e) {
+      e.preventDefault();
+      settings.betterQuoteBoxes = !settings.betterQuoteBoxes;
+      utils.saveSettings();
+      this.updateToggleUI();
+      if (settings.betterQuoteBoxes) {
+        betterQuotes.init();
       } else {
-        nestedContent.style.display = "none";
-        this.textContent = "Expand Quote";
+        // Implement reverting changes if needed
       }
-    };
-    quoteBox.appendChild(toggle);
-  }
+    },
 
-  function scrollToPost() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const postId = urlParams.get("p") || window.location.hash.slice(1);
-    if (postId) {
-      const postElement = document.getElementById(postId);
-      if (postElement) {
-        setTimeout(() => {
-          postElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 100); // Small delay to ensure DOM is ready
+    updateToggleUI() {
+      const toggleButton = document.getElementById("toggle-better-quote-boxes");
+      if (toggleButton) {
+        const icon = toggleButton.querySelector("i");
+        const text = toggleButton.querySelector("span");
+        if (icon && text) {
+          icon.className = settings.betterQuoteBoxes
+            ? "icon fa-toggle-on fa-fw"
+            : "icon fa-toggle-off fa-fw";
+          text.textContent = "Better Quote Boxes";
+          toggleButton.title = settings.betterQuoteBoxes
+            ? "Disable Better Quote Boxes"
+            : "Enable Better Quote Boxes";
+        }
       }
-    }
-  }
+    },
+
+    applyCustomStyles() {
+      utils.applyStyles(`
+          .toggle-setting {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 30px;
+            height: 17px;
+          }
+          .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+          }
+          .toggle-switch .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+          }
+          .toggle-switch .slider:before {
+            position: absolute;
+            content: "";
+            height: 13px;
+            width: 13px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+          }
+          .toggle-switch input:checked + .slider {
+            background-color: #2196F3;
+          }
+          .toggle-switch input:checked + .slider:before {
+            transform: translateX(13px);
+          }
+        `);
+    },
+  };
 
   function init() {
-    loadSettings();
-    addUITweaksDropdown();
-    applyCustomStyles();
+    utils.loadSettings();
+    uiTweaks.init();
     if (settings.betterQuoteBoxes) {
-      applyQuoteBoxStyles();
-      processQuoteBoxes();
-      removeReadMoreButtons();
-      scrollToPost();
+      betterQuotes.init();
+      utils.scrollToPost();
     }
   }
 
