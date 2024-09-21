@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Quote Box Improver
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  Improves quote boxes on rpghq.org
 // @match        https://rpghq.org/forums/*
 // @grant        none
@@ -11,45 +11,26 @@
   "use strict";
 
   function processQuoteBoxes() {
-    const topLevelQuotes = document.querySelectorAll(
-      "blockquote:not(blockquote blockquote)"
-    );
-    topLevelQuotes.forEach((quoteBox) => {
+    const allQuotes = document.querySelectorAll("blockquote");
+    allQuotes.forEach((quoteBox) => {
       try {
-        flattenQuote(quoteBox);
+        processQuote(quoteBox);
       } catch (error) {
         console.error("Error processing quote box:", error);
       }
     });
   }
 
-  function flattenQuote(quoteBox) {
-    const nestedQuotes = Array.from(quoteBox.querySelectorAll("blockquote"));
-
-    // Process nested quotes from innermost to outermost
-    for (let i = nestedQuotes.length - 1; i >= 0; i--) {
-      const nestedQuote = nestedQuotes[i];
-      const parentQuote = nestedQuote.parentElement.closest("blockquote");
-
-      if (parentQuote) {
-        const citation = nestedQuote.querySelector("cite");
-        if (citation) {
-          const divider = document.createElement("hr");
-          divider.className = "quote-divider";
-          parentQuote.insertBefore(divider, nestedQuote);
-          parentQuote.insertBefore(citation, divider);
-        }
-
-        // Move content of nested quote to parent quote
-        const fragment = document.createDocumentFragment();
-        while (nestedQuote.firstChild) {
-          fragment.appendChild(nestedQuote.firstChild);
-        }
-        parentQuote.insertBefore(fragment, nestedQuote);
-
-        // Remove the now-empty nested quote
-        nestedQuote.remove();
+  function processQuote(quoteBox) {
+    const isNested = quoteBox.closest("blockquote blockquote") !== null;
+    if (isNested) {
+      const nestedContent = document.createElement("div");
+      nestedContent.className = "nested-quote-content";
+      while (quoteBox.firstChild) {
+        nestedContent.appendChild(quoteBox.firstChild);
       }
+      quoteBox.appendChild(nestedContent);
+      addQuoteToggle(quoteBox, nestedContent);
     }
   }
 
@@ -96,32 +77,35 @@
                 margin-top: 5px;
                 display: inline-block;
             }
+            .nested-quote-content {
+                margin-top: 10px;
+            }
         `;
     document.head.appendChild(style);
   }
 
-  function addQuoteToggle(quoteBox) {
+  function addQuoteToggle(quoteBox, nestedContent) {
     const toggle = document.createElement("span");
     toggle.className = "quote-toggle";
-    toggle.textContent = "Collapse Quote";
+    toggle.textContent = "Expand Quote";
+    nestedContent.style.display = "none";
+
     toggle.onclick = function () {
-      const content = quoteBox.querySelector(".imcger-quote-text");
-      if (content.style.display === "none") {
-        content.style.display = "block";
+      if (nestedContent.style.display === "none") {
+        nestedContent.style.display = "block";
         this.textContent = "Collapse Quote";
       } else {
-        content.style.display = "none";
+        nestedContent.style.display = "none";
         this.textContent = "Expand Quote";
       }
     };
-    quoteBox.appendChild(toggle);
+    quoteBox.insertBefore(toggle, quoteBox.firstChild);
   }
 
   function init() {
     processQuoteBoxes();
     removeReadMoreButtons();
     applyCustomStyles();
-    document.querySelectorAll("blockquote").forEach(addQuoteToggle);
   }
 
   if (
