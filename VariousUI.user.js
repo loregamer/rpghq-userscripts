@@ -1,14 +1,177 @@
 // ==UserScript==
-// @name         RPGHQ Quote Box Improver
+// @name         RPGHQ UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      0.5
-// @description  Improves quote boxes on rpghq.org and scrolls to specified post
+// @version      0.7
+// @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/forums/*
 // @grant        none
 // ==/UserScript==
 
 (function () {
   "use strict";
+
+  let settings = {
+    betterQuoteBoxes: false,
+  };
+
+  function addUITweaksDropdown() {
+    const navMain = document.getElementById("nav-main");
+    if (!navMain) return;
+
+    const notificationsLi = document.querySelector(
+      "#nav-main .dropdown-container.dropdown-right.rightside"
+    );
+    if (!notificationsLi) return;
+
+    const dropdownLi = document.createElement("li");
+    dropdownLi.className = "dropdown-container dropdown-right rightside";
+    dropdownLi.style.marginRight = "5px"; // Add some space between UI Tweaks and Notifications
+    dropdownLi.innerHTML = `
+      <a href="#" class="dropdown-trigger">
+        <i class="icon fa-cogs fa-fw" aria-hidden="true"></i><span>UI Tweaks</span>
+      </a>
+      <div class="dropdown">
+        <div class="pointer"><div class="pointer-inner"></div></div>
+        <ul class="dropdown-contents" role="menu">
+          <li>
+            <a href="#" id="toggle-better-quote-boxes" class="toggle-setting">
+              <span class="setting-name">Better Quote Boxes</span>
+              <span class="toggle-switch">
+                <input type="checkbox" id="better-quote-boxes-checkbox">
+                <label for="better-quote-boxes-checkbox"></label>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    `;
+
+    navMain.insertBefore(dropdownLi, notificationsLi);
+
+    document
+      .getElementById("toggle-better-quote-boxes")
+      .addEventListener("click", toggleBetterQuoteBoxes);
+
+    // Apply initial state
+    updateToggleUI(
+      document.getElementById("better-quote-boxes-checkbox"),
+      settings.betterQuoteBoxes
+    );
+  }
+
+  function toggleBetterQuoteBoxes(e) {
+    e.preventDefault();
+    const checkbox = document.getElementById("better-quote-boxes-checkbox");
+    settings.betterQuoteBoxes = !settings.betterQuoteBoxes;
+    saveSettings();
+    if (settings.betterQuoteBoxes) {
+      processQuoteBoxes();
+      removeReadMoreButtons();
+      applyCustomStyles();
+    } else {
+      // Implement reverting changes if needed
+    }
+    updateToggleUI(checkbox, settings.betterQuoteBoxes);
+  }
+
+  function updateToggleUI(checkbox, enabled) {
+    if (checkbox) {
+      checkbox.checked = enabled;
+    }
+  }
+
+  function saveSettings() {
+    localStorage.setItem("rpghqUITweaks", JSON.stringify(settings));
+  }
+
+  function loadSettings() {
+    const savedSettings = localStorage.getItem("rpghqUITweaks");
+    if (savedSettings) {
+      settings = JSON.parse(savedSettings);
+    }
+  }
+
+  function applyCustomStyles() {
+    const style = document.createElement("style");
+    style.textContent = `
+      .toggle-setting {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 40px;
+        height: 20px;
+      }
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .toggle-switch label {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+      }
+      .toggle-switch label:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+      }
+      .toggle-switch input:checked + label {
+        background-color: #2196F3;
+      }
+      .toggle-switch input:checked + label:before {
+        transform: translateX(20px);
+      }
+      /* Existing styles for quote boxes */
+      blockquote {
+        background-color: #2a2e36;
+        border-left: 3px solid #4a90e2;
+        padding: 10px;
+        margin: 10px 0;
+        font-size: 0.9em;
+        line-height: 1.4;
+      }
+      blockquote cite {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #4a90e2;
+      }
+      .quote-divider {
+        border: none;
+        border-top: 1px solid #3a3f4c;
+        margin: 10px 0;
+      }
+      .quote-toggle {
+        cursor: pointer;
+        color: #4a90e2;
+        font-size: 0.8em;
+        margin-top: 5px;
+        display: block;
+      }
+      .nested-quote-content {
+        margin-top: 5px;
+        margin-bottom: 5px;
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
   function processQuoteBoxes() {
     const allQuotes = document.querySelectorAll("blockquote");
@@ -58,43 +221,6 @@
     });
   }
 
-  function applyCustomStyles() {
-    const style = document.createElement("style");
-    style.textContent = `
-            blockquote {
-                background-color: #2a2e36;
-                border-left: 3px solid #4a90e2;
-                padding: 10px;
-                margin: 10px 0;
-                font-size: 0.9em;
-                line-height: 1.4;
-            }
-            blockquote cite {
-                display: block;
-                margin-bottom: 5px;
-                font-weight: bold;
-                color: #4a90e2;
-            }
-            .quote-divider {
-                border: none;
-                border-top: 1px solid #3a3f4c;
-                margin: 10px 0;
-            }
-            .quote-toggle {
-                cursor: pointer;
-                color: #4a90e2;
-                font-size: 0.8em;
-                margin-top: 5px;
-                display: block;
-            }
-            .nested-quote-content {
-                margin-top: 5px;
-                margin-bottom: 5px;
-            }
-        `;
-    document.head.appendChild(style);
-  }
-
   function addQuoteToggle(quoteBox, nestedContent) {
     const toggle = document.createElement("span");
     toggle.className = "quote-toggle";
@@ -127,9 +253,13 @@
   }
 
   function init() {
-    processQuoteBoxes();
-    removeReadMoreButtons();
+    loadSettings();
+    addUITweaksDropdown();
     applyCustomStyles();
+    if (settings.betterQuoteBoxes) {
+      processQuoteBoxes();
+      removeReadMoreButtons();
+    }
     scrollToPost();
   }
 
