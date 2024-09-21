@@ -195,8 +195,13 @@
       fileLinks.forEach((link) => {
         const url = new URL(link.href);
         const filename = url.searchParams.get("n");
-        if (filename) {
-          link.innerHTML = `📥 ${filename}`;
+        if (
+          filename &&
+          link.textContent.trim().startsWith("https://f.rpghq.org/")
+        ) {
+          const downloadSvg =
+            '<img alt="📥" class="emoji smilies" draggable="false" src="//cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f4e5.svg">';
+          link.innerHTML = `${downloadSvg} ${filename}`;
           link.title = link.href; // Set the original URL as the title for reference
         }
       });
