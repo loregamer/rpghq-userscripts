@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Add User Pictures and Add [irc] to Names
 // @namespace    http://tampermonkey.net/
-// @version      3.0.6
+// @version      4.0
 // @description  Add pictures to users in Cinny Matrix client by user ID and add [irc] to their display names
 // @author       loregamer
 // @match        https://chat.rpghq.org/*
@@ -40,17 +40,6 @@ SOFTWARE.
 (function () {
   "use strict";
 
-  // Initialize userPictureOverrides as an empty array if it doesn't exist
-  let userPictureOverrides = GM_getValue("userPictureOverrides", []);
-
-  // Ensure userPictureOverrides is always an array
-  if (!Array.isArray(userPictureOverrides)) {
-    userPictureOverrides = [];
-  }
-
-  console.log("Loaded userPictureOverrides:", userPictureOverrides);
-
-  // Default avatars
   const defaultUserPictures = [
     {
       userId: "@irc_Gregz:rpghq.org",
@@ -216,93 +205,158 @@ SOFTWARE.
     },
   ];
 
-  // Function to get the avatar URL for a user
-  function getAvatarUrl(identifier) {
-    const override = userPictureOverrides.find(
-      (user) => user.userId === identifier || user.displayName === identifier
-    );
-    if (override) {
-      return override.baseImageUrl;
-    }
-    const defaultAvatar = defaultUserPictures.find(
-      (user) => user.userId === identifier || user.displayName === identifier
-    );
-    return defaultAvatar ? defaultAvatar.baseImageUrl : null;
-  }
+  const util = {
+    debounce: (func, wait) => {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    },
+    querySelector: (selector, parent = document) =>
+      parent.querySelector(selector),
+    querySelectorAll: (selector, parent = document) =>
+      parent.querySelectorAll(selector),
+    createElement: (tag, attributes = {}) => {
+      const element = document.createElement(tag);
+      Object.entries(attributes).forEach(([key, value]) =>
+        element.setAttribute(key, value)
+      );
+      return element;
+    },
+    setStyle: (element, styles) => {
+      Object.entries(styles).forEach(
+        ([key, value]) => (element.style[key] = value)
+      );
+    },
+  };
 
-  function setImageSource(img, baseImageUrl) {
-    // Check if the URL already ends with an image extension
-    if (/\.(jpg|jpeg|png|gif)$/i.test(baseImageUrl)) {
-      img.src = baseImageUrl;
-      return;
-    }
-
-    const extensions = ["jpg", "jpeg", "png", "gif"];
-    let imageSet = false;
-
-    extensions.forEach((ext) => {
-      if (!imageSet) {
-        const imgSrc = `${baseImageUrl}.${ext}`;
-        const testerImg = new Image();
-        testerImg.src = imgSrc;
-
-        testerImg.onload = () => {
-          if (testerImg.complete && testerImg.naturalHeight !== 0) {
-            img.src = imgSrc;
-            imageSet = true;
-          }
-        };
-
-        testerImg.onerror = () => {
-          if (!imageSet && ext === extensions[extensions.length - 1]) {
-            img.src = baseImageUrl; // Use the original URL as a fallback
-          }
-        };
+  const dom = {
+    setImageSource: (img, baseImageUrl) => {
+      if (/\.(jpg|jpeg|png|gif)$/i.test(baseImageUrl)) {
+        img.src = baseImageUrl;
+        return;
       }
-    });
-  }
+
+      const extensions = ["jpg", "jpeg", "png", "gif"];
+      let imageSet = false;
+
+      extensions.forEach((ext) => {
+        if (!imageSet) {
+          const imgSrc = `${baseImageUrl}.${ext}`;
+          const testerImg = new Image();
+          testerImg.src = imgSrc;
+
+          testerImg.onload = () => {
+            if (testerImg.complete && testerImg.naturalHeight !== 0) {
+              img.src = imgSrc;
+              imageSet = true;
+            }
+          };
+
+          testerImg.onerror = () => {
+            if (!imageSet && ext === extensions[extensions.length - 1]) {
+              img.src = baseImageUrl;
+            }
+          };
+        }
+      });
+    },
+    createAvatarImage: (userId, displayName, avatarUrl) => {
+      const img = util.createElement("img", {
+        alt: displayName || userId,
+        class: "_1684mq5c _1mqalmd1 _1mqalmd0 awo2r00",
+        draggable: "false",
+      });
+      util.setStyle(img, { width: "100%", height: "100%" });
+      dom.setImageSource(img, avatarUrl);
+      return img;
+    },
+  };
+
+  // Data management
+  const dataManager = {
+    getUserPictureOverrides: () => {
+      let overrides = GM_getValue("userPictureOverrides", []);
+      return Array.isArray(overrides) ? overrides : [];
+    },
+    setUserPictureOverrides: (overrides) => {
+      GM_setValue("userPictureOverrides", overrides);
+    },
+    getAvatarUrl: (identifier) => {
+      const overrides = dataManager.getUserPictureOverrides();
+      const override = overrides.find(
+        (user) => user.userId === identifier || user.displayName === identifier
+      );
+      if (override) return override.baseImageUrl;
+
+      const defaultAvatar = defaultUserPictures.find(
+        (user) => user.userId === identifier || user.displayName === identifier
+      );
+      return defaultAvatar ? defaultAvatar.baseImageUrl : null;
+    },
+    updateUserAvatar: (userId, displayName, newAvatarUrl) => {
+      let overrides = dataManager.getUserPictureOverrides();
+      const existingIndex = overrides.findIndex(
+        (user) => user.userId === userId || user.displayName === displayName
+      );
+
+      if (newAvatarUrl === "") {
+        if (existingIndex !== -1) overrides.splice(existingIndex, 1);
+      } else if (newAvatarUrl) {
+        if (existingIndex !== -1) {
+          overrides[existingIndex].baseImageUrl = newAvatarUrl;
+        } else {
+          overrides.push({ userId, displayName, baseImageUrl: newAvatarUrl });
+        }
+      } else {
+        return;
+      }
+
+      dataManager.setUserPictureOverrides(overrides);
+      updateAllElements();
+    },
+  };
 
   function addUserPictures() {
-    const allUserElements = document.querySelectorAll(
+    const allUserElements = util.querySelectorAll(
       "[data-user-id], .profile-viewer__user__info, .prxiv40, ._13tt0gb6, ._1684mq51"
     );
 
-    allUserElements.forEach(function (element) {
+    allUserElements.forEach((element) => {
       const userId =
         element.getAttribute("data-user-id") ||
-        element.querySelector("p.text.text-b2.text-normal, p._1xny9xlc")
+        util.querySelector("p.text.text-b2.text-normal, p._1xny9xlc", element)
           ?.textContent;
-      const displayNameElement = element.querySelector(
-        "span._1xny9xl0 b, h4.text.text-s1.text-medium, p._1xny9xl0, span._1xny9xl1"
+      const displayNameElement = util.querySelector(
+        "span._1xny9xl0 b, h4.text.text-s1.text-medium, p._1xny9xl0, span._1xny9xl1",
+        element
       );
       const displayName = displayNameElement?.textContent.trim();
-      let avatarContainer = element.querySelector(
-        "span._1684mq5d, .avatar__border, span._1684mq51"
+      let avatarContainer = util.querySelector(
+        "span._1684mq5d, .avatar__border, span._1684mq51",
+        element
       );
 
-      // If avatarContainer is not found, the element itself might be the avatar container
       if (!avatarContainer && element.classList.contains("_1684mq51")) {
         avatarContainer = element;
       }
 
-      const avatarUrl = getAvatarUrl(displayName) || getAvatarUrl(userId);
+      const avatarUrl =
+        dataManager.getAvatarUrl(displayName) ||
+        dataManager.getAvatarUrl(userId);
 
       if (avatarUrl && avatarContainer) {
-        let img = avatarContainer.querySelector("img");
+        let img = util.querySelector("img", avatarContainer);
         if (!img) {
-          img = document.createElement("img");
-          img.alt = displayName || userId;
-          img.classList.add("_1684mq5c", "_1mqalmd1", "_1mqalmd0", "awo2r00");
-          img.style.width = "100%";
-          img.style.height = "100%";
+          img = dom.createAvatarImage(userId, displayName, avatarUrl);
           avatarContainer.innerHTML = "";
           avatarContainer.appendChild(img);
+        } else {
+          dom.setImageSource(img, avatarUrl);
         }
-        // Always update the image source, even if the img element already exists
-        setImageSource(img, avatarUrl);
       }
 
-      // Add [irc] to names
       if (
         userId &&
         userId.includes("@irc") &&
@@ -310,23 +364,23 @@ SOFTWARE.
         !displayNameElement.textContent.includes("[irc]") &&
         !element.classList.contains("_13tt0gb6")
       ) {
-        displayNameElement.textContent =
-          displayNameElement.textContent + " [irc]";
+        displayNameElement.textContent += " [irc]";
       }
     });
   }
 
   function addSidebarNames() {
-    const sidebarElements = document.querySelectorAll(
+    const sidebarElements = util.querySelectorAll(
       "[data-user-id], .prxiv40, ._13tt0gb6"
     );
 
-    sidebarElements.forEach(function (element) {
+    sidebarElements.forEach((element) => {
       const userId =
         element.getAttribute("data-user-id") ||
-        element.querySelector("p._1xny9xlc")?.textContent;
-      const sidebarNameElement = element.querySelector(
-        "div.prxiv40._1mqalmd1._1mqalmd0.prxiv41.prxiv41s p._1xny9xl0._1mqalmd1._1mqalmd0._1xny9xla._1xny9xlr._1xny9xln, span._1xny9xl1"
+        util.querySelector("p._1xny9xlc", element)?.textContent;
+      const sidebarNameElement = util.querySelector(
+        "div.prxiv40._1mqalmd1._1mqalmd0.prxiv41.prxiv41s p._1xny9xl0._1mqalmd1._1mqalmd0._1xny9xla._1xny9xlr._1xny9xln, span._1xny9xl1",
+        element
       );
 
       if (
@@ -341,58 +395,56 @@ SOFTWARE.
   }
 
   function updateProfileViewer() {
-    const profileViewerElements = document.querySelectorAll(
+    const profileViewerElements = util.querySelectorAll(
       ".ReactModal__Content .profile-viewer__user__info"
     );
 
-    profileViewerElements.forEach(function (element) {
-      const userIdElement = element.querySelector("p.text.text-b2.text-normal");
+    profileViewerElements.forEach((element) => {
+      const userIdElement = util.querySelector(
+        "p.text.text-b2.text-normal",
+        element
+      );
       if (userIdElement) {
         const userId = userIdElement.textContent;
-        const avatarContainer = element
-          .closest(".profile-viewer__user")
-          .querySelector(".avatar-container");
+        const avatarContainer = util.querySelector(
+          ".avatar-container",
+          element.closest(".profile-viewer__user")
+        );
 
-        const avatarUrl = getAvatarUrl(userId);
+        const avatarUrl = dataManager.getAvatarUrl(userId);
 
         if (avatarUrl && avatarContainer) {
-          let img = avatarContainer.querySelector("img");
+          let img = util.querySelector("img", avatarContainer);
           if (!img) {
-            img = document.createElement("img");
-            img.draggable = false;
-            img.alt = userId;
-            img.style.backgroundColor = "transparent";
+            img = dom.createAvatarImage(userId, null, avatarUrl);
             avatarContainer.innerHTML = "";
             avatarContainer.appendChild(img);
+          } else {
+            dom.setImageSource(img, avatarUrl);
           }
-          setImageSource(img, avatarUrl);
         }
       }
     });
   }
 
   function updatePingUserBox() {
-    const pingUserBoxElements = document.querySelectorAll("._13tt0gb6");
+    const pingUserBoxElements = util.querySelectorAll("._13tt0gb6");
 
-    pingUserBoxElements.forEach(function (element) {
-      const userIdElement = element.querySelector("p._1xny9xlc");
+    pingUserBoxElements.forEach((element) => {
+      const userIdElement = util.querySelector("p._1xny9xlc", element);
       if (userIdElement) {
         const userId = userIdElement.textContent;
-        const avatarContainer = element.querySelector(
-          "span._1684mq5d, span._1684mq51"
+        const avatarContainer = util.querySelector(
+          "span._1684mq5d, span._1684mq51",
+          element
         );
 
-        const avatarUrl = getAvatarUrl(userId);
+        const avatarUrl = dataManager.getAvatarUrl(userId);
 
         if (avatarUrl && avatarContainer) {
-          if (!avatarContainer.querySelector("img")) {
-            const img = document.createElement("img");
-            img.draggable = false;
-            img.alt = userId;
-            img.classList.add("_1684mq5c", "_1mqalmd1", "_1mqalmd0", "awo2r00");
-            img.style.width = "32px";
-            img.style.height = "32px";
-            setImageSource(img, avatarUrl);
+          if (!util.querySelector("img", avatarContainer)) {
+            const img = dom.createAvatarImage(userId, null, avatarUrl);
+            util.setStyle(img, { width: "32px", height: "32px" });
             avatarContainer.innerHTML = "";
             avatarContainer.appendChild(img);
           }
@@ -402,13 +454,16 @@ SOFTWARE.
   }
 
   function makeProfilePictureClickable() {
-    const profileViewer = document.querySelector(
+    const profileViewer = util.querySelector(
       ".ReactModal__Content .profile-viewer"
     );
     if (profileViewer) {
-      const avatarContainer = profileViewer.querySelector(".avatar-container");
+      const avatarContainer = util.querySelector(
+        ".avatar-container",
+        profileViewer
+      );
       if (avatarContainer && !avatarContainer.hasAttribute("data-clickable")) {
-        avatarContainer.style.cursor = "pointer";
+        util.setStyle(avatarContainer, { cursor: "pointer" });
         avatarContainer.setAttribute("data-clickable", "true");
         avatarContainer.addEventListener("click", handleAvatarClick);
       }
@@ -416,14 +471,16 @@ SOFTWARE.
   }
 
   function handleAvatarClick() {
-    const profileViewer = document.querySelector(
+    const profileViewer = util.querySelector(
       ".ReactModal__Content .profile-viewer"
     );
-    const userIdElement = profileViewer.querySelector(
-      ".profile-viewer__user__info p.text.text-b2.text-normal"
+    const userIdElement = util.querySelector(
+      ".profile-viewer__user__info p.text.text-b2.text-normal",
+      profileViewer
     );
-    const displayNameElement = profileViewer.querySelector(
-      ".profile-viewer__user__info h4.text.text-s1.text-medium"
+    const displayNameElement = util.querySelector(
+      ".profile-viewer__user__info h4.text.text-s1.text-medium",
+      profileViewer
     );
 
     if (userIdElement && displayNameElement) {
@@ -434,125 +491,52 @@ SOFTWARE.
         ""
       );
 
-      updateUserAvatar(userId, displayName, newAvatarUrl);
+      dataManager.updateUserAvatar(userId, displayName, newAvatarUrl);
     } else {
       console.error("Could not find user ID or display name element");
     }
   }
 
-  function updateUserAvatar(userId, displayName, newAvatarUrl) {
-    // Ensure userPictureOverrides is an array
-    if (!Array.isArray(userPictureOverrides)) {
-      userPictureOverrides = [];
-    }
-
-    const existingOverrideIndex = userPictureOverrides.findIndex(
-      (user) => user.userId === userId || user.displayName === displayName
-    );
-
-    if (newAvatarUrl === "") {
-      // Remove the override if the URL is empty (reset to default)
-      if (existingOverrideIndex !== -1) {
-        userPictureOverrides.splice(existingOverrideIndex, 1);
-      }
-    } else if (newAvatarUrl) {
-      // Update or add the override with the new avatar URL
-      if (existingOverrideIndex !== -1) {
-        userPictureOverrides[existingOverrideIndex].baseImageUrl = newAvatarUrl;
-      } else {
-        userPictureOverrides.push({
-          userId,
-          displayName,
-          baseImageUrl: newAvatarUrl,
-        });
-      }
-    } else {
-      // If newAvatarUrl is null (user cancelled the prompt), do nothing
-      return;
-    }
-
-    // Save the updated overrides
-    GM_setValue("userPictureOverrides", userPictureOverrides);
-
-    // Update the avatar immediately
-    const avatarContainer = document.querySelector(
-      ".ReactModal__Content .profile-viewer .avatar-container"
-    );
-    if (avatarContainer) {
-      const img =
-        avatarContainer.querySelector("img") || document.createElement("img");
-      img.draggable = false;
-      img.alt = displayName || userId;
-      img.style.backgroundColor = "transparent";
-      const avatarUrl = getAvatarUrl(displayName) || getAvatarUrl(userId);
-      if (avatarUrl) {
-        setImageSource(img, avatarUrl);
-      } else {
-        // Set to a default avatar if no custom or default avatar is found
-        img.src = ""; // Or set to a generic default avatar URL
-      }
-      avatarContainer.innerHTML = "";
-      avatarContainer.appendChild(img);
-    }
-
-    // Refresh all avatars on the page
-    addUserPictures();
-    updateProfileViewer();
-    updatePingUserBox();
-
-    console.log("Updated userPictureOverrides:", userPictureOverrides);
-  }
-
-  function observeProfileViewer() {
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.type === "childList") {
-          const profileViewer = document.querySelector(
-            ".ReactModal__Content .profile-viewer"
-          );
-          if (profileViewer) {
-            makeProfilePictureClickable();
-            observer.disconnect(); // Stop observing once the avatar is made clickable
-            break;
-          }
-        }
-      }
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-  }
-
-  // Modify the existing observer
-  const mainObserver = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.addedNodes.length > 0) {
-        addUserPictures();
-        addSidebarNames();
-        updateProfileViewer();
-        updatePingUserBox();
-
-        const profileViewer = document.querySelector(
-          ".ReactModal__Content .profile-viewer"
-        );
-        if (profileViewer) {
-          observeProfileViewer(); // Start observing for the profile viewer
-        }
-      }
-    });
-  });
-
-  function initializeScript() {
+  function updateAllElements() {
     addUserPictures();
     addSidebarNames();
     updateProfileViewer();
     updatePingUserBox();
-    observeProfileViewer(); // Start observing for the profile viewer
+    makeProfilePictureClickable();
   }
 
-  // Run the initialization
+  function setupObservers() {
+    const debouncedUpdateAllElements = util.debounce(updateAllElements, 100);
+
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          debouncedUpdateAllElements();
+        }
+      },
+      { subtree: true, childList: true }
+    );
+
+    intersectionObserver.observe(document.body);
+
+    const mutationObserver = new MutationObserver((mutations) => {
+      if (
+        mutations.some(
+          (mutation) =>
+            mutation.type === "childList" && mutation.addedNodes.length > 0
+        )
+      ) {
+        debouncedUpdateAllElements();
+      }
+    });
+
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  function initializeScript() {
+    updateAllElements();
+    setupObservers();
+  }
+
   initializeScript();
-  mainObserver.observe(document.body, { childList: true, subtree: true });
 })();
