@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Quote Box Improver
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.4
 // @description  Improves quote boxes on rpghq.org
 // @match        https://rpghq.org/forums/*
 // @grant        none
@@ -24,10 +24,20 @@
   function processQuote(quoteBox) {
     const isNested = quoteBox.closest("blockquote blockquote") !== null;
     if (isNested) {
+      const citation = quoteBox.querySelector("cite");
       const nestedContent = document.createElement("div");
       nestedContent.className = "nested-quote-content";
+
       while (quoteBox.firstChild) {
-        nestedContent.appendChild(quoteBox.firstChild);
+        if (quoteBox.firstChild !== citation) {
+          nestedContent.appendChild(quoteBox.firstChild);
+        } else {
+          quoteBox.removeChild(quoteBox.firstChild);
+        }
+      }
+
+      if (citation) {
+        quoteBox.appendChild(citation);
       }
       quoteBox.appendChild(nestedContent);
       addQuoteToggle(quoteBox, nestedContent);
@@ -75,10 +85,11 @@
                 color: #4a90e2;
                 font-size: 0.8em;
                 margin-top: 5px;
-                display: inline-block;
+                display: block;
             }
             .nested-quote-content {
-                margin-top: 10px;
+                margin-top: 5px;
+                margin-bottom: 5px;
             }
         `;
     document.head.appendChild(style);
@@ -99,7 +110,7 @@
         this.textContent = "Expand Quote";
       }
     };
-    quoteBox.insertBefore(toggle, quoteBox.firstChild);
+    quoteBox.appendChild(toggle);
   }
 
   function init() {
