@@ -12,7 +12,7 @@
 
   const settings = {
     betterQuoteBoxes: false,
-    betterFileLinks: false, // Add this new setting
+    betterFileLinks: false,
   };
 
   const utils = {
@@ -202,7 +202,7 @@
           const downloadSvg =
             '<img alt="📥" class="emoji smilies" draggable="false" src="//cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f4e5.svg">';
           link.innerHTML = `${downloadSvg} ${filename}`;
-          link.title = link.href; // Set the original URL as the title for reference
+          link.title = link.href;
         }
       });
     },
@@ -225,7 +225,9 @@
 
       const dropdownLi = document.createElement("li");
       dropdownLi.className = "dropdown-container dropdown-right rightside";
-      dropdownLi.style.marginRight = "5px";
+      // Remove the inline style that was adding extra margin
+      // dropdownLi.style.marginRight = "5px";
+
       dropdownLi.innerHTML = `
         <a href="#" class="dropdown-trigger">
           <i class="icon fa-cogs fa-fw" aria-hidden="true"></i>
@@ -362,6 +364,14 @@
             align-items: center;
             justify-content: center;
             height: 100%;
+          }
+          /* Adjust spacing for UI Tweaks dropdown */
+          #nav-main .dropdown-container.dropdown-right.rightside:not(:last-child) {
+            margin-right: 5px;
+          }
+          /* Ensure consistent spacing for rightside elements */
+          #nav-main .rightside {
+            margin-left: 5px;
           }
         `);
     },
