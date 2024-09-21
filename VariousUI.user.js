@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RPGHQ Quote Box Improver
 // @namespace    http://tampermonkey.net/
-// @version      0.4
-// @description  Improves quote boxes on rpghq.org
+// @version      0.5
+// @description  Improves quote boxes on rpghq.org and scrolls to specified post
 // @match        https://rpghq.org/forums/*
 // @grant        none
 // ==/UserScript==
@@ -113,10 +113,24 @@
     quoteBox.appendChild(toggle);
   }
 
+  function scrollToPost() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get("p") || window.location.hash.slice(1);
+    if (postId) {
+      const postElement = document.getElementById(postId);
+      if (postElement) {
+        setTimeout(() => {
+          postElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 100); // Small delay to ensure DOM is ready
+      }
+    }
+  }
+
   function init() {
     processQuoteBoxes();
     removeReadMoreButtons();
     applyCustomStyles();
+    scrollToPost();
   }
 
   if (
