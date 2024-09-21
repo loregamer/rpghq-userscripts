@@ -100,7 +100,6 @@
           display: block;
           margin-bottom: 5px;
           font-weight: bold;
-          color: #4a90e2;
         }
         .quote-divider {
           border: none;
@@ -249,21 +248,29 @@
 
     applyCustomStyles() {
       utils.applyStyles(`
-        .ui-tweak-toggle {
-          display: flex !important;
-          align-items: center;
-          padding: 5px 10px;
-        }
-        .ui-tweak-toggle .toggle-switch {
-          margin-right: 10px;
-        }
-        .ui-tweak-toggle .toggle-text {
-          flex-grow: 1;
-        }
-        .ui-tweak-toggle:hover {
-          background-color: rgba(255, 255, 255, 0.1);
-        }
-      `);
+          .ui-tweak-toggle {
+            display: flex !important;
+            align-items: center;
+            padding: 5px 10px;
+            text-decoration: none !important; /* Remove underline */
+          }
+          .ui-tweak-toggle .toggle-switch {
+            margin-right: 10px;
+          }
+          .ui-tweak-toggle .toggle-text {
+            flex-grow: 1;
+          }
+          .ui-tweak-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            text-decoration: none !important; /* Ensure no underline on hover */
+          }
+          /* Ensure no underline for all states */
+          .ui-tweak-toggle:hover,
+          .ui-tweak-toggle:focus,
+          .ui-tweak-toggle:active {
+            text-decoration: none !important;
+          }
+        `);
     },
   };
 
