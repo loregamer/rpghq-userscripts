@@ -47,27 +47,29 @@
 
     createToggleItem(id, text, isEnabled, onClickHandler) {
       const li = document.createElement("li");
+      li.id = id;
       li.innerHTML = `
         <a href="#" role="menuitem" class="ui-tweak-toggle">
-          <span class="toggle-switch">
+          <span class="toggle-content">
             <i class="icon ${
               isEnabled ? "fa-toggle-on" : "fa-toggle-off"
             } fa-fw" aria-hidden="true"></i>
+            ${text}
           </span>
-          <span class="toggle-text">${text}</span>
         </a>
       `;
       const link = li.querySelector("a");
       link.addEventListener("click", (e) => {
         e.preventDefault();
-        onClickHandler();
-        this.updateToggleUI(link, !isEnabled);
+        isEnabled = !isEnabled; // Toggle the state
+        onClickHandler(isEnabled);
+        this.updateToggleUI(link, isEnabled);
       });
       return li;
     },
 
     updateToggleUI(element, isEnabled) {
-      const icon = element.querySelector(".toggle-switch i");
+      const icon = element.querySelector(".toggle-content i");
       if (icon) {
         icon.className = `icon ${
           isEnabled ? "fa-toggle-on" : "fa-toggle-off"
@@ -221,6 +223,17 @@
       );
       // Add more toggle items here as needed
 
+      // Add Save button
+      const saveButton = document.createElement("li");
+      saveButton.innerHTML = `
+        <input type="button" value="Save Changes" class="button1 ui-tweak-save">
+      `;
+      saveButton.querySelector("input").addEventListener("click", (e) => {
+        e.preventDefault();
+        this.saveChanges();
+      });
+      dropdownContents.appendChild(saveButton);
+
       navMain.insertBefore(dropdownLi, notificationsLi);
     },
 
@@ -229,13 +242,26 @@
         `toggle-${settingKey}`,
         text,
         settings[settingKey],
-        () => {
-          settings[settingKey] = !settings[settingKey];
-          utils.saveSettings();
-          toggleFunction();
+        (isEnabled) => {
+          // Update the UI and store the new state temporarily
+          toggleItem.dataset.enabled = isEnabled;
         }
       );
       container.appendChild(toggleItem);
+    },
+
+    saveChanges() {
+      // Update settings based on current toggle states
+      const toggles = document.querySelectorAll(".ui-tweak-toggle");
+      toggles.forEach((toggle) => {
+        const settingKey = toggle.closest("li").id.replace("toggle-", "");
+        const isEnabled = toggle.closest("li").dataset.enabled === "true";
+        settings[settingKey] = isEnabled;
+      });
+
+      // Save settings and refresh the page
+      utils.saveSettings();
+      window.location.reload();
     },
 
     toggleBetterQuoteBoxes() {
@@ -254,14 +280,22 @@
             padding: 5px 10px;
             text-decoration: none !important; /* Remove underline */
           }
-          .ui-tweak-toggle .toggle-switch {
-            margin-right: 10px;
+          .ui-tweak-toggle .toggle-content {
+            display: flex;
+            align-items: center;
+          }
+          .ui-tweak-toggle .icon {
+            margin-right: 5px; /* Reduced from 10px to 5px */
+            display: flex;
+            align-items: center;
+            position: relative;
+            top: 2px; /* Adjust this value to move the icon down */
           }
           .ui-tweak-toggle .toggle-text {
             flex-grow: 1;
+            line-height: 1; /* Ensure text is vertically centered */
           }
           .ui-tweak-toggle:hover {
-            background-color: rgba(255, 255, 255, 0.1);
             text-decoration: none !important; /* Ensure no underline on hover */
           }
           /* Ensure no underline for all states */
@@ -269,6 +303,22 @@
           .ui-tweak-toggle:focus,
           .ui-tweak-toggle:active {
             text-decoration: none !important;
+          }
+          .dropdown-contents li {
+            display: flex;
+            align-items: center;
+          }
+          .ui-tweak-save {
+            width: 100%;
+            margin: 10px 0;
+            text-align: center;
+          }
+          /* Ensure the icon is vertically centered */
+          .ui-tweak-toggle .icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
           }
         `);
     },
