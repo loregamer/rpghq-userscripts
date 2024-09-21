@@ -354,9 +354,11 @@
             align-items: center;
           }
           .ui-tweak-save {
-            width: 100%;
-            margin: 10px 0;
+            display: block;
+            width: calc(100% - 20px); /* Adjust width to account for padding */
+            margin: 10px auto;
             text-align: center;
+            padding: 5px 10px;
           }
           /* Ensure the icon is vertically centered */
           .ui-tweak-toggle .icon {
