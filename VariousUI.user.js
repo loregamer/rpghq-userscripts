@@ -12,6 +12,7 @@
 
   const settings = {
     betterQuoteBoxes: false,
+    betterFileLinks: false, // Add this new setting
   };
 
   const utils = {
@@ -182,6 +183,26 @@
     },
   };
 
+  const betterFileLinks = {
+    init() {
+      this.processFileLinks();
+    },
+
+    processFileLinks() {
+      const fileLinks = document.querySelectorAll(
+        'a[href^="https://f.rpghq.org/"]'
+      );
+      fileLinks.forEach((link) => {
+        const url = new URL(link.href);
+        const filename = url.searchParams.get("n");
+        if (filename) {
+          link.innerHTML = `📥 ${filename}`;
+          link.title = link.href; // Set the original URL as the title for reference
+        }
+      });
+    },
+  };
+
   const uiTweaks = {
     init() {
       this.addUITweaksDropdown();
@@ -221,6 +242,12 @@
         "Better Quote Boxes",
         this.toggleBetterQuoteBoxes.bind(this)
       );
+      this.addToggleItem(
+        dropdownContents,
+        "betterFileLinks",
+        "Better File Links",
+        this.toggleBetterFileLinks.bind(this)
+      );
       // Add more toggle items here as needed
 
       // Add Save button
@@ -255,7 +282,9 @@
       const toggles = document.querySelectorAll(".ui-tweak-toggle");
       toggles.forEach((toggle) => {
         const settingKey = toggle.closest("li").id.replace("toggle-", "");
-        const isEnabled = toggle.closest("li").dataset.enabled === "true";
+        const isEnabled = toggle
+          .querySelector(".icon")
+          .classList.contains("fa-toggle-on");
         settings[settingKey] = isEnabled;
       });
 
@@ -269,6 +298,15 @@
         betterQuotes.init();
       } else {
         // Implement reverting changes if needed
+      }
+    },
+
+    toggleBetterFileLinks() {
+      if (settings.betterFileLinks) {
+        betterFileLinks.init();
+      } else {
+        // Implement reverting changes if needed
+        window.location.reload();
       }
     },
 
@@ -330,6 +368,9 @@
     if (settings.betterQuoteBoxes) {
       betterQuotes.init();
       utils.scrollToPost();
+    }
+    if (settings.betterFileLinks) {
+      betterFileLinks.init();
     }
   }
 
