@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.2.2
+// @version      1.3
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        GM_setValue
@@ -44,6 +44,7 @@ SOFTWARE.
     betterFileLinks: true,
     unreadLastPostButton: true,
     replaceReadTopicLinks: true,
+    cleanerEditedNotice: false,
   };
 
   const utils = {
@@ -93,7 +94,7 @@ SOFTWARE.
       const link = li.querySelector("a");
       link.addEventListener("click", (e) => {
         e.preventDefault();
-        isEnabled = !isEnabled; // Toggle the state
+        isEnabled = !isEnabled;
         onClickHandler(isEnabled);
         this.updateToggleUI(link, isEnabled);
       });
@@ -337,6 +338,41 @@ SOFTWARE.
     },
   };
 
+  const cleanerEditedNotice = {
+    init() {
+      if (settings.cleanerEditedNotice) {
+        this.applyStyles();
+      }
+    },
+
+    applyStyles() {
+      utils.applyStyles(`
+        .notice {
+          background-color: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 3px;
+          padding: 6px 10px;
+          font-size: 0.85em;
+          color: rgba(255, 255, 255, 0.5);
+          margin-top: 8px;
+          transition: background-color 0.2s ease;
+        }
+        .notice:hover {
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+        .notice a {
+          color: rgba(255, 255, 255, 0.7);
+          text-decoration: none;
+          transition: color 0.2s ease;
+        }
+        .notice a:hover {
+          color: rgba(255, 255, 255, 0.9);
+          text-decoration: underline;
+        }
+      `);
+    },
+  };
+
   const uiTweaks = {
     init() {
       // Only add the UI Tweaks dropdown if the URL contains "ucp.php"
@@ -398,6 +434,12 @@ SOFTWARE.
         "replaceReadTopicLinks",
         "Jump to Last Read",
         this.toggleReplaceReadTopicLinks.bind(this)
+      );
+      this.addToggleItem(
+        dropdownContents,
+        "cleanerEditedNotice",
+        "Cleaner Edited Notice",
+        this.toggleCleanerEditedNotice.bind(this)
       );
       // Add more toggle items here as needed
 
@@ -473,6 +515,15 @@ SOFTWARE.
     toggleReplaceReadTopicLinks() {
       if (settings.replaceReadTopicLinks) {
         replaceReadTopicLinks.init();
+      } else {
+        // Revert changes if needed
+        window.location.reload();
+      }
+    },
+
+    toggleCleanerEditedNotice() {
+      if (settings.cleanerEditedNotice) {
+        cleanerEditedNotice.init();
       } else {
         // Revert changes if needed
         window.location.reload();
@@ -556,6 +607,9 @@ SOFTWARE.
     }
     if (settings.replaceReadTopicLinks) {
       replaceReadTopicLinks.init();
+    }
+    if (settings.cleanerEditedNotice) {
+      cleanerEditedNotice.init();
     }
   }
 
