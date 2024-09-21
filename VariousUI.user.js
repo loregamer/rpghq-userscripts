@@ -157,6 +157,24 @@ SOFTWARE.
           height: auto !important;
           width: auto !important;
         }
+        blockquote span[data-s9e-mediaembed="youtube"] {
+          display: inline-block !important;
+          width: 20% !important;
+          max-width: 20% !important;
+          height: auto !important;
+        }
+
+        blockquote span[data-s9e-mediaembed="youtube"] > span {
+          padding-bottom: 56.25% !important;
+        }
+
+        blockquote span[data-s9e-mediaembed="youtube"] iframe {
+          width: 100% !important;
+          height: 100% !important;
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+        }
       `);
     },
 
