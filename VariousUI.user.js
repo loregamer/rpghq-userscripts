@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        GM_setValue
@@ -240,26 +240,35 @@ SOFTWARE.
 
   const unreadLastPostButton = {
     init() {
-      this.processTopicRows();
+      this.processRows();
     },
 
-    processTopicRows() {
-      const topicRows = document.querySelectorAll(".row-item");
+    processRows() {
+      const topicRows = document.querySelectorAll('.row-item[class*="topic_"]');
       topicRows.forEach((row) => {
-        if (
-          row.classList.contains("topic_unread") ||
-          row.classList.contains("topic_unread_mine") ||
-          row.classList.contains("topic_unread_hot") ||
-          row.classList.contains("topic_unread_hot_mine")
-        ) {
+        if (this.isUnreadTopic(row)) {
           this.updateLastPostButton(row);
         }
       });
+
+      const forumRows = document.querySelectorAll(
+        ".row-item.forum_read, .row-item.forum_unread"
+      );
+      forumRows.forEach((row) => this.checkForumLastPost(row));
+    },
+
+    isUnreadTopic(row) {
+      return (
+        row.classList.contains("topic_unread") ||
+        row.classList.contains("topic_unread_mine") ||
+        row.classList.contains("topic_unread_hot") ||
+        row.classList.contains("topic_unread_hot_mine")
+      );
     },
 
     updateLastPostButton(row) {
       const lastPostLink = row.querySelector(
-        '.lastpost a[title="Go to last post"]'
+        '.lastpost a[title="Go to last post"], .lastpost a[title="View the latest post"]'
       );
       if (lastPostLink) {
         const icon = lastPostLink.querySelector("i.icon");
@@ -267,6 +276,31 @@ SOFTWARE.
           icon.classList.remove("icon-lightgray");
           icon.classList.add("icon-red");
         }
+      }
+    },
+
+    checkForumLastPost(forumRow) {
+      const forumLink = forumRow.querySelector("a.forumtitle");
+      if (forumLink) {
+        const forumUrl = forumLink.href;
+        fetch(forumUrl)
+          .then((response) => response.text())
+          .then((html) => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const topicRows = doc.querySelectorAll(
+              '.row-item[class*="topic_"]'
+            );
+            const hasUnreadTopic = Array.from(topicRows).some((row) =>
+              this.isUnreadTopic(row)
+            );
+            if (hasUnreadTopic) {
+              this.updateLastPostButton(forumRow);
+            }
+          })
+          .catch((error) =>
+            console.error("Error checking forum last post:", error)
+          );
       }
     },
   };
