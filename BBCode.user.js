@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      4.6.1
+// @version      4.6.2
 // @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php*
@@ -348,7 +348,7 @@ SOFTWARE.
 
     // Handle [img] and [media] tags separately
     text = text.replace(
-      /\[(img|media)\](.*?)\[\/\1\]/gi,
+      /\[(img|media|webm)\](.*?)\[\/\1\]/gi,
       function (match, tagName, url) {
         const colorIndex = getColorIndex(tagName);
         return `<span class="bbcode-bracket">[</span><span class="bbcode-tag-${colorIndex}">${tagName}</span><span class="bbcode-bracket">]</span><span class="bbcode-link">${escapeHTML(
