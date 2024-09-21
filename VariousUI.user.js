@@ -42,6 +42,7 @@ SOFTWARE.
   const settings = {
     betterQuoteBoxes: true,
     betterFileLinks: true,
+    unreadLastPostButton: true, // Add this new setting
   };
 
   const utils = {
@@ -237,6 +238,39 @@ SOFTWARE.
     },
   };
 
+  const unreadLastPostButton = {
+    init() {
+      this.processTopicRows();
+    },
+
+    processTopicRows() {
+      const topicRows = document.querySelectorAll(".row-item");
+      topicRows.forEach((row) => {
+        if (
+          row.classList.contains("topic_unread") ||
+          row.classList.contains("topic_unread_mine") ||
+          row.classList.contains("topic_unread_hot") ||
+          row.classList.contains("topic_unread_hot_mine")
+        ) {
+          this.updateLastPostButton(row);
+        }
+      });
+    },
+
+    updateLastPostButton(row) {
+      const lastPostLink = row.querySelector(
+        '.lastpost a[title="Go to last post"]'
+      );
+      if (lastPostLink) {
+        const icon = lastPostLink.querySelector("i.icon");
+        if (icon) {
+          icon.classList.remove("icon-lightgray");
+          icon.classList.add("icon-red");
+        }
+      }
+    },
+  };
+
   const uiTweaks = {
     init() {
       this.addUITweaksDropdown();
@@ -283,6 +317,12 @@ SOFTWARE.
         "betterFileLinks",
         "Better File Links",
         this.toggleBetterFileLinks.bind(this)
+      );
+      this.addToggleItem(
+        dropdownContents,
+        "unreadLastPostButton",
+        "Unread Last Post Button",
+        this.toggleUnreadLastPostButton.bind(this)
       );
       // Add more toggle items here as needed
 
@@ -342,6 +382,15 @@ SOFTWARE.
         betterFileLinks.init();
       } else {
         // Implement reverting changes if needed
+        window.location.reload();
+      }
+    },
+
+    toggleUnreadLastPostButton() {
+      if (settings.unreadLastPostButton) {
+        unreadLastPostButton.init();
+      } else {
+        // Revert changes if needed
         window.location.reload();
       }
     },
@@ -417,6 +466,9 @@ SOFTWARE.
     }
     if (settings.betterFileLinks) {
       betterFileLinks.init();
+    }
+    if (settings.unreadLastPostButton) {
+      unreadLastPostButton.init();
     }
   }
 
