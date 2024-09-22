@@ -214,10 +214,7 @@ SOFTWARE.
           if (referenceElement) {
             referenceElement.textContent = `"${postContent}"`;
           } else {
-            titleText = titleText.replace(
-              /"([^"]*)"/,
-              `<br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"${postContent}"</span>`
-            );
+            titleText += `<br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"${postContent}"</span>`;
           }
         }
 
@@ -335,9 +332,12 @@ SOFTWARE.
     },
 
     customizeNotificationPanel: () => {
-      document
-        .querySelectorAll(".notification-block, a.notification-block")
-        .forEach(NotificationCustomizer.customizeNotificationBlock);
+      const uncustomizedBlocks = document.querySelectorAll(
+        '.notification-block:not([data-customized="true"]), a.notification-block:not([data-customized="true"])'
+      );
+      uncustomizedBlocks.forEach(
+        NotificationCustomizer.customizeNotificationBlock
+      );
     },
 
     customizeNotificationPage: () => {
@@ -439,11 +439,25 @@ SOFTWARE.
     }
 
     const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === "childList") {
-          NotificationCustomizer.customizeNotificationPanel();
+      let shouldCustomize = false;
+      for (const mutation of mutations) {
+        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+          for (const node of mutation.addedNodes) {
+            if (
+              node.nodeType === Node.ELEMENT_NODE &&
+              (node.classList.contains("notification-block") ||
+                node.querySelector(".notification-block"))
+            ) {
+              shouldCustomize = true;
+              break;
+            }
+          }
+          if (shouldCustomize) break;
         }
-      });
+      }
+      if (shouldCustomize) {
+        NotificationCustomizer.customizeNotificationPanel();
+      }
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
