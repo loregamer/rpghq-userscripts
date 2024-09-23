@@ -45,7 +45,7 @@ SOFTWARE.
     unreadLastPostButton: true,
     replaceReadTopicLinks: true,
     cleanerEditedNotice: false,
-    topicLinkCopyButton: false,
+    topicLinkCopyButton: true,
   };
 
   const utils = {
