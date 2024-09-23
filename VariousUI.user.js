@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.3.2
+// @version      1.4
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        GM_setValue
@@ -45,6 +45,7 @@ SOFTWARE.
     unreadLastPostButton: true,
     replaceReadTopicLinks: true,
     cleanerEditedNotice: false,
+    topicLinkCopyButton: false,
   };
 
   const utils = {
@@ -174,6 +175,44 @@ SOFTWARE.
           position: absolute !important;
           top: 0 !important;
           left: 0 !important;
+        }
+
+        .topic-copy-button {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0 5px;
+          color: inherit;
+          font-size: 0.8em;
+          opacity: 0.7;
+          transition: opacity 0.2s;
+        }
+
+        .topic-copy-button:hover {
+          opacity: 1;
+        }
+
+        .copy-message {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          background-color: #4a90e2;
+          color: white;
+          padding: 10px 20px;
+          border-radius: 5px;
+          z-index: 9999;
+          animation: fadeInOut 2s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+          0%,
+          100% {
+            opacity: 0;
+          }
+          10%,
+          90% {
+            opacity: 1;
+          }
         }
       `);
     },
@@ -399,6 +438,55 @@ SOFTWARE.
     },
   };
 
+  const topicLinkCopyButton = {
+    init() {
+      if (settings.topicLinkCopyButton) {
+        this.addCopyButtons();
+      }
+    },
+
+    addCopyButtons() {
+      const topicTitles = document.querySelectorAll(".topic-title");
+      topicTitles.forEach((titleElement) => {
+        const link = titleElement.querySelector("a");
+        if (link) {
+          const copyButton = this.createCopyButton(link);
+          titleElement.appendChild(copyButton);
+        }
+      });
+    },
+
+    createCopyButton(link) {
+      const button = document.createElement("button");
+      button.className = "topic-copy-button";
+      button.innerHTML =
+        '<i class="icon fa-copy fa-fw" aria-hidden="true"></i>';
+      button.title = "Copy BBCode link";
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.copyBBCode(link);
+      });
+      return button;
+    },
+
+    copyBBCode(link) {
+      const bbcode = `[size=150][b][url=${link.href}]${link.textContent}[/url][/b][/size]`;
+      navigator.clipboard.writeText(bbcode).then(() => {
+        this.showCopiedMessage();
+      });
+    },
+
+    showCopiedMessage() {
+      const message = document.createElement("div");
+      message.textContent = "BBCode copied!";
+      message.className = "copy-message";
+      document.body.appendChild(message);
+      setTimeout(() => {
+        message.remove();
+      }, 2000);
+    },
+  };
+
   const uiTweaks = {
     init() {
       // Only add the UI Tweaks dropdown if the URL contains "ucp.php"
@@ -439,21 +527,21 @@ SOFTWARE.
       // Add toggle items for each setting
       this.addToggleItem(
         dropdownContents,
-        "betterQuoteBoxes",
-        "Better Quote Boxes",
-        this.toggleBetterQuoteBoxes.bind(this)
-      );
-      this.addToggleItem(
-        dropdownContents,
         "betterFileLinks",
         "Better File Links",
         this.toggleBetterFileLinks.bind(this)
       );
       this.addToggleItem(
         dropdownContents,
-        "unreadLastPostButton",
-        "Unread Last Post Button",
-        this.toggleUnreadLastPostButton.bind(this)
+        "betterQuoteBoxes",
+        "Better Quote Boxes",
+        this.toggleBetterQuoteBoxes.bind(this)
+      );
+      this.addToggleItem(
+        dropdownContents,
+        "cleanerEditedNotice",
+        "Cleaner Edited Notice",
+        this.toggleCleanerEditedNotice.bind(this)
       );
       this.addToggleItem(
         dropdownContents,
@@ -463,9 +551,15 @@ SOFTWARE.
       );
       this.addToggleItem(
         dropdownContents,
-        "cleanerEditedNotice",
-        "Cleaner Edited Notice",
-        this.toggleCleanerEditedNotice.bind(this)
+        "topicLinkCopyButton",
+        "Topic Link Copy Button",
+        this.toggleTopicLinkCopyButton.bind(this)
+      );
+      this.addToggleItem(
+        dropdownContents,
+        "unreadLastPostButton",
+        "Unread Last Post Button",
+        this.toggleUnreadLastPostButton.bind(this)
       );
       // Add more toggle items here as needed
 
@@ -510,6 +604,14 @@ SOFTWARE.
       // Save settings and refresh the page
       utils.saveSettings();
       window.location.reload();
+    },
+
+    toggleTopicLinkCopyButton() {
+      if (settings.topicLinkCopyButton) {
+        topicLinkCopyButton.init();
+      } else {
+        window.location.reload();
+      }
     },
 
     toggleBetterQuoteBoxes() {
@@ -636,6 +738,9 @@ SOFTWARE.
     }
     if (settings.cleanerEditedNotice) {
       cleanerEditedNotice.init();
+    }
+    if (settings.topicLinkCopyButton) {
+      topicLinkCopyButton.init();
     }
   }
 
