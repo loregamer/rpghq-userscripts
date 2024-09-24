@@ -94,27 +94,6 @@ SOFTWARE.
         })
       );
     },
-
-    getStoredPostContent: (postId) => {
-      const storedData = localStorage.getItem(`post_content_${postId}`);
-      if (storedData) {
-        const { content, timestamp } = JSON.parse(storedData);
-        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-          return content;
-        }
-      }
-      return null;
-    },
-
-    storePostContent: (postId, content) => {
-      localStorage.setItem(
-        `post_content_${postId}`,
-        JSON.stringify({
-          content,
-          timestamp: Date.now(),
-        })
-      );
-    },
   };
 
   const ReactionHandler = {
@@ -152,40 +131,12 @@ SOFTWARE.
       Storage.storeReactions(postId, reactions);
       return reactions;
     },
-
-    fetchPostContent: async (postId) => {
-      const cachedContent = Storage.getStoredPostContent(postId);
-      if (cachedContent) return cachedContent;
-
-      const response = await fetch(
-        `https://rpghq.org/forums/viewtopic.php?p=${postId}`,
-        {
-          credentials: "include",
-        }
-      );
-      const html = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-      const postContent = doc.querySelector(`#post_content${postId} .content`);
-      if (postContent) {
-        postContent.querySelectorAll("blockquote").forEach((el) => el.remove());
-        let content = postContent.textContent.trim().replace(/\s+/g, " ");
-        content = content.replace(/^.*wrote:\s*↑.*?ago/, "").trim();
-        if (content.length > 100) {
-          content = content.substring(0, 97) + "...";
-        }
-        Storage.storePostContent(postId, content);
-        return content;
-      }
-      return null;
-    },
   };
 
   const NotificationCustomizer = {
     customizeReactionNotification: async (titleElement, block) => {
-      if (block.dataset.customized === "true") return;
-
       let titleText = titleElement.innerHTML;
+      const isUnread = block.href && block.href.includes("mark_notification");
       const postId = (block.getAttribute("data-real-url") || block.href).match(
         /p=(\d+)/
       )?.[1];
@@ -194,35 +145,18 @@ SOFTWARE.
         const usernames = Array.from(
           titleElement.querySelectorAll(".username, .username-coloured")
         ).map((el) => el.textContent.trim());
-        const reactions = await ReactionHandler.fetchReactions(postId);
+        const reactions = await ReactionHandler.fetchReactions(
+          postId,
+          isUnread
+        );
         const filteredReactions = reactions.filter((reaction) =>
           usernames.includes(reaction.username)
         );
         const reactionHTML = Utils.formatReactions(filteredReactions);
-
-        titleText = titleText.replace(
+        titleElement.innerHTML = titleText.replace(
           /(have|has)\s+reacted.*$/,
           `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
         );
-
-        const postContent = await ReactionHandler.fetchPostContent(postId);
-
-        if (postContent) {
-          const referenceElement = titleElement.parentNode.querySelector(
-            ".notification-reference"
-          );
-          if (referenceElement) {
-            referenceElement.textContent = `"${postContent}"`;
-          } else {
-            titleText = titleText.replace(
-              /"([^"]*)"/,
-              `<br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"${postContent}"</span>`
-            );
-          }
-        }
-
-        titleElement.innerHTML = titleText;
-        block.dataset.customized = "true";
       }
     },
 
