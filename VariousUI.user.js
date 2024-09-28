@@ -120,6 +120,7 @@ SOFTWARE.
       this.applyStyles();
       this.processQuoteBoxes();
       this.removeReadMoreButtons();
+      this.colorizeUsernames();
     },
 
     applyStyles() {
@@ -178,6 +179,56 @@ SOFTWARE.
           max-height: none;
         }
       `);
+    },
+
+    colorizeUsernames() {
+      const colorMap = new Map();
+
+      // First, collect all colored usernames from the page
+      document.querySelectorAll("a.username-coloured").forEach((link) => {
+        const username = link.textContent.trim();
+        const color = link.style.color;
+        if (color) {
+          colorMap.set(username.toLowerCase(), color);
+        }
+      });
+
+      // Then, apply colors to usernames in blockquotes
+      document.querySelectorAll("blockquote cite a").forEach(async (link) => {
+        const username = link.textContent.trim();
+        let color = colorMap.get(username.toLowerCase());
+
+        if (!color) {
+          // If color not found on page, fetch from user profile
+          color = await this.fetchUserColor(link.href);
+          if (color) {
+            colorMap.set(username.toLowerCase(), color);
+          }
+        }
+
+        if (color) {
+          link.style.color = color;
+          link.classList.add("username-coloured");
+        }
+      });
+    },
+
+    async fetchUserColor(profileUrl) {
+      try {
+        const response = await fetch(profileUrl);
+        const text = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, "text/html");
+        const coloredUsername = doc.querySelector(
+          '.left-box.details.profile-details dd span[style^="color:"]'
+        );
+        if (coloredUsername) {
+          return coloredUsername.style.color;
+        }
+      } catch (error) {
+        console.error("Error fetching user color:", error);
+      }
+      return null;
     },
 
     processQuoteBoxes() {
