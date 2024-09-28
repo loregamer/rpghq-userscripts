@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.4.2
+// @version      3.5
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -196,62 +196,58 @@ SOFTWARE.
     // Determine the correct insertion point based on the current page
     let insertionPoint;
     if (window.location.href.includes("/search.php")) {
-      const actionBar = pageBody.querySelector(".action-bar.bar-top");
-      insertionPoint = actionBar
-        ? actionBar.nextElementSibling
-        : pageBody.querySelector(".forumbg");
-      if (insertionPoint) {
-        insertionPoint.parentNode.insertBefore(pinnedSection, insertionPoint);
-      }
+      insertionPoint = findSearchPageInsertionPoint(pageBody);
     } else {
       const indexLeft = pageBody.querySelector(".index-left");
-      if (indexLeft) {
-        indexLeft.insertAdjacentElement("afterbegin", pinnedSection);
-      } else {
-        insertionPoint = pageBody.querySelector(".forumbg");
-        if (insertionPoint) {
-          insertionPoint.parentNode.insertBefore(pinnedSection, insertionPoint);
-        }
-      }
+      insertionPoint = indexLeft || pageBody.querySelector(".forumbg");
     }
 
-    // If we couldn't insert the section anywhere, return
-    if (!pinnedSection.parentNode) return;
+    if (!insertionPoint) return;
+
+    // Insert the pinned section
+    if (insertionPoint.classList.contains("index-left")) {
+      insertionPoint.insertAdjacentElement("afterbegin", pinnedSection);
+    } else {
+      insertionPoint.parentNode.insertBefore(pinnedSection, insertionPoint);
+    }
 
     const pinnedList = pinnedSection.querySelector("#pinned-threads-list");
     const threadIds = Object.keys(pinnedThreads);
 
     // Create loading placeholders
-    for (const threadId of threadIds) {
+    threadIds.forEach((threadId) => {
       pinnedList.insertAdjacentHTML(
         "beforeend",
         createLoadingListItem(threadId)
       );
-    }
+    });
 
-    // Fetch thread data asynchronously
-    const threadDataPromises = threadIds.map(async (threadId) => {
-      try {
-        const threadData = await fetchThreadData(
-          threadId,
-          pinnedThreads[threadId]
-        );
-        return threadData;
-      } catch (error) {
-        console.error(`Error loading thread ${threadId}:`, error);
-        return {
+    // Set up Intersection Observer
+    let isVisible = false;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        isVisible = entries[0].isIntersecting;
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(pinnedSection);
+
+    // Store the initial height
+    const initialHeight = pinnedSection.offsetHeight;
+
+    // Fetch and process thread data
+    const threadsData = await Promise.all(
+      threadIds.map((threadId) =>
+        fetchThreadData(threadId, pinnedThreads[threadId]).catch((error) => ({
           threadId,
           title: `Error loading thread ${threadId}`,
           sortableTitle: `error loading thread ${threadId}`,
           rowHTML: createErrorListItemHTML(threadId),
-        };
-      }
-    });
+        }))
+      )
+    );
 
-    // Wait for all thread data to be fetched
-    const threadsData = await Promise.all(threadDataPromises);
-
-    // Sort threads using localeCompare with options
+    // Sort threads
     threadsData.sort((a, b) =>
       a.title.localeCompare(b.title, undefined, {
         numeric: true,
@@ -260,19 +256,29 @@ SOFTWARE.
       })
     );
 
-    // Clear the list and add sorted threads
+    // Update the list with sorted threads
     pinnedList.innerHTML = "";
     threadsData.forEach((threadData) => {
       pinnedList.insertAdjacentHTML("beforeend", threadData.rowHTML);
     });
+
+    // Adjust scroll position if necessary
+    const newHeight = pinnedSection.offsetHeight;
+    const heightDifference = newHeight - initialHeight;
+
+    if (!isVisible && heightDifference > 0) {
+      window.scrollBy(0, heightDifference);
+    }
+
+    // Clean up the observer
+    observer.disconnect();
   }
 
   function findSearchPageInsertionPoint(pageBody) {
     const actionBar = pageBody.querySelector(".action-bar.bar-top");
-    if (actionBar) {
-      return actionBar.nextElementSibling;
-    }
-    return pageBody.querySelector(".forumbg");
+    return actionBar
+      ? actionBar.nextElementSibling
+      : pageBody.querySelector(".forumbg");
   }
 
   function createPinnedSection() {
