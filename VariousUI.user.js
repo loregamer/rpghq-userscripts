@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.5.1
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        GM_setValue
@@ -567,6 +567,7 @@ SOFTWARE.
     init() {
       if (settings.topicLinkCopyButton) {
         this.addCopyButtons();
+        this.addCopiedMessageStyles();
       }
     },
 
@@ -587,6 +588,8 @@ SOFTWARE.
       button.innerHTML =
         '<i class="icon fa-copy fa-fw" aria-hidden="true"></i>';
       button.title = "Copy BBCode link";
+      button.style.marginLeft = "7px";
+      button.style.padding = "0 3px";
       button.addEventListener("click", (e) => {
         e.preventDefault();
         this.copyBBCode(link);
@@ -596,9 +599,14 @@ SOFTWARE.
 
     copyBBCode(link) {
       const bbcode = `[size=150][b][url=${link.href}]${link.textContent}[/url][/b][/size]`;
-      navigator.clipboard.writeText(bbcode).then(() => {
-        this.showCopiedMessage();
-      });
+      navigator.clipboard
+        .writeText(bbcode)
+        .then(() => {
+          this.showCopiedMessage();
+        })
+        .catch((err) => {
+          console.error("Failed to copy text: ", err);
+        });
     },
 
     showCopiedMessage() {
@@ -609,6 +617,24 @@ SOFTWARE.
       setTimeout(() => {
         message.remove();
       }, 2000);
+    },
+
+    addCopiedMessageStyles() {
+      const style = document.createElement("style");
+      style.textContent = `
+        .copy-message {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          background-color: rgba(0, 0, 0, 0.8);
+          color: white;
+          padding: 10px 20px;
+          border-radius: 5px;
+          z-index: 9999;
+          font-size: 14px;
+        }
+      `;
+      document.head.appendChild(style);
     },
   };
 
