@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        GM_setValue
@@ -268,6 +268,26 @@ SOFTWARE.
           quoteContent.classList.remove("expanded");
           quoteContent.classList.add("collapsed");
           readMoreToggle.textContent = "Read more...";
+
+          // Collapse inner blockquotes
+          const innerQuotes = quoteContent.querySelectorAll("blockquote");
+          innerQuotes.forEach((innerQuote) => {
+            const nestedContent = innerQuote.querySelector(
+              ".nested-quote-content"
+            );
+            if (nestedContent) {
+              nestedContent.style.display = "none";
+              const toggle = innerQuote.querySelector(".quote-toggle");
+              if (toggle) {
+                toggle.textContent = "Expand Quote";
+              }
+            }
+          });
+
+          const quoteBox = quoteContent.closest("blockquote");
+          if (quoteBox) {
+            quoteBox.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
         } else {
           quoteContent.classList.remove("collapsed");
           quoteContent.classList.add("expanded");
