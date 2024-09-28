@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Notifications Customization
 // @namespace    http://tampermonkey.net/
-// @version      3.2
+// @version      3.2.1
 // @description  Customize RPGHQ notifications display
 // @author       LOREGAMER
 // @match        https://rpghq.org/*/*
@@ -321,6 +321,11 @@ SOFTWARE.
           titleElement.innerHTML = titleText.replace(
             /Report closed/,
             '<strong style="color: #f58c05;">Report closed</strong>'
+          );
+        } else if (titleText.includes("Post approval")) {
+          titleElement.innerHTML = titleText.replace(
+            /<strong>Post approval<\/strong>/,
+            '<strong style="color: #00AA00;">Post approval</strong>'
           );
         }
 
