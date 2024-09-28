@@ -94,6 +94,27 @@ SOFTWARE.
         })
       );
     },
+
+    getStoredPostContent: (postId) => {
+      const storedData = localStorage.getItem(`post_content_${postId}`);
+      if (storedData) {
+        const { content, timestamp } = JSON.parse(storedData);
+        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+          return content;
+        }
+      }
+      return null;
+    },
+
+    storePostContent: (postId, content) => {
+      localStorage.setItem(
+        `post_content_${postId}`,
+        JSON.stringify({
+          content,
+          timestamp: Date.now(),
+        })
+      );
+    },
   };
 
   const ReactionHandler = {
@@ -131,6 +152,32 @@ SOFTWARE.
       Storage.storeReactions(postId, reactions);
       return reactions;
     },
+
+    fetchPostContent: async (postId) => {
+      const cachedContent = Storage.getStoredPostContent(postId);
+      if (cachedContent) return cachedContent;
+
+      const response = await fetch(
+        `https://rpghq.org/forums/viewtopic.php?p=${postId}`,
+        {
+          credentials: "include",
+        }
+      );
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const postContent = doc.querySelector(`#post_content${postId} .content`);
+      if (postContent) {
+        postContent.querySelectorAll("blockquote").forEach((el) => el.remove());
+        let content = postContent.textContent.trim().replace(/\s+/g, " ");
+        if (content.length > 100) {
+          content = content.substring(0, 97) + "...";
+        }
+        Storage.storePostContent(postId, content);
+        return content;
+      }
+      return null;
+    },
   };
 
   const NotificationCustomizer = {
@@ -153,10 +200,40 @@ SOFTWARE.
           usernames.includes(reaction.username)
         );
         const reactionHTML = Utils.formatReactions(filteredReactions);
-        titleElement.innerHTML = titleText.replace(
-          /(have|has)\s+reacted.*$/,
-          `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
+        const isReactedTo = titleText.includes(
+          "reacted to a message you posted"
         );
+
+        if (isReactedTo) {
+          titleElement.innerHTML = titleText.replace(
+            /(have|has)\s+reacted.*$/,
+            `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
+          );
+
+          const postContent = await ReactionHandler.fetchPostContent(postId);
+          if (postContent) {
+            const referenceElement = block.querySelector(
+              ".notification-reference"
+            );
+            if (referenceElement) {
+              referenceElement.textContent = postContent;
+              Utils.styleReference(referenceElement);
+            } else {
+              const newReferenceElement = Utils.createElement("span", {
+                className: "notification-reference",
+                textContent: postContent,
+              });
+              Utils.styleReference(newReferenceElement);
+              titleElement.appendChild(document.createElement("br"));
+              titleElement.appendChild(newReferenceElement);
+            }
+          }
+        } else {
+          titleElement.innerHTML = titleText.replace(
+            /(have|has)\s+reacted.*$/,
+            `<b style="color: #3889ED;">reacted</b> ${reactionHTML}`
+          );
+        }
       }
     },
 
