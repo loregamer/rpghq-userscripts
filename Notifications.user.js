@@ -182,6 +182,8 @@ SOFTWARE.
 
   const NotificationCustomizer = {
     customizeReactionNotification: async (titleElement, block) => {
+      if (block.dataset.reactionCustomized === "true") return;
+
       let titleText = titleElement.innerHTML;
       const isUnread = block.href && block.href.includes("mark_notification");
       const postId = (block.getAttribute("data-real-url") || block.href).match(
@@ -235,6 +237,7 @@ SOFTWARE.
           );
         }
       }
+      block.dataset.reactionCustomized = "true";
     },
 
     customizeMentionNotification: (notificationBlock) => {
