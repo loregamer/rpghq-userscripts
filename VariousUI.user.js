@@ -181,6 +181,25 @@ SOFTWARE.
       `);
     },
 
+    getUserColor(username) {
+      const key = `userColor_${username.toLowerCase()}`;
+      const storedColor = localStorage.getItem(key);
+      if (storedColor) {
+        const { color, timestamp } = JSON.parse(storedColor);
+        // Check if the stored color is less than 7 days old
+        if (Date.now() - timestamp < 7 * 24 * 60 * 60 * 1000) {
+          return color;
+        }
+      }
+      return null;
+    },
+
+    storeUserColor(username, color) {
+      const key = `userColor_${username.toLowerCase()}`;
+      const data = JSON.stringify({ color, timestamp: Date.now() });
+      localStorage.setItem(key, data);
+    },
+
     colorizeUsernames() {
       const colorMap = new Map();
 
@@ -190,19 +209,21 @@ SOFTWARE.
         const color = link.style.color;
         if (color) {
           colorMap.set(username.toLowerCase(), color);
+          this.storeUserColor(username, color);
         }
       });
 
       // Then, apply colors to usernames in blockquotes
       document.querySelectorAll("blockquote cite a").forEach(async (link) => {
         const username = link.textContent.trim();
-        let color = colorMap.get(username.toLowerCase());
+        let color =
+          colorMap.get(username.toLowerCase()) || this.getUserColor(username);
 
         if (!color) {
-          // If color not found on page, fetch from user profile
+          // If color not found in map or localStorage, fetch from user profile
           color = await this.fetchUserColor(link.href);
           if (color) {
-            colorMap.set(username.toLowerCase(), color);
+            this.storeUserColor(username, color);
           }
         }
 
