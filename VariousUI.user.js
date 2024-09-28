@@ -149,70 +149,33 @@ SOFTWARE.
           margin-top: 5px;
           display: block;
         }
-        .nested-quote-content {
-          margin-top: 5px;
-          margin-bottom: 5px;
-        }
-        blockquote img:not(.smilies):not(.emoji) {
-          max-width: 30% !important;
-          height: auto !important;
-          width: auto !important;
-        }
-        blockquote span[data-s9e-mediaembed="youtube"] {
-          display: inline-block !important;
-          width: 20% !important;
-          max-width: 20% !important;
-          height: auto !important;
-        }
 
-        blockquote span[data-s9e-mediaembed="youtube"] > span {
-          padding-bottom: 56.25% !important;
-        }
-
-        blockquote span[data-s9e-mediaembed="youtube"] iframe {
-          width: 100% !important;
-          height: 100% !important;
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-        }
-
-        .topic-copy-button {
-          background: none;
-          border: none;
+        .quote-read-more {
           cursor: pointer;
-          padding: 0 5px;
-          color: inherit;
-          font-size: 0.8em;
-          opacity: 0.7;
-          transition: opacity 0.2s;
+          color: #4a90e2;
+          font-size: 0.9em;
+          text-align: center;
+          padding: 5px;
+          background-color: rgba(74, 144, 226, 0.1);
+          border-top: 1px solid rgba(74, 144, 226, 0.3);
+          margin-top: 10px;
         }
 
-        .topic-copy-button:hover {
-          opacity: 1;
+        .quote-read-more:hover {
+          background-color: rgba(74, 144, 226, 0.2);
         }
 
-        .copy-message {
-          position: fixed;
-          bottom: 20px;
-          right: 20px;
-          background-color: #4a90e2;
-          color: white;
-          padding: 10px 20px;
-          border-radius: 5px;
-          z-index: 9999;
-          animation: fadeInOut 2s ease-in-out;
+        .quote-content {
+          transition: max-height 0.3s ease-out;
         }
 
-        @keyframes fadeInOut {
-          0%,
-          100% {
-            opacity: 0;
-          }
-          10%,
-          90% {
-            opacity: 1;
-          }
+        .quote-content.collapsed {
+          max-height: 300px;
+          overflow: hidden;
+        }
+
+        .quote-content.expanded {
+          max-height: none;
         }
       `);
     },
@@ -225,24 +188,94 @@ SOFTWARE.
     processQuote(quoteBox) {
       const isNested = quoteBox.closest("blockquote blockquote") !== null;
       if (isNested) {
-        const citation = quoteBox.querySelector("cite");
-        const nestedContent = document.createElement("div");
-        nestedContent.className = "nested-quote-content";
-
-        while (quoteBox.firstChild) {
-          if (quoteBox.firstChild !== citation) {
-            nestedContent.appendChild(quoteBox.firstChild);
-          } else {
-            quoteBox.removeChild(quoteBox.firstChild);
-          }
-        }
-
-        if (citation) {
-          quoteBox.appendChild(citation);
-        }
-        quoteBox.appendChild(nestedContent);
-        this.addQuoteToggle(quoteBox, nestedContent);
+        this.processNestedQuote(quoteBox);
+      } else {
+        this.processOuterQuote(quoteBox);
       }
+    },
+
+    processNestedQuote(quoteBox) {
+      const citation = quoteBox.querySelector("cite");
+      const nestedContent = document.createElement("div");
+      nestedContent.className = "nested-quote-content";
+
+      while (quoteBox.firstChild) {
+        if (quoteBox.firstChild !== citation) {
+          nestedContent.appendChild(quoteBox.firstChild);
+        } else {
+          quoteBox.removeChild(quoteBox.firstChild);
+        }
+      }
+
+      if (citation) {
+        quoteBox.appendChild(citation);
+      }
+      quoteBox.appendChild(nestedContent);
+      this.addQuoteToggle(quoteBox, nestedContent);
+    },
+
+    processOuterQuote(quoteBox) {
+      const quoteContent = document.createElement("div");
+      quoteContent.className = "quote-content";
+
+      while (quoteBox.firstChild) {
+        quoteContent.appendChild(quoteBox.firstChild);
+      }
+
+      quoteBox.appendChild(quoteContent);
+
+      this.updateReadMoreToggle(quoteBox, quoteContent);
+
+      // Create a MutationObserver to watch for changes in the quote content
+      const observer = new MutationObserver(() => {
+        this.updateReadMoreToggle(quoteBox, quoteContent);
+      });
+
+      observer.observe(quoteContent, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["style"],
+      });
+    },
+
+    updateReadMoreToggle(quoteBox, quoteContent) {
+      let readMoreToggle = quoteBox.querySelector(".quote-read-more");
+
+      if (quoteContent.scrollHeight > 400) {
+        if (!readMoreToggle) {
+          readMoreToggle = this.createReadMoreToggle(quoteContent);
+          quoteBox.appendChild(readMoreToggle);
+        }
+        if (!quoteContent.classList.contains("expanded")) {
+          quoteContent.classList.add("collapsed");
+        }
+      } else {
+        if (readMoreToggle) {
+          readMoreToggle.remove();
+        }
+        quoteContent.classList.remove("collapsed", "expanded");
+      }
+    },
+
+    createReadMoreToggle(quoteContent) {
+      const readMoreToggle = document.createElement("div");
+      readMoreToggle.className = "quote-read-more";
+      readMoreToggle.textContent = "Read more...";
+
+      readMoreToggle.addEventListener("click", () => {
+        if (quoteContent.classList.contains("expanded")) {
+          quoteContent.classList.remove("expanded");
+          quoteContent.classList.add("collapsed");
+          readMoreToggle.textContent = "Read more...";
+        } else {
+          quoteContent.classList.remove("collapsed");
+          quoteContent.classList.add("expanded");
+          readMoreToggle.textContent = "Show less...";
+        }
+      });
+
+      return readMoreToggle;
     },
 
     addQuoteToggle(quoteBox, nestedContent) {
