@@ -336,6 +336,7 @@ SOFTWARE.
       readMoreToggle.textContent = "Read more...";
 
       readMoreToggle.addEventListener("click", () => {
+        const quoteBox = quoteContent.closest("blockquote");
         if (quoteContent.classList.contains("expanded")) {
           quoteContent.classList.remove("expanded");
           quoteContent.classList.add("collapsed");
@@ -356,9 +357,11 @@ SOFTWARE.
             }
           });
 
-          const quoteBox = quoteContent.closest("blockquote");
           if (quoteBox) {
-            quoteBox.scrollIntoView({ behavior: "smooth", block: "start" });
+            const quoteBoxRect = quoteBox.getBoundingClientRect();
+            if (quoteBoxRect.top < 0) {
+              quoteBox.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
           }
         } else {
           quoteContent.classList.remove("collapsed");
@@ -384,6 +387,16 @@ SOFTWARE.
           nestedContent.style.display = "none";
           this.textContent = "Expand Quote";
         }
+
+        // Always scroll to ensure the quote is visible
+        setTimeout(() => {
+          const quoteBoxRect = quoteBox.getBoundingClientRect();
+          const viewportHeight = window.innerHeight;
+
+          if (quoteBoxRect.top < 0 || quoteBoxRect.bottom > viewportHeight) {
+            quoteBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+        }, 0);
       };
       quoteBox.appendChild(toggle);
     },
