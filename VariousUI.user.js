@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.6.1
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        GM_setValue
@@ -373,10 +373,16 @@ SOFTWARE.
 
     fixQuoteLinks() {
       const quoteLinks = document.querySelectorAll("blockquote cite a");
+      const isMobile = window.matchMedia("(max-width: 700px)").matches;
+
       quoteLinks.forEach((link) => {
         const linkText = link.textContent.trim();
         if (linkText.startsWith("↑") && !linkText.startsWith("↑ ")) {
-          link.textContent = "↑  " + linkText.slice(1);
+          if (isMobile) {
+            link.textContent = " ↑ ";
+          } else {
+            link.textContent = "↑  " + linkText.slice(1);
+          }
         }
       });
     },
