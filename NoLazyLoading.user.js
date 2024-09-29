@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         RPGHQ - No Lazy Loading
-// @version      1.1
+// @version      1.2
 // @description  Disable lazy loading for images on rpghq.org and scroll to specific posts after full page load
 // @match        https://rpghq.org/*
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
@@ -34,15 +34,33 @@
       const postElement = document.getElementById(`p${postId}`);
 
       if (postElement) {
-        setTimeout(() => {
-          const headerHeight = document.querySelector("header").offsetHeight;
-          const yOffset =
-            postElement.getBoundingClientRect().top +
-            window.pageYOffset -
-            headerHeight;
-          window.scrollTo({ top: yOffset, behavior: "smooth" });
-        }, 1000); // 1 second delay
+        const headerHeight = document.querySelector("header").offsetHeight;
+        const yOffset =
+          postElement.getBoundingClientRect().top +
+          window.pageYOffset -
+          headerHeight;
+        window.scrollTo({ top: yOffset, behavior: "smooth" });
       }
+    }
+  }
+
+  // Function to check if all resources are loaded
+  function areAllResourcesLoaded() {
+    const images = Array.from(document.images);
+    const articles = Array.from(document.getElementsByTagName("article"));
+
+    return (
+      images.every((img) => img.complete) &&
+      articles.every((article) => article.innerHTML.trim() !== "")
+    );
+  }
+
+  // Function to wait for all resources to load
+  function waitForResourcesAndScroll() {
+    if (areAllResourcesLoaded()) {
+      scrollToPost();
+    } else {
+      setTimeout(waitForResourcesAndScroll, 2000);
     }
   }
 
@@ -60,8 +78,8 @@
 
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // Wait for the window to fully load before scrolling to the post
+  // Wait for the window to fully load, then wait for all resources before scrolling
   window.addEventListener("load", function () {
-    scrollToPost();
+    waitForResourcesAndScroll();
   });
 })();
