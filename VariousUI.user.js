@@ -133,7 +133,6 @@ SOFTWARE.
           margin: 10px 0;
           font-size: 0.9em;
           line-height: 1.4;
-          padding-left: 20px;
         }
         blockquote cite {
           display: flex;
