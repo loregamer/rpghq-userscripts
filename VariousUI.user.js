@@ -121,6 +121,7 @@ SOFTWARE.
       this.processQuoteBoxes();
       this.removeReadMoreButtons();
       this.colorizeUsernames();
+      this.processAvatars();
     },
 
     applyStyles() {
@@ -132,11 +133,11 @@ SOFTWARE.
           margin: 10px 0;
           font-size: 0.9em;
           line-height: 1.4;
+          padding-left: 20px;
         }
         blockquote cite {
-          display: block;
-          margin-bottom: 5px;
-          font-weight: bold;
+          display: flex;
+          align-items: center;
         }
         .quote-divider {
           border: none;
@@ -178,7 +179,37 @@ SOFTWARE.
         .quote-content.expanded {
           max-height: none;
         }
+
+        blockquote cite a {
+          display: inline-flex;
+          align-items: center;
+          font-weight: bold;
+        }
+        .quote-avatar {
+          width: 16px;
+          height: 16px;
+          margin-left: 4px;
+          margin-right: 3px;
+          border-radius: 50%;
+          object-fit: cover;
+        }
+        blockquote cite {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px; // Add some space below the citation
+        }
       `);
+    },
+
+    restructureCitation(citation) {
+      const container = document.createElement("div");
+      container.className = "quote-citation-container";
+
+      while (citation.firstChild) {
+        container.appendChild(citation.firstChild);
+      }
+
+      citation.appendChild(container);
     },
 
     getUserColor(username) {
@@ -198,6 +229,94 @@ SOFTWARE.
       const key = `userColor_${username.toLowerCase()}`;
       const data = JSON.stringify({ color, timestamp: Date.now() });
       localStorage.setItem(key, data);
+    },
+
+    getUserAvatar(username) {
+      const key = `userAvatar_${username.toLowerCase()}`;
+      const storedAvatar = localStorage.getItem(key);
+      if (storedAvatar) {
+        const { avatar, timestamp } = JSON.parse(storedAvatar);
+        // Check if the stored avatar is less than 7 days old
+        if (Date.now() - timestamp < 7 * 24 * 60 * 60 * 1000) {
+          return avatar;
+        }
+      }
+      return null;
+    },
+
+    storeUserAvatar(username, avatar) {
+      const key = `userAvatar_${username.toLowerCase()}`;
+      const data = JSON.stringify({ avatar, timestamp: Date.now() });
+      localStorage.setItem(key, data);
+    },
+
+    processAvatars() {
+      const avatarMap = new Map();
+
+      // First, collect all avatars from the page
+      document
+        .querySelectorAll(".avatar-container img.avatar")
+        .forEach((img) => {
+          const postprofile = img.closest(".postprofile");
+          if (postprofile) {
+            const usernameElement = postprofile.querySelector(
+              "a.username-coloured, a.username"
+            );
+            if (usernameElement) {
+              const username = usernameElement.textContent.trim();
+              avatarMap.set(username.toLowerCase(), img.src);
+              this.storeUserAvatar(username, img.src);
+            }
+          }
+        });
+
+      // Then, apply avatars to usernames in blockquotes
+      document.querySelectorAll("blockquote cite").forEach(async (citation) => {
+        this.restructureCitation(citation);
+        const link = citation.querySelector("a");
+        if (link) {
+          const username = link.textContent.trim();
+          let avatar =
+            avatarMap.get(username.toLowerCase()) ||
+            this.getUserAvatar(username);
+
+          if (!avatar) {
+            avatar = await this.fetchUserAvatar(link.href);
+            if (avatar) {
+              this.storeUserAvatar(username, avatar);
+            }
+          }
+
+          if (avatar) {
+            const avatarImg = document.createElement("img");
+            avatarImg.src = avatar;
+            avatarImg.className = "quote-avatar";
+            avatarImg.alt = `${username}'s avatar`;
+            citation
+              .querySelector(".quote-citation-container")
+              .insertBefore(
+                avatarImg,
+                citation.querySelector(".quote-citation-container").firstChild
+              );
+          }
+        }
+      });
+    },
+
+    async fetchUserAvatar(profileUrl) {
+      try {
+        const response = await fetch(profileUrl);
+        const text = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, "text/html");
+        const avatarImg = doc.querySelector(".profile-avatar img.avatar");
+        if (avatarImg) {
+          return avatarImg.src;
+        }
+      } catch (error) {
+        console.error("Error fetching user avatar:", error);
+      }
+      return null;
     },
 
     colorizeUsernames() {
