@@ -371,9 +371,20 @@ SOFTWARE.
       return null;
     },
 
+    fixQuoteLinks() {
+      const quoteLinks = document.querySelectorAll("blockquote cite a");
+      quoteLinks.forEach((link) => {
+        const linkText = link.textContent.trim();
+        if (linkText.startsWith("↑") && !linkText.startsWith("↑ ")) {
+          link.textContent = "↑  " + linkText.slice(1);
+        }
+      });
+    },
+
     processQuoteBoxes() {
       const allQuotes = document.querySelectorAll("blockquote");
       allQuotes.forEach(this.processQuote.bind(this));
+      this.fixQuoteLinks();
     },
 
     processQuote(quoteBox) {
