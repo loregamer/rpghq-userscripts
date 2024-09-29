@@ -513,19 +513,57 @@ SOFTWARE.
         if (nestedContent.style.display === "none") {
           nestedContent.style.display = "block";
           this.textContent = "Collapse Quote";
+
+          // Expand all parent quote contents
+          let parentQuoteContent = quoteBox.closest(".quote-content");
+          while (parentQuoteContent) {
+            if (parentQuoteContent.classList.contains("collapsed")) {
+              const parentReadMoreToggle =
+                parentQuoteContent.nextElementSibling;
+              if (
+                parentReadMoreToggle &&
+                parentReadMoreToggle.classList.contains("quote-read-more")
+              ) {
+                parentReadMoreToggle.click();
+              } else {
+                // Force update of read more toggle
+                betterQuotes.updateReadMoreToggle(
+                  parentQuoteContent.closest("blockquote"),
+                  parentQuoteContent
+                );
+              }
+            }
+            parentQuoteContent = parentQuoteContent
+              .closest("blockquote")
+              ?.closest(".quote-content");
+          }
+
+          // Automatically trigger "Read More..." if applicable, including newly created ones
+          setTimeout(() => {
+            let currentQuoteContent = quoteBox.closest(".quote-content");
+            while (currentQuoteContent) {
+              if (currentQuoteContent.classList.contains("collapsed")) {
+                const readMoreToggle = currentQuoteContent.nextElementSibling;
+                if (
+                  readMoreToggle &&
+                  readMoreToggle.classList.contains("quote-read-more")
+                ) {
+                  readMoreToggle.click();
+                }
+              }
+              currentQuoteContent = currentQuoteContent
+                .closest("blockquote")
+                ?.closest(".quote-content");
+            }
+          }, 0);
         } else {
           nestedContent.style.display = "none";
           this.textContent = "Expand Quote";
         }
 
-        // Always scroll to ensure the quote is visible
+        // Scroll to ensure the quote is visible
         setTimeout(() => {
-          const quoteBoxRect = quoteBox.getBoundingClientRect();
-          const viewportHeight = window.innerHeight;
-
-          if (quoteBoxRect.top < 0 || quoteBoxRect.bottom > viewportHeight) {
-            quoteBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          }
+          quoteBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }, 0);
       };
       quoteBox.appendChild(toggle);
