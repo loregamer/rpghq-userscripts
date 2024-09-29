@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      4.6.5
+// @version      4.6.4
 // @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php?mode=post*
@@ -1382,10 +1382,7 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
             0,
             cursorPosition
           );
-          const mentionStart = textBeforeCursor.lastIndexOf("@");
-          const textBeforeMention = textBeforeCursor.substring(0, mentionStart);
-
-          const lines = textBeforeMention.split("\n");
+          const lines = textBeforeCursor.split("\n");
           const currentLine = lines.length;
           const currentColumn = lines[lines.length - 1].length;
 
@@ -1393,18 +1390,17 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
           const lineHeight = parseInt(
             window.getComputedStyle(newTextarea).lineHeight
           );
-          const charWidth = 7; // Approximate character width
 
-          const left = textareaRect.left + currentColumn * charWidth;
+          const left = textareaRect.left + currentColumn * 7; // Approximate character width
           const top =
             textareaRect.top +
             (currentLine - 1) * lineHeight -
             newTextarea.scrollTop;
 
           mentionBox.style.left = `${left}px`;
-          mentionBox.style.top = `${top + mentionBox.offsetHeight}px`; // Position above the current line
-          mentionBox.style.position = "fixed";
-          mentionBox.style.zIndex = "9999";
+          mentionBox.style.top = `${top + lineHeight}px`; // Position below the current line
+          mentionBox.style.position = "fixed"; // Use fixed positioning
+          mentionBox.style.zIndex = "9999"; // Ensure it's above other elements
         }
       }
 
