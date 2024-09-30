@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Reaction Grouping
 // @namespace    https://rpghq.org/
-// @version      2.4
+// @version      2.5
 // @description  Group specific reactions on RPGHQ forums with extensive logging.
 // @match        https://rpghq.org/forums/*
 // @grant        none
@@ -69,6 +69,7 @@
           ".reactions-list .tab-content li"
         );
         processReactions(reactionTabs, reactionItems);
+        processReactionScoreLists();
       })
       .catch((error) => {
         console.log(error);
@@ -208,6 +209,65 @@
     console.log("groupReactions function completed");
   }
 
+  function processReactionScoreLists() {
+    const scoreLists = document.querySelectorAll(".reaction-score-list");
+    console.log("Found reaction score lists:", scoreLists.length);
+
+    scoreLists.forEach((scoreList) => {
+      const scoreItems = scoreList.querySelectorAll(".list-scores a");
+      console.log("Processing score list, items:", scoreItems.length);
+
+      scoreItems.forEach((item) => {
+        const reactionId = item.getAttribute("href").split("reaction=")[1];
+        console.log("Processing score item:", reactionId);
+        if (reactionGroupings[reactionId]) {
+          console.log(
+            "Regrouping score item:",
+            reactionId,
+            "to",
+            reactionGroupings[reactionId].newId
+          );
+          const newReactionId = reactionGroupings[reactionId].newId;
+          const existingNewItem = scoreList.querySelector(
+            `.list-scores a[href$="reaction=${newReactionId}"]`
+          );
+
+          if (existingNewItem) {
+            // Update existing item count
+            const oldCount = parseInt(item.title.match(/\d+/)[0]);
+            const newCount =
+              parseInt(existingNewItem.title.match(/\d+/)[0]) + oldCount;
+            existingNewItem.title = `${reactionGroupings[reactionId].newTitle} (${newCount})`;
+            item.remove();
+          } else {
+            // Update item attributes
+            item.href = item.href.replace(
+              `reaction=${reactionId}`,
+              `reaction=${newReactionId}`
+            );
+            item.title = `${reactionGroupings[reactionId].newTitle} ${
+              item.title.match(/\(\d+\)/)[0]
+            }`;
+            const img = item.querySelector("img");
+            if (img) {
+              img.src = reactionGroupings[reactionId].newImageUrl;
+              img.alt = reactionGroupings[reactionId].newTitle;
+            }
+          }
+        }
+      });
+
+      // Re-order items based on z-index
+      const sortedItems = Array.from(
+        scoreList.querySelectorAll(".list-scores a")
+      ).sort((a, b) => parseInt(b.style.zIndex) - parseInt(a.style.zIndex));
+      const listScores = scoreList.querySelector(".list-scores");
+      sortedItems.forEach((item) => listScores.appendChild(item));
+    });
+
+    console.log("Reaction score lists processing completed");
+  }
+
   // Set up a MutationObserver for the entire document
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
@@ -229,6 +289,9 @@
 
   observer.observe(document.body, { childList: true, subtree: true });
   console.log("MutationObserver set up for the entire document");
+
+  // Process reaction score lists on page load
+  window.addEventListener("load", processReactionScoreLists);
 
   console.log("RPGHQ Reaction Grouping script setup complete");
 })();
