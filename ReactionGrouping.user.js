@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         RPGHQ Reaction Grouping
+// @name         RPGHQ - Reaction Grouping
 // @namespace    https://rpghq.org/
-// @version      2.6
+// @version      1.0
 // @description  Group specific reactions on RPGHQ forums with extensive logging and toggleable groupings.
 // @match        https://rpghq.org/forums/*
 // @grant        GM_registerMenuCommand
@@ -9,7 +9,33 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_setClipboard
+// @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABXUExURfz//////+v//wA4uPv///7//4mJexggKnqKfAoNEgYJDIGKewoNEYaKe4iKewsNEYiJew0MEQ4MEBAMEBIMEKaslg8MEAwNERMaIg4NEBgaIzo5PQAAADbJGTEAAAAddFJOU/////////////////////////////////////8AWYbnagAAAAlwSFlzAAAOwgAADsIBFShKgAAAARlJREFUSEvdldtygzAMRGnSWIHcaC5tLv7/74yslVSSwQU/MMN0n7TLnmRsDFSxUP8CqD6S1MUoboF5+SqE6L8Bn5i1aELYC6wwa9GEUIFABA+7phqlpoYa2CywoS0aNUHKZ4FdKbCnAxoMIHfbD7T05Q3kbvuBQEdvIHebA07eQO42B5y9gdytApcQcAF2GHjTHABeg+gCO2qXRMHstzdGAW3pjSs+GsXAnn6scUVuNgv48U5PwgRAWw74GvThhP4AfJfGAjc0GnvBQFkg0J1nbZn4HXXN/0OyWjTxz7OqlTQKAL7Ax/phAKtru+9JBjhJgJC/QNfKqBtVDPCiORn1BQLA4nkmAEu2S26cBkOS1SdNBrhmB8T4BM0bhnjKhG0+AAAAAElFTkSuQmCC
+// @license     MIT
 // ==/UserScript==
+
+/*
+MIT License
+
+Copyright (c) 2024 loregamer
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
 (function () {
   "use strict";
@@ -336,7 +362,7 @@
     Object.entries(reactionGroupings).forEach(([id, grouping]) => {
       if (GM_getValue(`grouping_${id}`, true)) {
         const { oldName, oldImageUrl } = grouping;
-        filters.push(`! Hide ${oldName} reaction in popup`);
+        filters.push(`! Hide ${oldName} reaction`);
         filters.push(
           `rpghq.org##.reactions-view-dialog .reaction-image[src*="${oldImageUrl
             .split("/")
