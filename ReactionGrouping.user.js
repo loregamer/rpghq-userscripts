@@ -10,6 +10,8 @@
 // @grant        GM_getValue
 // @grant        GM_setClipboard
 // @icon         https://rpghq.org/forums/ext/canidev/reactions/images/reaction/matter.svg
+// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/ReactionGrouping.user.js
+// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/ReactionGrouping.user.js
 // @license     MIT
 // ==/UserScript==
 
