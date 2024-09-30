@@ -1,10 +1,13 @@
 // ==UserScript==
 // @name         RPGHQ Reaction Grouping
 // @namespace    https://rpghq.org/
-// @version      2.5
-// @description  Group specific reactions on RPGHQ forums with extensive logging.
+// @version      2.6
+// @description  Group specific reactions on RPGHQ forums with extensive logging and toggleable groupings.
 // @match        https://rpghq.org/forums/*
-// @grant        none
+// @grant        GM_registerMenuCommand
+// @grant        GM_unregisterMenuCommand
+// @grant        GM_setValue
+// @grant        GM_getValue
 // ==/UserScript==
 
 (function () {
@@ -13,18 +16,52 @@
   const reactionGroupings = {
     // Format: 'originalReactionId': { newId: 'newReactionId', newTitle: 'New Reaction Title', newImageUrl: 'URL to new image' }
     26: {
+      oldName: "Salute",
       newId: "3",
       newTitle: "Care",
       newImageUrl:
         "https://rpghq.org/forums/ext/canidev/reactions/images/reaction/matter.svg",
     },
     23: {
+      oldName: "Rip and Tear",
       newId: "14",
       newTitle: "Mad",
       newImageUrl:
         "https://rpghq.org/forums/ext/canidev/reactions/images/reaction/argh.gif",
     },
   };
+
+  // Initialize enabled states and menu items
+  const menuItems = {};
+
+  function updateMenu(id) {
+    const isEnabled = GM_getValue(`grouping_${id}`, true);
+    const { oldName, newTitle } = reactionGroupings[id];
+    const menuText = `${
+      isEnabled ? "Disable" : "Enable"
+    } grouping: ${oldName} -> ${newTitle}`;
+
+    if (menuItems[id]) {
+      GM_unregisterMenuCommand(menuItems[id]);
+    }
+
+    menuItems[id] = GM_registerMenuCommand(menuText, () => toggleGrouping(id));
+  }
+
+  function toggleGrouping(id) {
+    const currentState = GM_getValue(`grouping_${id}`, true);
+    GM_setValue(`grouping_${id}`, !currentState);
+    updateMenu(id);
+    location.reload(); // Reload the page
+  }
+
+  // Initialize menus
+  Object.keys(reactionGroupings).forEach((id) => {
+    if (GM_getValue(`grouping_${id}`) === undefined) {
+      GM_setValue(`grouping_${id}`, true);
+    }
+    updateMenu(id);
+  });
 
   console.log("RPGHQ Reaction Grouping script loaded");
   console.log("Reaction groupings:", reactionGroupings);
@@ -84,26 +121,13 @@
 
   function processReactions(reactionTabs, reactionItems) {
     console.log("Found reaction tabs:", reactionTabs.length);
-    console.log(
-      "Reaction tabs:",
-      Array.from(reactionTabs).map(
-        (tab) => `${tab.getAttribute("data-id")}: ${tab.title}`
-      )
-    );
-
     console.log("Found reaction items:", reactionItems.length);
-    console.log(
-      "Reaction items:",
-      Array.from(reactionItems).map((item) =>
-        item.getAttribute("data-reaction")
-      )
-    );
 
     // Process tabs
     reactionTabs.forEach((tab) => {
       const tabId = tab.getAttribute("data-id");
       console.log("Processing tab:", tabId, tab.title);
-      if (reactionGroupings[tabId]) {
+      if (reactionGroupings[tabId] && GM_getValue(`grouping_${tabId}`, true)) {
         console.log("Tab needs regrouping:", tabId);
         const newTab = Array.from(reactionTabs).find(
           (t) => t.getAttribute("data-id") === reactionGroupings[tabId].newId
@@ -148,7 +172,10 @@
     reactionItems.forEach((item) => {
       const reactionId = item.getAttribute("data-reaction");
       console.log("Processing reaction item:", reactionId);
-      if (reactionGroupings[reactionId]) {
+      if (
+        reactionGroupings[reactionId] &&
+        GM_getValue(`grouping_${reactionId}`, true)
+      ) {
         console.log(
           "Regrouping reaction item:",
           reactionId,
@@ -167,31 +194,33 @@
 
     // Move items to new tab contents
     Object.keys(reactionGroupings).forEach((oldId) => {
-      const newId = reactionGroupings[oldId].newId;
-      console.log("Moving items from", oldId, "to", newId);
-      let newTabContent = document.querySelector(
-        `.reactions-list .tab-content[data-id="${newId}"]`
-      );
-      const oldTabContent = document.querySelector(
-        `.reactions-list .tab-content[data-id="${oldId}"]`
-      );
+      if (GM_getValue(`grouping_${oldId}`, true)) {
+        const newId = reactionGroupings[oldId].newId;
+        console.log("Moving items from", oldId, "to", newId);
+        let newTabContent = document.querySelector(
+          `.reactions-list .tab-content[data-id="${newId}"]`
+        );
+        const oldTabContent = document.querySelector(
+          `.reactions-list .tab-content[data-id="${oldId}"]`
+        );
 
-      if (oldTabContent) {
-        console.log("Found old tab content:", oldId);
-        if (!newTabContent) {
-          console.log("Creating new tab content for:", newId);
-          newTabContent = oldTabContent.cloneNode(false);
-          newTabContent.setAttribute("data-id", newId);
-          oldTabContent.parentNode.insertBefore(newTabContent, oldTabContent);
+        if (oldTabContent) {
+          console.log("Found old tab content:", oldId);
+          if (!newTabContent) {
+            console.log("Creating new tab content for:", newId);
+            newTabContent = oldTabContent.cloneNode(false);
+            newTabContent.setAttribute("data-id", newId);
+            oldTabContent.parentNode.insertBefore(newTabContent, oldTabContent);
+          }
+          console.log("Moving children from", oldId, "to", newId);
+          while (oldTabContent.firstChild) {
+            newTabContent.appendChild(oldTabContent.firstChild);
+          }
+          oldTabContent.remove();
+          console.log("Removed old tab content:", oldId);
+        } else {
+          console.log("Old tab content not found:", oldId);
         }
-        console.log("Moving children from", oldId, "to", newId);
-        while (oldTabContent.firstChild) {
-          newTabContent.appendChild(oldTabContent.firstChild);
-        }
-        oldTabContent.remove();
-        console.log("Removed old tab content:", oldId);
-      } else {
-        console.log("Old tab content not found:", oldId);
       }
     });
 
@@ -225,7 +254,10 @@
       scoreItems.forEach((item) => {
         const reactionId = item.getAttribute("href").split("reaction=")[1];
         console.log("Processing score item:", reactionId);
-        if (reactionGroupings[reactionId]) {
+        if (
+          reactionGroupings[reactionId] &&
+          GM_getValue(`grouping_${reactionId}`, true)
+        ) {
           console.log(
             "Regrouping score item:",
             reactionId,
