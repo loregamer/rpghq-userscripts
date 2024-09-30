@@ -18,7 +18,12 @@
       newImageUrl:
         "https://rpghq.org/forums/ext/canidev/reactions/images/reaction/matter.svg",
     },
-    // Add more groupings here as needed
+    23: {
+      newId: "14",
+      newTitle: "Mad",
+      newImageUrl:
+        "https://rpghq.org/forums/ext/canidev/reactions/images/reaction/argh.gif",
+    },
   };
 
   console.log("RPGHQ Reaction Grouping script loaded");
