@@ -8,6 +8,7 @@
 // @grant        GM_unregisterMenuCommand
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_setClipboard
 // ==/UserScript==
 
 (function () {
@@ -17,6 +18,8 @@
     // Format: 'originalReactionId': { newId: 'newReactionId', newTitle: 'New Reaction Title', newImageUrl: 'URL to new image' }
     26: {
       oldName: "Salute",
+      oldImageUrl:
+        "https://rpghq.org/forums/ext/canidev/reactions/images/reaction/salute.gif",
       newId: "3",
       newTitle: "Care",
       newImageUrl:
@@ -24,6 +27,8 @@
     },
     23: {
       oldName: "Rip and Tear",
+      oldImageUrl:
+        "https://rpghq.org/forums/ext/canidev/reactions/images/reaction/rip_and_tear.png",
       newId: "14",
       newTitle: "Mad",
       newImageUrl:
@@ -323,6 +328,54 @@
       }
     }
   });
+
+  // Add this new function to generate and copy uBlock Origin filters
+  function copyUblockFilters() {
+    let filters = [];
+
+    Object.entries(reactionGroupings).forEach(([id, grouping]) => {
+      if (GM_getValue(`grouping_${id}`, true)) {
+        const { oldName, oldImageUrl } = grouping;
+        filters.push(`! Hide ${oldName} reaction in popup`);
+        filters.push(
+          `rpghq.org##.reactions-view-dialog .reaction-image[src*="${oldImageUrl
+            .split("/")
+            .pop()}"]`
+        );
+        filters.push(
+          `rpghq.org##.reactions-view-dialog li[data-reaction="${id}"]`
+        );
+        filters.push(`rpghq.org##.reactions-view-dialog a[data-id="${id}"]`);
+        filters.push(
+          `rpghq.org##.reaction-score-list .list-scores a[href*="reaction=${id}"]`
+        );
+        filters.push("");
+      }
+    });
+
+    if (filters.length > 0) {
+      const filtersText = filters.join("\n");
+      GM_setClipboard(filtersText, "text");
+      console.log("uBlock Origin filters copied to clipboard:", filtersText);
+      alert("uBlock Origin filters have been copied to your clipboard.");
+    } else {
+      console.log("No filters generated: all groupings are enabled");
+      alert(
+        "No filters generated: all groupings are currently enabled. Disable a grouping to generate filters."
+      );
+    }
+  }
+
+  // Initialize menus
+  Object.keys(reactionGroupings).forEach((id) => {
+    if (GM_getValue(`grouping_${id}`) === undefined) {
+      GM_setValue(`grouping_${id}`, true);
+    }
+    updateMenu(id);
+  });
+
+  // Add the new menu item for copying uBlock Origin filters
+  GM_registerMenuCommand("Copy uBlock Origin filters", copyUblockFilters);
 
   observer.observe(document.body, { childList: true, subtree: true });
   console.log("MutationObserver set up for the entire document");
