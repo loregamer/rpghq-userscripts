@@ -9,7 +9,7 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_setClipboard
-// @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABXUExURfz//////+v//wA4uPv///7//4mJexggKnqKfAoNEgYJDIGKewoNEYaKe4iKewsNEYiJew0MEQ4MEBAMEBIMEKaslg8MEAwNERMaIg4NEBgaIzo5PQAAADbJGTEAAAAddFJOU/////////////////////////////////////8AWYbnagAAAAlwSFlzAAAOwgAADsIBFShKgAAAARlJREFUSEvdldtygzAMRGnSWIHcaC5tLv7/74yslVSSwQU/MMN0n7TLnmRsDFSxUP8CqD6S1MUoboF5+SqE6L8Bn5i1aELYC6wwa9GEUIFABA+7phqlpoYa2CywoS0aNUHKZ4FdKbCnAxoMIHfbD7T05Q3kbvuBQEdvIHebA07eQO42B5y9gdytApcQcAF2GHjTHABeg+gCO2qXRMHstzdGAW3pjSs+GsXAnn6scUVuNgv48U5PwgRAWw74GvThhP4AfJfGAjc0GnvBQFkg0J1nbZn4HXXN/0OyWjTxz7OqlTQKAL7Ax/phAKtru+9JBjhJgJC/QNfKqBtVDPCiORn1BQLA4nkmAEu2S26cBkOS1SdNBrhmB8T4BM0bhnjKhG0+AAAAAElFTkSuQmCC
+// @icon         https://rpghq.org/forums/ext/canidev/reactions/images/reaction/matter.svg
 // @license     MIT
 // ==/UserScript==
 
@@ -70,7 +70,7 @@ SOFTWARE.
     const { oldName, newTitle } = reactionGroupings[id];
     const menuText = `${
       isEnabled ? "Disable" : "Enable"
-    } grouping: ${oldName} -> ${newTitle}`;
+    }: ${oldName} -> ${newTitle}`;
 
     if (menuItems[id]) {
       GM_unregisterMenuCommand(menuItems[id]);
