@@ -1216,9 +1216,23 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     addCustomSmileyButtons(); // Refresh the smiley buttons
   }
 
+  function removeInterferingEventListeners() {
+    const textarea = document.getElementById("message");
+    if (textarea) {
+      const $textarea = $(textarea);
+
+      $textarea.off("focus change keyup");
+
+      textarea.classList.remove("auto-resized");
+      textarea.style.height = "";
+      textarea.style.resize = "none";
+    }
+  }
+
   function initialize() {
     const originalTextarea = document.getElementById("message");
     if (originalTextarea) {
+      removeInterferingEventListeners();
       const newTextarea = originalTextarea; // Use original textarea
 
       // Wrap the original textarea with a container div
