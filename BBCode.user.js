@@ -43,6 +43,15 @@ SOFTWARE.
 (function () {
   "use strict";
 
+  window.resizeTextArea = function ($items, options) {
+    return;
+  };
+
+  // In case the function is defined on the phpbb object
+  if (typeof phpbb !== "undefined") {
+    phpbb.resizeTextArea = window.resizeTextArea;
+  }
+
   // Simplified customSmileys array
   let customSmileys = [
     "📥",
