@@ -1219,37 +1219,49 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
   function initialize() {
     const originalTextarea = document.getElementById("message");
     if (originalTextarea) {
-      // Create a new textarea element
-      const newTextarea = document.createElement("textarea");
-      newTextarea.id = "message";
-      newTextarea.name = "message";
-      newTextarea.className = originalTextarea.className;
-      newTextarea.value = originalTextarea.value;
-      newTextarea.setAttribute(
-        "tabindex",
-        originalTextarea.getAttribute("tabindex")
-      );
-      newTextarea.setAttribute(
-        "onselect",
-        originalTextarea.getAttribute("onselect")
-      );
-      newTextarea.setAttribute(
-        "onclick",
-        originalTextarea.getAttribute("onclick")
-      );
-      newTextarea.setAttribute(
-        "onkeyup",
-        originalTextarea.getAttribute("onkeyup")
-      );
-      newTextarea.setAttribute(
-        "onfocus",
-        originalTextarea.getAttribute("onfocus")
-      );
+      const newTextarea = originalTextarea; // Use original textarea
 
-      // Set the style for the new textarea
+      // Wrap the original textarea with a container div
+      const container = document.createElement("div");
+      container.className = "editor-container";
+
+      // Create the highlightDiv
+      const highlightDiv = document.createElement("div");
+      highlightDiv.id = "bbcode-highlight";
+
+      // Replace the original textarea with the container
+      originalTextarea.parentNode.replaceChild(container, originalTextarea);
+
+      // Append the highlightDiv and the original textarea to the container
+      container.appendChild(highlightDiv);
+      container.appendChild(newTextarea);
+
+      // Set the style for the textarea
       newTextarea.style.overflow = "hidden";
       newTextarea.style.resize = "none";
       newTextarea.style.minHeight = "500px"; // Set a minimum height
+
+      // Additional styles to match the new textarea
+      newTextarea.style.position = "relative";
+      newTextarea.style.zIndex = "2";
+      newTextarea.style.background = "transparent";
+      newTextarea.style.color = "rgb(204, 204, 204)";
+      newTextarea.style.caretColor = "white";
+      newTextarea.style.width = "100%";
+      newTextarea.style.height = "100%";
+      newTextarea.style.padding = "3px";
+      newTextarea.style.boxSizing = "border-box";
+      newTextarea.style.resize = "none";
+      newTextarea.style.overflow = "auto";
+      newTextarea.style.fontFamily = "Verdana, Helvetica, Arial, sans-serif";
+      newTextarea.style.fontSize = "11px";
+      newTextarea.style.fontStyle = "normal";
+      newTextarea.style.fontVariantCaps = "normal";
+      newTextarea.style.fontVariantEastAsian = "normal";
+      newTextarea.style.fontVariantLigatures = "normal";
+      newTextarea.style.fontVariantNumeric = "normal";
+      newTextarea.style.fontWeight = "400";
+      newTextarea.style.lineHeight = "15.4px";
 
       newTextarea.addEventListener("keydown", function (e) {
         if (e.ctrlKey) {
@@ -1273,16 +1285,6 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
           adjustTextareaAndHighlight();
         }
       });
-
-      const container = document.createElement("div");
-      container.className = "editor-container";
-
-      const highlightDiv = document.createElement("div");
-      highlightDiv.id = "bbcode-highlight";
-
-      container.appendChild(highlightDiv);
-      originalTextarea.parentNode.replaceChild(container, originalTextarea);
-      container.appendChild(newTextarea);
 
       // Add mention functionality
       let mentionTimeout;
@@ -1455,13 +1457,13 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
           max-height: 200px;
           overflow-y: auto;
           z-index: 9999;
-          width: 200px; // Set a fixed width
+          width: 200px; /* Set a fixed width */
           box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         .mention-item {
           padding: 5px 10px;
           cursor: pointer;
-          color: #fff; // Ensure text is visible
+          color: #fff; /* Ensure text is visible */
         }
         .mention-item:hover, .mention-item.active {
           background-color: #3a3a3a;
@@ -1529,7 +1531,6 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       positionSmileyBox();
       positionEditorHeader();
 
-      // Modify the "Add image to post" link
       // Modify the "Add image to post" link and add "Open Vault" button
       const addImageContainer = document.querySelector(
         'div[style*="margin-bottom: 0.5em; margin-top: 0.5em;"]'
