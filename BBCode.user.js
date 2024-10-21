@@ -453,27 +453,27 @@ SOFTWARE.
 
   // Function to adjust textarea and highlight div
   function adjustTextareaAndHighlight() {
-    const newTextarea = document.getElementById("message");
+    const textArea = document.getElementById("message");
     const highlightDiv = document.getElementById("bbcode-highlight");
 
     // Adjust textarea height
-    newTextarea.style.height = "auto";
-    newTextarea.style.height = newTextarea.scrollHeight + "px";
+    textArea.style.height = "auto";
+    textArea.style.height = textArea.scrollHeight + "px";
 
     // Match highlight div to textarea
-    highlightDiv.style.width = newTextarea.offsetWidth + "px";
-    highlightDiv.style.height = newTextarea.offsetHeight + "px";
-    highlightDiv.style.padding = window.getComputedStyle(newTextarea).padding;
+    highlightDiv.style.width = textArea.offsetWidth + "px";
+    highlightDiv.style.height = textArea.offsetHeight + "px";
+    highlightDiv.style.padding = window.getComputedStyle(textArea).padding;
     highlightDiv.style.borderWidth =
-      window.getComputedStyle(newTextarea).borderWidth;
+      window.getComputedStyle(textArea).borderWidth;
     highlightDiv.style.borderStyle =
-      window.getComputedStyle(newTextarea).borderStyle;
+      window.getComputedStyle(textArea).borderStyle;
     highlightDiv.style.borderColor = "transparent";
     highlightDiv.style.fontFamily =
-      window.getComputedStyle(newTextarea).fontFamily;
-    highlightDiv.style.fontSize = window.getComputedStyle(newTextarea).fontSize;
+      window.getComputedStyle(textArea).fontFamily;
+    highlightDiv.style.fontSize = window.getComputedStyle(textArea).fontSize;
     highlightDiv.style.lineHeight =
-      window.getComputedStyle(newTextarea).lineHeight;
+      window.getComputedStyle(textArea).lineHeight;
 
     // Reposition smiley box
     positionSmileyBox();
@@ -1230,10 +1230,9 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
   }
 
   function initialize() {
-    const originalTextarea = document.getElementById("message");
-    if (originalTextarea) {
+    const textArea = document.getElementById("message");
+    if (textArea) {
       removeInterferingEventListeners();
-      const newTextarea = originalTextarea; // Use original textarea
 
       // Wrap the original textarea with a container div
       const container = document.createElement("div");
@@ -1244,40 +1243,40 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       highlightDiv.id = "bbcode-highlight";
 
       // Replace the original textarea with the container
-      originalTextarea.parentNode.replaceChild(container, originalTextarea);
+      textArea.parentNode.replaceChild(container, textArea);
 
       // Append the highlightDiv and the original textarea to the container
       container.appendChild(highlightDiv);
-      container.appendChild(newTextarea);
+      container.appendChild(textArea);
 
       // Set the style for the textarea
-      newTextarea.style.overflow = "hidden";
-      newTextarea.style.resize = "none";
-      newTextarea.style.minHeight = "500px"; // Set a minimum height
+      textArea.style.overflow = "hidden";
+      textArea.style.resize = "none";
+      textArea.style.minHeight = "500px"; // Set a minimum height
 
       // Additional styles to match the new textarea
-      newTextarea.style.position = "relative";
-      newTextarea.style.zIndex = "2";
-      newTextarea.style.background = "transparent";
-      newTextarea.style.color = "rgb(204, 204, 204)";
-      newTextarea.style.caretColor = "white";
-      newTextarea.style.width = "100%";
-      newTextarea.style.height = "100%";
-      newTextarea.style.padding = "3px";
-      newTextarea.style.boxSizing = "border-box";
-      newTextarea.style.resize = "none";
-      newTextarea.style.overflow = "auto";
-      newTextarea.style.fontFamily = "Verdana, Helvetica, Arial, sans-serif";
-      newTextarea.style.fontSize = "11px";
-      newTextarea.style.fontStyle = "normal";
-      newTextarea.style.fontVariantCaps = "normal";
-      newTextarea.style.fontVariantEastAsian = "normal";
-      newTextarea.style.fontVariantLigatures = "normal";
-      newTextarea.style.fontVariantNumeric = "normal";
-      newTextarea.style.fontWeight = "400";
-      newTextarea.style.lineHeight = "15.4px";
+      textArea.style.position = "relative";
+      textArea.style.zIndex = "2";
+      textArea.style.background = "transparent";
+      textArea.style.color = "rgb(204, 204, 204)";
+      textArea.style.caretColor = "white";
+      textArea.style.width = "100%";
+      textArea.style.height = "100%";
+      textArea.style.padding = "3px";
+      textArea.style.boxSizing = "border-box";
+      textArea.style.resize = "none";
+      textArea.style.overflow = "auto";
+      textArea.style.fontFamily = "Verdana, Helvetica, Arial, sans-serif";
+      textArea.style.fontSize = "11px";
+      textArea.style.fontStyle = "normal";
+      textArea.style.fontVariantCaps = "normal";
+      textArea.style.fontVariantEastAsian = "normal";
+      textArea.style.fontVariantLigatures = "normal";
+      textArea.style.fontVariantNumeric = "normal";
+      textArea.style.fontWeight = "400";
+      textArea.style.lineHeight = "15.4px";
 
-      newTextarea.addEventListener("keydown", function (e) {
+      textArea.addEventListener("keydown", function (e) {
         if (e.ctrlKey) {
           let tag = "";
           if (e.key === "b") tag = "b";
@@ -1326,7 +1325,7 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       }
 
       function checkForUpdates() {
-        const currentContent = newTextarea.value;
+        const currentContent = textArea.value;
         if (currentContent !== lastContent) {
           updateHighlight();
           adjustTextareaAndHighlight();
@@ -1335,7 +1334,7 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         updateTimer = setTimeout(checkForUpdates, 100); // Check every 100ms
       }
 
-      newTextarea.addEventListener("input", function () {
+      textArea.addEventListener("input", function () {
         clearTimeout(updateTimer);
         checkForUpdates();
       });
@@ -1345,7 +1344,7 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       // Initial adjustment and highlight
       adjustTextareaAndHighlight();
       updateHighlight();
-      lastContent = newTextarea.value;
+      lastContent = textArea.value;
 
       // Start checking for updates
       checkForUpdates();
@@ -1389,10 +1388,7 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       vaultContainer.appendChild(vaultLink);
 
       // Insert the container after the textarea
-      originalTextarea.parentNode.insertBefore(
-        vaultContainer,
-        originalTextarea.nextSibling
-      );
+      textArea.parentNode.insertBefore(vaultContainer, textArea.nextSibling);
 
       // Add event listeners for repositioning
       window.addEventListener("resize", function () {
