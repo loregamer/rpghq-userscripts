@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      4.6.4
+// @version      5.0
 // @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php?mode=post*
@@ -1574,7 +1574,10 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       vaultContainer.appendChild(vaultLink);
 
       // Insert the container after the textarea
-      textarea.parentNode.insertBefore(vaultContainer, textarea.nextSibling);
+      originalTextarea.parentNode.insertBefore(
+        vaultContainer,
+        originalTextarea.nextSibling
+      );
 
       // Add event listeners for repositioning
       window.addEventListener("resize", function () {
