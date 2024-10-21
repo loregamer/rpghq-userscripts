@@ -43,15 +43,6 @@ SOFTWARE.
 (function () {
   "use strict";
 
-  window.resizeTextArea = function ($items, options) {
-    return;
-  };
-
-  // In case the function is defined on the phpbb object
-  if (typeof phpbb !== "undefined") {
-    phpbb.resizeTextArea = window.resizeTextArea;
-  }
-
   // Simplified customSmileys array
   let customSmileys = [
     "📥",
@@ -1225,9 +1216,24 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     addCustomSmileyButtons(); // Refresh the smiley buttons
   }
 
+  function removeInterferingEventListeners() {
+    const textarea = document.getElementById("message");
+    if (textarea) {
+      const $textarea = $(textarea);
+
+      $textarea.off("focus change keyup");
+
+      textarea.classList.remove("auto-resized");
+      textarea.style.height = "";
+      textarea.style.resize = "none";
+    }
+  }
+
   function initialize() {
     const textArea = document.getElementById("message");
     if (textArea) {
+      removeInterferingEventListeners();
+
       // Wrap the original textarea with a container div
       const container = document.createElement("div");
       container.className = "editor-container";
