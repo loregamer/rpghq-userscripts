@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Fix YouTube Embeds
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.3
 // @description  Fix YouTube embeds on chat.rpghq.org
 // @author       Your Name
 // @match        https://chat.rpghq.org/*
@@ -33,10 +33,30 @@
     });
   }
 
-  // Run the function on page load
-  window.addEventListener("load", replaceYouTubeLinks);
+  // Function to hide the specific broken embed
+  function hideBrokenEmbed() {
+    const youtubeImages = document.querySelectorAll('img[alt*="YouTube"]');
+    youtubeImages.forEach((img) => {
+      let parent = img.parentElement;
+      while (parent && !parent.classList.contains("prxiv40")) {
+        parent = parent.parentElement;
+      }
+      if (parent) {
+        parent.style.display = "none";
+      }
+    });
+  }
 
-  // Run the function when new messages are added
-  const observer = new MutationObserver(replaceYouTubeLinks);
+  // Run the functions on page load
+  window.addEventListener("load", () => {
+    replaceYouTubeLinks();
+    hideBrokenEmbed();
+  });
+
+  // Run the functions when new messages are added
+  const observer = new MutationObserver(() => {
+    replaceYouTubeLinks();
+    hideBrokenEmbed();
+  });
   observer.observe(document.body, { childList: true, subtree: true });
 })();
