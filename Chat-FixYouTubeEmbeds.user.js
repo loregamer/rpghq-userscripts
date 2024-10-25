@@ -28,8 +28,8 @@
             // Create new embed
             const embed = document.createElement("iframe");
             embed.src = `https://www.youtube.com/embed/${videoId}`;
-            embed.width = "320";
-            embed.height = "180";
+            embed.width = "480";
+            embed.height = "270";
             embed.frameBorder = "0";
             embed.allow =
               "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
