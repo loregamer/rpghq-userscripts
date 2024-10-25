@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Fix YouTube Embeds
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  Fix YouTube embeds on chat.rpghq.org
 // @author       Your Name
 // @match        https://chat.rpghq.org/*
@@ -38,10 +38,12 @@
             // Replace content of the embed container
             embedContainer.innerHTML = "";
             embedContainer.appendChild(embed);
+
+            // Remove all classes and set minimal styling
+            embedContainer.className = "";
             embedContainer.style.display = "flex";
             embedContainer.style.justifyContent = "center";
             embedContainer.style.alignItems = "center";
-            embedContainer.style.padding = "10px 0";
           }
         }
       }
