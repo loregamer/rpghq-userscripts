@@ -1,10 +1,13 @@
 // ==UserScript==
-// @name         Fix YouTube Embeds
+// @name         RPHGQ Chat - Fix YouTube Embeds
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.0
+// @icon         https://www.youtube.com/favicon.ico
 // @description  Fix YouTube embeds on chat.rpghq.org
-// @author       Your Name
+// @author       loregamer
 // @match        https://chat.rpghq.org/*
+// @updateURL    https://github.com/loregamer/RPHGQ-Chat-FixYouTubeEmbeds/raw/main/Chat-FixYouTubeEmbeds.user.js
+// @downloadURL https://github.com/loregamer/RPHGQ-Chat-FixYouTubeEmbeds/raw/main/Chat-FixYouTubeEmbeds.user.js
 // @grant        none
 // ==/UserScript==
 
