@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPHGQ Chat - Fix YouTube Embeds
 // @namespace    http://tampermonkey.net/
-// @version      1.1.1
+// @version      1.2
 // @icon         https://www.youtube.com/favicon.ico
 // @description  Fix YouTube embeds on chat.rpghq.org
 // @author       loregamer
@@ -43,6 +43,15 @@
             "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
           embed.allowFullscreen = true;
 
+          const scrollContainer = document.querySelector(
+            "div._4yxtfd2._1mqalmd1._1mqalmd0._4yxtfd4._4yxtfdc._4yxtfdg._4yxtfdi._4yxtfdn"
+          );
+          const scrollBottom = scrollContainer
+            ? scrollContainer.scrollHeight -
+              scrollContainer.scrollTop -
+              scrollContainer.clientHeight
+            : 0;
+
           container.innerHTML = "";
           container.appendChild(embed);
 
@@ -50,6 +59,10 @@
           container.style.display = "flex";
           container.style.justifyContent = "center";
           container.style.alignItems = "center";
+
+          if (scrollContainer && scrollBottom < 10) {
+            scrollContainer.scrollTop = scrollContainer.scrollHeight;
+          }
         }
       }
     });
