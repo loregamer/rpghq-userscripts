@@ -55,8 +55,50 @@
     });
   }
 
-  window.addEventListener("load", fixYouTubeEmbeds);
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
 
-  const observer = new MutationObserver(fixYouTubeEmbeds);
-  observer.observe(document.body, { childList: true, subtree: true });
+  function setupObservers() {
+    const debouncedFixEmbeds = debounce(fixYouTubeEmbeds, 100);
+
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          debouncedFixEmbeds();
+        }
+      },
+      { subtree: true, childList: true }
+    );
+
+    intersectionObserver.observe(document.body);
+
+    const mutationObserver = new MutationObserver((mutations) => {
+      if (
+        mutations.some(
+          (mutation) =>
+            mutation.type === "childList" && mutation.addedNodes.length > 0
+        )
+      ) {
+        debouncedFixEmbeds();
+      }
+    });
+
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  function initializeScript() {
+    fixYouTubeEmbeds();
+    setupObservers();
+  }
+
+  initializeScript();
 })();
