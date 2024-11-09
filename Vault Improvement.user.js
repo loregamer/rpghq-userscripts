@@ -86,7 +86,7 @@ SOFTWARE.
     document.title = `(${completedDownloads}/${totalUploads}${uploadStatus}) - ${originalTitle}`;
   }
 
-  let soundEnabled = GM_getValue("soundEnabled", true);
+  let soundEnabled = GM_getValue("soundEnabled", false);
 
   GM_registerMenuCommand("Toggle Notification Sound", () => {
     soundEnabled = !soundEnabled;
