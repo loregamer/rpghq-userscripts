@@ -64,9 +64,7 @@
           console.log("Got user ID:", userId); // Debug log
           const newUrl = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}-${username.toLowerCase()}`;
           console.log("Setting new URL:", newUrl); // Debug log
-          link.href = newUrl;
-          // Force update the link's href attribute
-          link.setAttribute("href", newUrl);
+          window.location.replace(newUrl);
         } catch (error) {
           console.error("Error processing link:", error);
         }
