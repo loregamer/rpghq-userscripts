@@ -12,6 +12,14 @@
 (function () {
   "use strict";
 
+  // Skip entirely if we're already on a profile page
+  if (
+    window.location.pathname.includes("memberlist.php") &&
+    window.location.search.includes("mode=viewprofile")
+  ) {
+    return;
+  }
+
   // Function to get user ID from the mention API
   async function getUserId(username) {
     return new Promise((resolve, reject) => {
@@ -48,53 +56,55 @@
     });
   }
 
-  // Function to process links
-  async function processLink(link) {
-    const path = link.pathname;
-    console.log("Processing link:", path); // Debug log
+  // Process only the current window URL
+  async function processCurrentURL() {
+    const path = window.location.pathname;
 
-    if (path.startsWith("/forums/")) {
-      const username = path.split("/").pop();
-      console.log("Extracted username:", username); // Debug log
+    // Skip if not a simple /forums/username pattern
+    const pathParts = path.split("/").filter(Boolean);
+    if (
+      pathParts.length !== 2 ||
+      pathParts[0] !== "forums" ||
+      path.includes(".php")
+    ) {
+      return;
+    }
 
-      if (username && !path.includes(".php")) {
-        console.log("Making API request for:", username); // Debug log
-        try {
-          const userId = await getUserId(username);
-          console.log("Got user ID:", userId); // Debug log
-          const newUrl = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}-${username.toLowerCase()}`;
-          console.log("Setting new URL:", newUrl); // Debug log
-          window.location.replace(newUrl);
-        } catch (error) {
-          console.error("Error processing link:", error);
-        }
+    const username = pathParts[1];
+    console.log("Processing URL:", path);
+
+    const messagePanel = document.querySelector(".panel .inner");
+    if (messagePanel) {
+      messagePanel.innerHTML = `
+        <h2 class="message-title">Loading</h2>
+        <p>Fetching profile for user: ${username}...</p>
+      `;
+    }
+
+    try {
+      const userId = await getUserId(username);
+      console.log("Got user ID:", userId);
+      const newUrl = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}-${username.toLowerCase()}`;
+      console.log("Setting new URL:", newUrl);
+      window.location.replace(newUrl);
+    } catch (error) {
+      console.error("Error processing URL:", error);
+      if (messagePanel) {
+        messagePanel.innerHTML = `
+          <h2 class="message-title">Error</h2>
+          <p style="color: red;">User "${username}" not found.</p>
+        `;
       }
     }
   }
 
-  // Observer to watch for new links being added to the page
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      mutation.addedNodes.forEach((node) => {
-        if (node.nodeType === 1) {
-          const links = node.getElementsByTagName("a");
-          Array.from(links).forEach(processLink);
-        }
-      });
+  // Remove all the observer and link processing code
+  // Just process the current URL when the script loads
+  if (document.readyState === "loading") {
+    window.addEventListener("DOMContentLoaded", processCurrentURL, {
+      once: true,
     });
-  });
-
-  // Process existing links
-  window.addEventListener("load", () => {
-    // Changed from DOMContentLoaded
-    console.log("Processing existing links"); // Debug log
-    const links = document.getElementsByTagName("a");
-    Array.from(links).forEach(processLink);
-  });
-
-  // Start observing the document
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  } else {
+    processCurrentURL();
+  }
 })();
