@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Profile URL Converter
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Converts simple profile URLs to full profile URLs on RPGHQ
 // @author       You
 // @match        https://rpghq.org/forums/*
@@ -40,8 +40,11 @@ SOFTWARE.
 (function () {
   "use strict";
 
-  // Skip if URL contains .php - simplified check
-  if (window.location.pathname.includes(".php")) {
+  // Skip if URL contains .php or is the contact admin page
+  if (
+    window.location.pathname.includes(".php") ||
+    window.location.pathname.includes("contactadmin")
+  ) {
     return;
   }
 
