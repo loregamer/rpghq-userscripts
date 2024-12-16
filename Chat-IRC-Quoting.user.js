@@ -104,8 +104,30 @@
     };
   }
 
-  // Replace the existing observer code with these functions
+  // Add this function to clean up IRC quotes in reply content
+  function cleanReplyContent() {
+    const replyContents = document.querySelectorAll(
+      ".replyWrapper ._1en4l6y4 p"
+    );
+    replyContents.forEach((replyContent) => {
+      const text = replyContent.textContent;
+      const ircMatch = text.match(/<@?([^>]+)>\s*([^<]+)\s*</);
+      if (ircMatch) {
+        const [fullMatch] = ircMatch;
+        replyContent.textContent = text
+          .substring(fullMatch.length)
+          .replace(/^\s*<\s*/, "")
+          .trim();
+      }
+    });
+  }
+
+  // Update the updateAllElements function
   function updateAllElements() {
+    // First clean any IRC quotes in existing replies
+    cleanReplyContent();
+
+    // Then handle new IRC quotes
     const messages = document.querySelectorAll("[data-message-id]");
     messages.forEach((messageElement) => {
       if (!messageElement) return;
