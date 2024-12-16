@@ -61,7 +61,7 @@
     // Create reply button structure with simplified content
     const replyHTML = `
         <div class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv46">
-            <button class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv41a prxiv41d prxiv41j _1en4l6y3">
+            <div class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv41a prxiv41d prxiv41j _1en4l6y3">
                 <div class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv41a prxiv41t" style="color: var(--mx-uc-1); max-width: 12.5rem;">
                     <svg class="_19nrl2w0 _1mqalmd1 _1mqalmd0 cpipac8" focusable="false" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M21 9.5V8H7V16H8.5V9.5H21Z" fill="currentColor"></path>
@@ -72,7 +72,7 @@
                 <div class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv41s _1en4l6y4">
                     <p class="_1xny9xl0 _1mqalmd1 _1mqalmd0 _1xny9xlb _1xny9xlr _1xny9xln">${quotedContent.trim()}</p>
                 </div>
-            </button>
+            </div>
         </div>
     `;
 
