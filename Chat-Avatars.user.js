@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Add User Pictures and Add [irc] to Names
 // @namespace    http://tampermonkey.net/
-// @version      4.0
+// @version      4.1
 // @description  Add pictures to users in Cinny Matrix client by user ID and add [irc] to their display names
 // @author       loregamer
 // @match        https://chat.rpghq.org/*
@@ -231,6 +231,33 @@ SOFTWARE.
     },
   };
 
+  const cache = {
+    avatarCache: new Map(),
+
+    // Cache results for 1 hour by default
+    CACHE_DURATION: 60 * 60 * 1000,
+
+    getCachedAvatar: (url) => {
+      const cached = cache.avatarCache.get(url);
+      if (!cached) return null;
+
+      // Check if cache has expired
+      if (Date.now() - cached.timestamp > cache.CACHE_DURATION) {
+        cache.avatarCache.delete(url);
+        return null;
+      }
+
+      return cached.result;
+    },
+
+    cacheAvatar: (url, exists) => {
+      cache.avatarCache.set(url, {
+        result: exists,
+        timestamp: Date.now(),
+      });
+    },
+  };
+
   const dom = {
     setImageSource: (img, baseImageUrl) => {
       if (/\.(jpg|jpeg|png|gif)$/i.test(baseImageUrl)) {
@@ -244,6 +271,17 @@ SOFTWARE.
       extensions.forEach((ext) => {
         if (!imageSet) {
           const imgSrc = `${baseImageUrl}.${ext}`;
+
+          // Check cache first
+          const cached = cache.getCachedAvatar(imgSrc);
+          if (cached !== null) {
+            if (cached) {
+              img.src = imgSrc;
+              imageSet = true;
+            }
+            return;
+          }
+
           const testerImg = new Image();
           testerImg.src = imgSrc;
 
@@ -251,10 +289,14 @@ SOFTWARE.
             if (testerImg.complete && testerImg.naturalHeight !== 0) {
               img.src = imgSrc;
               imageSet = true;
+              // Cache successful result
+              cache.cacheAvatar(imgSrc, true);
             }
           };
 
           testerImg.onerror = () => {
+            // Cache failed result
+            cache.cacheAvatar(imgSrc, false);
             if (!imageSet && ext === extensions[extensions.length - 1]) {
               img.src = baseImageUrl;
             }
