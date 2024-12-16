@@ -47,41 +47,38 @@
     const text = contentDiv.textContent;
     if (!text) return;
 
-    const quoteMatch = text.match(/<@?([^>]+)>\s*(.*?)\s*</);
+    // Updated regex to better match IRC-style quotes
+    const quoteMatch = text.match(/<@?([^>]+)>\s*([^<]+)\s*</);
     if (!quoteMatch) return;
 
     const [fullMatch, username, quotedContent] = quoteMatch;
     if (!username || !quotedContent) return;
 
-    // Find the quoted message
-    const quotedMessage = findMessageByContent(username, quotedContent);
-    if (!quotedMessage || !quotedMessage.dataset.messageId) return;
-
     // Create reply wrapper
     const replyWrapper = document.createElement("div");
     replyWrapper.className = "replyWrapper";
 
-    // Create reply button structure
+    // Create reply button structure with simplified content
     const replyHTML = `
-            <div class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv46">
-                <button class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv41a prxiv41d prxiv41j _1en4l6y3" data-event-id="${quotedMessage.dataset.messageId}">
-                    <div class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv41a prxiv41t" style="color: var(--mx-uc-1); max-width: 12.5rem;">
-                        <svg class="_19nrl2w0 _1mqalmd1 _1mqalmd0 cpipac8" focusable="false" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M21 9.5V8H7V16H8.5V9.5H21Z" fill="currentColor"></path>
-                            <path d="M4.56066 12.6993L3.5 13.76L7.74264 18.0027L11.9853 13.76L10.9246 12.6993L7.74264 15.8813L4.56066 12.6993Z" fill="currentColor"></path>
-                        </svg>
-                        <p class="_1xny9xl0 _1mqalmd1 _1mqalmd0 _1xny9xlb _1xny9xlr _1xny9xln"><b>${username}</b></p>
-                    </div>
-                    <div class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv41s _1en4l6y4">
-                        <p class="_1xny9xl0 _1mqalmd1 _1mqalmd0 _1xny9xlb _1xny9xlr _1xny9xln">${quotedContent}</p>
-                    </div>
-                </button>
-            </div>
-        `;
+        <div class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv46">
+            <button class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv41a prxiv41d prxiv41j _1en4l6y3">
+                <div class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv41a prxiv41t" style="color: var(--mx-uc-1); max-width: 12.5rem;">
+                    <svg class="_19nrl2w0 _1mqalmd1 _1mqalmd0 cpipac8" focusable="false" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 9.5V8H7V16H8.5V9.5H21Z" fill="currentColor"></path>
+                        <path d="M4.56066 12.6993L3.5 13.76L7.74264 18.0027L11.9853 13.76L10.9246 12.6993L7.74264 15.8813L4.56066 12.6993Z" fill="currentColor"></path>
+                    </svg>
+                    <p class="_1xny9xl0 _1mqalmd1 _1mqalmd0 _1xny9xlb _1xny9xlr _1xny9xln"><b>${username}</b></p>
+                </div>
+                <div class="prxiv40 _1mqalmd1 _1mqalmd0 prxiv41 prxiv41s _1en4l6y4">
+                    <p class="_1xny9xl0 _1mqalmd1 _1mqalmd0 _1xny9xlb _1xny9xlr _1xny9xln">${quotedContent.trim()}</p>
+                </div>
+            </button>
+        </div>
+    `;
 
     replyWrapper.innerHTML = replyHTML;
 
-    // Update the content
+    // Update the content with just the remaining text
     const newContentDiv = document.createElement("div");
     newContentDiv.className = contentDiv.className;
     newContentDiv.textContent = text
