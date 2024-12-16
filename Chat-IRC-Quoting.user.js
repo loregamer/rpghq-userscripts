@@ -122,12 +122,26 @@
     });
   }
 
-  // Update the updateAllElements function
+  // Add this CSS to the document
+  function addStyles() {
+    const style = document.createElement("style");
+    style.textContent = `
+        .irc-quote {
+            background-color: rgba(128, 128, 128, 0.1);
+            border-radius: 4px;
+            padding: 2px 4px;
+            margin: 0 2px;
+        }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Modify the updateAllElements function to also handle inline IRC quotes
   function updateAllElements() {
     // First clean any IRC quotes in existing replies
     cleanReplyContent();
 
-    // Then handle new IRC quotes
+    // Then handle new IRC quotes and inline references
     const messages = document.querySelectorAll("[data-message-id]");
     messages.forEach((messageElement) => {
       if (!messageElement) return;
@@ -138,8 +152,20 @@
       const content = contentElement.textContent;
       if (!content) return;
 
-      if (content.match(/<@?[^>]+>/)) {
+      // Handle full IRC quotes first
+      if (content.match(/<@?[^>]+>.*?</)) {
         convertIRCQuote(messageElement);
+        return;
+      }
+
+      // Handle inline IRC references
+      const ircReference = content.match(/(<[+@]?[^>]+>[^<]+)/g);
+      if (ircReference) {
+        const html = content.replace(
+          /(<[+@]?[^>]+>[^<]+)/g,
+          '<span class="irc-quote">$1</span>'
+        );
+        contentElement.innerHTML = html;
       }
     });
   }
@@ -172,7 +198,9 @@
     mutationObserver.observe(document.body, { childList: true, subtree: true });
   }
 
+  // Add this to initializeScript
   function initializeScript() {
+    addStyles();
     updateAllElements();
     setupObservers();
   }
