@@ -1,11 +1,13 @@
 // ==UserScript==
-// @name         Chat IRC Quoting
+// @name         RPHGQ Chat - IRC Quote Formatter
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      1.0
 // @description  Convert IRC-style quotes to proper reply format on chat.rpghq.org
 // @author       You
 // @match        https://chat.rpghq.org/*
 // @grant        none
+// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Chat-IRC-Quoting.user.js
+// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Chat-IRC-Quoting.user.js
 // ==/UserScript==
 
 (function () {

@@ -6,8 +6,8 @@
 // @description  Fix YouTube embeds on chat.rpghq.org
 // @author       loregamer
 // @match        https://chat.rpghq.org/*
-// @updateURL    https://github.com/loregamer/RPHGQ-Chat-FixYouTubeEmbeds/raw/main/Chat-FixYouTubeEmbeds.user.js
-// @downloadURL https://github.com/loregamer/RPHGQ-Chat-FixYouTubeEmbeds/raw/main/Chat-FixYouTubeEmbeds.user.js
+// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Chat-FixYouTubeEmbeds.user.js
+// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Chat-FixYouTubeEmbeds.user.js
 // @grant        none
 // ==/UserScript==
 
