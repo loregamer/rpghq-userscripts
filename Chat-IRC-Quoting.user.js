@@ -111,6 +111,8 @@
     );
     replyContents.forEach((replyContent) => {
       const text = replyContent.textContent;
+
+      // Handle full IRC quotes first
       const ircMatch = text.match(/<@?([^>]+)>\s*([^<]+)\s*</);
       if (ircMatch) {
         const [fullMatch] = ircMatch;
@@ -118,6 +120,17 @@
           .substring(fullMatch.length)
           .replace(/^\s*<\s*/, "")
           .trim();
+        return;
+      }
+
+      // Handle inline IRC references
+      const ircReference = text.match(/(<[+@]?[^>]+>[^<]+)/g);
+      if (ircReference) {
+        const html = text.replace(
+          /(<[+@]?[^>]+>[^<]+)/g,
+          '<span class="irc-quote">$1</span>'
+        );
+        replyContent.innerHTML = html;
       }
     });
   }
