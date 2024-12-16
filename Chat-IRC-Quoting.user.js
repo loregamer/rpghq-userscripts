@@ -140,7 +140,7 @@
     const style = document.createElement("style");
     style.textContent = `
         .irc-quote {
-            background-color: rgba(128, 128, 128, 0.1);
+            background-color: var(--oq6d07a);
             border-radius: 4px;
             padding: 2px 4px;
             margin: 0 2px;
