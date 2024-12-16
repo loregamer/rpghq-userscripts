@@ -23,8 +23,14 @@
       const userElement = message.querySelector("button[data-user-id]");
       if (!userElement) continue;
 
-      const messageUsername = userElement.querySelector("b").textContent;
-      const messageContent = message.querySelector("._161nxvet")?.textContent;
+      const usernameElement = userElement.querySelector("b");
+      if (!usernameElement) continue;
+
+      const messageUsername = usernameElement.textContent;
+      const contentElement = message.querySelector("._161nxvet");
+      if (!contentElement) continue;
+
+      const messageContent = contentElement.textContent;
 
       if (messageUsername === username && messageContent?.includes(content)) {
         return message;
@@ -39,19 +45,17 @@
     if (!contentDiv) return;
 
     const text = contentDiv.textContent;
-    const quoteMatch = text.match(/<@?([^>]+)>\s*(.*?)\s*</);
+    if (!text) return;
 
+    const quoteMatch = text.match(/<@?([^>]+)>\s*(.*?)\s*</);
     if (!quoteMatch) return;
 
     const [fullMatch, username, quotedContent] = quoteMatch;
-    const remainingText = text
-      .substring(fullMatch.length)
-      .replace(/^\s*<\s*/, "")
-      .trim();
+    if (!username || !quotedContent) return;
 
     // Find the quoted message
     const quotedMessage = findMessageByContent(username, quotedContent);
-    if (!quotedMessage) return;
+    if (!quotedMessage || !quotedMessage.dataset.messageId) return;
 
     // Create reply wrapper
     const replyWrapper = document.createElement("div");
@@ -80,7 +84,10 @@
     // Update the content
     const newContentDiv = document.createElement("div");
     newContentDiv.className = contentDiv.className;
-    newContentDiv.textContent = remainingText;
+    newContentDiv.textContent = text
+      .substring(fullMatch.length)
+      .replace(/^\s*<\s*/, "")
+      .trim();
 
     // Replace the old content
     contentDiv.parentElement.insertBefore(replyWrapper, contentDiv);
@@ -104,8 +111,15 @@
   function updateAllElements() {
     const messages = document.querySelectorAll("[data-message-id]");
     messages.forEach((messageElement) => {
-      const content = messageElement.querySelector("._161nxvet")?.textContent;
-      if (content?.match(/<@?[^>]+>/)) {
+      if (!messageElement) return;
+
+      const contentElement = messageElement.querySelector("._161nxvet");
+      if (!contentElement) return;
+
+      const content = contentElement.textContent;
+      if (!content) return;
+
+      if (content.match(/<@?[^>]+>/)) {
         convertIRCQuote(messageElement);
       }
     });
