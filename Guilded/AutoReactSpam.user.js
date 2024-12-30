@@ -56,11 +56,41 @@
     reactionCounter.style.color = count > 30 ? "red" : "#fff";
   }
 
-  function countReactions() {
-    // Look for all reaction badges in the document
-    const allReactions = document.querySelectorAll(
-      ".ReactionBadge-container-content"
+  function getVisibleLayerWrapper() {
+    // Get the wrapper that's actually visible in the DOM
+    const wrapper = document.querySelector(
+      ".LayerContext-layer-item-wrapper:not(.LayerContext-layer-hidden):not([style*='display: none']):not([style*='opacity: 0'])"
     );
+    console.log("[Debug] Found visible layer wrapper:", wrapper);
+    return wrapper;
+  }
+
+  function isElementVisible(element) {
+    // Check if element or any ancestor is hidden
+    let current = element;
+    while (current) {
+      const style = window.getComputedStyle(current);
+      if (
+        style.display === "none" ||
+        style.visibility === "hidden" ||
+        style.opacity === "0" ||
+        current.classList.contains("LayerContext-layer-hidden")
+      ) {
+        return false;
+      }
+      current = current.parentElement;
+    }
+    return true;
+  }
+
+  function countReactions() {
+    // Get all reactions and filter out ones with hidden ancestors
+    const allReactions = Array.from(
+      document.querySelectorAll(".ReactionBadge-container-content")
+    ).filter(isElementVisible);
+
+    console.log("[Debug] Found visible reactions:", allReactions.length);
+    updateReactionCount(allReactions.length);
     return allReactions.length;
   }
 
@@ -80,19 +110,22 @@
       return;
     }
 
-    const layerWrapper = document.querySelector(
-      ".LayerContext-layer-item-wrapper"
+    // Get all visible reactions
+    const allReactions = Array.from(
+      document.querySelectorAll(".ReactionBadge-container-content")
+    ).filter(isElementVisible);
+
+    console.log(
+      "[Debug] Found visible reactions to click:",
+      allReactions.length
     );
-    if (!layerWrapper) return;
-    const allReactions = layerWrapper.querySelectorAll(
-      ".ReactionBadge-container-content"
-    );
+
     for (const badge of allReactions) {
-      if (!isActive) break; // Stop if script is turned off
+      if (!isActive) break;
 
       if (badge instanceof HTMLElement) {
         badge.click();
-        console.log("[Auto Reactor] Clicked a reaction");
+        console.log("[Auto Reactor] Clicked a visible reaction");
 
         if (isErrorPresent()) {
           console.warn(
@@ -113,33 +146,43 @@
   }
 
   function refreshReactionCount() {
+    console.log("[Debug] Refreshing reaction count");
     const reactionCount = countReactions();
+    console.log("[Debug] Setting count to:", reactionCount);
     updateReactionCount(reactionCount);
   }
 
   function observePageChanges() {
     const observer = new MutationObserver((mutations) => {
-      // Check if any of the mutations involve reaction changes
+      // Always refresh count on any mutation to catch layer changes
+      refreshReactionCount();
+
+      // Additional logging for debugging
       for (const mutation of mutations) {
-        if (
-          mutation.target.classList.contains(
-            "ReactionBadge-container-content"
-          ) ||
-          mutation.target.querySelector(".ReactionBadge-container-content")
-        ) {
-          refreshReactionCount();
-          break;
+        const layerWrapper = getVisibleLayerWrapper();
+        if (!layerWrapper) {
+          console.log("[Debug] No layer wrapper in mutation check");
+          continue;
+        }
+
+        if (layerWrapper.contains(mutation.target)) {
+          console.log("[Debug] Mutation detected in layer wrapper:", {
+            target: mutation.target,
+            type: mutation.type,
+            addedNodes: mutation.addedNodes.length,
+            removedNodes: mutation.removedNodes.length,
+          });
         }
       }
     });
 
-    // Observe the entire document body for reaction changes
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-      attributes: true,
-      attributeFilter: ["class"],
+      attributes: true, // Add this to catch class changes
+      attributeFilter: ["class"], // Only watch for class changes
     });
+    console.log("[Debug] Observer started");
   }
 
   document.addEventListener("keydown", (e) => {
