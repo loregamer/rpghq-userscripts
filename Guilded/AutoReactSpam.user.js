@@ -6,6 +6,8 @@
 // @match        https://www.guilded.gg/*
 // @icon         https://support.guilded.gg/favicon.ico
 // @grant        none
+// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Guilded/AutoReactSpam.user.js
+// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Guilded/AutoReactSpam.user.js
 // ==/UserScript==
 
 (function () {
