@@ -24,6 +24,9 @@
 
   // Create a visual feedback indicator
   const statusIndicator = document.createElement("div");
+  const statusLabel = document.createElement("span");
+  const statusValue = document.createElement("span");
+  statusLabel.textContent = "Auto-Reactor: ";
   statusIndicator.style.position = "fixed";
   statusIndicator.style.top = "10px";
   statusIndicator.style.right = "10px";
@@ -34,10 +37,15 @@
   statusIndicator.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
   statusIndicator.style.fontSize = "14px";
   statusIndicator.style.zIndex = "10000";
-  statusIndicator.textContent = "Auto-Reactor: OFF";
+  statusIndicator.appendChild(statusLabel);
+  statusIndicator.appendChild(statusValue);
+  statusValue.textContent = "OFF";
   document.body.appendChild(statusIndicator);
 
   const reactionCounter = document.createElement("div");
+  const counterLabel = document.createElement("span");
+  const counterValue = document.createElement("span");
+  counterLabel.textContent = "Reactions: ";
   reactionCounter.style.position = "fixed";
   reactionCounter.style.top = "50px";
   reactionCounter.style.right = "10px";
@@ -48,16 +56,37 @@
   reactionCounter.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
   reactionCounter.style.fontSize = "14px";
   reactionCounter.style.zIndex = "10000";
-  reactionCounter.textContent = "Reactions: 0";
+  reactionCounter.appendChild(counterLabel);
+  reactionCounter.appendChild(counterValue);
+  counterValue.textContent = "0";
   document.body.appendChild(reactionCounter);
 
   function updateStatus(message) {
-    statusIndicator.textContent = `Auto-Reactor: ${message}`;
+    let color;
+    switch (message) {
+      case "Paused (Error Detected)":
+        color = "#ffff00"; // Yellow
+        break;
+      case "Break (10s)":
+        color = "#00ffff"; // Light blue
+        break;
+      case "ON":
+        color = "#00ff00"; // Green
+        break;
+      case "OFF":
+        color = "#ff0000"; // Red
+        break;
+      default:
+        color = "#ffffff"; // White for any other status
+    }
+    statusValue.textContent = message;
+    statusValue.style.color = color;
   }
 
   function updateReactionCount(count) {
-    reactionCounter.textContent = `Reactions: ${count}`;
-    reactionCounter.style.color = count > 30 ? "red" : "#fff";
+    const color = count <= 30 ? "#00ff00" : "#ff0000"; // Green if ≤30, Red if >30
+    counterValue.textContent = count;
+    counterValue.style.color = color;
   }
 
   function getVisibleLayerWrapper() {
