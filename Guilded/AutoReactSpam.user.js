@@ -40,7 +40,21 @@
   statusIndicator.appendChild(statusLabel);
   statusIndicator.appendChild(statusValue);
   statusValue.textContent = "OFF";
+  statusValue.style.color = "#ff0000"; // Set initial color to red
   document.body.appendChild(statusIndicator);
+
+  // Create blocking overlay
+  const blockingOverlay = document.createElement("div");
+  blockingOverlay.style.position = "fixed";
+  blockingOverlay.style.top = "0";
+  blockingOverlay.style.left = "0";
+  blockingOverlay.style.width = "100%";
+  blockingOverlay.style.height = "100%";
+  blockingOverlay.style.backgroundColor = "transparent";
+  blockingOverlay.style.display = "none";
+  blockingOverlay.style.zIndex = "9999";
+  blockingOverlay.style.cursor = "not-allowed";
+  document.body.appendChild(blockingOverlay);
 
   const reactionCounter = document.createElement("div");
   const counterLabel = document.createElement("span");
@@ -264,11 +278,13 @@
         // Turn off
         isActive = false;
         updateStatus("OFF");
+        blockingOverlay.style.display = "none";
         console.log("[Auto Reactor] OFF");
       } else {
         // Turn on
         isActive = true;
         updateStatus("ON");
+        blockingOverlay.style.display = "block";
         console.log("[Auto Reactor] ON");
 
         (async function autoClickLoop() {
