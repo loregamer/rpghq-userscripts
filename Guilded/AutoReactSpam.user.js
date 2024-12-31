@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Guilded Auto-Reactor (Enhanced Error Detection + Reaction Counter)
 // @namespace    http://tampermonkey.net/
-// @version      1.12
+// @version      2.0
 // @description  Automatically react to messages, detecting errors via DOM for "An error occurred" and "You're doing that too often", and display reaction count
 // @match        https://www.guilded.gg/*
 // @icon         https://support.guilded.gg/favicon.ico
