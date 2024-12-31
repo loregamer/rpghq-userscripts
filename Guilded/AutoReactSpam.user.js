@@ -50,16 +50,28 @@
   blockingOverlay.style.left = "0";
   blockingOverlay.style.width = "100%";
   blockingOverlay.style.height = "100%";
-  blockingOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)"; // Semi-transparent black
+  blockingOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
   blockingOverlay.style.zIndex = "9999";
   blockingOverlay.style.cursor = "not-allowed";
+  blockingOverlay.style.flexDirection = "column";
   blockingOverlay.style.justifyContent = "center";
   blockingOverlay.style.alignItems = "center";
   blockingOverlay.style.color = "white";
   blockingOverlay.style.fontSize = "24px";
   blockingOverlay.style.fontWeight = "bold";
-  blockingOverlay.style.display = "none"; // Move display:none after display:flex styles
-  blockingOverlay.textContent = "Auto Reactor Running";
+  blockingOverlay.style.display = "none"; // Only set display once
+
+  const overlayTitle = document.createElement("div");
+  overlayTitle.textContent = "Auto Reactor Running";
+  overlayTitle.style.marginBottom = "10px";
+
+  const overlayStatus = document.createElement("div");
+  overlayStatus.style.fontSize = "18px";
+  overlayStatus.style.opacity = "0.8";
+  overlayStatus.textContent = "Working...";
+
+  blockingOverlay.appendChild(overlayTitle);
+  blockingOverlay.appendChild(overlayStatus);
   document.body.appendChild(blockingOverlay);
 
   const reactionCounter = document.createElement("div");
@@ -85,21 +97,30 @@
     let color;
     switch (message) {
       case "Paused (Error Detected)":
-        color = "#ffff00"; // Yellow
+        color = "#ffff00";
+        overlayStatus.textContent = "Paused - Error Detected";
         break;
       case "Break (10s)":
-        color = "#00ffff"; // Light blue
+        color = "#00ffff";
+        overlayStatus.textContent = "Taking a Break (10s)";
         break;
       case "ON":
-        color = "#00ff00"; // Green
+        color = "#00ff00";
+        overlayStatus.textContent = "Working...";
         break;
       case "OFF":
-        color = "#ff0000"; // Red
+        color = "#ff0000";
+        overlayStatus.textContent = "";
         break;
       default:
-        color = "#ffffff"; // White for any other status
+        color = "#ffffff";
+        overlayStatus.textContent = message;
     }
-    statusValue.textContent = message;
+
+    // Only update the status text if we're turning it on/off
+    if (message === "ON" || message === "OFF") {
+      statusValue.textContent = message;
+    }
     statusValue.style.color = color;
   }
 
@@ -290,14 +311,14 @@
         // Turn on
         isActive = true;
         updateStatus("ON");
-        blockingOverlay.style.display = "block";
+        blockingOverlay.style.display = "flex";
         console.log("[Auto Reactor] ON");
 
         (async function autoClickLoop() {
           while (isActive) {
             refreshReactionCount();
             await clickReactions();
-            await new Promise((resolve) => setTimeout(resolve, 500)); // Small gap between cycles
+            await new Promise((resolve) => setTimeout(resolve, 500));
           }
         })();
       }
