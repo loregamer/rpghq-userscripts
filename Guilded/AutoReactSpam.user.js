@@ -19,6 +19,7 @@
 
   let isActive = false;
   let isPaused = false;
+  let lastClickedIndex = 0; // Add this near the other state variables (isActive, isPaused)
 
   // Create a visual feedback indicator
   const statusIndicator = document.createElement("div");
@@ -119,15 +120,25 @@
 
     console.log(
       "[Debug] Found visible reactions to click:",
-      allReactions.length
+      allReactions.length,
+      "Starting from index:",
+      lastClickedIndex
     );
 
-    for (const badge of allReactions) {
+    // Reset lastClickedIndex if it's beyond the array length
+    if (lastClickedIndex >= allReactions.length) {
+      lastClickedIndex = 0;
+    }
+
+    // Start from lastClickedIndex instead of beginning
+    for (let i = lastClickedIndex; i < allReactions.length; i++) {
       if (!isActive) break;
 
+      const badge = allReactions[i];
       if (badge instanceof HTMLElement) {
         badge.click();
-        console.log("[Auto Reactor] Clicked a visible reaction");
+        console.log("[Auto Reactor] Clicked reaction at index:", i);
+        lastClickedIndex = i + 1; // Update the index for next time
 
         if (isErrorPresent()) {
           console.warn(
@@ -138,12 +149,26 @@
           await new Promise((resolve) => setTimeout(resolve, THROTTLE_DELAY));
           isPaused = false;
           updateStatus("Resuming...");
-          console.log("[Auto Reactor] Resuming after pause.");
+          console.log(
+            "[Auto Reactor] Resuming after pause at index:",
+            lastClickedIndex
+          );
           break;
         }
 
         await new Promise((resolve) => setTimeout(resolve, CLICK_DELAY));
       }
+    }
+
+    // If we've completed all reactions, pause for 10 seconds
+    if (lastClickedIndex >= allReactions.length) {
+      console.log(
+        "[Auto Reactor] Completed all reactions. Taking a 10 second break..."
+      );
+      updateStatus("Break (10s)");
+      await new Promise((resolve) => setTimeout(resolve, THROTTLE_DELAY));
+      updateStatus("ON");
+      lastClickedIndex = 0;
     }
   }
 
