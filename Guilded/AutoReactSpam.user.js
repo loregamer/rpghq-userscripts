@@ -16,6 +16,7 @@
   const TOGGLE_KEY = "Insert";
   const CLICK_DELAY = 100; // Very small delay (100ms) between each click
   const THROTTLE_DELAY = 10000; // 10 seconds pause if an error is detected
+  const REACTIONS_PER_BATCH = 15; // Number of reactions to click before taking a break
 
   let isActive = false;
   let isPaused = false;
@@ -130,6 +131,8 @@
       lastClickedIndex = 0;
     }
 
+    let clickedInThisBatch = 0;
+
     // Start from lastClickedIndex instead of beginning
     for (let i = lastClickedIndex; i < allReactions.length; i++) {
       if (!isActive) break;
@@ -138,7 +141,8 @@
       if (badge instanceof HTMLElement) {
         badge.click();
         console.log("[Auto Reactor] Clicked reaction at index:", i);
-        lastClickedIndex = i + 1; // Update the index for next time
+        lastClickedIndex = i + 1;
+        clickedInThisBatch++;
 
         if (isErrorPresent()) {
           console.warn(
@@ -156,11 +160,24 @@
           break;
         }
 
+        // Take a break after REACTIONS_PER_BATCH reactions
+        if (clickedInThisBatch >= REACTIONS_PER_BATCH) {
+          console.log(
+            "[Auto Reactor] Clicked",
+            REACTIONS_PER_BATCH,
+            "reactions. Taking a break..."
+          );
+          updateStatus("Break (10s)");
+          await new Promise((resolve) => setTimeout(resolve, THROTTLE_DELAY));
+          updateStatus("ON");
+          break;
+        }
+
         await new Promise((resolve) => setTimeout(resolve, CLICK_DELAY));
       }
     }
 
-    // If we've completed all reactions, pause for 10 seconds
+    // Reset index when we've gone through all reactions
     if (lastClickedIndex >= allReactions.length) {
       console.log(
         "[Auto Reactor] Completed all reactions. Taking a 10 second break..."
