@@ -50,10 +50,16 @@
   blockingOverlay.style.left = "0";
   blockingOverlay.style.width = "100%";
   blockingOverlay.style.height = "100%";
-  blockingOverlay.style.backgroundColor = "transparent";
-  blockingOverlay.style.display = "none";
+  blockingOverlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)"; // Semi-transparent black
   blockingOverlay.style.zIndex = "9999";
   blockingOverlay.style.cursor = "not-allowed";
+  blockingOverlay.style.justifyContent = "center";
+  blockingOverlay.style.alignItems = "center";
+  blockingOverlay.style.color = "white";
+  blockingOverlay.style.fontSize = "24px";
+  blockingOverlay.style.fontWeight = "bold";
+  blockingOverlay.style.display = "none"; // Move display:none after display:flex styles
+  blockingOverlay.textContent = "Auto Reactor Running";
   document.body.appendChild(blockingOverlay);
 
   const reactionCounter = document.createElement("div");
@@ -301,4 +307,14 @@
   // Initialize reaction count and observe page changes
   refreshReactionCount();
   observePageChanges();
+
+  // Add beforeunload event listener for page close confirmation
+  window.addEventListener("beforeunload", (e) => {
+    if (isActive) {
+      e.preventDefault();
+      e.returnValue =
+        "Auto Reactor is still running. Are you sure you want to leave?";
+      return e.returnValue;
+    }
+  });
 })();
