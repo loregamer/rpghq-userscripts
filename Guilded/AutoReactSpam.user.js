@@ -62,7 +62,7 @@
   blockingOverlay.style.display = "none"; // Only set display once
 
   const overlayTitle = document.createElement("div");
-  overlayTitle.textContent = "Auto Reactor Running";
+  overlayTitle.textContent = "Auto Reactor Running...";
   overlayTitle.style.marginBottom = "10px";
 
   const overlayStatus = document.createElement("div");
@@ -93,20 +93,22 @@
   counterValue.textContent = "0";
   document.body.appendChild(reactionCounter);
 
-  function updateStatus(message) {
+  function updateStatus(message, keepOnStatus = false) {
     let color;
     switch (message) {
       case "Paused (Error Detected)":
         color = "#ffff00";
         overlayStatus.textContent = "Paused - Error Detected";
+        overlayStatus.style.color = color;
         break;
-      case "Break (10s)":
+      case "Break":
         color = "#00ffff";
-        overlayStatus.textContent = "Taking a Break (10s)";
+        overlayStatus.style.color = color;
         break;
       case "ON":
         color = "#00ff00";
         overlayStatus.textContent = "Working...";
+        overlayStatus.style.color = color;
         break;
       case "OFF":
         color = "#ff0000";
@@ -115,18 +117,19 @@
       default:
         color = "#ffffff";
         overlayStatus.textContent = message;
+        overlayStatus.style.color = color;
     }
 
-    // Only update the status text if we're turning it on/off
-    if (message === "ON" || message === "OFF") {
+    // Only update the status text if we're turning it on/off or if keepOnStatus is false
+    if (message === "ON" || message === "OFF" || !keepOnStatus) {
       statusValue.textContent = message;
+      statusValue.style.color = color;
     }
-    statusValue.style.color = color;
   }
 
   function updateReactionCount(count) {
     const color = count <= 30 ? "#00ff00" : "#ff0000"; // Green if ≤30, Red if >30
-    counterValue.textContent = count;
+    counterValue.textContent = `${count} / 30`;
     counterValue.style.color = color;
   }
 
@@ -176,6 +179,25 @@
       errorText.includes("An error occurred") ||
       errorText.includes("You're doing that too often")
     );
+  }
+
+  async function takeBreak(reason = "Completed batch") {
+    console.log(`[Auto Reactor] ${reason}. Taking a 10 second break...`);
+    updateStatus("ON", true); // Keep the ON status in corner
+
+    // Start countdown
+    for (let i = 10; i > 0; i--) {
+      if (!isActive) break; // Stop countdown if script is turned off
+      overlayStatus.textContent = `Taking a Break (${i}s)`;
+      overlayStatus.style.color = "#00ffff"; // Light blue color for countdown
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    if (isActive) {
+      // Only update if still active
+      overlayStatus.textContent = "Working...";
+      overlayStatus.style.color = "#00ff00"; // Reset to green when working
+    }
   }
 
   async function clickReactions() {
@@ -232,14 +254,7 @@
 
         // Take a break after REACTIONS_PER_BATCH reactions
         if (clickedInThisBatch >= REACTIONS_PER_BATCH) {
-          console.log(
-            "[Auto Reactor] Clicked",
-            REACTIONS_PER_BATCH,
-            "reactions. Taking a break..."
-          );
-          updateStatus("Break (10s)");
-          await new Promise((resolve) => setTimeout(resolve, THROTTLE_DELAY));
-          updateStatus("ON");
+          await takeBreak(`Clicked ${REACTIONS_PER_BATCH} reactions`);
           break;
         }
 
@@ -249,12 +264,7 @@
 
     // Reset index when we've gone through all reactions
     if (lastClickedIndex >= allReactions.length) {
-      console.log(
-        "[Auto Reactor] Completed all reactions. Taking a 10 second break..."
-      );
-      updateStatus("Break (10s)");
-      await new Promise((resolve) => setTimeout(resolve, THROTTLE_DELAY));
-      updateStatus("ON");
+      await takeBreak("Completed all reactions");
       lastClickedIndex = 0;
     }
   }
