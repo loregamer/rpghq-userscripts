@@ -160,15 +160,20 @@
       }
     });
 
-    // Process posts
+    // Process posts - only check the post author
     const posts = document.querySelectorAll(".post");
     posts.forEach((post) => {
-      const usernameElement = post.querySelector(".username");
-      if (
-        usernameElement &&
-        isUserIgnored(usernameElement.textContent.trim())
-      ) {
-        post.classList.add("ghosted-post");
+      const postProfile = post.querySelector(".postprofile");
+      if (postProfile) {
+        const usernameElement = postProfile.querySelector(
+          ".username, .username-coloured"
+        );
+        if (
+          usernameElement &&
+          isUserIgnored(usernameElement.textContent.trim())
+        ) {
+          post.classList.add("ghosted-post");
+        }
       }
     });
   }
