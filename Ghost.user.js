@@ -80,24 +80,57 @@
     // Process notifications
     const notificationItems = document.querySelectorAll(".notification-block");
     notificationItems.forEach((item) => {
-      const usernameElement = item.querySelector(".username");
-      if (
-        usernameElement &&
-        isUserIgnored(usernameElement.textContent.trim())
-      ) {
-        const markReadLink = item.getAttribute("data-mark-read-url");
-        if (markReadLink) {
-          markAsRead(markReadLink);
-        } else {
-          // For read notifications that don't have data-mark-read-url
-          const href = item.getAttribute("href");
-          if (href) {
-            markAsRead(href);
+      // Get all usernames in the notification
+      const usernameElements = item.querySelectorAll(
+        ".username, .username-coloured"
+      );
+      const usernames = Array.from(usernameElements).map((el) =>
+        el.textContent.trim()
+      );
+
+      // Check if any of the users are ignored
+      const nonIgnoredUsers = usernames.filter(
+        (username) => !isUserIgnored(username)
+      );
+      const hasIgnoredUsers = nonIgnoredUsers.length < usernames.length;
+
+      if (hasIgnoredUsers) {
+        // Update the notification text to only show non-ignored users
+        const notificationTitle = item.querySelector(".notification-title");
+        if (notificationTitle) {
+          // Store all nodes after the last username for later
+          const lastUsername = usernameElements[usernameElements.length - 1];
+          const nodesAfter = [];
+          let currentNode = lastUsername.nextSibling;
+          while (currentNode) {
+            nodesAfter.push(currentNode.cloneNode(true));
+            currentNode = currentNode.nextSibling;
           }
-        }
-        const listItem = item.closest("li");
-        if (listItem) {
-          listItem.style.display = "none";
+
+          // Keep track of non-ignored username elements
+          const nonIgnoredElements = Array.from(usernameElements).filter(
+            (el) => !isUserIgnored(el.textContent.trim())
+          );
+
+          // Clear the title content
+          notificationTitle.textContent = "";
+
+          // Add back non-ignored usernames with proper formatting
+          nonIgnoredElements.forEach((el, index) => {
+            const clone = el.cloneNode(true);
+            notificationTitle.appendChild(clone);
+
+            if (index < nonIgnoredElements.length - 2) {
+              notificationTitle.appendChild(document.createTextNode(", "));
+            } else if (index === nonIgnoredElements.length - 2) {
+              notificationTitle.appendChild(document.createTextNode(" and "));
+            }
+          });
+
+          // Add back the stored nodes
+          nodesAfter.forEach((node) => {
+            notificationTitle.appendChild(node);
+          });
         }
       }
     });
