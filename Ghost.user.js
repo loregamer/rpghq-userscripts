@@ -95,9 +95,36 @@
       const hasIgnoredUsers = nonIgnoredUsers.length < usernames.length;
 
       if (hasIgnoredUsers) {
-        // Update the notification text to only show non-ignored users
         const notificationTitle = item.querySelector(".notification-title");
         if (notificationTitle) {
+          // Check if there are any commas in the notification text
+          const hasCommas = notificationTitle.textContent.includes(",");
+
+          if (!hasCommas) {
+            // Find the mark as read link first
+            const listItem = item.closest("li");
+            if (listItem) {
+              const markReadLink = listItem.querySelector(
+                'a.mark_read[data-ajax="notification.mark_read"]'
+              );
+              if (markReadLink && markReadLink.href) {
+                GM_xmlhttpRequest({
+                  method: "GET",
+                  url: markReadLink.href,
+                  onload: function (response) {
+                    console.log(
+                      "Ghosted notification marked as read:",
+                      response.status
+                    );
+                  },
+                });
+              }
+              // Then hide the notification
+              listItem.style.display = "none";
+            }
+            return;
+          }
+
           // Store all nodes after the last username for later
           const lastUsername = usernameElements[usernameElements.length - 1];
           const nodesAfter = [];
