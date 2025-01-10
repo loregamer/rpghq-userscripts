@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.6.2
+// @version      1.7
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        GM_setValue
@@ -46,6 +46,7 @@ SOFTWARE.
     replaceReadTopicLinks: true,
     cleanerEditedNotice: false,
     topicLinkCopyButton: true,
+    highlightCurrentPost: true,
   };
 
   const utils = {
@@ -824,6 +825,54 @@ SOFTWARE.
     },
   };
 
+  const highlightCurrentPost = {
+    init() {
+      if (settings.highlightCurrentPost) {
+        this.applyStyles();
+        this.highlightPost();
+      }
+    },
+
+    applyStyles() {
+      utils.applyStyles(`
+        .post.highlighted-current-post {
+          outline: 2px solid #BC2A4D;
+          outline-offset: -2px;
+          animation: highlightFade 1s ease-out;
+        }
+        @keyframes highlightFade {
+          from {
+            outline-color: rgba(188, 42, 77, 1);
+          }
+          to {
+            outline-color: rgba(188, 42, 77, 0.7);
+          }
+        }
+      `);
+    },
+
+    highlightPost() {
+      const hash = window.location.hash;
+      const postId = hash ? hash.slice(1) : null;
+
+      // Also check for p parameter in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const postParam = urlParams.get("p");
+
+      const targetPostId = postId || postParam;
+
+      if (targetPostId) {
+        const postElement = document.getElementById(targetPostId);
+        if (postElement) {
+          const postContainer = postElement.closest(".post");
+          if (postContainer) {
+            postContainer.classList.add("highlighted-current-post");
+          }
+        }
+      }
+    },
+  };
+
   const uiTweaks = {
     init() {
       // Only add the UI Tweaks dropdown if the URL contains "ucp.php"
@@ -897,6 +946,12 @@ SOFTWARE.
         "unreadLastPostButton",
         "Unread Last Post Button",
         this.toggleUnreadLastPostButton.bind(this)
+      );
+      this.addToggleItem(
+        dropdownContents,
+        "highlightCurrentPost",
+        "Highlight Current Post",
+        this.toggleHighlightCurrentPost.bind(this)
       );
       // Add more toggle items here as needed
 
@@ -995,6 +1050,19 @@ SOFTWARE.
       }
     },
 
+    toggleHighlightCurrentPost() {
+      if (settings.highlightCurrentPost) {
+        highlightCurrentPost.init();
+      } else {
+        // Remove highlight from any highlighted posts
+        document
+          .querySelectorAll(".highlighted-current-post")
+          .forEach((post) => {
+            post.classList.remove("highlighted-current-post");
+          });
+      }
+    },
+
     applyCustomStyles() {
       utils.applyStyles(`
           .ui-tweak-toggle {
@@ -1078,6 +1146,9 @@ SOFTWARE.
     }
     if (settings.topicLinkCopyButton) {
       topicLinkCopyButton.init();
+    }
+    if (settings.highlightCurrentPost) {
+      highlightCurrentPost.init();
     }
   }
 
