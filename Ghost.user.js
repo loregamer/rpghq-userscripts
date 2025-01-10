@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Add Ghost User button to profiles, hide content from ghosted users, and replace avatars
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -116,10 +116,12 @@
                       "Ghosted notification marked as read:",
                       response.status
                     );
+                    // Refresh the page after marking as read
+                    window.location.reload();
                   },
                 });
               }
-              // Then hide the notification
+              // Hide the notification
               listItem.style.display = "none";
             }
             return;
