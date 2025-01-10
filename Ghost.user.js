@@ -186,17 +186,21 @@
               usernameElement &&
               isUserIgnored(usernameElement.textContent.trim())
             ) {
-              // Remove the "by" text node
-              byTextNode.remove();
-              // Remove the mas-wrap element (avatar and username)
-              nextElement.remove();
-              // Remove the <br> element
-              const br = spanElement.querySelector("br");
-              if (br) {
-                br.remove();
+              // For recent topics, hide the entire li element
+              const recentTopicLi =
+                lastpostElement.closest("#recent-topics li");
+              if (recentTopicLi) {
+                recentTopicLi.style.display = "none";
+              } else {
+                // For other lastpost elements, just remove the user info as before
+                byTextNode.remove();
+                nextElement.remove();
+                const br = spanElement.querySelector("br");
+                if (br) {
+                  br.remove();
+                }
+                spanElement.normalize();
               }
-              // Remove any extra spaces
-              spanElement.normalize();
             }
           }
         }
