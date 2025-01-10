@@ -5,6 +5,8 @@
 // @description  Remove messages without images or videos on guilded.gg, except the first message
 // @match        https://www.guilded.gg/*
 // @grant        none
+// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Guilded/HideNonMedia.user.js
+// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Guilded/HideNonMedia.user.js
 // ==/UserScript==
 
 (function () {

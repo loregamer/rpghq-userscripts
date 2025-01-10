@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.5.1
+// @version      1.6.3
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -50,9 +50,14 @@ SOFTWARE.
       threadId &&
       !document.getElementById("ignore-thread-button")
     ) {
-      const ignoreButton = document.createElement("a");
+      const dropdownContainer = document.createElement("div");
+      dropdownContainer.className =
+        "dropdown-container dropdown-button-control topic-tools";
+
+      const ignoreButton = document.createElement("span");
       ignoreButton.id = "ignore-thread-button";
-      ignoreButton.className = "button button-secondary";
+      ignoreButton.className = "button button-secondary dropdown-trigger";
+      ignoreButton.title = "Ignore Thread";
 
       let isIgnored = ignoredThreads.hasOwnProperty(threadId);
       updateButtonState(ignoreButton, isIgnored);
@@ -76,18 +81,35 @@ SOFTWARE.
         }
       });
 
-      actionBar.appendChild(ignoreButton);
+      dropdownContainer.appendChild(ignoreButton);
+
+      const paginationDiv = actionBar.querySelector(".pagination");
+      const topicTitle = document.querySelector("h2.topic-title");
+      if (paginationDiv && topicTitle) {
+        actionBar.insertBefore(dropdownContainer, paginationDiv);
+      }
+
+      // Add media query for responsive design
+      const style = document.createElement("style");
+      style.textContent = `
+        @media (max-width: 700px) {
+          #ignore-thread-button span {
+            display: none;
+          }
+        }
+      `;
+      document.head.appendChild(style);
     }
   }
 
   function updateButtonState(button, isIgnored) {
     if (isIgnored) {
       button.innerHTML =
-        '<span>Unignore Thread</span> <i class="icon fa-check fa-fw" aria-hidden="true"></i>';
+        '<i class="icon fa-check fa-fw" aria-hidden="true"></i><span>Unignore Thread</span>';
       button.title = "Unignore Thread";
     } else {
       button.innerHTML =
-        '<span>Ignore Thread</span> <i class="icon fa-ban fa-fw" aria-hidden="true"></i>';
+        '<i class="icon fa-ban fa-fw" aria-hidden="true"></i><span>Ignore Thread</span>';
       button.title = "Ignore Thread";
     }
   }
@@ -307,17 +329,47 @@ SOFTWARE.
     return button;
   }
 
+  function escapeForUblock(str) {
+    return str
+      .replace(/[\\^$.*+?()[\]{}|]/g, "\\$&") // Escape special regex characters
+      .replace(/"/g, '\\"') // Escape double quotes
+      .replace(/'/g, "\\'"); // Escape single quotes (apostrophes)
+  }
+
   function exportIgnoredThreads() {
+    // Export JSON
     const exportData = JSON.stringify(ignoredThreads);
-    const blob = new Blob([exportData], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "ignored_threads.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const jsonBlob = new Blob([exportData], { type: "application/json" });
+    const jsonUrl = URL.createObjectURL(jsonBlob);
+    const jsonLink = document.createElement("a");
+    jsonLink.href = jsonUrl;
+    jsonLink.download = "ignored_threads.json";
+    document.body.appendChild(jsonLink);
+    jsonLink.click();
+    document.body.removeChild(jsonLink);
+    URL.revokeObjectURL(jsonUrl);
+
+    // Export uBlock Origin filters
+    let uBlockFilters = "! RPGHQ Thread Ignorer - Ignored Threads\n";
+    for (const threadId in ignoredThreads) {
+      const threadTitle = escapeForUblock(ignoredThreads[threadId]);
+      uBlockFilters += `
+! Thread ID: ${threadId}
+! Thread Title: ${threadTitle}
+
+rpghq.org##ul.topiclist li:has(a:has-text(/${threadTitle}/))
+rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
+`;
+    }
+    const textBlob = new Blob([uBlockFilters], { type: "text/plain" });
+    const textUrl = URL.createObjectURL(textBlob);
+    const textLink = document.createElement("a");
+    textLink.href = textUrl;
+    textLink.download = "ignored_threads_ublock.txt";
+    document.body.appendChild(textLink);
+    textLink.click();
+    document.body.removeChild(textLink);
+    URL.revokeObjectURL(textUrl);
   }
 
   function importIgnoredThreads() {

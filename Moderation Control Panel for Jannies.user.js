@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name         RPGHQ Moderator Control Panel Enhancer
 // @namespace    https://rpghq.org/
-// @version      3.2.2
+// @version      4.2.2
 // @description  Enhance the look of posts in the moderator control panel to match the forum posts, including profile pictures, fixing post width, adding a fade effect for long posts
 // @author       loregamer
-// @match        https://rpghq.org/forums/mcp.php?*mode=topic_view*
-// @match        https://rpghq.org/forums/mcp.php?*viewtopic*
+// @match        https://rpghq.org/*
 // @grant        GM_getResourceText
 // @grant        GM_xmlhttpRequest
 // @grant        GM_info
@@ -45,11 +44,11 @@ SOFTWARE.
   const defaultAvatarUrl =
     "https://f.rpghq.org/98ltUBUmxF3M.png?n=Vergstarion.png";
   const avatarExtensions = [".gif", ".jpeg", ".jpg", ".png"];
-  const postMaxHeight = "300px"; // Set the maximum height for a post before adding the fade effect
+  const postMaxHeight = "300px";
 
-  // Add custom styles to make the moderator control panel posts look like forum posts
-  const style = document.createElement("style");
-  style.innerHTML = `
+  function createStylingForMCP() {
+    const style = document.createElement("style");
+    style.innerHTML = `
     .postbody .content blockquote {
       background-color: #171b24 !important;
       border-color: #303744 !important;
@@ -106,6 +105,46 @@ SOFTWARE.
       width: 100%;
       height: 100%;
       object-fit: cover;
+    }
+    @media (max-width: 768px) {
+      .postprofile {
+        min-width: 80px;
+        width: 80px;
+      }
+      .postprofile .avatar-container {
+        width: 60px;
+        height: 60px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .postprofile {
+        min-width: 60px;
+        width: 60px;
+      }
+      .postprofile .avatar-container {
+        width: 50px;
+        height: 50px;
+      }
+      .postprofile a.username,
+      .postprofile a.username-coloured {
+        font-size: 0.8em;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .postprofile {
+        min-width: 40px;
+        width: 40px;
+      }
+      .postprofile .avatar-container {
+        width: 40px;
+        height: 40px;
+      }
+      .postprofile a.username,
+      .postprofile a.username-coloured {
+        font-size: 0.7em;
+      }
     }
     .postbody {
       flex-grow: 1 !important;
@@ -318,7 +357,7 @@ SOFTWARE.
       padding: 0 !important;
       margin: 0 !important;
       list-style-type: none !important;
-      gap: 5px !important; 
+      gap: 5px !important;
       justify-content: flex-end !important;
     }
 
@@ -402,8 +441,147 @@ SOFTWARE.
     .post-buttons input[type="checkbox"] {
       margin-left: 5px;
     }
+
+    li.row {
+      display: flex;
+      align-items: flex-start;
+      padding: 10px;
+      border: 1px solid #303744;
+      margin-bottom: 10px;
+      background-color: #282f3c;
+    }
+
+    .mcp-queue-post {
+      flex: 1;
+      min-width: 0;
+      margin-right: 10px;
+    }
+
+    .mcp-queue-post .postbody {
+      width: 100%;
+    }
+
+    li.row .mark {
+      flex-shrink: 0;
+    }
   `;
-  document.head.appendChild(style);
+    document.head.appendChild(style);
+  }
+
+  function enhanceUserFlairPage() {
+    const style = document.createElement("style");
+    style.innerHTML = `
+      .flair {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+      }
+      .flair-tile {
+        background-color: #242A36;
+        border: 1px solid #3e4247;
+        border-radius: 5px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 180px;
+      }
+      .flair-tile th {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .flair-tile .flair-icon {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+      .flair-tile h5 {
+        margin: 5px 0;
+        text-align: center;
+        font-size: 0.9em;
+        line-height: 1.2;
+        word-wrap: break-word;
+        max-width: 100%;
+        height: 2.4em;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+      .flair-buttons {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-top: auto;
+      }
+      .flair-buttons input[type="number"] {
+        width: 40px;
+      }
+    `;
+    document.head.appendChild(style);
+
+    function enhanceFlairSection(container) {
+      const flairTiles = Array.from(container.querySelectorAll(".flair-tile"));
+
+      flairTiles.sort((a, b) => {
+        const titleA = a.querySelector("h5").textContent.trim().toLowerCase();
+        const titleB = b.querySelector("h5").textContent.trim().toLowerCase();
+        return titleA.localeCompare(titleB);
+      });
+
+      container.innerHTML = "";
+      flairTiles.forEach((tile) => {
+        tile.style.display = "flex";
+        tile.style.flexDirection = "column";
+        tile.style.alignItems = "center";
+        tile.style.height = "180px";
+
+        const title = tile.querySelector("h5");
+        const icon = tile.querySelector(".flair-icon");
+        const buttonsContainer =
+          tile.querySelector(".flair-buttons") || document.createElement("div");
+
+        if (!buttonsContainer.classList.contains("flair-buttons")) {
+          buttonsContainer.className = "flair-buttons";
+          const input = tile.querySelector('input[type="number"]');
+          const setButton = tile.querySelector('input[name^="set_flair"]');
+          const removeButton = tile.querySelector(
+            'input[name^="remove_flair"]'
+          );
+          if (input) buttonsContainer.appendChild(input);
+          if (setButton) buttonsContainer.appendChild(setButton);
+          if (removeButton) buttonsContainer.appendChild(removeButton);
+        }
+
+        tile.innerHTML = "";
+        tile.appendChild(icon.closest("th"));
+        tile.appendChild(title);
+        tile.appendChild(buttonsContainer);
+
+        container.appendChild(tile);
+      });
+    }
+
+    // Enhance user's existing flair section
+    const userFlairSection = document.querySelector(
+      ".panel:nth-of-type(2) .flair"
+    );
+    if (userFlairSection) {
+      enhanceFlairSection(userFlairSection);
+    }
+
+    // Enhance available flair section
+    const availableFlairSection = document.querySelector(
+      ".panel:nth-of-type(3) .flair"
+    );
+    if (availableFlairSection) {
+      enhanceFlairSection(availableFlairSection);
+    }
+  }
 
   // Function to create the post profile
   function createPostProfile(authorElement, userId, username) {
@@ -592,80 +770,90 @@ SOFTWARE.
 
   // Modify the structure of each post to match forum posts
   function modifyPostStructure() {
-    document.querySelectorAll(".post").forEach((post) => {
+    document.querySelectorAll(".post").forEach((post, index) => {
       const authorElement = post.querySelector(
         ".author strong a.username, .author strong a.username-coloured"
       );
+
+      if (!authorElement) {
+        return; // Skip this post and continue with the next one
+      }
+
       const postId = post.id.replace("p", "");
+      const userId = authorElement.href.match(/u=(\d+)-/)?.[1];
+      const username = authorElement.textContent;
 
-      if (authorElement) {
-        const userId = authorElement.href.match(/u=(\d+)-/)[1];
-        const username = authorElement.textContent;
+      if (!userId) {
+        return; // Skip this post and continue with the next one
+      }
+      const postProfile = createPostProfile(authorElement, userId, username);
+      const avatarImg = postProfile.querySelector("img.avatar");
 
-        const postProfile = createPostProfile(authorElement, userId, username);
-        const avatarImg = postProfile.querySelector("img.avatar");
+      // Load the avatar lazily
+      setTimeout(() => {
+        console.log("Loading avatar for user ID:", userId);
+        findAvatarUrl(userId, avatarImg);
+      }, 0);
 
-        // Load the avatar lazily
-        setTimeout(() => {
-          findAvatarUrl(userId, avatarImg);
-        }, 0);
+      post.insertBefore(postProfile, post.firstChild);
 
-        post.insertBefore(postProfile, post.firstChild);
+      // Adjust post content structure
+      const h3Element = post.querySelector("h3");
+      if (h3Element) {
+        h3Element.remove();
+      }
 
-        // Adjust post content structure
-        const h3Element = post.querySelector("h3");
-        if (h3Element) {
-          h3Element.remove();
+      const postbody = post.querySelector(".postbody");
+      if (postbody) {
+        const postContent = postbody.querySelector(".content");
+        const postAuthor = postbody.querySelector(".author");
+        if (postContent && postAuthor) {
+          postbody.insertBefore(postAuthor, postContent);
         }
+      }
 
-        const postbody = post.querySelector(".postbody");
-        if (postbody) {
-          const postContent = postbody.querySelector(".content");
-          const postAuthor = postbody.querySelector(".author");
-          if (postContent && postAuthor) {
-            postbody.insertBefore(postAuthor, postContent);
-          }
-        }
+      // Ensure original post buttons are visible
+      const originalPostButtons = post.querySelector(".post-buttons");
+      if (originalPostButtons) {
+        originalPostButtons.style.display = "block";
+      }
 
-        // Ensure original post buttons are visible
-        const originalPostButtons = post.querySelector(".post-buttons");
-        if (originalPostButtons) {
-          originalPostButtons.style.display = "block";
-        }
+      // Make the whole post selectable
+      post.addEventListener("click", (event) => {
+        togglePostSelection(post, event);
+      });
 
-        // Make the whole post selectable
-        post.addEventListener("click", (event) => {
-          togglePostSelection(post, event);
+      // Sync the selected state with the checkbox
+      syncPostSelection(post);
+      modifyPostAuthorLine(post);
+
+      const originalPostDetailsButton = post.querySelector(
+        'a[title="Post details"]'
+      );
+      if (originalPostDetailsButton) {
+        originalPostDetailsButton.remove();
+      }
+
+      // Monitor checkbox changes to sync selection
+      const checkbox = post.querySelector('input[type="checkbox"]');
+      if (checkbox) {
+        checkbox.addEventListener("change", () => {
+          syncPostSelection(post);
+          saveSelectedPosts(); // Save when checkbox is changed directly
         });
+      }
 
-        // Sync the selected state with the checkbox
-        syncPostSelection(post);
-        modifyPostAuthorLine(post);
-
-        const originalPostDetailsButton = post.querySelector(
-          'a[title="Post details"]'
+      // Apply special style for "loregamer" username
+      if (username === "loregamer") {
+        const usernameElement = post.querySelector(".username");
+        if (usernameElement) {
+          usernameElement.classList.add("username-loregamer");
+        }
+        const profileLink = post.querySelector(
+          'a[href*="memberlist.php?mode=viewprofile&u=551-loregamer"]'
         );
-        if (originalPostDetailsButton) {
-          originalPostDetailsButton.remove();
-        }
-
-        // Monitor checkbox changes to sync selection
-        const checkbox = post.querySelector('input[type="checkbox"]');
-        if (checkbox) {
-          checkbox.addEventListener("change", () => {
-            syncPostSelection(post);
-            saveSelectedPosts(); // Save when checkbox is changed directly
-          });
-        }
-
-        // Apply special style for "loregamer" username
-        if (username === "loregamer") {
-          post.querySelector(".username").classList.add("username-loregamer");
-          post
-            .querySelector(
-              'a[href*="memberlist.php?mode=viewprofile&u=551-loregamer"]'
-            )
-            .classList.add("username-loregamer");
+        if (profileLink) {
+          profileLink.classList.add("username-loregamer");
         }
       }
     });
@@ -679,7 +867,6 @@ SOFTWARE.
         syncPostSelection(post);
       });
   }
-
   // Handle "Mark all" and "Unmark all" clicks
   function handleMarkAllClicks() {
     document.querySelectorAll(".display-actions a").forEach((actionLink) => {
@@ -1071,7 +1258,21 @@ SOFTWARE.
     });
   }
 
-  function init() {
+  async function fetchPostContent(url) {
+    try {
+      const response = await fetch(url);
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      const postbody = doc.querySelector(".postbody");
+      return postbody ? postbody.outerHTML : null;
+    } catch (error) {
+      console.error("Error fetching post content:", error);
+      return null;
+    }
+  }
+
+  function enhanceTopicView() {
     modifyPostStructure();
     loadSelectedPosts();
     clickExpandView();
@@ -1080,6 +1281,327 @@ SOFTWARE.
     makeDisplayActionsFloat();
     handleMarkAllClicks();
     observeDocumentChanges();
+  }
+
+  function toggleQueuePostSelection(post, event) {
+    const checkbox = post.querySelector('input[type="checkbox"]');
+    const interactiveElements = [
+      "a",
+      "button",
+      "input",
+      "img",
+      "textarea",
+      "select",
+    ];
+    const isInteractiveElement = interactiveElements.includes(
+      event.target.tagName.toLowerCase()
+    );
+    const hasInteractiveParent = event.target.closest(
+      interactiveElements.join(",")
+    );
+    const isSpoilerElement = event.target.closest(
+      ".spoilwrapper, .spoiltitle, .spoilbtn, .spoilcontent"
+    );
+
+    if (
+      !isInteractiveElement &&
+      !hasInteractiveParent &&
+      !isSpoilerElement &&
+      event.target.className !== "show-more-button"
+    ) {
+      checkbox.checked = !checkbox.checked;
+      syncQueuePostSelection(post);
+    }
+  }
+
+  function syncQueuePostSelection(post) {
+    const checkbox = post.querySelector('input[type="checkbox"]');
+    if (checkbox.checked) {
+      post.classList.add("selected");
+      post.style.setProperty("border", "1px solid #ff6666", "important");
+    } else {
+      post.classList.remove("selected");
+      post.style.setProperty("border", "1px solid #303744", "important");
+    }
+  }
+
+  function handleQueueMarkAllClicks() {
+    document.querySelectorAll('a[onclick*="marklist"]').forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const markAll = link.textContent.trim() === "Mark all";
+        document.querySelectorAll(".post").forEach((post) => {
+          const checkbox = post.querySelector('input[type="checkbox"]');
+          if (checkbox) {
+            checkbox.checked = markAll;
+            syncQueuePostSelection(post);
+          }
+        });
+      });
+    });
+  }
+
+  function enhanceMcpQueue() {
+    document.querySelectorAll("li.row").forEach(async (row, index) => {
+      const approveLink = row.querySelector('a[href*="mode=approve_details"]');
+      if (approveLink) {
+        const postId = approveLink.href.match(/p=(\d+)/)[1];
+        const postContent = await fetchPostContent(approveLink.href);
+
+        if (postContent) {
+          const tempDiv = document.createElement("div");
+          tempDiv.innerHTML = postContent;
+
+          const postDiv = document.createElement("div");
+          postDiv.className = "post bg2";
+          postDiv.style.cssText = `
+            background-color: rgb(32, 38, 51) !important;
+            border: 1px solid rgb(48, 55, 68) !important;
+            padding: 10px !important;
+            margin-bottom: 5px !important;
+            border-radius: 5px !important;
+            display: flex !important;
+            flex-direction: row !important;
+            position: relative !important;
+            width: calc(100% - 20px) !important;
+            margin-right: 10px !important;
+            overflow: hidden !important;
+          `;
+
+          const authorElement = tempDiv.querySelector(
+            ".author a.username, .author a.username-coloured"
+          );
+          if (authorElement) {
+            const userId = authorElement.href.match(/u=(\d+)/)?.[1];
+            const username = authorElement.textContent;
+
+            const postProfile = createPostProfile(
+              authorElement,
+              userId,
+              username
+            );
+            postDiv.appendChild(postProfile);
+
+            const avatarImg = postProfile.querySelector("img.avatar");
+
+            // Load the avatar lazily
+            setTimeout(() => {
+              console.log("Loading avatar for user ID:", userId);
+              findAvatarUrl(userId, avatarImg);
+            }, 0);
+          }
+
+          const innerDiv = document.createElement("div");
+          innerDiv.className = "inner";
+          innerDiv.style.cssText = `
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding-left: 10px;
+          `;
+          postDiv.appendChild(innerDiv);
+
+          const postbody = document.createElement("div");
+          postbody.className = "postbody";
+          postbody.id = `pr${postId}`;
+          postbody.style.cssText = `
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            padding-right: 30px; /* Add right padding to make room for the checkbox */
+          `;
+          innerDiv.appendChild(postbody);
+
+          const postButtons = document.createElement("ul");
+          postButtons.className = "post-buttons";
+          postButtons.style.cssText = `
+            display: block;
+            position: absolute;
+            top: 0;
+            right: 0;
+            margin: 0;
+            padding: 0;
+          `;
+          postButtons.innerHTML = `
+            <li>
+              <label for="post_id_list_select_${postId}" style="display: flex; align-items: center; justify-content: flex-end;">
+                <input type="checkbox" id="post_id_list_select_${postId}" name="post_id_list[]" value="${postId}">
+              </label>
+            </li>
+          `;
+          innerDiv.appendChild(postButtons);
+
+          const authorBlock = document.createElement("p");
+          authorBlock.className = "author";
+          const postDate = tempDiv.querySelector(".author");
+          if (postDate) {
+            authorBlock.innerHTML = postDate.innerHTML;
+
+            const moderationInfo = row.querySelector(".responsive-show");
+            if (moderationInfo) {
+              const topicInfo = moderationInfo.querySelector("span");
+              const forumLink = topicInfo.querySelector(
+                'a[href*="viewforum.php"]'
+              );
+              const postHyperlink = row.querySelector(
+                'a.topictitle[href*="mode=approve_details"]'
+              );
+
+              if (topicInfo && postHyperlink) {
+                const postMatch = postHyperlink.href.match(/p=(\d+)/);
+                const postNumber = postMatch ? postMatch[1] : null;
+
+                if (postNumber) {
+                  const topicLink = `<a href="https://rpghq.org/forums/viewtopic.php?p=${postNumber}#p${postNumber}">${postHyperlink.textContent}</a>`;
+
+                  authorBlock.innerHTML += ` » Topic: ${topicLink} » Forum: ${forumLink.outerHTML}`;
+                }
+              }
+            }
+
+            const postTimeLink = row.querySelector(
+              '.list-inner > span > a[href*="mode=approve_details"]'
+            );
+            if (postTimeLink) {
+              const postTimeText =
+                authorBlock.innerHTML.match(/»\s*(.*?)(?:\s*»|$)/);
+              if (postTimeText && postTimeText[1]) {
+                authorBlock.innerHTML = authorBlock.innerHTML.replace(
+                  postTimeText[1],
+                  `<a href="${postTimeLink.href}">${postTimeText[1]}</a>`
+                );
+              }
+            }
+          }
+          postbody.appendChild(authorBlock);
+
+          const deleteNotice = tempDiv.querySelector(".notice");
+          if (deleteNotice) {
+            const deleteReasonDiv = document.createElement("div");
+            deleteReasonDiv.className = "delete-reason";
+            deleteReasonDiv.innerHTML = deleteNotice.innerHTML;
+            deleteReasonDiv.style.cssText = `
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.2);
+            border-radius: 5px;
+            padding: 5px;
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #ff6666;
+          `;
+            postbody.appendChild(deleteReasonDiv);
+          }
+
+          const contentDiv = document.createElement("div");
+          contentDiv.className = "content";
+          contentDiv.id = `message_${postId}`;
+          const originalContent = tempDiv.querySelector(".content");
+          if (originalContent) {
+            contentDiv.innerHTML = originalContent.innerHTML;
+          }
+          postbody.appendChild(contentDiv);
+
+          row.innerHTML = "";
+          row.appendChild(postDiv);
+
+          modifyPostAuthorLine(postDiv);
+          createPlaceholders(postDiv);
+
+          postDiv.addEventListener("click", (event) => {
+            toggleQueuePostSelection(postDiv, event);
+          });
+
+          // Sync the selected state with the checkbox
+          syncQueuePostSelection(postDiv);
+
+          row.innerHTML = "";
+          row.appendChild(postDiv);
+
+          modifyPostAuthorLine(postDiv);
+          createPlaceholders(postDiv);
+          handleQueueMarkAllClicks();
+        }
+      }
+    });
+  }
+
+  function makeWarningsClickable() {
+    const warningsElements = document.querySelectorAll(".profile-warnings");
+
+    warningsElements.forEach((element) => {
+      const warningsText = element.textContent;
+      const warningsMatch = warningsText.match(/Warnings:\s*(\d+)/);
+
+      if (warningsMatch) {
+        const warningsCount = warningsMatch[1];
+        const profileLink = element
+          .closest(".postprofile")
+          .querySelector("a.username-coloured, a.username");
+        const userId = profileLink
+          ? profileLink.href.match(/u=(\d+)/)?.[1]
+          : null;
+
+        if (userId) {
+          const warningsLink = document.createElement("a");
+          warningsLink.href = `https://rpghq.org/forums/mcp.php?i=notes&mode=user_notes&u=${userId}`;
+          warningsLink.textContent = warningsCount;
+          warningsLink.style.color = "inherit";
+          warningsLink.style.textDecoration = "none"; // Remove underline
+
+          element.innerHTML = element.innerHTML.replace(
+            warningsCount,
+            warningsLink.outerHTML
+          );
+        }
+      }
+    });
+  }
+
+  function makeNotesUrlsClickable() {
+    function convertUrlsToLinks(element) {
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      element.innerHTML = element.innerHTML.replace(urlRegex, function (url) {
+        return `<a href="${url}" target="_blank">${url}</a>`;
+      });
+    }
+
+    function walkTextNodes(node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const container = document.createElement("span");
+        container.innerHTML = node.textContent;
+        convertUrlsToLinks(container);
+        if (container.innerHTML !== node.textContent) {
+          node.parentNode.replaceChild(container, node);
+        }
+      } else {
+        for (let child of node.childNodes) {
+          walkTextNodes(child);
+        }
+      }
+    }
+
+    walkTextNodes(document.body);
+  }
+
+  function init() {
+    const url = window.location.href;
+
+    if (url.includes("/forums/mcp.php")) {
+      createStylingForMCP();
+      if (url.includes("mode=topic_view") || url.includes("viewtopic")) {
+        enhanceTopicView();
+      } else if (url.includes("mcp_queue")) {
+        enhanceMcpQueue();
+      } else if (url.includes("mode=user_flair")) {
+        enhanceUserFlairPage();
+      } else if (url.includes("i=notes")) {
+        makeNotesUrlsClickable();
+      }
+    }
+
+    if (url.includes("viewtopic.php")) {
+      makeWarningsClickable();
+    }
   }
 
   // Run the init function when the page loads

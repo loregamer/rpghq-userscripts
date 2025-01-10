@@ -1,10 +1,13 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      4.4
+// @version      5.1
 // @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags
 // @author       loregamer
-// @match        https://rpghq.org/forums/posting.php*
+// @match        https://rpghq.org/forums/posting.php?mode=post*
+// @match        https://rpghq.org/forums/posting.php?mode=quote*
+// @match        https://rpghq.org/forums/posting.php?mode=reply*
+// @match        https://rpghq.org/forums/posting.php?mode=edit*
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -39,6 +42,15 @@ SOFTWARE.
 
 (function () {
   "use strict";
+
+  window.resizeTextArea = function ($items, options) {
+    return;
+  };
+
+  // In case the function is defined on the phpbb object
+  if (typeof phpbb !== "undefined") {
+    phpbb.resizeTextArea = window.resizeTextArea;
+  }
 
   // Simplified customSmileys array
   let customSmileys = [
@@ -196,7 +208,6 @@ SOFTWARE.
               max-height: 80vh; /* Adjust this value as needed */
               width: 17%;
               overflow-y: auto;
-              padding: 10px;
               border-radius: 5px;
               z-index: 1000;
             }
@@ -349,7 +360,7 @@ SOFTWARE.
 
     // Handle [img] and [media] tags separately
     text = text.replace(
-      /\[(img|media)\](.*?)\[\/\1\]/gi,
+      /\[(img|media|webm)\](.*?)\[\/\1\]/gi,
       function (match, tagName, url) {
         const colorIndex = getColorIndex(tagName);
         return `<span class="bbcode-bracket">[</span><span class="bbcode-tag-${colorIndex}">${tagName}</span><span class="bbcode-bracket">]</span><span class="bbcode-link">${escapeHTML(
@@ -451,27 +462,27 @@ SOFTWARE.
 
   // Function to adjust textarea and highlight div
   function adjustTextareaAndHighlight() {
-    const newTextarea = document.getElementById("message");
+    const textArea = document.getElementById("message");
     const highlightDiv = document.getElementById("bbcode-highlight");
 
     // Adjust textarea height
-    newTextarea.style.height = "auto";
-    newTextarea.style.height = newTextarea.scrollHeight + "px";
+    textArea.style.height = "auto";
+    textArea.style.height = textArea.scrollHeight + "px";
 
     // Match highlight div to textarea
-    highlightDiv.style.width = newTextarea.offsetWidth + "px";
-    highlightDiv.style.height = newTextarea.offsetHeight + "px";
-    highlightDiv.style.padding = window.getComputedStyle(newTextarea).padding;
+    highlightDiv.style.width = textArea.offsetWidth + "px";
+    highlightDiv.style.height = textArea.offsetHeight + "px";
+    highlightDiv.style.padding = window.getComputedStyle(textArea).padding;
     highlightDiv.style.borderWidth =
-      window.getComputedStyle(newTextarea).borderWidth;
+      window.getComputedStyle(textArea).borderWidth;
     highlightDiv.style.borderStyle =
-      window.getComputedStyle(newTextarea).borderStyle;
+      window.getComputedStyle(textArea).borderStyle;
     highlightDiv.style.borderColor = "transparent";
     highlightDiv.style.fontFamily =
-      window.getComputedStyle(newTextarea).fontFamily;
-    highlightDiv.style.fontSize = window.getComputedStyle(newTextarea).fontSize;
+      window.getComputedStyle(textArea).fontFamily;
+    highlightDiv.style.fontSize = window.getComputedStyle(textArea).fontSize;
     highlightDiv.style.lineHeight =
-      window.getComputedStyle(newTextarea).lineHeight;
+      window.getComputedStyle(textArea).lineHeight;
 
     // Reposition smiley box
     positionSmileyBox();
@@ -489,48 +500,68 @@ SOFTWARE.
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = textarea.value.substring(start, end);
-    const replacement = `[${tag}]${selectedText}[/${tag}]`;
+    let replacement;
+
+    if (tag.includes("=")) {
+      const [tagName, attribute] = tag.split("=");
+      replacement = `[${tagName}=${attribute}]${selectedText}[/${tagName}]`;
+    } else {
+      replacement = `[${tag}]${selectedText}[/${tag}]`;
+    }
+
     textarea.value =
       textarea.value.substring(0, start) +
       replacement +
       textarea.value.substring(end);
-    textarea.setSelectionRange(
-      start + tag.length + 2,
-      start + replacement.length - tag.length - 3
-    );
+
+    const newCursorPos = start + tag.length + 2;
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
   }
 
   function positionSmileyBox() {
     const smileyBox = document.getElementById("smiley-box");
     const textarea = document.getElementById("message");
     if (smileyBox && textarea) {
-      const textareaRect = textarea.getBoundingClientRect();
-      const windowWidth = window.innerWidth;
-      const scrollTop =
-        window.pageYOffset || document.documentElement.scrollTop;
+      const isMobile = window.innerWidth <= 768; // Adjust this breakpoint as needed
 
-      // Define the point at which the smiley box should start scrolling
-      const scrollStartPoint = textareaRect.top + scrollTop;
-
-      // Calculate the left position to avoid overlap
-      const smileyBoxWidth = 220; // Width of the smiley box plus some padding
-      const leftPosition = Math.min(
-        textareaRect.right + 10,
-        windowWidth - smileyBoxWidth
-      );
-
-      if (scrollTop >= scrollStartPoint) {
-        const scrollDistance = scrollTop - scrollStartPoint;
-        const maxScroll = textarea.offsetHeight - smileyBox.offsetHeight;
-        const newTop = Math.min(scrollDistance, maxScroll);
-
-        smileyBox.style.position = "absolute";
-        smileyBox.style.top = scrollStartPoint + newTop + "px";
-        smileyBox.style.left = leftPosition + "px";
+      if (isMobile) {
+        // Mobile styling
+        smileyBox.style.position = "static";
+        smileyBox.style.width = "100%";
+        smileyBox.style.maxHeight = "none";
+        smileyBox.style.overflowY = "visible";
+        smileyBox.style.marginBottom = "10px";
       } else {
-        smileyBox.style.position = "absolute";
-        smileyBox.style.top = scrollStartPoint + "px";
-        smileyBox.style.left = leftPosition + "px";
+        // Desktop styling
+        const textareaRect = textarea.getBoundingClientRect();
+        const windowWidth = window.innerWidth;
+        const scrollTop =
+          window.pageYOffset || document.documentElement.scrollTop;
+
+        const scrollStartPoint = textareaRect.top + scrollTop;
+        const smileyBoxWidth = 220;
+        const leftPosition = Math.min(
+          textareaRect.right + 10,
+          windowWidth - smileyBoxWidth
+        );
+
+        if (scrollTop >= scrollStartPoint) {
+          const scrollDistance = scrollTop - scrollStartPoint;
+          const maxScroll = textarea.offsetHeight - smileyBox.offsetHeight;
+          const newTop = Math.min(scrollDistance, maxScroll);
+
+          smileyBox.style.position = "absolute";
+          smileyBox.style.top = scrollStartPoint + newTop + "px";
+          smileyBox.style.left = leftPosition + "px";
+        } else {
+          smileyBox.style.position = "absolute";
+          smileyBox.style.top = scrollStartPoint + "px";
+          smileyBox.style.left = leftPosition + "px";
+        }
+
+        // smileyBox.style.width = smileyBoxWidth + "px";
+        smileyBox.style.maxHeight = "80vh";
+        smileyBox.style.overflowY = "auto";
       }
     }
   }
@@ -729,6 +760,32 @@ SOFTWARE.
 
           customSmileyContainer.appendChild(smileyButton);
         }
+
+        // Add responsive styling
+        const responsiveStyle = document.createElement("style");
+        responsiveStyle.textContent = `
+          @media (max-width: 768px) {
+            #smiley-box {
+              position: static !important;
+              width: 100% !important;
+              max-height: none !important;
+              overflow-y: visible !important;
+              margin-bottom: 10px;
+            }
+            .smiley-button, .custom-smiley-button {
+              width: 36px;
+              height: 36px;
+            }
+            .smiley-button img, .custom-smiley-button img {
+              width: 30px;
+              height: 30px;
+            }
+            .emoji-smiley {
+              font-size: 24px;
+            }
+          }
+        `;
+        document.head.appendChild(responsiveStyle);
       } else {
         // Remove custom smiley container and separator if no custom smileys exist
         if (customSmileyContainer) customSmileyContainer.remove();
@@ -741,22 +798,36 @@ SOFTWARE.
     const smileyBox = document.getElementById("smiley-box");
     if (smileyBox) {
       const bbcodeStatus = smileyBox.querySelector(".bbcode-status");
-      const usernameElement = document.querySelector("span.username");
+      const usernameElement = document.querySelector(".username-coloured");
       const isLoregamer =
         usernameElement && usernameElement.textContent.trim() === "loregamer";
 
       if (bbcodeStatus) {
         bbcodeStatus.innerHTML = `
-            <hr>
-          <button type="button" class="button button-secondary custom-button" id="insert-mod-template">Insert Mod Template</button>
-          <button type="button" class="button button-secondary custom-button" id="insert-table">Insert Table</button>
+          <hr />
+          <button
+            type="button"
+            class="button button-secondary custom-button"
+            id="insert-mod-template"
+          >
+            Insert Mod Template
+          </button>
+          <button
+            type="button"
+            class="button button-secondary custom-button"
+            id="insert-table"
+          >
+            Insert Table
+          </button>
+          <button
+            type="button"
+            class="button button-secondary custom-button"
+            id="ping-bloomery"
+            style="display: ${isLoregamer ? "inline-block" : "none"};"
+          >
+            Ping Bloomery
+          </button>
         `;
-
-        if (isLoregamer) {
-          bbcodeStatus.innerHTML += `
-            <button type="button" class="button button-secondary custom-button" id="ping-bloomery">Ping Bloomery</button>
-          `;
-        }
 
         document
           .getElementById("insert-mod-template")
@@ -1111,7 +1182,6 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     newSmileyInput.type = "text";
     newSmileyInput.placeholder = "Enter new smiley or emoji and press Enter";
     newSmileyInput.style.cssText = `
-    width: 100%;
     margin-top: 15px;
     padding: 5px;
     background-color: #3a3f4b;
@@ -1155,42 +1225,67 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     addCustomSmileyButtons(); // Refresh the smiley buttons
   }
 
+  function removeInterferingEventListeners() {
+    const textarea = document.getElementById("message");
+    if (textarea) {
+      const $textarea = $(textarea);
+
+      $textarea.off("focus change keyup");
+
+      textarea.classList.remove("auto-resized");
+      textarea.style.height = "";
+      textarea.style.resize = "none";
+    }
+  }
+
   function initialize() {
-    const originalTextarea = document.getElementById("message");
-    if (originalTextarea) {
-      // Create a new textarea element
-      const newTextarea = document.createElement("textarea");
-      newTextarea.id = "message";
-      newTextarea.name = "message";
-      newTextarea.className = originalTextarea.className;
-      newTextarea.value = originalTextarea.value;
-      newTextarea.setAttribute(
-        "tabindex",
-        originalTextarea.getAttribute("tabindex")
-      );
-      newTextarea.setAttribute(
-        "onselect",
-        originalTextarea.getAttribute("onselect")
-      );
-      newTextarea.setAttribute(
-        "onclick",
-        originalTextarea.getAttribute("onclick")
-      );
-      newTextarea.setAttribute(
-        "onkeyup",
-        originalTextarea.getAttribute("onkeyup")
-      );
-      newTextarea.setAttribute(
-        "onfocus",
-        originalTextarea.getAttribute("onfocus")
-      );
+    const textArea = document.getElementById("message");
+    if (textArea) {
+      removeInterferingEventListeners();
 
-      // Set the style for the new textarea
-      newTextarea.style.overflow = "hidden";
-      newTextarea.style.resize = "none";
-      newTextarea.style.minHeight = "500px"; // Set a minimum height
+      // Wrap the original textarea with a container div
+      const container = document.createElement("div");
+      container.className = "editor-container";
 
-      newTextarea.addEventListener("keydown", function (e) {
+      // Create the highlightDiv
+      const highlightDiv = document.createElement("div");
+      highlightDiv.id = "bbcode-highlight";
+
+      // Replace the original textarea with the container
+      textArea.parentNode.replaceChild(container, textArea);
+
+      // Append the highlightDiv and the original textarea to the container
+      container.appendChild(highlightDiv);
+      container.appendChild(textArea);
+
+      // Set the style for the textarea
+      textArea.style.overflow = "hidden";
+      textArea.style.resize = "none";
+      textArea.style.minHeight = "500px"; // Set a minimum height
+
+      // Additional styles to match the new textarea
+      textArea.style.position = "relative";
+      textArea.style.zIndex = "2";
+      textArea.style.background = "transparent";
+      textArea.style.color = "rgb(204, 204, 204)";
+      textArea.style.caretColor = "white";
+      textArea.style.width = "100%";
+      textArea.style.height = "100%";
+      textArea.style.padding = "3px";
+      textArea.style.boxSizing = "border-box";
+      textArea.style.resize = "none";
+      textArea.style.overflow = "auto";
+      textArea.style.fontFamily = "Verdana, Helvetica, Arial, sans-serif";
+      textArea.style.fontSize = "11px";
+      textArea.style.fontStyle = "normal";
+      textArea.style.fontVariantCaps = "normal";
+      textArea.style.fontVariantEastAsian = "normal";
+      textArea.style.fontVariantLigatures = "normal";
+      textArea.style.fontVariantNumeric = "normal";
+      textArea.style.fontWeight = "400";
+      textArea.style.lineHeight = "15.4px";
+
+      textArea.addEventListener("keydown", function (e) {
         if (e.ctrlKey) {
           let tag = "";
           if (e.key === "b") tag = "b";
@@ -1204,202 +1299,14 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
             adjustTextareaAndHighlight();
           }
         }
-      });
 
-      const container = document.createElement("div");
-      container.className = "editor-container";
-
-      const highlightDiv = document.createElement("div");
-      highlightDiv.id = "bbcode-highlight";
-
-      container.appendChild(highlightDiv);
-      originalTextarea.parentNode.replaceChild(container, originalTextarea);
-      container.appendChild(newTextarea);
-
-      // Add mention functionality
-      let mentionTimeout;
-      let mentionBox;
-
-      newTextarea.addEventListener("input", function (e) {
-        clearTimeout(updateTimer);
-        checkForUpdates();
-
-        // Check for mention
-        const cursorPosition = this.selectionStart;
-        const textBeforeCursor = this.value.substring(0, cursorPosition);
-        const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
-
-        if (mentionMatch) {
-          clearTimeout(mentionTimeout);
-          mentionTimeout = setTimeout(
-            () => fetchMentions(mentionMatch[1]),
-            300
-          );
-        } else {
-          closeMentionBox();
+        if (e.altKey && e.key === "g") {
+          e.preventDefault();
+          wrapSelectedText(this, "color=#80BF00");
+          updateHighlight();
+          adjustTextareaAndHighlight();
         }
       });
-
-      newTextarea.addEventListener("keydown", function (e) {
-        if (mentionBox && mentionBox.style.display !== "none") {
-          const activeItem = mentionBox.querySelector(".mention-item.active");
-          switch (e.key) {
-            case "ArrowDown":
-              e.preventDefault();
-              selectNextMention(activeItem);
-              break;
-            case "ArrowUp":
-              e.preventDefault();
-              selectPreviousMention(activeItem);
-              break;
-            case "Enter":
-              e.preventDefault();
-              if (activeItem) {
-                insertMention(
-                  activeItem.dataset.userId,
-                  activeItem.textContent
-                );
-              }
-              break;
-            case "Escape":
-              closeMentionBox();
-              break;
-          }
-        }
-      });
-
-      function fetchMentions(query) {
-        fetch(`https://rpghq.org/forums/mentionloc?q=${query}`, {
-          headers: {
-            accept: "application/json, text/javascript, */*; q=0.01",
-            "x-requested-with": "XMLHttpRequest",
-          },
-          credentials: "include",
-        })
-          .then((response) => response.json())
-          .then((data) => displayMentions(data, query));
-      }
-
-      // Modify the displayMentions function
-      function displayMentions(mentions, query) {
-        if (!mentionBox) {
-          mentionBox = document.createElement("div");
-          mentionBox.className = "mention-box";
-          document.body.appendChild(mentionBox); // Append to body instead of container
-        }
-
-        mentionBox.innerHTML = "";
-        mentionBox.style.display = mentions.length ? "block" : "none";
-
-        mentions.forEach((mention, index) => {
-          const item = document.createElement("div");
-          item.className = "mention-item";
-          item.textContent = mention.value;
-          item.dataset.userId = mention.user_id;
-          if (index === 0) item.classList.add("active");
-          item.addEventListener("click", () =>
-            insertMention(mention.user_id, mention.value)
-          );
-          mentionBox.appendChild(item);
-        });
-
-        positionMentionBox();
-      }
-
-      // Modify the positionMentionBox function
-      function positionMentionBox() {
-        if (mentionBox && mentionBox.style.display !== "none") {
-          const cursorPosition = newTextarea.selectionStart;
-          const textBeforeCursor = newTextarea.value.substring(
-            0,
-            cursorPosition
-          );
-          const lines = textBeforeCursor.split("\n");
-          const currentLine = lines.length;
-          const currentColumn = lines[lines.length - 1].length;
-
-          const textareaRect = newTextarea.getBoundingClientRect();
-          const lineHeight = parseInt(
-            window.getComputedStyle(newTextarea).lineHeight
-          );
-
-          const left = textareaRect.left + currentColumn * 7; // Approximate character width
-          const top =
-            textareaRect.top +
-            (currentLine - 1) * lineHeight -
-            newTextarea.scrollTop;
-
-          mentionBox.style.left = `${left}px`;
-          mentionBox.style.top = `${top + lineHeight}px`; // Position below the current line
-          mentionBox.style.position = "fixed"; // Use fixed positioning
-          mentionBox.style.zIndex = "9999"; // Ensure it's above other elements
-        }
-      }
-
-      function selectNextMention(activeItem) {
-        if (activeItem && activeItem.nextElementSibling) {
-          activeItem.classList.remove("active");
-          activeItem.nextElementSibling.classList.add("active");
-        }
-      }
-
-      function selectPreviousMention(activeItem) {
-        if (activeItem && activeItem.previousElementSibling) {
-          activeItem.classList.remove("active");
-          activeItem.previousElementSibling.classList.add("active");
-        }
-      }
-
-      function insertMention(userId, username) {
-        const cursorPosition = newTextarea.selectionStart;
-        const textBeforeCursor = newTextarea.value.substring(0, cursorPosition);
-        const textAfterCursor = newTextarea.value.substring(cursorPosition);
-        const mentionText = `[smention u=${userId}]${username}[/smention] `;
-        const mentionStart = textBeforeCursor.lastIndexOf("@");
-        const newText =
-          textBeforeCursor.substring(0, mentionStart) +
-          mentionText +
-          textAfterCursor;
-
-        newTextarea.value = newText;
-        newTextarea.setSelectionRange(
-          mentionStart + mentionText.length,
-          mentionStart + mentionText.length
-        );
-        closeMentionBox();
-        updateHighlight();
-        adjustTextareaAndHighlight();
-      }
-
-      function closeMentionBox() {
-        if (mentionBox) {
-          mentionBox.style.display = "none";
-        }
-      }
-
-      // Add CSS for mention box
-      const mentionStyle = document.createElement("style");
-      mentionStyle.textContent = `
-        .mention-box {
-          position: fixed;
-          background-color: #2b2b2b;
-          border: 1px solid #444;
-          max-height: 200px;
-          overflow-y: auto;
-          z-index: 9999;
-          width: 200px; // Set a fixed width
-          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .mention-item {
-          padding: 5px 10px;
-          cursor: pointer;
-          color: #fff; // Ensure text is visible
-        }
-        .mention-item:hover, .mention-item.active {
-          background-color: #3a3a3a;
-        }
-      `;
-      document.head.appendChild(mentionStyle);
 
       let lastContent = "";
       let updateTimer = null;
@@ -1427,7 +1334,7 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       }
 
       function checkForUpdates() {
-        const currentContent = newTextarea.value;
+        const currentContent = textArea.value;
         if (currentContent !== lastContent) {
           updateHighlight();
           adjustTextareaAndHighlight();
@@ -1436,7 +1343,7 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         updateTimer = setTimeout(checkForUpdates, 100); // Check every 100ms
       }
 
-      newTextarea.addEventListener("input", function () {
+      textArea.addEventListener("input", function () {
         clearTimeout(updateTimer);
         checkForUpdates();
       });
@@ -1446,7 +1353,7 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       // Initial adjustment and highlight
       adjustTextareaAndHighlight();
       updateHighlight();
-      lastContent = newTextarea.value;
+      lastContent = textArea.value;
 
       // Start checking for updates
       checkForUpdates();
@@ -1461,33 +1368,36 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       positionSmileyBox();
       positionEditorHeader();
 
-      // Modify the "Add image to post" link
-      const addImageContainer = document.querySelector(
-        'div[style*="margin-bottom: 0.5em; margin-top: 0.5em;"]'
-      );
-      if (addImageContainer) {
-        // Update the image
-        const img = addImageContainer.querySelector("img");
-        if (img) {
-          img.src = `https://f.rpghq.org/V4gHDnvTTgpf.webp`;
-          img.alt = "Vault";
-        }
+      // Create the container for the Open Vault link
+      const vaultContainer = document.createElement("div");
+      vaultContainer.style.marginTop = "10px";
 
-        // Update the link
-        const link = addImageContainer.querySelector("a");
-        if (link) {
-          link.textContent = "Open Vault";
-          link.href = "javascript:void(0);";
-          link.onclick = function (e) {
-            e.preventDefault();
-            window.open(
-              "https://vault.rpghq.org/",
-              "RPGHQVault",
-              "width=800,height=600,resizable=yes,scrollbars=yes"
-            );
-          };
-        }
-      }
+      // Create the Open Vault link
+      const vaultLink = document.createElement("a");
+      vaultLink.href = "javascript:void(0);";
+      vaultLink.style.color = "rgb(58, 128, 234)";
+      vaultLink.style.fontSize = "1em";
+      vaultLink.style.display = "inline-flex";
+      vaultLink.style.alignItems = "center";
+      vaultLink.style.textDecoration = "none";
+      vaultLink.innerHTML = `
+      <img src="https://f.rpghq.org/V4gHDnvTTgpf.webp" width="16" height="16" style="margin-right: 5px;">
+      Open Vault
+    `;
+      vaultLink.onclick = function (e) {
+        e.preventDefault();
+        window.open(
+          "https://vault.rpghq.org/",
+          "RPGHQVault",
+          "width=800,height=800,resizable=yes,scrollbars=yes"
+        );
+      };
+
+      // Add the link to the container
+      vaultContainer.appendChild(vaultLink);
+
+      // Insert the container after the textarea
+      textArea.parentNode.insertBefore(vaultContainer, textArea.nextSibling);
 
       // Add event listeners for repositioning
       window.addEventListener("resize", function () {
