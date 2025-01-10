@@ -287,7 +287,17 @@
           post.classList.add("ghosted-post");
         } else {
           // Check if post has exactly one blockquote from an ignored user
-          const blockquotes = post.querySelectorAll("blockquote");
+          const allBlockquotes = post.querySelectorAll("blockquote");
+          // Filter to only get top-level blockquotes (those that aren't nested inside other blockquotes)
+          const blockquotes = Array.from(allBlockquotes).filter(
+            (blockquote) => {
+              // Get all ancestor blockquotes of this blockquote
+              const parentBlockquotes =
+                blockquote.parentElement.closest("blockquote");
+              // Keep only if it has no blockquote ancestors
+              return !parentBlockquotes;
+            }
+          );
           if (blockquotes.length === 1) {
             const quotedUsername = blockquotes[0].querySelector(
               ".quote-citation-container a:not([data-post-id])"
