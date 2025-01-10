@@ -31,6 +31,50 @@
   let replacedAvatars = GM_getValue("replacedAvatars", {});
 
   function processIgnoredContent() {
+    // Check if we're viewing a ghosted user's post and redirect if needed
+    const currentPostId = window.location.hash.replace("#p", "");
+    if (currentPostId) {
+      const currentPost = document.getElementById("p" + currentPostId);
+      if (currentPost) {
+        const postProfile = currentPost.querySelector(".postprofile");
+        if (postProfile) {
+          const usernameElement = postProfile.querySelector(
+            ".username, .username-coloured"
+          );
+          if (
+            usernameElement &&
+            isUserIgnored(usernameElement.textContent.trim())
+          ) {
+            // Find the previous visible post
+            let previousPost = currentPost.previousElementSibling;
+            while (previousPost) {
+              if (previousPost.classList.contains("post")) {
+                const prevProfile = previousPost.querySelector(".postprofile");
+                const prevUsername = prevProfile?.querySelector(
+                  ".username, .username-coloured"
+                );
+                if (
+                  prevUsername &&
+                  !isUserIgnored(prevUsername.textContent.trim())
+                ) {
+                  // Get the post ID and update the URL
+                  const prevPostId = previousPost.id.replace("p", "");
+                  const newUrl =
+                    window.location.href.replace(/#p\d+$/, "") +
+                    "#p" +
+                    prevPostId;
+                  window.history.replaceState(null, "", newUrl);
+                  previousPost.scrollIntoView();
+                  break;
+                }
+              }
+              previousPost = previousPost.previousElementSibling;
+            }
+          }
+        }
+      }
+    }
+
     // Process notifications
     const notificationItems = document.querySelectorAll(".notification-block");
     notificationItems.forEach((item) => {
@@ -173,6 +217,50 @@
           isUserIgnored(usernameElement.textContent.trim())
         ) {
           post.classList.add("ghosted-post");
+        }
+      }
+
+      // Process reactions
+      const reactionList = post.querySelector(".reaction-score-list");
+      if (reactionList) {
+        const reactionGroups = reactionList.querySelectorAll(".reaction-group");
+        reactionGroups.forEach((group) => {
+          const countSpan = group.querySelector("span");
+          const popup = group.querySelector(".reaction-users-popup");
+          if (popup) {
+            const userRows = popup.querySelectorAll(
+              ".reaction-users-popup > div:last-child > div"
+            );
+            let removedCount = 0;
+
+            userRows.forEach((row) => {
+              const usernameElement = row.querySelector(
+                ".username, .username-coloured"
+              );
+              if (
+                usernameElement &&
+                isUserIgnored(usernameElement.textContent.trim())
+              ) {
+                row.remove();
+                removedCount++;
+              }
+            });
+
+            // Update count and remove group if it becomes 0
+            if (removedCount > 0 && countSpan) {
+              const newCount = parseInt(countSpan.textContent) - removedCount;
+              if (newCount <= 0) {
+                group.remove();
+              } else {
+                countSpan.textContent = newCount.toString();
+              }
+            }
+          }
+        });
+
+        // Remove the entire reaction list if all groups are gone
+        if (reactionList.querySelector(".list-scores").children.length === 0) {
+          reactionList.remove();
         }
       }
     });
