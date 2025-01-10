@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Add Ghost User button to profiles, hide content from ghosted users, and replace avatars
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -206,7 +206,7 @@
       }
     });
 
-    // Process posts - only check the post author
+    // Process posts - check both author and single blockquote from ignored user
     const posts = document.querySelectorAll(".post");
     posts.forEach((post) => {
       const postProfile = post.querySelector(".postprofile");
@@ -219,6 +219,30 @@
           isUserIgnored(usernameElement.textContent.trim())
         ) {
           post.classList.add("ghosted-post");
+        } else {
+          // Check if post has exactly one blockquote from an ignored user
+          const blockquotes = post.querySelectorAll("blockquote");
+          if (blockquotes.length === 1) {
+            const quotedUsername = blockquotes[0].querySelector(
+              ".quote-citation-container a:not([data-post-id])"
+            );
+            if (
+              quotedUsername &&
+              isUserIgnored(quotedUsername.textContent.trim())
+            ) {
+              const postContent = post.querySelector(".content");
+              // Check if the post content only contains the blockquote and minimal text
+              if (postContent) {
+                const textContent = postContent.textContent
+                  .replace(blockquotes[0].textContent, "")
+                  .trim();
+                if (textContent.length < 100) {
+                  // Allow for small comments
+                  post.classList.add("ghosted-post");
+                }
+              }
+            }
+          }
         }
       }
 
