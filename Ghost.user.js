@@ -680,6 +680,29 @@
     });
   }
 
+  function cleanGhostedQuotes(text) {
+    let cleanedText = text;
+    for (const userId in ignoredUsers) {
+      // Match the entire quote block including following text until next quote or end
+      const regex = new RegExp(
+        `\\[quote=[^\\]]*user_id=${userId}[^\\]]*\\][\\s\\S]*?\\[\\/quote\\][^\\[]*`,
+        "g"
+      );
+      cleanedText = cleanedText.replace(regex, "");
+    }
+    return cleanedText.trim();
+  }
+
+  function handleTextArea() {
+    const textarea = document.querySelector("textarea#message");
+    if (textarea && textarea.value.includes("[quote")) {
+      const cleanedText = cleanGhostedQuotes(textarea.value);
+      if (cleanedText !== textarea.value) {
+        textarea.value = cleanedText;
+      }
+    }
+  }
+
   function init() {
     processIgnoredContent();
     addShowGhostedPostsButton();
@@ -694,12 +717,23 @@
           processIgnoredContent();
           replaceUserAvatar();
           addGhostButton();
+          handleTextArea();
         }
       });
     });
 
     const config = { childList: true, subtree: true };
     observer.observe(document.body, config);
+
+    // Add event listener for textarea changes
+    document.addEventListener("input", (e) => {
+      if (e.target && e.target.id === "message") {
+        handleTextArea();
+      }
+    });
+
+    // Initial check for textarea
+    handleTextArea();
   }
 
   // Run the init function when the page loads
