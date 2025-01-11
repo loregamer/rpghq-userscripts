@@ -21,34 +21,21 @@
     });
   }
 
-  // Function to selectively hide text elements
-  function hideTextElements(selector, textContent) {
-    const elements = document.querySelectorAll(selector);
-    elements.forEach((element) => {
-      // Skip if this is part of a following message
-      if (
-        element.closest(
-          "p._1xny9xl0._1mqalmd1._1mqalmd0._1xny9xlb._1xny9xlr._1xny9xln"
-        )
-      ) {
-        return;
-      }
+  // Function to hide user buttons and messages
+  function hideUserContent(userId) {
+    // Hide user buttons - try both original case and lowercase
+    const userButtons = document.querySelectorAll(
+      `button[data-user-id="@${userId.toLowerCase()}:rpghq.org"], button[data-user-id="@${userId}:rpghq.org"]`
+    );
+    userButtons.forEach((button) => {
+      button.style.display = "none";
+    });
 
-      // If it's a direct text match in a button, only hide the specific text elements
-      const parentButton = element.closest("button._13tt0gb6");
-      if (parentButton) {
-        const textElements = parentButton.querySelectorAll("p, span, b");
-        textElements.forEach((textEl) => {
-          if (textEl.textContent.includes(textContent)) {
-            textEl.style.display = "none";
-          }
-        });
-        return;
-      }
-
-      // For other cases, hide the element if it contains the text
-      if (element.textContent.includes(textContent)) {
-        element.style.display = "none";
+    // Hide messages containing the user's name
+    const allMessages = document.querySelectorAll("div._161nxvec");
+    allMessages.forEach((message) => {
+      if (message.textContent.toLowerCase().includes(userId.toLowerCase())) {
+        message.style.display = "none";
       }
     });
   }
@@ -81,33 +68,19 @@
     handleFollowingMessages(usersToHide);
 
     usersToHide.forEach((user) => {
-      // Hide usernames in bold (except in following messages which are handled separately)
-      const boldElements = document.querySelectorAll("b");
-      boldElements.forEach((element) => {
-        if (
-          element.textContent === user &&
-          !element.closest(
-            "p._1xny9xl0._1mqalmd1._1mqalmd0._1xny9xlb._1xny9xlr._1xny9xln"
-          )
-        ) {
-          element.style.display = "none";
-        }
-      });
-
-      // Use the new selective hiding function instead of hideElementsWithParents
-      hideTextElements("p", user);
-      hideTextElements("span", user);
+      // Hide all content for each user
+      hideUserContent(user);
     });
 
     // Hide appservice mentions
-    hideTextElements("p", "appservice");
+    hideElements("div._161nxvec", "appservice");
 
     // Hide messages containing "tz"
-    hideTextElements("span", "tz");
+    hideElements("div._161nxvec", "tz");
 
     // Hide "left the room" messages
     usersToHide.forEach((user) => {
-      hideElements("div._161nxvec p", `${user} left the room`);
+      hideElements("div._161nxvec", `${user} left the room`);
     });
 
     // Hide specific date
