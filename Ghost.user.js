@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.5.1
 // @description  Add Ghost User button to profiles, hide content from ghosted users, and replace avatars
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -678,14 +678,14 @@
   function cleanGhostedQuotes(text) {
     let cleanedText = text;
     for (const userId in ignoredUsers) {
-      // Match the entire quote block including following text until next quote or end
+      // Match the quote block only, preserving text after it
       const regex = new RegExp(
-        `\\[quote=[^\\]]*user_id=${userId}[^\\]]*\\][\\s\\S]*?\\[\\/quote\\][^\\[]*`,
+        `\\[quote=[^\\]]*user_id=${userId}[^\\]]*\\][\\s\\S]*?\\[\\/quote\\]`,
         "g"
       );
       cleanedText = cleanedText.replace(regex, "");
     }
-    return cleanedText.trim();
+    return cleanedText;
   }
 
   function handleTextArea() {
