@@ -21,16 +21,16 @@
   const style = document.createElement("style");
   style.textContent = `
     .ghosted-post {
-      display: none;
+      display: none !important;
     }
     .ghosted-post.show {
-      display: block;
+      display: block !important;
     }
     .ghosted-quote {
-      display: none;
+      display: none !important;
     }
     .ghosted-quote.show {
-      display: block; /* or inline, etc., depending on how you want it displayed */
+      display: block !important;
     }
   `;
   document.head.appendChild(style);
@@ -39,6 +39,20 @@
   let replacedAvatars = GM_getValue("replacedAvatars", {});
 
   function processIgnoredContent() {
+    // Process posts from ghosted users
+    const posts = document.querySelectorAll(".post");
+    posts.forEach((post) => {
+      const usernameElement = post.querySelector(
+        ".username, .username-coloured"
+      );
+      if (
+        usernameElement &&
+        isUserIgnored(usernameElement.textContent.trim())
+      ) {
+        post.classList.add("ghosted-post");
+      }
+    });
+
     // Check if we're viewing a ghosted user's post and redirect if needed
     const currentPostId = window.location.hash.replace("#p", "");
     if (currentPostId) {
