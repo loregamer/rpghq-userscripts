@@ -20,13 +20,19 @@
   // Add CSS for ghosted posts
   const style = document.createElement("style");
   style.textContent = `
-      .ghosted-post {
-        display: none;
-      }
-      .ghosted-post.show {
-        display: block;
-      }
-    `;
+    .ghosted-post {
+      display: none;
+    }
+    .ghosted-post.show {
+      display: block;
+    }
+    .ghosted-quote {
+      display: none;
+    }
+    .ghosted-quote.show {
+      display: block; /* or inline, etc., depending on how you want it displayed */
+    }
+  `;
   document.head.appendChild(style);
 
   let ignoredUsers = GM_getValue("ignoredUsers", {});
@@ -276,39 +282,52 @@
     const blockquotes = document.querySelectorAll(".post .content blockquote");
 
     blockquotes.forEach((blockquote) => {
-      // Use the new selector: "cite a" instead of ".quote-citation-container a"
+      // 1. Detect the quoted user with the correct selector:
       const anchor = blockquote.querySelector("cite a");
-      if (!anchor) return;
+      if (!anchor) return; // no user link
 
-      // Get the username from anchor, e.g. "Vergil"
       const quotedUsername = anchor.textContent.trim();
 
-      // If the user is in your ignore list, do the hiding
+      // 2. If that user is ignored, hide blockquote & following text
       if (isUserIgnored(quotedUsername)) {
-        // Hide this <blockquote>
-        blockquote.style.display = "none";
+        // Mark the blockquote with our new ghosted-quote class
+        blockquote.classList.add("ghosted-quote");
 
-        // Now hide siblings after the blockquote until
-        //   either the next blockquote or the end of the post
+        // Then walk siblings and hide them, until hitting another blockquote (or none):
         let sibling = blockquote.nextSibling;
         while (sibling) {
-          // Stop if we hit another blockquote (or some other boundary).
+          // If you only want to hide *up to* the next blockquote
+          // (so you don't nuke an entirely different quote),
+          // break out if next is a <blockquote>.
           if (
             sibling.nodeType === Node.ELEMENT_NODE &&
             sibling.tagName === "BLOCKQUOTE"
           ) {
             break;
           }
-          // If you want to hide *all* subsequent content, remove the above check.
 
-          // Hide element nodes
+          // If sibling is an element, just add the .ghosted-quote class
           if (sibling.nodeType === Node.ELEMENT_NODE) {
-            sibling.style.display = "none";
+            sibling.classList.add("ghosted-quote");
           }
-          // Or blank out text nodes
+          // If sibling is a text node, wrap it in a <span> so we can toggle w/CSS
           else if (sibling.nodeType === Node.TEXT_NODE) {
-            sibling.textContent = "";
+            // Only if it's nonempty text
+            const trimmedText = sibling.nodeValue.trim();
+            if (trimmedText.length > 0) {
+              const span = document.createElement("span");
+              span.classList.add("ghosted-quote");
+              span.textContent = sibling.nodeValue;
+
+              // Insert <span> before the original text node, remove text node
+              sibling.parentNode.insertBefore(span, sibling);
+              sibling.parentNode.removeChild(sibling);
+
+              // Move on from the newly inserted <span>
+              sibling = span;
+            }
           }
+
           sibling = sibling.nextSibling;
         }
       }
@@ -604,9 +623,16 @@
       ? "icon fa-eye fa-fw"
       : "icon fa-eye-slash fa-fw";
 
+    // 1) Toggle the main ghosted posts
     const ghostedPosts = document.querySelectorAll(".post.ghosted-post");
     ghostedPosts.forEach((post) => {
       post.classList.toggle("show");
+    });
+
+    // 2) Toggle the ghosted quotes
+    const ghostedQuotes = document.querySelectorAll(".ghosted-quote");
+    ghostedQuotes.forEach((el) => {
+      el.classList.toggle("show");
     });
   }
 
