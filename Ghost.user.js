@@ -292,17 +292,39 @@
       }
     });
 
-    // Process posts - check both author and blockquotes from ignored users
-    const blockquotes = document.querySelectorAll(".post .content blockquote");
+    // Process posts - first check for posts that start with ghosted quotes
+    const topLevelBlockquotes = document.querySelectorAll(
+      ".post .content > blockquote:first-child"
+    );
 
-    blockquotes.forEach((blockquote) => {
-      // 1. Detect the quoted user with the correct selector:
+    topLevelBlockquotes.forEach((blockquote) => {
       const anchor = blockquote.querySelector("cite a");
-      if (!anchor) return; // no user link
+      if (!anchor) return;
 
       const quotedUsername = anchor.textContent.trim();
 
-      // 2. If that user is ignored, hide blockquote & following text
+      if (isUserIgnored(quotedUsername)) {
+        const post = blockquote.closest(".post");
+        if (post) {
+          post.classList.add("ghosted-post");
+        }
+      }
+    });
+
+    // Then process all other blockquotes
+    const allBlockquotes = document.querySelectorAll(
+      ".post .content blockquote"
+    );
+
+    allBlockquotes.forEach((blockquote) => {
+      // Skip if this is a first-child blockquote (already handled above)
+      if (blockquote.parentElement.firstElementChild === blockquote) return;
+
+      const anchor = blockquote.querySelector("cite a");
+      if (!anchor) return;
+
+      const quotedUsername = anchor.textContent.trim();
+
       if (isUserIgnored(quotedUsername)) {
         // Mark the blockquote with our new ghosted-quote class
         blockquote.classList.add("ghosted-quote");
