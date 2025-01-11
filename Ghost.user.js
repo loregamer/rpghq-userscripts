@@ -272,7 +272,7 @@
       }
     });
 
-    // Process posts - check both author and single blockquote from ignored user
+    // Process posts - check both author and blockquotes from ignored users
     const posts = document.querySelectorAll(".post");
     posts.forEach((post) => {
       const postProfile = post.querySelector(".postprofile");
@@ -286,38 +286,24 @@
         ) {
           post.classList.add("ghosted-post");
         } else {
-          // Check if post has exactly one blockquote from an ignored user
-          const allBlockquotes = post.querySelectorAll("blockquote");
-          // Filter to only get top-level blockquotes (those that aren't nested inside other blockquotes)
-          const blockquotes = Array.from(allBlockquotes).filter(
-            (blockquote) => {
-              // Get all ancestor blockquotes of this blockquote
-              const parentBlockquotes =
-                blockquote.parentElement.closest("blockquote");
-              // Keep only if it has no blockquote ancestors
-              return !parentBlockquotes;
-            }
-          );
-          if (blockquotes.length === 1) {
-            const quotedUsername = blockquotes[0].querySelector(
-              ".quote-citation-container a:not([data-post-id])"
-            );
-            if (
-              quotedUsername &&
-              isUserIgnored(quotedUsername.textContent.trim())
-            ) {
-              const postContent = post.querySelector(".content");
-              // Check if the post content only contains the blockquote and minimal text
-              if (postContent) {
-                const textContent = postContent.textContent
-                  .replace(blockquotes[0].textContent, "")
-                  .trim();
-                if (textContent.length < 100) {
-                  // Allow for small comments
-                  post.classList.add("ghosted-post");
-                }
+          // Process blockquotes from ignored users
+          const content = post.querySelector(".content");
+          if (content) {
+            const blockquotes = content.querySelectorAll("blockquote");
+            blockquotes.forEach((blockquote) => {
+              const quotedUsername = blockquote.querySelector(
+                ".quote-citation-container a"
+              );
+              if (
+                quotedUsername &&
+                !quotedUsername.hasAttribute("data-post-id") &&
+                isUserIgnored(
+                  quotedUsername.textContent.trim().replace(/\s*wrote:.*$/, "")
+                )
+              ) {
+                blockquote.style.display = "none";
               }
-            }
+            });
           }
         }
       }
