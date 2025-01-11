@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  Add Ghost User button to profiles, hide content from ghosted users, and replace avatars
 // @author       You
 // @match        https://rpghq.org/*/*
