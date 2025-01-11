@@ -62,6 +62,19 @@
 
     // Hide specific date
     hideElements("span._13qe89m6 p", "25 December 2024");
+
+    // Hide all messages from tars that mention ignored users
+    usersToHide.forEach((user) => {
+      const tarsMessages = document.querySelectorAll(
+        'button[data-user-id="@irc_tars:rpghq.org"]'
+      );
+      tarsMessages.forEach((message) => {
+        const messageContainer = message.closest("div._161nxvec");
+        if (messageContainer && messageContainer.textContent.includes(user)) {
+          messageContainer.style.display = "none";
+        }
+      });
+    });
   }
 
   // Run initially
