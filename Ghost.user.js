@@ -273,82 +273,43 @@
     });
 
     // Process posts - check both author and blockquotes from ignored users
-    const posts = document.querySelectorAll(".post");
-    posts.forEach((post) => {
-      const postProfile = post.querySelector(".postprofile");
-      if (postProfile) {
-        const usernameElement = postProfile.querySelector(
-          ".username, .username-coloured"
-        );
-        if (
-          usernameElement &&
-          isUserIgnored(usernameElement.textContent.trim())
-        ) {
-          post.classList.add("ghosted-post");
-        } else {
-          // Process blockquotes from ignored users
-          const content = post.querySelector(".content");
-          if (content) {
-            const blockquotes = content.querySelectorAll("blockquote");
-            blockquotes.forEach((blockquote) => {
-              const quotedUsername = blockquote.querySelector(
-                ".quote-citation-container a"
-              );
-              if (
-                quotedUsername &&
-                !quotedUsername.hasAttribute("data-post-id") &&
-                isUserIgnored(
-                  quotedUsername.textContent.trim().replace(/\s*wrote:.*$/, "")
-                )
-              ) {
-                blockquote.style.display = "none";
-              }
-            });
+    const blockquotes = document.querySelectorAll(".post .content blockquote");
+
+    blockquotes.forEach((blockquote) => {
+      // Use the new selector: "cite a" instead of ".quote-citation-container a"
+      const anchor = blockquote.querySelector("cite a");
+      if (!anchor) return;
+
+      // Get the username from anchor, e.g. "Vergil"
+      const quotedUsername = anchor.textContent.trim();
+
+      // If the user is in your ignore list, do the hiding
+      if (isUserIgnored(quotedUsername)) {
+        // Hide this <blockquote>
+        blockquote.style.display = "none";
+
+        // Now hide siblings after the blockquote until
+        //   either the next blockquote or the end of the post
+        let sibling = blockquote.nextSibling;
+        while (sibling) {
+          // Stop if we hit another blockquote (or some other boundary).
+          if (
+            sibling.nodeType === Node.ELEMENT_NODE &&
+            sibling.tagName === "BLOCKQUOTE"
+          ) {
+            break;
           }
-        }
-      }
+          // If you want to hide *all* subsequent content, remove the above check.
 
-      // Process reactions
-      const reactionList = post.querySelector(".reaction-score-list");
-      if (reactionList) {
-        const reactionGroups = reactionList.querySelectorAll(".reaction-group");
-        reactionGroups.forEach((group) => {
-          const countSpan = group.querySelector("span");
-          const popup = group.querySelector(".reaction-users-popup");
-          if (popup) {
-            const userRows = popup.querySelectorAll(
-              ".reaction-users-popup > div:last-child > div"
-            );
-            let removedCount = 0;
-
-            userRows.forEach((row) => {
-              const usernameElement = row.querySelector(
-                ".username, .username-coloured"
-              );
-              if (
-                usernameElement &&
-                isUserIgnored(usernameElement.textContent.trim())
-              ) {
-                row.remove();
-                removedCount++;
-              }
-            });
-
-            // Update count and remove group if it becomes 0
-            if (removedCount > 0 && countSpan) {
-              const newCount = parseInt(countSpan.textContent) - removedCount;
-              if (newCount <= 0) {
-                group.remove();
-              } else {
-                countSpan.textContent = newCount.toString();
-              }
-            }
+          // Hide element nodes
+          if (sibling.nodeType === Node.ELEMENT_NODE) {
+            sibling.style.display = "none";
           }
-        });
-
-        // Remove the entire reaction list if all groups are gone
-        if (reactionList.querySelector(".list-scores").children.length === 0) {
-          reactionList.remove();
+          // Or blank out text nodes
+          else if (sibling.nodeType === Node.TEXT_NODE) {
+            sibling.textContent = "";
+          }
+          sibling = sibling.nextSibling;
         }
       }
     });
