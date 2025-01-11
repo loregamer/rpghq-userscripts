@@ -68,9 +68,29 @@
     });
   }
 
+  // Function to hide typing indicators
+  function hideTypingIndicators() {
+    const typingIndicators = document.querySelectorAll(
+      "p._1xny9xl0._1mqalmd1._1mqalmd0._1xny9xlb._1xny9xlr._1xny9xln"
+    );
+    typingIndicators.forEach((indicator) => {
+      if (indicator.textContent.includes("is typing...")) {
+        const container = indicator.closest(
+          "div.prxiv40._1mqalmd1._1mqalmd0.prxiv41"
+        );
+        if (container) {
+          container.style.display = "none";
+        }
+      }
+    });
+  }
+
   // Function to run the hiding logic
   function applyFilters() {
     const usersToHide = ["stackofturtles", "Vergil"];
+
+    // Hide typing indicators
+    hideTypingIndicators();
 
     // Handle following messages specially
     handleFollowingMessages(usersToHide);
