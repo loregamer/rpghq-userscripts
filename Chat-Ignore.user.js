@@ -21,18 +21,55 @@
     });
   }
 
-  // Function to hide elements and their parent containers
-  function hideElementsWithParents(selector, textContent) {
+  // Function to selectively hide text elements
+  function hideTextElements(selector, textContent) {
     const elements = document.querySelectorAll(selector);
     elements.forEach((element) => {
-      if (element.textContent.includes(textContent)) {
-        // Find the closest parent container and hide it
-        const parentButton = element.closest("button._13tt0gb6");
-        const parentDiv = element.closest("div.a6xo8r0");
-        if (parentButton) parentButton.style.display = "none";
-        if (parentDiv) parentDiv.style.display = "none";
-        if (!parentButton && !parentDiv) element.style.display = "none";
+      // Skip if this is part of a following message
+      if (
+        element.closest(
+          "p._1xny9xl0._1mqalmd1._1mqalmd0._1xny9xlb._1xny9xlr._1xny9xln"
+        )
+      ) {
+        return;
       }
+
+      // If it's a direct text match in a button, only hide the specific text elements
+      const parentButton = element.closest("button._13tt0gb6");
+      if (parentButton) {
+        const textElements = parentButton.querySelectorAll("p, span, b");
+        textElements.forEach((textEl) => {
+          if (textEl.textContent.includes(textContent)) {
+            textEl.style.display = "none";
+          }
+        });
+        return;
+      }
+
+      // For other cases, hide the element if it contains the text
+      if (element.textContent.includes(textContent)) {
+        element.style.display = "none";
+      }
+    });
+  }
+
+  // Function to handle "following the conversation" messages
+  function handleFollowingMessages(usersToHide) {
+    const followingMessages = document.querySelectorAll(
+      "p._1xny9xl0._1mqalmd1._1mqalmd0._1xny9xlb._1xny9xlr._1xny9xln"
+    );
+    followingMessages.forEach((message) => {
+      const boldElements = message.querySelectorAll("b");
+      boldElements.forEach((bold) => {
+        if (usersToHide.includes(bold.textContent)) {
+          // Find the next span with comma or "and"
+          let nextSpan = bold.nextElementSibling;
+          if (nextSpan && nextSpan.textContent.match(/(,| and )/)) {
+            nextSpan.style.display = "none";
+          }
+          bold.style.display = "none";
+        }
+      });
     });
   }
 
@@ -40,20 +77,33 @@
   function applyFilters() {
     const usersToHide = ["stackofturtles", "Vergil"];
 
-    usersToHide.forEach((user) => {
-      // Hide usernames in bold
-      hideElements("b", user);
+    // Handle following messages specially
+    handleFollowingMessages(usersToHide);
 
-      // Hide user buttons and their containers
-      hideElementsWithParents("p", user);
-      hideElementsWithParents("span", user);
+    usersToHide.forEach((user) => {
+      // Hide usernames in bold (except in following messages which are handled separately)
+      const boldElements = document.querySelectorAll("b");
+      boldElements.forEach((element) => {
+        if (
+          element.textContent === user &&
+          !element.closest(
+            "p._1xny9xl0._1mqalmd1._1mqalmd0._1xny9xlb._1xny9xlr._1xny9xln"
+          )
+        ) {
+          element.style.display = "none";
+        }
+      });
+
+      // Use the new selective hiding function instead of hideElementsWithParents
+      hideTextElements("p", user);
+      hideTextElements("span", user);
     });
 
     // Hide appservice mentions
-    hideElementsWithParents("p", "appservice");
+    hideTextElements("p", "appservice");
 
     // Hide messages containing "tz"
-    hideElementsWithParents("span", "tz");
+    hideTextElements("span", "tz");
 
     // Hide "left the room" messages
     usersToHide.forEach((user) => {
