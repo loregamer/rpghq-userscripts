@@ -188,6 +188,7 @@
     const lastpostElements = document.querySelectorAll(
       "dd.lastpost, #recent-topics li dd.lastpost"
     );
+
     lastpostElements.forEach((lastpostElement) => {
       const spanElement = lastpostElement.querySelector("span");
       if (spanElement) {
@@ -212,14 +213,8 @@
               if (recentTopicLi) {
                 recentTopicLi.style.display = "none";
               } else {
-                // For other lastpost elements, just remove the user info as before
-                byTextNode.remove();
-                nextElement.remove();
-                const br = spanElement.querySelector("br");
-                if (br) {
-                  br.remove();
-                }
-                spanElement.normalize();
+                // Hide the entire lastpost element
+                lastpostElement.style.display = "none";
               }
             }
           }
