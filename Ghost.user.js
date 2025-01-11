@@ -604,27 +604,30 @@
   }
 
   function addShowGhostedPostsButton() {
-    if (!document.getElementById("show-ghosted-posts")) {
-      const dropdownContainer = document.createElement("div");
-      dropdownContainer.className =
-        "dropdown-container dropdown-button-control topic-tools";
+    const actionBars = document.querySelectorAll(
+      ".action-bar.bar-top, .action-bar.bar-bottom"
+    );
 
-      const button = document.createElement("span");
-      button.id = "show-ghosted-posts";
-      button.className = "button button-secondary dropdown-trigger";
-      button.title = "Show Ghosted Posts";
-      button.innerHTML =
-        '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>Show Ghosted Posts</span>';
+    actionBars.forEach((actionBar, index) => {
+      if (!actionBar.querySelector(".show-ghosted-posts")) {
+        const dropdownContainer = document.createElement("div");
+        dropdownContainer.className =
+          "dropdown-container dropdown-button-control topic-tools";
 
-      button.addEventListener("click", function (e) {
-        e.preventDefault();
-        toggleGhostedPosts();
-      });
+        const button = document.createElement("span");
+        button.className =
+          "button button-secondary dropdown-trigger show-ghosted-posts";
+        button.title = "Show Ghosted Posts";
+        button.innerHTML =
+          '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>Show Ghosted Posts</span>';
 
-      dropdownContainer.appendChild(button);
+        button.addEventListener("click", function (e) {
+          e.preventDefault();
+          toggleGhostedPosts();
+        });
 
-      const actionBar = document.querySelector(".action-bar.bar-top");
-      if (actionBar) {
+        dropdownContainer.appendChild(button);
+
         const firstButton = actionBar.querySelector(".button");
         if (firstButton) {
           actionBar.insertBefore(dropdownContainer, firstButton);
@@ -632,40 +635,45 @@
           actionBar.appendChild(dropdownContainer);
         }
       }
+    });
 
-      // Add media query for responsive design
-      const style = document.createElement("style");
-      style.textContent = `
-        @media (max-width: 700px) {
-          #show-ghosted-posts span:not(.icon) {
-            display: none;
-          }
+    // Add media query for responsive design
+    const style = document.createElement("style");
+    style.textContent = `
+      @media (max-width: 700px) {
+        .show-ghosted-posts span:not(.icon) {
+          display: none;
         }
-      `;
-      document.head.appendChild(style);
-    }
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   function toggleGhostedPosts() {
-    const button = document.getElementById("show-ghosted-posts");
-    const textSpan = button.querySelector("span:not(.icon)");
-    const icon = button.querySelector("i");
-    const isShowing = textSpan.textContent === "Hide Ghosted Posts";
+    const buttons = document.querySelectorAll(".show-ghosted-posts");
+    const isShowing =
+      buttons[0].querySelector("span:not(.icon)").textContent ===
+      "Hide Ghosted Posts";
 
-    textSpan.textContent = isShowing
-      ? "Show Ghosted Posts"
-      : "Hide Ghosted Posts";
-    icon.className = isShowing
-      ? "icon fa-eye fa-fw"
-      : "icon fa-eye-slash fa-fw";
+    buttons.forEach((button) => {
+      const textSpan = button.querySelector("span:not(.icon)");
+      const icon = button.querySelector("i");
 
-    // 1) Toggle the main ghosted posts
+      textSpan.textContent = isShowing
+        ? "Show Ghosted Posts"
+        : "Hide Ghosted Posts";
+      icon.className = isShowing
+        ? "icon fa-eye fa-fw"
+        : "icon fa-eye-slash fa-fw";
+    });
+
+    // Toggle the main ghosted posts
     const ghostedPosts = document.querySelectorAll(".post.ghosted-post");
     ghostedPosts.forEach((post) => {
       post.classList.toggle("show");
     });
 
-    // 2) Toggle the ghosted quotes
+    // Toggle the ghosted quotes
     const ghostedQuotes = document.querySelectorAll(".ghosted-quote");
     ghostedQuotes.forEach((el) => {
       el.classList.toggle("show");
