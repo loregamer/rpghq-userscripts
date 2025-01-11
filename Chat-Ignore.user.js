@@ -38,6 +38,14 @@
         message.style.display = "none";
       }
     });
+
+    // Hide direct message entries in sidebar
+    const directMessageEntries = document.querySelectorAll("div.a6xo8r0");
+    directMessageEntries.forEach((entry) => {
+      if (entry.textContent.toLowerCase().includes(userId.toLowerCase())) {
+        entry.style.display = "none";
+      }
+    });
   }
 
   // Function to handle "following the conversation" messages
