@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      1.5.1
+// @version      1.5.2
 // @description  Add Ghost User button to profiles, hide content from ghosted users, and replace avatars
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -39,6 +39,10 @@
   let replacedAvatars = GM_getValue("replacedAvatars", {});
 
   function processIgnoredContent() {
+    // Process reactions from ignored users
+    const reactionLists = document.querySelectorAll(".reaction-score-list");
+    reactionLists.forEach(processReactionList);
+
     // Process posts from ghosted users
     const posts = document.querySelectorAll(".post");
     posts.forEach((post) => {
@@ -365,6 +369,45 @@
     });
   }
 
+  function processReactionList(reactionList) {
+    const reactionGroups = reactionList.querySelectorAll(".reaction-group");
+    reactionGroups.forEach((group) => {
+      const popup = group.querySelector(".reaction-users-popup");
+      if (!popup) return;
+
+      const userLinks = popup.querySelectorAll(
+        "a.username, a.username-coloured"
+      );
+      const countSpan = group.querySelector("span");
+      if (!countSpan) return;
+
+      let currentCount = parseInt(countSpan.textContent);
+      let removedCount = 0;
+
+      userLinks.forEach((link) => {
+        const userId = link.href.match(/u=(\d+)/)?.[1];
+        if (userId && isUserIgnored(userId)) {
+          const userDiv = link.closest("div");
+          if (userDiv) {
+            userDiv.remove();
+            removedCount++;
+          }
+        }
+      });
+
+      if (removedCount > 0) {
+        const newCount = currentCount - removedCount;
+        if (newCount <= 0) {
+          // Remove the entire reaction group if count reaches 0
+          group.remove();
+        } else {
+          // Update the count
+          countSpan.textContent = newCount.toString();
+        }
+      }
+    });
+  }
+
   function markAsRead(href) {
     GM_xmlhttpRequest({
       method: "GET",
@@ -375,8 +418,15 @@
     });
   }
 
-  function isUserIgnored(username) {
-    return Object.values(ignoredUsers).includes(username.toLowerCase());
+  function isUserIgnored(usernameOrId) {
+    // If it's a user ID, check if it exists as a key in ignoredUsers
+    if (ignoredUsers.hasOwnProperty(usernameOrId)) {
+      return true;
+    }
+
+    // If it's a username, check if it exists as a value in ignoredUsers
+    const lowercaseUsername = usernameOrId.toLowerCase();
+    return Object.values(ignoredUsers).includes(lowercaseUsername);
   }
 
   function addGhostButton() {
