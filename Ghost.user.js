@@ -57,22 +57,6 @@
       }
     });
 
-    // Update post count in pagination after processing ghosted posts
-    const paginationDivs = document.querySelectorAll(".pagination");
-    paginationDivs.forEach((div) => {
-      const totalPosts = document.querySelectorAll(".post").length;
-      const hiddenPosts = document.querySelectorAll(
-        ".post.ghosted-post:not(.show)"
-      ).length;
-      const visiblePosts = totalPosts - hiddenPosts;
-
-      // Update the text content while preserving pagination info
-      const paginationText = div.textContent;
-      const paginationMatch = paginationText.match(/Page .* of .*/);
-      const paginationInfo = paginationMatch ? paginationMatch[0] : "";
-      div.textContent = `${visiblePosts} posts • ${paginationInfo}`;
-    });
-
     // Check if we're viewing a ghosted user's post and redirect if needed
     const currentPostId = window.location.hash.replace("#p", "");
     if (currentPostId) {
@@ -738,22 +722,6 @@
     const ghostedQuotes = document.querySelectorAll(".ghosted-quote");
     ghostedQuotes.forEach((el) => {
       el.classList.toggle("show");
-    });
-
-    // Update post count in pagination
-    const paginationDivs = document.querySelectorAll(".pagination");
-    paginationDivs.forEach((div) => {
-      const totalPosts = document.querySelectorAll(".post").length;
-      const hiddenPosts = document.querySelectorAll(
-        ".post.ghosted-post:not(.show)"
-      ).length;
-      const visiblePosts = totalPosts - hiddenPosts;
-
-      // Update the text content while preserving pagination info
-      const paginationText = div.textContent;
-      const paginationMatch = paginationText.match(/Page .* of .*/);
-      const paginationInfo = paginationMatch ? paginationMatch[0] : "";
-      div.textContent = `${visiblePosts} posts • ${paginationInfo}`;
     });
   }
 
