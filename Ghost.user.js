@@ -38,6 +38,29 @@
   let ignoredUsers = GM_getValue("ignoredUsers", {});
   let replacedAvatars = GM_getValue("replacedAvatars", {});
 
+  function updatePaginationCount() {
+    const paginationDivs = document.querySelectorAll(".pagination");
+    const totalPosts = document.querySelectorAll(".post").length;
+    const hiddenPosts = document.querySelectorAll(
+      ".post.ghosted-post:not(.show)"
+    ).length;
+    const visiblePosts = totalPosts - hiddenPosts;
+
+    paginationDivs.forEach((div) => {
+      const textNodes = Array.from(div.childNodes).filter(
+        (node) => node.nodeType === Node.TEXT_NODE
+      );
+      if (textNodes.length > 0) {
+        const firstTextNode = textNodes[0];
+        // Replace only the number in the text content
+        firstTextNode.textContent = firstTextNode.textContent.replace(
+          /\d+(?= posts)/,
+          visiblePosts
+        );
+      }
+    });
+  }
+
   function processIgnoredContent() {
     // Process reactions from ignored users
     const reactionLists = document.querySelectorAll(".reaction-score-list");
@@ -57,21 +80,8 @@
       }
     });
 
-    // Update post count in pagination after processing ghosted posts
-    const paginationDivs = document.querySelectorAll(".pagination");
-    paginationDivs.forEach((div) => {
-      const totalPosts = document.querySelectorAll(".post").length;
-      const hiddenPosts = document.querySelectorAll(
-        ".post.ghosted-post:not(.show)"
-      ).length;
-      const visiblePosts = totalPosts - hiddenPosts;
-
-      // Update the text content while preserving pagination info
-      const paginationText = div.textContent;
-      const paginationMatch = paginationText.match(/Page .* of .*/);
-      const paginationInfo = paginationMatch ? paginationMatch[0] : "";
-      div.textContent = `${visiblePosts} posts • ${paginationInfo}`;
-    });
+    // Update post count
+    updatePaginationCount();
 
     // Check if we're viewing a ghosted user's post and redirect if needed
     const currentPostId = window.location.hash.replace("#p", "");
@@ -740,21 +750,8 @@
       el.classList.toggle("show");
     });
 
-    // Update post count in pagination
-    const paginationDivs = document.querySelectorAll(".pagination");
-    paginationDivs.forEach((div) => {
-      const totalPosts = document.querySelectorAll(".post").length;
-      const hiddenPosts = document.querySelectorAll(
-        ".post.ghosted-post:not(.show)"
-      ).length;
-      const visiblePosts = totalPosts - hiddenPosts;
-
-      // Update the text content while preserving pagination info
-      const paginationText = div.textContent;
-      const paginationMatch = paginationText.match(/Page .* of .*/);
-      const paginationInfo = paginationMatch ? paginationMatch[0] : "";
-      div.textContent = `${visiblePosts} posts • ${paginationInfo}`;
-    });
+    // Update post count
+    updatePaginationCount();
   }
 
   function cleanGhostedQuotes(text) {
