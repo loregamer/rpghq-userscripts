@@ -30,21 +30,22 @@
     .notification-block:not(.content-processed),
     dd.lastpost:not(.content-processed),
     #recent-topics li dd.lastpost:not(.content-processed),
-    .reaction-score-list:not(.content-processed) {
-      display: none !important;
+    .reaction-score-list:not(.content-processed),
+    li.row:not(.content-processed) {
+      visibility: hidden !important;
     }
 
     /* Show content once processed and not ghosted */
-    .content-processed {
-      display: block !important;
+    .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote) {
+      visibility: visible !important;
     }
 
     /* Hide ghosted content */
-    .ghosted-post {
+    .ghosted-post, .ghosted-row {
       display: none !important;
     }
     
-    .ghosted-post.show {
+    .ghosted-post.show, .ghosted-row.show {
       display: block !important;
     }
     
@@ -110,6 +111,16 @@
   }
 
   function processIgnoredContent() {
+    // Process rows in topic lists
+    const topicRows = document.querySelectorAll("li.row");
+    topicRows.forEach((row) => {
+      const lastpostElement = row.querySelector("dd.lastpost");
+      if (lastpostElement) {
+        processLastPost(lastpostElement);
+      }
+      row.classList.add("content-processed");
+    });
+
     // Process reactions from ignored users
     const reactionLists = document.querySelectorAll(".reaction-score-list");
     reactionLists.forEach((list) => {
@@ -361,34 +372,34 @@
             if (recentTopicLi) {
               recentTopicLi.style.display = "none";
             } else {
-              // Hide the entire lastpost element
-              element.style.display = "none";
+              // Hide the entire row if it's in a topic list
+              const rowItem = element.closest("li.row");
+              if (rowItem) {
+                rowItem.classList.add("ghosted-row");
+              } else {
+                // Otherwise just hide the lastpost element
+                element.style.display = "none";
+              }
             }
           }
         }
       }
 
       // Process the responsive-show element if it exists
-      const responsiveShow = element.querySelector(".responsive-show");
+      const responsiveShow = element
+        .closest("dl.row-item")
+        .querySelector(".responsive-show");
       if (responsiveShow) {
         const usernameElement = responsiveShow.querySelector(".username");
         if (
           usernameElement &&
           isUserIgnored(usernameElement.textContent.trim())
         ) {
-          // Find and remove the "Last post by" text
-          const lastPostByText = Array.from(responsiveShow.childNodes).find(
-            (node) =>
-              node.nodeType === Node.TEXT_NODE &&
-              node.textContent.trim().startsWith("Last post by")
-          );
-          if (lastPostByText) {
-            lastPostByText.remove();
+          // Hide the entire row
+          const rowItem = responsiveShow.closest("li.row");
+          if (rowItem) {
+            rowItem.classList.add("ghosted-row");
           }
-          // Remove the username element
-          usernameElement.remove();
-          // Remove any extra spaces
-          responsiveShow.normalize();
         }
       }
     }
