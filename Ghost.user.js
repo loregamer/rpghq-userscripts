@@ -597,8 +597,6 @@
         const userId = srcMatch[1];
         if (replacedAvatars.hasOwnProperty(userId)) {
           avatar.src = replacedAvatars[userId];
-        } else if (isUserIgnored(userId)) {
-          avatar.src = "https://f.rpghq.org/sVKSQ0VE3PJW.png?n=pasted-file.png";
         }
       }
     });
