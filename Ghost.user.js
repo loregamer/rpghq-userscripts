@@ -49,12 +49,24 @@
       const usernameElement = post.querySelector(
         ".username, .username-coloured"
       );
+      const mentions = post.querySelectorAll("em.mention");
+
+      // Check if post author is ghosted
       if (
         usernameElement &&
         isUserIgnored(usernameElement.textContent.trim())
       ) {
         post.classList.add("ghosted-post");
+        return;
       }
+
+      // Check for mentions of ghosted users
+      mentions.forEach((mention) => {
+        const mentionedUser = mention.textContent.trim().replace("@", "");
+        if (isUserIgnored(mentionedUser)) {
+          post.classList.add("ghosted-post");
+        }
+      });
     });
 
     // Check if we're viewing a ghosted user's post and redirect if needed
