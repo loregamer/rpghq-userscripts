@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      1.6.3
+// @version      2.0
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
 // @license      MIT
+// @run-at       document-start
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Ignore-Threads.user.js
 // @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Ignore-Threads.user.js
@@ -41,6 +42,52 @@ SOFTWARE.
   "use strict";
 
   let ignoredThreads = GM_getValue("ignoredThreads", {});
+  let ignoreModeActive = GM_getValue("ignoreModeActive", false);
+
+  // Add CSS early to prevent flash
+  const style = document.createElement("style");
+  style.textContent = `
+    .hidden-thread {
+      display: none !important;
+    }
+    @media (max-width: 700px) {
+      #ignore-thread-button span {
+        display: none;
+      }
+    }
+  `;
+  document.documentElement.appendChild(style);
+
+  // Pre-hide ignored threads as early as possible
+  function hideIgnoredThreadsEarly(mutations) {
+    const threadItems = document.querySelectorAll(
+      ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
+    );
+    threadItems.forEach((item) => {
+      const threadLink = item.querySelector("a.topictitle");
+      if (threadLink) {
+        const threadTitle = threadLink.textContent.trim();
+        if (isThreadIgnored(threadTitle)) {
+          item.classList.add("hidden-thread");
+        }
+      }
+    });
+
+    const lastPosts = document.querySelectorAll(".lastpost");
+    lastPosts.forEach((lastPost) => {
+      const lastPostLink = lastPost.querySelector("a.lastsubject");
+      if (lastPostLink) {
+        const threadTitle = lastPostLink.getAttribute("title");
+        if (threadTitle && isThreadIgnored(threadTitle)) {
+          lastPost.classList.add("hidden-thread");
+        }
+      }
+    });
+  }
+
+  // Set up early mutation observer
+  const earlyObserver = new MutationObserver(hideIgnoredThreadsEarly);
+  earlyObserver.observe(document, { childList: true, subtree: true });
 
   function addIgnoreButton() {
     const actionBar = document.querySelector(".action-bar.bar-top");
@@ -88,17 +135,6 @@ SOFTWARE.
       if (paginationDiv && topicTitle) {
         actionBar.insertBefore(dropdownContainer, paginationDiv);
       }
-
-      // Add media query for responsive design
-      const style = document.createElement("style");
-      style.textContent = `
-        @media (max-width: 700px) {
-          #ignore-thread-button span {
-            display: none;
-          }
-        }
-      `;
-      document.head.appendChild(style);
     }
   }
 
@@ -159,23 +195,22 @@ SOFTWARE.
       if (threadLink) {
         const threadTitle = threadLink.textContent.trim();
         if (isThreadIgnored(threadTitle)) {
-          item.style.display = "none";
+          item.classList.add("hidden-thread");
         } else {
-          item.style.display = "";
+          item.classList.remove("hidden-thread");
         }
       }
     });
 
-    // Hide lastpost information if it's from an ignored thread
     const lastPosts = document.querySelectorAll(".lastpost");
     lastPosts.forEach((lastPost) => {
       const lastPostLink = lastPost.querySelector("a.lastsubject");
       if (lastPostLink) {
         const threadTitle = lastPostLink.getAttribute("title");
         if (threadTitle && isThreadIgnored(threadTitle)) {
-          lastPost.style.display = "none";
+          lastPost.classList.add("hidden-thread");
         } else {
-          lastPost.style.display = "";
+          lastPost.classList.remove("hidden-thread");
         }
       }
     });
@@ -223,8 +258,6 @@ SOFTWARE.
       dropdown.insertBefore(listItem, dropdown.lastElementChild);
     }
   }
-
-  let ignoreModeActive = GM_getValue("ignoreModeActive", false);
 
   function toggleIgnoreMode() {
     ignoreModeActive = !ignoreModeActive;
@@ -630,27 +663,6 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     }
   }
 
-  hideIgnoredThreads();
-
-  // If immediate execution fails, wait for DOM content to be loaded
-  if (
-    !document.querySelector(".topiclist.topics") &&
-    !document.querySelector("#recent-topics")
-  ) {
-    document.addEventListener("DOMContentLoaded", initializeScript);
-  }
-
-  // Fallback: If still not loaded, use a short timeout
-  setTimeout(initializeScript, 500);
-
-  // Add a MutationObserver to handle dynamically loaded content
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.type === "childList") {
-        updateIgnoreButtons();
-      }
-    });
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
+  // Initialize when DOM is ready
+  document.addEventListener("DOMContentLoaded", initializeScript);
 })();
