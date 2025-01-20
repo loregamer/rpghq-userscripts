@@ -81,11 +81,37 @@
 
     // Process posts from ghosted users
     const posts = document.querySelectorAll(".post");
+    let shouldRedirect = false;
+    let currentPost = null;
+
     posts.forEach((post) => {
+      // First process any nested blockquotes in this post
+      const blockquotes = Array.from(
+        post.querySelectorAll(".content blockquote")
+      );
+      blockquotes.sort((a, b) => {
+        const aDepth = getBlockquoteDepth(a);
+        const bDepth = getBlockquoteDepth(b);
+        return bDepth - aDepth;
+      });
+
+      blockquotes.forEach((blockquote) => {
+        const anchor = blockquote.querySelector("cite a");
+        if (!anchor) return;
+
+        const quotedUsername = anchor.textContent.trim();
+        if (isUserIgnored(quotedUsername)) {
+          blockquote.remove();
+        }
+      });
+
+      // Then check if the post itself should be hidden
       const usernameElement = post.querySelector(
         ".username, .username-coloured"
       );
       const mentions = post.querySelectorAll("em.mention");
+
+      let isHidden = false;
 
       // Check if post author is ghosted
       if (
@@ -93,7 +119,7 @@
         isUserIgnored(usernameElement.textContent.trim())
       ) {
         post.classList.add("ghosted-post");
-        return;
+        isHidden = true;
       }
 
       // Check for mentions of ghosted users
@@ -101,51 +127,36 @@
         const mentionedUser = mention.textContent.trim().replace("@", "");
         if (isUserIgnored(mentionedUser)) {
           post.classList.add("ghosted-post");
+          isHidden = true;
         }
       });
+
+      // Check if this is the current post and it's hidden
+      const postId = post.id.replace("p", "");
+      const currentPostId = window.location.hash.replace("#p", "");
+      if (postId === currentPostId && isHidden) {
+        shouldRedirect = true;
+        currentPost = post;
+      }
     });
 
-    // Check if we're viewing a ghosted user's post and redirect if needed
-    const currentPostId = window.location.hash.replace("#p", "");
-    if (currentPostId) {
-      const currentPost = document.getElementById("p" + currentPostId);
-      if (currentPost) {
-        const postProfile = currentPost.querySelector(".postprofile");
-        if (postProfile) {
-          const usernameElement = postProfile.querySelector(
-            ".username, .username-coloured"
-          );
-          if (
-            usernameElement &&
-            isUserIgnored(usernameElement.textContent.trim())
-          ) {
-            // Find the previous visible post
-            let previousPost = currentPost.previousElementSibling;
-            while (previousPost) {
-              if (previousPost.classList.contains("post")) {
-                const prevProfile = previousPost.querySelector(".postprofile");
-                const prevUsername = prevProfile?.querySelector(
-                  ".username, .username-coloured"
-                );
-                if (
-                  prevUsername &&
-                  !isUserIgnored(prevUsername.textContent.trim())
-                ) {
-                  // Get the post ID and update the URL
-                  const prevPostId = previousPost.id.replace("p", "");
-                  const newUrl =
-                    window.location.href.replace(/#p\d+$/, "") +
-                    "#p" +
-                    prevPostId;
-                  window.history.replaceState(null, "", newUrl);
-                  previousPost.scrollIntoView();
-                  break;
-                }
-              }
-              previousPost = previousPost.previousElementSibling;
-            }
-          }
+    // Handle redirection if needed
+    if (shouldRedirect && currentPost) {
+      // Find the previous visible post
+      let previousPost = currentPost.previousElementSibling;
+      while (previousPost) {
+        if (
+          previousPost.classList.contains("post") &&
+          !previousPost.classList.contains("ghosted-post")
+        ) {
+          const prevPostId = previousPost.id.replace("p", "");
+          const newUrl =
+            window.location.href.replace(/#p\d+$/, "") + "#p" + prevPostId;
+          window.history.replaceState(null, "", newUrl);
+          previousPost.scrollIntoView();
+          break;
         }
+        previousPost = previousPost.previousElementSibling;
       }
     }
 
@@ -795,7 +806,6 @@
   }
 
   function init() {
-    processNestedBlockquotes();
     processIgnoredContent();
     addShowGhostedPostsButton();
     replaceUserAvatar();
