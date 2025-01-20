@@ -93,7 +93,7 @@
 
       const quotedUsername = anchor.textContent.trim();
       if (isUserIgnored(quotedUsername)) {
-        blockquote.remove();
+        blockquote.classList.add("ghosted-quote");
       }
     });
   }
@@ -135,24 +135,17 @@
 
     posts.forEach((post) => {
       // First process any nested blockquotes in this post
-      const blockquotes = Array.from(
-        post.querySelectorAll(".content blockquote")
-      );
-      blockquotes.sort((a, b) => {
-        const aDepth = getBlockquoteDepth(a);
-        const bDepth = getBlockquoteDepth(b);
-        return bDepth - aDepth;
-      });
+      processNestedBlockquotes();
 
-      blockquotes.forEach((blockquote) => {
-        const anchor = blockquote.querySelector("cite a");
-        if (!anchor) return;
-
-        const quotedUsername = anchor.textContent.trim();
-        if (isUserIgnored(quotedUsername)) {
-          blockquote.remove();
-        }
-      });
+      // Check if all blockquotes in this post are ghosted
+      const blockquotes = post.querySelectorAll(".content blockquote");
+      const allBlockquotesGhosted =
+        blockquotes.length > 0 &&
+        Array.from(blockquotes).every((quote) => {
+          const anchor = quote.querySelector("cite a");
+          if (!anchor) return false;
+          return isUserIgnored(anchor.textContent.trim());
+        });
 
       // Then check if the post itself should be hidden
       const usernameElement = post.querySelector(
@@ -162,10 +155,11 @@
 
       let isHidden = false;
 
-      // Check if post author is ghosted
+      // Check if post author is ghosted or if all blockquotes are ghosted
       if (
-        usernameElement &&
-        isUserIgnored(usernameElement.textContent.trim())
+        (usernameElement &&
+          isUserIgnored(usernameElement.textContent.trim())) ||
+        allBlockquotesGhosted
       ) {
         post.classList.add("ghosted-post");
         isHidden = true;
