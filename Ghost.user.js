@@ -38,6 +38,42 @@
   let ignoredUsers = GM_getValue("ignoredUsers", {});
   let replacedAvatars = GM_getValue("replacedAvatars", {});
 
+  function processNestedBlockquotes() {
+    // Process from innermost to outermost blockquotes
+    const allBlockquotes = Array.from(
+      document.querySelectorAll(".post .content blockquote")
+    );
+
+    // Sort blockquotes by nesting level (deepest first)
+    allBlockquotes.sort((a, b) => {
+      const aDepth = getBlockquoteDepth(a);
+      const bDepth = getBlockquoteDepth(b);
+      return bDepth - aDepth;
+    });
+
+    allBlockquotes.forEach((blockquote) => {
+      const anchor = blockquote.querySelector("cite a");
+      if (!anchor) return;
+
+      const quotedUsername = anchor.textContent.trim();
+      if (isUserIgnored(quotedUsername)) {
+        blockquote.remove();
+      }
+    });
+  }
+
+  function getBlockquoteDepth(element) {
+    let depth = 0;
+    let current = element;
+    while (current) {
+      if (current.tagName === "BLOCKQUOTE") {
+        depth++;
+      }
+      current = current.parentElement;
+    }
+    return depth;
+  }
+
   function processIgnoredContent() {
     // Process reactions from ignored users
     const reactionLists = document.querySelectorAll(".reaction-score-list");
@@ -759,6 +795,7 @@
   }
 
   function init() {
+    processNestedBlockquotes();
     processIgnoredContent();
     addShowGhostedPostsButton();
     replaceUserAvatar();
