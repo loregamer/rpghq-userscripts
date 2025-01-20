@@ -67,6 +67,35 @@ SOFTWARE.
       document.head.appendChild(style);
     },
 
+    addPostIdsToUsernames() {
+      document.querySelectorAll(".post").forEach((post) => {
+        const postId = post.id;
+        if (!postId) return;
+
+        const usernameSpan = post.querySelector(".responsive-hide");
+        if (!usernameSpan) return;
+
+        // Check if we already added the post ID
+        if (usernameSpan.querySelector(".post-id-text")) return;
+
+        // Find the text node containing "»"
+        const nodes = Array.from(usernameSpan.childNodes);
+        const arrowNode = nodes.find(
+          (node) =>
+            node.nodeType === Node.TEXT_NODE && node.textContent.includes("»")
+        );
+
+        if (arrowNode) {
+          const idSpan = document.createElement("span");
+          idSpan.className = "post-id-text";
+          idSpan.style.fontSize = "0";
+          idSpan.style.color = "transparent";
+          idSpan.textContent = postId;
+          usernameSpan.insertBefore(idSpan, arrowNode);
+        }
+      });
+    },
+
     scrollToPost() {
       const urlParams = new URLSearchParams(window.location.search);
       const postId = urlParams.get("p") || window.location.hash.slice(1);
@@ -1127,6 +1156,7 @@ SOFTWARE.
 
   function init() {
     utils.loadSettings();
+    utils.addPostIdsToUsernames();
     uiTweaks.init();
     if (settings.betterQuoteBoxes) {
       betterQuotes.init();
