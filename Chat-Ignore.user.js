@@ -87,7 +87,7 @@
 
   // Function to run the hiding logic
   function applyFilters() {
-    const usersToHide = ["stackofturtles", "Vergil"];
+    const usersToHide = ["Vergil"];
 
     // Hide typing indicators
     hideTypingIndicators();
