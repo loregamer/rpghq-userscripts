@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      2.2
+// @version      2.3.1
 // @description  Hides content from ghosted users + optional avatar replacement
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -33,13 +33,13 @@
     .notification-block:not(.content-processed),
     dd.lastpost:not(.content-processed):not(#pinned-threads-list dd.lastpost),
     #recent-topics li dd.lastpost:not(.content-processed),
-    .reaction-score-list:not(.content-processed),
     li.row:not(.content-processed):not(#pinned-threads-list li.row) {
       visibility: hidden !important;
     }
 
     /* Once processed, they become visible if not ghosted */
-    .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote) {
+    .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote),
+    .reaction-score-list.content-processed {
       visibility: visible !important;
     }
 
@@ -192,7 +192,10 @@
         }
       }
     });
+
+    // Always mark as processed and ensure visibility
     list.classList.add("content-processed");
+    list.style.visibility = "visible";
   }
 
   // Hide ghosted notifications
