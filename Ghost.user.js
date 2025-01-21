@@ -31,10 +31,10 @@
     /* Immediately hide all relevant containers until processed */
     .post:not(.content-processed),
     .notification-block:not(.content-processed),
-    dd.lastpost:not(.content-processed),
+    dd.lastpost:not(.content-processed):not(#pinned-threads-list dd.lastpost),
     #recent-topics li dd.lastpost:not(.content-processed),
     .reaction-score-list:not(.content-processed),
-    li.row:not(.content-processed) {
+    li.row:not(.content-processed):not(#pinned-threads-list li.row) {
       visibility: hidden !important;
     }
 
@@ -44,7 +44,7 @@
     }
 
     /* Ghosted content is hidden altogether */
-    .ghosted-post, .ghosted-row {
+    .ghosted-post, .ghosted-row:not(#pinned-threads-list .row) {
       display: none !important;
     }
     .ghosted-post.show, .ghosted-row.show {
@@ -104,8 +104,14 @@
    * 3) CONTENT-PROCESSING ROUTINES
    * ------------------------------------------------------------------------ ***/
 
-  // Hide ghosted “lastpost” elements in topic lists
+  // Hide ghosted "lastpost" elements in topic lists
   function processLastPost(element) {
+    // Skip if element is within pinned section
+    if (element.closest("#pinned-threads-list")) {
+      element.classList.add("content-processed");
+      return;
+    }
+
     const spanElement = element.querySelector("span");
     if (!spanElement) return;
 
@@ -203,7 +209,7 @@
       return;
     }
 
-    // If it’s 100% from ignored user, you might want to hide or mark read
+    // If it's 100% from ignored user, you might want to hide or mark read
     const titleEl = item.querySelector(".notification-title");
     if (!titleEl) {
       item.classList.add("content-processed");
@@ -508,7 +514,7 @@
    * ------------------------------------------------------------------------ ***/
 
   function addShowGhostedPostsButton() {
-    // Insert a “Show Ghosted Posts” button in the .action-bar, if present
+    // Insert a "Show Ghosted Posts" button in the .action-bar, if present
     const actionBars = document.querySelectorAll(
       ".action-bar.bar-top, .action-bar.bar-bottom"
     );
@@ -625,7 +631,7 @@
     // Replace avatars
     replaceUserAvatars();
 
-    // Add “Show Ghosted” button
+    // Add "Show Ghosted" button
     addShowGhostedPostsButton();
 
     // Add ghost button on profile
