@@ -24,8 +24,6 @@
 
   let ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => lowercased username
   let replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
-  let recentPostsCache = null; // Cache for recent posts data
-  let lastRecentPostsFetch = 0; // Timestamp of last fetch
 
   // Inject style at document-start to immediately hide potential ghosted content
   const style = document.createElement("style");
@@ -106,53 +104,8 @@
    * 3) CONTENT-PROCESSING ROUTINES
    * ------------------------------------------------------------------------ ***/
 
-  // Fetch and cache recent posts data
-  async function fetchRecentPosts() {
-    const now = Date.now();
-    // Only fetch if cache is empty or older than 5 minutes
-    if (recentPostsCache && now - lastRecentPostsFetch < 300000) {
-      return recentPostsCache;
-    }
-
-    try {
-      const response = await fetch(
-        "https://rpghq.org/forums/search.php?search_id=newposts&terms=all&author=&sc=1&sr=posts&sk=t&sd=d&st=0&ch=1000&t=0&submit=Search"
-      );
-      const text = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(text, "text/html");
-
-      // Extract post data
-      const posts = {};
-      doc.querySelectorAll(".search.post").forEach((post) => {
-        const postLink = post.querySelector(".postbody h3 a");
-        if (!postLink) return;
-
-        const postId = postLink.href.match(/p=(\d+)/)?.[1];
-        if (!postId) return;
-
-        const content =
-          post.querySelector(".content")?.textContent?.trim() || "";
-        const author =
-          post.querySelector(".author a")?.textContent?.trim() || "";
-
-        posts[postId] = {
-          content,
-          author,
-        };
-      });
-
-      recentPostsCache = posts;
-      lastRecentPostsFetch = now;
-      return posts;
-    } catch (error) {
-      console.error("Failed to fetch recent posts:", error);
-      return {};
-    }
-  }
-
-  // Enhanced processLastPost that checks post content
-  async function processLastPost(element) {
+  // Hide ghosted "lastpost" elements in topic lists
+  function processLastPost(element) {
     // Skip if element is within pinned section
     if (element.closest("#pinned-threads-list")) {
       element.classList.add("content-processed");
@@ -180,44 +133,7 @@
         ? nextElement
         : nextElement.querySelector(".username");
 
-      if (!userEl) {
-        element.classList.add("content-processed");
-        return;
-      }
-
-      const username = userEl.textContent.trim();
-      let shouldHide = isUserIgnored(username);
-
-      if (!shouldHide) {
-        // Check the post content if we can find the post ID
-        const postLink = element.querySelector('a[title="Go to last post"]');
-        if (postLink) {
-          const postId = postLink.href.match(/p=(\d+)/)?.[1];
-          if (postId) {
-            const recentPosts = await fetchRecentPosts();
-            const postData = recentPosts[postId];
-
-            if (postData) {
-              // Check if the post content or author contains any ignored username
-              const contentLower = postData.content.toLowerCase();
-              const authorLower = postData.author.toLowerCase();
-
-              for (const ignoredId in ignoredUsers) {
-                const ignoredName = ignoredUsers[ignoredId].toLowerCase();
-                if (
-                  contentLower.includes(ignoredName) ||
-                  authorLower.includes(ignoredName)
-                ) {
-                  shouldHide = true;
-                  break;
-                }
-              }
-            }
-          }
-        }
-      }
-
-      if (shouldHide) {
+      if (userEl && isUserIgnored(userEl.textContent.trim())) {
         // For recent topics, hide the entire li
         const recentTopicLi = element.closest("#recent-topics li");
         if (recentTopicLi) {
@@ -391,10 +307,7 @@
   }
 
   // Main single-pass function: hide anything from ignored users
-  async function processIgnoredContentOnce() {
-    // Fetch recent posts first
-    await fetchRecentPosts();
-
+  function processIgnoredContentOnce() {
     // Posts
     document
       .querySelectorAll(".post:not(.content-processed)")
@@ -411,23 +324,23 @@
       .forEach(processNotification);
 
     // Lastpost items (topics, etc.)
-    const lastposts = document.querySelectorAll(
-      "dd.lastpost:not(.content-processed), #recent-topics li dd.lastpost:not(.content-processed)"
-    );
-    for (const lastpost of lastposts) {
-      await processLastPost(lastpost);
-    }
+    document
+      .querySelectorAll(
+        "dd.lastpost:not(.content-processed), #recent-topics li dd.lastpost:not(.content-processed)"
+      )
+      .forEach(processLastPost);
 
     // Row items in topic lists
-    const rows = document.querySelectorAll("li.row:not(.content-processed)");
-    for (const row of rows) {
-      // Possibly handle the lastpost inside that row
-      const lastpost = row.querySelector("dd.lastpost");
-      if (lastpost && !lastpost.classList.contains("content-processed")) {
-        await processLastPost(lastpost);
-      }
-      row.classList.add("content-processed");
-    }
+    document
+      .querySelectorAll("li.row:not(.content-processed)")
+      .forEach((row) => {
+        // Possibly handle the lastpost inside that row
+        const lastpost = row.querySelector("dd.lastpost");
+        if (lastpost && !lastpost.classList.contains("content-processed")) {
+          processLastPost(lastpost);
+        }
+        row.classList.add("content-processed");
+      });
   }
 
   /*** -----------------------------------------------------------------------
@@ -713,7 +626,7 @@
   // The main processing will happen at DOMContentLoaded.
   document.addEventListener("DOMContentLoaded", () => {
     // Single pass to hide ghosted content
-    processIgnoredContentOnce().catch(console.error);
+    processIgnoredContentOnce();
 
     // Replace avatars
     replaceUserAvatars();
