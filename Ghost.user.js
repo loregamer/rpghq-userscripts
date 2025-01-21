@@ -26,7 +26,6 @@
   let replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   let recentPostsCache = null; // Cache for recent posts data
   let lastRecentPostsFetch = 0; // Timestamp of last fetch
-  let pagePostsContent = GM_getValue("pagePostsContent", {}); // postId => text content
 
   // Inject style at document-start to immediately hide potential ghosted content
   const style = document.createElement("style");
@@ -101,27 +100,6 @@
       ignoredUsers[userId] = username.toLowerCase();
     }
     GM_setValue("ignoredUsers", ignoredUsers);
-  }
-
-  // Function to store post content
-  function storePostContent(postId, content) {
-    if (!postId || !content) return;
-    pagePostsContent[postId] = content;
-    GM_setValue("pagePostsContent", pagePostsContent);
-  }
-
-  // Function to process post content
-  function processPostContent(post) {
-    const postId =
-      post.id?.match(/p(\d+)/)?.[1] ||
-      Array.from(post.querySelectorAll("a"))
-        .find((a) => a.href?.includes("p="))
-        ?.href?.match(/p=(\d+)/)?.[1];
-
-    if (postId) {
-      const content = post.querySelector(".content")?.textContent?.trim() || "";
-      storePostContent(postId, content);
-    }
   }
 
   /*** -----------------------------------------------------------------------
@@ -384,7 +362,6 @@
 
   // Hide ghosted posts themselves
   function processPost(post) {
-    processPostContent(post);
     processBlockquotesInPost(post);
 
     const usernameEl = post.querySelector(".username, .username-coloured");
