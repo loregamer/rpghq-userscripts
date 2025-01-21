@@ -24,8 +24,8 @@
 
   let ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => lowercased username
   let replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
-  let recentPostsCache = GM_getValue("recentPosts", {}); // Cache for recent posts data
-  let lastRecentPostsFetch = GM_getValue("lastRecentPostsFetch", 0); // Timestamp of last fetch
+  let recentPostsCache = null; // Cache for recent posts data
+  let lastRecentPostsFetch = 0; // Timestamp of last fetch
   let pagePostsContent = GM_getValue("pagePostsContent", {}); // postId => text content
 
   // Inject style at document-start to immediately hide potential ghosted content
@@ -132,10 +132,7 @@
   async function fetchRecentPosts() {
     const now = Date.now();
     // Only fetch if cache is empty or older than 5 minutes
-    if (
-      Object.keys(recentPostsCache).length > 0 &&
-      now - lastRecentPostsFetch < 300000
-    ) {
+    if (recentPostsCache && now - lastRecentPostsFetch < 300000) {
       return recentPostsCache;
     }
 
@@ -160,34 +157,19 @@
           post.querySelector(".content")?.textContent?.trim() || "";
         const author =
           post.querySelector(".author a")?.textContent?.trim() || "";
-        const timestamp =
-          post.querySelector(".author")?.textContent?.match(/» (.+)$/)?.[1] ||
-          "";
 
         posts[postId] = {
           content,
           author,
-          timestamp,
-          fetchedAt: now,
         };
       });
 
-      // Keep only the newest 100 posts
-      const sortedPosts = Object.entries(posts)
-        .sort(([, a], [, b]) => b.fetchedAt - a.fetchedAt)
-        .slice(0, 100);
-
-      recentPostsCache = Object.fromEntries(sortedPosts);
+      recentPostsCache = posts;
       lastRecentPostsFetch = now;
-
-      // Store in GM storage
-      GM_setValue("recentPosts", recentPostsCache);
-      GM_setValue("lastRecentPostsFetch", lastRecentPostsFetch);
-
-      return recentPostsCache;
+      return posts;
     } catch (error) {
       console.error("Failed to fetch recent posts:", error);
-      return recentPostsCache; // Return cached data on error
+      return {};
     }
   }
 
