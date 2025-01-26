@@ -191,9 +191,7 @@
       const content = await fetchAndCachePost(postId);
       if (!content) return;
 
-      tooltip.innerHTML = `<div class="post-content">${parseBBCode(
-        content
-      )}</div>`;
+      tooltip.innerHTML = `<div class="post-content">${content}</div>`;
 
       // Position to the left of cursor
       const tooltipX = event.pageX - tooltip.offsetWidth - 10;
@@ -261,12 +259,29 @@
       const doc = parser.parseFromString(text, "text/html");
       const textarea = doc.querySelector("textarea#message");
       if (textarea) {
+        // Clean up the content before caching
+        let content = textarea.value;
+
+        // Remove the subject line
+        content = content.replace(
+          /\[url=[^\]]+\]Subject:[^\[]+\[\/url\]\n+/,
+          ""
+        );
+
+        // Extract content between the outermost quote tags
+        const quoteMatch = content.match(
+          /\[quote=[^\]]+\]([\s\S]*)\[\/quote\]/
+        );
+        if (quoteMatch) {
+          content = quoteMatch[1].trim();
+        }
+
         postCache[postId] = {
-          content: textarea.value,
+          content: content,
           timestamp: Date.now(),
         };
         GM_setValue("postCache", postCache);
-        return textarea.value;
+        return content;
       }
     } catch (err) {
       console.error(`Failed to fetch post ${postId}:`, err);
