@@ -404,16 +404,33 @@
       } else {
         // Check post content for ghosted users
         const lastPostLink = element.querySelector(
-          'a[title="Go to last post"]'
+          'a[title="View the latest post"], a[title="Go to last post"]'
         );
-        if (lastPostLink) {
-          const postId = lastPostLink.href.match(/p=(\d+)/)?.[1];
+        const subjectLink = element.querySelector("a.lastsubject");
+
+        if (lastPostLink || subjectLink) {
+          // Extract post ID from either link
+          const postId = (lastPostLink?.href || subjectLink?.href)?.match(
+            /p=(\d+)/
+          )?.[1];
           if (postId) {
-            // Add hover handlers
-            lastPostLink.addEventListener("mouseenter", (e) =>
-              showPostPreview(e, postId)
-            );
-            lastPostLink.addEventListener("mouseleave", hidePostPreview);
+            // Fetch and check post content
+            const content = await fetchAndCachePost(postId);
+            if (content && postContentContainsGhosted(content)) {
+              hideTopicRow(element);
+            } else {
+              // Add hover handlers to both links
+              const addHoverHandlers = (link) => {
+                if (!link) return;
+                link.addEventListener("mouseenter", (e) =>
+                  showPostPreview(e, postId)
+                );
+                link.addEventListener("mouseleave", hidePostPreview);
+              };
+
+              addHoverHandlers(lastPostLink);
+              addHoverHandlers(subjectLink);
+            }
           }
         }
       }
