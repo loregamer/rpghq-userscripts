@@ -254,6 +254,41 @@
     return false;
   }
 
+  // Helper to hide topic row
+  function hideTopicRow(element) {
+    const recentTopicLi = element.closest("#recent-topics li");
+    if (recentTopicLi) {
+      recentTopicLi.style.display = "none";
+    } else {
+      const rowItem = element.closest("li.row");
+      if (rowItem) {
+        rowItem.classList.add("ghosted-row");
+      } else {
+        element.style.display = "none";
+      }
+    }
+  }
+
+  // Proactively cache all posts found on the page
+  async function cacheAllPosts() {
+    const lastPostLinks = document.querySelectorAll(
+      'a[title="Go to last post"]'
+    );
+    const postIds = Array.from(lastPostLinks)
+      .map((link) => link.href.match(/p=(\d+)/)?.[1])
+      .filter((id) => id && !postCache[id]); // Only fetch uncached posts
+
+    // Fetch in parallel, but limit concurrency to 5 at a time
+    const chunks = [];
+    for (let i = 0; i < postIds.length; i += 5) {
+      chunks.push(postIds.slice(i, i + 5));
+    }
+
+    for (const chunk of chunks) {
+      await Promise.all(chunk.map((postId) => fetchAndCachePost(postId)));
+    }
+  }
+
   // Modified processLastPost function
   async function processLastPost(element) {
     // Skip if element is within pinned section
@@ -305,21 +340,6 @@
 
     // Mark processed
     element.classList.add("content-processed");
-  }
-
-  // Helper to hide topic row
-  function hideTopicRow(element) {
-    const recentTopicLi = element.closest("#recent-topics li");
-    if (recentTopicLi) {
-      recentTopicLi.style.display = "none";
-    } else {
-      const rowItem = element.closest("li.row");
-      if (rowItem) {
-        rowItem.classList.add("ghosted-row");
-      } else {
-        element.style.display = "none";
-      }
-    }
   }
 
   // Hide ghosted reaction-lists
@@ -478,6 +498,9 @@
 
   // Main single-pass function: hide anything from ignored users
   async function processIgnoredContentOnce() {
+    // First, proactively cache all posts
+    await cacheAllPosts();
+
     // Posts
     document
       .querySelectorAll(".post:not(.content-processed)")
