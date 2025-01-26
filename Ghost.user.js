@@ -466,11 +466,15 @@
   function cleanupPostContent(content) {
     // (1) Remove the subject URL line
     content = content.replace(/^\[url=[^\]]+\]Subject:[^\]]+\[\/url\]\s*/m, "");
-    // (2) Remove the first [quote=...]
+
+    // (2) Remove quotation marks from quote usernames
+    content = content.replace(/\[quote="([^"]+)"/g, "[quote=$1");
+
+    // (3) Remove the first [quote=...]
     content = content.replace(/^(\[quote=[^\]]+\]\s*)/, "");
-    // (3) Remove the last [/quote]
+    // (4) Remove the last [/quote]
     content = content.replace(/\[\/quote\]\s*$/, "");
-    // (4) Remove nested quotes
+    // (5) Remove nested quotes
     content = removeNestedQuotes(content);
     return content;
   }
