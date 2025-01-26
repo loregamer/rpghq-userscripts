@@ -47,27 +47,22 @@
       min-height: 100px;
     }
 
+    /* Remove the background overlay */
     .forabg:not(#pinned-threads) .topiclist.topics:not(.all-processed)::before,
     #recent-topics-box:not(.all-processed)::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(42, 42, 42, 0.7);
-      z-index: 1;
+      display: none;
     }
 
+    /* Move loading spinner to top center */
     .forabg:not(#pinned-threads) .topiclist.topics:not(.all-processed)::after,
     #recent-topics-box:not(.all-processed)::after {
       content: "";
       position: absolute;
       width: 30px;
       height: 30px;
-      top: 50%;
+      top: 35px; /* Add padding from top */
       left: 50%;
-      margin: -15px 0 0 -15px;
+      margin-left: -15px;
       border: 3px solid transparent;
       border-top-color: #e0e0e0;
       border-radius: 50%;
