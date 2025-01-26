@@ -1014,6 +1014,18 @@
   // ---------------------------------------------------------------------
 
   function addShowGhostedPostsButton() {
+    // Check if there's any ghosted content first
+    const hasGhostedPosts =
+      document.querySelectorAll(".ghosted-post").length > 0;
+    const hasGhostedQuotes =
+      document.querySelectorAll(".ghosted-quote").length > 0;
+    const hasGhostedRows = document.querySelectorAll(".ghosted-row").length > 0;
+
+    // Only add button if there's something to show/hide
+    if (!hasGhostedPosts && !hasGhostedQuotes && !hasGhostedRows) {
+      return;
+    }
+
     const actionBars = document.querySelectorAll(
       ".action-bar.bar-top, .action-bar.bar-bottom"
     );
