@@ -137,20 +137,11 @@
     // Remove any quote start tags
     content = content.replace(/\[quote=[^\]]+\]/g, "").trim();
 
-    // Basic BBCode to HTML conversion
-    return (
-      content
-        // Convert basic formatting
-        .replace(/\[b\]([\s\S]*?)\[\/b\]/g, "<strong>$1</strong>")
-        .replace(/\[i\]([\s\S]*?)\[\/i\]/g, "<em>$1</em>")
-        .replace(/\[u\]([\s\S]*?)\[\/u\]/g, "<u>$1</u>")
-        .replace(/\[s\]([\s\S]*?)\[\/s\]/g, "<strike>$1</strike>")
-        // Convert URLs
-        .replace(/\[url=([^\]]+)\]([\s\S]*?)\[\/url\]/g, '<a href="$1">$2</a>')
-        .replace(/\[url\]([\s\S]*?)\[\/url\]/g, '<a href="$1">$1</a>')
-        // Convert line breaks
-        .replace(/\n/g, "<br>")
-    );
+    // Remove all remaining BBCode tags and their content
+    content = content.replace(/\[[^\]]+\]/g, "").trim();
+
+    // Convert line breaks and return
+    return content.replace(/\n/g, "<br>");
   }
 
   // Create tooltip element
