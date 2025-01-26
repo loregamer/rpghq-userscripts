@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      3.1
-// @description  Hides content from ghosted users + optional avatar replacement
+// @version      3.2
+// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews
 // @author       You
 // @match        https://rpghq.org/*/*
 // @run-at       document-start
@@ -142,39 +142,86 @@
   let currentHoverTimeout = null;
 
   // ---------------------------------------------------------------------
-  // 2) HELPER: BBCode Parsing
+  // 2) HELPER: QUOTE → BLOCKQUOTE PARSER
   // ---------------------------------------------------------------------
-  function parseBBCode(text) {
+
+  /**
+   * Convert [quote=Name post_id=123 ...]...[/quote] to <blockquote> HTML.
+   * If you need more robust or nested parsing, you can expand this.
+   */
+  function parseQuotes(text) {
     if (!text) return "";
 
-    // Remove the subject URL line
-    text = text.replace(/\[url=[^\]]+\]Subject:[^\[]+\[\/url\]\n+/, "");
+    // Regex to find [quote=AUTHOR post_id=XYZ time=TIME user_id=UID] content [/quote]
+    // The groups are:
+    //   1 => author name (AUTHOR)
+    //   2 => post_id (XYZ)
+    //   3 => time (TIME)
+    //   4 => user_id (UID)
+    //   5 => quoted content
+    const quoteRegex =
+      /\[quote=(.*?)(?: post_id=(\d+))?(?: time=(\d+))?(?: user_id=(\d+))?\]([\s\S]*?)\[\/quote\]/gi;
 
-    // If no quotes
-    const lastQuoteEnd = text.lastIndexOf("[/quote]");
-    if (lastQuoteEnd === -1) {
-      return text;
+    let output = "";
+    let lastIndex = 0;
+    let match;
+
+    while ((match = quoteRegex.exec(text)) !== null) {
+      // Text before the quote block
+      output += text.slice(lastIndex, match.index);
+
+      const author = match[1] || "Unknown";
+      const postId = match[2] || "";
+      const time = match[3] || "";
+      const userId = match[4] || "";
+      let quoteBody = match[5] || "";
+
+      // Recursively handle nested quotes inside the current quote body
+      quoteBody = parseQuotes(quoteBody);
+
+      // Construct the final <blockquote> HTML
+      // For demonstration, we won't do actual "X minutes ago" logic here.
+      const profileUrl = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&amp;u=${userId}-${encodeURIComponent(
+        author
+      )}`;
+      const postUrl = `https://rpghq.org/forums/viewtopic.php?p=${postId}-${encodeURIComponent(
+        author
+      )}#p${postId}`;
+      const blockHtml = `
+<blockquote cite="./viewtopic.php?p=${postId}#p${postId}" data-observer="[object MutationObserver]">
+  <div class="quote-content">
+    <div>
+      <cite>
+        <div class="quote-citation-container">
+          <a href="${profileUrl}" class="username-coloured" style="color: rgb(240, 128, 0);">${author}</a>
+          wrote:
+          <a href="${postUrl}" data-post-id="${postId}" onclick="if(document.getElementById(hash.substr(1)))href=hash">↑ Some time ago</a>
+        </div>
+      </cite>
+      <div class="imcger-quote">
+        <div class="imcger-quote-text" style="max-height: none; overflow: visible;">
+          <div>
+            ${quoteBody.replace(/\n/g, "<br>")}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</blockquote>`;
+
+      output += blockHtml;
+      lastIndex = quoteRegex.lastIndex;
     }
+    // Append any remaining text after the last quote block
+    output += text.slice(lastIndex);
 
-    // Find the second-to-last quote end
-    const beforeLastQuote = text.lastIndexOf("[/quote]", lastQuoteEnd - 1);
-
-    // Extract content between the last quotes
-    let content =
-      beforeLastQuote !== -1
-        ? text.substring(beforeLastQuote + 8, lastQuoteEnd).trim()
-        : text.substring(0, lastQuoteEnd).trim();
-
-    // Remove quote start tags and any other BBCode
-    content = content
-      .replace(/\[quote=[^\]]+\]/g, "")
-      .replace(/\[[^\]]+\]/g, "");
-    return content.trim().replace(/\n/g, "<br>");
+    return output;
   }
 
   // ---------------------------------------------------------------------
   // 3) TOOLTIP CREATION / SHOW / HIDE
   // ---------------------------------------------------------------------
+
   function createTooltip() {
     if (tooltip) return;
     tooltip = document.createElement("div");
@@ -188,8 +235,11 @@
 
     // Slight delay before showing
     currentHoverTimeout = setTimeout(async () => {
-      const content = await fetchAndCachePost(postId);
+      let content = await fetchAndCachePost(postId);
       if (!content) return;
+
+      // Here is where we convert all [quote=...]...[/quote] to <blockquote>:
+      content = parseQuotes(content);
 
       tooltip.innerHTML = `<div class="post-content">${content}</div>`;
 
@@ -215,6 +265,7 @@
   // ---------------------------------------------------------------------
   // 4) IGNORE / GHOST USERS
   // ---------------------------------------------------------------------
+
   function isUserIgnored(usernameOrId) {
     // Numeric ID check
     if (ignoredUsers.hasOwnProperty(usernameOrId)) return true;
@@ -240,6 +291,7 @@
   // ---------------------------------------------------------------------
   // 5) POST FETCH & CACHING
   // ---------------------------------------------------------------------
+
   async function fetchAndCachePost(postId) {
     // Return cached if under 24h
     const cached = postCache[postId];
@@ -259,23 +311,15 @@
       const doc = parser.parseFromString(text, "text/html");
       const textarea = doc.querySelector("textarea#message");
       if (textarea) {
-        // Clean up the content before caching
         let content = textarea.value;
 
-        // Remove the subject line
+        // Remove the subject line if present
         content = content.replace(
           /\[url=[^\]]+\]Subject:[^\[]+\[\/url\]\n+/,
           ""
         );
 
-        // Extract content between the outermost quote tags
-        const quoteMatch = content.match(
-          /\[quote=[^\]]+\]([\s\S]*)\[\/quote\]/
-        );
-        if (quoteMatch) {
-          content = quoteMatch[1].trim();
-        }
-
+        // We store the raw content (with [quote] tags) so we can parse them later.
         postCache[postId] = {
           content: content,
           timestamp: Date.now(),
@@ -289,7 +333,6 @@
     return null;
   }
 
-  // Pre-cache posts found on the page
   async function cacheAllPosts() {
     const lastPostLinks = document.querySelectorAll(
       'a[title="Go to last post"], a[title="View the latest post"]'
@@ -308,6 +351,7 @@
   // ---------------------------------------------------------------------
   // 6) CONTENT PROCESSING FOR HIDING
   // ---------------------------------------------------------------------
+
   function postContentContainsGhosted(content) {
     if (!content) return false;
     const quoteMatches = content.match(/\[quote=([^\]]+)/g);
@@ -525,7 +569,6 @@
     post.classList.add("content-processed");
   }
 
-  // Single routine to hide everything from ignored users
   async function processIgnoredContentOnce() {
     await cacheAllPosts();
 
@@ -560,6 +603,7 @@
   // ---------------------------------------------------------------------
   // 7) AVATAR REPLACEMENT
   // ---------------------------------------------------------------------
+
   function replaceUserAvatars() {
     const avatars = document.querySelectorAll("img.avatar");
     avatars.forEach((img) => {
@@ -594,6 +638,7 @@
   // ---------------------------------------------------------------------
   // 8) PROFILE BUTTONS: GHOST + REPLACE AVATAR
   // ---------------------------------------------------------------------
+
   function addGhostButtonsIfOnProfile() {
     const memberlistTitle = document.querySelector(".memberlist-title");
     if (!memberlistTitle) return;
@@ -722,6 +767,7 @@
   // ---------------------------------------------------------------------
   // 9) SHOW/HIDE GHOSTED POSTS
   // ---------------------------------------------------------------------
+
   function addShowGhostedPostsButton() {
     const actionBars = document.querySelectorAll(
       ".action-bar.bar-top, .action-bar.bar-bottom"
@@ -826,6 +872,7 @@
   // ---------------------------------------------------------------------
   // 10) MISC
   // ---------------------------------------------------------------------
+
   function moveExternalLinkIcon() {
     const lastPostSpans = document.querySelectorAll(
       "dd.lastpost span:not(.icon-moved)"
