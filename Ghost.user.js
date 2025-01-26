@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      3.4.0
+// @version      3.5.0
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -26,6 +26,7 @@
   let replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   let postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
   let userColors = GM_getValue("userColors", {}); // username => color
+  let showGhostedPosts = GM_getValue("showGhostedPosts", false); // New preference
 
   // Clear expired cache entries (older than 24h)
   const now = Date.now();
@@ -1075,8 +1076,14 @@
       const button = document.createElement("span");
       button.className =
         "button button-secondary dropdown-trigger show-ghosted-posts";
-      button.title = "Show Ghosted Posts";
-      button.innerHTML = `<i class="icon fa-eye fa-fw"></i><span>Show Ghosted Posts</span>`;
+      button.title = showGhostedPosts
+        ? "Hide Ghosted Posts"
+        : "Show Ghosted Posts";
+      button.innerHTML = `<i class="icon fa-${
+        showGhostedPosts ? "eye-slash" : "eye"
+      } fa-fw"></i><span>${
+        showGhostedPosts ? "Hide" : "Show"
+      } Ghosted Posts</span>`;
       button.addEventListener("click", (e) => {
         e.preventDefault();
         toggleGhostedPosts();
@@ -1092,39 +1099,51 @@
         bar.appendChild(container);
       }
     });
+
+    // Apply initial state if showing
+    if (showGhostedPosts) {
+      document
+        .querySelectorAll(".post.ghosted-post")
+        .forEach((p) => p.classList.add("show"));
+      document
+        .querySelectorAll(".ghosted-quote")
+        .forEach((q) => q.classList.add("show"));
+      document
+        .querySelectorAll(".ghosted-row")
+        .forEach((r) => r.classList.add("show"));
+      document.body.classList.add("show-hidden-threads");
+    }
   }
 
   function toggleGhostedPosts() {
-    const buttons = document.querySelectorAll(".show-ghosted-posts");
-    const currentlyShowing =
-      buttons[0]?.querySelector("span:not(.icon)")?.textContent ===
-      "Hide Ghosted Posts";
+    showGhostedPosts = !showGhostedPosts;
+    GM_setValue("showGhostedPosts", showGhostedPosts);
 
+    const buttons = document.querySelectorAll(".show-ghosted-posts");
     buttons.forEach((btn) => {
       const textSpan = btn.querySelector("span:not(.icon)");
       const icon = btn.querySelector("i");
       if (!textSpan || !icon) return;
 
-      if (currentlyShowing) {
-        textSpan.textContent = "Show Ghosted Posts";
-        icon.className = "icon fa-eye fa-fw";
-      } else {
-        textSpan.textContent = "Hide Ghosted Posts";
-        icon.className = "icon fa-eye-slash fa-fw";
-      }
+      textSpan.textContent = showGhostedPosts
+        ? "Hide Ghosted Posts"
+        : "Show Ghosted Posts";
+      icon.className = `icon fa-${
+        showGhostedPosts ? "eye-slash" : "eye"
+      } fa-fw`;
     });
 
     document
       .querySelectorAll(".post.ghosted-post")
-      .forEach((p) => p.classList.toggle("show"));
+      .forEach((p) => p.classList.toggle("show", showGhostedPosts));
     document
       .querySelectorAll(".ghosted-quote")
-      .forEach((q) => q.classList.toggle("show"));
+      .forEach((q) => q.classList.toggle("show", showGhostedPosts));
     document
       .querySelectorAll(".ghosted-row")
-      .forEach((r) => r.classList.toggle("show"));
+      .forEach((r) => r.classList.toggle("show", showGhostedPosts));
 
-    document.body.classList.toggle("show-hidden-threads");
+    document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
   }
 
   // ---------------------------------------------------------------------
