@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      3.3.1
-// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews
+// @version      3.3.2
+// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with loading spinners
 // @author       You
 // @match        https://rpghq.org/*/*
 // @run-at       document-start
@@ -38,16 +38,52 @@
     GM_setValue("postCache", postCache);
   }
 
-  // Inject style at document-start to hide ghostable content ASAP
+  // Inject style at document-start to hide ghostable content ASAP,
+  // **but** display a spinner so it isn't blank.
   const mainStyle = document.createElement("style");
   mainStyle.textContent = `
-    /* Hide relevant containers until processed */
+    /* Show a spinner on anything not .content-processed */
     .post:not(.content-processed),
     .notification-block:not(.content-processed),
-    dd.lastpost:not(.content-processed):not(#pinned-threads-list dd.lastpost),
+    dd.lastpost:not(.content-processed):not(#pinned-threads-list dd.lastpost):not(li.header dd.lastpost),
     #recent-topics li dd.lastpost:not(.content-processed),
-    li.row:not(.content-processed):not(#pinned-threads-list li.row) {
-      visibility: hidden !important;
+    li.row:not(.content-processed):not(#pinned-threads-list li.row):not(li.header) {
+      position: relative;
+      min-height: 32px;  /* Enough room for spinner */
+      visibility: hidden; /* Hide real content behind the spinner */
+    }
+
+    /* The spinner itself using ::after */
+    .post:not(.content-processed)::after,
+    .notification-block:not(.content-processed)::after,
+    dd.lastpost:not(.content-processed):not(#pinned-threads-list dd.lastpost):not(li.header dd.lastpost)::after,
+    #recent-topics li dd.lastpost:not(.content-processed)::after,
+    li.row:not(.content-processed):not(#pinned-threads-list li.row):not(li.header)::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 10px;  /* Changed from 50% to fixed 10px */
+      width: 24px;
+      height: 24px;
+      margin: -12px 0 0 0;  /* Removed left margin offset */
+      border: 3px solid #999;
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      visibility: visible;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Once processed, show if not ghosted */
+    .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote),
+    .reaction-score-list.content-processed {
+      visibility: visible !important;
     }
 
     /* Ghosted row styling */
@@ -57,12 +93,6 @@
     .ghosted-row.show {
       display: block !important;
       background-color: rgba(255, 0, 0, 0.1) !important;
-    }
-
-    /* Once processed, show if not ghosted */
-    .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote),
-    .reaction-score-list.content-processed {
-      visibility: visible !important;
     }
 
     /* Ghosted posts and quotes */
@@ -143,7 +173,7 @@
       font-size: 0.9em;
       line-height: 1.4;
     }
-    
+
     .custom-quote-header {
       display: flex;
       align-items: center;
@@ -377,7 +407,7 @@
 
       tooltip.innerHTML = `<div class="post-content">${content}</div>`;
 
-      // Position to the left of cursor
+      // Position near cursor
       const tooltipX = Math.max(10, event.pageX - tooltip.offsetWidth - 10);
       const tooltipY = Math.max(10, event.pageY - tooltip.offsetHeight / 2);
 
@@ -385,7 +415,7 @@
       tooltip.style.top = `${tooltipY}px`;
       tooltip.classList.add("visible");
 
-      // Add hover handlers to the tooltip itself
+      // Keep tooltip visible if user hovers over it
       tooltip.addEventListener("mouseenter", () => {
         if (currentHoverTimeout) clearTimeout(currentHoverTimeout);
       });
@@ -432,90 +462,61 @@
   // 5) POST FETCH & CACHING + CLEANUP
   // ---------------------------------------------------------------------
 
-  /**
-   * Cleanup the fetched post content with your 4 steps, but use a simpler
-   * "removeNestedQuotes()" for step #4.
-   */
   function cleanupPostContent(content) {
-    // (1) Remove the subject URL line (unchanged)
+    // (1) Remove the subject URL line
     content = content.replace(/^\[url=[^\]]+\]Subject:[^\]]+\[\/url\]\s*/m, "");
 
-    // (2) Remove the first [quote=...] (unchanged)
+    // (2) Remove the first [quote=...]
     content = content.replace(/^(\[quote=[^\]]+\]\s*)/, "");
 
-    // (3) Remove the last [/quote] (unchanged)
+    // (3) Remove the last [/quote]
     content = content.replace(/\[\/quote\]\s*$/, "");
 
-    // (4) Remove any nested quotes with the simpler approach:
-    //     If we are already in a quote, then any new [quote=...] is skipped
-    //     until its matching [/quote].
+    // (4) Remove nested quotes
     content = removeNestedQuotes(content);
 
     return content;
   }
 
-  /**
-   * removeNestedQuotes(str):
-   *   We do a single pass through `str`.  The moment we see a `[quote=...]`
-   *   *while we're already inside a quote*, we skip everything until the next
-   *   `[/quote]`.  This ensures that only the outer (first) quote is kept.
-   *
-   *   Pseudocode:
-   *   - Keep a boolean `inQuote = false`.
-   *   - Scan left to right:
-   *       - If we find `[quote=...]` and `!inQuote`, we set `inQuote = true`
-   *         and *keep* that `[quote=...]`.
-   *       - If we find `[quote=...]` and `inQuote === true`, that means
-   *         it's nested, so we skip everything until the *matching* `[/quote]`.
-   *       - If we find `[/quote]` and `inQuote === true`, we append it and set
-   *         `inQuote = false`.
-   *       - All other text is kept, whether we're in a quote or not
-   *         (so text inside the *outer* quote is preserved).
-   */
   function removeNestedQuotes(str) {
     let result = "";
     let i = 0;
     let inQuote = false;
 
     while (i < str.length) {
-      // Look for an opening [quote=...] at the current position
+      // Look for an opening [quote=...]
       const openMatch = str.slice(i).match(/^(\[quote=[^\]]+\])/);
       if (openMatch) {
-        // Found [quote=...]
         if (!inQuote) {
-          // This is the outermost (first) quote → keep it
+          // This is the outer quote → keep it
           inQuote = true;
-          result += openMatch[1]; // append that [quote=...]
+          result += openMatch[1];
           i += openMatch[1].length;
         } else {
-          // We are *already* inside a quote → skip everything until [/quote]
+          // Already in a quote → skip until [/quote]
           i += openMatch[1].length;
           const closeIdx = str.indexOf("[/quote]", i);
           if (closeIdx === -1) {
-            // No matching [/quote], skip to end
             i = str.length;
           } else {
-            // Jump past that [/quote]
             i = closeIdx + 8; // length of "[/quote]"
           }
         }
         continue;
       }
 
-      // Look for a closing [/quote] at the current position
+      // Look for a closing [/quote]
       const closeMatch = str.slice(i).match(/^(\[\/quote\])/);
       if (closeMatch) {
-        // Found [/quote]
         if (inQuote) {
-          // We close the *outer* quote
           inQuote = false;
-          result += closeMatch[1]; // append [/quote]
+          result += closeMatch[1];
         }
         i += closeMatch[1].length;
         continue;
       }
 
-      // If we reach here, it's just a normal character
+      // Normal char
       result += str[i];
       i++;
     }
@@ -544,10 +545,7 @@
       const textarea = doc.querySelector("textarea#message");
 
       if (textarea) {
-        // Original quoted text
         let content = textarea.value;
-
-        // Clean it up per your 4 steps
         content = cleanupPostContent(content);
 
         // Save to cache
@@ -659,7 +657,7 @@
             if (content && postContentContainsGhosted(content)) {
               hideTopicRow(element);
             } else {
-              // Add hover preview with parent element handling
+              // Add hover preview
               [lastLink, altLink, subjLink].filter(Boolean).forEach((l) => {
                 const icon = l.querySelector(".icon");
                 if (icon) {
@@ -834,6 +832,7 @@
     );
     await Promise.all(Array.from(lastPosts).map(processLastPost));
 
+    // Mark any leftover rows as processed
     document
       .querySelectorAll("li.row:not(.content-processed)")
       .forEach((row) => {
@@ -1021,7 +1020,6 @@
       document.querySelectorAll(".ghosted-quote").length > 0;
     const hasGhostedRows = document.querySelectorAll(".ghosted-row").length > 0;
 
-    // Only add button if there's something to show/hide
     if (!hasGhostedPosts && !hasGhostedQuotes && !hasGhostedRows) {
       return;
     }
@@ -1083,48 +1081,9 @@
     document
       .querySelectorAll(".ghosted-quote")
       .forEach((q) => q.classList.toggle("show"));
-
-    // Handle ghosted rows and add preview functionality when shown
-    document.querySelectorAll(".ghosted-row").forEach((r) => {
-      r.classList.toggle("show");
-      if (r.classList.contains("show")) {
-        const lastPost = r.querySelector("dd.lastpost");
-        if (lastPost) {
-          const lastLink = lastPost.querySelector(
-            'a[title="Go to last post"], a[title="View the latest post"]'
-          );
-          const altLink = lastLink
-            ? null
-            : lastPost.querySelector('a[href*="viewtopic.php"][href*="#p"]');
-          const subjLink =
-            lastLink || altLink
-              ? null
-              : lastPost.querySelector("a.lastsubject");
-
-          const link = lastLink || altLink || subjLink;
-          if (link) {
-            const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
-            if (pid) {
-              [lastLink, altLink, subjLink].filter(Boolean).forEach((l) => {
-                // Remove existing listeners first to prevent duplicates
-                const icon = l.querySelector(".icon");
-                if (icon) {
-                  icon.removeEventListener("mouseenter", (e) =>
-                    showPostPreview(e, pid)
-                  );
-                  icon.removeEventListener("mouseleave", hidePostPreview);
-                  // Add new listeners
-                  icon.addEventListener("mouseenter", (e) =>
-                    showPostPreview(e, pid)
-                  );
-                  icon.addEventListener("mouseleave", hidePostPreview);
-                }
-              });
-            }
-          }
-        }
-      }
-    });
+    document
+      .querySelectorAll(".ghosted-row")
+      .forEach((r) => r.classList.toggle("show"));
 
     document.body.classList.toggle("show-hidden-threads");
   }
