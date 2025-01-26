@@ -45,22 +45,22 @@
     /* -----------------------------------------------------------------
        1) One spinner per container
        ----------------------------------------------------------------- */
-    .topiclist.topics:not(.content-processed),
+    .topiclist.topics:not(#pinned-threads-list):not(.content-processed),
     #recent-topics:not(.content-processed),
     .topiclist.forums:not(.content-processed) {
       position: relative;
       min-height: 32px;
     }
     /* Single spinner in the center */
-    .topiclist.topics:not(.content-processed)::after,
+    .topiclist.topics:not(#pinned-threads-list):not(.content-processed)::after,
     #recent-topics:not(.content-processed)::after,
     .topiclist.forums:not(.content-processed)::after {
       content: "";
       position: absolute;
       top: 50%;
       left: 50%;
-      margin-top: -12px;  /* half spinner height */
-      margin-left: -12px; /* half spinner width */
+      margin-top: -12px;   /* half the spinner height */
+      margin-left: -12px;  /* half the spinner width */
       width: 24px;
       height: 24px;
       border: 3px solid #999;
@@ -75,14 +75,15 @@
         transform: rotate(360deg);
       }
     }
-    /* Hide child items behind the spinner */
-    .topiclist.topics:not(.content-processed) > *:not(style),
+    /* 3) Hide child elements in these containers until processed */
+    .topiclist.topics:not(#pinned-threads-list):not(.content-processed) > *:not(style),
     #recent-topics:not(.content-processed) > *:not(style),
     .topiclist.forums:not(.content-processed) > *:not(style) {
       visibility: hidden;
     }
-    /* Once processed, everything is visible */
-    .topiclist.topics.content-processed > *,
+
+    /* 4) Once processed, reveal child items */
+    .topiclist.topics:not(#pinned-threads-list).content-processed > *,
     #recent-topics.content-processed > *,
     .topiclist.forums.content-processed > * {
       visibility: visible !important;
