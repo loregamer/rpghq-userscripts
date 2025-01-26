@@ -76,7 +76,6 @@
     .post-preview-tooltip {
       position: absolute;
       background: #171B24;
-      color: #e0e0e0;
       padding: 15px;
       border-radius: 5px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
@@ -156,23 +155,9 @@
     }
 
     .custom-quote-header a {
-      color: #4a90e2;
+      color: #89a6cf;
       text-decoration: none;
       font-weight: 700;
-    }
-
-    .custom-quote-header a:hover {
-      text-decoration: underline;
-      color: #5a9ee8;
-    }
-
-    .custom-quote-header .quote-wrote {
-      font-weight: normal;
-      color: #e0e0e0;
-    }
-
-    .custom-quote-content {
-      color: #e0e0e0;
     }
 
     /* Nested quotes get a different border color */
