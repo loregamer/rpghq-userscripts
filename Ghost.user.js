@@ -409,7 +409,7 @@
   // Proactively cache all posts found on the page
   async function cacheAllPosts() {
     const lastPostLinks = document.querySelectorAll(
-      'a[title="Go to last post"]'
+      'a[title="Go to last post"], a[title="View the latest post"]'
     );
     const postIds = Array.from(lastPostLinks)
       .map((link) => link.href.match(/p=(\d+)/)?.[1])
@@ -459,23 +459,31 @@
         hideTopicRow(element);
       } else {
         // Check post content for ghosted users
+        // First try the external link icon
         const lastPostLink = element.querySelector(
-          'a[title="View the latest post"], a[title="Go to last post"]'
+          'a[title="Go to last post"], a[title="View the latest post"]'
         );
-        const subjectLink = element.querySelector("a.lastsubject");
+        // Then try finding any link that contains a post ID
+        const anyPostLink = !lastPostLink
+          ? element.querySelector('a[href*="viewtopic.php"][href*="#p"]')
+          : null;
+        // Finally try the subject link
+        const subjectLink =
+          !lastPostLink && !anyPostLink
+            ? element.querySelector("a.lastsubject")
+            : null;
 
-        if (lastPostLink || subjectLink) {
-          // Extract post ID from either link
-          const postId = (lastPostLink?.href || subjectLink?.href)?.match(
-            /p=(\d+)/
-          )?.[1];
+        const link = lastPostLink || anyPostLink || subjectLink;
+        if (link) {
+          // Extract post ID from the link href
+          const postId = link.href.match(/[#&]p=?(\d+)/)?.[1];
           if (postId) {
             // Fetch and check post content
             const content = await fetchAndCachePost(postId);
             if (content && postContentContainsGhosted(content)) {
               hideTopicRow(element);
             } else {
-              // Add hover handlers to both links
+              // Add hover handlers to both the main link and any other related links
               const addHoverHandlers = (link) => {
                 if (!link) return;
                 link.addEventListener("mouseenter", (e) =>
@@ -484,8 +492,10 @@
                 link.addEventListener("mouseleave", hidePostPreview);
               };
 
-              addHoverHandlers(lastPostLink);
-              addHoverHandlers(subjectLink);
+              // Add handlers to all relevant links
+              [lastPostLink, anyPostLink, subjectLink]
+                .filter(Boolean)
+                .forEach(addHoverHandlers);
             }
           }
         }
