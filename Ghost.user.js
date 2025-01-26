@@ -332,7 +332,7 @@
 
   /**
    * Cleanup the fetched post content with your 4 steps, but use a simpler
-   * "removeNestedQuotes()" for step #4.
+   * “removeNestedQuotes()” for step #4.
    */
   function cleanupPostContent(content) {
     // (1) Remove the subject URL line (unchanged)
@@ -344,10 +344,7 @@
     // (3) Remove the last [/quote] (unchanged)
     content = content.replace(/\[\/quote\]\s*$/, "");
 
-    // (4) Remove newlines after [quote=...] tags
-    content = content.replace(/(\[quote=[^\]]+\])\s*\n+/g, "$1");
-
-    // (5) Remove any nested quotes with the simpler approach:
+    // (4) Remove any nested quotes with the simpler approach:
     //     If we are already in a quote, then any new [quote=...] is skipped
     //     until its matching [/quote].
     content = removeNestedQuotes(content);
@@ -358,7 +355,7 @@
   /**
    * removeNestedQuotes(str):
    *   We do a single pass through `str`.  The moment we see a `[quote=...]`
-   *   *while we're already inside a quote*, we skip everything until the next
+   *   *while we’re already inside a quote*, we skip everything until the next
    *   `[/quote]`.  This ensures that only the outer (first) quote is kept.
    *
    *   Pseudocode:
@@ -367,10 +364,10 @@
    *       - If we find `[quote=...]` and `!inQuote`, we set `inQuote = true`
    *         and *keep* that `[quote=...]`.
    *       - If we find `[quote=...]` and `inQuote === true`, that means
-   *         it's nested, so we skip everything until the *matching* `[/quote]`.
+   *         it’s nested, so we skip everything until the *matching* `[/quote]`.
    *       - If we find `[/quote]` and `inQuote === true`, we append it and set
    *         `inQuote = false`.
-   *       - All other text is kept, whether we're in a quote or not
+   *       - All other text is kept, whether we’re in a quote or not
    *         (so text inside the *outer* quote is preserved).
    */
   function removeNestedQuotes(str) {
