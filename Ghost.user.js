@@ -462,17 +462,13 @@
             } else {
               // Add hover preview with parent element handling
               [lastLink, altLink, subjLink].filter(Boolean).forEach((l) => {
-                const lastpost = l.closest("dd.lastpost");
-                if (lastpost) {
-                  lastpost.addEventListener("mouseenter", (e) =>
+                const icon = l.querySelector(".icon");
+                if (icon) {
+                  icon.addEventListener("mouseenter", (e) =>
                     showPostPreview(e, pid)
                   );
-                  lastpost.addEventListener("mouseleave", hidePostPreview);
+                  icon.addEventListener("mouseleave", hidePostPreview);
                 }
-                l.addEventListener("mouseenter", (e) =>
-                  showPostPreview(e, pid)
-                );
-                l.addEventListener("mouseleave", hidePostPreview);
               });
             }
           }
@@ -890,15 +886,18 @@
             if (pid) {
               [lastLink, altLink, subjLink].filter(Boolean).forEach((l) => {
                 // Remove existing listeners first to prevent duplicates
-                l.removeEventListener("mouseenter", (e) =>
-                  showPostPreview(e, pid)
-                );
-                l.removeEventListener("mouseleave", hidePostPreview);
-                // Add new listeners
-                l.addEventListener("mouseenter", (e) =>
-                  showPostPreview(e, pid)
-                );
-                l.addEventListener("mouseleave", hidePostPreview);
+                const icon = l.querySelector(".icon");
+                if (icon) {
+                  icon.removeEventListener("mouseenter", (e) =>
+                    showPostPreview(e, pid)
+                  );
+                  icon.removeEventListener("mouseleave", hidePostPreview);
+                  // Add new listeners
+                  icon.addEventListener("mouseenter", (e) =>
+                    showPostPreview(e, pid)
+                  );
+                  icon.addEventListener("mouseleave", hidePostPreview);
+                }
               });
             }
           }
