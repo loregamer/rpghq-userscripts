@@ -117,8 +117,21 @@
     .ghosted-post, .ghosted-quote {
       display: none !important;
     }
-    .ghosted-post.show, .ghosted-quote.show {
+    .ghosted-post.show,
+    .ghosted-quote.show {
       display: block !important;
+
+      /* Add a 3px border that uses a rainbow gradient */
+      border: 3px solid;                  /* required to enable border-image */
+      border-image: linear-gradient(
+        to right,
+        red, orange, yellow, green, blue, indigo, violet
+      ) 1;
+      border-image-slice: 1;
+
+      /* optional extra niceness */
+      border-radius: 4px;                 /* slightly rounded corners */
+      padding: 6px;                       /* spacing so border is more visible */
     }
 
     /* Post preview tooltip */
