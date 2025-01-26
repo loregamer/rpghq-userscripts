@@ -129,10 +129,13 @@
     const beforeLastQuote = text.lastIndexOf("[/quote]", lastQuoteEnd - 1);
 
     // Extract the content between quotes
-    const content =
+    let content =
       beforeLastQuote !== -1
         ? text.substring(beforeLastQuote + 8, lastQuoteEnd).trim()
         : text.substring(0, lastQuoteEnd).trim();
+
+    // Remove any quote start tags
+    content = content.replace(/\[quote=[^\]]+\]/g, "").trim();
 
     // Basic BBCode to HTML conversion
     return (
