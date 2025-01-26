@@ -114,17 +114,21 @@
       background-color: rgba(255, 0, 0, 0.1) !important;
     }
 
-    /* Special handling for forum lists - only hide lastpost */
-    .topiclist.forums .ghosted-row {
+    /* Special handling for forum lists and viewforum - only hide lastpost */
+    .topiclist.forums .ghosted-row,
+    body[class*="viewforum-"] .ghosted-row {
       display: block !important;
     }
-    .topiclist.forums .ghosted-row.show {
+    .topiclist.forums .ghosted-row.show,
+    body[class*="viewforum-"] .ghosted-row.show {
       background-color: transparent !important;
     }
-    .topiclist.forums .ghosted-row dd.lastpost {
+    .topiclist.forums .ghosted-row dd.lastpost,
+    body[class*="viewforum-"] .ghosted-row dd.lastpost {
       display: none !important;
     }
-    .topiclist.forums .ghosted-row.show dd.lastpost {
+    .topiclist.forums .ghosted-row.show dd.lastpost,
+    body[class*="viewforum-"] .ghosted-row.show dd.lastpost {
       display: block !important;
       background-color: rgba(255, 0, 0, 0.1) !important;
     }
@@ -653,6 +657,16 @@
     if (rowItem) {
       // Check if we're in a forum list
       const isForumList = rowItem.closest(".topiclist.forums");
+      const isViewForum = window.location.href.includes("/viewforum.php");
+
+      // If we're in viewforum, only hide the lastpost cell
+      if (isViewForum) {
+        const lastpostCell = rowItem.querySelector("dd.lastpost");
+        if (lastpostCell) {
+          lastpostCell.classList.add("ghosted-row");
+          return;
+        }
+      }
 
       // Check if the row itself indicates a ghosted user
       const authorLinks = rowItem.querySelectorAll(
