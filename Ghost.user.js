@@ -231,10 +231,9 @@
       // Update tooltip content
       tooltip.innerHTML = `<div class="post-content">${formattedContent}</div>`;
 
-      // Position tooltip
-      const rect = event.target.getBoundingClientRect();
-      const tooltipX = rect.right + 10;
-      const tooltipY = rect.top;
+      // Position tooltip to the left of cursor, accounting for scroll position
+      const tooltipX = event.pageX - tooltip.offsetWidth - 10;
+      const tooltipY = event.pageY;
 
       tooltip.style.left = `${tooltipX}px`;
       tooltip.style.top = `${tooltipY}px`;
