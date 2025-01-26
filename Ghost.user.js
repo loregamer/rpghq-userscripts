@@ -42,6 +42,7 @@
 
     /* Loading state for topic lists */
     .forabg:not(#pinned-threads) .topiclist.topics:not(.all-processed),
+    .forabg .topiclist.forums:not(.all-processed),
     #recent-topics-box:not(.all-processed) {
       position: relative;
       min-height: 100px;
@@ -49,12 +50,14 @@
 
     /* Remove the background overlay */
     .forabg:not(#pinned-threads) .topiclist.topics:not(.all-processed)::before,
+    .forabg .topiclist.forums:not(.all-processed)::before,
     #recent-topics-box:not(.all-processed)::before {
       display: none;
     }
 
     /* Move loading spinner to top center */
     .forabg:not(#pinned-threads) .topiclist.topics:not(.all-processed)::after,
+    .forabg .topiclist.forums:not(.all-processed)::after,
     #recent-topics-box:not(.all-processed)::after {
       content: "";
       position: absolute;
@@ -673,14 +676,25 @@
     // Check if topic lists are fully processed
     document
       .querySelectorAll(
-        ".forabg:not(#pinned-threads) .topiclist.topics, #recent-topics-box"
+        ".forabg:not(#pinned-threads) .topiclist.topics, .forabg .topiclist.forums, #recent-topics-box"
       )
       .forEach((container) => {
-        const unprocessedItems = container.querySelectorAll(
-          "li.row:not(.content-processed), dd.lastpost:not(.content-processed)"
-        );
-        if (unprocessedItems.length === 0) {
-          container.classList.add("all-processed");
+        // For topic lists, check all li elements
+        if (container.classList.contains("topics")) {
+          const unprocessedItems = container.querySelectorAll(
+            "li:not(.content-processed)"
+          );
+          if (unprocessedItems.length === 0) {
+            container.classList.add("all-processed");
+          }
+        } else {
+          // For other lists (forums, recent-topics), keep existing check
+          const unprocessedItems = container.querySelectorAll(
+            "li.row:not(.content-processed), dd.lastpost:not(.content-processed)"
+          );
+          if (unprocessedItems.length === 0) {
+            container.classList.add("all-processed");
+          }
         }
       });
   }
