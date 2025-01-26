@@ -25,6 +25,9 @@
   let ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => lowercased username
   let replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
 
+  // Cache for post content
+  let postCache = GM_getValue("postCache", {});
+
   // Inject style at document-start to immediately hide potential ghosted content
   const style = document.createElement("style");
   style.textContent = `
@@ -57,6 +60,41 @@
       display: block !important;
     }
 
+    /* Post preview tooltip */
+    .post-preview-tooltip {
+      position: absolute;
+      background: #2a2a2a;
+      color: #e0e0e0;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      z-index: 9999;
+      max-width: 400px;
+      font-size: 13px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .post-preview-tooltip.visible {
+      opacity: 1;
+    }
+
+    .post-preview-tooltip .post-subject {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #8af;
+    }
+
+    .post-preview-tooltip .post-content {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
     @media (max-width: 700px) {
       .show-ghosted-posts span:not(.icon) {
         display: none;
@@ -67,6 +105,69 @@
   // Insert style ASAP
   if (document.documentElement) {
     document.documentElement.appendChild(style);
+  }
+
+  // Track tooltip and hover state
+  let tooltip = null;
+  let currentHoverTimeout = null;
+
+  // Create tooltip element
+  function createTooltip() {
+    if (tooltip) return; // Already created
+    tooltip = document.createElement("div");
+    tooltip.className = "post-preview-tooltip";
+    document.body.appendChild(tooltip);
+  }
+
+  // Show preview tooltip
+  async function showPostPreview(event, postId) {
+    if (!tooltip) return;
+    // Clear any existing timeout
+    if (currentHoverTimeout) {
+      clearTimeout(currentHoverTimeout);
+    }
+
+    // Set new timeout for showing preview
+    currentHoverTimeout = setTimeout(async () => {
+      const content = await fetchAndCachePost(postId);
+      if (!content) return;
+
+      // Extract subject from content
+      const subjectMatch = content.match(/\[url=[^\]]+\]Subject: ([^\[]+)/);
+      const subject = subjectMatch ? subjectMatch[1].trim() : "";
+
+      // Extract post content (everything after the last [quote] block)
+      const lastQuoteEnd = content.lastIndexOf("[/quote]");
+      const postContent =
+        lastQuoteEnd > -1
+          ? content.substring(lastQuoteEnd + 8).trim()
+          : content.trim();
+
+      // Build tooltip content
+      tooltip.innerHTML = `
+        ${subject ? `<div class="post-subject">${subject}</div>` : ""}
+        <div class="post-content">${postContent}</div>
+      `;
+
+      // Position tooltip
+      const rect = event.target.getBoundingClientRect();
+      const tooltipX = rect.right + 10;
+      const tooltipY = rect.top;
+
+      tooltip.style.left = `${tooltipX}px`;
+      tooltip.style.top = `${tooltipY}px`;
+      tooltip.classList.add("visible");
+    }, 200); // 200ms delay before showing
+  }
+
+  // Hide preview tooltip
+  function hidePostPreview() {
+    if (!tooltip) return;
+    if (currentHoverTimeout) {
+      clearTimeout(currentHoverTimeout);
+      currentHoverTimeout = null;
+    }
+    tooltip.classList.remove("visible");
   }
 
   /*** -----------------------------------------------------------------------
@@ -104,8 +205,57 @@
    * 3) CONTENT-PROCESSING ROUTINES
    * ------------------------------------------------------------------------ ***/
 
-  // Hide ghosted "lastpost" elements in topic lists
-  function processLastPost(element) {
+  // Fetch and cache post content
+  async function fetchAndCachePost(postId) {
+    // Return cached content if available
+    if (postCache[postId]) {
+      return postCache[postId];
+    }
+
+    try {
+      const response = await fetch(
+        `https://rpghq.org/forums/ucp.php?i=pm&mode=compose&action=quotepost&p=${postId}`
+      );
+      const text = await response.text();
+
+      // Extract post content from textarea
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, "text/html");
+      const textarea = doc.querySelector("textarea#message");
+
+      if (textarea) {
+        const content = textarea.value;
+        // Cache the content
+        postCache[postId] = content;
+        GM_setValue("postCache", postCache);
+        return content;
+      }
+    } catch (error) {
+      console.error(`Failed to fetch post ${postId}:`, error);
+    }
+    return null;
+  }
+
+  // Check if post content contains ghosted users
+  function postContentContainsGhosted(content) {
+    if (!content) return false;
+
+    // Extract usernames from quotes
+    const quoteMatches = content.match(/\[quote=([^\]]+)/g);
+    if (quoteMatches) {
+      for (const quote of quoteMatches) {
+        const username = quote.replace("[quote=", "").split(" ")[0];
+        if (isUserIgnored(username)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // Modified processLastPost function
+  async function processLastPost(element) {
     // Skip if element is within pinned section
     if (element.closest("#pinned-threads-list")) {
       element.classList.add("content-processed");
@@ -134,18 +284,20 @@
         : nextElement.querySelector(".username");
 
       if (userEl && isUserIgnored(userEl.textContent.trim())) {
-        // For recent topics, hide the entire li
-        const recentTopicLi = element.closest("#recent-topics li");
-        if (recentTopicLi) {
-          recentTopicLi.style.display = "none";
-        } else {
-          // Hide the entire .row if it's a topic row
-          const rowItem = element.closest("li.row");
-          if (rowItem) {
-            rowItem.classList.add("ghosted-row");
-          } else {
-            // fallback
-            element.style.display = "none";
+        hideTopicRow(element);
+      } else {
+        // Check post content for ghosted users
+        const lastPostLink = element.querySelector(
+          'a[title="Go to last post"]'
+        );
+        if (lastPostLink) {
+          const postId = lastPostLink.href.match(/p=(\d+)/)?.[1];
+          if (postId) {
+            // Add hover handlers
+            lastPostLink.addEventListener("mouseenter", (e) =>
+              showPostPreview(e, postId)
+            );
+            lastPostLink.addEventListener("mouseleave", hidePostPreview);
           }
         }
       }
@@ -153,6 +305,21 @@
 
     // Mark processed
     element.classList.add("content-processed");
+  }
+
+  // Helper to hide topic row
+  function hideTopicRow(element) {
+    const recentTopicLi = element.closest("#recent-topics li");
+    if (recentTopicLi) {
+      recentTopicLi.style.display = "none";
+    } else {
+      const rowItem = element.closest("li.row");
+      if (rowItem) {
+        rowItem.classList.add("ghosted-row");
+      } else {
+        element.style.display = "none";
+      }
+    }
   }
 
   // Hide ghosted reaction-lists
@@ -310,7 +477,7 @@
   }
 
   // Main single-pass function: hide anything from ignored users
-  function processIgnoredContentOnce() {
+  async function processIgnoredContentOnce() {
     // Posts
     document
       .querySelectorAll(".post:not(.content-processed)")
@@ -327,11 +494,12 @@
       .forEach(processNotification);
 
     // Lastpost items (topics, etc.)
-    document
-      .querySelectorAll(
-        "dd.lastpost:not(.content-processed), #recent-topics li dd.lastpost:not(.content-processed)"
-      )
-      .forEach(processLastPost);
+    const lastposts = document.querySelectorAll(
+      "dd.lastpost:not(.content-processed), #recent-topics li dd.lastpost:not(.content-processed)"
+    );
+
+    // Process lastposts in parallel
+    await Promise.all(Array.from(lastposts).map(processLastPost));
 
     // Row items in topic lists
     document
@@ -340,7 +508,8 @@
         // Possibly handle the lastpost inside that row
         const lastpost = row.querySelector("dd.lastpost");
         if (lastpost && !lastpost.classList.contains("content-processed")) {
-          processLastPost(lastpost);
+          // We'll handle this in the lastposts query above
+          return;
         }
         row.classList.add("content-processed");
       });
@@ -627,9 +796,12 @@
 
   // At document-start, we inject style only.
   // The main processing will happen at DOMContentLoaded.
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    // Create tooltip
+    createTooltip();
+
     // Single pass to hide ghosted content
-    processIgnoredContentOnce();
+    await processIgnoredContentOnce();
 
     // Replace avatars
     replaceUserAvatars();
