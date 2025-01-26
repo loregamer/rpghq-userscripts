@@ -87,12 +87,13 @@
       line-height: 1.5;
       white-space: pre-wrap;
       word-break: break-word;
-      pointer-events: auto;
+      pointer-events: none;
       opacity: 0;
       transition: opacity 0.2s;
     }
     .post-preview-tooltip.visible {
       opacity: 1;
+      pointer-events: auto;
     }
     .post-preview-tooltip .post-content {
       max-height: 500px;
@@ -103,49 +104,74 @@
     /* Custom Quote Styling */
     .custom-quote {
       margin: 10px 0;
-      background: rgba(40, 44, 52, 0.6);
-      border-radius: 6px;
-      border-left: 3px solid #4a9eff;
+      background: #2a2e36;
+      border-radius: 4px;
+      border-left: 3px solid #4a90e2;
+      font-size: 0.95em;
+      line-height: 1.5;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     
     .custom-quote-header {
       padding: 8px 12px;
-      background: rgba(74, 158, 255, 0.1);
-      border-radius: 6px 6px 0 0;
-      font-size: 13px;
-      color: #4a9eff;
+      border-radius: 4px 4px 0 0;
+      font-size: 0.9em;
+      color: #4a90e2;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      border-bottom: 1px solid rgba(74, 144, 226, 0.2);
+      position: relative;
+    }
+
+    .custom-quote-header::before {
+      content: "❝";
+      font-size: 1.2em;
+      color: #4a90e2;
+      line-height: 1;
     }
 
     .custom-quote-header a {
-      color: #4a9eff;
+      color: #4a90e2;
       text-decoration: none;
-      font-weight: 500;
+      font-weight: 700;
     }
 
     .custom-quote-header a:hover {
       text-decoration: underline;
+      color: #5a9ee8;
     }
 
-    .custom-quote-content {
-      padding: 12px;
+    .custom-quote-header .quote-wrote {
+      font-weight: normal;
       color: #e0e0e0;
     }
 
-    /* Nested quotes get a different border color and smaller margins */
+    .custom-quote-content {
+      padding: 12px 15px;
+      color: #e0e0e0;
+    }
+
+    /* Nested quotes get a different border color */
     .custom-quote .custom-quote {
       margin: 8px 0;
       border-left-color: #ff9e4a;
     }
 
+    .custom-quote .custom-quote .custom-quote-header::before {
+      color: #ff9e4a;
+    }
+
     .custom-quote .custom-quote .custom-quote-header {
-      background: rgba(255, 158, 74, 0.1);
+      border-bottom-color: rgba(255, 158, 74, 0.2);
     }
 
     .custom-quote .custom-quote .custom-quote-header a {
       color: #ff9e4a;
+    }
+
+    .custom-quote .custom-quote .custom-quote-header a:hover {
+      color: #ffa85e;
     }
 
     /* Responsive: hide text on small screens */
@@ -191,27 +217,18 @@
       const userId = match[4] || "";
       let quoteBody = match[5] || "";
 
-      // Remove any raw [quote] tags from the content
+      // Remove any raw [quote] tags from the content but don't recursively parse
       quoteBody = quoteBody.replace(/\[quote=.*?\]|\[\/quote\]/g, "");
-
-      // Recursively handle nested quotes inside the current quote body
-      quoteBody = parseQuotes(quoteBody);
 
       // Construct the final quote HTML with our custom structure
       const profileUrl = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&amp;u=${userId}-${encodeURIComponent(
         author
       )}`;
 
-      const quoteHtml = `
-<div class="custom-quote">
-  <div class="custom-quote-header">
-    <a href="${profileUrl}" class="quote-author">${author}</a>
-    wrote:
-  </div>
-  <div class="custom-quote-content">
-    ${quoteBody.replace(/\n/g, "<br>")}
-  </div>
-</div>`;
+      const quoteHtml = `<div class="custom-quote"><div class="custom-quote-header"><a href="${profileUrl}" class="quote-author">${author}</a><span class="quote-wrote">wrote:</span></div><div class="custom-quote-content">${quoteBody.replace(
+        /\n/g,
+        "<br>"
+      )}</div></div>`;
 
       output += quoteHtml;
       lastIndex = quoteRegex.lastIndex;
@@ -323,11 +340,17 @@
       if (textarea) {
         let content = textarea.value;
 
-        // Remove the subject line if present
+        // Remove the subject line
         content = content.replace(
-          /\[url=[^\]]+\]Subject:[^\[]+\[\/url\]\n+/,
+          /^\[url=[^\]]+\]Subject:[^\[]+\[\/url\]\n+/,
           ""
         );
+
+        // Remove the first quote header line
+        content = content.replace(/^\[quote=[^\]]+\]\n/, "");
+
+        // Remove the last [/quote] line if it's alone on a line
+        content = content.replace(/\n\[\/quote\]\n*$/, "");
 
         // We store the raw content (with [quote] tags) so we can parse them later.
         postCache[postId] = {
@@ -437,8 +460,15 @@
             if (content && postContentContainsGhosted(content)) {
               hideTopicRow(element);
             } else {
-              // Add hover preview
+              // Add hover preview with parent element handling
               [lastLink, altLink, subjLink].filter(Boolean).forEach((l) => {
+                const lastpost = l.closest("dd.lastpost");
+                if (lastpost) {
+                  lastpost.addEventListener("mouseenter", (e) =>
+                    showPostPreview(e, pid)
+                  );
+                  lastpost.addEventListener("mouseleave", hidePostPreview);
+                }
                 l.addEventListener("mouseenter", (e) =>
                   showPostPreview(e, pid)
                 );
