@@ -136,7 +136,7 @@
 
     /* Custom Quote Styling */
     .custom-quote {
-      background-color: #2a2e36;
+      background-color: #242A36;
       border-left: 3px solid #4a90e2;
       padding: 10px;
       margin: 10px 0;
@@ -207,6 +207,14 @@
   // ---------------------------------------------------------------------
   // 2) HELPER: BBCODE + QUOTE PARSER FOR PREVIEW
   // ---------------------------------------------------------------------
+
+  function removeRemainingBrackets(text) {
+    // Remove any remaining [tag]content[/tag] patterns
+    text = text.replace(/\[[^\]]*\][^\[]*\[\/[^\]]*\]/g, "");
+    // Remove any standalone brackets with content
+    text = text.replace(/\[[^\]]*\]/g, "");
+    return text;
+  }
 
   function parseBBCode(text) {
     if (!text) return "";
@@ -300,6 +308,9 @@
       processedText = processedText.replace(pattern, replacement);
     }
 
+    // Finally, remove any remaining brackets and their contents
+    processedText = removeRemainingBrackets(processedText);
+
     return processedText;
   }
 
@@ -332,13 +343,7 @@
         author
       )}`;
 
-      const quoteHtml = `<div class="custom-quote">
-  <div class="custom-quote-header">
-    <a href="${profileUrl}" class="quote-author">${author}</a>
-    <span class="quote-wrote">wrote:</span>
-  </div>
-  <div class="custom-quote-content">${quoteBody.replace(/\n/g, "<br>")}</div>
-</div>`;
+      const quoteHtml = `<div class="custom-quote"><div class="custom-quote-header"><a href="${profileUrl}" class="quote-author">${author}</a><span class="quote-wrote">wrote:</span></div><div class="custom-quote-content">${quoteBody}</div></div>`;
 
       output += quoteHtml;
       lastIndex = quoteRegex.lastIndex;
