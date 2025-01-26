@@ -83,8 +83,8 @@
       z-index: 9999;
       max-width: 600px;
       min-width: 400px;
-      font-size: 14px;
-      line-height: 1.5;
+      font-size: 12px;
+      line-height: 1.4;
       white-space: pre-wrap;
       word-break: break-word;
       pointer-events: none;
@@ -99,6 +99,39 @@
       max-height: 500px;
       overflow-y: auto;
       padding-right: 10px;
+    }
+    .post-preview-tooltip pre.code {
+      background: #1a1a1a;
+      padding: 8px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 11px;
+      overflow-x: auto;
+    }
+    .post-preview-tooltip ul, .post-preview-tooltip ol {
+      padding-left: 20px;
+      margin: 5px 0;
+    }
+    .post-preview-tooltip li {
+      margin: 2px 0;
+    }
+    .post-preview-tooltip details {
+      margin: 5px 0;
+      padding: 5px;
+      background: #1a1a1a;
+      border-radius: 3px;
+    }
+    .post-preview-tooltip summary {
+      cursor: pointer;
+      user-select: none;
+    }
+    .post-preview-tooltip table {
+      border-collapse: collapse;
+      margin: 5px 0;
+    }
+    .post-preview-tooltip td {
+      border: 1px solid #4a4a4a;
+      padding: 3px 6px;
     }
 
     /* Custom Quote Styling */
