@@ -223,13 +223,9 @@
   let currentHoverTimeout = null;
 
   // ---------------------------------------------------------------------
-  // 2) HELPER: QUOTE → BLOCKQUOTE PARSER
+  // 2) HELPER: QUOTE → BLOCKQUOTE PARSER FOR PREVIEW
   // ---------------------------------------------------------------------
 
-  /**
-   * Convert [quote=Name post_id=123 ...]...[/quote] to <blockquote> HTML.
-   * If you need more robust or nested parsing, you can expand this.
-   */
   function parseQuotes(text) {
     if (!text) return "";
 
@@ -245,12 +241,10 @@
       output += text.slice(lastIndex, match.index);
 
       const author = match[1] || "Unknown";
-      const postId = match[2] || "";
-      const time = match[3] || "";
       const userId = match[4] || "";
       let quoteBody = match[5] || "";
 
-      // Remove any raw [quote] tags from the content but don't recursively parse
+      // Remove any raw [quote] tags from the content (non-recursive here)
       quoteBody = quoteBody.replace(/\[quote=.*?\]|\[\/quote\]/g, "");
 
       // Construct the final quote HTML with our custom structure
@@ -258,10 +252,13 @@
         author
       )}`;
 
-      const quoteHtml = `<div class="custom-quote"><div class="custom-quote-header"><a href="${profileUrl}" class="quote-author">${author}</a><span class="quote-wrote">wrote:</span></div><div class="custom-quote-content">${quoteBody.replace(
-        /\n/g,
-        "<br>"
-      )}</div></div>`;
+      const quoteHtml = `<div class="custom-quote">
+  <div class="custom-quote-header">
+    <a href="${profileUrl}" class="quote-author">${author}</a>
+    <span class="quote-wrote">wrote:</span>
+  </div>
+  <div class="custom-quote-content">${quoteBody.replace(/\n/g, "<br>")}</div>
+</div>`;
 
       output += quoteHtml;
       lastIndex = quoteRegex.lastIndex;
@@ -292,7 +289,7 @@
       let content = await fetchAndCachePost(postId);
       if (!content) return;
 
-      // Here is where we convert all [quote=...]...[/quote] to <blockquote>:
+      // Convert all [quote=...]...[/quote] to <blockquote> in the preview
       content = parseQuotes(content);
 
       tooltip.innerHTML = `<div class="post-content">${content}</div>`;
@@ -349,8 +346,99 @@
   }
 
   // ---------------------------------------------------------------------
-  // 5) POST FETCH & CACHING
+  // 5) POST FETCH & CACHING + CLEANUP
   // ---------------------------------------------------------------------
+
+  /**
+   * Cleanup the fetched post content with your 4 steps, but use a simpler
+   * “removeNestedQuotes()” for step #4.
+   */
+  function cleanupPostContent(content) {
+    // (1) Remove the subject URL line (unchanged)
+    content = content.replace(/^\[url=[^\]]+\]Subject:[^\]]+\[\/url\]\s*/m, "");
+
+    // (2) Remove the first [quote=...] (unchanged)
+    content = content.replace(/^(\[quote=[^\]]+\]\s*)/, "");
+
+    // (3) Remove the last [/quote] (unchanged)
+    content = content.replace(/\[\/quote\]\s*$/, "");
+
+    // (4) Remove any nested quotes with the simpler approach:
+    //     If we are already in a quote, then any new [quote=...] is skipped
+    //     until its matching [/quote].
+    content = removeNestedQuotes(content);
+
+    return content;
+  }
+
+  /**
+   * removeNestedQuotes(str):
+   *   We do a single pass through `str`.  The moment we see a `[quote=...]`
+   *   *while we’re already inside a quote*, we skip everything until the next
+   *   `[/quote]`.  This ensures that only the outer (first) quote is kept.
+   *
+   *   Pseudocode:
+   *   - Keep a boolean `inQuote = false`.
+   *   - Scan left to right:
+   *       - If we find `[quote=...]` and `!inQuote`, we set `inQuote = true`
+   *         and *keep* that `[quote=...]`.
+   *       - If we find `[quote=...]` and `inQuote === true`, that means
+   *         it’s nested, so we skip everything until the *matching* `[/quote]`.
+   *       - If we find `[/quote]` and `inQuote === true`, we append it and set
+   *         `inQuote = false`.
+   *       - All other text is kept, whether we’re in a quote or not
+   *         (so text inside the *outer* quote is preserved).
+   */
+  function removeNestedQuotes(str) {
+    let result = "";
+    let i = 0;
+    let inQuote = false;
+
+    while (i < str.length) {
+      // Look for an opening [quote=...] at the current position
+      const openMatch = str.slice(i).match(/^(\[quote=[^\]]+\])/);
+      if (openMatch) {
+        // Found [quote=...]
+        if (!inQuote) {
+          // This is the outermost (first) quote → keep it
+          inQuote = true;
+          result += openMatch[1]; // append that [quote=...]
+          i += openMatch[1].length;
+        } else {
+          // We are *already* inside a quote → skip everything until [/quote]
+          i += openMatch[1].length;
+          const closeIdx = str.indexOf("[/quote]", i);
+          if (closeIdx === -1) {
+            // No matching [/quote], skip to end
+            i = str.length;
+          } else {
+            // Jump past that [/quote]
+            i = closeIdx + 8; // length of "[/quote]"
+          }
+        }
+        continue;
+      }
+
+      // Look for a closing [/quote] at the current position
+      const closeMatch = str.slice(i).match(/^(\[\/quote\])/);
+      if (closeMatch) {
+        // Found [/quote]
+        if (inQuote) {
+          // We close the *outer* quote
+          inQuote = false;
+          result += closeMatch[1]; // append [/quote]
+        }
+        i += closeMatch[1].length;
+        continue;
+      }
+
+      // If we reach here, it's just a normal character
+      result += str[i];
+      i++;
+    }
+
+    return result;
+  }
 
   async function fetchAndCachePost(postId) {
     // Return cached if under 24h
@@ -362,6 +450,7 @@
     ) {
       return cached.content;
     }
+
     try {
       const response = await fetch(
         `https://rpghq.org/forums/ucp.php?i=pm&mode=compose&action=quotepost&p=${postId}`
@@ -370,27 +459,21 @@
       const parser = new DOMParser();
       const doc = parser.parseFromString(text, "text/html");
       const textarea = doc.querySelector("textarea#message");
+
       if (textarea) {
+        // Original quoted text
         let content = textarea.value;
 
-        // Remove the subject line
-        content = content.replace(
-          /^\[url=[^\]]+\]Subject:[^\[]+\[\/url\]\n+/,
-          ""
-        );
+        // Clean it up per your 4 steps
+        content = cleanupPostContent(content);
 
-        // Remove the first quote header line
-        content = content.replace(/^\[quote=[^\]]+\]\n/, "");
-
-        // Remove the last [/quote] line if it's alone on a line
-        content = content.replace(/\n\[\/quote\]\n*$/, "");
-
-        // We store the raw content (with [quote] tags) so we can parse them later.
+        // Save to cache
         postCache[postId] = {
-          content: content,
+          content,
           timestamp: Date.now(),
         };
         GM_setValue("postCache", postCache);
+
         return content;
       }
     } catch (err) {
