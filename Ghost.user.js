@@ -28,6 +28,17 @@
   // Cache for post content
   let postCache = GM_getValue("postCache", {});
 
+  // Check and clear expired cache entries (older than 24 hours)
+  const now = Date.now();
+  const expiredKeys = Object.keys(postCache).filter((key) => {
+    const entry = postCache[key];
+    return !entry.timestamp || now - entry.timestamp > 24 * 60 * 60 * 1000;
+  });
+  if (expiredKeys.length > 0) {
+    expiredKeys.forEach((key) => delete postCache[key]);
+    GM_setValue("postCache", postCache);
+  }
+
   // Inject style at document-start to immediately hide potential ghosted content
   const style = document.createElement("style");
   style.textContent = `
@@ -326,9 +337,13 @@
 
   // Fetch and cache post content
   async function fetchAndCachePost(postId) {
-    // Return cached content if available
-    if (postCache[postId]) {
-      return postCache[postId];
+    // Return cached content if available and not expired
+    if (postCache[postId] && postCache[postId].timestamp) {
+      const age = Date.now() - postCache[postId].timestamp;
+      if (age < 24 * 60 * 60 * 1000) {
+        // Less than 24 hours old
+        return postCache[postId].content;
+      }
     }
 
     try {
@@ -344,8 +359,11 @@
 
       if (textarea) {
         const content = textarea.value;
-        // Cache the content
-        postCache[postId] = content;
+        // Cache the content with timestamp
+        postCache[postId] = {
+          content: content,
+          timestamp: Date.now(),
+        };
         GM_setValue("postCache", postCache);
         return content;
       }
