@@ -75,24 +75,17 @@
         transform: rotate(360deg);
       }
     }
-    /* 3) Hide child elements in these containers until processed */
-    .topiclist.topics:not(#pinned-threads-list):not(.content-processed) > *:not(style),
-    #recent-topics:not(.content-processed) > *:not(style),
-    .topiclist.forums:not(.content-processed) > *:not(style) {
-      visibility: hidden;
+
+    /* Hide main containers until processed */
+    .post.bg1:not(.content-processed),
+    .post.bg2:not(.content-processed),
+    dd.lastpost:not(.content-processed),
+    #recent-topics > li:not(.content-processed),
+    .notification-block:not(.content-processed) {
+      visibility: hidden !important;
     }
 
-    /* 4) Once processed, reveal child items */
-    .topiclist.topics:not(#pinned-threads-list).content-processed > *,
-    #recent-topics.content-processed > *,
-    .topiclist.forums.content-processed > * {
-      visibility: visible !important;
-    }
-
-    /* -----------------------------------------------------------------
-       2) Misc: ghost/hiding styles
-       ----------------------------------------------------------------- */
-    /* Mark processed items as visible (unless they are ghosted) */
+    /* Once processed and not ghosted, show content */
     .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote),
     .reaction-score-list.content-processed {
       visibility: visible !important;
