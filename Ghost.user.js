@@ -59,6 +59,15 @@
       min-height: 100px;
     }
 
+    /* Ghosted content styling */
+    .ghosted-row {
+      display: none !important;
+    }
+    .ghosted-row.show {
+      display: block !important;
+      background-color: rgba(255, 0, 0, 0.1) !important;
+    }
+
     /* Remove the background overlay */
     .forabg:not(#pinned-threads) .topiclist.topics:not(.all-processed)::before,
     .forabg .topiclist.forums:not(.all-processed)::before,
@@ -96,16 +105,10 @@
     }
 
     /* Ghosted content is hidden altogether */
-    .ghosted-post, .ghosted-row:not(#pinned-threads-list .row) {
+    .ghosted-post, .ghosted-quote {
       display: none !important;
     }
-    .ghosted-post.show, .ghosted-row.show {
-      display: block !important;
-    }
-    .ghosted-quote {
-      display: none !important;
-    }
-    .ghosted-quote.show {
+    .ghosted-post.show, .ghosted-quote.show {
       display: block !important;
     }
 
@@ -963,6 +966,9 @@
     document
       .querySelectorAll(".ghosted-row")
       .forEach((r) => r.classList.toggle("show"));
+
+    // Toggle visibility of hidden threads via body class
+    document.body.classList.toggle("show-hidden-threads");
   }
 
   /*** -----------------------------------------------------------------------
