@@ -85,7 +85,6 @@
       min-width: 400px;
       font-size: 12px;
       line-height: 1.4;
-      white-space: pre-wrap;
       word-break: break-word;
       pointer-events: none;
       opacity: 0;
@@ -136,32 +135,23 @@
 
     /* Custom Quote Styling */
     .custom-quote {
-      margin: 10px 0;
-      background: #2a2e36;
-      border-radius: 4px;
+      background-color: #2a2e36;
       border-left: 3px solid #4a90e2;
-      font-size: 0.95em;
-      line-height: 1.5;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 0.9em;
+      line-height: 1.4;
     }
     
     .custom-quote-header {
-      padding: 8px 12px;
-      border-radius: 4px 4px 0 0;
-      font-size: 0.9em;
-      color: #4a90e2;
       display: flex;
       align-items: center;
-      gap: 8px;
-      border-bottom: 1px solid rgba(74, 144, 226, 0.2);
-      position: relative;
+      gap: 4px;
+      margin-bottom: 8px;
     }
 
     .custom-quote-header::before {
-      content: "❝";
-      font-size: 1.2em;
-      color: #4a90e2;
-      line-height: 1;
+      display: none;
     }
 
     .custom-quote-header a {
@@ -181,22 +171,13 @@
     }
 
     .custom-quote-content {
-      padding: 12px 15px;
       color: #e0e0e0;
     }
 
     /* Nested quotes get a different border color */
     .custom-quote .custom-quote {
-      margin: 8px 0;
       border-left-color: #ff9e4a;
-    }
-
-    .custom-quote .custom-quote .custom-quote-header::before {
-      color: #ff9e4a;
-    }
-
-    .custom-quote .custom-quote .custom-quote-header {
-      border-bottom-color: rgba(255, 158, 74, 0.2);
+      margin: 10px 0;
     }
 
     .custom-quote .custom-quote .custom-quote-header a {
