@@ -619,17 +619,54 @@
   }
 
   function hideTopicRow(element) {
+    // First check if it's a recent topics list item
     const recentTopicLi = element.closest("#recent-topics li");
     if (recentTopicLi) {
-      // For "recent topics" block
       recentTopicLi.style.display = "none";
       return;
     }
+
+    // Check for any row element
     const rowItem = element.closest("li.row");
     if (rowItem) {
+      // Check if the row itself indicates a ghosted user
+      const authorLinks = rowItem.querySelectorAll(
+        "a.username, a.username-coloured"
+      );
+      const authorNames = Array.from(authorLinks).map((link) =>
+        link.textContent.trim()
+      );
+      const hasGhostedAuthor = authorNames.some((name) => isUserIgnored(name));
+
+      // Also check for author name in the class
+      const hasGhostedClass = Array.from(rowItem.classList).some(
+        (cls) =>
+          cls.startsWith("author-name-") &&
+          isUserIgnored(cls.replace("author-name-", ""))
+      );
+
+      if (hasGhostedAuthor || hasGhostedClass) {
+        rowItem.classList.add("ghosted-row");
+        return;
+      }
+
+      // Check the inner content for ghosted user mentions
+      const innerDiv = rowItem.querySelector(".list-inner");
+      if (innerDiv) {
+        const byText = innerDiv.textContent.toLowerCase();
+        const hasGhostedInBy = Object.values(ignoredUsers).some((username) =>
+          byText.includes(`by ${username.toLowerCase()}`)
+        );
+        if (hasGhostedInBy) {
+          rowItem.classList.add("ghosted-row");
+          return;
+        }
+      }
+
+      // If we got here and still have a rowItem, add the class
       rowItem.classList.add("ghosted-row");
     } else {
-      // Fallback
+      // Fallback to just hiding the element
       element.style.display = "none";
     }
   }
@@ -640,16 +677,60 @@
       element.classList.add("content-processed");
       return;
     }
-    const spanEl = element.querySelector("span");
-    if (!spanEl) return;
 
-    // We look for the "by" text node
+    // First, set up any post previews for links with icons
+    const linksWithIcons = element.querySelectorAll("a:has(i.icon)");
+    linksWithIcons.forEach((link) => {
+      const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
+      if (pid) {
+        link.addEventListener("mouseenter", (e) => showPostPreview(e, pid));
+        link.addEventListener("mouseleave", hidePostPreview);
+      }
+    });
+
+    // Check if this post is in a row that mentions a ghosted user
+    const row = element.closest("li.row");
+    if (row) {
+      const authorLinks = row.querySelectorAll(
+        "a.username, a.username-coloured"
+      );
+      for (const link of authorLinks) {
+        if (isUserIgnored(link.textContent.trim())) {
+          hideTopicRow(row);
+          element.classList.add("content-processed");
+          return;
+        }
+      }
+
+      // Check for author-name class
+      const hasGhostedClass = Array.from(row.classList).some(
+        (cls) =>
+          cls.startsWith("author-name-") &&
+          isUserIgnored(cls.replace("author-name-", ""))
+      );
+      if (hasGhostedClass) {
+        hideTopicRow(row);
+        element.classList.add("content-processed");
+        return;
+      }
+    }
+
+    const spanEl = element.querySelector("span");
+    if (!spanEl) {
+      element.classList.add("content-processed");
+      return;
+    }
+
+    // Look for the "by" text node
     const byTextNode = Array.from(spanEl.childNodes).find(
       (node) =>
         node.nodeType === Node.TEXT_NODE &&
         node.textContent.trim().toLowerCase() === "by"
     );
-    if (!byTextNode) return;
+    if (!byTextNode) {
+      element.classList.add("content-processed");
+      return;
+    }
 
     const nextEl = byTextNode.nextElementSibling;
     if (
@@ -665,40 +746,14 @@
           ? nextEl
           : nextEl.querySelector(".username, .username-coloured");
 
-      // Get the post ID and add hover functionality before potentially hiding
-      const lastLink = element.querySelector(
-        'a[title="Go to last post"], a[title="View the latest post"]'
+      // Get the post ID for checking content
+      const link = element.querySelector(
+        'a[href*="viewtopic.php"][href*="#p"]'
       );
-      const altLink =
-        lastLink == null
-          ? element.querySelector('a[href*="viewtopic.php"][href*="#p"]')
-          : null;
-      const subjLink =
-        lastLink || altLink ? null : element.querySelector("a.lastsubject");
-
-      const link = lastLink || altLink || subjLink;
       if (link) {
         const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
         if (pid) {
-          // Add hover preview on the icon and timestamp
-          [lastLink, altLink, subjLink].filter(Boolean).forEach((l) => {
-            const icon = l.querySelector(".icon");
-            const time = element.querySelector("time");
-            if (icon) {
-              icon.addEventListener("mouseenter", (e) =>
-                showPostPreview(e, pid)
-              );
-              icon.addEventListener("mouseleave", hidePostPreview);
-            }
-            if (time) {
-              time.addEventListener("mouseenter", (e) =>
-                showPostPreview(e, pid)
-              );
-              time.addEventListener("mouseleave", hidePostPreview);
-            }
-          });
-
-          // Now check if we need to hide it
+          // Check if we need to hide it
           if (userEl && isUserIgnored(userEl.textContent.trim())) {
             hideTopicRow(element);
           } else {
