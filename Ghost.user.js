@@ -452,11 +452,14 @@
     if (
       nextElement &&
       (nextElement.classList.contains("mas-wrap") ||
-        nextElement.classList.contains("username"))
+        nextElement.classList.contains("username") ||
+        nextElement.classList.contains("username-coloured"))
     ) {
-      const userEl = nextElement.classList.contains("username")
-        ? nextElement
-        : nextElement.querySelector(".username");
+      const userEl =
+        nextElement.classList.contains("username") ||
+        nextElement.classList.contains("username-coloured")
+          ? nextElement
+          : nextElement.querySelector(".username, .username-coloured");
 
       if (userEl && isUserIgnored(userEl.textContent.trim())) {
         hideTopicRow(element);
