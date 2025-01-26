@@ -111,11 +111,110 @@
   let tooltip = null;
   let currentHoverTimeout = null;
 
+  // BBCode parsing helpers
+  function parseBBCode(text) {
+    if (!text) return "";
+
+    // Remove the subject URL line
+    text = text.replace(/\[url=[^\]]+\]Subject:[^\[]+\[\/url\]\n+/, "");
+
+    // Find the last quote end
+    const lastQuoteEnd = text.lastIndexOf("[/quote]");
+    if (lastQuoteEnd === -1) {
+      // No quotes, just return the whole text
+      return text;
+    }
+
+    // Find the second-to-last quote end
+    const beforeLastQuote = text.lastIndexOf("[/quote]", lastQuoteEnd - 1);
+
+    // Extract the content between quotes
+    const content =
+      beforeLastQuote !== -1
+        ? text.substring(beforeLastQuote + 8, lastQuoteEnd).trim()
+        : text.substring(0, lastQuoteEnd).trim();
+
+    // Basic BBCode to HTML conversion
+    return (
+      content
+        // Convert basic formatting
+        .replace(/\[b\]([\s\S]*?)\[\/b\]/g, "<strong>$1</strong>")
+        .replace(/\[i\]([\s\S]*?)\[\/i\]/g, "<em>$1</em>")
+        .replace(/\[u\]([\s\S]*?)\[\/u\]/g, "<u>$1</u>")
+        .replace(/\[s\]([\s\S]*?)\[\/s\]/g, "<strike>$1</strike>")
+        // Convert URLs
+        .replace(/\[url=([^\]]+)\]([\s\S]*?)\[\/url\]/g, '<a href="$1">$2</a>')
+        .replace(/\[url\]([\s\S]*?)\[\/url\]/g, '<a href="$1">$1</a>')
+        // Convert line breaks
+        .replace(/\n/g, "<br>")
+    );
+  }
+
   // Create tooltip element
   function createTooltip() {
     if (tooltip) return; // Already created
     tooltip = document.createElement("div");
     tooltip.className = "post-preview-tooltip";
+
+    // Add tooltip styles
+    const style = document.createElement("style");
+    style.textContent = `
+      .post-preview-tooltip {
+        position: absolute;
+        background: #2a2a2a;
+        color: #e0e0e0;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        z-index: 9999;
+        max-width: 400px;
+        font-size: 13px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-break: break-word;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      .post-preview-tooltip.visible {
+        opacity: 1;
+      }
+
+      .post-preview-tooltip .post-content {
+        max-height: 300px;
+        overflow-y: auto;
+        padding-right: 5px;
+      }
+
+      .post-preview-tooltip .quote {
+        margin: 5px 0;
+        padding: 5px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 3px;
+      }
+
+      .post-preview-tooltip .quote-header {
+        color: #8af;
+        margin-bottom: 3px;
+        font-size: 12px;
+      }
+
+      .post-preview-tooltip .quote-content {
+        padding-left: 10px;
+        border-left: 2px solid rgba(255,255,255,0.2);
+      }
+
+      .post-preview-tooltip a {
+        color: #8af;
+        text-decoration: none;
+      }
+
+      .post-preview-tooltip a:hover {
+        text-decoration: underline;
+      }
+    `;
+    document.head.appendChild(style);
     document.body.appendChild(tooltip);
   }
 
@@ -132,22 +231,11 @@
       const content = await fetchAndCachePost(postId);
       if (!content) return;
 
-      // Extract subject from content
-      const subjectMatch = content.match(/\[url=[^\]]+\]Subject: ([^\[]+)/);
-      const subject = subjectMatch ? subjectMatch[1].trim() : "";
+      // Parse and format the content
+      const formattedContent = parseBBCode(content);
 
-      // Extract post content (everything after the last [quote] block)
-      const lastQuoteEnd = content.lastIndexOf("[/quote]");
-      const postContent =
-        lastQuoteEnd > -1
-          ? content.substring(lastQuoteEnd + 8).trim()
-          : content.trim();
-
-      // Build tooltip content
-      tooltip.innerHTML = `
-        ${subject ? `<div class="post-subject">${subject}</div>` : ""}
-        <div class="post-content">${postContent}</div>
-      `;
+      // Update tooltip content
+      tooltip.innerHTML = `<div class="post-content">${formattedContent}</div>`;
 
       // Position tooltip
       const rect = event.target.getBoundingClientRect();
