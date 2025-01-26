@@ -77,53 +77,75 @@
       position: absolute;
       background: #2a2a2a;
       color: #e0e0e0;
-      padding: 10px;
+      padding: 15px;
       border-radius: 5px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       z-index: 9999;
-      max-width: 400px;
-      font-size: 13px;
-      line-height: 1.4;
+      max-width: 600px;
+      min-width: 400px;
+      font-size: 14px;
+      line-height: 1.5;
       white-space: pre-wrap;
       word-break: break-word;
-      pointer-events: none;
+      pointer-events: auto;
       opacity: 0;
       transition: opacity 0.2s;
     }
     .post-preview-tooltip.visible {
       opacity: 1;
     }
-    .post-preview-tooltip .post-subject {
-      font-weight: bold;
-      margin-bottom: 5px;
-      color: #8af;
-    }
     .post-preview-tooltip .post-content {
-      max-height: 300px;
+      max-height: 500px;
       overflow-y: auto;
-      padding-right: 5px;
+      padding-right: 10px;
     }
-    .post-preview-tooltip .quote {
-      margin: 5px 0;
-      padding: 5px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 3px;
+
+    /* Custom Quote Styling */
+    .custom-quote {
+      margin: 10px 0;
+      background: rgba(40, 44, 52, 0.6);
+      border-radius: 6px;
+      border-left: 3px solid #4a9eff;
     }
-    .post-preview-tooltip .quote-header {
-      color: #8af;
-      margin-bottom: 3px;
-      font-size: 12px;
+    
+    .custom-quote-header {
+      padding: 8px 12px;
+      background: rgba(74, 158, 255, 0.1);
+      border-radius: 6px 6px 0 0;
+      font-size: 13px;
+      color: #4a9eff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    .post-preview-tooltip .quote-content {
-      padding-left: 10px;
-      border-left: 2px solid rgba(255,255,255,0.2);
-    }
-    .post-preview-tooltip a {
-      color: #8af;
+
+    .custom-quote-header a {
+      color: #4a9eff;
       text-decoration: none;
+      font-weight: 500;
     }
-    .post-preview-tooltip a:hover {
+
+    .custom-quote-header a:hover {
       text-decoration: underline;
+    }
+
+    .custom-quote-content {
+      padding: 12px;
+      color: #e0e0e0;
+    }
+
+    /* Nested quotes get a different border color and smaller margins */
+    .custom-quote .custom-quote {
+      margin: 8px 0;
+      border-left-color: #ff9e4a;
+    }
+
+    .custom-quote .custom-quote .custom-quote-header {
+      background: rgba(255, 158, 74, 0.1);
+    }
+
+    .custom-quote .custom-quote .custom-quote-header a {
+      color: #ff9e4a;
     }
 
     /* Responsive: hide text on small screens */
@@ -152,13 +174,6 @@
   function parseQuotes(text) {
     if (!text) return "";
 
-    // Regex to find [quote=AUTHOR post_id=XYZ time=TIME user_id=UID] content [/quote]
-    // The groups are:
-    //   1 => author name (AUTHOR)
-    //   2 => post_id (XYZ)
-    //   3 => time (TIME)
-    //   4 => user_id (UID)
-    //   5 => quoted content
     const quoteRegex =
       /\[quote=(.*?)(?: post_id=(\d+))?(?: time=(\d+))?(?: user_id=(\d+))?\]([\s\S]*?)\[\/quote\]/gi;
 
@@ -176,40 +191,29 @@
       const userId = match[4] || "";
       let quoteBody = match[5] || "";
 
+      // Remove any raw [quote] tags from the content
+      quoteBody = quoteBody.replace(/\[quote=.*?\]|\[\/quote\]/g, "");
+
       // Recursively handle nested quotes inside the current quote body
       quoteBody = parseQuotes(quoteBody);
 
-      // Construct the final <blockquote> HTML
-      // For demonstration, we won't do actual "X minutes ago" logic here.
+      // Construct the final quote HTML with our custom structure
       const profileUrl = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&amp;u=${userId}-${encodeURIComponent(
         author
       )}`;
-      const postUrl = `https://rpghq.org/forums/viewtopic.php?p=${postId}-${encodeURIComponent(
-        author
-      )}#p${postId}`;
-      const blockHtml = `
-<blockquote cite="./viewtopic.php?p=${postId}#p${postId}" data-observer="[object MutationObserver]">
-  <div class="quote-content">
-    <div>
-      <cite>
-        <div class="quote-citation-container">
-          <a href="${profileUrl}" class="username-coloured" style="color: rgb(240, 128, 0);">${author}</a>
-          wrote:
-          <a href="${postUrl}" data-post-id="${postId}" onclick="if(document.getElementById(hash.substr(1)))href=hash">↑ Some time ago</a>
-        </div>
-      </cite>
-      <div class="imcger-quote">
-        <div class="imcger-quote-text" style="max-height: none; overflow: visible;">
-          <div>
-            ${quoteBody.replace(/\n/g, "<br>")}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</blockquote>`;
 
-      output += blockHtml;
+      const quoteHtml = `
+<div class="custom-quote">
+  <div class="custom-quote-header">
+    <a href="${profileUrl}" class="quote-author">${author}</a>
+    wrote:
+  </div>
+  <div class="custom-quote-content">
+    ${quoteBody.replace(/\n/g, "<br>")}
+  </div>
+</div>`;
+
+      output += quoteHtml;
       lastIndex = quoteRegex.lastIndex;
     }
     // Append any remaining text after the last quote block
@@ -244,12 +248,18 @@
       tooltip.innerHTML = `<div class="post-content">${content}</div>`;
 
       // Position to the left of cursor
-      const tooltipX = event.pageX - tooltip.offsetWidth - 10;
-      const tooltipY = event.pageY;
+      const tooltipX = Math.max(10, event.pageX - tooltip.offsetWidth - 10);
+      const tooltipY = Math.max(10, event.pageY - tooltip.offsetHeight / 2);
 
       tooltip.style.left = `${tooltipX}px`;
       tooltip.style.top = `${tooltipY}px`;
       tooltip.classList.add("visible");
+
+      // Add hover handlers to the tooltip itself
+      tooltip.addEventListener("mouseenter", () => {
+        if (currentHoverTimeout) clearTimeout(currentHoverTimeout);
+      });
+      tooltip.addEventListener("mouseleave", hidePostPreview);
     }, 200);
   }
 
