@@ -272,13 +272,14 @@
         replacement: "<details><summary>Spoiler</summary>$1</details>",
       },
 
-      // Tables
-      table: {
-        pattern: /\[table\](.*?)\[\/table\]/gis,
-        replacement: "<table>$1</table>",
+      // Generic handler for any other BBCode tags
+      generic: {
+        pattern: /\[([a-z]+)\](.*?)\[\/\1\]/gis,
+        replacement: (match, tag, content) =>
+          `<details><summary>${
+            tag.charAt(0).toUpperCase() + tag.slice(1)
+          }</summary>${content}</details>`,
       },
-      tr: { pattern: /\[tr\](.*?)\[\/tr\]/gis, replacement: "<tr>$1</tr>" },
-      td: { pattern: /\[td\](.*?)\[\/td\]/gis, replacement: "<td>$1</td>" },
     };
 
     // Process each BBCode pattern
