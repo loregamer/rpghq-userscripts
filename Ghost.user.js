@@ -204,8 +204,96 @@
   let currentHoverTimeout = null;
 
   // ---------------------------------------------------------------------
-  // 2) HELPER: QUOTE → BLOCKQUOTE PARSER FOR PREVIEW
+  // 2) HELPER: BBCODE + QUOTE PARSER FOR PREVIEW
   // ---------------------------------------------------------------------
+
+  function parseBBCode(text) {
+    if (!text) return "";
+
+    // Basic BBCode patterns
+    const patterns = {
+      // Text formatting
+      b: { pattern: /\[b\](.*?)\[\/b\]/gi, replacement: "<strong>$1</strong>" },
+      i: { pattern: /\[i\](.*?)\[\/i\]/gi, replacement: "<em>$1</em>" },
+      u: { pattern: /\[u\](.*?)\[\/u\]/gi, replacement: "<u>$1</u>" },
+      s: { pattern: /\[s\](.*?)\[\/s\]/gi, replacement: "<s>$1</s>" },
+
+      // Colors and sizes
+      color: {
+        pattern: /\[color=([^\]]+)\](.*?)\[\/color\]/gi,
+        replacement: '<span style="color: $1">$2</span>',
+      },
+      size: {
+        pattern: /\[size=([^\]]+)\](.*?)\[\/size\]/gi,
+        replacement: '<span style="font-size: $1">$2</span>',
+      },
+
+      // Links and images
+      url: {
+        pattern: /\[url=([^\]]+)\](.*?)\[\/url\]/gi,
+        replacement:
+          '<a href="$1" target="_blank" rel="noopener noreferrer">$2</a>',
+      },
+      img: {
+        pattern: /\[img\](.*?)\[\/img\]/gi,
+        replacement:
+          '<img src="$1" alt="" style="max-width: 100%; height: auto;">',
+      },
+
+      // Lists
+      list: {
+        pattern: /\[list\](.*?)\[\/list\]/gis,
+        replacement: "<ul>$1</ul>",
+      },
+      "*": {
+        pattern: /\[\*\](.*?)(?=\[\*\]|\[\/list\]|$)/gi,
+        replacement: "<li>$1</li>",
+      },
+
+      // Code blocks
+      code: {
+        pattern: /\[code\](.*?)\[\/code\]/gis,
+        replacement: '<pre class="code">$1</pre>',
+      },
+
+      // Alignment
+      center: {
+        pattern: /\[center\](.*?)\[\/center\]/gi,
+        replacement: '<div style="text-align: center">$1</div>',
+      },
+      right: {
+        pattern: /\[right\](.*?)\[\/right\]/gi,
+        replacement: '<div style="text-align: right">$1</div>',
+      },
+
+      // Spoilers
+      spoiler: {
+        pattern: /\[spoiler\](.*?)\[\/spoiler\]/gis,
+        replacement: "<details><summary>Spoiler</summary>$1</details>",
+      },
+
+      // Tables
+      table: {
+        pattern: /\[table\](.*?)\[\/table\]/gis,
+        replacement: "<table>$1</table>",
+      },
+      tr: { pattern: /\[tr\](.*?)\[\/tr\]/gis, replacement: "<tr>$1</tr>" },
+      td: { pattern: /\[td\](.*?)\[\/td\]/gis, replacement: "<td>$1</td>" },
+    };
+
+    // Process each BBCode pattern
+    let processedText = text;
+
+    // First handle newlines (before other processing)
+    processedText = processedText.replace(/\n/g, "<br>");
+
+    // Then process each BBCode pattern
+    for (const [tag, { pattern, replacement }] of Object.entries(patterns)) {
+      processedText = processedText.replace(pattern, replacement);
+    }
+
+    return processedText;
+  }
 
   function parseQuotes(text) {
     if (!text) return "";
@@ -273,8 +361,11 @@
       let content = await fetchAndCachePost(postId);
       if (!content) return;
 
-      // Convert all [quote=...]...[/quote] to <blockquote> in the preview
+      // First convert quotes to HTML
       content = parseQuotes(content);
+
+      // Then parse remaining BBCode
+      content = parseBBCode(content);
 
       tooltip.innerHTML = `<div class="post-content">${content}</div>`;
 
