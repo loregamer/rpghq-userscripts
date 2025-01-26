@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      3.3.2
-// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with loading spinners
+// @version      3.4.0
+// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
 // @run-at       document-start
@@ -38,39 +38,35 @@
     GM_setValue("postCache", postCache);
   }
 
-  // Inject style at document-start to hide ghostable content ASAP,
-  // **but** display a spinner so it isn't blank.
+  // Inject style at document-start
+  // Instead of per-item spinners, we show exactly one spinner per container
   const mainStyle = document.createElement("style");
   mainStyle.textContent = `
-    /* Show a spinner on anything not .content-processed */
-    .post:not(.content-processed),
-    .notification-block:not(.content-processed),
-    dd.lastpost:not(.content-processed):not(#pinned-threads-list dd.lastpost):not(li.header dd.lastpost),
-    #recent-topics li dd.lastpost:not(.content-processed),
-    li.row:not(.content-processed):not(#pinned-threads-list li.row):not(li.header) {
+    /* -----------------------------------------------------------------
+       1) One spinner per container
+       ----------------------------------------------------------------- */
+    .topiclist.topics:not(.content-processed),
+    #recent-topics:not(.content-processed),
+    .topiclist.forums:not(.content-processed) {
       position: relative;
-      min-height: 32px;  /* Enough room for spinner */
-      visibility: hidden; /* Hide real content behind the spinner */
+      min-height: 32px;
     }
-
-    /* The spinner itself using ::after */
-    .post:not(.content-processed)::after,
-    .notification-block:not(.content-processed)::after,
-    dd.lastpost:not(.content-processed):not(#pinned-threads-list dd.lastpost):not(li.header dd.lastpost)::after,
-    #recent-topics li dd.lastpost:not(.content-processed)::after,
-    li.row:not(.content-processed):not(#pinned-threads-list li.row):not(li.header)::after {
+    /* Single spinner in the center */
+    .topiclist.topics:not(.content-processed)::after,
+    #recent-topics:not(.content-processed)::after,
+    .topiclist.forums:not(.content-processed)::after {
       content: "";
       position: absolute;
       top: 50%;
-      left: 10px;  /* Changed from 50% to fixed 10px */
+      left: 50%;
+      margin-top: -12px;  /* half spinner height */
+      margin-left: -12px; /* half spinner width */
       width: 24px;
       height: 24px;
-      margin: -12px 0 0 0;  /* Removed left margin offset */
       border: 3px solid #999;
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      visibility: visible;
       pointer-events: none;
       z-index: 9999;
     }
@@ -79,8 +75,23 @@
         transform: rotate(360deg);
       }
     }
+    /* Hide child items behind the spinner */
+    .topiclist.topics:not(.content-processed) > *:not(style),
+    #recent-topics:not(.content-processed) > *:not(style),
+    .topiclist.forums:not(.content-processed) > *:not(style) {
+      visibility: hidden;
+    }
+    /* Once processed, everything is visible */
+    .topiclist.topics.content-processed > *,
+    #recent-topics.content-processed > *,
+    .topiclist.forums.content-processed > * {
+      visibility: visible !important;
+    }
 
-    /* Once processed, show if not ghosted */
+    /* -----------------------------------------------------------------
+       2) Misc: ghost/hiding styles
+       ----------------------------------------------------------------- */
+    /* Mark processed items as visible (unless they are ghosted) */
     .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote),
     .reaction-score-list.content-processed {
       visibility: visible !important;
@@ -173,34 +184,28 @@
       font-size: 0.9em;
       line-height: 1.4;
     }
-
     .custom-quote-header {
       display: flex;
       align-items: center;
       gap: 4px;
       margin-bottom: 8px;
     }
-
     .custom-quote-header::before {
       display: none;
     }
-
     .custom-quote-header a {
       color: #89a6cf;
       text-decoration: none;
       font-weight: 700;
     }
-
     /* Nested quotes get a different border color */
     .custom-quote .custom-quote {
       border-left-color: #ff9e4a;
       margin: 10px 0;
     }
-
     .custom-quote .custom-quote .custom-quote-header a {
       color: #ff9e4a;
     }
-
     .custom-quote .custom-quote .custom-quote-header a:hover {
       color: #ffa85e;
     }
@@ -313,20 +318,17 @@
       },
     };
 
-    // Process each BBCode pattern
     let processedText = text;
-
-    // First handle newlines (before other processing)
+    // Convert newlines
     processedText = processedText.replace(/\n/g, "<br>");
 
-    // Then process each BBCode pattern
-    for (const [tag, { pattern, replacement }] of Object.entries(patterns)) {
+    // Then process each BBCode
+    for (const { pattern, replacement } of Object.values(patterns)) {
       processedText = processedText.replace(pattern, replacement);
     }
 
-    // Finally, remove any remaining brackets and their contents
+    // Finally, remove leftover [ ] tags
     processedText = removeRemainingBrackets(processedText);
-
     return processedText;
   }
 
@@ -341,30 +343,37 @@
     let match;
 
     while ((match = quoteRegex.exec(text)) !== null) {
-      // Text before the quote block
+      // Text before the quote
       output += text.slice(lastIndex, match.index);
 
       const author = match[1] || "Unknown";
       const userId = match[4] || "";
       let quoteBody = match[5] || "";
 
-      // Remove any raw [quote] tags from the content (non-recursive here)
+      // Remove raw [quote] tags from inside
       quoteBody = quoteBody.replace(/\[quote=.*?\]|\[\/quote\]/g, "");
-
-      // Remove leading line breaks/whitespace
+      // Trim leading whitespace
       quoteBody = quoteBody.replace(/^\s+/, "");
 
-      // Construct the final quote HTML with our custom structure
-      const profileUrl = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&amp;u=${userId}-${encodeURIComponent(
-        author
-      )}`;
+      // Link to profile
+      const profileUrl =
+        `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=` +
+        `${userId}-${encodeURIComponent(author)}`;
 
-      const quoteHtml = `<div class="custom-quote"><div class="custom-quote-header"><a href="${profileUrl}" class="quote-author">${author}</a><span class="quote-wrote">wrote:</span></div><div class="custom-quote-content">${quoteBody}</div></div>`;
+      // Our custom quote HTML
+      const quoteHtml = `
+        <div class="custom-quote">
+          <div class="custom-quote-header">
+            <a href="${profileUrl}" class="quote-author">${author}</a>
+            <span class="quote-wrote">wrote:</span>
+          </div>
+          <div class="custom-quote-content">${quoteBody}</div>
+        </div>`;
 
       output += quoteHtml;
       lastIndex = quoteRegex.lastIndex;
     }
-    // Append any remaining text after the last quote block
+    // Append any remainder
     output += text.slice(lastIndex);
 
     return output;
@@ -385,18 +394,17 @@
     if (!tooltip) return;
     if (currentHoverTimeout) clearTimeout(currentHoverTimeout);
 
-    // Slight delay before showing
+    // Slight delay to avoid flicker
     currentHoverTimeout = setTimeout(async () => {
       let content = await fetchAndCachePost(postId);
       if (!content) return;
 
-      // First convert quotes to HTML
+      // Parse quotes
       content = parseQuotes(content);
-
-      // Then parse remaining BBCode
+      // Parse remaining BBCode
       content = parseBBCode(content);
 
-      // Apply username colors
+      // Apply stored user color
       Object.entries(userColors).forEach(([username, color]) => {
         const usernameRegex = new RegExp(`<a[^>]*>${username}</a>`, "g");
         content = content.replace(
@@ -410,12 +418,11 @@
       // Position near cursor
       const tooltipX = Math.max(10, event.pageX - tooltip.offsetWidth - 10);
       const tooltipY = Math.max(10, event.pageY - tooltip.offsetHeight / 2);
-
       tooltip.style.left = `${tooltipX}px`;
       tooltip.style.top = `${tooltipY}px`;
       tooltip.classList.add("visible");
 
-      // Keep tooltip visible if user hovers over it
+      // Keep tooltip if hovered
       tooltip.addEventListener("mouseenter", () => {
         if (currentHoverTimeout) clearTimeout(currentHoverTimeout);
       });
@@ -465,16 +472,12 @@
   function cleanupPostContent(content) {
     // (1) Remove the subject URL line
     content = content.replace(/^\[url=[^\]]+\]Subject:[^\]]+\[\/url\]\s*/m, "");
-
     // (2) Remove the first [quote=...]
     content = content.replace(/^(\[quote=[^\]]+\]\s*)/, "");
-
     // (3) Remove the last [/quote]
     content = content.replace(/\[\/quote\]\s*$/, "");
-
     // (4) Remove nested quotes
     content = removeNestedQuotes(content);
-
     return content;
   }
 
@@ -484,16 +487,15 @@
     let inQuote = false;
 
     while (i < str.length) {
-      // Look for an opening [quote=...]
       const openMatch = str.slice(i).match(/^(\[quote=[^\]]+\])/);
       if (openMatch) {
         if (!inQuote) {
-          // This is the outer quote → keep it
+          // This is the first/outer quote
           inQuote = true;
           result += openMatch[1];
           i += openMatch[1].length;
         } else {
-          // Already in a quote → skip until [/quote]
+          // Already in a quote, skip until [/quote]
           i += openMatch[1].length;
           const closeIdx = str.indexOf("[/quote]", i);
           if (closeIdx === -1) {
@@ -504,8 +506,6 @@
         }
         continue;
       }
-
-      // Look for a closing [/quote]
       const closeMatch = str.slice(i).match(/^(\[\/quote\])/);
       if (closeMatch) {
         if (inQuote) {
@@ -515,12 +515,10 @@
         i += closeMatch[1].length;
         continue;
       }
-
       // Normal char
       result += str[i];
       i++;
     }
-
     return result;
   }
 
@@ -536,6 +534,7 @@
     }
 
     try {
+      // The "quote post" page includes the BBCode of the post in a textarea
       const response = await fetch(
         `https://rpghq.org/forums/ucp.php?i=pm&mode=compose&action=quotepost&p=${postId}`
       );
@@ -547,14 +546,12 @@
       if (textarea) {
         let content = textarea.value;
         content = cleanupPostContent(content);
-
-        // Save to cache
+        // Cache it
         postCache[postId] = {
           content,
           timestamp: Date.now(),
         };
         GM_setValue("postCache", postCache);
-
         return content;
       }
     } catch (err) {
@@ -564,6 +561,7 @@
   }
 
   async function cacheAllPosts() {
+    // Prefetch last post contents
     const lastPostLinks = document.querySelectorAll(
       'a[title="Go to last post"], a[title="View the latest post"]'
     );
@@ -571,10 +569,10 @@
       .map((lnk) => lnk.href.match(/p=(\d+)/)?.[1])
       .filter((id) => id && !postCache[id]);
 
-    // Fetch in parallel, limit concurrency to 5
+    // Limit concurrency in chunks of 5
     for (let i = 0; i < postIds.length; i += 5) {
       const chunk = postIds.slice(i, i + 5);
-      await Promise.all(chunk.map((pid) => fetchAndCachePost(pid)));
+      await Promise.all(chunk.map(fetchAndCachePost));
     }
   }
 
@@ -584,6 +582,7 @@
 
   function postContentContainsGhosted(content) {
     if (!content) return false;
+    // If quotes mention an ignored user
     const quoteMatches = content.match(/\[quote=([^\]]+)/g);
     if (quoteMatches) {
       for (const q of quoteMatches) {
@@ -597,6 +596,7 @@
   function hideTopicRow(element) {
     const recentTopicLi = element.closest("#recent-topics li");
     if (recentTopicLi) {
+      // For "recent topics" block
       recentTopicLi.style.display = "none";
       return;
     }
@@ -604,11 +604,13 @@
     if (rowItem) {
       rowItem.classList.add("ghosted-row");
     } else {
+      // Fallback
       element.style.display = "none";
     }
   }
 
   async function processLastPost(element) {
+    // Skip pinned threads
     if (element.closest("#pinned-threads-list")) {
       element.classList.add("content-processed");
       return;
@@ -616,6 +618,7 @@
     const spanEl = element.querySelector("span");
     if (!spanEl) return;
 
+    // We look for the "by" text node
     const byTextNode = Array.from(spanEl.childNodes).find(
       (node) =>
         node.nodeType === Node.TEXT_NODE &&
@@ -630,6 +633,7 @@
         nextEl.classList.contains("username") ||
         nextEl.classList.contains("username-coloured"))
     ) {
+      // This is the poster's username link
       const userEl =
         nextEl.classList.contains("username") ||
         nextEl.classList.contains("username-coloured")
@@ -639,13 +643,14 @@
       if (userEl && isUserIgnored(userEl.textContent.trim())) {
         hideTopicRow(element);
       } else {
-        // Check post content for ghosted quotes
+        // Or we check the post content for ghosted quotes
         const lastLink = element.querySelector(
           'a[title="Go to last post"], a[title="View the latest post"]'
         );
-        const altLink = lastLink
-          ? null
-          : element.querySelector('a[href*="viewtopic.php"][href*="#p"]');
+        const altLink =
+          lastLink == null
+            ? element.querySelector('a[href*="viewtopic.php"][href*="#p"]')
+            : null;
         const subjLink =
           lastLink || altLink ? null : element.querySelector("a.lastsubject");
 
@@ -657,7 +662,7 @@
             if (content && postContentContainsGhosted(content)) {
               hideTopicRow(element);
             } else {
-              // Add hover preview
+              // Add hover preview on the icon
               [lastLink, altLink, subjLink].filter(Boolean).forEach((l) => {
                 const icon = l.querySelector(".icon");
                 if (icon) {
@@ -676,6 +681,7 @@
   }
 
   function processReactionList(list) {
+    // Some boards have reaction score popups
     const reactionGroups = list.querySelectorAll(".reaction-group");
     reactionGroups.forEach((group) => {
       const popup = group.querySelector(".reaction-users-popup");
@@ -711,6 +717,7 @@
       }
     });
     list.classList.add("content-processed");
+    // Make sure it's shown
     list.style.visibility = "visible";
   }
 
@@ -733,7 +740,7 @@
       return;
     }
 
-    // If all are ignored, just hide
+    // If all are ignored, hide it
     if (nonIgnored.length === 0) {
       const li = item.closest("li");
       if (li) li.style.display = "none";
@@ -741,7 +748,7 @@
       return;
     }
 
-    // Otherwise rewrite notification
+    // Otherwise rewrite the notification to only show non-ignored
     const lastIgnoredEl = usernameEls[usernameEls.length - 1];
     const nodesAfter = [];
     let nxt = lastIgnoredEl?.nextSibling;
@@ -772,6 +779,7 @@
   }
 
   function processBlockquotesInPost(post) {
+    // In actual page posts, see if any blockquote is from an ignored user
     const blockquotes = post.querySelectorAll(".content blockquote");
     blockquotes.forEach((bq) => {
       const anchor = bq.querySelector("cite a");
@@ -788,7 +796,7 @@
     const mentions = post.querySelectorAll("em.mention");
     let hideIt = false;
 
-    // Store username color if present
+    // Store user color for future highlights
     if (usernameEl && usernameEl.classList.contains("username-coloured")) {
       const username = usernameEl.textContent.trim();
       const color = usernameEl.style.color;
@@ -812,27 +820,33 @@
     post.classList.add("content-processed");
   }
 
+  // This runs once after DOMContentLoaded
   async function processIgnoredContentOnce() {
+    // Prefetch post data for last posts
     await cacheAllPosts();
 
+    // Posts
     document
       .querySelectorAll(".post:not(.content-processed)")
       .forEach(processPost);
 
+    // Reaction popups
     document
       .querySelectorAll(".reaction-score-list:not(.content-processed)")
       .forEach(processReactionList);
 
+    // Notifications
     document
       .querySelectorAll(".notification-block:not(.content-processed)")
       .forEach(processNotification);
 
+    // Lastpost cells
     const lastPosts = document.querySelectorAll(
       "dd.lastpost:not(.content-processed), #recent-topics li dd.lastpost:not(.content-processed)"
     );
     await Promise.all(Array.from(lastPosts).map(processLastPost));
 
-    // Mark any leftover rows as processed
+    // Mark leftover rows as processed
     document
       .querySelectorAll("li.row:not(.content-processed)")
       .forEach((row) => {
@@ -1046,6 +1060,7 @@
 
       container.appendChild(button);
 
+      // Insert it at the beginning if possible
       const firstBtn = bar.querySelector(".dropdown-container");
       if (firstBtn && firstBtn.parentNode === bar) {
         bar.insertBefore(container, firstBtn);
@@ -1093,6 +1108,7 @@
   // ---------------------------------------------------------------------
 
   function moveExternalLinkIcon() {
+    // Just a small tweak that moves the external link icon after the time
     const lastPostSpans = document.querySelectorAll(
       "dd.lastpost span:not(.icon-moved)"
     );
@@ -1113,6 +1129,7 @@
     if (!textarea || !textarea.value.includes("[quote")) return;
     let text = textarea.value;
 
+    // Remove quotes referencing ignored user IDs
     for (const userId in ignoredUsers) {
       const rx = new RegExp(
         `\\[quote=[^\\]]*user_id=${userId}[^\\]]*\\][\\s\\S]*?\\[\\/quote\\]`,
@@ -1130,11 +1147,23 @@
   // ---------------------------------------------------------------------
   document.addEventListener("DOMContentLoaded", async () => {
     createTooltip();
+
+    // Main pass: fetch & hide ghosted content
     await processIgnoredContentOnce();
+
+    // Avatars
     replaceUserAvatars();
+    // Ghost toggle button
     addShowGhostedPostsButton();
+    // Profile ghost button
     addGhostButtonsIfOnProfile();
+    // Misc
     moveExternalLinkIcon();
     cleanGhostedQuotesInTextarea();
+
+    // Finally, mark each container as processed (remove the spinner)
+    document
+      .querySelectorAll(".topiclist.topics, #recent-topics, .topiclist.forums")
+      .forEach((container) => container.classList.add("content-processed"));
   });
 })();
