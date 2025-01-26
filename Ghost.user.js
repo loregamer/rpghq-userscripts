@@ -765,9 +765,46 @@
     document
       .querySelectorAll(".ghosted-quote")
       .forEach((q) => q.classList.toggle("show"));
-    document
-      .querySelectorAll(".ghosted-row")
-      .forEach((r) => r.classList.toggle("show"));
+
+    // Handle ghosted rows and add preview functionality when shown
+    document.querySelectorAll(".ghosted-row").forEach((r) => {
+      r.classList.toggle("show");
+      if (r.classList.contains("show")) {
+        const lastPost = r.querySelector("dd.lastpost");
+        if (lastPost) {
+          const lastLink = lastPost.querySelector(
+            'a[title="Go to last post"], a[title="View the latest post"]'
+          );
+          const altLink = lastLink
+            ? null
+            : lastPost.querySelector('a[href*="viewtopic.php"][href*="#p"]');
+          const subjLink =
+            lastLink || altLink
+              ? null
+              : lastPost.querySelector("a.lastsubject");
+
+          const link = lastLink || altLink || subjLink;
+          if (link) {
+            const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
+            if (pid) {
+              [lastLink, altLink, subjLink].filter(Boolean).forEach((l) => {
+                // Remove existing listeners first to prevent duplicates
+                l.removeEventListener("mouseenter", (e) =>
+                  showPostPreview(e, pid)
+                );
+                l.removeEventListener("mouseleave", hidePostPreview);
+                // Add new listeners
+                l.addEventListener("mouseenter", (e) =>
+                  showPostPreview(e, pid)
+                );
+                l.addEventListener("mouseleave", hidePostPreview);
+              });
+            }
+          }
+        }
+      }
+    });
+
     document.body.classList.toggle("show-hidden-threads");
   }
 
