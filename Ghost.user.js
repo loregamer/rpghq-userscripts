@@ -879,10 +879,13 @@
       });
 
       container.appendChild(button);
-      const firstBtn = bar.querySelector(".button");
-      if (firstBtn) {
+
+      // Find the first button within this specific action bar
+      const firstBtn = bar.querySelector(".dropdown-container");
+      if (firstBtn && firstBtn.parentNode === bar) {
         bar.insertBefore(container, firstBtn);
       } else {
+        // If no suitable button found or not in correct parent, just append
         bar.appendChild(container);
       }
     });
