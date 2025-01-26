@@ -228,6 +228,9 @@
       // Remove any raw [quote] tags from the content (non-recursive here)
       quoteBody = quoteBody.replace(/\[quote=.*?\]|\[\/quote\]/g, "");
 
+      // Remove leading line breaks/whitespace
+      quoteBody = quoteBody.replace(/^\s+/, "");
+
       // Construct the final quote HTML with our custom structure
       const profileUrl = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&amp;u=${userId}-${encodeURIComponent(
         author
@@ -332,7 +335,7 @@
 
   /**
    * Cleanup the fetched post content with your 4 steps, but use a simpler
-   * “removeNestedQuotes()” for step #4.
+   * "removeNestedQuotes()" for step #4.
    */
   function cleanupPostContent(content) {
     // (1) Remove the subject URL line (unchanged)
@@ -355,7 +358,7 @@
   /**
    * removeNestedQuotes(str):
    *   We do a single pass through `str`.  The moment we see a `[quote=...]`
-   *   *while we’re already inside a quote*, we skip everything until the next
+   *   *while we're already inside a quote*, we skip everything until the next
    *   `[/quote]`.  This ensures that only the outer (first) quote is kept.
    *
    *   Pseudocode:
@@ -364,10 +367,10 @@
    *       - If we find `[quote=...]` and `!inQuote`, we set `inQuote = true`
    *         and *keep* that `[quote=...]`.
    *       - If we find `[quote=...]` and `inQuote === true`, that means
-   *         it’s nested, so we skip everything until the *matching* `[/quote]`.
+   *         it's nested, so we skip everything until the *matching* `[/quote]`.
    *       - If we find `[/quote]` and `inQuote === true`, we append it and set
    *         `inQuote = false`.
-   *       - All other text is kept, whether we’re in a quote or not
+   *       - All other text is kept, whether we're in a quote or not
    *         (so text inside the *outer* quote is preserved).
    */
   function removeNestedQuotes(str) {
