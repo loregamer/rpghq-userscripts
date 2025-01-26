@@ -100,8 +100,7 @@
       padding-right: 10px;
     }
     .post-preview-tooltip pre.code {
-      background: #253450;
-      border: 1px solid #959595;
+      background: #1a1a1a;
       padding: 8px;
       border-radius: 3px;
       font-family: monospace;
@@ -118,6 +117,8 @@
     .post-preview-tooltip details {
       margin: 5px 0;
       padding: 5px;
+      background: #253450;
+      border: 1px solid #959595;
       border-radius: 3px;
     }
     .post-preview-tooltip summary {
