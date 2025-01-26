@@ -25,6 +25,7 @@
   let ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => lowercased username
   let replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   let postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
+  let userColors = GM_getValue("userColors", {}); // username => color
 
   // Clear expired cache entries (older than 24h)
   const now = Date.now();
@@ -364,6 +365,15 @@
 
       // Then parse remaining BBCode
       content = parseBBCode(content);
+
+      // Apply username colors
+      Object.entries(userColors).forEach(([username, color]) => {
+        const usernameRegex = new RegExp(`<a[^>]*>${username}</a>`, "g");
+        content = content.replace(
+          usernameRegex,
+          `<a href="#" style="color: ${color};">${username}</a>`
+        );
+      });
 
       tooltip.innerHTML = `<div class="post-content">${content}</div>`;
 
@@ -779,6 +789,16 @@
     const usernameEl = post.querySelector(".username, .username-coloured");
     const mentions = post.querySelectorAll("em.mention");
     let hideIt = false;
+
+    // Store username color if present
+    if (usernameEl && usernameEl.classList.contains("username-coloured")) {
+      const username = usernameEl.textContent.trim();
+      const color = usernameEl.style.color;
+      if (color && !userColors[username]) {
+        userColors[username] = color;
+        GM_setValue("userColors", userColors);
+      }
+    }
 
     if (usernameEl && isUserIgnored(usernameEl.textContent.trim())) {
       hideIt = true;
