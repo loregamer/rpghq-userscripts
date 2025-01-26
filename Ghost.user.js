@@ -665,38 +665,46 @@
           ? nextEl
           : nextEl.querySelector(".username, .username-coloured");
 
-      if (userEl && isUserIgnored(userEl.textContent.trim())) {
-        hideTopicRow(element);
-      } else {
-        // Or we check the post content for ghosted quotes
-        const lastLink = element.querySelector(
-          'a[title="Go to last post"], a[title="View the latest post"]'
-        );
-        const altLink =
-          lastLink == null
-            ? element.querySelector('a[href*="viewtopic.php"][href*="#p"]')
-            : null;
-        const subjLink =
-          lastLink || altLink ? null : element.querySelector("a.lastsubject");
+      // Get the post ID and add hover functionality before potentially hiding
+      const lastLink = element.querySelector(
+        'a[title="Go to last post"], a[title="View the latest post"]'
+      );
+      const altLink =
+        lastLink == null
+          ? element.querySelector('a[href*="viewtopic.php"][href*="#p"]')
+          : null;
+      const subjLink =
+        lastLink || altLink ? null : element.querySelector("a.lastsubject");
 
-        const link = lastLink || altLink || subjLink;
-        if (link) {
-          const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
-          if (pid) {
+      const link = lastLink || altLink || subjLink;
+      if (link) {
+        const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
+        if (pid) {
+          // Add hover preview on the icon and timestamp
+          [lastLink, altLink, subjLink].filter(Boolean).forEach((l) => {
+            const icon = l.querySelector(".icon");
+            const time = element.querySelector("time");
+            if (icon) {
+              icon.addEventListener("mouseenter", (e) =>
+                showPostPreview(e, pid)
+              );
+              icon.addEventListener("mouseleave", hidePostPreview);
+            }
+            if (time) {
+              time.addEventListener("mouseenter", (e) =>
+                showPostPreview(e, pid)
+              );
+              time.addEventListener("mouseleave", hidePostPreview);
+            }
+          });
+
+          // Now check if we need to hide it
+          if (userEl && isUserIgnored(userEl.textContent.trim())) {
+            hideTopicRow(element);
+          } else {
             const content = await fetchAndCachePost(pid);
             if (content && postContentContainsGhosted(content)) {
               hideTopicRow(element);
-            } else {
-              // Add hover preview on the icon
-              [lastLink, altLink, subjLink].filter(Boolean).forEach((l) => {
-                const icon = l.querySelector(".icon");
-                if (icon) {
-                  icon.addEventListener("mouseenter", (e) =>
-                    showPostPreview(e, pid)
-                  );
-                  icon.addEventListener("mouseleave", hidePostPreview);
-                }
-              });
             }
           }
         }
