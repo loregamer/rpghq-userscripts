@@ -114,6 +114,21 @@
       background-color: rgba(255, 0, 0, 0.1) !important;
     }
 
+    /* Special handling for forum lists - only hide lastpost */
+    .topiclist.forums .ghosted-row {
+      display: block !important;
+    }
+    .topiclist.forums .ghosted-row.show {
+      background-color: transparent !important;
+    }
+    .topiclist.forums .ghosted-row dd.lastpost {
+      display: none !important;
+    }
+    .topiclist.forums .ghosted-row.show dd.lastpost {
+      display: block !important;
+      background-color: rgba(255, 0, 0, 0.1) !important;
+    }
+
     /* Ghosted posts and quotes */
     .ghosted-post, .ghosted-quote {
       display: none !important;
@@ -295,6 +310,13 @@
         pattern: /\[img\](.*?)\[\/img\]/gi,
         replacement:
           '<img src="$1" alt="" style="max-width: 100%; height: auto;">',
+      },
+
+      // Media tag that always shows a specific image
+      media: {
+        pattern: /\[media\](.*?)\[\/media\]/gi,
+        replacement:
+          '<img src="https://f.rpghq.org/516uJnaFaEYB.png?n=pasted-file.png" alt="" style="max-width: 50%; height: auto;">',
       },
 
       // Lists
@@ -629,6 +651,9 @@
     // Check for any row element
     const rowItem = element.closest("li.row");
     if (rowItem) {
+      // Check if we're in a forum list
+      const isForumList = rowItem.closest(".topiclist.forums");
+
       // Check if the row itself indicates a ghosted user
       const authorLinks = rowItem.querySelectorAll(
         "a.username, a.username-coloured"
