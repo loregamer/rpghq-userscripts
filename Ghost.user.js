@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      3.5.1
+// @version      3.6
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -947,10 +947,32 @@
     post.classList.add("content-processed");
   }
 
+  function processTopicPoster(poster) {
+    const usernameEl = poster.querySelector(".username, .username-coloured");
+    if (!usernameEl) return;
+
+    if (isUserIgnored(usernameEl.textContent.trim())) {
+      const masWrap = poster.querySelector(".mas-wrap");
+      if (masWrap) {
+        masWrap.innerHTML = `
+          <div class="mas-avatar" style="width: 20px; height: 20px;">
+            <img class="avatar" src="./download/file.php?avatar=58.png" width="102" height="111" alt="User avatar">
+          </div>
+          <div class="mas-username">
+            <a href="https://rpghq.org/forums/memberlist.php?mode=viewprofile&amp;u=58-rusty-shackleford" style="color: #ff6e6e;" class="username-coloured">rusty_shackleford</a>
+          </div>
+        `;
+      }
+    }
+  }
+
   // This runs once after DOMContentLoaded
   async function processIgnoredContentOnce() {
     // Prefetch post data for last posts
     await cacheAllPosts();
+
+    // Topic posters
+    document.querySelectorAll(".topic-poster").forEach(processTopicPoster);
 
     // Posts
     document
