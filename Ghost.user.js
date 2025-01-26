@@ -76,11 +76,24 @@
       }
     }
 
-    /* Hide main containers until processed */
+    /* Hide child elements in these containers until processed */
+    .topiclist.topics:not(#pinned-threads-list):not(.content-processed) > *:not(style),
+    #recent-topics:not(.content-processed) > *:not(style),
+    .topiclist.forums:not(.content-processed) > *:not(style) {
+      visibility: hidden;
+    }
+
+    /* Once processed, reveal child items */
+    .topiclist.topics:not(#pinned-threads-list).content-processed > *,
+    #recent-topics.content-processed > *,
+    .topiclist.forums.content-processed > * {
+      visibility: visible !important;
+    }
+
+    /* Hide main post containers until processed */
     .post.bg1:not(.content-processed),
     .post.bg2:not(.content-processed),
     dd.lastpost:not(.content-processed),
-    #recent-topics > li:not(.content-processed),
     .notification-block:not(.content-processed) {
       visibility: hidden !important;
     }
