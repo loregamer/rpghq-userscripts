@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      3.0
+// @version      3.0.1
 // @description  Hides content from ghosted users + optional avatar replacement
 // @author       You
 // @match        https://rpghq.org/*/*
