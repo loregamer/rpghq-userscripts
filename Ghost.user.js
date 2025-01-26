@@ -75,7 +75,7 @@
     /* Post preview tooltip */
     .post-preview-tooltip {
       position: absolute;
-      background: #2a2a2a;
+      background: #171B24;
       color: #e0e0e0;
       padding: 15px;
       border-radius: 5px;
@@ -100,7 +100,8 @@
       padding-right: 10px;
     }
     .post-preview-tooltip pre.code {
-      background: #1a1a1a;
+      background: #253450;
+      border: 1px solid #959595;
       padding: 8px;
       border-radius: 3px;
       font-family: monospace;
@@ -117,7 +118,6 @@
     .post-preview-tooltip details {
       margin: 5px 0;
       padding: 5px;
-      background: #1a1a1a;
       border-radius: 3px;
     }
     .post-preview-tooltip summary {
