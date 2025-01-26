@@ -51,14 +51,6 @@
       visibility: hidden !important;
     }
 
-    /* Loading state for topic lists */
-    .forabg:not(#pinned-threads) .topiclist.topics:not(.all-processed),
-    .forabg .topiclist.forums:not(.all-processed),
-    #recent-topics-box:not(.all-processed) {
-      position: relative;
-      min-height: 100px;
-    }
-
     /* Ghosted content styling */
     .ghosted-row {
       display: none !important;
@@ -66,36 +58,6 @@
     .ghosted-row.show {
       display: block !important;
       background-color: rgba(255, 0, 0, 0.1) !important;
-    }
-
-    /* Remove the background overlay */
-    .forabg:not(#pinned-threads) .topiclist.topics:not(.all-processed)::before,
-    .forabg .topiclist.forums:not(.all-processed)::before,
-    #recent-topics-box:not(.all-processed)::before {
-      display: none;
-    }
-
-    /* Move loading spinner to top center */
-    .forabg:not(#pinned-threads) .topiclist.topics:not(.all-processed)::after,
-    .forabg .topiclist.forums:not(.all-processed)::after,
-    #recent-topics-box:not(.all-processed)::after {
-      content: "";
-      position: absolute;
-      width: 30px;
-      height: 30px;
-      top: 35px; /* Add padding from top */
-      left: 50%;
-      margin-left: -15px;
-      border: 3px solid transparent;
-      border-top-color: #e0e0e0;
-      border-radius: 50%;
-      z-index: 2;
-      animation: loading-spin 0.8s linear infinite;
-    }
-
-    @keyframes loading-spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
     }
 
     /* Once processed, they become visible if not ghosted */
@@ -705,31 +667,6 @@
           return;
         }
         row.classList.add("content-processed");
-      });
-
-    // Check if topic lists are fully processed
-    document
-      .querySelectorAll(
-        ".forabg:not(#pinned-threads) .topiclist.topics, .forabg .topiclist.forums, #recent-topics-box"
-      )
-      .forEach((container) => {
-        // For topic lists, check all li elements
-        if (container.classList.contains("topics")) {
-          const unprocessedItems = container.querySelectorAll(
-            "li:not(.content-processed)"
-          );
-          if (unprocessedItems.length === 0) {
-            container.classList.add("all-processed");
-          }
-        } else {
-          // For other lists (forums, recent-topics), keep existing check
-          const unprocessedItems = container.querySelectorAll(
-            "li.row:not(.content-processed), dd.lastpost:not(.content-processed)"
-          );
-          if (unprocessedItems.length === 0) {
-            container.classList.add("all-processed");
-          }
-        }
       });
   }
 
