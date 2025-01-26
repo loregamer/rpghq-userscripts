@@ -218,6 +218,12 @@
       u: { pattern: /\[u\](.*?)\[\/u\]/gi, replacement: "<u>$1</u>" },
       s: { pattern: /\[s\](.*?)\[\/s\]/gi, replacement: "<s>$1</s>" },
 
+      // Mentions
+      smention: {
+        pattern: /\[smention u=(\d+)\](.*?)\[\/smention\]/gi,
+        replacement: '<em class="mention">@$2</em>',
+      },
+
       // Colors and sizes
       color: {
         pattern: /\[color=([^\]]+)\](.*?)\[\/color\]/gi,
