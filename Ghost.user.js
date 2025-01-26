@@ -57,9 +57,9 @@
     .topiclist.forums:not(.content-processed)::after {
       content: "";
       position: absolute;
-      top: 50%;
+      top: 16px;   /* Fixed distance from top instead of 50% */
       left: 50%;
-      margin-top: -12px;   /* half the spinner height */
+      margin-top: 0;   /* Remove vertical margin */
       margin-left: -12px;  /* half the spinner width */
       width: 24px;
       height: 24px;
