@@ -40,6 +40,46 @@
       visibility: hidden !important;
     }
 
+    /* Loading state for topic lists */
+    .forabg:not(#pinned-threads) .topiclist.topics:not(.all-processed),
+    #recent-topics-box:not(.all-processed) {
+      position: relative;
+      min-height: 100px;
+    }
+
+    .forabg:not(#pinned-threads) .topiclist.topics:not(.all-processed)::before,
+    #recent-topics-box:not(.all-processed)::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(42, 42, 42, 0.7);
+      z-index: 1;
+    }
+
+    .forabg:not(#pinned-threads) .topiclist.topics:not(.all-processed)::after,
+    #recent-topics-box:not(.all-processed)::after {
+      content: "";
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      top: 50%;
+      left: 50%;
+      margin: -15px 0 0 -15px;
+      border: 3px solid transparent;
+      border-top-color: #e0e0e0;
+      border-radius: 50%;
+      z-index: 2;
+      animation: loading-spin 0.8s linear infinite;
+    }
+
+    @keyframes loading-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     /* Once processed, they become visible if not ghosted */
     .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote),
     .reaction-score-list.content-processed {
@@ -633,6 +673,20 @@
           return;
         }
         row.classList.add("content-processed");
+      });
+
+    // Check if topic lists are fully processed
+    document
+      .querySelectorAll(
+        ".forabg:not(#pinned-threads) .topiclist.topics, #recent-topics-box"
+      )
+      .forEach((container) => {
+        const unprocessedItems = container.querySelectorAll(
+          "li.row:not(.content-processed), dd.lastpost:not(.content-processed)"
+        );
+        if (unprocessedItems.length === 0) {
+          container.classList.add("all-processed");
+        }
       });
   }
 
