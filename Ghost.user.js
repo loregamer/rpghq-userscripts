@@ -974,8 +974,17 @@
     // Remove any existing processed class first
     poll.classList.remove("content-processed");
 
-    // Process each poll option
+    // First get the total votes across all options
+    let totalVotes = 0;
     const options = poll.querySelectorAll("dl[data-poll-option-id]");
+    options.forEach((option) => {
+      const resultBar = option.querySelector(".resultbar");
+      const pollBar = resultBar?.querySelector('[class^="pollbar"]');
+      const voteCount = parseInt(pollBar?.textContent || "0", 10);
+      totalVotes += voteCount;
+    });
+
+    // Process each poll option
     options.forEach((option) => {
       const voterBox = option.nextElementSibling;
       if (!voterBox || !voterBox.classList.contains("poll_voters_box")) return;
@@ -1023,22 +1032,35 @@
         firstNode.remove();
       }
 
-      // Update vote count and percentage if changed
+      // Update vote count, width percentage, and display percentage
       if (newCount !== voteCount && pollBar) {
         pollBar.textContent = String(newCount);
-        pollBar.style.width = `${(newCount / voteCount) * 100}%`;
 
+        // Calculate new width percentage based on highest vote count
+        const maxVotes = Math.max(
+          ...Array.from(options).map((opt) => {
+            const bar = opt.querySelector('[class^="pollbar"]');
+            return parseInt(bar?.textContent || "0", 10);
+          })
+        );
+
+        // Set width relative to highest vote count (100%)
+        const widthPercent = maxVotes > 0 ? (newCount / maxVotes) * 100 : 0;
+        pollBar.style.width = `${widthPercent}%`;
+
+        // Update the percentage text (this is relative to total votes)
         const percentEl = option.querySelector(".poll_option_percent");
         if (percentEl) {
           if (newCount === 0) {
             percentEl.textContent = "No votes";
           } else {
-            const totalVotes = parseInt(
-              poll.querySelector(".poll_total_vote_cnt")?.textContent || "0",
-              10
-            );
-            const newPercent = Math.round((newCount / totalVotes) * 100);
-            percentEl.textContent = `${newPercent}%`;
+            // Calculate percentage of total remaining votes
+            const newTotal = Array.from(options).reduce((sum, opt) => {
+              const bar = opt.querySelector('[class^="pollbar"]');
+              return sum + parseInt(bar?.textContent || "0", 10);
+            }, 0);
+            const percent = Math.round((newCount / newTotal) * 100);
+            percentEl.textContent = `${percent}%`;
           }
         }
       }
@@ -1087,6 +1109,11 @@
             node.classList.contains("vote-submitted") &&
             node.style.display === "block"
           ) {
+            // Hide the poll section
+            const pollSection = node.closest("fieldset.polls");
+            if (pollSection) {
+              pollSection.style.visibility = "hidden";
+            }
             // Refresh as soon as vote-submitted becomes visible
             window.location.reload();
             return;
