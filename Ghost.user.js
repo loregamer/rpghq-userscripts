@@ -966,10 +966,80 @@
     }
   }
 
+  function processPoll(poll) {
+    // Process each poll option
+    const options = poll.querySelectorAll("dl[data-poll-option-id]");
+    options.forEach((option) => {
+      const voterBox = option.nextElementSibling;
+      if (!voterBox || !voterBox.classList.contains("poll_voters_box")) return;
+
+      const votersList = voterBox.querySelector(".poll_voters");
+      if (!votersList) return;
+
+      // Get original vote count
+      const resultBar = option.querySelector(".resultbar");
+      const pollBar = resultBar?.querySelector('[class^="pollbar"]');
+      const voteCount = parseInt(pollBar?.textContent || "0", 10);
+
+      // Process voters
+      let newCount = voteCount;
+      const voterSpans = votersList.querySelectorAll("span[name]");
+      voterSpans.forEach((span) => {
+        const userLink = span.querySelector("a");
+        if (!userLink) return;
+
+        const userId = userLink.href.match(/[?&]u=(\d+)/)?.[1];
+        const username = userLink.textContent.trim();
+
+        if ((userId && isUserIgnored(userId)) || isUserIgnored(username)) {
+          span.remove();
+          newCount--;
+        }
+      });
+
+      // Update vote count and percentage if changed
+      if (newCount !== voteCount && pollBar) {
+        pollBar.textContent = String(newCount);
+        pollBar.style.width = `${(newCount / voteCount) * 100}%`;
+
+        const percentEl = option.querySelector(".poll_option_percent");
+        if (percentEl) {
+          if (newCount === 0) {
+            percentEl.textContent = "No votes";
+          } else {
+            const totalVotes = parseInt(
+              poll.querySelector(".poll_total_vote_cnt")?.textContent || "0",
+              10
+            );
+            const newPercent = Math.round((newCount / totalVotes) * 100);
+            percentEl.textContent = `${newPercent}%`;
+          }
+        }
+      }
+
+      // If no voters left, update the text
+      if (votersList.children.length === 0) {
+        votersList.innerHTML = '<span name="none">None</span>';
+      }
+    });
+
+    // Update total votes
+    const totalVotesEl = poll.querySelector(".poll_total_vote_cnt");
+    if (totalVotesEl) {
+      const newTotal = Array.from(
+        poll.querySelectorAll('[class^="pollbar"]')
+      ).reduce((sum, bar) => sum + parseInt(bar.textContent || "0", 10), 0);
+      totalVotesEl.textContent = String(newTotal);
+    }
+  }
+
   // This runs once after DOMContentLoaded
   async function processIgnoredContentOnce() {
     // Prefetch post data for last posts
     await cacheAllPosts();
+
+    // Process polls
+    document.querySelectorAll("fieldset.polls").forEach(processPoll);
 
     // Topic posters
     document.querySelectorAll(".topic-poster").forEach(processTopicPoster);
