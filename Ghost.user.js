@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      3.7
+// @version      3.8
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1093,6 +1093,20 @@
       if (poll) {
         // Remove processed class to show loading state
         poll.classList.remove("content-processed");
+      }
+    });
+
+    // Add click handler for Submit vote button
+    document.addEventListener("click", (e) => {
+      if (
+        e.target.matches(
+          'input[type="submit"][name="update"][value="Submit vote"]'
+        )
+      ) {
+        const poll = e.target.closest("fieldset.polls");
+        if (poll) {
+          poll.classList.remove("content-processed");
+        }
       }
     });
 
