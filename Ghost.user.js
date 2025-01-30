@@ -48,14 +48,16 @@
        ----------------------------------------------------------------- */
     .topiclist.topics:not(#pinned-threads-list):not(.content-processed),
     #recent-topics:not(.content-processed),
-    .topiclist.forums:not(.content-processed) {
+    .topiclist.forums:not(.content-processed),
+    fieldset.polls:not(.content-processed) {
       position: relative;
       min-height: 32px;
     }
     /* Single spinner in the center */
     .topiclist.topics:not(#pinned-threads-list):not(.content-processed)::after,
     #recent-topics:not(.content-processed)::after,
-    .topiclist.forums:not(.content-processed)::after {
+    .topiclist.forums:not(.content-processed)::after,
+    fieldset.polls:not(.content-processed)::after {
       content: "";
       position: absolute;
       top: 16px;   /* Fixed distance from top instead of 50% */
@@ -80,14 +82,16 @@
     /* Hide child elements in these containers until processed */
     .topiclist.topics:not(#pinned-threads-list):not(.content-processed) > *:not(style),
     #recent-topics:not(.content-processed) > *:not(style),
-    .topiclist.forums:not(.content-processed) > *:not(style) {
+    .topiclist.forums:not(.content-processed) > *:not(style),
+    fieldset.polls:not(.content-processed) > *:not(style) {
       visibility: hidden;
     }
 
     /* Once processed, reveal child items */
     .topiclist.topics:not(#pinned-threads-list).content-processed > *,
     #recent-topics.content-processed > *,
-    .topiclist.forums.content-processed > * {
+    .topiclist.forums.content-processed > *,
+    fieldset.polls.content-processed > * {
       visibility: visible !important;
     }
 
@@ -967,6 +971,9 @@
   }
 
   function processPoll(poll) {
+    // Remove any existing processed class first
+    poll.classList.remove("content-processed");
+
     // Process each poll option
     const options = poll.querySelectorAll("dl[data-poll-option-id]");
     options.forEach((option) => {
@@ -983,19 +990,38 @@
 
       // Process voters
       let newCount = voteCount;
-      const voterSpans = votersList.querySelectorAll("span[name]");
-      voterSpans.forEach((span) => {
-        const userLink = span.querySelector("a");
-        if (!userLink) return;
+      const voterSpans = Array.from(votersList.childNodes);
 
-        const userId = userLink.href.match(/[?&]u=(\d+)/)?.[1];
-        const username = userLink.textContent.trim();
+      // First pass: mark nodes for removal
+      const toRemove = new Set();
+      voterSpans.forEach((node, i) => {
+        if (node.nodeType === Node.ELEMENT_NODE && node.matches("span[name]")) {
+          const userLink = node.querySelector("a");
+          if (!userLink) return;
 
-        if ((userId && isUserIgnored(userId)) || isUserIgnored(username)) {
-          span.remove();
-          newCount--;
+          const userId = userLink.href.match(/[?&]u=(\d+)/)?.[1];
+          const username = userLink.textContent.trim();
+
+          if ((userId && isUserIgnored(userId)) || isUserIgnored(username)) {
+            toRemove.add(node);
+            // Also mark the preceding comma/space if it exists
+            const prev = voterSpans[i - 1];
+            if (prev && prev.nodeType === Node.TEXT_NODE) {
+              toRemove.add(prev);
+            }
+            newCount--;
+          }
         }
       });
+
+      // Second pass: remove marked nodes
+      toRemove.forEach((node) => node.remove());
+
+      // Clean up any remaining leading commas
+      const firstNode = votersList.firstChild;
+      if (firstNode && firstNode.nodeType === Node.TEXT_NODE) {
+        firstNode.remove();
+      }
 
       // Update vote count and percentage if changed
       if (newCount !== voteCount && pollBar) {
@@ -1018,7 +1044,7 @@
       }
 
       // If no voters left, update the text
-      if (votersList.children.length === 0) {
+      if (!votersList.querySelector("span[name]")) {
         votersList.innerHTML = '<span name="none">None</span>';
       }
     });
@@ -1031,6 +1057,47 @@
       ).reduce((sum, bar) => sum + parseInt(bar.textContent || "0", 10), 0);
       totalVotesEl.textContent = String(newTotal);
     }
+
+    // Mark as processed at the end
+    poll.classList.add("content-processed");
+  }
+
+  // Add poll refresh detection
+  function setupPollRefreshDetection() {
+    // Watch for form submissions
+    document.addEventListener("submit", (e) => {
+      const form = e.target;
+      const poll = form.closest("fieldset.polls");
+      if (poll) {
+        // Remove processed class to show loading state
+        poll.classList.remove("content-processed");
+      }
+    });
+
+    // Watch for DOM changes that might indicate a poll refresh
+    const pollObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            // Check if this is a poll or contains polls
+            const polls = node.matches("fieldset.polls")
+              ? [node]
+              : node.querySelectorAll("fieldset.polls");
+
+            polls.forEach((poll) => {
+              if (!poll.classList.contains("content-processed")) {
+                processPoll(poll);
+              }
+            });
+          }
+        });
+      });
+    });
+
+    pollObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
   }
 
   // This runs once after DOMContentLoaded
@@ -1040,6 +1107,7 @@
 
     // Process polls
     document.querySelectorAll("fieldset.polls").forEach(processPoll);
+    setupPollRefreshDetection();
 
     // Topic posters
     document.querySelectorAll(".topic-poster").forEach(processTopicPoster);
