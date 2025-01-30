@@ -1077,6 +1077,22 @@
     // Watch for DOM changes that might indicate a poll refresh
     const pollObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
+        // Check if this is a style change
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "style"
+        ) {
+          const node = mutation.target;
+          if (
+            node.classList.contains("vote-submitted") &&
+            node.style.display === "block"
+          ) {
+            // Refresh as soon as vote-submitted becomes visible
+            window.location.reload();
+            return;
+          }
+        }
+
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.ELEMENT_NODE) {
             // Check if this is a poll or contains polls
@@ -1097,6 +1113,8 @@
     pollObserver.observe(document.body, {
       childList: true,
       subtree: true,
+      attributes: true,
+      attributeFilter: ["style"],
     });
   }
 
