@@ -99,7 +99,8 @@
     .post.bg1:not(.content-processed),
     .post.bg2:not(.content-processed),
     dd.lastpost:not(.content-processed),
-    .notification-block:not(.content-processed) {
+    .notification-block:not(.content-processed),
+    .reaction-score-list:not(.content-processed) {
       visibility: hidden !important;
     }
 
