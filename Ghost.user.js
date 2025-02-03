@@ -477,8 +477,8 @@
 
       tooltip.innerHTML = `<div class="post-content">${content}</div>`;
 
-      // Position near cursor
-      const tooltipX = Math.max(10, event.pageX - tooltip.offsetWidth - 10);
+      // Position near cursor, but further to the left
+      const tooltipX = Math.max(10, event.pageX - tooltip.offsetWidth - 100);
       const tooltipY = Math.max(10, event.pageY - tooltip.offsetHeight / 2);
       tooltip.style.left = `${tooltipX}px`;
       tooltip.style.top = `${tooltipY}px`;
