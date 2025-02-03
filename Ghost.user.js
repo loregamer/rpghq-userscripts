@@ -1555,6 +1555,20 @@
     });
   }
 
+  function removeNotificationButtonId() {
+    // Remove the ID from the notification list button
+    const notificationButton = document.querySelector(
+      "#notification_list_button"
+    );
+    if (notificationButton) {
+      notificationButton.removeAttribute("id");
+    }
+    const notificationList = document.querySelector("#notification_list");
+    if (notificationList) {
+      notificationList.removeAttribute("id");
+    }
+  }
+
   function cleanGhostedQuotesInTextarea() {
     const textarea = document.querySelector("textarea#message");
     if (!textarea || !textarea.value.includes("[quote")) return;
@@ -1590,6 +1604,7 @@
     addGhostButtonsIfOnProfile();
     // Misc
     moveExternalLinkIcon();
+    removeNotificationButtonId();
     cleanGhostedQuotesInTextarea();
 
     // Finally, mark each container as processed (remove the spinner)
