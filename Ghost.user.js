@@ -1588,10 +1588,83 @@
   }
 
   // ---------------------------------------------------------------------
-  // 11) INIT ON DOMContentLoaded
+  // 11) RT PAGE INJECTION
   // ---------------------------------------------------------------------
+
+  async function injectRTContent() {
+    // Only run on the newposts page
+    if (!window.location.href.includes("search.php?search_id=newposts")) return;
+
+    try {
+      // Fetch the RT page content
+      const response = await fetch(
+        "https://rpghq.org/forums/rt?recent_topics_start=0"
+      );
+      const text = await response.text();
+      const parser = new DOMParser();
+      const rtDoc = parser.parseFromString(text, "text/html");
+
+      // Get the RT rows
+      const rtRows = Array.from(
+        rtDoc.querySelectorAll(".topiclist.topics li.row")
+      );
+      if (!rtRows.length) return;
+
+      // Get the target container on newposts page
+      const targetList = document.querySelector(".topiclist.topics");
+      if (!targetList) return;
+
+      // Process each RT row before injecting
+      rtRows.forEach((row) => {
+        // Fix the links to be absolute
+        row.querySelectorAll('a[href^="./"]').forEach((link) => {
+          link.href = link.href.replace("./", "https://rpghq.org/forums/");
+        });
+
+        // Remove the mas-wrap divs and simplify username display
+        row.querySelectorAll(".mas-wrap").forEach((wrap) => {
+          const userLink = wrap.querySelector("a");
+          if (userLink) {
+            // Preserve the original classes and styling
+            const classes = userLink.getAttribute("class");
+            const style = userLink.getAttribute("style");
+            wrap.parentNode.replaceChild(userLink, wrap);
+            if (classes) userLink.setAttribute("class", classes);
+            if (style) userLink.setAttribute("style", style);
+          }
+        });
+
+        // Fix forum hierarchy display
+        const responsiveHide = row.querySelector(".responsive-hide");
+        if (responsiveHide) {
+          const otherLink = responsiveHide.querySelector('a[href$="f=11"]');
+          if (
+            otherLink &&
+            otherLink.nextSibling &&
+            otherLink.nextSibling.textContent.includes("»")
+          ) {
+            otherLink.nextSibling.remove();
+            otherLink.remove();
+          }
+        }
+
+        // Add the row to the target list
+        targetList.appendChild(row);
+      });
+    } catch (error) {
+      console.error("Failed to inject RT content:", error);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // 12) INIT ON DOMContentLoaded
+  // ---------------------------------------------------------------------
+
   document.addEventListener("DOMContentLoaded", async () => {
     createTooltip();
+
+    // Inject RT content first
+    await injectRTContent();
 
     // Main pass: fetch & hide ghosted content
     await processIgnoredContentOnce();
