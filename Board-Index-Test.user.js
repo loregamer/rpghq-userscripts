@@ -85,10 +85,6 @@
               <div class="forum-links">
                 <a class="forum-link" href="#">${forumPath}</a>
               </div>
-              <div class="topic-stats">
-                <span class="replies">${replies} replies</span>
-                <span class="views">${views} views</span>
-              </div>
             </div>
           </dt>
           <dd class="lastpost">
@@ -211,14 +207,6 @@
             #recent-topics-box {
                 width: 100%;
             }
-        }
-        .topic-stats {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 4px;
-        }
-        .topic-stats span {
-            margin-right: 10px;
         }
         #recent-topics-box .forum-links {
             font-size: 0.9em;
