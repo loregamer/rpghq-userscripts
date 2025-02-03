@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Reaction List
 // @namespace    http://tampermonkey.net/
-// @version      1.5.2
+// @version      1.5.3
 // @description  Display a list of reactions for RPGHQ posts in a Discord-style with hover popups
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
@@ -19,7 +19,7 @@
   function createReactionList(postId, reactions) {
     const displayStyle = reactions.length === 0 ? "display: none;" : "";
     return `
-        <div class="reaction-score-list" data-post-id="${postId}" data-title="Reactions" style="padding-top: 10px !important; ${displayStyle}">
+        <div class="reaction-score-list content-processed" data-post-id="${postId}" data-title="Reactions" style="padding-top: 10px !important; ${displayStyle}">
             <div class="list-scores" style="display: flex; flex-wrap: wrap; gap: 4px;">
                 ${reactions
                   .map(
