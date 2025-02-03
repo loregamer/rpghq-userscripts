@@ -11,6 +11,86 @@
 (function () {
   "use strict";
 
+  // Helper function to create a topic row
+  function createTopicRow(topic, index) {
+    const authorName =
+      topic.querySelector(".mas-username a")?.textContent?.trim() || "";
+    const topicTitle =
+      topic.querySelector(".topictitle")?.textContent?.trim() || "";
+    const topicLink = topic.querySelector(".topictitle")?.href || "#";
+    const forumPath = Array.from(topic.querySelectorAll(".responsive-hide a"))
+      .slice(1) // Skip the author link
+      .map((a) => a.textContent.trim())
+      .join(" » ");
+    const lastPostAuthor =
+      topic.querySelector(".lastpost .mas-username a")?.textContent?.trim() ||
+      "";
+    const lastPostAvatar =
+      topic.querySelector(".lastpost .mas-avatar img")?.src || "";
+    const lastPostTime =
+      topic.querySelector(".lastpost time")?.textContent?.trim() ||
+      topic
+        .querySelector(".lastpost")
+        ?.textContent?.trim()
+        ?.split("»")?.[1]
+        ?.trim() ||
+      "";
+    const lastPostColor =
+      topic.querySelector(".lastpost .mas-username a")?.style?.color || "";
+    const lastPostLink =
+      topic.querySelector('.lastpost a[title="Go to last post"]')?.href || "#";
+    const replies =
+      topic.querySelector(".posts")?.textContent?.split(" ")?.[0]?.trim() ||
+      "0";
+    const views =
+      topic.querySelector(".views")?.textContent?.split(" ")?.[0]?.trim() ||
+      "0";
+
+    return `
+      <li class="author-name-${authorName.replace(/\s+/g, "-")} row bg${
+      (index % 2) + 1
+    }">
+        <dl class="row-item topic_read">
+          <dt title="No unread posts">
+            <div class="list-inner">
+              <a href="${topicLink}" class="topictitle">${topicTitle}</a>
+              <div class="forum-links">
+                <a class="forum-link" href="#">${forumPath}</a>
+              </div>
+              <div class="topic-stats">
+                <span class="replies">${replies} replies</span>
+                <span class="views">${views} views</span>
+              </div>
+            </div>
+          </dt>
+          <dd class="lastpost">
+            <span>
+              by <div class="mas-wrap">
+                <div class="mas-avatar" style="width: 20px; height: 20px;">
+                  <img class="avatar" src="${lastPostAvatar}" width="128" height="128" alt="User avatar">
+                </div>
+                <div class="mas-username">
+                  <a href="#" ${
+                    lastPostColor ? `style="color: ${lastPostColor};"` : ""
+                  } 
+                     class="username${
+                       lastPostColor ? "-coloured" : ""
+                     }">${lastPostAuthor}</a>
+                </div>
+              </div>
+              <br>
+              ${lastPostTime}
+              <a href="${lastPostLink}" title="Go to last post">
+                <i class="icon fa-external-link-square fa-fw icon-lightgrey icon-md" aria-hidden="true"></i>
+                <span class="sr-only"></span>
+              </a>
+            </span>
+          </dd>
+        </dl>
+      </li>
+    `;
+  }
+
   // Create wrapper for flex layout
   const wrapper = document.createElement("div");
   wrapper.style.cssText = `
@@ -38,30 +118,13 @@
   recentTopicsBox.id = "recent-topics-box";
   recentTopicsBox.className = "forabg";
 
-  // Sample topics data
-  const sampleTopics = [
-    {
-      author: "Classix",
-      title: "What are you listening to right now?",
-      forum: "Other » HQ's Theater",
-      lastPost: {
-        author: "Classix",
-        time: "1 minute ago",
-        avatar: "./download/file.php?avatar=3607_1737756902.png",
-      },
-    },
-    {
-      author: "Val the Moofia Boss",
-      title: "What can be done to revive the MMO genre?",
-      forum: "Gaming » Online RPGs",
-      lastPost: {
-        author: "Tweed",
-        time: "7 minutes ago",
-        avatar: "./download/file.php?avatar=68_1718243351.png",
-        color: "#0080FF",
-      },
-    },
-  ];
+  // Get actual recent topics from the page
+  const recentTopicsBottom = document.querySelector(
+    "#recenttopicsbottom .topics"
+  );
+  const topicElements = recentTopicsBottom
+    ? Array.from(recentTopicsBottom.children)
+    : [];
 
   // Create the HTML structure
   recentTopicsBox.innerHTML = `
@@ -77,55 +140,7 @@
     </div>
     <div id="recent-topics" class="inner collapsible">
       <ul>
-        ${sampleTopics
-          .map(
-            (topic, index) => `
-          <li class="author-name-${topic.author.replace(/\s+/g, "-")} row bg${
-              (index % 2) + 1
-            }">
-            <dl class="row-item topic_read">
-              <dt title="No unread posts">
-                <div class="list-inner">
-                  <a href="#" class="topictitle">${topic.title}</a>
-                  <div class="forum-links">
-                    <a class="forum-link" href="#">${topic.forum}</a>
-                  </div>
-                </div>
-              </dt>
-              <dd class="lastpost">
-                <span>
-                  by <div class="mas-wrap">
-                    <div class="mas-avatar" style="width: 20px; height: 20px;">
-                      <img class="avatar" src="${
-                        topic.lastPost.avatar
-                      }" width="128" height="128" alt="User avatar">
-                    </div>
-                    <div class="mas-username">
-                      <a href="#" ${
-                        topic.lastPost.color
-                          ? `style="color: ${topic.lastPost.color};"`
-                          : ""
-                      } class="username${
-              topic.lastPost.color ? "-coloured" : ""
-            }">${topic.lastPost.author}</a>
-                    </div>
-                  </div>
-                  <br>
-                  ${topic.lastPost.time}
-                  <a href="#" title="Go to last post">
-                    <i class="icon fa-external-link-square fa-fw icon-lightgrey icon-md" aria-hidden="true"></i>
-                    <span class="sr-only"></span>
-                  </a>
-                </span>
-              </dd>
-              <dd class="status-icons">
-                <br>
-              </dd>
-            </dl>
-          </li>
-        `
-          )
-          .join("")}
+        ${topicElements.slice(0, 10).map(createTopicRow).join("")}
       </ul>
     </div>
   `;
@@ -156,7 +171,7 @@
   // Insert the wrapper right after the action bar
   actionBar.insertAdjacentElement("afterend", wrapper);
 
-  // Adjust responsive styles
+  // Add styles for topic stats
   const style = document.createElement("style");
   style.textContent = `
         @media (max-width: 700px) {
@@ -166,6 +181,19 @@
             #recent-topics-box {
                 width: 100%;
             }
+        }
+        .topic-stats {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 4px;
+        }
+        .topic-stats span {
+            margin-right: 10px;
+        }
+        #recent-topics-box .forum-links {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 2px;
         }
     `;
   document.head.appendChild(style);
