@@ -46,13 +46,41 @@
       topic.querySelector(".views")?.textContent?.split(" ")?.[0]?.trim() ||
       "0";
 
+    // Check if topic is unread
+    const isUnread =
+      topic.querySelector(".row-item")?.classList?.contains("topic_unread") ||
+      topic
+        .querySelector(".row-item")
+        ?.classList?.contains("topic_unread_hot") ||
+      topic
+        .querySelector(".row-item")
+        ?.classList?.contains("topic_unread_hot_mine");
+
+    // Get unread link if it exists
+    const unreadLink = topic.querySelector(
+      'a[href*="view=unread#unread"]'
+    )?.href;
+
     return `
       <li class="author-name-${authorName.replace(/\s+/g, "-")} row bg${
       (index % 2) + 1
     }">
-        <dl class="row-item topic_read">
-          <dt title="No unread posts">
+        <dl class="row-item ${isUnread ? "topic_unread_hot" : "topic_read"}">
+          <dt title="${isUnread ? "Unread posts" : "No unread posts"}">
+            ${
+              isUnread
+                ? `<a href="${unreadLink}" class="row-item-link"></a>`
+                : ""
+            }
             <div class="list-inner">
+              ${
+                isUnread
+                  ? `
+                <a href="${unreadLink}">
+                  <i class="icon fa-file fa-fw icon-red icon-md" aria-hidden="true"></i><span class="sr-only"></span>
+                </a>`
+                  : ""
+              }
               <a href="${topicLink}" class="topictitle">${topicTitle}</a>
               <div class="forum-links">
                 <a class="forum-link" href="#">${forumPath}</a>
@@ -81,7 +109,9 @@
               <br>
               ${lastPostTime}
               <a href="${lastPostLink}" title="Go to last post">
-                <i class="icon fa-external-link-square fa-fw icon-lightgrey icon-md" aria-hidden="true"></i>
+                <i class="icon fa-external-link-square fa-fw ${
+                  isUnread ? "icon-red" : "icon-lightgrey"
+                } icon-md" aria-hidden="true"></i>
                 <span class="sr-only"></span>
               </a>
             </span>
