@@ -1715,7 +1715,7 @@
           }
         }
 
-        // Change external link icon color for unread rows
+        // Change external link icon color for unread rows and update topic title link
         const isUnread =
           row.querySelector(".row-item").classList.contains("topic_unread") ||
           row
@@ -1730,17 +1730,32 @@
             .classList.contains("sticky_unread_mine") ||
           row.querySelector(".row-item").classList.contains("announce_unread");
 
-        if (isUnread) {
-          const externalIcon = row.querySelector(".icon-lightgray");
-          if (externalIcon) {
-            externalIcon.classList.remove("icon-lightgray");
-            externalIcon.classList.add("icon-red");
-          }
-
-          // Add unread parameters to topic title link
-          const topicTitle = row.querySelector("a.topictitle");
-          if (topicTitle) {
+        // Get the topic title link
+        const topicTitle = row.querySelector("a.topictitle");
+        if (topicTitle) {
+          if (isUnread) {
+            // For unread topics, add the unread parameters
             topicTitle.href = topicTitle.href + "&view=unread#unread";
+
+            // Update icon if needed
+            const externalIcon = row.querySelector(".icon-lightgray");
+            if (externalIcon) {
+              externalIcon.classList.remove("icon-lightgray");
+              externalIcon.classList.add("icon-red");
+            }
+          } else {
+            // For read topics, make the link match the last post link
+            const lastPostLink = row.querySelector(
+              'a[title="Go to last post"]'
+            );
+            if (lastPostLink) {
+              // Extract the post ID parameters from the last post link
+              const postParams = lastPostLink.href.match(/[?&]p=\d+#p\d+/)?.[0];
+              if (postParams) {
+                // Update the topic title link to include the post parameters
+                topicTitle.href = topicTitle.href + postParams;
+              }
+            }
           }
         }
 
