@@ -1643,27 +1643,6 @@
           link.href = link.href.replace("./", "https://rpghq.org/forums/");
         });
 
-        // Remove the mas-wrap divs and simplify username display
-        row.querySelectorAll(".mas-wrap").forEach((wrap) => {
-          const userLink = wrap.querySelector("a");
-          if (userLink) {
-            // Get user ID to check for original avatar
-            const userId = userLink.href.match(/u=(\d+)/)?.[1];
-            const avatar = wrap.querySelector("img.avatar");
-            if (userId && avatar && originalAvatars.has(userId)) {
-              // Replace with original avatar if we have it
-              avatar.src = originalAvatars.get(userId);
-            }
-
-            // Preserve the original classes and styling
-            const classes = userLink.getAttribute("class");
-            const style = userLink.getAttribute("style");
-            wrap.parentNode.replaceChild(userLink, wrap);
-            if (classes) userLink.setAttribute("class", classes);
-            if (style) userLink.setAttribute("style", style);
-          }
-        });
-
         // Fix forum hierarchy display
         const responsiveHide = row.querySelector(".responsive-hide");
         if (responsiveHide) {
