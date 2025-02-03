@@ -16,12 +16,22 @@
   wrapper.style.cssText = `
         display: flex;
         gap: 20px;
-        margin-top: 20px;
     `;
 
   // Get the main content and create recent topics box
   const pageBody = document.querySelector("#page-body");
   if (!pageBody) return;
+
+  // Move elements after the time/mark-read section to mainContent
+  const mainContent = document.createElement("div");
+  mainContent.style.cssText = `
+        flex: 1;
+        min-width: 0;
+    `;
+
+  // Find the action-bar element which is our insertion point
+  const actionBar = pageBody.querySelector(".action-bar");
+  if (!actionBar) return;
 
   // Create the recent topics box
   const recentTopicsBox = document.createElement("div");
@@ -120,29 +130,31 @@
     </div>
   `;
 
-  // Style the main content area
-  const mainContent = document.createElement("div");
-  mainContent.style.cssText = `
-        flex: 1;
-        min-width: 0;
-    `;
-
   // Style the recent topics section
   recentTopicsBox.style.cssText = `
         width: 300px;
         flex-shrink: 0;
     `;
 
-  // Move elements to their new containers
-  const elements = Array.from(pageBody.children);
-  elements.forEach((el) => {
+  // Get all elements after the action bar
+  const elementsToMove = [];
+  let currentElement = actionBar.nextElementSibling;
+  while (currentElement) {
+    elementsToMove.push(currentElement);
+    currentElement = currentElement.nextElementSibling;
+  }
+
+  // Move elements to the main content div
+  elementsToMove.forEach((el) => {
     mainContent.appendChild(el);
   });
 
   // Assemble the new layout
   wrapper.appendChild(mainContent);
   wrapper.appendChild(recentTopicsBox);
-  pageBody.appendChild(wrapper);
+
+  // Insert the wrapper right after the action bar
+  actionBar.insertAdjacentElement("afterend", wrapper);
 
   // Adjust responsive styles
   const style = document.createElement("style");
