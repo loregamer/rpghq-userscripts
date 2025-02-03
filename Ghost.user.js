@@ -1538,6 +1538,53 @@
     }
   }
 
+  // Process the "Who is online" list to remove ghosted users
+  function processOnlineList() {
+    const onlineList = document.querySelector(".stat-block.online-list p");
+    if (!onlineList) return;
+
+    // Get all user links
+    const userLinks = Array.from(
+      onlineList.querySelectorAll("a.username, a.username-coloured")
+    );
+
+    // Filter out ghosted users
+    const nonGhostedUsers = userLinks.filter((link) => {
+      const userId = link.href.match(/u=(\d+)/)?.[1];
+      const username = link.textContent.trim();
+      return !(userId && isUserIgnored(userId)) && !isUserIgnored(username);
+    });
+
+    // If all users are ghosted, just show guests
+    if (nonGhostedUsers.length === 0) {
+      const guestsMatch = onlineList.textContent.match(/and (\d+) guests/);
+      const guestCount = guestsMatch ? guestsMatch[1] : "0";
+      onlineList.innerHTML = `Users browsing this forum: ${guestCount} guests`;
+      return;
+    }
+
+    // Reconstruct the text with remaining users
+    let newText = "Users browsing this forum: ";
+    nonGhostedUsers.forEach((link, index) => {
+      if (index > 0) {
+        if (index === nonGhostedUsers.length - 1) {
+          newText += " and ";
+        } else {
+          newText += ", ";
+        }
+      }
+      newText += link.outerHTML;
+    });
+
+    // Add guests count if present
+    const guestsMatch = onlineList.textContent.match(/and (\d+) guests/);
+    if (guestsMatch) {
+      newText += ` and ${guestsMatch[1]} guests`;
+    }
+
+    onlineList.innerHTML = newText;
+  }
+
   // ---------------------------------------------------------------------
   // 11) RT PAGE INJECTION
   // ---------------------------------------------------------------------
@@ -1658,6 +1705,8 @@
     addShowGhostedPostsButton();
     // Profile ghost button
     addGhostButtonsIfOnProfile();
+    // Process online list
+    processOnlineList();
     // Misc
     moveExternalLinkIcon();
     removeNotificationButtonId();
