@@ -956,20 +956,21 @@
   }
 
   function processBlockquotesInPost(post) {
-    // In actual page posts, see if any blockquote is from an ignored user
-    const blockquotes = post.querySelectorAll(".content blockquote");
+    // First check top-level blockquotes to see if post should be hidden
+    const topLevelBlockquotes = post.querySelectorAll(".content > blockquote");
 
-    // If there's only one blockquote and it's from an ignored user, mark the post for hiding
-    if (blockquotes.length === 1) {
-      const anchor = blockquotes[0].querySelector("cite a");
+    // If there's only one top-level blockquote and it's from an ignored user, mark the post for hiding
+    if (topLevelBlockquotes.length === 1) {
+      const anchor = topLevelBlockquotes[0].querySelector("cite a");
       if (anchor && isUserIgnored(anchor.textContent.trim())) {
         post.dataset.hideForSingleIgnoredQuote = "true";
         return;
       }
     }
 
-    // Otherwise process blockquotes normally
-    blockquotes.forEach((bq) => {
+    // Then process ALL blockquotes (including nested) for ghosting
+    const allBlockquotes = post.querySelectorAll(".content blockquote");
+    allBlockquotes.forEach((bq) => {
       const anchor = bq.querySelector("cite a");
       if (!anchor) return;
       if (isUserIgnored(anchor.textContent.trim())) {
