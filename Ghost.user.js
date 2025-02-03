@@ -1566,12 +1566,9 @@
     // Reconstruct the text with remaining users
     let newText = "Users browsing this forum: ";
     nonGhostedUsers.forEach((link, index) => {
+      // Add comma after each user except the last one
       if (index > 0) {
-        if (index === nonGhostedUsers.length - 1) {
-          newText += " and ";
-        } else {
-          newText += ", ";
-        }
+        newText += ", ";
       }
       newText += link.outerHTML;
     });
@@ -1579,7 +1576,7 @@
     // Add guests count if present
     const guestsMatch = onlineList.textContent.match(/and (\d+) guests/);
     if (guestsMatch) {
-      newText += ` and ${guestsMatch[1]} guests`;
+      newText += `, and ${guestsMatch[1]} guests`;
     }
 
     onlineList.innerHTML = newText;
