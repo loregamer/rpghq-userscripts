@@ -99,14 +99,15 @@
     .post.bg1:not(.content-processed),
     .post.bg2:not(.content-processed),
     dd.lastpost:not(.content-processed),
-    .notification-block:not(.content-processed),
     .reaction-score-list:not(.content-processed) {
       visibility: hidden !important;
     }
 
     /* Once processed and not ghosted, show content */
     .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote),
-    .reaction-score-list.content-processed {
+    .reaction-score-list.content-processed,
+    li.row.content-processed,
+    .notification-block {
       visibility: visible !important;
     }
 
