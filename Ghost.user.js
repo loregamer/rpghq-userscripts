@@ -1657,6 +1657,29 @@
           }
         }
 
+        // Change external link icon color for unread rows
+        const isUnread =
+          row.querySelector(".row-item").classList.contains("topic_unread") ||
+          row
+            .querySelector(".row-item")
+            .classList.contains("topic_unread_hot") ||
+          row
+            .querySelector(".row-item")
+            .classList.contains("topic_unread_hot_mine") ||
+          row.querySelector(".row-item").classList.contains("sticky_unread") ||
+          row
+            .querySelector(".row-item")
+            .classList.contains("sticky_unread_mine") ||
+          row.querySelector(".row-item").classList.contains("announce_unread");
+
+        if (isUnread) {
+          const externalIcon = row.querySelector(".icon-lightgray");
+          if (externalIcon) {
+            externalIcon.classList.remove("icon-lightgray");
+            externalIcon.classList.add("icon-red");
+          }
+        }
+
         // Add the row to the target list
         targetList.appendChild(row);
       });
