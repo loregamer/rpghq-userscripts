@@ -1596,6 +1596,32 @@
     if (!window.location.href.includes("search.php?search_id=newposts")) return;
 
     try {
+      // Get the target container and store original avatars
+      const targetList = document.querySelector(".topiclist.topics");
+      if (!targetList) return;
+
+      // Store original avatars before removing rows
+      const originalAvatars = new Map();
+      targetList.querySelectorAll("li.row").forEach((row) => {
+        const userLinks = row.querySelectorAll(
+          "a.username, a.username-coloured"
+        );
+        userLinks.forEach((link) => {
+          const userId = link.href.match(/u=(\d+)/)?.[1];
+          if (userId) {
+            const avatar = row.querySelector("img.avatar");
+            if (avatar) {
+              originalAvatars.set(userId, avatar.src);
+            }
+          }
+        });
+      });
+
+      // Clear existing rows
+      while (targetList.firstChild) {
+        targetList.removeChild(targetList.firstChild);
+      }
+
       // Fetch the RT page content
       const response = await fetch(
         "https://rpghq.org/forums/rt?recent_topics_start=0"
@@ -1610,10 +1636,6 @@
       );
       if (!rtRows.length) return;
 
-      // Get the target container on newposts page
-      const targetList = document.querySelector(".topiclist.topics");
-      if (!targetList) return;
-
       // Process each RT row before injecting
       rtRows.forEach((row) => {
         // Fix the links to be absolute
@@ -1625,6 +1647,14 @@
         row.querySelectorAll(".mas-wrap").forEach((wrap) => {
           const userLink = wrap.querySelector("a");
           if (userLink) {
+            // Get user ID to check for original avatar
+            const userId = userLink.href.match(/u=(\d+)/)?.[1];
+            const avatar = wrap.querySelector("img.avatar");
+            if (userId && avatar && originalAvatars.has(userId)) {
+              // Replace with original avatar if we have it
+              avatar.src = originalAvatars.get(userId);
+            }
+
             // Preserve the original classes and styling
             const classes = userLink.getAttribute("class");
             const style = userLink.getAttribute("style");
