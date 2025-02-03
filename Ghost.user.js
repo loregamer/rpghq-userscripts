@@ -857,47 +857,6 @@
     element.classList.add("content-processed");
   }
 
-  function processReactionList(list) {
-    // Some boards have reaction score popups
-    const reactionGroups = list.querySelectorAll(".reaction-group");
-    reactionGroups.forEach((group) => {
-      const popup = group.querySelector(".reaction-users-popup");
-      if (!popup) return;
-
-      const userLinks = popup.querySelectorAll(
-        "a.username, a.username-coloured"
-      );
-      const countSpan = group.querySelector("span");
-      if (!countSpan) return;
-
-      let currentCount = parseInt(countSpan.textContent || "0", 10);
-      let removedCount = 0;
-
-      userLinks.forEach((link) => {
-        const uid = link.href.match(/u=(\d+)/)?.[1];
-        if (uid && isUserIgnored(uid)) {
-          const userDiv = link.closest("div");
-          if (userDiv) {
-            userDiv.remove();
-            removedCount++;
-          }
-        }
-      });
-
-      if (removedCount > 0) {
-        const newCount = currentCount - removedCount;
-        if (newCount <= 0) {
-          group.remove();
-        } else {
-          countSpan.textContent = String(newCount);
-        }
-      }
-    });
-    list.classList.add("content-processed");
-    // Make sure it's shown
-    list.style.visibility = "visible";
-  }
-
   function processNotification(item) {
     const usernameEls = item.querySelectorAll(".username, .username-coloured");
     const usernames = Array.from(usernameEls).map((el) =>
@@ -1239,11 +1198,6 @@
     document
       .querySelectorAll(".post:not(.content-processed)")
       .forEach(processPost);
-
-    reactionObserver.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
 
     // Notifications
     document
