@@ -958,6 +958,17 @@
   function processBlockquotesInPost(post) {
     // In actual page posts, see if any blockquote is from an ignored user
     const blockquotes = post.querySelectorAll(".content blockquote");
+
+    // If there's only one blockquote and it's from an ignored user, mark the post for hiding
+    if (blockquotes.length === 1) {
+      const anchor = blockquotes[0].querySelector("cite a");
+      if (anchor && isUserIgnored(anchor.textContent.trim())) {
+        post.dataset.hideForSingleIgnoredQuote = "true";
+        return;
+      }
+    }
+
+    // Otherwise process blockquotes normally
     blockquotes.forEach((bq) => {
       const anchor = bq.querySelector("cite a");
       if (!anchor) return;
@@ -972,6 +983,12 @@
     const usernameEl = post.querySelector(".username, .username-coloured");
     const mentions = post.querySelectorAll("em.mention");
     let hideIt = false;
+
+    // Check if post should be hidden due to single ignored quote
+    if (post.dataset.hideForSingleIgnoredQuote === "true") {
+      hideIt = true;
+      delete post.dataset.hideForSingleIgnoredQuote; // Clean up the data attribute
+    }
 
     // Store user color for future highlights
     if (usernameEl && usernameEl.classList.contains("username-coloured")) {
