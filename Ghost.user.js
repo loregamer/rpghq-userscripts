@@ -1736,6 +1736,12 @@
             externalIcon.classList.remove("icon-lightgray");
             externalIcon.classList.add("icon-red");
           }
+
+          // Add unread parameters to topic title link
+          const topicTitle = row.querySelector("a.topictitle");
+          if (topicTitle) {
+            topicTitle.href = topicTitle.href + "&view=unread#unread";
+          }
         }
 
         // Add the row to the target list
