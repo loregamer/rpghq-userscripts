@@ -115,7 +115,13 @@
     }
     .ghosted-row.show {
       display: block !important;
+    }
+    /* Different colors based on ghost reason */
+    .ghosted-row.show.ghosted-by-author {
       background-color: rgba(255, 0, 0, 0.1) !important;
+    }
+    .ghosted-row.show.ghosted-by-content {
+      background-color: rgba(255, 128, 0, 0.1) !important;
     }
 
     /* Special handling for forum lists and viewforum - only hide lastpost */
@@ -131,10 +137,15 @@
     body[class*="viewforum-"] .ghosted-row dd.lastpost {
       display: none !important;
     }
-    .topiclist.forums .ghosted-row.show dd.lastpost,
-    body[class*="viewforum-"] .ghosted-row.show dd.lastpost {
+    .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-author,
+    body[class*="viewforum-"] .ghosted-row.show dd.lastpost.ghosted-by-author {
       display: block !important;
       background-color: rgba(255, 0, 0, 0.1) !important;
+    }
+    .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-content,
+    body[class*="viewforum-"] .ghosted-row.show dd.lastpost.ghosted-by-content {
+      display: block !important;
+      background-color: rgba(255, 255, 0, 0.1) !important;
     }
 
     /* Ghosted posts and quotes */
@@ -659,17 +670,53 @@
       // Check if we're in a forum list
       const isForumList = rowItem.closest(".topiclist.forums");
       const isViewForum = window.location.href.includes("/viewforum.php");
+      const isSearch = window.location.href.includes("/search.php");
 
-      // If we're in viewforum, only hide the lastpost cell
-      if (isViewForum) {
+      // If we're in viewforum or search, only check the lastpost cell
+      if (isViewForum || isSearch) {
         const lastpostCell = rowItem.querySelector("dd.lastpost");
         if (lastpostCell) {
-          lastpostCell.classList.add("ghosted-row");
+          // Check if the lastpost author is ghosted
+          const authorLink = lastpostCell.querySelector(
+            "a.username, a.username-coloured"
+          );
+          if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
+            if (isViewForum) {
+              lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+            }
+            rowItem.classList.add("ghosted-row", "ghosted-by-author");
+          } else {
+            // Check if there are any ghosted users mentioned in the content
+            // Exclude the topic author link (which is in .responsive-hide.left-box)
+            const allLinks = rowItem.querySelectorAll(
+              "a.username, a.username-coloured"
+            );
+            const nonAuthorLinks = Array.from(allLinks).filter((link) => {
+              const leftBox = link.closest(".responsive-hide.left-box");
+              return !leftBox; // Keep only links that aren't in the left-box
+            });
+
+            const hasGhostedUser = nonAuthorLinks.some((link) =>
+              isUserIgnored(link.textContent.trim())
+            );
+
+            if (hasGhostedUser) {
+              if (isViewForum) {
+                lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+              }
+              rowItem.classList.add("ghosted-row", "ghosted-by-author");
+            } else {
+              if (isViewForum) {
+                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+              }
+              rowItem.classList.add("ghosted-row", "ghosted-by-content");
+            }
+          }
           return;
         }
       }
 
-      // Check if the row itself indicates a ghosted user
+      // For non-viewforum pages, check if the row itself indicates a ghosted user
       const authorLinks = rowItem.querySelectorAll(
         "a.username, a.username-coloured"
       );
@@ -686,7 +733,7 @@
       );
 
       if (hasGhostedAuthor || hasGhostedClass) {
-        rowItem.classList.add("ghosted-row");
+        rowItem.classList.add("ghosted-row", "ghosted-by-author");
         return;
       }
 
@@ -698,13 +745,13 @@
           byText.includes(`by ${username.toLowerCase()}`)
         );
         if (hasGhostedInBy) {
-          rowItem.classList.add("ghosted-row");
+          rowItem.classList.add("ghosted-row", "ghosted-by-author");
           return;
         }
       }
 
-      // If we got here and still have a rowItem, add the class
-      rowItem.classList.add("ghosted-row");
+      // If we got here and still have a rowItem, add the content-based class
+      rowItem.classList.add("ghosted-row", "ghosted-by-content");
     } else {
       // Fallback to just hiding the element
       element.style.display = "none";
