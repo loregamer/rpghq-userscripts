@@ -1240,29 +1240,6 @@
       .querySelectorAll(".post:not(.content-processed)")
       .forEach(processPost);
 
-    // Initial reaction popups
-    document
-      .querySelectorAll(".reaction-score-list:not(.content-processed)")
-      .forEach(processReactionList);
-
-    // Set up observer for future reaction lists
-    const reactionObserver = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            const lists = node.classList?.contains("reaction-score-list")
-              ? [node]
-              : node.querySelectorAll(".reaction-score-list");
-            lists.forEach((list) => {
-              if (!list.classList.contains("content-processed")) {
-                processReactionList(list);
-              }
-            });
-          }
-        });
-      });
-    });
-
     reactionObserver.observe(document.body, {
       childList: true,
       subtree: true,
