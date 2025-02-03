@@ -521,9 +521,6 @@
   // ---------------------------------------------------------------------
 
   function cleanupPostContent(content) {
-    // (1) Remove the subject URL line
-    content = content.replace(/^\[url=[^\]]+\]Subject:[^\]]+\[\/url\]\s*/m, "");
-
     // (2) Remove quotation marks from quote usernames
     content = content.replace(/\[quote="([^"]+)"/g, "[quote=$1");
 
@@ -591,7 +588,7 @@
     try {
       // The "quote post" page includes the BBCode of the post in a textarea
       const response = await fetch(
-        `https://rpghq.org/forums/ucp.php?i=pm&mode=compose&action=quotepost&p=${postId}`
+        `https://rpghq.org/forums/posting.php?mode=quote&p=182671&multiquote=${postId}`
       );
       const text = await response.text();
       const parser = new DOMParser();
