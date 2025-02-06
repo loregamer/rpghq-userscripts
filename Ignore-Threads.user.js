@@ -629,10 +629,10 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       const showButton = document.createElement("a");
       showButton.id = "show-ignored-threads-button";
       showButton.href = "#";
-      showButton.title = "View Ignored Threads";
+      showButton.title = "Review Ignored Threads";
       showButton.role = "menuitem";
       showButton.innerHTML =
-        '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>View Ignored Threads</span>';
+        '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>Review Ignored Threads</span>';
 
       showButton.addEventListener("click", function (e) {
         e.preventDefault();
