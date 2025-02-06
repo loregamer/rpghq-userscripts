@@ -1190,12 +1190,9 @@ SOFTWARE.
     }
   }
 
-  if (
-    document.readyState === "complete" ||
-    document.readyState === "interactive"
-  ) {
-    init();
-  } else {
-    window.addEventListener("load", init);
-  }
+  // Wait for DOMContentLoaded to ensure Ghost.user.js has initialized first
+  document.addEventListener("DOMContentLoaded", () => {
+    // Small delay to ensure Ghost.user.js has finished its initialization
+    setTimeout(init, 0);
+  });
 })();
