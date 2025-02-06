@@ -672,7 +672,10 @@ SOFTWARE.
     replaceReadTopicLinks.init();
 
     // Skip other UI modifications if URL contains index.php
-    if (window.location.href.includes("index.php")) {
+    if (
+      window.location.href.includes("index.php") ||
+      window.location.href.includes("search.php")
+    ) {
       return;
     }
 
