@@ -4,8 +4,7 @@
 // @version      1.2
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
-// @grant        GM_setValue
-// @grant        GM_getValue
+// @grant        none
 // @license      MIT
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/ghosted-users/VariousUI.user.js
@@ -39,25 +38,7 @@ SOFTWARE.
 (function () {
   "use strict";
 
-  const settings = {
-    betterQuoteBoxes: true,
-    replaceReadTopicLinks: true,
-    cleanerEditedNotice: false,
-    highlightCurrentPost: true,
-  };
-
   const utils = {
-    saveSettings() {
-      GM_setValue("rpghqUITweaks", JSON.stringify(settings));
-    },
-
-    loadSettings() {
-      const savedSettings = GM_getValue("rpghqUITweaks");
-      if (savedSettings) {
-        Object.assign(settings, JSON.parse(savedSettings));
-      }
-    },
-
     applyStyles(styles) {
       const style = document.createElement("style");
       style.textContent = styles;
@@ -106,39 +87,17 @@ SOFTWARE.
       }
     },
 
-    createToggleItem(id, text, isEnabled, onClickHandler) {
-      const li = document.createElement("li");
-      li.id = id;
-      li.innerHTML = `
-        <a href="#" role="menuitem" class="ui-tweak-toggle">
-          <span class="toggle-content">
-            <i class="icon ${
-              isEnabled ? "fa-toggle-on" : "fa-toggle-off"
-            } fa-fw" aria-hidden="true"></i>
-            ${text}
-          </span>
-        </a>
-      `;
-      const link = li.querySelector("a");
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-        isEnabled = !isEnabled;
-        onClickHandler(isEnabled);
-        this.updateToggleUI(link, isEnabled);
+    removeReadMoreButtons() {
+      document
+        .querySelectorAll(".imcger-quote-button")
+        .forEach((button) => button.remove());
+      document
+        .querySelectorAll(".imcger-quote-shadow")
+        .forEach((shadow) => shadow.remove());
+      document.querySelectorAll(".imcger-quote-text").forEach((text) => {
+        text.style.maxHeight = "none";
+        text.style.overflow = "visible";
       });
-      return li;
-    },
-
-    updateToggleUI(element, isEnabled) {
-      const icon = element.querySelector(".toggle-content i");
-      if (icon) {
-        icon.className = `icon ${
-          isEnabled ? "fa-toggle-on" : "fa-toggle-off"
-        } fa-fw`;
-      }
-      element.title = isEnabled
-        ? `Disable ${element.textContent.trim()}`
-        : `Enable ${element.textContent.trim()}`;
     },
   };
 
@@ -600,19 +559,6 @@ SOFTWARE.
       };
       quoteBox.appendChild(toggle);
     },
-
-    removeReadMoreButtons() {
-      document
-        .querySelectorAll(".imcger-quote-button")
-        .forEach((button) => button.remove());
-      document
-        .querySelectorAll(".imcger-quote-shadow")
-        .forEach((shadow) => shadow.remove());
-      document.querySelectorAll(".imcger-quote-text").forEach((text) => {
-        text.style.maxHeight = "none";
-        text.style.overflow = "visible";
-      });
-    },
   };
 
   const replaceReadTopicLinks = {
@@ -644,9 +590,7 @@ SOFTWARE.
 
   const cleanerEditedNotice = {
     init() {
-      if (settings.cleanerEditedNotice) {
-        this.applyStyles();
-      }
+      this.applyStyles();
     },
 
     applyStyles() {
@@ -679,10 +623,8 @@ SOFTWARE.
 
   const highlightCurrentPost = {
     init() {
-      if (settings.highlightCurrentPost) {
-        this.applyStyles();
-        this.highlightPost();
-      }
+      this.applyStyles();
+      this.highlightPost();
     },
 
     applyStyles() {
@@ -725,231 +667,13 @@ SOFTWARE.
     },
   };
 
-  const uiTweaks = {
-    init() {
-      // Only add the UI Tweaks dropdown if the URL contains "ucp.php"
-      if (window.location.href.includes("ucp.php")) {
-        this.addUITweaksDropdown();
-        this.applyCustomStyles();
-      }
-    },
-
-    addUITweaksDropdown() {
-      const navMain = document.getElementById("nav-main");
-      if (!navMain) return;
-
-      const notificationsLi = document.querySelector(
-        "#nav-main .dropdown-container.dropdown-right.rightside"
-      );
-      if (!notificationsLi) return;
-
-      const dropdownLi = document.createElement("li");
-      dropdownLi.className = "dropdown-container dropdown-right rightside";
-      // Remove the inline style that was adding extra margin
-      // dropdownLi.style.marginRight = "5px";
-
-      dropdownLi.innerHTML = `
-        <a href="#" class="dropdown-trigger">
-          <i class="icon fa-cogs fa-fw" aria-hidden="true"></i>
-          <span>UI Tweaks</span>
-        </a>
-        <div class="dropdown">
-          <div class="pointer"><div class="pointer-inner"></div></div>
-          <ul class="dropdown-contents" role="menu">
-          </ul>
-        </div>
-      `;
-
-      const dropdownContents = dropdownLi.querySelector(".dropdown-contents");
-
-      // Add toggle items for each setting
-      this.addToggleItem(
-        dropdownContents,
-        "betterQuoteBoxes",
-        "Better Quote Boxes",
-        this.toggleBetterQuoteBoxes.bind(this)
-      );
-      this.addToggleItem(
-        dropdownContents,
-        "cleanerEditedNotice",
-        "Cleaner Edited Notice",
-        this.toggleCleanerEditedNotice.bind(this)
-      );
-      this.addToggleItem(
-        dropdownContents,
-        "replaceReadTopicLinks",
-        "Jump to Last Read",
-        this.toggleReplaceReadTopicLinks.bind(this)
-      );
-      this.addToggleItem(
-        dropdownContents,
-        "highlightCurrentPost",
-        "Highlight Current Post",
-        this.toggleHighlightCurrentPost.bind(this)
-      );
-
-      // Add Save button
-      const saveButton = document.createElement("li");
-      saveButton.innerHTML = `
-        <input type="button" value="Save Changes" class="button1 ui-tweak-save">
-      `;
-      saveButton.querySelector("input").addEventListener("click", (e) => {
-        e.preventDefault();
-        this.saveChanges();
-      });
-      dropdownContents.appendChild(saveButton);
-
-      navMain.insertBefore(dropdownLi, notificationsLi);
-    },
-
-    addToggleItem(container, settingKey, text, toggleFunction) {
-      const toggleItem = utils.createToggleItem(
-        `toggle-${settingKey}`,
-        text,
-        settings[settingKey],
-        (isEnabled) => {
-          // Update the UI and store the new state temporarily
-          toggleItem.dataset.enabled = isEnabled;
-        }
-      );
-      container.appendChild(toggleItem);
-    },
-
-    saveChanges() {
-      // Update settings based on current toggle states
-      const toggles = document.querySelectorAll(".ui-tweak-toggle");
-      toggles.forEach((toggle) => {
-        const settingKey = toggle.closest("li").id.replace("toggle-", "");
-        const isEnabled = toggle
-          .querySelector(".icon")
-          .classList.contains("fa-toggle-on");
-        settings[settingKey] = isEnabled;
-      });
-
-      // Save settings and refresh the page
-      utils.saveSettings();
-      window.location.reload();
-    },
-
-    toggleBetterQuoteBoxes() {
-      if (settings.betterQuoteBoxes) {
-        betterQuotes.init();
-      } else {
-        // Implement reverting changes if needed
-        window.location.reload();
-      }
-    },
-
-    toggleCleanerEditedNotice() {
-      if (settings.cleanerEditedNotice) {
-        cleanerEditedNotice.init();
-      } else {
-        // Revert changes if needed
-        window.location.reload();
-      }
-    },
-
-    toggleReplaceReadTopicLinks() {
-      if (settings.replaceReadTopicLinks) {
-        replaceReadTopicLinks.init();
-      } else {
-        // Revert changes if needed
-        window.location.reload();
-      }
-    },
-
-    toggleHighlightCurrentPost() {
-      if (settings.highlightCurrentPost) {
-        highlightCurrentPost.init();
-      } else {
-        // Remove highlight from any highlighted posts
-        document
-          .querySelectorAll(".highlighted-current-post")
-          .forEach((post) => {
-            post.classList.remove("highlighted-current-post");
-          });
-      }
-    },
-
-    applyCustomStyles() {
-      utils.applyStyles(`
-          .ui-tweak-toggle {
-            display: flex !important;
-            align-items: center;
-            padding: 5px 10px;
-            text-decoration: none !important; /* Remove underline */
-          }
-          .ui-tweak-toggle .toggle-content {
-            display: flex;
-            align-items: center;
-          }
-          .ui-tweak-toggle .icon {
-            margin-right: 5px; /* Reduced from 10px to 5px */
-            display: flex;
-            align-items: center;
-            position: relative;
-            top: 2px; /* Adjust this value to move the icon down */
-          }
-          .ui-tweak-toggle .toggle-text {
-            flex-grow: 1;
-            line-height: 1; /* Ensure text is vertically centered */
-          }
-          .ui-tweak-toggle:hover {
-            text-decoration: none !important; /* Ensure no underline on hover */
-          }
-          /* Ensure no underline for all states */
-          .ui-tweak-toggle:hover,
-          .ui-tweak-toggle:focus,
-          .ui-tweak-toggle:active {
-            text-decoration: none !important;
-          }
-          .dropdown-contents li {
-            display: flex;
-            align-items: center;
-          }
-          .ui-tweak-save {
-            display: block;
-            width: calc(100% - 20px); /* Adjust width to account for padding */
-            margin: 10px auto;
-            text-align: center;
-            padding: 5px 10px;
-          }
-          /* Ensure the icon is vertically centered */
-          .ui-tweak-toggle .icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-          }
-          /* Adjust spacing for UI Tweaks dropdown */
-          #nav-main .dropdown-container.dropdown-right.rightside:not(:last-child) {
-            margin-right: 5px;
-          }
-          /* Ensure consistent spacing for rightside elements */
-          #nav-main .rightside {
-            margin-left: 5px;
-          }
-        `);
-    },
-  };
-
   function init() {
-    utils.loadSettings();
     utils.addPostIdsToUsernames();
-    uiTweaks.init();
-    if (settings.betterQuoteBoxes) {
-      betterQuotes.init();
-      utils.scrollToPost();
-    }
-    if (settings.cleanerEditedNotice) {
-      cleanerEditedNotice.init();
-    }
-    if (settings.replaceReadTopicLinks) {
-      replaceReadTopicLinks.init();
-    }
-    if (settings.highlightCurrentPost) {
-      highlightCurrentPost.init();
-    }
+    betterQuotes.init();
+    utils.scrollToPost();
+    cleanerEditedNotice.init();
+    replaceReadTopicLinks.init();
+    highlightCurrentPost.init();
   }
 
   if (
