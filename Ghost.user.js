@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      4.3
+// @version      4.3.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -634,11 +634,17 @@
       .map((lnk) => lnk.href.match(/p=(\d+)/)?.[1])
       .filter((id) => id && !postCache[id]);
 
+    // If no posts need fetching, return false
+    if (postIds.length === 0) {
+      return false;
+    }
+
     // Limit concurrency in chunks of 5
     for (let i = 0; i < postIds.length; i += 5) {
       const chunk = postIds.slice(i, i + 5);
       await Promise.all(chunk.map(fetchAndCachePost));
     }
+    return true;
   }
 
   // ---------------------------------------------------------------------
@@ -1792,6 +1798,18 @@
     // Inject RT content first
     await injectRTContent();
 
+    // Check if we need to fetch any posts
+    const needsFetching = await cacheAllPosts();
+
+    if (!needsFetching) {
+      // If no fetching needed, immediately mark containers as processed
+      document
+        .querySelectorAll(
+          ".topiclist.topics, #recent-topics, .topiclist.forums"
+        )
+        .forEach((container) => container.classList.add("content-processed"));
+    }
+
     // Main pass: fetch & hide ghosted content
     await processIgnoredContentOnce();
 
@@ -1808,7 +1826,7 @@
     removeNotificationButtonId();
     cleanGhostedQuotesInTextarea();
 
-    // Finally, mark each container as processed (remove the spinner)
+    // Finally, mark any remaining containers as processed (remove the spinner)
     document
       .querySelectorAll(".topiclist.topics, #recent-topics, .topiclist.forums")
       .forEach((container) => container.classList.add("content-processed"));
