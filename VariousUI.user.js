@@ -417,9 +417,22 @@ SOFTWARE.
     },
 
     processQuoteBoxes() {
+      // Store any containers that have content-processed class
+      const processedContainers = new Set();
+      document.querySelectorAll(".content-processed").forEach((container) => {
+        processedContainers.add(container);
+      });
+
       const allQuotes = document.querySelectorAll("blockquote");
       allQuotes.forEach(this.processQuote.bind(this));
       this.fixQuoteLinks();
+
+      // Restore content-processed class to any containers that had it
+      processedContainers.forEach((container) => {
+        if (container && document.contains(container)) {
+          container.classList.add("content-processed");
+        }
+      });
     },
 
     processQuote(quoteBox) {
