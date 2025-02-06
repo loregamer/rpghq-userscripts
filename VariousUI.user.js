@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.3.2
+// @version      1.3.3
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        none
@@ -647,14 +647,25 @@ SOFTWARE.
 
     highlightPost() {
       const hash = window.location.hash;
-      const postId = hash ? hash.slice(1) : null;
-
-      // Also check for p parameter in URL
       const urlParams = new URLSearchParams(window.location.search);
       const postParam = urlParams.get("p");
+      const viewParam = urlParams.get("view");
 
-      const targetPostId = postId || postParam;
+      // Check for unread view first
+      if (viewParam === "unread" && hash === "#unread") {
+        const unreadPosts = document.querySelectorAll(".post.unreadpost");
+        for (const post of unreadPosts) {
+          if (!post.classList.contains("ghosted-post")) {
+            post.classList.add("highlighted-current-post");
+            post.scrollIntoView({ behavior: "smooth", block: "center" });
+            break; // Only highlight the first one
+          }
+        }
+        return;
+      }
 
+      // Handle regular post highlighting
+      const targetPostId = hash ? hash.slice(1) : postParam;
       if (targetPostId) {
         const postElement = document.getElementById(targetPostId);
         if (postElement) {
