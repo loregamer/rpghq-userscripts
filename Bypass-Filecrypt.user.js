@@ -129,21 +129,72 @@ function dcrypt(content) {
       let a = document.createElement("SPAN");
       a.textContent = "Decrypted links:";
       finalLinksDiv.appendChild(a);
+
+      // Add copy all button
+      let copyButton = document.createElement("BUTTON");
+      copyButton.textContent = "Copy All Links";
+      copyButton.style.marginLeft = "1em";
+      copyButton.style.padding = "0.5em 1em";
+      copyButton.style.borderRadius = "5px";
+      copyButton.style.cursor = "pointer";
+      copyButton.style.backgroundColor =
+        bgColor() === "white" ? "#f0f0f0" : "#1a1d2b";
+      copyButton.style.border = "1px solid " + textColor();
+      copyButton.style.color = textColor();
+
+      // Create a container for all links that we'll use for copying
+      let allLinks = [];
+
+      copyButton.addEventListener("click", function () {
+        const linkText = allLinks.join("\n");
+        navigator.clipboard
+          .writeText(linkText)
+          .then(function () {
+            const originalText = copyButton.textContent;
+            copyButton.textContent = "Copied!";
+            setTimeout(() => {
+              copyButton.textContent = originalText;
+            }, 2000);
+          })
+          .catch(function (err) {
+            console.error("Failed to copy links: ", err);
+            copyButton.textContent = "Failed to copy";
+            setTimeout(() => {
+              copyButton.textContent = "Copy All Links";
+            }, 2000);
+          });
+      });
+
+      finalLinksDiv.appendChild(copyButton);
       finalLinksDiv.appendChild(document.createElement("BR"));
       finalLinksDiv.appendChild(document.createElement("BR"));
       if (obj.success.links.length > 0) {
         try {
-          for (var link of obj.success.links) {
+          for (let i = 0; i < obj.success.links.length; i++) {
+            const link = obj.success.links[i];
+            allLinks.push(link); // Add link to our collection
             console.log("Decrypted using dcrypt.it: " + link);
-            let b = document.createElement("SPAN");
-            b.textContent = link;
-            b.addEventListener("click", function () {
-              window.open(link);
-            });
-            b.style.color = textColor();
-            b.style.cursor = "pointer";
+            let b = document.createElement("DIV");
+            b.style.display = "flex";
+            b.style.alignItems = "center";
+            b.style.marginBottom = "0.5em";
+
+            let num = document.createElement("SPAN");
+            num.textContent = i + 1 + ". ";
+            num.style.marginRight = "0.5em";
+            num.style.color = textColor();
+
+            let linkElem = document.createElement("A");
+            linkElem.href = link;
+            linkElem.textContent = link;
+            linkElem.style.color = textColor();
+            linkElem.style.textDecoration = "underline";
+            linkElem.style.cursor = "pointer";
+            linkElem.target = "_blank";
+
+            b.appendChild(num);
+            b.appendChild(linkElem);
             finalLinksDiv.appendChild(b);
-            finalLinksDiv.appendChild(document.createElement("BR"));
           }
           console.log(finalLinksDiv);
           document.getElementById("dcryptLoadMsg").replaceWith(finalLinksDiv);
@@ -224,15 +275,74 @@ function getFinalLink(encLink, finalLinksDiv) {
       req.abort();
       console.log(response);
       console.log("Decrypted locally: " + response.finalUrl);
-      let b = document.createElement("SPAN");
-      b.textContent = response.finalUrl;
-      b.addEventListener("click", function () {
-        window.open(response.finalUrl);
-      });
-      b.style.color = textColor();
-      b.style.cursor = "pointer";
+
+      // Get or create the allLinks array
+      let copyButton = finalLinksDiv.querySelector("button");
+      if (!copyButton) {
+        // Create copy button if it doesn't exist
+        copyButton = document.createElement("BUTTON");
+        copyButton.textContent = "Copy All Links";
+        copyButton.style.marginLeft = "1em";
+        copyButton.style.padding = "0.5em 1em";
+        copyButton.style.borderRadius = "5px";
+        copyButton.style.cursor = "pointer";
+        copyButton.style.backgroundColor =
+          bgColor() === "white" ? "#f0f0f0" : "#1a1d2b";
+        copyButton.style.border = "1px solid " + textColor();
+        copyButton.style.color = textColor();
+
+        // Insert the button after the "Decrypted links:" text
+        const firstSpan = finalLinksDiv.querySelector("span");
+        if (firstSpan) {
+          firstSpan.parentNode.insertBefore(copyButton, firstSpan.nextSibling);
+        }
+
+        copyButton.addEventListener("click", function () {
+          const links = Array.from(finalLinksDiv.querySelectorAll("a")).map(
+            (a) => a.href
+          );
+          const linkText = links.join("\n");
+          navigator.clipboard
+            .writeText(linkText)
+            .then(function () {
+              const originalText = copyButton.textContent;
+              copyButton.textContent = "Copied!";
+              setTimeout(() => {
+                copyButton.textContent = originalText;
+              }, 2000);
+            })
+            .catch(function (err) {
+              console.error("Failed to copy links: ", err);
+              copyButton.textContent = "Failed to copy";
+              setTimeout(() => {
+                copyButton.textContent = "Copy All Links";
+              }, 2000);
+            });
+        });
+      }
+
+      let linkCount = finalLinksDiv.querySelectorAll("div").length;
+      let b = document.createElement("DIV");
+      b.style.display = "flex";
+      b.style.alignItems = "center";
+      b.style.marginBottom = "0.5em";
+
+      let num = document.createElement("SPAN");
+      num.textContent = linkCount + 1 + ". ";
+      num.style.marginRight = "0.5em";
+      num.style.color = textColor();
+
+      let linkElem = document.createElement("A");
+      linkElem.href = response.finalUrl;
+      linkElem.textContent = response.finalUrl;
+      linkElem.style.color = textColor();
+      linkElem.style.textDecoration = "underline";
+      linkElem.style.cursor = "pointer";
+      linkElem.target = "_blank";
+
+      b.appendChild(num);
+      b.appendChild(linkElem);
       finalLinksDiv.appendChild(b);
-      finalLinksDiv.appendChild(document.createElement("BR"));
     },
   });
 }
