@@ -649,7 +649,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     addIgnoreButton();
     addResetIgnoredThreadsButton();
     addShowIgnoredThreadsButton();
-    addToggleIgnoreModeButton();
+    // addToggleIgnoreModeButton();
     addExportImportButtons();
     if (ignoreModeActive) {
       updateIgnoreButtons();
