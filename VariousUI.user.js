@@ -41,11 +41,8 @@ SOFTWARE.
 
   const settings = {
     betterQuoteBoxes: true,
-    betterFileLinks: true,
-    unreadLastPostButton: true,
     replaceReadTopicLinks: true,
     cleanerEditedNotice: false,
-    topicLinkCopyButton: true,
     highlightCurrentPost: true,
   };
 
@@ -618,105 +615,6 @@ SOFTWARE.
     },
   };
 
-  const betterFileLinks = {
-    init() {
-      this.processFileLinks();
-    },
-
-    processFileLinks() {
-      const fileLinks = document.querySelectorAll(
-        'a[href^="https://f.rpghq.org/"]'
-      );
-      fileLinks.forEach((link) => {
-        const url = new URL(link.href);
-        const filename = url.searchParams.get("n");
-        if (
-          filename &&
-          link.textContent.trim().startsWith("https://f.rpghq.org/")
-        ) {
-          const downloadSvg =
-            '<img alt="📥" class="emoji smilies" draggable="false" src="//cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f4e5.svg">';
-          link.innerHTML = `${downloadSvg} ${filename}`;
-          link.title = link.href;
-        }
-      });
-    },
-  };
-
-  const unreadLastPostButton = {
-    init() {
-      this.processRows();
-    },
-
-    processRows() {
-      const topicRows = document.querySelectorAll('.row-item[class*="topic_"]');
-      topicRows.forEach((row) => {
-        if (this.isUnreadTopic(row)) {
-          this.updateLastPostButton(row);
-        }
-      });
-
-      const forumRows = document.querySelectorAll(
-        ".row-item.forum_read, .row-item.forum_unread"
-      );
-      forumRows.forEach((row) => this.checkForumLastPost(row));
-    },
-
-    isUnreadTopic(row) {
-      return (
-        row.classList.contains("topic_unread") ||
-        row.classList.contains("topic_unread_mine") ||
-        row.classList.contains("topic_unread_hot") ||
-        row.classList.contains("topic_unread_hot_mine")
-      );
-    },
-
-    updateLastPostButton(row) {
-      const lastPostLink = row.querySelector(
-        '.lastpost a[title="Go to last post"], .lastpost a[title="View the latest post"]'
-      );
-      if (lastPostLink) {
-        const icon = lastPostLink.querySelector("i.icon");
-        if (icon) {
-          icon.classList.remove("icon-lightgray");
-          icon.classList.add("icon-red");
-        }
-      }
-    },
-
-    checkForumLastPost(forumRow) {
-      const forumLink = forumRow.querySelector("a.forumtitle");
-      const lastPostTitle = forumRow.querySelector(".lastpost .lastsubject");
-      if (forumLink && lastPostTitle) {
-        const forumUrl = forumLink.href;
-        const lastPostText = lastPostTitle.textContent.trim();
-        fetch(forumUrl)
-          .then((response) => response.text())
-          .then((html) => {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, "text/html");
-            const topicRows = doc.querySelectorAll(
-              '.row-item[class*="topic_"]'
-            );
-            const hasUnreadTopic = Array.from(topicRows).some((row) => {
-              const topicTitle = row.querySelector(".topictitle");
-              return (
-                this.isUnreadTopic(row) &&
-                topicTitle &&
-                topicTitle.textContent.trim() === lastPostText
-              );
-            });
-            if (hasUnreadTopic) {
-              this.updateLastPostButton(forumRow);
-            }
-          })
-          .catch((error) =>
-            console.error("Error checking forum last post:", error)
-          );
-      }
-    },
-  };
-
   const replaceReadTopicLinks = {
     init() {
       this.processTopicRows();
@@ -776,81 +674,6 @@ SOFTWARE.
           text-decoration: underline;
         }
       `);
-    },
-  };
-
-  const topicLinkCopyButton = {
-    init() {
-      if (settings.topicLinkCopyButton) {
-        this.addCopyButtons();
-        this.addCopiedMessageStyles();
-      }
-    },
-
-    addCopyButtons() {
-      const topicTitles = document.querySelectorAll(".topic-title");
-      topicTitles.forEach((titleElement) => {
-        const link = titleElement.querySelector("a");
-        if (link) {
-          const copyButton = this.createCopyButton(link);
-          titleElement.appendChild(copyButton);
-        }
-      });
-    },
-
-    createCopyButton(link) {
-      const button = document.createElement("button");
-      button.className = "topic-copy-button";
-      button.innerHTML =
-        '<i class="icon fa-copy fa-fw" aria-hidden="true"></i>';
-      button.title = "Copy BBCode link";
-      button.style.marginLeft = "7px";
-      button.style.padding = "0 3px";
-      button.addEventListener("click", (e) => {
-        e.preventDefault();
-        this.copyBBCode(link);
-      });
-      return button;
-    },
-
-    copyBBCode(link) {
-      const bbcode = `[size=150][b][url=${link.href}]${link.textContent}[/url][/b][/size]`;
-      navigator.clipboard
-        .writeText(bbcode)
-        .then(() => {
-          this.showCopiedMessage();
-        })
-        .catch((err) => {
-          console.error("Failed to copy text: ", err);
-        });
-    },
-
-    showCopiedMessage() {
-      const message = document.createElement("div");
-      message.textContent = "BBCode copied!";
-      message.className = "copy-message";
-      document.body.appendChild(message);
-      setTimeout(() => {
-        message.remove();
-      }, 2000);
-    },
-
-    addCopiedMessageStyles() {
-      const style = document.createElement("style");
-      style.textContent = `
-        .copy-message {
-          position: fixed;
-          bottom: 20px;
-          right: 20px;
-          background-color: rgba(0, 0, 0, 0.8);
-          color: white;
-          padding: 10px 20px;
-          border-radius: 5px;
-          z-index: 9999;
-          font-size: 14px;
-        }
-      `;
-      document.head.appendChild(style);
     },
   };
 
@@ -942,12 +765,6 @@ SOFTWARE.
       // Add toggle items for each setting
       this.addToggleItem(
         dropdownContents,
-        "betterFileLinks",
-        "Better File Links",
-        this.toggleBetterFileLinks.bind(this)
-      );
-      this.addToggleItem(
-        dropdownContents,
         "betterQuoteBoxes",
         "Better Quote Boxes",
         this.toggleBetterQuoteBoxes.bind(this)
@@ -966,23 +783,10 @@ SOFTWARE.
       );
       this.addToggleItem(
         dropdownContents,
-        "topicLinkCopyButton",
-        "Topic Link Copy Button",
-        this.toggleTopicLinkCopyButton.bind(this)
-      );
-      this.addToggleItem(
-        dropdownContents,
-        "unreadLastPostButton",
-        "Unread Last Post Button",
-        this.toggleUnreadLastPostButton.bind(this)
-      );
-      this.addToggleItem(
-        dropdownContents,
         "highlightCurrentPost",
         "Highlight Current Post",
         this.toggleHighlightCurrentPost.bind(this)
       );
-      // Add more toggle items here as needed
 
       // Add Save button
       const saveButton = document.createElement("li");
@@ -1027,34 +831,18 @@ SOFTWARE.
       window.location.reload();
     },
 
-    toggleTopicLinkCopyButton() {
-      if (settings.topicLinkCopyButton) {
-        topicLinkCopyButton.init();
-      } else {
-        window.location.reload();
-      }
-    },
-
     toggleBetterQuoteBoxes() {
       if (settings.betterQuoteBoxes) {
         betterQuotes.init();
       } else {
         // Implement reverting changes if needed
-      }
-    },
-
-    toggleBetterFileLinks() {
-      if (settings.betterFileLinks) {
-        betterFileLinks.init();
-      } else {
-        // Implement reverting changes if needed
         window.location.reload();
       }
     },
 
-    toggleUnreadLastPostButton() {
-      if (settings.unreadLastPostButton) {
-        unreadLastPostButton.init();
+    toggleCleanerEditedNotice() {
+      if (settings.cleanerEditedNotice) {
+        cleanerEditedNotice.init();
       } else {
         // Revert changes if needed
         window.location.reload();
@@ -1064,15 +852,6 @@ SOFTWARE.
     toggleReplaceReadTopicLinks() {
       if (settings.replaceReadTopicLinks) {
         replaceReadTopicLinks.init();
-      } else {
-        // Revert changes if needed
-        window.location.reload();
-      }
-    },
-
-    toggleCleanerEditedNotice() {
-      if (settings.cleanerEditedNotice) {
-        cleanerEditedNotice.init();
       } else {
         // Revert changes if needed
         window.location.reload();
@@ -1162,20 +941,11 @@ SOFTWARE.
       betterQuotes.init();
       utils.scrollToPost();
     }
-    if (settings.betterFileLinks) {
-      betterFileLinks.init();
-    }
-    if (settings.unreadLastPostButton) {
-      unreadLastPostButton.init();
-    }
-    if (settings.replaceReadTopicLinks) {
-      replaceReadTopicLinks.init();
-    }
     if (settings.cleanerEditedNotice) {
       cleanerEditedNotice.init();
     }
-    if (settings.topicLinkCopyButton) {
-      topicLinkCopyButton.init();
+    if (settings.replaceReadTopicLinks) {
+      replaceReadTopicLinks.init();
     }
     if (settings.highlightCurrentPost) {
       highlightCurrentPost.init();
