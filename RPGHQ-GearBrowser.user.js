@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Use Gear Browser on iOS
 // @namespace    http://rpghq.org/
-// @version      1.0
+// @version      1.1
 // @description  Redirects iOS users to use Gear browser for RPGHQ
 // @author       You
 // @match        https://rpghq.org/*
@@ -33,7 +33,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #1a1a1a;
+            background-color: #222833;
             color: white;
             display: flex;
             flex-direction: column;
@@ -54,8 +54,7 @@
         `;
 
     const subMessage = document.createElement("p");
-    subMessage.textContent =
-      "For the best experience on iOS, please use the Gear browser to view RPGHQ.";
+    subMessage.textContent = "Switch to Gear Browser, dumbass";
     subMessage.style.cssText = `
             font-size: 16px;
             line-height: 1.5;
