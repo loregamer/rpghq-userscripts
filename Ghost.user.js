@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      4.3.1
+// @version      4.4
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -281,6 +281,19 @@
   // Tooltip tracking
   let tooltip = null;
   let currentHoverTimeout = null;
+  let isMobileDevice = false; // Add mobile detection
+
+  // Add mobile detection function
+  function detectMobile() {
+    return (
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      ) ||
+      window.matchMedia("(max-width: 768px)").matches ||
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0
+    );
+  }
 
   // ---------------------------------------------------------------------
   // 2) HELPER: BBCODE + QUOTE PARSER FOR PREVIEW
@@ -455,6 +468,9 @@
   }
 
   async function showPostPreview(event, postId) {
+    // Skip preview on mobile
+    if (isMobileDevice) return;
+
     if (!tooltip) return;
     if (currentHoverTimeout) clearTimeout(currentHoverTimeout);
 
@@ -1793,6 +1809,9 @@
   // ---------------------------------------------------------------------
 
   document.addEventListener("DOMContentLoaded", async () => {
+    // Check for mobile at startup
+    isMobileDevice = detectMobile();
+
     createTooltip();
 
     // Inject RT content first
