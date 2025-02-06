@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.3.1
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        none
@@ -105,7 +105,7 @@ SOFTWARE.
     init() {
       this.applyStyles();
       this.processQuoteBoxes();
-      this.removeReadMoreButtons();
+      utils.removeReadMoreButtons();
       this.colorizeUsernames();
       this.processAvatars();
     },
