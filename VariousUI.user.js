@@ -1,15 +1,15 @@
 // ==UserScript==
-// @name         RPGHQ - Various UI Tweaks
+// @name         RPGHQ - Various UI Tweaks Fork
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.0
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @license      MIT
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
-// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/VariousUI.user.js
-// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/VariousUI.user.js
+// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/ghosted-users/VariousUI.user.js
+// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/ghosted-users/VariousUI.user.js
 // ==/UserScript==
 
 /*
@@ -423,11 +423,19 @@ SOFTWARE.
     },
 
     processQuote(quoteBox) {
+      // Store the content-processed class state before modifying
+      const wasProcessed = quoteBox.classList.contains("content-processed");
+
       const isNested = quoteBox.closest("blockquote blockquote") !== null;
       if (isNested) {
         this.processNestedQuote(quoteBox);
       } else {
         this.processOuterQuote(quoteBox);
+      }
+
+      // Restore the content-processed class if it was present
+      if (wasProcessed) {
+        quoteBox.classList.add("content-processed");
       }
     },
 
