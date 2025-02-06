@@ -1164,17 +1164,10 @@ SOFTWARE.
 
   function init() {
     utils.loadSettings();
-    utils.addPostIdsToUsernames();
     uiTweaks.init();
     if (settings.betterQuoteBoxes) {
       betterQuotes.init();
       utils.scrollToPost();
-    }
-    if (settings.betterFileLinks) {
-      betterFileLinks.init();
-    }
-    if (settings.unreadLastPostButton) {
-      unreadLastPostButton.init();
     }
     if (settings.replaceReadTopicLinks) {
       replaceReadTopicLinks.init();
@@ -1182,17 +1175,10 @@ SOFTWARE.
     if (settings.cleanerEditedNotice) {
       cleanerEditedNotice.init();
     }
-    if (settings.topicLinkCopyButton) {
-      topicLinkCopyButton.init();
-    }
     if (settings.highlightCurrentPost) {
       highlightCurrentPost.init();
     }
   }
 
-  // Wait for DOMContentLoaded to ensure Ghost.user.js has initialized first
-  document.addEventListener("DOMContentLoaded", () => {
-    // Small delay to ensure Ghost.user.js has finished its initialization
-    setTimeout(init, 0);
-  });
+  window.addEventListener("load", init);
 })();
