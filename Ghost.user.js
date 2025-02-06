@@ -669,6 +669,21 @@
     // Check for any row element
     const rowItem = element.closest("li.row");
     if (rowItem) {
+      // Check if this is from Moderation Station or Chat With Staff
+      const forumLinks = rowItem.querySelectorAll(
+        ".forum-links a, .responsive-hide a"
+      );
+      const forumNames = Array.from(forumLinks).map((link) =>
+        link.textContent.trim()
+      );
+      if (
+        forumNames.includes("Moderation Station") ||
+        forumNames.includes("Chat With Staff")
+      ) {
+        // Don't hide these forums
+        return;
+      }
+
       // Check if we're in a forum list
       const isForumList = rowItem.closest(".topiclist.forums");
       const isViewForum = window.location.href.includes("/viewforum.php");
