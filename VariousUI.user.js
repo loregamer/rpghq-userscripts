@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         RPGHQ - Various UI Tweaks Fork
+// @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        GM_setValue
@@ -423,19 +423,11 @@ SOFTWARE.
     },
 
     processQuote(quoteBox) {
-      // Store the content-processed class state before modifying
-      const wasProcessed = quoteBox.classList.contains("content-processed");
-
       const isNested = quoteBox.closest("blockquote blockquote") !== null;
       if (isNested) {
         this.processNestedQuote(quoteBox);
       } else {
         this.processOuterQuote(quoteBox);
-      }
-
-      // Restore the content-processed class if it was present
-      if (wasProcessed) {
-        quoteBox.classList.add("content-processed");
       }
     },
 
@@ -1164,10 +1156,17 @@ SOFTWARE.
 
   function init() {
     utils.loadSettings();
+    utils.addPostIdsToUsernames();
     uiTweaks.init();
     if (settings.betterQuoteBoxes) {
       betterQuotes.init();
       utils.scrollToPost();
+    }
+    if (settings.betterFileLinks) {
+      betterFileLinks.init();
+    }
+    if (settings.unreadLastPostButton) {
+      unreadLastPostButton.init();
     }
     if (settings.replaceReadTopicLinks) {
       replaceReadTopicLinks.init();
@@ -1175,10 +1174,20 @@ SOFTWARE.
     if (settings.cleanerEditedNotice) {
       cleanerEditedNotice.init();
     }
+    if (settings.topicLinkCopyButton) {
+      topicLinkCopyButton.init();
+    }
     if (settings.highlightCurrentPost) {
       highlightCurrentPost.init();
     }
   }
 
-  window.addEventListener("load", init);
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
+    init();
+  } else {
+    window.addEventListener("load", init);
+  }
 })();
