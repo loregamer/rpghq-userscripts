@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -47,9 +47,6 @@ SOFTWARE.
   // Add CSS early to prevent flash
   const style = document.createElement("style");
   style.textContent = `
-    .hidden-thread {
-      display: none !important;
-    }
     @media (max-width: 700px) {
       #ignore-thread-button span {
         display: none;
@@ -68,7 +65,7 @@ SOFTWARE.
       if (threadLink) {
         const threadTitle = threadLink.textContent.trim();
         if (isThreadIgnored(threadTitle)) {
-          item.classList.add("hidden-thread");
+          item.remove();
         }
       }
     });
@@ -79,7 +76,7 @@ SOFTWARE.
       if (lastPostLink) {
         const threadTitle = lastPostLink.getAttribute("title");
         if (threadTitle && isThreadIgnored(threadTitle)) {
-          lastPost.classList.add("hidden-thread");
+          lastPost.remove();
         }
       }
     });
@@ -195,9 +192,7 @@ SOFTWARE.
       if (threadLink) {
         const threadTitle = threadLink.textContent.trim();
         if (isThreadIgnored(threadTitle)) {
-          item.classList.add("hidden-thread");
-        } else {
-          item.classList.remove("hidden-thread");
+          item.remove();
         }
       }
     });
@@ -208,9 +203,7 @@ SOFTWARE.
       if (lastPostLink) {
         const threadTitle = lastPostLink.getAttribute("title");
         if (threadTitle && isThreadIgnored(threadTitle)) {
-          lastPost.classList.add("hidden-thread");
-        } else {
-          lastPost.classList.remove("hidden-thread");
+          lastPost.remove();
         }
       }
     });
