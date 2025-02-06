@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      4.4
+// @version      4.5
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1016,7 +1016,6 @@
   function processPost(post) {
     processBlockquotesInPost(post);
     const usernameEl = post.querySelector(".username, .username-coloured");
-    const mentions = post.querySelectorAll("em.mention");
     let hideIt = false;
 
     // Check if post should be hidden due to single ignored quote
@@ -1025,24 +1024,9 @@
       delete post.dataset.hideForSingleIgnoredQuote; // Clean up the data attribute
     }
 
-    // Store user color for future highlights
-    if (usernameEl && usernameEl.classList.contains("username-coloured")) {
-      const username = usernameEl.textContent.trim();
-      const color = usernameEl.style.color;
-      if (color && !userColors[username]) {
-        userColors[username] = color;
-        GM_setValue("userColors", userColors);
-      }
-    }
-
     if (usernameEl && isUserIgnored(usernameEl.textContent.trim())) {
       hideIt = true;
     }
-    mentions.forEach((m) => {
-      if (isUserIgnored(m.textContent.trim().replace("@", ""))) {
-        hideIt = true;
-      }
-    });
     if (hideIt) {
       post.classList.add("ghosted-post");
     }
@@ -1145,22 +1129,6 @@
         // Set width relative to highest vote count (100%)
         const widthPercent = maxVotes > 0 ? (newCount / maxVotes) * 100 : 0;
         pollBar.style.width = `${widthPercent}%`;
-
-        // Update the percentage text (this is relative to total votes)
-        const percentEl = option.querySelector(".poll_option_percent");
-        if (percentEl) {
-          if (newCount === 0) {
-            percentEl.textContent = "No votes";
-          } else {
-            // Calculate percentage of total remaining votes
-            const newTotal = Array.from(options).reduce((sum, opt) => {
-              const bar = opt.querySelector('[class^="pollbar"]');
-              return sum + parseInt(bar?.textContent || "0", 10);
-            }, 0);
-            const percent = Math.round((newCount / newTotal) * 100);
-            percentEl.textContent = `${percent}%`;
-          }
-        }
       }
 
       // If no voters left, update the text
@@ -1169,13 +1137,58 @@
       }
     });
 
+    // Now calculate all percentages after processing ghosted users
+    const finalVoteCounts = Array.from(options).map((opt) => {
+      const bar = opt.querySelector('[class^="pollbar"]');
+      return parseInt(bar?.textContent || "0", 10);
+    });
+
+    const total = finalVoteCounts.reduce((a, b) => a + b, 0);
+
+    // Calculate exact percentages
+    const exactPercentages = finalVoteCounts.map(
+      (count) => (count / total) * 100
+    );
+
+    // Round down all percentages initially
+    const roundedDown = exactPercentages.map((p) => Math.floor(p));
+
+    // Calculate how many points we need to distribute
+    const remainder = 100 - roundedDown.reduce((a, b) => a + b, 0);
+
+    // Get fractional parts and sort by largest first
+    const fractionalParts = exactPercentages
+      .map((p, i) => ({
+        index: i,
+        frac: p - Math.floor(p),
+      }))
+      .sort((a, b) => b.frac - a.frac);
+
+    // Distribute remaining points to highest fractional parts
+    const finalPercentages = [...roundedDown];
+    for (let i = 0; i < remainder; i++) {
+      if (fractionalParts[i]) {
+        finalPercentages[fractionalParts[i].index]++;
+      }
+    }
+
+    // Update all percentage displays
+    options.forEach((option, index) => {
+      const percentEl = option.querySelector(".poll_option_percent");
+      if (percentEl) {
+        const count = finalVoteCounts[index];
+        if (count === 0) {
+          percentEl.textContent = "No votes";
+        } else {
+          percentEl.textContent = `${finalPercentages[index]}%`;
+        }
+      }
+    });
+
     // Update total votes
     const totalVotesEl = poll.querySelector(".poll_total_vote_cnt");
     if (totalVotesEl) {
-      const newTotal = Array.from(
-        poll.querySelectorAll('[class^="pollbar"]')
-      ).reduce((sum, bar) => sum + parseInt(bar.textContent || "0", 10), 0);
-      totalVotesEl.textContent = String(newTotal);
+      totalVotesEl.textContent = String(total);
     }
 
     // Mark as processed at the end
