@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        none
@@ -668,11 +668,18 @@ SOFTWARE.
   };
 
   function init() {
+    // Always run replaceReadTopicLinks
+    replaceReadTopicLinks.init();
+
+    // Skip other UI modifications if URL contains index.php
+    if (window.location.href.includes("index.php")) {
+      return;
+    }
+
     utils.addPostIdsToUsernames();
     betterQuotes.init();
     utils.scrollToPost();
     cleanerEditedNotice.init();
-    replaceReadTopicLinks.init();
     highlightCurrentPost.init();
   }
 
