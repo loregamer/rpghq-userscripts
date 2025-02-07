@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      4.6
+// @version      4.6.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -107,7 +107,8 @@
     .topiclist.topics:not(#pinned-threads-list):not(.content-processed) > *:not(style),
     #recent-topics:not(.content-processed) > *:not(style),
     .topiclist.forums:not(.content-processed) > *:not(style),
-    fieldset.polls:not(.content-processed) > *:not(style) {
+    fieldset.polls:not(.content-processed) > *:not(style),
+    strong.badge:not(.content-processed) {
       visibility: hidden;
     }
 
@@ -115,7 +116,8 @@
     .topiclist.topics:not(#pinned-threads-list).content-processed > *,
     #recent-topics.content-processed > *,
     .topiclist.forums.content-processed > *,
-    fieldset.polls.content-processed > * {
+    fieldset.polls.content-processed > *,
+    strong.badge.content-processed {
       visibility: visible !important;
     }
 
@@ -1357,6 +1359,11 @@
     document
       .querySelectorAll(".post:not(.content-processed)")
       .forEach(processPost);
+
+    // Process badges
+    document
+      .querySelectorAll("strong.badge:not(.content-processed)")
+      .forEach((badge) => badge.classList.add("content-processed"));
 
     document
       .querySelectorAll(".reaction-score-list")
