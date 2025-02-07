@@ -295,6 +295,19 @@
     );
   }
 
+  function overrideUpdateInterval() {
+    if (
+      window.activeNotifications &&
+      typeof window.activeNotifications === "object"
+    ) {
+      window.activeNotifications.updateInterval = 999999;
+      console.log("activeNotifications.updateInterval set to 999999");
+    } else {
+      // Try again shortly if the object isn't available yet.
+      setTimeout(overrideUpdateInterval, 50);
+    }
+  }
+
   // ---------------------------------------------------------------------
   // 2) HELPER: BBCODE + QUOTE PARSER FOR PREVIEW
   // ---------------------------------------------------------------------
@@ -932,7 +945,7 @@
     });
   }
 
-  function processNotification(item) {
+  async function processNotification(item) {
     const usernameEls = item.querySelectorAll(".username, .username-coloured");
     const usernames = Array.from(usernameEls).map((el) =>
       el.textContent.trim()
@@ -951,8 +964,22 @@
       return;
     }
 
-    // If all are ignored, hide it
+    // If all are ignored, mark as read then hide it
     if (nonIgnored.length === 0) {
+      // Extract the mark read URL from the notification block
+      const markReadUrl = item.getAttribute("href");
+      if (markReadUrl) {
+        try {
+          // Send request to mark as read
+          await fetch("https://rpghq.org/forums" + markReadUrl.substring(1), {
+            method: "GET",
+            credentials: "include",
+          });
+        } catch (err) {
+          console.error("Failed to mark notification as read:", err);
+        }
+      }
+
       const li = item.closest("li");
       if (li) li.style.display = "none";
       item.classList.add("content-processed");
@@ -1812,6 +1839,8 @@
     isMobileDevice = detectMobile();
 
     createTooltip();
+
+    overrideUpdateInterval();
 
     // Inject RT content first
     await injectRTContent();
