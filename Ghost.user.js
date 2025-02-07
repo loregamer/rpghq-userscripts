@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      4.5
+// @version      4.5.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1619,20 +1619,6 @@
     });
   }
 
-  function removeNotificationButtonId() {
-    // Remove the ID from the notification list button
-    const notificationButton = document.querySelector(
-      "#notification_list_button"
-    );
-    if (notificationButton) {
-      notificationButton.removeAttribute("id");
-    }
-    const notificationList = document.querySelector("#notification_list");
-    if (notificationList) {
-      notificationList.removeAttribute("id");
-    }
-  }
-
   function cleanGhostedQuotesInTextarea() {
     const textarea = document.querySelector("textarea#message");
     if (!textarea || !textarea.value.includes("[quote")) return;
@@ -1855,7 +1841,6 @@
     processOnlineList();
     // Misc
     moveExternalLinkIcon();
-    removeNotificationButtonId();
     cleanGhostedQuotesInTextarea();
 
     // Finally, mark any remaining containers as processed (remove the spinner)
