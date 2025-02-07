@@ -329,7 +329,7 @@
       b: { pattern: /\[b\](.*?)\[\/b\]/gi, replacement: "<strong>$1</strong>" },
       i: { pattern: /\[i\](.*?)\[\/i\]/gi, replacement: "<em>$1</em>" },
       u: { pattern: /\[u\](.*?)\[\/u\]/gi, replacement: "<u>$1</u>" },
-      s: { pattern: /\[s\](.*?)\[\/s\]/gi, replacement: "<s>$1</s>" },
+      s: { pattern: /\[s\](.*?)\[\/s\]/gi, replacement: " $1 " },
 
       // Mentions
       smention: {
@@ -966,22 +966,23 @@
 
     // If all are ignored, mark as read then hide it
     if (nonIgnored.length === 0) {
-      // Find and click the mark read icon
-      const markReadIcon = item.querySelector(".fa-exclamation-circle");
-      if (markReadIcon) {
-        try {
-          // Simple click() method should work
-          markReadIcon.click();
-
-          // Give a small delay for the click to process
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        } catch (err) {
-          console.error("Failed to mark notification as read:", err);
-        }
-      }
-
+      // Find the mark read link (it's outside the notification-block)
       const li = item.closest("li");
-      if (li) li.style.display = "none";
+      if (li) {
+        const markReadLink = li.querySelector(".mark_read.icon-mark");
+        if (markReadLink) {
+          try {
+            // Click the mark read link
+            markReadLink.click();
+
+            // Give a small delay for the click to process
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          } catch (err) {
+            console.error("Failed to mark notification as read:", err);
+          }
+        }
+        li.style.display = "none";
+      }
       item.classList.add("content-processed");
       return;
     }
@@ -1839,8 +1840,6 @@
     isMobileDevice = detectMobile();
 
     createTooltip();
-
-    overrideUpdateInterval();
 
     // Inject RT content first
     await injectRTContent();
