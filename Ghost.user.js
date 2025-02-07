@@ -961,6 +961,38 @@
     const usernames = Array.from(usernameEls).map((el) =>
       el.textContent.trim()
     );
+
+    // If no usernames found, just mark as processed
+    if (usernames.length === 0) {
+      item.classList.add("content-processed");
+      return;
+    }
+
+    // Check if first username is ignored
+    const firstUsername = usernames[0];
+    if (isUserIgnored(firstUsername)) {
+      // Find the mark read link (it's outside the notification-block)
+      const li = item.closest("li");
+      if (li) {
+        const markReadLink = li.querySelector(".mark_read.icon-mark");
+        if (markReadLink) {
+          try {
+            // Click the mark read link
+            markReadLink.click();
+
+            // Give a small delay for the click to process
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          } catch (err) {
+            console.error("Failed to mark notification as read:", err);
+          }
+        }
+        li.style.display = "none";
+      }
+      item.classList.add("content-processed");
+      return;
+    }
+
+    // Continue with normal processing for other cases
     const nonIgnored = usernames.filter((u) => !isUserIgnored(u));
     const hasIgnored = nonIgnored.length < usernames.length;
 
