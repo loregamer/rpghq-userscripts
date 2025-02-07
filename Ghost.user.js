@@ -966,15 +966,15 @@
 
     // If all are ignored, mark as read then hide it
     if (nonIgnored.length === 0) {
-      // Extract the mark read URL from the notification block
-      const markReadUrl = item.getAttribute("href");
-      if (markReadUrl) {
+      // Find and click the mark read icon
+      const markReadIcon = item.querySelector(".fa-exclamation-circle");
+      if (markReadIcon) {
         try {
-          // Send request to mark as read
-          await fetch("https://rpghq.org/forums" + markReadUrl.substring(1), {
-            method: "GET",
-            credentials: "include",
-          });
+          // Simple click() method should work
+          markReadIcon.click();
+
+          // Give a small delay for the click to process
+          await new Promise((resolve) => setTimeout(resolve, 100));
         } catch (err) {
           console.error("Failed to mark notification as read:", err);
         }
