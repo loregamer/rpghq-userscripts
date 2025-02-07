@@ -107,9 +107,13 @@
     .topiclist.topics:not(#pinned-threads-list):not(.content-processed) > *:not(style),
     #recent-topics:not(.content-processed) > *:not(style),
     .topiclist.forums:not(.content-processed) > *:not(style),
-    fieldset.polls:not(.content-processed) > *:not(style),
-    strong.badge:not(.content-processed) {
+    fieldset.polls:not(.content-processed) > *:not(style) {
       visibility: hidden;
+    }
+
+    /* Hide badges until processed */
+    strong.badge:not(.content-processed) {
+      display: none !important;
     }
 
     /* Once processed, reveal child items */
@@ -1391,6 +1395,9 @@
         document.querySelectorAll(".notification-block:not(.content-processed)")
       ).map(processNotification)
     );
+
+    // Add a half second delay
+    await new Promise((resolve) => setTimeout(resolve, 150));
 
     // Process badges after notifications are handled
     document
