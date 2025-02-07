@@ -18,6 +18,30 @@
 (function () {
   "use strict";
 
+  const code =
+    "(" +
+    function () {
+      // Poll for the activeNotifications object in the page's context.
+      function overrideUpdateInterval() {
+        if (
+          window.activeNotifications &&
+          typeof window.activeNotifications === "object"
+        ) {
+          window.activeNotifications.updateInterval = 999999;
+          console.log("activeNotifications.updateInterval set to 999999");
+        } else {
+          setTimeout(overrideUpdateInterval, 50);
+        }
+      }
+      overrideUpdateInterval();
+    } +
+    ")();";
+
+  const script = document.createElement("script");
+  script.textContent = code;
+  (document.head || document.documentElement).appendChild(script);
+  script.remove();
+
   // ---------------------------------------------------------------------
   // 1) DATA LOAD + IMMEDIATE STYLES
   // ---------------------------------------------------------------------
@@ -293,19 +317,6 @@
       "ontouchstart" in window ||
       navigator.maxTouchPoints > 0
     );
-  }
-
-  function overrideUpdateInterval() {
-    if (
-      window.activeNotifications &&
-      typeof window.activeNotifications === "object"
-    ) {
-      window.activeNotifications.updateInterval = 999999;
-      console.log("activeNotifications.updateInterval set to 999999");
-    } else {
-      // Try again shortly if the object isn't available yet.
-      setTimeout(overrideUpdateInterval, 50);
-    }
   }
 
   // ---------------------------------------------------------------------
