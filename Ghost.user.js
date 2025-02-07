@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      4.6.1
+// @version      4.6.2
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1360,11 +1360,6 @@
       .querySelectorAll(".post:not(.content-processed)")
       .forEach(processPost);
 
-    // Process badges
-    document
-      .querySelectorAll("strong.badge:not(.content-processed)")
-      .forEach((badge) => badge.classList.add("content-processed"));
-
     document
       .querySelectorAll(".reaction-score-list")
       .forEach(processReactionList);
@@ -1391,9 +1386,16 @@
     });
 
     // Notifications
+    await Promise.all(
+      Array.from(
+        document.querySelectorAll(".notification-block:not(.content-processed)")
+      ).map(processNotification)
+    );
+
+    // Process badges after notifications are handled
     document
-      .querySelectorAll(".notification-block:not(.content-processed)")
-      .forEach(processNotification);
+      .querySelectorAll("strong.badge:not(.content-processed)")
+      .forEach((badge) => badge.classList.add("content-processed"));
 
     // Lastpost cells
     const lastPosts = document.querySelectorAll(
