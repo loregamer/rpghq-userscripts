@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      4.8
+// @version      4.8.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1113,7 +1113,7 @@
 
   async function processIgnoredContentOnce() {
     // Optionally, clean up topic authors first:
-    // document.querySelectorAll("li.row").forEach(cleanupTopicAuthor);
+    document.querySelectorAll("li.row").forEach(cleanupTopicAuthor);
 
     await cacheAllPosts();
     document.querySelectorAll("fieldset.polls").forEach(processPoll);
