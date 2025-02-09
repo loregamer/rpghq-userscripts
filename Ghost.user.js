@@ -1422,7 +1422,8 @@
   // This runs once after DOMContentLoaded
   async function processIgnoredContentOnce() {
     // First, clean up all topic authors before any other processing
-    document.querySelectorAll("li.row").forEach(cleanupTopicAuthor);
+    // Disabling for now
+    // document.querySelectorAll("li.row").forEach(cleanupTopicAuthor);
 
     // Prefetch post data for last posts
     await cacheAllPosts();
