@@ -84,10 +84,10 @@
     fieldset.polls:not(.content-processed)::after {
       content: "";
       position: absolute;
-      top: 16px;   /* Fixed distance from top instead of 50% */
+      top: 16px; /* Fixed distance from top instead of 50% */
       left: 50%;
-      margin-top: 0;   /* Remove vertical margin */
-      margin-left: -12px;  /* half the spinner width */
+      margin-top: 0; /* Remove vertical margin */
+      margin-left: -12px; /* half the spinner width */
       width: 24px;
       height: 24px;
       border: 3px solid #999;
@@ -104,7 +104,8 @@
     }
 
     /* Hide child elements in these containers until processed */
-    .topiclist.topics:not(#pinned-threads-list):not(.content-processed) > *:not(style),
+    .topiclist.topics:not(#pinned-threads-list):not(.content-processed)
+      > *:not(style),
     #recent-topics:not(.content-processed) > *:not(style),
     .topiclist.forums:not(.content-processed) > *:not(style),
     fieldset.polls:not(.content-processed) > *:not(style) {
@@ -181,7 +182,8 @@
     }
 
     /* Ghosted posts and quotes */
-    .ghosted-post, .ghosted-quote {
+    .ghosted-post,
+    .ghosted-quote {
       display: none !important;
     }
     .ghosted-post.show,
@@ -189,25 +191,32 @@
       display: block !important;
 
       /* Add a 3px border that uses a rainbow gradient */
-      border: 3px solid;                  /* required to enable border-image */
+      border: 3px solid; /* required to enable border-image */
       border-image: linear-gradient(
-        to right,
-        red, orange, yellow, green, blue, indigo, violet
-      ) 1;
+          to right,
+          red,
+          orange,
+          yellow,
+          green,
+          blue,
+          indigo,
+          violet
+        )
+        1;
       border-image-slice: 1;
 
       /* optional extra niceness */
-      border-radius: 4px;                 /* slightly rounded corners */
-      padding: 6px;                       /* spacing so border is more visible */
+      border-radius: 4px; /* slightly rounded corners */
+      padding: 6px; /* spacing so border is more visible */
     }
 
     /* Post preview tooltip */
     .post-preview-tooltip {
       position: absolute;
-      background: #171B24;
+      background: #171b24;
       padding: 15px;
       border-radius: 5px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       z-index: 9999;
       max-width: 600px;
       min-width: 400px;
@@ -235,7 +244,8 @@
       font-size: 11px;
       overflow-x: auto;
     }
-    .post-preview-tooltip ul, .post-preview-tooltip ol {
+    .post-preview-tooltip ul,
+    .post-preview-tooltip ol {
       padding-left: 20px;
       margin: 5px 0;
     }
@@ -264,7 +274,7 @@
 
     /* Custom Quote Styling */
     .custom-quote {
-      background-color: #242A36;
+      background-color: #242a36;
       border-left: 3px solid #4a90e2;
       padding: 10px;
       margin: 10px 0;
