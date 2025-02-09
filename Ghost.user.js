@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      4.7.1
+// @version      4.7.2
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1427,8 +1427,9 @@
   // ---------------------------------------------------------------------
 
   function replaceUserAvatars() {
-    const avatars = document.querySelectorAll("img.avatar");
+    const avatars = document.querySelectorAll("img");
     avatars.forEach((img) => {
+      // Just look for the user ID number in the avatar URL
       const match = img.src.match(/avatar=(\d+)/);
       if (match) {
         const uid = match[1];
