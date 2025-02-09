@@ -1800,13 +1800,14 @@
     if (!window.location.href.includes("search.php?search_id=newposts")) return;
 
     try {
-      // Get the target container and store original avatars
-      const targetList = document.querySelector(".topiclist.topics");
-      if (!targetList) return;
+      // Get the inner div we want to replace
+      const pagebody = document.querySelector("#page-body");
+      const innerDiv = pagebody.querySelector(".inner:not(.column1)");
+      if (!innerDiv) return;
 
-      // Store original avatars before removing rows
+      // Store original avatars before removing content
       const originalAvatars = new Map();
-      targetList.querySelectorAll("li.row").forEach((row) => {
+      innerDiv.querySelectorAll("li.row").forEach((row) => {
         const userLinks = row.querySelectorAll(
           "a.username, a.username-coloured"
         );
@@ -1821,11 +1822,6 @@
         });
       });
 
-      // Clear existing rows
-      while (targetList.firstChild) {
-        targetList.removeChild(targetList.firstChild);
-      }
-
       // Fetch the RT page content
       const response = await fetch(
         "https://rpghq.org/forums/rt?recent_topics_start=0"
@@ -1834,19 +1830,19 @@
       const parser = new DOMParser();
       const rtDoc = parser.parseFromString(text, "text/html");
 
-      // Get the RT rows
-      const rtRows = Array.from(
-        rtDoc.querySelectorAll(".topiclist.topics li.row")
-      );
-      if (!rtRows.length) return;
+      // Get the RT inner div
+      const rtInner = rtDoc.querySelector(".inner:not(.column1)");
+      if (!rtInner) {
+        throw new Error("Could not find inner div in RT page");
+      }
 
-      // Process each RT row before injecting
-      rtRows.forEach((row) => {
-        // Fix the links to be absolute
-        row.querySelectorAll('a[href^="./"]').forEach((link) => {
-          link.href = link.href.replace("./", "https://rpghq.org/forums/");
-        });
+      // Fix the links to be absolute
+      rtInner.querySelectorAll('a[href^="./"]').forEach((link) => {
+        link.href = link.href.replace("./", "https://rpghq.org/forums/");
+      });
 
+      // Process each row to update unread status and links
+      rtInner.querySelectorAll("li.row").forEach((row) => {
         // Fix forum hierarchy display
         const responsiveHide = row.querySelector(".responsive-hide");
         if (responsiveHide) {
@@ -1904,10 +1900,10 @@
             }
           }
         }
-
-        // Add the row to the target list
-        targetList.appendChild(row);
       });
+
+      // Replace the inner div content
+      innerDiv.innerHTML = rtInner.innerHTML;
     } catch (error) {
       console.error("Failed to inject RT content:", error);
     }
