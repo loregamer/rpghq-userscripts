@@ -715,6 +715,57 @@
     return false;
   }
 
+  function cleanupTopicAuthor(element) {
+    const responsiveHide = element.querySelector(".responsive-hide");
+    if (!responsiveHide) return;
+
+    // Check if it contains "» in"
+    const textContent = responsiveHide.textContent.trim();
+    if (!textContent.includes("» in")) return;
+
+    // Find the mas-wrap div
+    const masWrap = responsiveHide.querySelector(".mas-wrap");
+    if (!masWrap) return;
+
+    // Check if the user in mas-wrap is ignored
+    const userLink = masWrap.querySelector(".mas-username a");
+    if (!userLink) return;
+
+    const userId = userLink.href.match(/u=(\d+)/)?.[1];
+    const username = userLink.textContent.trim();
+
+    if ((userId && isUserIgnored(userId)) || isUserIgnored(username)) {
+      // Find all text nodes and elements
+      const nodes = Array.from(responsiveHide.childNodes);
+
+      // Find the "by" text node
+      const byTextNodeIndex = nodes.findIndex(
+        (node) =>
+          node.nodeType === Node.TEXT_NODE &&
+          node.textContent.trim().toLowerCase() === "by"
+      );
+
+      if (byTextNodeIndex !== -1) {
+        // Find the leading arrow text node (should be before "by")
+        const arrowTextNode = nodes.find(
+          (node, index) =>
+            index < byTextNodeIndex &&
+            node.nodeType === Node.TEXT_NODE &&
+            node.textContent.includes("»")
+        );
+
+        // Remove the arrow text node if found
+        if (arrowTextNode) {
+          responsiveHide.removeChild(arrowTextNode);
+        }
+
+        // Remove the "by" text node and the mas-wrap
+        responsiveHide.removeChild(nodes[byTextNodeIndex]);
+        masWrap.remove();
+      }
+    }
+  }
+
   function hideTopicRow(element) {
     // First check if it's a recent topics list item
     const recentTopicLi = element.closest("#recent-topics li");
@@ -726,6 +777,9 @@
     // Check for any row element
     const rowItem = element.closest("li.row");
     if (rowItem) {
+      // Clean up responsive-hide if needed
+      cleanupTopicAuthor(rowItem);
+
       // Check if this is from Moderation Station or Chat With Staff
       const forumLinks = rowItem.querySelectorAll(
         ".forum-links a, .responsive-hide a"
