@@ -294,7 +294,6 @@ SOFTWARE.
               <dt><div class="list-inner">Pinned Topics</div></dt>
               <dd class="posts">Replies</dd>
               <dd class="views">Views</dd>
-              <dd class="lastpost"><span>Last post</span></dd>
             </dl>
           </li>
         </ul>
@@ -317,7 +316,6 @@ SOFTWARE.
           </dt>
           <dd class="posts">-</dd>
           <dd class="views">-</dd>
-          <dd class="lastpost"><span>Loading...</span></dd>
         </dl>
       </li>
     `;
@@ -358,7 +356,6 @@ SOFTWARE.
           </dt>
           <dd class="posts">-</dd>
           <dd class="views">-</dd>
-          <dd class="lastpost"><span>-</span></dd>
         </dl>
       </li>
     `;
@@ -497,11 +494,11 @@ SOFTWARE.
       element.className = element.className.replace(/\bsticky_/g, "topic_");
     });
 
-    // Hide pagination
-    // const pagination = row.querySelector(".pagination");
-    // if (pagination) {
-    //   pagination.style.display = "none";
-    // }
+    // Remove pagination
+    const pagination = row.querySelector(".pagination");
+    if (pagination) {
+      pagination.style.display = "none";
+    }
 
     // Remove rh_tag elements
     const rhTags = row.querySelectorAll(".rh_tag");
@@ -523,21 +520,10 @@ SOFTWARE.
       iconElement.classList.add(isUnread ? "icon-red" : "icon-lightgray");
     }
 
-    // Modify the external link icon
-    const lastpostLink = row.querySelector(
-      ".lastpost a[title='Go to last post']"
-    );
-    if (lastpostLink) {
-      const externalLinkIcon =
-        lastpostLink.querySelector("i") || document.createElement("i");
-      externalLinkIcon.className = `icon fa-external-link-square fa-fw icon-${
-        isUnread ? "red" : "lightgray"
-      } icon-md`;
-      externalLinkIcon.setAttribute("aria-hidden", "true");
-      if (!lastpostLink.contains(externalLinkIcon)) {
-        lastpostLink.innerHTML = "";
-        lastpostLink.appendChild(externalLinkIcon);
-      }
+    // Remove lastpost column
+    const lastpostColumn = row.querySelector(".lastpost");
+    if (lastpostColumn) {
+      lastpostColumn.remove();
     }
 
     // Modify the topic hyperlink
@@ -553,28 +539,7 @@ SOFTWARE.
 
       if (!isUnread) {
         const currentHref = topicLink.getAttribute("href");
-        const lastPostLink = row.querySelector(
-          ".lastpost a[title='Go to last post']"
-        );
-
-        if (lastPostLink) {
-          const lastPostId = lastPostLink.getAttribute("href").split("#p")[1];
-          const newHref = `${currentHref}&view=unread#p${lastPostId}`;
-          topicLink.setAttribute("href", newHref);
-
-          // Add click event listener to scroll to last post
-          topicLink.addEventListener("click", function (e) {
-            e.preventDefault();
-            const targetUrl = this.getAttribute("href");
-            window.location.href = targetUrl;
-            setTimeout(() => {
-              const lastPost = document.querySelector(".post:last-of-type");
-              if (lastPost) {
-                lastPost.scrollIntoView({ behavior: "smooth" });
-              }
-            }, 100);
-          });
-        }
+        topicLink.setAttribute("href", `${currentHref}&view=unread`);
       }
     }
 
@@ -657,7 +622,6 @@ SOFTWARE.
           </dt>
           <dd class="posts">-</dd>
           <dd class="views">-</dd>
-          <dd class="lastpost"><span>-</span></dd>
         </dl>
       </li>
     `;
