@@ -70,7 +70,6 @@
     /* -----------------------------------------------------------------
        1) One spinner per container
        ----------------------------------------------------------------- */
-    .topiclist.topics:not(#pinned-threads-list):not(.content-processed),
     #recent-topics:not(.content-processed),
     .topiclist.forums:not(.content-processed),
     fieldset.polls:not(.content-processed) {
@@ -78,7 +77,6 @@
       min-height: 32px;
     }
     /* Single spinner in the center */
-    .topiclist.topics:not(#pinned-threads-list):not(.content-processed)::after,
     #recent-topics:not(.content-processed)::after,
     .topiclist.forums:not(.content-processed)::after,
     fieldset.polls:not(.content-processed)::after {
@@ -104,7 +102,6 @@
     }
 
     /* Hide child elements in these containers until processed */
-    .topiclist.topics:not(#pinned-threads-list):not(.content-processed)
       > *:not(style),
     #recent-topics:not(.content-processed) > *:not(style),
     .topiclist.forums:not(.content-processed) > *:not(style),
@@ -118,7 +115,6 @@
     }
 
     /* Once processed, reveal child items */
-    .topiclist.topics:not(#pinned-threads-list).content-processed > *,
     #recent-topics.content-processed > *,
     .topiclist.forums.content-processed > *,
     fieldset.polls.content-processed > *,
@@ -904,12 +900,6 @@
   }
 
   async function processLastPost(element) {
-    // Skip pinned threads
-    if (element.closest("#pinned-threads-list")) {
-      element.classList.add("content-processed");
-      return;
-    }
-
     // First, set up any post previews for links with icons
     const linksWithIcons = element.querySelectorAll("a:has(i.icon)");
     linksWithIcons.forEach((link) => {
