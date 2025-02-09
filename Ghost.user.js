@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      4.7
+// @version      4.7.6
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -50,7 +50,7 @@
   let replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   let postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
   let userColors = GM_getValue("userColors", {}); // username => color
-  let showGhostedPosts = GM_getValue("showGhostedPosts", false); // New preference
+  let showGhostedPosts = false; // Always start hidden
 
   // Clear expired cache entries (older than 24h)
   const now = Date.now();
@@ -703,11 +703,77 @@
     const quoteMatches = content.match(/\[quote=([^\]]+)/g);
     if (quoteMatches) {
       for (const q of quoteMatches) {
+        // Check for user_id in the quote
+        const userIdMatch = q.match(/user_id=(\d+)/);
+        if (userIdMatch && isUserIgnored(userIdMatch[1])) return true;
+
+        // Also check username as fallback
         const quotedName = q.replace("[quote=", "").split(" ")[0];
         if (isUserIgnored(quotedName)) return true;
       }
     }
     return false;
+  }
+
+  function cleanupTopicAuthor(element) {
+    // First remove any author-name-* classes from the row
+    const row = element.closest("li.row");
+    if (row) {
+      Array.from(row.classList).forEach((cls) => {
+        if (cls.startsWith("author-name-")) {
+          row.classList.remove(cls);
+        }
+      });
+    }
+
+    const responsiveHide = element.querySelector(".responsive-hide");
+    if (!responsiveHide) return;
+
+    // Check if it contains "» in"
+    const textContent = responsiveHide.textContent.trim();
+    if (!textContent.includes("» in")) return;
+
+    // Find the mas-wrap div
+    const masWrap = responsiveHide.querySelector(".mas-wrap");
+    if (!masWrap) return;
+
+    // Check if the user in mas-wrap is ignored
+    const userLink = masWrap.querySelector(".mas-username a");
+    if (!userLink) return;
+
+    const userId = userLink.href.match(/u=(\d+)/)?.[1];
+    const username = userLink.textContent.trim();
+
+    if ((userId && isUserIgnored(userId)) || isUserIgnored(username)) {
+      // Find all text nodes and elements
+      const nodes = Array.from(responsiveHide.childNodes);
+
+      // Find the "by" text node
+      const byTextNodeIndex = nodes.findIndex(
+        (node) =>
+          node.nodeType === Node.TEXT_NODE &&
+          node.textContent.trim().toLowerCase() === "by"
+      );
+
+      if (byTextNodeIndex !== -1) {
+        // Find the leading arrow text node (should be before "by")
+        const arrowTextNode = nodes.find(
+          (node, index) =>
+            index < byTextNodeIndex &&
+            node.nodeType === Node.TEXT_NODE &&
+            node.textContent.includes("»")
+        );
+
+        // Remove the arrow text node if found
+        if (arrowTextNode) {
+          responsiveHide.removeChild(arrowTextNode);
+        }
+
+        // Remove the "by" text node and the mas-wrap
+        responsiveHide.removeChild(nodes[byTextNodeIndex]);
+        masWrap.remove();
+      }
+    }
   }
 
   function hideTopicRow(element) {
@@ -913,8 +979,14 @@
           if (userEl && isUserIgnored(userEl.textContent.trim())) {
             hideTopicRow(element);
           } else {
-            const content = await fetchAndCachePost(pid);
-            if (content && postContentContainsGhosted(content)) {
+            try {
+              const content = await fetchAndCachePost(pid);
+              // If we failed to get content, hide by default
+              if (!content || postContentContainsGhosted(content)) {
+                hideTopicRow(element);
+              }
+            } catch (err) {
+              // If there was any error fetching/caching, hide by default
               hideTopicRow(element);
             }
           }
@@ -1349,6 +1421,9 @@
 
   // This runs once after DOMContentLoaded
   async function processIgnoredContentOnce() {
+    // First, clean up all topic authors before any other processing
+    document.querySelectorAll("li.row").forEach(cleanupTopicAuthor);
+
     // Prefetch post data for last posts
     await cacheAllPosts();
 
@@ -1427,8 +1502,9 @@
   // ---------------------------------------------------------------------
 
   function replaceUserAvatars() {
-    const avatars = document.querySelectorAll("img.avatar");
+    const avatars = document.querySelectorAll("img");
     avatars.forEach((img) => {
+      // Just look for the user ID number in the avatar URL
       const match = img.src.match(/avatar=(\d+)/);
       if (match) {
         const uid = match[1];
@@ -1437,6 +1513,17 @@
         }
       }
     });
+  }
+
+  // New function to periodically check and replace avatars
+  function startPeriodicAvatarCheck() {
+    // Initial check
+    replaceUserAvatars();
+
+    // Set up periodic check every 3 seconds
+    setInterval(() => {
+      replaceUserAvatars();
+    }, 1500);
   }
 
   function validateAndReplaceAvatar(userId, url) {
@@ -1656,7 +1743,6 @@
 
   function toggleGhostedPosts() {
     showGhostedPosts = !showGhostedPosts;
-    GM_setValue("showGhostedPosts", showGhostedPosts);
 
     const buttons = document.querySelectorAll(".show-ghosted-posts");
     buttons.forEach((btn) => {
@@ -1777,13 +1863,14 @@
     if (!window.location.href.includes("search.php?search_id=newposts")) return;
 
     try {
-      // Get the target container and store original avatars
-      const targetList = document.querySelector(".topiclist.topics");
-      if (!targetList) return;
+      // Get the inner div we want to replace
+      const pagebody = document.querySelector("#page-body");
+      const innerDiv = pagebody.querySelector(".inner:not(.column1)");
+      if (!innerDiv) return;
 
-      // Store original avatars before removing rows
+      // Store original avatars before removing content
       const originalAvatars = new Map();
-      targetList.querySelectorAll("li.row").forEach((row) => {
+      innerDiv.querySelectorAll("li.row").forEach((row) => {
         const userLinks = row.querySelectorAll(
           "a.username, a.username-coloured"
         );
@@ -1798,11 +1885,6 @@
         });
       });
 
-      // Clear existing rows
-      while (targetList.firstChild) {
-        targetList.removeChild(targetList.firstChild);
-      }
-
       // Fetch the RT page content
       const response = await fetch(
         "https://rpghq.org/forums/rt?recent_topics_start=0"
@@ -1811,19 +1893,75 @@
       const parser = new DOMParser();
       const rtDoc = parser.parseFromString(text, "text/html");
 
-      // Get the RT rows
-      const rtRows = Array.from(
-        rtDoc.querySelectorAll(".topiclist.topics li.row")
-      );
-      if (!rtRows.length) return;
+      // Get the RT inner div
+      const rtInner = rtDoc.querySelector(".inner:not(.column1)");
+      if (!rtInner) {
+        throw new Error("Could not find inner div in RT page");
+      }
 
-      // Process each RT row before injecting
-      rtRows.forEach((row) => {
-        // Fix the links to be absolute
-        row.querySelectorAll('a[href^="./"]').forEach((link) => {
-          link.href = link.href.replace("./", "https://rpghq.org/forums/");
-        });
+      // Create our clean container structure
+      const cleanContainer = document.createElement("div");
+      cleanContainer.className = "inner";
+      cleanContainer.innerHTML = `
+        <ul class="topiclist">
+            <li class="header">
+                <dl class="row-item">
+                    <dt><div class="list-inner">Recent Topics</div></dt>
+                    <dd class="posts">Replies</dd>
+                    <dd class="views">Views</dd>
+                    <dd class="lastpost content-processed"><span>Last post</span></dd>
+                </dl>
+            </li>
+        </ul>
+        <ul class="topiclist topics collapsible content-processed">
+        </ul>
+      `;
 
+      // Get the target ul where we'll insert rows
+      const targetList = cleanContainer.querySelector("ul.topiclist.topics");
+
+      // Get all rows from the RT page
+      const rtListItems = rtInner.querySelectorAll("li.row");
+      const firstPageCount = rtListItems.length;
+      console.log(`Found ${firstPageCount} topics on first RT page`);
+
+      // Clone and append each row to our clean container
+      rtListItems.forEach((row) => {
+        targetList.appendChild(row.cloneNode(true));
+      });
+
+      // If we found 35 items, get the second page
+      if (firstPageCount === 35) {
+        console.log("Found 35 items, fetching second page...");
+        // Fetch the second page
+        const secondResponse = await fetch(
+          "https://rpghq.org/forums/rt?recent_topics_start=35"
+        );
+        const secondText = await secondResponse.text();
+        const secondDoc = parser.parseFromString(secondText, "text/html");
+
+        // Get the second page's inner div
+        const secondInner = secondDoc.querySelector(".inner:not(.column1)");
+        if (secondInner) {
+          const secondPageItems = secondInner.querySelectorAll("li.row");
+          console.log(
+            `Found ${secondPageItems.length} topics on second RT page`
+          );
+
+          // Append each row from the second page
+          secondPageItems.forEach((row) => {
+            targetList.appendChild(row.cloneNode(true));
+          });
+        }
+      }
+
+      // Fix the links to be absolute in our clean container
+      cleanContainer.querySelectorAll('a[href^="./"]').forEach((link) => {
+        link.href = link.href.replace("./", "https://rpghq.org/forums/");
+      });
+
+      // Process each row to update unread status and links
+      cleanContainer.querySelectorAll("li.row").forEach((row) => {
         // Fix forum hierarchy display
         const responsiveHide = row.querySelector(".responsive-hide");
         if (responsiveHide) {
@@ -1881,10 +2019,10 @@
             }
           }
         }
-
-        // Add the row to the target list
-        targetList.appendChild(row);
       });
+
+      // Replace the inner div content
+      innerDiv.innerHTML = cleanContainer.innerHTML;
     } catch (error) {
       console.error("Failed to inject RT content:", error);
     }
@@ -1899,6 +2037,9 @@
     isMobileDevice = detectMobile();
 
     createTooltip();
+
+    // Start periodic avatar checking
+    startPeriodicAvatarCheck();
 
     // Inject RT content first
     await injectRTContent();
