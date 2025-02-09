@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      4.7.3
+// @version      4.7.4
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -703,6 +703,11 @@
     const quoteMatches = content.match(/\[quote=([^\]]+)/g);
     if (quoteMatches) {
       for (const q of quoteMatches) {
+        // Check for user_id in the quote
+        const userIdMatch = q.match(/user_id=(\d+)/);
+        if (userIdMatch && isUserIgnored(userIdMatch[1])) return true;
+
+        // Also check username as fallback
         const quotedName = q.replace("[quote=", "").split(" ")[0];
         if (isUserIgnored(quotedName)) return true;
       }
