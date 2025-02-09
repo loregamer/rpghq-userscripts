@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.5
+// @version      3.5.1
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -288,7 +288,7 @@ SOFTWARE.
     section.className = "forabg";
     section.innerHTML = `
       <div class="inner">
-        <ul class="topiclist">
+        <ul class="topiclist content-processed">
           <li class="header">
             <dl class="row-item">
               <dt><div class="list-inner">Pinned Topics</div></dt>
@@ -298,7 +298,7 @@ SOFTWARE.
             </dl>
           </li>
         </ul>
-        <ul class="topiclist topics" id="pinned-threads-list"></ul>
+        <ul class="topiclist topics content-processed" id="pinned-threads-list"></ul>
       </div>
     `;
     return section;
@@ -306,7 +306,7 @@ SOFTWARE.
 
   function createLoadingListItem(threadId) {
     return `
-      <li class="row bg1" id="pinned-thread-${threadId}">
+      <li class="row bg1 content-processed" id="pinned-thread-${threadId}">
         <dl class="row-item topic_read">
           <dt>
             <div class="list-inner">
@@ -344,7 +344,7 @@ SOFTWARE.
         : "";
 
     return `
-      <li class="row bg1" id="pinned-thread-${threadId}">
+      <li class="row bg1 content-processed" id="pinned-thread-${threadId}">
         <dl class="row-item topic_read">
           <dt>
             <div class="list-inner">
@@ -486,6 +486,11 @@ SOFTWARE.
 
     const row = doc.querySelector(".row");
     if (!row) return rowHTML;
+
+    // Add content-processed class if it's not already there
+    if (!row.classList.contains("content-processed")) {
+      row.classList.add("content-processed");
+    }
 
     // Change "sticky_" classes to "topic_"
     row.querySelectorAll('*[class*="sticky_"]').forEach((element) => {
@@ -641,7 +646,7 @@ SOFTWARE.
 
   function createErrorListItemHTML(threadId) {
     return `
-      <li class="row bg1" id="pinned-thread-${threadId}">
+      <li class="row bg1 content-processed" id="pinned-thread-${threadId}">
         <dl class="row-item topic_read">
           <dt>
             <div class="list-inner">
