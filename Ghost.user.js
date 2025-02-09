@@ -1822,6 +1822,45 @@
         });
       });
 
+      // Clear the existing content and set up our structure immediately
+      innerDiv.innerHTML = `
+        <ul class="topiclist">
+            <li class="header">
+                <dl class="row-item">
+                    <dt><div class="list-inner">Recent Topics</div></dt>
+                    <dd class="posts">Replies</dd>
+                    <dd class="views">Views</dd>
+                    <dd class="lastpost content-processed"><span>Last post</span></dd>
+                </dl>
+            </li>
+        </ul>
+        <ul class="topiclist topics collapsible">
+        </ul>
+      `;
+
+      // Get our target list for rows
+      const targetList = innerDiv.querySelector("ul.topiclist.topics");
+
+      // Add animation styles
+      const animationStyle = document.createElement("style");
+      animationStyle.textContent = `
+        @keyframes fadeInRow {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .row-fade-in {
+          animation: fadeInRow 0.3s ease-out forwards;
+          opacity: 0;
+        }
+      `;
+      document.head.appendChild(animationStyle);
+
       // Fetch the RT page content
       const response = await fetch(
         "https://rpghq.org/forums/rt?recent_topics_start=0"
@@ -1836,36 +1875,29 @@
         throw new Error("Could not find inner div in RT page");
       }
 
-      // Create our clean container structure
-      const cleanContainer = document.createElement("div");
-      cleanContainer.className = "inner";
-      cleanContainer.innerHTML = `
-        <ul class="topiclist">
-            <li class="header">
-                <dl class="row-item">
-                    <dt><div class="list-inner">Recent Topics</div></dt>
-                    <dd class="posts">Replies</dd>
-                    <dd class="views">Views</dd>
-                    <dd class="lastpost content-processed"><span>Last post</span></dd>
-                </dl>
-            </li>
-        </ul>
-        <ul class="topiclist topics collapsible content-processed">
-        </ul>
-      `;
-
-      // Get the target ul where we'll insert rows
-      const targetList = cleanContainer.querySelector("ul.topiclist.topics");
-
       // Get all rows from the RT page
       const rtListItems = rtInner.querySelectorAll("li.row");
       const firstPageCount = rtListItems.length;
       console.log(`Found ${firstPageCount} topics on first RT page`);
 
-      // Clone and append each row to our clean container
-      rtListItems.forEach((row) => {
-        targetList.appendChild(row.cloneNode(true));
-      });
+      // Function to insert a row with animation
+      async function insertRowWithAnimation(row, delay, isFirst = false) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        const clonedRow = row.cloneNode(true);
+        clonedRow.classList.add("row-fade-in");
+        targetList.appendChild(clonedRow);
+
+        // If this is the first row, mark the container as processed
+        if (isFirst) {
+          targetList.classList.add("content-processed");
+        }
+      }
+
+      // Insert first page rows with animation
+      const promises = Array.from(rtListItems).map((row, index) =>
+        insertRowWithAnimation(row, index * 50, index === 0)
+      );
+      await Promise.all(promises);
 
       // If we found 35 items, get the second page
       if (firstPageCount === 35) {
@@ -1885,10 +1917,11 @@
             `Found ${secondPageItems.length} topics on second RT page`
           );
 
-          // Append each row from the second page
-          secondPageItems.forEach((row) => {
-            targetList.appendChild(row.cloneNode(true));
-          });
+          // Insert second page rows with animation
+          const secondPagePromises = Array.from(secondPageItems).map(
+            (row, index) => insertRowWithAnimation(row, index * 50)
+          );
+          await Promise.all(secondPagePromises);
         }
       }
 
