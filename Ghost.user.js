@@ -50,7 +50,7 @@
   let replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   let postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
   let userColors = GM_getValue("userColors", {}); // username => color
-  let showGhostedPosts = GM_getValue("showGhostedPosts", false); // New preference
+  let showGhostedPosts = false; // Always start hidden
 
   // Clear expired cache entries (older than 24h)
   const now = Date.now();
@@ -1743,7 +1743,6 @@
 
   function toggleGhostedPosts() {
     showGhostedPosts = !showGhostedPosts;
-    GM_setValue("showGhostedPosts", showGhostedPosts);
 
     const buttons = document.querySelectorAll(".show-ghosted-posts");
     buttons.forEach((btn) => {
