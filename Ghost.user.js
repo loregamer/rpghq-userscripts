@@ -1859,12 +1859,38 @@
 
       // Get all rows from the RT page
       const rtListItems = rtInner.querySelectorAll("li.row");
-      console.log(`Found ${rtListItems.length} topics on RT page`);
+      const firstPageCount = rtListItems.length;
+      console.log(`Found ${firstPageCount} topics on first RT page`);
 
       // Clone and append each row to our clean container
       rtListItems.forEach((row) => {
         targetList.appendChild(row.cloneNode(true));
       });
+
+      // If we found 35 items, get the second page
+      if (firstPageCount === 35) {
+        console.log("Found 35 items, fetching second page...");
+        // Fetch the second page
+        const secondResponse = await fetch(
+          "https://rpghq.org/forums/rt?recent_topics_start=35"
+        );
+        const secondText = await secondResponse.text();
+        const secondDoc = parser.parseFromString(secondText, "text/html");
+
+        // Get the second page's inner div
+        const secondInner = secondDoc.querySelector(".inner:not(.column1)");
+        if (secondInner) {
+          const secondPageItems = secondInner.querySelectorAll("li.row");
+          console.log(
+            `Found ${secondPageItems.length} topics on second RT page`
+          );
+
+          // Append each row from the second page
+          secondPageItems.forEach((row) => {
+            targetList.appendChild(row.cloneNode(true));
+          });
+        }
+      }
 
       // Fix the links to be absolute in our clean container
       cleanContainer.querySelectorAll('a[href^="./"]').forEach((link) => {
