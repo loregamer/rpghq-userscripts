@@ -716,6 +716,16 @@
   }
 
   function cleanupTopicAuthor(element) {
+    // First remove any author-name-* classes from the row
+    const row = element.closest("li.row");
+    if (row) {
+      Array.from(row.classList).forEach((cls) => {
+        if (cls.startsWith("author-name-")) {
+          row.classList.remove(cls);
+        }
+      });
+    }
+
     const responsiveHide = element.querySelector(".responsive-hide");
     if (!responsiveHide) return;
 
@@ -777,9 +787,6 @@
     // Check for any row element
     const rowItem = element.closest("li.row");
     if (rowItem) {
-      // Clean up responsive-hide if needed
-      cleanupTopicAuthor(rowItem);
-
       // Check if this is from Moderation Station or Chat With Staff
       const forumLinks = rowItem.querySelectorAll(
         ".forum-links a, .responsive-hide a"
@@ -1414,6 +1421,9 @@
 
   // This runs once after DOMContentLoaded
   async function processIgnoredContentOnce() {
+    // First, clean up all topic authors before any other processing
+    document.querySelectorAll("li.row").forEach(cleanupTopicAuthor);
+
     // Prefetch post data for last posts
     await cacheAllPosts();
 
