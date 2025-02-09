@@ -1836,13 +1836,43 @@
         throw new Error("Could not find inner div in RT page");
       }
 
-      // Fix the links to be absolute
-      rtInner.querySelectorAll('a[href^="./"]').forEach((link) => {
+      // Create our clean container structure
+      const cleanContainer = document.createElement("div");
+      cleanContainer.className = "inner";
+      cleanContainer.innerHTML = `
+        <ul class="topiclist">
+            <li class="header">
+                <dl class="row-item">
+                    <dt><div class="list-inner">Recent Topics</div></dt>
+                    <dd class="posts">Replies</dd>
+                    <dd class="views">Views</dd>
+                    <dd class="lastpost content-processed"><span>Last post</span></dd>
+                </dl>
+            </li>
+        </ul>
+        <ul class="topiclist topics collapsible content-processed">
+        </ul>
+      `;
+
+      // Get the target ul where we'll insert rows
+      const targetList = cleanContainer.querySelector("ul.topiclist.topics");
+
+      // Get all rows from the RT page
+      const rtListItems = rtInner.querySelectorAll("li.row");
+      console.log(`Found ${rtListItems.length} topics on RT page`);
+
+      // Clone and append each row to our clean container
+      rtListItems.forEach((row) => {
+        targetList.appendChild(row.cloneNode(true));
+      });
+
+      // Fix the links to be absolute in our clean container
+      cleanContainer.querySelectorAll('a[href^="./"]').forEach((link) => {
         link.href = link.href.replace("./", "https://rpghq.org/forums/");
       });
 
       // Process each row to update unread status and links
-      rtInner.querySelectorAll("li.row").forEach((row) => {
+      cleanContainer.querySelectorAll("li.row").forEach((row) => {
         // Fix forum hierarchy display
         const responsiveHide = row.querySelector(".responsive-hide");
         if (responsiveHide) {
@@ -1903,7 +1933,7 @@
       });
 
       // Replace the inner div content
-      innerDiv.innerHTML = rtInner.innerHTML;
+      innerDiv.innerHTML = cleanContainer.innerHTML;
     } catch (error) {
       console.error("Failed to inject RT content:", error);
     }
