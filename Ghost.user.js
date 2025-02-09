@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      4.7
+// @version      4.7.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1439,6 +1439,17 @@
     });
   }
 
+  // New function to periodically check and replace avatars
+  function startPeriodicAvatarCheck() {
+    // Initial check
+    replaceUserAvatars();
+
+    // Set up periodic check every 3 seconds
+    setInterval(() => {
+      replaceUserAvatars();
+    }, 1500);
+  }
+
   function validateAndReplaceAvatar(userId, url) {
     const testImg = new Image();
     testImg.onload = function () {
@@ -1899,6 +1910,9 @@
     isMobileDevice = detectMobile();
 
     createTooltip();
+
+    // Start periodic avatar checking
+    startPeriodicAvatarCheck();
 
     // Inject RT content first
     await injectRTContent();
