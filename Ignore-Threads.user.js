@@ -650,6 +650,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       display: flex;
       justify-content: center;
       gap: 10px;
+      flex-wrap: wrap;
     `;
 
     // Mass Unignore button
@@ -678,26 +679,92 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       }
     };
 
-    // Export button
-    const exportButton = document.createElement("button");
-    exportButton.innerHTML =
-      '<i class="icon fa-download fa-fw" aria-hidden="true"></i> Export';
-    exportButton.style.cssText = massUnignoreButton.style.cssText;
-    exportButton.onclick = () => {
-      exportIgnoredThreads();
+    // Export uBlock button
+    const exportUblockButton = document.createElement("button");
+    exportUblockButton.innerHTML =
+      '<i class="icon fa-shield fa-fw" aria-hidden="true"></i> Export uBlock';
+    exportUblockButton.style.cssText = massUnignoreButton.style.cssText;
+    exportUblockButton.onclick = () => {
+      let uBlockFilters = "! RPGHQ Thread Ignorer - Ignored Threads\n";
+      for (const threadId in ignoredThreads) {
+        const threadTitle = escapeForUblock(ignoredThreads[threadId]);
+        uBlockFilters += `
+! Thread ID: ${threadId}
+! Thread Title: ${threadTitle}
+
+rpghq.org##ul.topiclist li:has(a:has-text(/${threadTitle}/))
+rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
+`;
+      }
+      const textBlob = new Blob([uBlockFilters], { type: "text/plain" });
+      const textUrl = URL.createObjectURL(textBlob);
+      const textLink = document.createElement("a");
+      textLink.href = textUrl;
+      textLink.download = "ignored_threads_ublock.txt";
+      document.body.appendChild(textLink);
+      textLink.click();
+      document.body.removeChild(textLink);
+      URL.revokeObjectURL(textUrl);
     };
 
-    // Import button
+    // Export JSON button
+    const exportJsonButton = document.createElement("button");
+    exportJsonButton.innerHTML =
+      '<i class="icon fa-download fa-fw" aria-hidden="true"></i> Export JSON';
+    exportJsonButton.style.cssText = massUnignoreButton.style.cssText;
+    exportJsonButton.onclick = () => {
+      const isMobile = window.innerWidth <= 700;
+      const exportData = JSON.stringify(ignoredThreads, null, 2); // Pretty print JSON with 2 spaces
+
+      if (isMobile) {
+        // On mobile, copy JSON directly to clipboard
+        navigator.clipboard
+          .writeText(exportData)
+          .then(() => {
+            alert("Ignored threads data copied to clipboard!");
+          })
+          .catch((err) => {
+            // Fallback for browsers that don't support clipboard API
+            const textarea = document.createElement("textarea");
+            textarea.value = exportData;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+              document.execCommand("copy");
+              alert("Ignored threads data copied to clipboard!");
+            } catch (e) {
+              alert(
+                "Failed to copy to clipboard. Your browser may not support this feature."
+              );
+            }
+            document.body.removeChild(textarea);
+          });
+      } else {
+        // On desktop, download JSON file
+        const jsonBlob = new Blob([exportData], { type: "application/json" });
+        const jsonUrl = URL.createObjectURL(jsonBlob);
+        const jsonLink = document.createElement("a");
+        jsonLink.href = jsonUrl;
+        jsonLink.download = "ignored_threads.json";
+        document.body.appendChild(jsonLink);
+        jsonLink.click();
+        document.body.removeChild(jsonLink);
+        URL.revokeObjectURL(jsonUrl);
+      }
+    };
+
+    // Import JSON button
     const importButton = document.createElement("button");
     importButton.innerHTML =
-      '<i class="icon fa-upload fa-fw" aria-hidden="true"></i> Import';
+      '<i class="icon fa-upload fa-fw" aria-hidden="true"></i> Import JSON';
     importButton.style.cssText = massUnignoreButton.style.cssText;
     importButton.onclick = () => {
       importIgnoredThreads();
     };
 
     bottomControls.appendChild(massUnignoreButton);
-    bottomControls.appendChild(exportButton);
+    bottomControls.appendChild(exportJsonButton);
+    bottomControls.appendChild(exportUblockButton);
     bottomControls.appendChild(importButton);
 
     // Assemble the popup
@@ -759,7 +826,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     hideIgnoredThreads();
     addIgnoreButton();
     addShowIgnoredThreadsButton();
-    // addToggleIgnoreModeButton();
+    addToggleIgnoreModeButton();
     if (ignoreModeActive) {
       updateIgnoreButtons();
     }
