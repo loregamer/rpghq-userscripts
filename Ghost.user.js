@@ -630,7 +630,7 @@
   function hideTopicRow(element) {
     const recentTopicLi = element.closest("#recent-topics li");
     if (recentTopicLi) {
-      recentTopicLi.style.display = "none";
+      recentTopicLi.classList.add("ghosted-row", "ghosted-by-author");
       return;
     }
     const rowItem = element.closest("li.row");
@@ -711,7 +711,7 @@
       }
       rowItem.classList.add("ghosted-row", "ghosted-by-content");
     } else {
-      element.style.display = "none";
+      element.classList.add("ghosted-row", "ghosted-by-author");
     }
   }
 
