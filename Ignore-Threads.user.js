@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      2.9
+// @version      2.9.1
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -405,21 +405,44 @@ SOFTWARE.
   }
 
   function exportIgnoredThreads() {
-    // Export JSON
-    const exportData = JSON.stringify(ignoredThreads);
-    const jsonBlob = new Blob([exportData], { type: "application/json" });
-    const jsonUrl = URL.createObjectURL(jsonBlob);
-    const jsonLink = document.createElement("a");
-    jsonLink.href = jsonUrl;
-    jsonLink.download = "ignored_threads.json";
-    document.body.appendChild(jsonLink);
-    jsonLink.click();
-    document.body.removeChild(jsonLink);
-    URL.revokeObjectURL(jsonUrl);
-
-    // Only export uBlock filters on non-mobile devices
     const isMobile = window.innerWidth <= 700;
-    if (!isMobile) {
+    const exportData = JSON.stringify(ignoredThreads, null, 2); // Pretty print JSON with 2 spaces
+
+    if (isMobile) {
+      // On mobile, copy JSON directly to clipboard
+      navigator.clipboard
+        .writeText(exportData)
+        .then(() => {
+          alert("Ignored threads data copied to clipboard!");
+        })
+        .catch((err) => {
+          // Fallback for browsers that don't support clipboard API
+          const textarea = document.createElement("textarea");
+          textarea.value = exportData;
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+            document.execCommand("copy");
+            alert("Ignored threads data copied to clipboard!");
+          } catch (e) {
+            alert(
+              "Failed to copy to clipboard. Your browser may not support this feature."
+            );
+          }
+          document.body.removeChild(textarea);
+        });
+    } else {
+      // On desktop, download JSON file
+      const jsonBlob = new Blob([exportData], { type: "application/json" });
+      const jsonUrl = URL.createObjectURL(jsonBlob);
+      const jsonLink = document.createElement("a");
+      jsonLink.href = jsonUrl;
+      jsonLink.download = "ignored_threads.json";
+      document.body.appendChild(jsonLink);
+      jsonLink.click();
+      document.body.removeChild(jsonLink);
+      URL.revokeObjectURL(jsonUrl);
+
       // Export uBlock Origin filters
       let uBlockFilters = "! RPGHQ Thread Ignorer - Ignored Threads\n";
       for (const threadId in ignoredThreads) {
