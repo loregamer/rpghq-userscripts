@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      2.3
+// @version      2.9
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -417,27 +417,31 @@ SOFTWARE.
     document.body.removeChild(jsonLink);
     URL.revokeObjectURL(jsonUrl);
 
-    // Export uBlock Origin filters
-    let uBlockFilters = "! RPGHQ Thread Ignorer - Ignored Threads\n";
-    for (const threadId in ignoredThreads) {
-      const threadTitle = escapeForUblock(ignoredThreads[threadId]);
-      uBlockFilters += `
+    // Only export uBlock filters on non-mobile devices
+    const isMobile = window.innerWidth <= 700;
+    if (!isMobile) {
+      // Export uBlock Origin filters
+      let uBlockFilters = "! RPGHQ Thread Ignorer - Ignored Threads\n";
+      for (const threadId in ignoredThreads) {
+        const threadTitle = escapeForUblock(ignoredThreads[threadId]);
+        uBlockFilters += `
 ! Thread ID: ${threadId}
 ! Thread Title: ${threadTitle}
 
 rpghq.org##ul.topiclist li:has(a:has-text(/${threadTitle}/))
 rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
 `;
+      }
+      const textBlob = new Blob([uBlockFilters], { type: "text/plain" });
+      const textUrl = URL.createObjectURL(textBlob);
+      const textLink = document.createElement("a");
+      textLink.href = textUrl;
+      textLink.download = "ignored_threads_ublock.txt";
+      document.body.appendChild(textLink);
+      textLink.click();
+      document.body.removeChild(textLink);
+      URL.revokeObjectURL(textUrl);
     }
-    const textBlob = new Blob([uBlockFilters], { type: "text/plain" });
-    const textUrl = URL.createObjectURL(textBlob);
-    const textLink = document.createElement("a");
-    textLink.href = textUrl;
-    textLink.download = "ignored_threads_ublock.txt";
-    document.body.appendChild(textLink);
-    textLink.click();
-    document.body.removeChild(textLink);
-    URL.revokeObjectURL(textUrl);
   }
 
   function importIgnoredThreads() {
