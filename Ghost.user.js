@@ -1498,14 +1498,14 @@
         <ul class="topiclist">
             <li class="header">
                 <dl class="row-item">
-                    <dt><div class="list-inner">Recent Topics</div></dt>
+                    <dt><div class="list-inner">Topics</div></dt>
                     <dd class="posts">Replies</dd>
                     <dd class="views">Views</dd>
                     <dd class="lastpost content-processed"><span>Last post</span></dd>
                 </dl>
             </li>
         </ul>
-        <ul class="topiclist topics collapsible content-processed">
+        <ul class="topiclist topics collapsible">
         </ul>
       `;
       const targetList = cleanContainer.querySelector("ul.topiclist.topics");
