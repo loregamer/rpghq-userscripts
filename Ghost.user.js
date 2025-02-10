@@ -1599,13 +1599,40 @@
     startPeriodicAvatarCheck();
     await injectRTContent();
     const needsFetching = await cacheAllPosts();
+
+    // Process li.row elements first
+    document.querySelectorAll("li.row").forEach((row) => {
+      const lp = row.querySelector("dd.lastpost");
+      if (lp && !lp.classList.contains("content-processed")) return;
+      row.classList.add("content-processed");
+    });
+
+    // Then process the containers, but only if all their li elements are processed
     if (!needsFetching) {
       document
         .querySelectorAll(
           ".topiclist.topics, #recent-topics, .topiclist.forums"
         )
-        .forEach((container) => container.classList.add("content-processed"));
+        .forEach((container) => {
+          // For topiclist.topics, only add content-processed if all li's are processed
+          if (
+            container.classList.contains("topiclist") &&
+            container.classList.contains("topics")
+          ) {
+            const allLis = container.querySelectorAll("li.row");
+            const allProcessed = Array.from(allLis).every((li) =>
+              li.classList.contains("content-processed")
+            );
+            if (allProcessed) {
+              container.classList.add("content-processed");
+            }
+          } else {
+            // For other containers, proceed as before
+            container.classList.add("content-processed");
+          }
+        });
     }
+
     await processIgnoredContentOnce();
     replaceUserAvatars();
     addShowGhostedPostsButton();
@@ -1613,8 +1640,25 @@
     processOnlineList();
     moveExternalLinkIcon();
     cleanGhostedQuotesInTextarea();
+
+    // Final pass to ensure all containers are marked as processed, with the same li check
     document
       .querySelectorAll(".topiclist.topics, #recent-topics, .topiclist.forums")
-      .forEach((container) => container.classList.add("content-processed"));
+      .forEach((container) => {
+        if (
+          container.classList.contains("topiclist") &&
+          container.classList.contains("topics")
+        ) {
+          const allLis = container.querySelectorAll("li.row");
+          const allProcessed = Array.from(allLis).every((li) =>
+            li.classList.contains("content-processed")
+          );
+          if (allProcessed) {
+            container.classList.add("content-processed");
+          }
+        } else {
+          container.classList.add("content-processed");
+        }
+      });
   });
 })();
