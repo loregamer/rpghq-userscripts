@@ -1614,10 +1614,11 @@
           ".topiclist.topics, #recent-topics, .topiclist.forums"
         )
         .forEach((container) => {
-          // For topiclist.topics, only add content-processed if all li's are processed
+          // For topiclist.topics and recent-topics, only add content-processed if all li's are processed
           if (
-            container.classList.contains("topiclist") &&
-            container.classList.contains("topics")
+            (container.classList.contains("topiclist") &&
+              container.classList.contains("topics")) ||
+            container.id === "recent-topics"
           ) {
             const allLis = container.querySelectorAll("li.row");
             const allProcessed = Array.from(allLis).every((li) =>
@@ -1646,8 +1647,9 @@
       .querySelectorAll(".topiclist.topics, #recent-topics, .topiclist.forums")
       .forEach((container) => {
         if (
-          container.classList.contains("topiclist") &&
-          container.classList.contains("topics")
+          (container.classList.contains("topiclist") &&
+            container.classList.contains("topics")) ||
+          container.id === "recent-topics"
         ) {
           const allLis = container.querySelectorAll("li.row");
           const allProcessed = Array.from(allLis).every((li) =>
