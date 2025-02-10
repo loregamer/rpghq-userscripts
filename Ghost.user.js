@@ -70,7 +70,7 @@
     fieldset.polls:not(.content-processed),
     .topiclist.topics:not(.content-processed) {
       position: relative;
-      min-height: 32px;
+      min-height: 64px;
     }
     #recent-topics:not(.content-processed)::after,
     .topiclist.forums:not(.content-processed)::after,
