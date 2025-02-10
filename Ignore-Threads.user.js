@@ -227,7 +227,8 @@ SOFTWARE.
 
   function isThreadIgnored(threadTitle) {
     return Object.values(ignoredThreads).some(
-      (ignoredTitle) => ignoredTitle.toLowerCase() === threadTitle.toLowerCase()
+      (threadData) =>
+        threadData.title.toLowerCase() === threadTitle.toLowerCase()
     );
   }
 
