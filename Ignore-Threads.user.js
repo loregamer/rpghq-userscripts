@@ -171,11 +171,8 @@ SOFTWARE.
     // Fetch the latest data from storage
     let currentIgnoredThreads = GM_getValue("ignoredThreads", {});
 
-    // Add the new thread to the current list with URL
-    currentIgnoredThreads[threadId] = {
-      title: threadTitle,
-      url: `https://rpghq.org/forums/viewtopic.php?t=${threadId}`,
-    };
+    // Add the new thread to the current list
+    currentIgnoredThreads[threadId] = threadTitle;
 
     // Save the updated list back to storage
     GM_setValue("ignoredThreads", currentIgnoredThreads);
@@ -227,8 +224,7 @@ SOFTWARE.
 
   function isThreadIgnored(threadTitle) {
     return Object.values(ignoredThreads).some(
-      (threadData) =>
-        threadData.title.toLowerCase() === threadTitle.toLowerCase()
+      (ignoredTitle) => ignoredTitle.toLowerCase() === threadTitle.toLowerCase()
     );
   }
 
