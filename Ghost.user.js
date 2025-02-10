@@ -1394,6 +1394,23 @@
       .querySelectorAll(".ghosted-row")
       .forEach((r) => r.classList.toggle("show", showGhostedPosts));
     document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
+
+    // If we're showing ghosted content, scroll to the first shown element
+    if (showGhostedPosts) {
+      // Find the first shown element, checking in order of posts, quotes, then rows
+      const firstShownElement =
+        document.querySelector(".post.ghosted-post.show") ||
+        document.querySelector(".ghosted-quote.show") ||
+        document.querySelector(".ghosted-row.show");
+
+      if (firstShownElement) {
+        // Scroll the element into view with smooth behavior
+        firstShownElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }
+    }
   }
 
   // ---------------------------------------------------------------------
