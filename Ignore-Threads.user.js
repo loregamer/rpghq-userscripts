@@ -261,7 +261,14 @@ SOFTWARE.
         ? "icon fa-toggle-on fa-fw"
         : "icon fa-toggle-off fa-fw";
     }
-    updateIgnoreButtons();
+    if (ignoreModeActive) {
+      updateIgnoreButtons();
+    } else {
+      // Remove all quick ignore buttons when turning off mass ignore mode
+      document
+        .querySelectorAll(".quick-ignore-button")
+        .forEach((button) => button.remove());
+    }
   }
 
   function addToggleIgnoreModeButton() {
