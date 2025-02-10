@@ -18,7 +18,7 @@
 (function () {
   "use strict";
 
-  // Inject a small inline script to override the page’s activeNotifications update interval.
+  // Inject a small inline script to override the page's activeNotifications update interval.
   const overrideCode = `(${function () {
     function overrideUpdateInterval() {
       if (
@@ -67,13 +67,15 @@
        ----------------------------------------------------------------- */
     #recent-topics:not(.content-processed),
     .topiclist.forums:not(.content-processed),
-    fieldset.polls:not(.content-processed) {
+    fieldset.polls:not(.content-processed),
+    .topiclist.topics:not(.content-processed) {
       position: relative;
       min-height: 32px;
     }
     #recent-topics:not(.content-processed)::after,
     .topiclist.forums:not(.content-processed)::after,
-    fieldset.polls:not(.content-processed)::after {
+    fieldset.polls:not(.content-processed)::after,
+    .topiclist.topics:not(.content-processed)::after {
       content: "";
       position: absolute;
       top: 16px;
@@ -99,6 +101,7 @@
     /* Hide child elements in these containers until processed */
     #recent-topics:not(.content-processed) > *:not(style),
     .topiclist.forums:not(.content-processed) > *:not(style),
+    .topiclist.topics:not(.content-processed) > *:not(style),
     fieldset.polls:not(.content-processed) > *:not(style) {
       visibility: hidden;
     }
@@ -115,7 +118,7 @@
     }
     /* Hide list rows until they are processed */
     li.row:not(.content-processed) {
-      visibility: hidden;
+      display: none !important;
     }
 
     /* -----------------------------------------------------------------
