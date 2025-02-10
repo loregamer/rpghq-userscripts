@@ -321,7 +321,7 @@ SOFTWARE.
               const threadId = threadLink.href.match(/[?&]t=(\d+)/)[1];
               const threadTitle = threadLink.textContent.trim();
               ignoreThread(threadId, threadTitle);
-              item.style.display = "none";
+              item.remove();
             }
           });
         }
