@@ -155,8 +155,8 @@
     body[class*="viewforum-"] .ghosted-row {
       display: block !important;
     }
-    .topiclist.forums .ghosted-row dd.lastpost,
-    body[class*="viewforum-"] .ghosted-row dd.lastpost {
+    .topiclist.forums .ghosted-row:not(.show) dd.lastpost,
+    body[class*="viewforum-"] .ghosted-row:not(.show) dd.lastpost {
       display: none !important;
     }
     .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-author,
