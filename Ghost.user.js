@@ -1471,30 +1471,9 @@
       const pagebody = document.querySelector("#page-body");
       const innerDiv = pagebody.querySelector(".inner:not(.column1)");
       if (!innerDiv) return;
-      const originalAvatars = new Map();
-      innerDiv.querySelectorAll("li.row").forEach((row) => {
-        const userLinks = row.querySelectorAll(
-          "a.username, a.username-coloured"
-        );
-        userLinks.forEach((link) => {
-          const userId = link.href.match(/u=(\d+)/)?.[1];
-          if (userId) {
-            const avatar = row.querySelector("img.avatar");
-            if (avatar) originalAvatars.set(userId, avatar.src);
-          }
-        });
-      });
-      const response = await fetch(
-        "https://rpghq.org/forums/rt?recent_topics_start=0"
-      );
-      const text = await response.text();
-      const parser = new DOMParser();
-      const rtDoc = parser.parseFromString(text, "text/html");
-      const rtInner = rtDoc.querySelector(".inner:not(.column1)");
-      if (!rtInner) throw new Error("Could not find inner div in RT page");
-      const cleanContainer = document.createElement("div");
-      cleanContainer.className = "inner";
-      cleanContainer.innerHTML = `
+
+      // Immediately replace with loading state
+      innerDiv.innerHTML = `
         <ul class="topiclist">
             <li class="header">
                 <dl class="row-item">
@@ -1508,12 +1487,24 @@
         <ul class="topiclist topics collapsible">
         </ul>
       `;
-      const targetList = cleanContainer.querySelector("ul.topiclist.topics");
+
+      const originalAvatars = new Map();
+      const response = await fetch(
+        "https://rpghq.org/forums/rt?recent_topics_start=0"
+      );
+      const text = await response.text();
+      const parser = new DOMParser();
+      const rtDoc = parser.parseFromString(text, "text/html");
+      const rtInner = rtDoc.querySelector(".inner:not(.column1)");
+      if (!rtInner) throw new Error("Could not find inner div in RT page");
+
+      const targetList = innerDiv.querySelector("ul.topiclist.topics");
       const rtListItems = rtInner.querySelectorAll("li.row");
       console.log(`Found ${rtListItems.length} topics on first RT page`);
       rtListItems.forEach((row) => {
         targetList.appendChild(row.cloneNode(true));
       });
+
       if (rtListItems.length === 35) {
         console.log("Found 35 items, fetching second page...");
         const secondResponse = await fetch(
@@ -1532,10 +1523,12 @@
           });
         }
       }
-      cleanContainer.querySelectorAll('a[href^="./"]').forEach((link) => {
+
+      innerDiv.querySelectorAll('a[href^="./"]').forEach((link) => {
         link.href = link.href.replace("./", "https://rpghq.org/forums/");
       });
-      cleanContainer.querySelectorAll("li.row").forEach((row) => {
+
+      innerDiv.querySelectorAll("li.row").forEach((row) => {
         const responsiveHide = row.querySelector(".responsive-hide");
         if (responsiveHide) {
           const otherLink = responsiveHide.querySelector('a[href$="f=11"]');
@@ -1548,6 +1541,7 @@
             otherLink.remove();
           }
         }
+
         const isUnread =
           row.querySelector(".row-item").classList.contains("topic_unread") ||
           row
@@ -1561,6 +1555,7 @@
             .querySelector(".row-item")
             .classList.contains("sticky_unread_mine") ||
           row.querySelector(".row-item").classList.contains("announce_unread");
+
         const topicTitle = row.querySelector("a.topictitle");
         if (topicTitle) {
           if (isUnread) {
@@ -1583,7 +1578,6 @@
           }
         }
       });
-      innerDiv.innerHTML = cleanContainer.innerHTML;
     } catch (error) {
       console.error("Failed to inject RT content:", error);
     }
