@@ -293,43 +293,65 @@ SOFTWARE.
   }
 
   function updateIgnoreButtons() {
+    if (!ignoreModeActive) return;
+
     const threadItems = document.querySelectorAll(
       ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
     );
     threadItems.forEach((item) => {
       const existingButton = item.querySelector(".quick-ignore-button");
-      if (ignoreModeActive) {
-        if (!existingButton) {
-          const button = createIgnoreButton();
+      if (!existingButton) {
+        const button = createIgnoreButton();
 
-          // Position the button in the center vertically and on the right
-          button.style.cssText = `
-            position: absolute;
-            right: 5px;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 10;
-          `;
+        // Position the button in the center vertically and on the right
+        button.style.cssText = `
+          position: absolute;
+          right: 5px;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 10;
+        `;
 
-          item.style.position = "relative";
-          item.appendChild(button);
+        item.style.position = "relative";
+        item.appendChild(button);
 
-          button.addEventListener("click", function (e) {
-            e.stopPropagation();
-            const threadLink = item.querySelector("a.topictitle");
-            if (threadLink) {
-              const threadId = threadLink.href.match(/[?&]t=(\d+)/)[1];
-              const threadTitle = threadLink.textContent.trim();
-              ignoreThread(threadId, threadTitle);
-              item.remove();
-            }
-          });
-        }
-      } else if (existingButton) {
-        existingButton.remove();
+        button.addEventListener("click", function (e) {
+          e.stopPropagation();
+          const threadLink = item.querySelector("a.topictitle");
+          if (threadLink) {
+            const threadId = threadLink.href.match(/[?&]t=(\d+)/)[1];
+            const threadTitle = threadLink.textContent.trim();
+            ignoreThread(threadId, threadTitle);
+            item.remove();
+          }
+        });
       }
     });
   }
+
+  // Add mutation observer to detect new thread items
+  const threadObserver = new MutationObserver((mutations) => {
+    if (ignoreModeActive) {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            // Check if the added node is a thread item or contains thread items
+            const threadItems = node.matches(
+              ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
+            )
+              ? [node]
+              : node.querySelectorAll(
+                  ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
+                );
+
+            if (threadItems.length > 0) {
+              updateIgnoreButtons();
+            }
+          }
+        });
+      });
+    }
+  });
 
   function createIgnoreButton() {
     const button = document.createElement("button");
@@ -654,8 +676,20 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     if (ignoreModeActive) {
       updateIgnoreButtons();
     }
+
+    // Set up the mutation observer once the body exists
+    if (document.body) {
+      threadObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    }
   }
 
   // Initialize when DOM is ready
-  document.addEventListener("DOMContentLoaded", initializeScript);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeScript);
+  } else {
+    initializeScript();
+  }
 })();
