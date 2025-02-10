@@ -461,50 +461,6 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     input.click();
   }
 
-  function addExportImportButtons() {
-    const dropdown = document.querySelector(
-      "#username_logged_in .dropdown-contents"
-    );
-    if (dropdown) {
-      // Export button
-      if (!document.getElementById("export-ignored-threads-button")) {
-        const exportListItem = document.createElement("li");
-        const exportButton = document.createElement("a");
-        exportButton.id = "export-ignored-threads-button";
-        exportButton.href = "#";
-        exportButton.title = "Export Ignored Threads";
-        exportButton.role = "menuitem";
-        exportButton.innerHTML =
-          '<i class="icon fa-download fa-fw" aria-hidden="true"></i><span>Export Ignored Threads</span>';
-        exportButton.addEventListener("click", function (e) {
-          e.preventDefault();
-          exportIgnoredThreads();
-        });
-        exportListItem.appendChild(exportButton);
-        dropdown.insertBefore(exportListItem, dropdown.lastElementChild);
-      }
-
-      // Import button
-      if (!document.getElementById("import-ignored-threads-button")) {
-        const importListItem = document.createElement("li");
-        const importButton = document.createElement("a");
-        importButton.id = "import-ignored-threads-button";
-        importButton.href = "#";
-        importButton.title = "Import Ignored Threads";
-        importButton.role = "menuitem";
-        importButton.innerHTML =
-          '<i class="icon fa-upload fa-fw" aria-hidden="true"></i><span>Import Ignored Threads</span>';
-        importButton.addEventListener("click", function (e) {
-          e.preventDefault();
-          importIgnoredThreads();
-        });
-        importListItem.appendChild(importButton);
-        dropdown.insertBefore(importListItem, dropdown.lastElementChild);
-      }
-    }
-  }
-
-  // NEW: Revamped Review Ignored Threads Overlay
   function showIgnoredThreadsPopup() {
     // Create popup container
     const popup = document.createElement("div");
@@ -538,7 +494,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       align-items: center;
     `;
     const title = document.createElement("h2");
-    title.textContent = "Review Ignored Threads";
+    title.textContent = "Ignored Threads";
     title.style.cssText = "margin: 0; color: #c5d0db; font-size: 1.2em;";
     const closeButton = document.createElement("button");
     closeButton.textContent = "×";
@@ -684,16 +640,22 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     }
     renderThreadList();
 
-    // Bottom controls with "Unignore All" button
+    // Bottom controls with buttons
     const bottomControls = document.createElement("div");
     bottomControls.style.cssText = `
       padding: 10px;
       background-color: #2a2e36;
       border-top: 1px solid #3a3f4b;
       text-align: center;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
     `;
+
+    // Mass Unignore button
     const massUnignoreButton = document.createElement("button");
-    massUnignoreButton.textContent = "Unignore All Threads";
+    massUnignoreButton.innerHTML =
+      '<i class="icon fa-trash fa-fw" aria-hidden="true"></i> Unignore All';
     massUnignoreButton.style.cssText = `
       background-color: #4a5464;
       color: #c5d0db;
@@ -701,6 +663,9 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       padding: 5px 10px;
       border-radius: 3px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
     `;
     massUnignoreButton.onclick = () => {
       if (confirm("Are you sure you want to unignore all threads?")) {
@@ -712,7 +677,28 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
         window.location.reload();
       }
     };
+
+    // Export button
+    const exportButton = document.createElement("button");
+    exportButton.innerHTML =
+      '<i class="icon fa-download fa-fw" aria-hidden="true"></i> Export';
+    exportButton.style.cssText = massUnignoreButton.style.cssText;
+    exportButton.onclick = () => {
+      exportIgnoredThreads();
+    };
+
+    // Import button
+    const importButton = document.createElement("button");
+    importButton.innerHTML =
+      '<i class="icon fa-upload fa-fw" aria-hidden="true"></i> Import';
+    importButton.style.cssText = massUnignoreButton.style.cssText;
+    importButton.onclick = () => {
+      importIgnoredThreads();
+    };
+
     bottomControls.appendChild(massUnignoreButton);
+    bottomControls.appendChild(exportButton);
+    bottomControls.appendChild(importButton);
 
     // Assemble the popup
     popup.appendChild(header);
@@ -774,7 +760,6 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     addIgnoreButton();
     addShowIgnoredThreadsButton();
     // addToggleIgnoreModeButton();
-    addExportImportButtons();
     if (ignoreModeActive) {
       updateIgnoreButtons();
     }
