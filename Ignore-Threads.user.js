@@ -228,43 +228,6 @@ SOFTWARE.
     );
   }
 
-  function resetIgnoredThreads() {
-    if (
-      confirm(
-        "Are you sure you want to reset all ignored threads? This action cannot be undone."
-      )
-    ) {
-      ignoredThreads = {};
-      GM_setValue("ignoredThreads", ignoredThreads);
-      alert("All ignored threads have been reset.");
-      window.location.reload(); // Reload the page to reflect changes
-    }
-  }
-
-  function addResetIgnoredThreadsButton() {
-    const dropdown = document.querySelector(
-      "#username_logged_in .dropdown-contents"
-    );
-    if (dropdown && !document.getElementById("reset-ignored-threads-button")) {
-      const listItem = document.createElement("li");
-      const resetButton = document.createElement("a");
-      resetButton.id = "reset-ignored-threads-button";
-      resetButton.href = "#";
-      resetButton.title = "Reset Ignored Threads";
-      resetButton.role = "menuitem";
-      resetButton.innerHTML =
-        '<i class="icon fa-refresh fa-fw" aria-hidden="true"></i><span>Reset Ignored Threads</span>';
-
-      resetButton.addEventListener("click", function (e) {
-        e.preventDefault();
-        resetIgnoredThreads();
-      });
-
-      listItem.appendChild(resetButton);
-      dropdown.insertBefore(listItem, dropdown.lastElementChild);
-    }
-  }
-
   function toggleIgnoreMode() {
     ignoreModeActive = !ignoreModeActive;
     GM_setValue("ignoreModeActive", ignoreModeActive);
@@ -606,7 +569,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
         totalTopics > 0
           ? ((ignoredCount / totalTopics) * 100).toFixed(2)
           : "N/A";
-      statsSection.innerHTML = `<strong>Ignored Threads:</strong> ${ignoredCount} &nbsp; | &nbsp; <strong>Percentage:</strong> ${percentage}%`;
+      statsSection.innerHTML = `<strong>Ignored Threads:</strong> ${ignoredCount} / ${totalTopics} &nbsp; | &nbsp; <strong>Percentage:</strong> ${percentage}%`;
     };
     updateStats();
 
@@ -809,7 +772,6 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
   function initializeScript() {
     hideIgnoredThreads();
     addIgnoreButton();
-    addResetIgnoredThreadsButton();
     addShowIgnoredThreadsButton();
     // addToggleIgnoreModeButton();
     addExportImportButtons();
