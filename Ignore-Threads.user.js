@@ -450,10 +450,38 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       reader.onload = function (e) {
         try {
           const importedData = JSON.parse(e.target.result);
-          ignoredThreads = importedData;
+          const currentIgnoredThreads = GM_getValue("ignoredThreads", {});
+
+          // Only add threads that don't exist in current ignored threads
+          const newThreads = Object.entries(importedData).reduce(
+            (acc, [key, value]) => {
+              if (!currentIgnoredThreads.hasOwnProperty(key)) {
+                acc[key] = value;
+              }
+              return acc;
+            },
+            {}
+          );
+
+          // Merge current threads with new ones
+          const mergedThreads = { ...currentIgnoredThreads, ...newThreads };
+
+          // Sort the merged threads by title
+          const sortedThreads = Object.fromEntries(
+            Object.entries(mergedThreads).sort(([, a], [, b]) =>
+              a.localeCompare(b)
+            )
+          );
+
+          ignoredThreads = sortedThreads;
           GM_setValue("ignoredThreads", ignoredThreads);
+
+          const newThreadsCount = Object.keys(newThreads).length;
+          const skippedCount =
+            Object.keys(importedData).length - newThreadsCount;
+
           alert(
-            "Ignored threads imported successfully. Refresh the page to see the changes."
+            `Import successful:\n${newThreadsCount} new threads added\n${skippedCount} duplicate threads skipped\nRefreshing page to apply changes.`
           );
           window.location.reload();
         } catch (error) {
