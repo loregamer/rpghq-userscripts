@@ -171,8 +171,11 @@ SOFTWARE.
     // Fetch the latest data from storage
     let currentIgnoredThreads = GM_getValue("ignoredThreads", {});
 
-    // Add the new thread to the current list
-    currentIgnoredThreads[threadId] = threadTitle;
+    // Add the new thread to the current list with URL
+    currentIgnoredThreads[threadId] = {
+      title: threadTitle,
+      url: `https://rpghq.org/forums/viewtopic.php?t=${threadId}`,
+    };
 
     // Save the updated list back to storage
     GM_setValue("ignoredThreads", currentIgnoredThreads);
@@ -240,7 +243,7 @@ SOFTWARE.
     if (ignoreModeActive) {
       updateIgnoreButtons();
     } else {
-      // Remove all quick ignore buttons when turning off mass ignore mode
+      // Remove all quick ignore buttons when turning off quick ignore mode
       document
         .querySelectorAll(".quick-ignore-button")
         .forEach((button) => button.remove());
@@ -256,13 +259,13 @@ SOFTWARE.
       const toggleButton = document.createElement("a");
       toggleButton.id = "toggle-ignore-mode-button";
       toggleButton.href = "#";
-      toggleButton.title = "Toggle Mass Ignore Mode";
+      toggleButton.title = "Toggle Quick Ignore Mode";
       toggleButton.role = "menuitem";
       toggleButton.innerHTML = `
         <i class="icon ${
           ignoreModeActive ? "fa-toggle-on" : "fa-toggle-off"
         } fa-fw" aria-hidden="true"></i>
-        <span>Mass Ignore Mode</span>
+        <span>Quick Ignore Mode</span>
       `;
 
       toggleButton.addEventListener("click", function (e) {
@@ -763,8 +766,8 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     };
 
     bottomControls.appendChild(massUnignoreButton);
-    bottomControls.appendChild(exportJsonButton);
     bottomControls.appendChild(exportUblockButton);
+    bottomControls.appendChild(exportJsonButton);
     bottomControls.appendChild(importButton);
 
     // Assemble the popup
@@ -790,10 +793,10 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       const showButton = document.createElement("a");
       showButton.id = "show-ignored-threads-button";
       showButton.href = "#";
-      showButton.title = "Review Ignored Threads";
+      showButton.title = "Ignored Threads";
       showButton.role = "menuitem";
       showButton.innerHTML =
-        '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>Review Ignored Threads</span>';
+        '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>Ignored Threads</span>';
 
       showButton.addEventListener("click", function (e) {
         e.preventDefault();
@@ -842,7 +845,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     }
   }
 
-  // Add mutation observer to detect new thread items (for mass ignore mode)
+  // Add mutation observer to detect new thread items (for quick ignore mode)
   const threadObserver = new MutationObserver((mutations) => {
     if (ignoreModeActive) {
       mutations.forEach((mutation) => {
