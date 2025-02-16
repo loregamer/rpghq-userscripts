@@ -105,6 +105,13 @@ SOFTWARE.
       topics: totalTopics,
     });
 
+    // Function to format numbers, only adding commas for 5+ digits
+    function formatStatNumber(num) {
+      return num.toString().length >= 5
+        ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        : num.toString();
+    }
+
     // Find and update the statistics block
     const statsBlock = document.querySelector(".stat-block.statistics");
     if (statsBlock) {
@@ -120,9 +127,9 @@ SOFTWARE.
         );
 
         if (membersMatch && newestMemberMatch) {
-          statsText.innerHTML = `Total posts <strong>${formatNumberWithCommas(
+          statsText.innerHTML = `Total posts <strong>${formatStatNumber(
             totalPosts
-          )}</strong> • Total topics <strong>${formatNumberWithCommas(
+          )}</strong> • Total topics <strong>${formatStatNumber(
             totalTopics
           )}</strong> • Total members <strong>${membersMatch[1]}</strong> • ${
             newestMemberMatch[1]
