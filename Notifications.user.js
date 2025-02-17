@@ -53,6 +53,7 @@ SOFTWARE.
     display: "inline-block",
     whiteSpace: "nowrap",
   };
+  const FETCH_DELAY = 500; // Add delay between fetches
 
   // --- Utility Functions ---
   const Utils = {
@@ -84,6 +85,8 @@ SOFTWARE.
       const match = (url || "").match(/p=(\d+)/);
       return match ? match[1] : null;
     },
+
+    sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   };
 
   // --- Storage Helpers ---
@@ -351,7 +354,16 @@ SOFTWARE.
             /in topic:/,
             `in <strong>${threadTitle}</strong>:`
           );
-          referenceElement.remove();
+
+          // Update the existing reference element with loading state
+          referenceElement.textContent = "Loading...";
+          Utils.styleReference(referenceElement);
+
+          // Queue the content fetch
+          this.queuePostContentFetch(
+            block.getAttribute("data-real-url") || block.href,
+            referenceElement
+          );
         }
 
         titleElement.innerHTML = titleElement.innerHTML
@@ -446,6 +458,36 @@ SOFTWARE.
 
         row.dataset.customized = "true";
       });
+    },
+
+    async queuePostContentFetch(url, placeholder) {
+      const postId = Utils.extractPostId(url);
+      if (!postId) {
+        placeholder.remove();
+        return;
+      }
+
+      // Check if we need to wait before next fetch
+      if (this.lastFetchTime) {
+        const timeSinceLastFetch = Date.now() - this.lastFetchTime;
+        if (timeSinceLastFetch < FETCH_DELAY) {
+          await Utils.sleep(FETCH_DELAY - timeSinceLastFetch);
+        }
+      }
+
+      try {
+        const postContent = await ReactionHandler.fetchPostContent(postId);
+        if (postContent && placeholder.parentNode) {
+          placeholder.textContent = postContent;
+        } else {
+          placeholder.remove();
+        }
+      } catch (error) {
+        console.error("Error fetching post content:", error);
+        placeholder.remove();
+      }
+
+      this.lastFetchTime = Date.now();
     },
   };
 
