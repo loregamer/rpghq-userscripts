@@ -345,13 +345,14 @@ SOFTWARE.
         );
         if (
           referenceElement &&
-          referenceElement.textContent.trim() === '"Modder Gossiping Thread"'
+          (titleText.includes("<strong>Reply</strong>") ||
+            titleText.includes("<strong>Quoted</strong>"))
         ) {
           const threadTitle = referenceElement.textContent
             .trim()
             .replace(/^"|"$/g, "");
           titleElement.innerHTML = titleElement.innerHTML.replace(
-            /in topic:/,
+            /in(?:\stopic)?:/,
             `in <strong>${threadTitle}</strong>:`
           );
 
@@ -428,14 +429,16 @@ SOFTWARE.
             const trimmedQuote =
               quote.length > 50 ? quote.substring(0, 50) + "..." : quote;
 
-            // Special handling for Modder Gossiping Thread
-            if (quote === "Modder Gossiping Thread") {
+            if (
+              titleText.includes("Reply</b>") ||
+              titleText.includes("Quoted</b>")
+            ) {
               titleText = titleText.replace(
-                /in topic:/,
-                'in <b style="color: #FFD866;">Modder Gossiping Thread</b>:'
+                /in(?:\stopic)?:/,
+                `in <b>${quote}</b>:`
               );
               // Remove the quoted title since we've incorporated it inline
-              titleText = titleText.replace(/ "Modder Gossiping Thread"/, "");
+              titleText = titleText.replace(/ "[^"]*"/, "");
             } else {
               titleText = titleText.replace(
                 /in topic: "([^"]*)"/,
