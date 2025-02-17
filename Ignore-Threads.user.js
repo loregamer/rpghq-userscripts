@@ -64,6 +64,15 @@ SOFTWARE.
     );
   }
 
+  function isUnreadThread(element) {
+    // Check if any of the element's classes contain "unread"
+    const dl = element.querySelector("dl");
+    return (
+      dl &&
+      Array.from(dl.classList).some((className) => className.includes("unread"))
+    );
+  }
+
   // Pre-hide ignored threads as early as possible
   function hideIgnoredThreadsEarly(mutations) {
     if (!shouldProcessPage()) return;
@@ -76,12 +85,14 @@ SOFTWARE.
       if (threadLink) {
         const threadTitle = threadLink.textContent.trim();
         if (isThreadIgnored(threadTitle)) {
-          // Mark as read before removing
-          const ids = extractLastPostIds(item);
-          if (ids) {
-            markRead(ids.topicId, ids.forumId, ids.postId);
+          // Only mark as read if it's an unread thread
+          if (isUnreadThread(item)) {
+            const ids = extractLastPostIds(item);
+            if (ids) {
+              markRead(ids.topicId, ids.forumId, ids.postId);
+            }
           }
-          // Remove after marking as read
+          // Remove after potentially marking as read
           item.remove();
         }
       }
