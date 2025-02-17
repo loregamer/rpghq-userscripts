@@ -154,6 +154,45 @@ SOFTWARE.
 
       return result;
     },
+
+    removeBBCode: (text) => {
+      // Remove all BBCode tags
+      let result = text
+        // Remove color tags
+        .replace(/\[color=[^\]]*\](.*?)\[\/color\]/gi, "$1")
+        // Remove size tags
+        .replace(/\[size=[^\]]*\](.*?)\[\/size\]/gi, "$1")
+        // Remove bold tags
+        .replace(/\[b\](.*?)\[\/b\]/gi, "$1")
+        // Remove italic tags
+        .replace(/\[i\](.*?)\[\/i\]/gi, "$1")
+        // Remove underline tags
+        .replace(/\[u\](.*?)\[\/u\]/gi, "$1")
+        // Remove strike tags
+        .replace(/\[s\](.*?)\[\/s\]/gi, "$1")
+        // Remove url tags with attributes
+        .replace(/\[url=[^\]]*\](.*?)\[\/url\]/gi, "$1")
+        // Remove simple url tags
+        .replace(/\[url\](.*?)\[\/url\]/gi, "$1")
+        // Remove img tags
+        .replace(/\[img\](.*?)\[\/img\]/gi, "")
+        // Remove media tags
+        .replace(/\[media\](.*?)\[\/media\]/gi, "")
+        // Remove code tags
+        .replace(/\[code\](.*?)\[\/code\]/gi, "$1")
+        // Remove list tags
+        .replace(/\[list\](.*?)\[\/list\]/gi, "$1")
+        .replace(/\[\*\]/gi, "")
+        // Remove quote tags (in case any remain)
+        .replace(/\[quote(?:=[^\]]*?)?\](.*?)\[\/quote\]/gi, "")
+        // Remove any remaining BBCode tags
+        .replace(/\[[^\]]*\]/g, "")
+        // Normalize whitespace
+        .replace(/\s+/g, " ")
+        .trim();
+
+      return result;
+    },
   };
 
   // --- Storage Helpers ---
@@ -300,12 +339,12 @@ SOFTWARE.
         if (postContent) {
           let referenceElement = block.querySelector(".notification-reference");
           if (referenceElement) {
-            referenceElement.textContent = postContent;
+            referenceElement.textContent = Utils.removeBBCode(postContent);
             Utils.styleReference(referenceElement);
           } else {
             referenceElement = Utils.createElement("span", {
               className: "notification-reference",
-              textContent: postContent,
+              textContent: Utils.removeBBCode(postContent),
             });
             Utils.styleReference(referenceElement);
             titleElement.appendChild(document.createElement("br"));
@@ -542,7 +581,7 @@ SOFTWARE.
       try {
         const postContent = await ReactionHandler.fetchPostContent(postId);
         if (postContent && placeholder.parentNode) {
-          placeholder.textContent = postContent;
+          placeholder.textContent = Utils.removeBBCode(postContent);
         } else {
           placeholder.remove();
         }
