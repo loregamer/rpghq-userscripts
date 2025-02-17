@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Notifications Customization
 // @namespace    http://tampermonkey.net/
-// @version      4.0
+// @version      4.1
 // @description  Customize RPGHQ notifications display
 // @author       LOREGAMER
 // @match        https://rpghq.org/*/*
@@ -10,6 +10,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
+// @grant        GM_listValues
 // @license     MIT
 // @updateURL    https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Notifications.user.js
 // @downloadURL  https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Notifications.user.js
@@ -251,6 +252,37 @@ SOFTWARE.
         JSON.stringify({ content, timestamp: Date.now() })
       );
     },
+
+    cleanupStorage: () => {
+      const lastCleanup = GM_getValue("last_storage_cleanup", 0);
+      const now = Date.now();
+
+      // Only cleanup if it's been more than 24 hours since last cleanup
+      if (now - lastCleanup >= ONE_DAY) {
+        // Get all stored keys
+        const allKeys = GM_listValues ? GM_listValues() : [];
+
+        allKeys.forEach((key) => {
+          if (key === "last_storage_cleanup") return;
+
+          const data = GM_getValue(key);
+          if (data) {
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.timestamp && now - parsed.timestamp >= ONE_DAY) {
+                GM_deleteValue(key);
+              }
+            } catch (e) {
+              // If we can't parse the data, it's probably corrupted, so delete it
+              GM_deleteValue(key);
+            }
+          }
+        });
+
+        // Update last cleanup timestamp
+        GM_setValue("last_storage_cleanup", now);
+      }
+    },
   };
 
   // --- Reaction Handling ---
@@ -488,7 +520,7 @@ SOFTWARE.
             .replace(/^"|"$/g, "");
           titleElement.innerHTML = titleElement.innerHTML.replace(
             /in(?:\stopic)?:/,
-            `<span style="font-size: 0.85em;">in</span> <strong>${threadTitle}</strong>:`
+            `<span style="font-size: 0.85em; padding: 0 0.25px;">in</span> <strong>${threadTitle}</strong>:`
           );
 
           // Update the existing reference element with loading state
@@ -506,7 +538,7 @@ SOFTWARE.
         titleElement.innerHTML = titleElement.innerHTML
           .replace(
             /\b(by|and|in|from)\b(?!-)/g,
-            '<span style="font-size: 0.85em;">$1</span>'
+            '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>'
           )
           .replace(
             /<strong>Quoted<\/strong>/,
@@ -707,6 +739,9 @@ SOFTWARE.
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
+
+    // Run storage cleanup last
+    Storage.cleanupStorage();
   };
 
   if (
