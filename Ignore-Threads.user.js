@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      3.1
+// @version      3.2
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads with an improved review overlay
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -55,12 +55,22 @@ SOFTWARE.
   `;
   document.documentElement.appendChild(style);
 
-  function shouldProcessPage() {
+  function shouldMarkAsRead() {
     const url = window.location.href;
     return (
       url.includes("index.php") ||
       url.includes("viewforum.php") ||
       url.includes("newposts")
+    );
+  }
+
+  function isThreadListPage() {
+    const url = window.location.href;
+    return (
+      url.includes("index.php") ||
+      url.includes("viewforum.php") ||
+      url.includes("newposts") ||
+      url.includes("search.php")
     );
   }
 
@@ -75,8 +85,6 @@ SOFTWARE.
 
   // Pre-hide ignored threads as early as possible
   function hideIgnoredThreadsEarly(mutations) {
-    if (!shouldProcessPage()) return;
-
     const threadItems = document.querySelectorAll(
       ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
     );
@@ -85,8 +93,8 @@ SOFTWARE.
       if (threadLink) {
         const threadTitle = threadLink.textContent.trim();
         if (isThreadIgnored(threadTitle)) {
-          // Only mark as read if it's an unread thread
-          if (isUnreadThread(item)) {
+          // Only mark as read if it's an unread thread and we should mark as read
+          if (isUnreadThread(item) && shouldMarkAsRead()) {
             const ids = extractLastPostIds(item);
             if (ids) {
               markRead(ids.topicId, ids.forumId, ids.postId);
@@ -243,7 +251,7 @@ SOFTWARE.
   }
 
   function markIgnoredThreadsAsRead() {
-    if (!shouldProcessPage()) return;
+    if (!shouldMarkAsRead()) return;
 
     const threadItems = document.querySelectorAll(
       ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
@@ -277,7 +285,7 @@ SOFTWARE.
     ignoredThreads = currentIgnoredThreads;
 
     // Mark the thread as read if we're on a relevant page
-    if (shouldProcessPage()) {
+    if (shouldMarkAsRead()) {
       const threadItem = document
         .querySelector(`a.topictitle[href*="t=${threadId}"]`)
         ?.closest("li");
@@ -304,7 +312,7 @@ SOFTWARE.
   }
 
   function hideIgnoredThreads() {
-    if (!shouldProcessPage()) return;
+    if (!isThreadListPage()) return;
 
     const threadItems = document.querySelectorAll(
       ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
@@ -385,7 +393,7 @@ SOFTWARE.
   }
 
   function updateIgnoreButtons() {
-    if (!shouldProcessPage() || !ignoreModeActive) return;
+    if (!isThreadListPage() || !ignoreModeActive) return;
 
     const threadItems = document.querySelectorAll(
       ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
@@ -943,7 +951,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     updateTotalTopicsCount();
 
     // Mark ignored threads as read on relevant pages
-    if (shouldProcessPage()) {
+    if (shouldMarkAsRead()) {
       markIgnoredThreadsAsRead();
     }
 
