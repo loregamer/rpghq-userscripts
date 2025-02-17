@@ -488,7 +488,7 @@ SOFTWARE.
             .replace(/^"|"$/g, "");
           titleElement.innerHTML = titleElement.innerHTML.replace(
             /in(?:\stopic)?:/,
-            `in <strong>${threadTitle}</strong>:`
+            `<span style="font-size: 0.85em;">in</span> <strong>${threadTitle}</strong>:`
           );
 
           // Update the existing reference element with loading state
@@ -502,7 +502,12 @@ SOFTWARE.
           );
         }
 
+        // Apply text resizing to all notifications
         titleElement.innerHTML = titleElement.innerHTML
+          .replace(
+            /\b(by|and|in|from)\b(?!-)/g,
+            '<span style="font-size: 0.85em;">$1</span>'
+          )
           .replace(
             /<strong>Quoted<\/strong>/,
             '<strong style="color: #FF4A66;">Quoted</strong>'
