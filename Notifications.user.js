@@ -194,6 +194,19 @@ SOFTWARE.
       return result;
     },
 
+    removeURLs: (text) => {
+      // Remove URLs with various protocols (http, https, ftp)
+      return (
+        text
+          .replace(/(?:https?|ftp):\/\/[\n\S]+/gi, "")
+          // Remove www. URLs
+          .replace(/www\.[^\s]+/gi, "")
+          // Clean up any double spaces created by URL removal
+          .replace(/\s+/g, " ")
+          .trim()
+      );
+    },
+
     extractSingleImageUrl: (text) => {
       const imageUrls = text.match(/\[img\](.*?)\[\/img\]/gi);
       if (imageUrls && imageUrls.length === 1) {
@@ -350,12 +363,14 @@ SOFTWARE.
 
           let referenceElement = block.querySelector(".notification-reference");
           if (referenceElement) {
-            referenceElement.textContent = Utils.removeBBCode(postContent);
+            referenceElement.textContent = Utils.removeURLs(
+              Utils.removeBBCode(postContent)
+            );
             Utils.styleReference(referenceElement);
           } else {
             referenceElement = Utils.createElement("span", {
               className: "notification-reference",
-              textContent: Utils.removeBBCode(postContent),
+              textContent: Utils.removeURLs(Utils.removeBBCode(postContent)),
             });
             Utils.styleReference(referenceElement);
             titleElement.appendChild(document.createElement("br"));
