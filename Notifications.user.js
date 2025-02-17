@@ -7,6 +7,9 @@
 // @match        https://rpghq.org/*/*
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
 // @grant        GM_xmlhttpRequest
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
 // @license     MIT
 // @updateURL    https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Notifications.user.js
 // @downloadURL  https://raw.githubusercontent.com/loregamer/rpghq-userscripts/main/Notifications.user.js
@@ -75,18 +78,20 @@ SOFTWARE.
 
   const Storage = {
     getStoredReactions: (postId) => {
-      const storedData = localStorage.getItem(`reactions_${postId}`);
+      const storedData = GM_getValue(`reactions_${postId}`);
       if (storedData) {
         const { reactions, timestamp } = JSON.parse(storedData);
         if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
           return reactions;
         }
+        // Clean up expired data
+        GM_deleteValue(`reactions_${postId}`);
       }
       return null;
     },
 
     storeReactions: (postId, reactions) => {
-      localStorage.setItem(
+      GM_setValue(
         `reactions_${postId}`,
         JSON.stringify({
           reactions,
@@ -96,18 +101,20 @@ SOFTWARE.
     },
 
     getStoredPostContent: (postId) => {
-      const storedData = localStorage.getItem(`post_content_${postId}`);
+      const storedData = GM_getValue(`post_content_${postId}`);
       if (storedData) {
         const { content, timestamp } = JSON.parse(storedData);
         if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
           return content;
         }
+        // Clean up expired data
+        GM_deleteValue(`post_content_${postId}`);
       }
       return null;
     },
 
     storePostContent: (postId, content) => {
-      localStorage.setItem(
+      GM_setValue(
         `post_content_${postId}`,
         JSON.stringify({
           content,
@@ -157,26 +164,47 @@ SOFTWARE.
       const cachedContent = Storage.getStoredPostContent(postId);
       if (cachedContent) return cachedContent;
 
-      const response = await fetch(
-        `https://rpghq.org/forums/viewtopic.php?p=${postId}`,
-        {
-          credentials: "include",
+      try {
+        const response = await fetch(
+          `https://rpghq.org/forums/posting.php?mode=quote&p=${postId}`,
+          {
+            headers: {
+              "X-Requested-With": "XMLHttpRequest",
+            },
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      );
-      const html = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-      const postContent = doc.querySelector(`#post_content${postId} .content`);
-      if (postContent) {
-        postContent.querySelectorAll("blockquote").forEach((el) => el.remove());
-        let content = postContent.textContent.trim().replace(/\s+/g, " ");
+
+        const text = await response.text();
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = text;
+
+        const messageArea = tempDiv.querySelector("#message");
+        if (!messageArea) {
+          throw new Error("Could not find message content");
+        }
+
+        const rawContent = messageArea.value;
+        // Remove the [quote][/quote] tags and clean up the content
+        let content = rawContent
+          .replace(/\[quote(?:=.*?)?\][\s\S]*?\[\/quote\]/g, "")
+          .trim();
+
+        // Truncate if needed
         if (content.length > 100) {
           content = content.substring(0, 97) + "...";
         }
+
         Storage.storePostContent(postId, content);
         return content;
+      } catch (error) {
+        console.error("Error fetching post content:", error);
+        return null;
       }
-      return null;
     },
   };
 
