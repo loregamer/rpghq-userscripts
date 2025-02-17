@@ -57,11 +57,11 @@ SOFTWARE.
 
   function shouldProcessPage() {
     const url = window.location.href;
-    if (url.includes("search.php")) {
-      // Only process search.php pages if they have search_id parameter
-      return url.includes("search_id=");
-    }
-    return true; // Process all other pages
+    return (
+      url.includes("index.php") ||
+      url.includes("viewforum.php") ||
+      url.includes("newposts")
+    );
   }
 
   // Pre-hide ignored threads as early as possible
@@ -76,6 +76,12 @@ SOFTWARE.
       if (threadLink) {
         const threadTitle = threadLink.textContent.trim();
         if (isThreadIgnored(threadTitle)) {
+          // Mark as read before removing
+          const ids = extractLastPostIds(item);
+          if (ids) {
+            markRead(ids.topicId, ids.forumId, ids.postId);
+          }
+          // Remove after marking as read
           item.remove();
         }
       }
@@ -167,6 +173,85 @@ SOFTWARE.
     return null;
   }
 
+  function extractLastPostIds(element) {
+    // Find the last post link (the external link icon)
+    const lastPostLink = element.querySelector('dd.lastpost a[href*="#p"]');
+    if (!lastPostLink) return null;
+
+    // Extract IDs from the href
+    const href = lastPostLink.href;
+    const forumMatch = href.match(/f=(\d+)/);
+    const topicMatch = href.match(/t=(\d+)/);
+    const postMatch = href.match(/p=(\d+)/);
+
+    if (!forumMatch || !topicMatch || !postMatch) return null;
+
+    return {
+      forumId: forumMatch[1],
+      topicId: topicMatch[1].split("-")[0], // Remove any suffix after the ID
+      postId: postMatch[1],
+    };
+  }
+
+  function markRead(topicId, forumId, postId) {
+    const markLinks = Array.from(document.querySelectorAll('a[href*="hash="]'));
+    const hashLink = markLinks.find((link) => link.href.includes("hash="));
+
+    if (!hashLink) {
+      console.error("Could not find any link with hash");
+      return;
+    }
+
+    const hashMatch = hashLink.href.match(/hash=([a-zA-Z0-9]+)/);
+    if (!hashMatch) {
+      console.error("Could not find security hash");
+      return;
+    }
+
+    const hash = hashMatch[1];
+
+    fetch(
+      `viewtopic.php?f=${forumId}&t=${topicId}&p=${postId}&mark=topic&hash=${hash}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: `mark=topic&p=${postId}&hash=${hash}`,
+      }
+    )
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+      })
+      .catch((error) => {
+        console.error("Error marking as read:", error);
+      });
+  }
+
+  function markIgnoredThreadsAsRead() {
+    if (!shouldProcessPage()) return;
+
+    const threadItems = document.querySelectorAll(
+      ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
+    );
+
+    threadItems.forEach((item) => {
+      const threadLink = item.querySelector("a.topictitle");
+      if (threadLink) {
+        const threadTitle = threadLink.textContent.trim();
+        if (isThreadIgnored(threadTitle)) {
+          const ids = extractLastPostIds(item);
+          if (ids) {
+            markRead(ids.topicId, ids.forumId, ids.postId);
+          }
+        }
+      }
+    });
+  }
+
   function ignoreThread(threadId, threadTitle) {
     // Fetch the latest data from storage
     let currentIgnoredThreads = GM_getValue("ignoredThreads", {});
@@ -179,6 +264,19 @@ SOFTWARE.
 
     // Update the local ignoredThreads object
     ignoredThreads = currentIgnoredThreads;
+
+    // Mark the thread as read if we're on a relevant page
+    if (shouldProcessPage()) {
+      const threadItem = document
+        .querySelector(`a.topictitle[href*="t=${threadId}"]`)
+        ?.closest("li");
+      if (threadItem) {
+        const ids = extractLastPostIds(threadItem);
+        if (ids) {
+          markRead(ids.topicId, ids.forumId, ids.postId);
+        }
+      }
+    }
   }
 
   function unignoreThread(threadId) {
@@ -832,6 +930,11 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     }
     // If the board index statistics are available, update the total topics count.
     updateTotalTopicsCount();
+
+    // Mark ignored threads as read on relevant pages
+    if (shouldProcessPage()) {
+      markIgnoredThreadsAsRead();
+    }
 
     // Set up the mutation observer once the body exists
     if (document.body) {
