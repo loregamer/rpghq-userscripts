@@ -337,6 +337,23 @@ SOFTWARE.
           );
         }
 
+        const referenceElement = notificationText.querySelector(
+          ".notification-reference"
+        );
+        if (
+          referenceElement &&
+          referenceElement.textContent.trim() === '"Modder Gossiping Thread"'
+        ) {
+          const threadTitle = referenceElement.textContent
+            .trim()
+            .replace(/^"|"$/g, "");
+          titleElement.innerHTML = titleElement.innerHTML.replace(
+            /in topic:/,
+            `in <strong>${threadTitle}</strong>:`
+          );
+          referenceElement.remove();
+        }
+
         titleElement.innerHTML = titleElement.innerHTML
           .replace(
             /<strong>Quoted<\/strong>/,
@@ -398,10 +415,21 @@ SOFTWARE.
             const quote = quoteMatch[1];
             const trimmedQuote =
               quote.length > 50 ? quote.substring(0, 50) + "..." : quote;
-            titleText = titleText.replace(
-              /in topic: "([^"]*)"/,
-              `<br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"${trimmedQuote}"</span>`
-            );
+
+            // Special handling for Modder Gossiping Thread
+            if (quote === "Modder Gossiping Thread") {
+              titleText = titleText.replace(
+                /in topic:/,
+                'in <b style="color: #FFD866;">Modder Gossiping Thread</b>:'
+              );
+              // Remove the quoted title since we've incorporated it inline
+              titleText = titleText.replace(/ "Modder Gossiping Thread"/, "");
+            } else {
+              titleText = titleText.replace(
+                /in topic: "([^"]*)"/,
+                `<br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"${trimmedQuote}"</span>`
+              );
+            }
           }
 
           titleText = titleText.replace(
