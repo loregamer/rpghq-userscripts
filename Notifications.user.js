@@ -193,6 +193,14 @@ SOFTWARE.
 
       return result;
     },
+
+    extractSingleImageUrl: (text) => {
+      const imageUrls = text.match(/\[img\](.*?)\[\/img\]/gi);
+      if (imageUrls && imageUrls.length === 1) {
+        return imageUrls[0].replace(/\[img\](.*?)\[\/img\]/i, "$1");
+      }
+      return null;
+    },
   };
 
   // --- Storage Helpers ---
@@ -337,6 +345,9 @@ SOFTWARE.
         );
         const postContent = await ReactionHandler.fetchPostContent(postId);
         if (postContent) {
+          // Extract image URL before removing BBCode
+          const imageUrl = Utils.extractSingleImageUrl(postContent);
+
           let referenceElement = block.querySelector(".notification-reference");
           if (referenceElement) {
             referenceElement.textContent = Utils.removeBBCode(postContent);
@@ -349,6 +360,15 @@ SOFTWARE.
             Utils.styleReference(referenceElement);
             titleElement.appendChild(document.createElement("br"));
             titleElement.appendChild(referenceElement);
+          }
+
+          // Add image preview if we found one earlier
+          if (imageUrl && referenceElement) {
+            const imagePreview = Utils.createElement("div", {
+              className: "notification-image-preview",
+              innerHTML: `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`,
+            });
+            referenceElement.insertAdjacentElement("afterend", imagePreview);
           }
         }
       } else {
@@ -581,7 +601,20 @@ SOFTWARE.
       try {
         const postContent = await ReactionHandler.fetchPostContent(postId);
         if (postContent && placeholder.parentNode) {
+          // Extract image URL before removing BBCode
+          const imageUrl = Utils.extractSingleImageUrl(postContent);
+
           placeholder.textContent = Utils.removeBBCode(postContent);
+          Utils.styleReference(placeholder);
+
+          // Add image preview if we found one earlier
+          if (imageUrl) {
+            const imagePreview = Utils.createElement("div", {
+              className: "notification-image-preview",
+              innerHTML: `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`,
+            });
+            placeholder.insertAdjacentElement("afterend", imagePreview);
+          }
         } else {
           placeholder.remove();
         }
