@@ -42,6 +42,19 @@ SOFTWARE.
 (function () {
   "use strict";
 
+  // --- Constants ---
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+  const REFERENCE_STYLE = {
+    background: "rgba(23, 27, 36, 0.5)",
+    color: "#ffffff",
+    padding: "2px 4px",
+    borderRadius: "2px",
+    zIndex: "-1",
+    display: "inline-block",
+    whiteSpace: "nowrap",
+  };
+
+  // --- Utility Functions ---
   const Utils = {
     createElement: (tag, attributes = {}, innerHTML = "") => {
       const element = document.createElement(tag);
@@ -64,27 +77,22 @@ SOFTWARE.
     },
 
     styleReference: (element) => {
-      Object.assign(element.style, {
-        background: "rgba(23, 27, 36, 0.5)",
-        color: "#ffffff",
-        padding: "2px 4px",
-        borderRadius: "2px",
-        zIndex: "-1",
-        display: "inline-block",
-        whiteSpace: "nowrap",
-      });
+      Object.assign(element.style, REFERENCE_STYLE);
+    },
+
+    extractPostId: (url) => {
+      const match = (url || "").match(/p=(\d+)/);
+      return match ? match[1] : null;
     },
   };
 
+  // --- Storage Helpers ---
   const Storage = {
     getStoredReactions: (postId) => {
       const storedData = GM_getValue(`reactions_${postId}`);
       if (storedData) {
         const { reactions, timestamp } = JSON.parse(storedData);
-        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-          return reactions;
-        }
-        // Clean up expired data
+        if (Date.now() - timestamp < ONE_DAY) return reactions;
         GM_deleteValue(`reactions_${postId}`);
       }
       return null;
@@ -93,10 +101,7 @@ SOFTWARE.
     storeReactions: (postId, reactions) => {
       GM_setValue(
         `reactions_${postId}`,
-        JSON.stringify({
-          reactions,
-          timestamp: Date.now(),
-        })
+        JSON.stringify({ reactions, timestamp: Date.now() })
       );
     },
 
@@ -104,10 +109,7 @@ SOFTWARE.
       const storedData = GM_getValue(`post_content_${postId}`);
       if (storedData) {
         const { content, timestamp } = JSON.parse(storedData);
-        if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-          return content;
-        }
-        // Clean up expired data
+        if (Date.now() - timestamp < ONE_DAY) return content;
         GM_deleteValue(`post_content_${postId}`);
       }
       return null;
@@ -116,48 +118,49 @@ SOFTWARE.
     storePostContent: (postId, content) => {
       GM_setValue(
         `post_content_${postId}`,
-        JSON.stringify({
-          content,
-          timestamp: Date.now(),
-        })
+        JSON.stringify({ content, timestamp: Date.now() })
       );
     },
   };
 
+  // --- Reaction Handling ---
   const ReactionHandler = {
     fetchReactions: async (postId, isUnread) => {
       if (!isUnread) {
         const storedReactions = Storage.getStoredReactions(postId);
         if (storedReactions) return storedReactions;
       }
+      try {
+        const response = await fetch(
+          `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
+          {
+            method: "POST",
+            headers: {
+              accept: "application/json, text/javascript, */*; q=0.01",
+              "x-requested-with": "XMLHttpRequest",
+            },
+            credentials: "include",
+          }
+        );
+        const data = await response.json();
+        const doc = new DOMParser().parseFromString(
+          data.htmlContent,
+          "text/html"
+        );
+        const reactions = Array.from(
+          doc.querySelectorAll('.tab-content[data-id="0"] li')
+        ).map((li) => ({
+          username: li.querySelector(".cbb-helper-text a").textContent,
+          image: li.querySelector(".reaction-image").src,
+          name: li.querySelector(".reaction-image").alt,
+        }));
 
-      const response = await fetch(
-        `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
-        {
-          method: "POST",
-          headers: {
-            accept: "application/json, text/javascript, */*; q=0.01",
-            "x-requested-with": "XMLHttpRequest",
-          },
-          credentials: "include",
-        }
-      );
-
-      const data = await response.json();
-      const doc = new DOMParser().parseFromString(
-        data.htmlContent,
-        "text/html"
-      );
-      const reactions = Array.from(
-        doc.querySelectorAll('.tab-content[data-id="0"] li')
-      ).map((li) => ({
-        username: li.querySelector(".cbb-helper-text a").textContent,
-        image: li.querySelector(".reaction-image").src,
-        name: li.querySelector(".reaction-image").alt,
-      }));
-
-      Storage.storeReactions(postId, reactions);
-      return reactions;
+        Storage.storeReactions(postId, reactions);
+        return reactions;
+      } catch (error) {
+        console.error("Error fetching reactions:", error);
+        return [];
+      }
     },
 
     fetchPostContent: async (postId) => {
@@ -168,9 +171,7 @@ SOFTWARE.
         const response = await fetch(
           `https://rpghq.org/forums/posting.php?mode=quote&p=${postId}`,
           {
-            headers: {
-              "X-Requested-With": "XMLHttpRequest",
-            },
+            headers: { "X-Requested-With": "XMLHttpRequest" },
             credentials: "include",
           }
         );
@@ -182,19 +183,12 @@ SOFTWARE.
         const text = await response.text();
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = text;
-
         const messageArea = tempDiv.querySelector("#message");
-        if (!messageArea) {
-          throw new Error("Could not find message content");
-        }
+        if (!messageArea) throw new Error("Could not find message content");
 
-        const rawContent = messageArea.value;
-        // Remove the [quote][/quote] tags and clean up the content
-        let content = rawContent
+        let content = messageArea.value
           .replace(/\[quote(?:=.*?)?\][\s\S]*?\[\/quote\]/g, "")
           .trim();
-
-        // Truncate if needed
         if (content.length > 100) {
           content = content.substring(0, 97) + "...";
         }
@@ -208,74 +202,68 @@ SOFTWARE.
     },
   };
 
+  // --- Notification Customization ---
   const NotificationCustomizer = {
-    customizeReactionNotification: async (titleElement, block) => {
+    async customizeReactionNotification(titleElement, block) {
       if (block.dataset.reactionCustomized === "true") return;
 
-      let titleText = titleElement.innerHTML;
+      const titleText = titleElement.innerHTML;
       const isUnread = block.href && block.href.includes("mark_notification");
-      const postId = (block.getAttribute("data-real-url") || block.href).match(
-        /p=(\d+)/
-      )?.[1];
+      const postId = Utils.extractPostId(
+        block.getAttribute("data-real-url") || block.href
+      );
+      if (!postId) return;
 
-      if (postId) {
-        const usernames = Array.from(
-          titleElement.querySelectorAll(".username, .username-coloured")
-        ).map((el) => el.textContent.trim());
-        const reactions = await ReactionHandler.fetchReactions(
-          postId,
-          isUnread
-        );
-        const filteredReactions = reactions.filter((reaction) =>
-          usernames.includes(reaction.username)
-        );
-        const reactionHTML = Utils.formatReactions(filteredReactions);
-        const isReactedTo = titleText.includes(
-          "reacted to a message you posted"
-        );
+      const usernameElements = titleElement.querySelectorAll(
+        ".username, .username-coloured"
+      );
+      const usernames = Array.from(usernameElements).map((el) =>
+        el.textContent.trim()
+      );
+      const reactions = await ReactionHandler.fetchReactions(postId, isUnread);
+      const filteredReactions = reactions.filter((reaction) =>
+        usernames.includes(reaction.username)
+      );
+      const reactionHTML = Utils.formatReactions(filteredReactions);
+      const isReactedTo = titleText.includes("reacted to a message you posted");
 
-        if (isReactedTo) {
-          titleElement.innerHTML = titleText.replace(
-            /(have|has)\s+reacted.*$/,
-            `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
-          );
-
-          const postContent = await ReactionHandler.fetchPostContent(postId);
-          if (postContent) {
-            const referenceElement = block.querySelector(
-              ".notification-reference"
-            );
-            if (referenceElement) {
-              referenceElement.textContent = postContent;
-              Utils.styleReference(referenceElement);
-            } else {
-              const newReferenceElement = Utils.createElement("span", {
-                className: "notification-reference",
-                textContent: postContent,
-              });
-              Utils.styleReference(newReferenceElement);
-              titleElement.appendChild(document.createElement("br"));
-              titleElement.appendChild(newReferenceElement);
-            }
+      if (isReactedTo) {
+        titleElement.innerHTML = titleText.replace(
+          /(have|has)\s+reacted.*$/,
+          `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
+        );
+        const postContent = await ReactionHandler.fetchPostContent(postId);
+        if (postContent) {
+          let referenceElement = block.querySelector(".notification-reference");
+          if (referenceElement) {
+            referenceElement.textContent = postContent;
+            Utils.styleReference(referenceElement);
+          } else {
+            referenceElement = Utils.createElement("span", {
+              className: "notification-reference",
+              textContent: postContent,
+            });
+            Utils.styleReference(referenceElement);
+            titleElement.appendChild(document.createElement("br"));
+            titleElement.appendChild(referenceElement);
           }
-        } else {
-          titleElement.innerHTML = titleText.replace(
-            /(have|has)\s+reacted.*$/,
-            `<b style="color: #3889ED;">reacted</b> ${reactionHTML}`
-          );
         }
+      } else {
+        titleElement.innerHTML = titleText.replace(
+          /(have|has)\s+reacted.*$/,
+          `<b style="color: #3889ED;">reacted</b> ${reactionHTML}`
+        );
       }
       block.dataset.reactionCustomized = "true";
     },
 
-    customizeMentionNotification: (notificationBlock) => {
+    customizeMentionNotification(notificationBlock) {
       const notificationText =
         notificationBlock.querySelector(".notification_text");
       const titleElement = notificationText.querySelector(
         ".notification-title"
       );
       const originalHTML = titleElement.innerHTML;
-
       const usernameElements = titleElement.querySelectorAll(
         ".username, .username-coloured"
       );
@@ -284,29 +272,25 @@ SOFTWARE.
         .join(", ");
 
       const parts = originalHTML.split("<br>in ");
-      let topicName = "Unknown Topic";
-      if (parts.length > 1) {
-        topicName = parts[1].replace(/^"|"$/g, "").trim();
-      }
-
+      let topicName =
+        parts.length > 1
+          ? parts[1].replace(/^"|"$/g, "").trim()
+          : "Unknown Topic";
       if (topicName.length > 50) {
         topicName = topicName.substring(0, 50) + "...";
       }
 
-      const newHTML = `
+      titleElement.innerHTML = `
         <b style="color: #FFC107;">Mentioned</b> by ${usernames} in topic:
         <br><span class="notification-reference">${topicName}</span>
       `;
-
-      titleElement.innerHTML = newHTML;
-
       const timeElement = notificationText.querySelector(".notification-time");
       if (timeElement) {
         notificationText.appendChild(timeElement);
       }
     },
 
-    customizePrivateMessageNotification: (titleElement, referenceElement) => {
+    customizePrivateMessageNotification(titleElement, referenceElement) {
       const subject = referenceElement?.textContent
         .trim()
         .replace(/^"(.*)"$/, "$1");
@@ -322,26 +306,22 @@ SOFTWARE.
       }
     },
 
-    customizeNotificationBlock: async (block) => {
+    async customizeNotificationBlock(block) {
       if (block.dataset.customized === "true") return;
-
       const notificationText = block.querySelector(".notification_text");
+      if (!notificationText) return;
       const titleElement = notificationText.querySelector(
         ".notification-title"
       );
 
       if (titleElement) {
-        const titleText = titleElement.innerHTML;
-
+        let titleText = titleElement.innerHTML;
         if (titleText.includes("You were mentioned by")) {
-          NotificationCustomizer.customizeMentionNotification(block);
+          this.customizeMentionNotification(block);
         } else if (titleText.includes("reacted to a message you posted")) {
-          await NotificationCustomizer.customizeReactionNotification(
-            titleElement,
-            block
-          );
+          await this.customizeReactionNotification(titleElement, block);
         } else if (titleText.includes("Private Message")) {
-          NotificationCustomizer.customizePrivateMessageNotification(
+          this.customizePrivateMessageNotification(
             titleElement,
             notificationText.querySelector(".notification-reference")
           );
@@ -381,13 +361,17 @@ SOFTWARE.
       block.dataset.customized = "true";
     },
 
-    customizeNotificationPanel: () => {
+    customizeNotificationPanel() {
       document
         .querySelectorAll(".notification-block, a.notification-block")
-        .forEach(NotificationCustomizer.customizeNotificationBlock);
+        .forEach(
+          NotificationCustomizer.customizeNotificationBlock.bind(
+            NotificationCustomizer
+          )
+        );
     },
 
-    customizeNotificationPage: () => {
+    customizeNotificationPage() {
       document.querySelectorAll(".cplist .row").forEach((row) => {
         if (row.dataset.customized === "true") return;
 
@@ -437,26 +421,27 @@ SOFTWARE.
     },
   };
 
+  // --- Notification Marker ---
   const NotificationMarker = {
-    getDisplayedPostIds: () => {
+    getDisplayedPostIds() {
       return Array.from(document.querySelectorAll('div[id^="p"]')).map((el) =>
         el.id.substring(1)
       );
     },
 
-    getNotificationData: () => {
+    getNotificationData() {
       return Array.from(document.querySelectorAll(".notification-block"))
         .map((link) => {
           const href = link.getAttribute("href");
-          const postId = (link.getAttribute("data-real-url") || href)?.match(
-            /p=(\d+)/
-          )?.[1];
+          const postId = Utils.extractPostId(
+            link.getAttribute("data-real-url") || href
+          );
           return { href, postId };
         })
         .filter((data) => data.href && data.postId);
     },
 
-    markNotificationAsRead: (href) => {
+    markNotificationAsRead(href) {
       GM_xmlhttpRequest({
         method: "GET",
         url: "https://rpghq.org/forums/" + href,
@@ -465,18 +450,19 @@ SOFTWARE.
       });
     },
 
-    checkAndMarkNotifications: () => {
-      const displayedPostIds = NotificationMarker.getDisplayedPostIds();
-      const notificationData = NotificationMarker.getNotificationData();
+    checkAndMarkNotifications() {
+      const displayedPostIds = this.getDisplayedPostIds();
+      const notificationData = this.getNotificationData();
 
       notificationData.forEach((notification) => {
         if (displayedPostIds.includes(notification.postId)) {
-          NotificationMarker.markNotificationAsRead(notification.href);
+          this.markNotificationAsRead(notification.href);
         }
       });
     },
   };
 
+  // --- Initialization ---
   const init = () => {
     NotificationCustomizer.customizeNotificationPanel();
     NotificationMarker.checkAndMarkNotifications();
@@ -485,6 +471,7 @@ SOFTWARE.
       NotificationCustomizer.customizeNotificationPage();
     }
 
+    // Observe DOM changes to apply customizations dynamically
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === "childList") {
