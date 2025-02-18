@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      3.4
+// @version      3.4.1
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads with an improved review overlay
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -165,7 +165,7 @@ SOFTWARE.
         } else {
           // If thread is ignored but not exact match (title changed), or not ignored at all
           const action = currentStatus.ignored
-            ? "Are you sure you want to update this thread? (You had it previously ignored but the title changed)"
+            ? "Are you sure you want to update this thread?\n\nYou had it previously ignored, but the title changed.\n\nIt is currently being hidden from your recent topic listings, but you'll have to re-ignore it to fix it appearing in other areas."
             : "Are you sure you want to ignore this thread?";
 
           if (confirm(action)) {
