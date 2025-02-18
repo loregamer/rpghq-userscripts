@@ -80,10 +80,10 @@
 
     if (isGuildTitle) {
       const [_, prefix, month, gamesList] = match;
-      return `<span style="font-size: 0.8em; opacity: 0.8;">${prefix}${month}</span><br>${gamesList.trim()}`;
+      return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">${prefix}${month}</span>`;
     } else {
       const [_, month, gamesList] = match;
-      return `<span style="font-size: 0.8em; opacity: 0.8;">Adventurer's Guild - ${month}</span><br>${gamesList.trim()}`;
+      return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">Adventurer's Guild - ${month}</span>`;
     }
   }
 
