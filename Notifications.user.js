@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Notifications Customization
 // @namespace    http://tampermonkey.net/
-// @version      4.1
+// @version      4.2
 // @description  Customize RPGHQ notifications display
 // @author       LOREGAMER
 // @match        https://rpghq.org/*/*
