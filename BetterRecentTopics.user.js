@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Better Recent Topics
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
+// @version      1.0
 // @description  Removes ellipses/truncation in titles, makes parentheses smaller, styles version numbers, and unbolds game names
 // @match        https://rpghq.org/forums/*
 // @grant        none
