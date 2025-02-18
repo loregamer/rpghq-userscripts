@@ -52,24 +52,39 @@
 
   /**
    * Special formatting for Adventurer's Guild titles
-   * Format: "[x] Adventurer's Guild - Month: Games"
+   * Format: "[x] Adventurer's Guild - Month: Games" or "Month: Games"
    */
-  function styleAdventurersGuildTitle(str) {
-    // Check if it's an Adventurer's Guild title
-    if (!str.includes("Adventurer's Guild")) return str;
+  function styleAdventurersGuildTitle(str, elem) {
+    // Check if it's an Adventurer's Guild title or post
+    const isGuildTitle = str.includes("Adventurer's Guild");
+    const isGuildForum =
+      elem
+        .closest(".row-item")
+        .querySelector('.forum-links a[href*="adventurer-s-guild"]') !== null;
 
-    // Match the pattern: everything before the month, the month, and games list
-    const regex =
-      /^(.*?Adventurer's Guild\s*-\s*)([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
-    const match = str.match(regex);
+    if (!isGuildTitle && !isGuildForum) return str;
+
+    let match;
+    if (isGuildTitle) {
+      // Match the pattern: everything before the month, the month, and games list
+      const titleRegex =
+        /^(.*?Adventurer's Guild\s*-\s*)([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
+      match = str.match(titleRegex);
+    } else {
+      // Match the pattern: month and games list
+      const forumRegex = /^([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
+      match = str.match(forumRegex);
+    }
+
     if (!match) return str;
 
-    const [_, prefix, month, gamesList] = match;
-
-    // Format each part:
-    // - Make the prefix and month smaller and less prominent
-    // - Put games list on new line, with any all-caps text removed
-    return `<span style="font-size: 0.85em; opacity: 0.8;">${prefix}${month}</span><br>${gamesList.trim()}`;
+    if (isGuildTitle) {
+      const [_, prefix, month, gamesList] = match;
+      return `<span style="font-size: 0.8em; opacity: 0.8;">${prefix}${month}</span><br>${gamesList.trim()}`;
+    } else {
+      const [_, month, gamesList] = match;
+      return `<span style="font-size: 0.8em; opacity: 0.8;">Adventurer's Guild - ${month}</span><br>${gamesList.trim()}`;
+    }
   }
 
   /**
@@ -77,9 +92,14 @@
    * e.g. "Title - Game" -> "Title<span style="font-weight: normal"> - Game</span>"
    * Handles both regular dash and em dash
    */
-  function styleEverythingAfterFirstDash(str) {
-    // Don't process Adventurer's Guild titles with this function
-    if (str.includes("Adventurer's Guild")) return str;
+  function styleEverythingAfterFirstDash(str, elem) {
+    // Don't process Adventurer's Guild titles or posts
+    const isGuildTitle = str.includes("Adventurer's Guild");
+    const isGuildForum =
+      elem
+        .closest(".row-item")
+        .querySelector('.forum-links a[href*="adventurer-s-guild"]') !== null;
+    if (isGuildTitle || isGuildForum) return str;
 
     // Match both regular dash and em dash with optional spaces
     const dashRegex = /\s+[-—]\s+/;
@@ -109,8 +129,8 @@
     let newHTML = originalText;
     newHTML = styleParentheses(newHTML);
     newHTML = styleVersionNumbers(newHTML);
-    newHTML = styleAdventurersGuildTitle(newHTML);
-    newHTML = styleEverythingAfterFirstDash(newHTML);
+    newHTML = styleAdventurersGuildTitle(newHTML, titleElem);
+    newHTML = styleEverythingAfterFirstDash(newHTML, titleElem);
 
     // Replace original text with our new HTML
     titleElem.innerHTML = newHTML;
