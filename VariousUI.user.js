@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.7.1
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
 // @grant        GM_setValue
@@ -739,7 +739,16 @@ SOFTWARE.
       );
 
       if (topicLink && lastPostLink) {
-        topicLink.href = lastPostLink.href;
+        // Extract the post ID from the last post link
+        const postMatch = lastPostLink.href.match(/#p(\d+)$/);
+        if (postMatch) {
+          const postId = postMatch[1];
+          // Preserve the original topic URL and add the post parameter
+          const newUrl = new URL(topicLink.href);
+          newUrl.searchParams.set("p", postId);
+          newUrl.hash = `#p${postId}`;
+          topicLink.href = newUrl.toString();
+        }
       }
     },
   };
