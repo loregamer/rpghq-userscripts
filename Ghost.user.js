@@ -437,18 +437,7 @@
         );
       });
       tooltip.innerHTML = `<div class="post-content">${content}</div>`;
-
-      // Position tooltip to the right of the cursor for elements with forceRightPosition
-      let tooltipX;
-      if (event.forceRightPosition) {
-        tooltipX = Math.min(
-          document.documentElement.clientWidth - tooltip.offsetWidth - 20,
-          event.pageX + 20
-        );
-      } else {
-        tooltipX = Math.max(10, event.pageX - tooltip.offsetWidth - 100);
-      }
-
+      const tooltipX = Math.max(10, event.pageX - tooltip.offsetWidth - 100);
       const tooltipY = Math.max(10, event.pageY - tooltip.offsetHeight / 2);
       tooltip.style.left = `${tooltipX}px`;
       tooltip.style.top = `${tooltipY}px`;
@@ -727,27 +716,14 @@
   }
 
   async function processLastPost(element) {
-    // Add preview for all icon links
-    const iconLinks = element.querySelectorAll("a:has(i.icon)");
-    iconLinks.forEach((link) => {
+    const linksWithIcons = element.querySelectorAll("a:has(i.icon)");
+    linksWithIcons.forEach((link) => {
       const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
       if (pid) {
         link.addEventListener("mouseenter", (e) => showPostPreview(e, pid));
         link.addEventListener("mouseleave", hidePostPreview);
       }
     });
-
-    // Add preview for topic titles and row item links
-    const topicLinks = element.querySelectorAll(".topictitle, .row-item-link");
-    topicLinks.forEach((link) => {
-      const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
-      if (pid) {
-        link.addEventListener("mouseenter", (e) => showPostPreview(e, pid));
-        link.addEventListener("mouseleave", hidePostPreview);
-      }
-    });
-
-    // Rest of the existing processLastPost function...
     const row = element.closest("li.row");
     if (row) {
       const authorLinks = row.querySelectorAll(
@@ -1625,37 +1601,6 @@
     }
   }
 
-  function setupGlobalPostPreviews() {
-    document.addEventListener("mouseover", (e) => {
-      if (isMobileDevice) return;
-
-      const target = e.target.closest(
-        ".topictitle, .row-item-link, a:has(i.icon)"
-      );
-      if (!target) return;
-
-      // Find the lastpost link in the same row
-      const row = target.closest("li.row");
-      if (!row) return;
-
-      const lastPostLink = row.querySelector('a[title="Go to last post"]');
-      if (!lastPostLink) return;
-
-      const pid = lastPostLink.href.match(/[#&]p=?(\d+)/)?.[1];
-      if (pid) {
-        // Modified showPostPreview call to force right positioning
-        const event = new MouseEvent("mouseover", {
-          clientX: e.clientX,
-          clientY: e.clientY,
-          bubbles: true,
-        });
-        event.forceRightPosition = true; // Custom flag
-        showPostPreview(event, pid);
-        target.addEventListener("mouseleave", hidePostPreview, { once: true });
-      }
-    });
-  }
-
   // ---------------------------------------------------------------------
   // 11) INIT ON DOMContentLoaded
   // ---------------------------------------------------------------------
@@ -1664,7 +1609,6 @@
     isMobileDevice = detectMobile();
     createTooltip();
     startPeriodicAvatarCheck();
-    setupGlobalPostPreviews();
     await injectRTContent();
     const needsFetching = await cacheAllPosts();
 
