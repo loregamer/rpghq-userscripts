@@ -68,7 +68,7 @@
     if (isGuildTitle) {
       // Match the pattern: everything before the month, the month, and games list
       const titleRegex =
-        /^(.*?Adventurer's Guild\s*-\s*)([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
+        /^(.*?)(?:Junior )?Adventurer's Guild\s*-\s*([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
       match = str.match(titleRegex);
     } else {
       // Match the pattern: month and games list
@@ -80,10 +80,11 @@
 
     if (isGuildTitle) {
       const [_, prefix, month, gamesList] = match;
-      return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">${prefix}${month}</span>`;
+      const shortPrefix = prefix.includes("Junior") ? "Junior AG - " : "AG - ";
+      return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">${shortPrefix}${month}</span>`;
     } else {
       const [_, month, gamesList] = match;
-      return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">Adventurer's Guild - ${month}</span>`;
+      return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">(AG - ${month})</span>`;
     }
   }
 
