@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      3.2
+// @version      3.2.1
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads with an improved review overlay
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -89,20 +89,16 @@ SOFTWARE.
       ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
     );
     threadItems.forEach((item) => {
-      const threadLink = item.querySelector("a.topictitle");
-      if (threadLink) {
-        const threadTitle = threadLink.textContent.trim();
-        if (isThreadIgnored(threadTitle)) {
-          // Only mark as read if it's an unread thread and we should mark as read
-          if (isUnreadThread(item) && shouldMarkAsRead()) {
-            const ids = extractLastPostIds(item);
-            if (ids) {
-              markRead(ids.topicId, ids.forumId, ids.postId);
-            }
+      if (isThreadIgnored(item)) {
+        // Only mark as read if it's an unread thread and we should mark as read
+        if (isUnreadThread(item) && shouldMarkAsRead()) {
+          const ids = extractLastPostIds(item);
+          if (ids) {
+            markRead(ids.topicId, ids.forumId, ids.postId);
           }
-          // Remove after potentially marking as read
-          item.remove();
         }
+        // Remove after potentially marking as read
+        item.remove();
       }
     });
 
@@ -110,8 +106,8 @@ SOFTWARE.
     lastPosts.forEach((lastPost) => {
       const lastPostLink = lastPost.querySelector("a.lastsubject");
       if (lastPostLink) {
-        const threadTitle = lastPostLink.getAttribute("title");
-        if (threadTitle && isThreadIgnored(threadTitle)) {
+        const match = lastPostLink.href.match(/[?&]t=(\d+)/);
+        if (match && isThreadIgnored(match[1])) {
           lastPost.remove();
         }
       }
@@ -258,14 +254,10 @@ SOFTWARE.
     );
 
     threadItems.forEach((item) => {
-      const threadLink = item.querySelector("a.topictitle");
-      if (threadLink) {
-        const threadTitle = threadLink.textContent.trim();
-        if (isThreadIgnored(threadTitle)) {
-          const ids = extractLastPostIds(item);
-          if (ids) {
-            markRead(ids.topicId, ids.forumId, ids.postId);
-          }
+      if (isThreadIgnored(item)) {
+        const ids = extractLastPostIds(item);
+        if (ids) {
+          markRead(ids.topicId, ids.forumId, ids.postId);
         }
       }
     });
@@ -318,12 +310,8 @@ SOFTWARE.
       ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
     );
     threadItems.forEach((item) => {
-      const threadLink = item.querySelector("a.topictitle");
-      if (threadLink) {
-        const threadTitle = threadLink.textContent.trim();
-        if (isThreadIgnored(threadTitle)) {
-          item.remove();
-        }
+      if (isThreadIgnored(item)) {
+        item.remove();
       }
     });
 
@@ -331,18 +319,26 @@ SOFTWARE.
     lastPosts.forEach((lastPost) => {
       const lastPostLink = lastPost.querySelector("a.lastsubject");
       if (lastPostLink) {
-        const threadTitle = lastPostLink.getAttribute("title");
-        if (threadTitle && isThreadIgnored(threadTitle)) {
+        const match = lastPostLink.href.match(/[?&]t=(\d+)/);
+        if (match && isThreadIgnored(match[1])) {
           lastPost.remove();
         }
       }
     });
   }
 
-  function isThreadIgnored(threadTitle) {
-    return Object.values(ignoredThreads).some(
-      (ignoredTitle) => ignoredTitle.toLowerCase() === threadTitle.toLowerCase()
-    );
+  function isThreadIgnored(threadIdOrElement) {
+    // If passed an element, extract the thread ID from it
+    if (typeof threadIdOrElement === "object" && threadIdOrElement !== null) {
+      const threadLink = threadIdOrElement.querySelector("a.topictitle");
+      if (!threadLink) return false;
+      const match = threadLink.href.match(/[?&]t=(\d+)/);
+      if (!match) return false;
+      threadIdOrElement = match[1];
+    }
+
+    // Check if the thread ID exists in our ignored threads object
+    return ignoredThreads.hasOwnProperty(threadIdOrElement);
   }
 
   function toggleIgnoreMode() {
@@ -711,7 +707,8 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       for (const [threadId, threadTitle] of sortedThreads) {
         if (
           filter &&
-          !threadTitle.toLowerCase().includes(filter.toLowerCase())
+          !threadTitle.toLowerCase().includes(filter.toLowerCase()) &&
+          !threadId.includes(filter)
         ) {
           continue;
         }
@@ -743,7 +740,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
         };
         const threadLink = document.createElement("a");
         threadLink.href = `https://rpghq.org/forums/viewtopic.php?t=${threadId}`;
-        threadLink.textContent = threadTitle;
+        threadLink.textContent = `${threadTitle} (ID: ${threadId})`;
         threadLink.style.cssText =
           "color: #4a90e2; text-decoration: none; flex-grow: 1;";
         listItem.appendChild(unignoreButton);
