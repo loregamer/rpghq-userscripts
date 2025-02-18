@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      3.3
+// @version      3.4
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads with an improved review overlay
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -94,7 +94,8 @@ SOFTWARE.
         const threadTitle = threadLink.textContent.trim();
         const threadIdMatch = threadLink.href.match(/[?&]t=(\d+)/);
         const threadId = threadIdMatch ? threadIdMatch[1] : null;
-        if (isThreadIgnored(threadTitle, threadId)) {
+        const ignoreStatus = isThreadIgnored(threadTitle, threadId);
+        if (ignoreStatus.ignored) {
           // Only mark as read if it's an unread thread and we should mark as read
           if (isUnreadThread(item) && shouldMarkAsRead()) {
             const ids = extractLastPostIds(item);
@@ -111,13 +112,14 @@ SOFTWARE.
     const lastPosts = document.querySelectorAll(".lastpost");
     lastPosts.forEach((lastPost) => {
       const lastPostLink = lastPost.querySelector("a.lastsubject");
-      const lastPostHref = lastPost.querySelector('a[href*="t="]');
-      if (lastPostLink && lastPostHref) {
+      if (lastPostLink) {
         const threadTitle = lastPostLink.getAttribute("title");
-        const threadIdMatch = lastPostHref.href.match(/[?&]t=(\d+)/);
-        const threadId = threadIdMatch ? threadIdMatch[1] : null;
-        if (threadTitle && isThreadIgnored(threadTitle, threadId)) {
-          lastPost.remove();
+        if (threadTitle) {
+          // For lastposts, only check by title since they link to specific posts
+          const ignoreStatus = isThreadIgnored(threadTitle);
+          if (ignoreStatus.ignored) {
+            lastPost.remove();
+          }
         }
       }
     });
@@ -336,7 +338,8 @@ SOFTWARE.
         const threadTitle = threadLink.textContent.trim();
         const threadIdMatch = threadLink.href.match(/[?&]t=(\d+)/);
         const threadId = threadIdMatch ? threadIdMatch[1] : null;
-        if (isThreadIgnored(threadTitle, threadId)) {
+        const ignoreStatus = isThreadIgnored(threadTitle, threadId);
+        if (ignoreStatus.ignored) {
           item.remove();
         }
       }
@@ -345,13 +348,14 @@ SOFTWARE.
     const lastPosts = document.querySelectorAll(".lastpost");
     lastPosts.forEach((lastPost) => {
       const lastPostLink = lastPost.querySelector("a.lastsubject");
-      const lastPostHref = lastPost.querySelector('a[href*="t="]');
-      if (lastPostLink && lastPostHref) {
+      if (lastPostLink) {
         const threadTitle = lastPostLink.getAttribute("title");
-        const threadIdMatch = lastPostHref.href.match(/[?&]t=(\d+)/);
-        const threadId = threadIdMatch ? threadIdMatch[1] : null;
-        if (threadTitle && isThreadIgnored(threadTitle, threadId)) {
-          lastPost.remove();
+        if (threadTitle) {
+          // For lastposts, only check by title since they link to specific posts
+          const ignoreStatus = isThreadIgnored(threadTitle);
+          if (ignoreStatus.ignored) {
+            lastPost.remove();
+          }
         }
       }
     });
