@@ -445,17 +445,10 @@ SOFTWARE.
         .join(", ");
 
       const parts = originalHTML.split("<br>in ");
-      let topicName =
-        parts.length > 1
-          ? parts[1].replace(/^"|"$/g, "").trim()
-          : "Unknown Topic";
-      if (topicName.length > 50) {
-        topicName = topicName.substring(0, 50) + "...";
-      }
+      let topicName = parts.length > 1 ? parts[1].trim() : "Unknown Topic";
 
       titleElement.innerHTML = `
-        <b style="color: #FFC107;">Mentioned</b> by ${usernames} in topic:
-        <br><span class="notification-reference">${topicName}</span>
+        <b style="color: #FFC107;">Mentioned</b> by ${usernames} in <b>${topicName}</b>
       `;
       const timeElement = notificationText.querySelector(".notification-time");
       if (timeElement) {
@@ -589,49 +582,28 @@ SOFTWARE.
           );
           let titleText = titleElement.innerHTML;
 
-          titleText = titleText
-            .replace(/\bReply\b/g, '<b style="color: #FFD866;">Reply</b>')
-            .replace(/\bQuoted\b/g, '<b style="color: #FF4A66;">Quoted</b>')
-            .replace(/\breacted\b/g, '<b style="color: #3889ED;">reacted</b>')
-            .replace(
-              /\bReport closed\b/g,
-              '<b style="color: #f58c05;">Report closed</b>'
-            );
+          // Find the last quoted text in the title
+          const lastQuoteMatch = titleText.match(/"([^"]*)"$/);
 
-          const quoteMatch = titleText.match(/"([^"]*)"/);
-          if (quoteMatch) {
-            const quote = quoteMatch[1];
-            const trimmedQuote =
-              quote.length > 50 ? quote.substring(0, 50) + "..." : quote;
+          if (lastQuoteMatch) {
+            // Get the quote without the quotation marks
+            const quote = lastQuoteMatch[1];
 
-            if (
-              titleText.includes("Reply</b>") ||
-              titleText.includes("Quoted</b>")
-            ) {
-              titleText = titleText.replace(
-                /in(?:\stopic)?:/,
-                `in <b>${quote}</b>:`
-              );
-              // Remove the quoted title since we've incorporated it inline
-              titleText = titleText.replace(/ "[^"]*"/, "");
-            } else {
-              titleText = titleText.replace(
-                /in topic: "([^"]*)"/,
-                `<br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">"${trimmedQuote}"</span>`
-              );
-            }
+            // Remove the quote from the title text
+            titleText = titleText.replace(/"[^"]*"$/, "").trim();
+
+            // Create the new HTML structure
+            const newHtml = `
+              <div class="notification-block">
+                <div class="notification-title">${titleText}</div>
+                <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
+                  ${quote}
+                </div>
+              </div>
+            `;
+
+            anchorElement.innerHTML = newHtml;
           }
-
-          titleText = titleText.replace(
-            /(to a message you posted) "([^"]*)"/g,
-            '$1 <br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">"$2"</span>'
-          );
-
-          anchorElement.innerHTML = `
-            <div class="notification-block">
-              <div class="notification-title">${titleText}</div>
-            </div>
-          `;
         }
 
         row.dataset.customized = "true";
