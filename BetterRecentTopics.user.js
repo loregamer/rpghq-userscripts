@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Better Recent Topics
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Removes ellipses/truncation in titles, makes parentheses smaller, styles version numbers, and unbolds game names
 // @match        https://rpghq.org/forums/*
 // @grant        none
@@ -71,7 +71,7 @@
     if (isGuildTitle) {
       // Match the pattern: everything before the month, the month, and games list
       const titleRegex =
-        /^(.*?)(?:Junior )?Adventurer's Guild\s*-\s*([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
+        /^(?:(Junior)\s+)?Adventurer's Guild\s*-\s*([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
       match = str.match(titleRegex);
     } else {
       // Match the pattern: month and games list
@@ -82,8 +82,8 @@
     if (!match) return str;
 
     if (isGuildTitle) {
-      const [_, prefix, month, gamesList] = match;
-      const shortPrefix = prefix.includes("Junior") ? "Junior AG - " : "AG - ";
+      const [_, juniorPrefix, month, gamesList] = match;
+      const shortPrefix = juniorPrefix ? "Jr. AG - " : "AG - ";
       return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">${shortPrefix}${month}</span>`;
     } else {
       const [_, month, gamesList] = match;
@@ -122,11 +122,10 @@
     return `${beforePart}<span style="font-weight: normal;">${afterPart}</span>`;
   }
 
-  /******************************************
-   * 3) Transform each topic title
-   ******************************************/
-  const titles = document.querySelectorAll(".topictitle");
-  titles.forEach((titleElem) => {
+  /**
+   * Process a single title element
+   */
+  function processTitle(titleElem) {
     const originalText = titleElem.textContent;
 
     // Apply transformations in sequence
@@ -138,5 +137,32 @@
 
     // Replace original text with our new HTML
     titleElem.innerHTML = newHTML;
+  }
+
+  /**
+   * Process all titles in a container element
+   */
+  function processTitlesInContainer(container) {
+    const titles = container.querySelectorAll(".topictitle");
+    titles.forEach(processTitle);
+  }
+
+  // Initial processing
+  processTitlesInContainer(document);
+
+  // Set up mutation observer for dynamic updates
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === "childList") {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            processTitlesInContainer(node);
+          }
+        });
+      }
+    });
   });
+
+  // Start observing the document with the configured parameters
+  observer.observe(document.body, { childList: true, subtree: true });
 })();
