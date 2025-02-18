@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Thousands Comma Formatter
 // @namespace    http://tampermonkey.net/
-// @version      2.1.1
+// @version      2.1.2
 // @description  Add commas to numbers
 // @match        https://rpghq.org/forums/*
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
@@ -62,24 +62,14 @@ SOFTWARE.
     const postsElements = document.querySelectorAll("dd.posts");
     const topicsElements = document.querySelectorAll("dd.topics");
 
-    console.log(
-      `Found ${postsElements.length} post elements and ${topicsElements.length} topic elements`
-    );
-
     // Sum up posts
     postsElements.forEach((element, index) => {
       const postsText = element.childNodes[0].textContent
         .trim()
         .replace(/,/g, "");
       const posts = parseInt(postsText);
-      console.log(`Post element ${index + 1}:`, {
-        rawText: element.textContent,
-        trimmedNumber: postsText,
-        parsed: posts,
-      });
       if (!isNaN(posts)) {
         totalPosts += posts;
-        console.log(`Added ${posts} posts, running total: ${totalPosts}`);
       }
     });
 
@@ -89,20 +79,9 @@ SOFTWARE.
         .trim()
         .replace(/,/g, "");
       const topics = parseInt(topicsText);
-      console.log(`Topic element ${index + 1}:`, {
-        rawText: element.textContent,
-        trimmedNumber: topicsText,
-        parsed: topics,
-      });
       if (!isNaN(topics)) {
         totalTopics += topics;
-        console.log(`Added ${topics} topics, running total: ${totalTopics}`);
       }
-    });
-
-    console.log("Final totals:", {
-      posts: totalPosts,
-      topics: totalTopics,
     });
 
     // Function to format numbers, only adding commas for 5+ digits
@@ -134,7 +113,6 @@ SOFTWARE.
           )}</strong> • Total members <strong>${membersMatch[1]}</strong> • ${
             newestMemberMatch[1]
           }`;
-          console.log("Updated statistics block with new totals");
         }
       }
     }
