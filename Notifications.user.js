@@ -430,7 +430,7 @@ SOFTWARE.
       block.dataset.reactionCustomized = "true";
     },
 
-    customizeMentionNotification(notificationBlock) {
+    async customizeMentionNotification(notificationBlock) {
       const notificationText =
         notificationBlock.querySelector(".notification_text");
       const titleElement = notificationText.querySelector(
@@ -450,6 +450,28 @@ SOFTWARE.
       titleElement.innerHTML = `
         <b style="color: #FFC107;">Mentioned</b> by ${usernames} in <b>${topicName}</b>
       `;
+
+      // Create or update reference element for post content
+      let referenceElement = notificationBlock.querySelector(
+        ".notification-reference"
+      );
+      if (!referenceElement) {
+        referenceElement = Utils.createElement("span", {
+          className: "notification-reference",
+          textContent: "Loading...",
+        });
+        Utils.styleReference(referenceElement);
+        titleElement.appendChild(document.createElement("br"));
+        titleElement.appendChild(referenceElement);
+      }
+
+      // Queue the content fetch
+      this.queuePostContentFetch(
+        notificationBlock.getAttribute("data-real-url") ||
+          notificationBlock.href,
+        referenceElement
+      );
+
       const timeElement = notificationText.querySelector(".notification-time");
       if (timeElement) {
         notificationText.appendChild(timeElement);
@@ -483,7 +505,7 @@ SOFTWARE.
       if (titleElement) {
         let titleText = titleElement.innerHTML;
         if (titleText.includes("You were mentioned by")) {
-          this.customizeMentionNotification(block);
+          await this.customizeMentionNotification(block);
         } else if (titleText.includes("reacted to a message you posted")) {
           await this.customizeReactionNotification(titleElement, block);
         } else if (titleText.includes("Private Message")) {
