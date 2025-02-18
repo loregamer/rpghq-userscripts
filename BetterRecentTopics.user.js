@@ -51,11 +51,36 @@
   }
 
   /**
+   * Special formatting for Adventurer's Guild titles
+   * Format: "[x] Adventurer's Guild - Month: Games"
+   */
+  function styleAdventurersGuildTitle(str) {
+    // Check if it's an Adventurer's Guild title
+    if (!str.includes("Adventurer's Guild")) return str;
+
+    // Match the pattern: everything before the month, the month, and games list
+    const regex =
+      /^(.*?Adventurer's Guild\s*-\s*)([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
+    const match = str.match(regex);
+    if (!match) return str;
+
+    const [_, prefix, month, gamesList] = match;
+
+    // Format each part:
+    // - Make the prefix and month smaller and less prominent
+    // - Put games list on new line, with any all-caps text removed
+    return `<span style="font-size: 0.85em; opacity: 0.8;">${prefix}${month}</span><br>${gamesList.trim()}`;
+  }
+
+  /**
    * Make text after dash unbolded (but keep same size)
    * e.g. "Title - Game" -> "Title<span style="font-weight: normal"> - Game</span>"
    * Handles both regular dash and em dash
    */
   function styleEverythingAfterFirstDash(str) {
+    // Don't process Adventurer's Guild titles with this function
+    if (str.includes("Adventurer's Guild")) return str;
+
     // Match both regular dash and em dash with optional spaces
     const dashRegex = /\s+[-—]\s+/;
     const match = str.match(dashRegex);
@@ -84,6 +109,7 @@
     let newHTML = originalText;
     newHTML = styleParentheses(newHTML);
     newHTML = styleVersionNumbers(newHTML);
+    newHTML = styleAdventurersGuildTitle(newHTML);
     newHTML = styleEverythingAfterFirstDash(newHTML);
 
     // Replace original text with our new HTML
