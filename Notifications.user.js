@@ -46,13 +46,16 @@ SOFTWARE.
   // --- Constants ---
   const ONE_DAY = 24 * 60 * 60 * 1000;
   const REFERENCE_STYLE = {
+    display: "inline-block",
     background: "rgba(23, 27, 36, 0.5)",
     color: "#ffffff",
     padding: "2px 4px",
     borderRadius: "2px",
     zIndex: "-1",
-    display: "inline-block",
+    maxWidth: "98%",
     whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   };
   const FETCH_DELAY = 500; // Add delay between fetches
 
@@ -614,14 +617,14 @@ SOFTWARE.
             } else {
               titleText = titleText.replace(
                 /in topic: "([^"]*)"/,
-                `<br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"${trimmedQuote}"</span>`
+                `<br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">"${trimmedQuote}"</span>`
               );
             }
           }
 
           titleText = titleText.replace(
             /(to a message you posted) "([^"]*)"/g,
-            '$1 <br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; display: inline-block; margin-top: 5px;">"$2"</span>'
+            '$1 <br><span class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">"$2"</span>'
           );
 
           anchorElement.innerHTML = `
