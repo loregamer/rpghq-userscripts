@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      3.3
+// @version      3.2.2
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads with an improved review overlay
 // @match        https://rpghq.org/forums/*
 // @grant        GM_setValue
@@ -92,9 +92,7 @@ SOFTWARE.
       const threadLink = item.querySelector("a.topictitle");
       if (threadLink) {
         const threadTitle = threadLink.textContent.trim();
-        const threadIdMatch = threadLink.href.match(/[?&]t=(\d+)/);
-        const threadId = threadIdMatch ? threadIdMatch[1] : null;
-        if (isThreadIgnored(threadTitle, threadId)) {
+        if (isThreadIgnored(threadTitle)) {
           // Only mark as read if it's an unread thread and we should mark as read
           if (isUnreadThread(item) && shouldMarkAsRead()) {
             const ids = extractLastPostIds(item);
@@ -111,12 +109,9 @@ SOFTWARE.
     const lastPosts = document.querySelectorAll(".lastpost");
     lastPosts.forEach((lastPost) => {
       const lastPostLink = lastPost.querySelector("a.lastsubject");
-      const lastPostHref = lastPost.querySelector('a[href*="t="]');
-      if (lastPostLink && lastPostHref) {
+      if (lastPostLink) {
         const threadTitle = lastPostLink.getAttribute("title");
-        const threadIdMatch = lastPostHref.href.match(/[?&]t=(\d+)/);
-        const threadId = threadIdMatch ? threadIdMatch[1] : null;
-        if (threadTitle && isThreadIgnored(threadTitle, threadId)) {
+        if (threadTitle && isThreadIgnored(threadTitle)) {
           lastPost.remove();
         }
       }
@@ -144,31 +139,23 @@ SOFTWARE.
       ignoreButton.className = "button button-secondary dropdown-trigger";
       ignoreButton.title = "Ignore Thread";
 
-      const threadTitle = document
-        .querySelector(".topic-title")
-        .textContent.trim();
-      const ignoreStatus = isThreadIgnored(threadTitle, threadId);
-      updateButtonState(ignoreButton, ignoreStatus.exactMatch);
+      let isIgnored = ignoredThreads.hasOwnProperty(threadId);
+      updateButtonState(ignoreButton, isIgnored);
 
       ignoreButton.addEventListener("click", function (e) {
         e.preventDefault();
         const threadTitle = document
           .querySelector(".topic-title")
           .textContent.trim();
-        const currentStatus = isThreadIgnored(threadTitle, threadId);
-
-        if (currentStatus.exactMatch) {
+        if (isIgnored) {
           unignoreThread(threadId);
           updateButtonState(ignoreButton, false);
+          isIgnored = false;
         } else {
-          // If thread is ignored but not exact match (title changed), or not ignored at all
-          const action = currentStatus.ignored
-            ? "Are you sure you want to update this thread? (You had it previously ignored but the title changed)"
-            : "Are you sure you want to ignore this thread?";
-
-          if (confirm(action)) {
+          if (confirm("Are you sure you want to ignore this thread?")) {
             ignoreThread(threadId, threadTitle);
             updateButtonState(ignoreButton, true);
+            isIgnored = true;
             window.location.href = "https://rpghq.org/forums/index.php";
           }
         }
@@ -184,8 +171,8 @@ SOFTWARE.
     }
   }
 
-  function updateButtonState(button, isExactMatch) {
-    if (isExactMatch) {
+  function updateButtonState(button, isIgnored) {
+    if (isIgnored) {
       button.innerHTML =
         '<i class="icon fa-check fa-fw" aria-hidden="true"></i><span>Unignore Thread</span>';
       button.title = "Unignore Thread";
@@ -288,7 +275,7 @@ SOFTWARE.
     // Fetch the latest data from storage
     let currentIgnoredThreads = GM_getValue("ignoredThreads", {});
 
-    // Add or update the thread in the current list
+    // Add the new thread to the current list
     currentIgnoredThreads[threadId] = threadTitle;
 
     // Save the updated list back to storage
@@ -334,9 +321,7 @@ SOFTWARE.
       const threadLink = item.querySelector("a.topictitle");
       if (threadLink) {
         const threadTitle = threadLink.textContent.trim();
-        const threadIdMatch = threadLink.href.match(/[?&]t=(\d+)/);
-        const threadId = threadIdMatch ? threadIdMatch[1] : null;
-        if (isThreadIgnored(threadTitle, threadId)) {
+        if (isThreadIgnored(threadTitle)) {
           item.remove();
         }
       }
@@ -345,36 +330,19 @@ SOFTWARE.
     const lastPosts = document.querySelectorAll(".lastpost");
     lastPosts.forEach((lastPost) => {
       const lastPostLink = lastPost.querySelector("a.lastsubject");
-      const lastPostHref = lastPost.querySelector('a[href*="t="]');
-      if (lastPostLink && lastPostHref) {
+      if (lastPostLink) {
         const threadTitle = lastPostLink.getAttribute("title");
-        const threadIdMatch = lastPostHref.href.match(/[?&]t=(\d+)/);
-        const threadId = threadIdMatch ? threadIdMatch[1] : null;
-        if (threadTitle && isThreadIgnored(threadTitle, threadId)) {
+        if (threadTitle && isThreadIgnored(threadTitle)) {
           lastPost.remove();
         }
       }
     });
   }
 
-  function isThreadIgnored(threadTitle, threadId = null) {
-    // Check if the thread title matches any ignored thread title
-    const titleMatch = Object.values(ignoredThreads).some(
+  function isThreadIgnored(threadTitle) {
+    return Object.values(ignoredThreads).some(
       (ignoredTitle) => ignoredTitle.toLowerCase() === threadTitle.toLowerCase()
     );
-
-    // Check if the thread ID matches any ignored thread ID
-    const idMatch = threadId && Object.keys(ignoredThreads).includes(threadId);
-
-    // For exact match checking, we need to verify the specific title matches the specific ID
-    const exactMatch =
-      threadId &&
-      ignoredThreads[threadId]?.toLowerCase() === threadTitle.toLowerCase();
-
-    return {
-      ignored: titleMatch || idMatch,
-      exactMatch: exactMatch,
-    };
   }
 
   function toggleIgnoreMode() {
