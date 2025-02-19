@@ -41,6 +41,8 @@ SOFTWARE.
 (function () {
   "use strict";
 
+  const I_Want_To_Devlishly_Ignore_Many_Many_Threads = false;
+
   let ignoredThreads = GM_getValue("ignoredThreads", {});
   let ignoreModeActive = GM_getValue("ignoreModeActive", false);
 
@@ -984,9 +986,11 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     hideIgnoredThreads();
     addIgnoreButton();
     addShowIgnoredThreadsButton();
-    addToggleIgnoreModeButton();
-    if (ignoreModeActive) {
-      updateIgnoreButtons();
+    if (I_Want_To_Devlishly_Ignore_Many_Many_Threads) {
+      addToggleIgnoreModeButton();
+      if (ignoreModeActive) {
+        updateIgnoreButtons();
+      }
     }
     // If the board index statistics are available, update the total topics count.
     updateTotalTopicsCount();
