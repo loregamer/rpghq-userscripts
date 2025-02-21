@@ -830,6 +830,111 @@
     });
   }
 
+  async function processCPListNotification(item) {
+    const titleEl = item.querySelector(".notifications_title");
+    if (!titleEl) {
+      item.classList.add("content-processed");
+      return;
+    }
+
+    const usernameEls = titleEl.querySelectorAll(
+      ".username, .username-coloured"
+    );
+    const usernames = Array.from(usernameEls).map((el) =>
+      el.textContent.trim()
+    );
+
+    if (usernames.length === 0) {
+      item.classList.add("content-processed");
+      return;
+    }
+
+    // For notifications that start with "Quoted by" or "You were mentioned by", the first username is the key user
+    const titleText = titleEl.textContent.trim();
+    const isQuoteOrMention =
+      titleText.startsWith("Quoted") || titleText.includes("mentioned by");
+    const firstUsername = usernames[0];
+
+    if (isQuoteOrMention && isUserIgnored(firstUsername)) {
+      const row = item.closest("li.row");
+      if (row) {
+        const markReadInput = row.querySelector('input[name^="mark"]');
+        if (markReadInput) {
+          try {
+            markReadInput.checked = true;
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          } catch (err) {
+            console.error("Failed to mark notification as read:", err);
+          }
+        }
+        row.style.display = "none";
+      }
+      item.classList.add("content-processed");
+      return;
+    }
+
+    const nonIgnored = usernames.filter((u) => !isUserIgnored(u));
+    const hasIgnored = nonIgnored.length < usernames.length;
+
+    if (!hasIgnored) {
+      item.classList.add("content-processed");
+      return;
+    }
+
+    if (nonIgnored.length === 0) {
+      const row = item.closest("li.row");
+      if (row) {
+        const markReadInput = row.querySelector('input[name^="mark"]');
+        if (markReadInput) {
+          try {
+            markReadInput.checked = true;
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          } catch (err) {
+            console.error("Failed to mark notification as read:", err);
+          }
+        }
+        row.style.display = "none";
+      }
+      item.classList.add("content-processed");
+      return;
+    }
+
+    // Find the last username element to get text after it
+    const lastIgnoredEl = usernameEls[usernameEls.length - 1];
+    const nodesAfter = [];
+    let nxt = lastIgnoredEl?.nextSibling;
+    while (nxt) {
+      nodesAfter.push(nxt.cloneNode(true));
+      nxt = nxt.nextSibling;
+    }
+
+    // Clear the title element
+    titleEl.textContent = "";
+
+    // Add non-ignored usernames with appropriate separators
+    nonIgnored.forEach((username, i) => {
+      const matchEl = Array.from(usernameEls).find(
+        (el) => el.textContent.trim().toLowerCase() === username.toLowerCase()
+      );
+      if (matchEl) {
+        titleEl.appendChild(matchEl.cloneNode(true));
+      } else {
+        titleEl.appendChild(document.createTextNode(username));
+      }
+
+      if (i < nonIgnored.length - 2) {
+        titleEl.appendChild(document.createTextNode(", "));
+      } else if (i === nonIgnored.length - 2) {
+        titleEl.appendChild(document.createTextNode(" and "));
+      }
+    });
+
+    // Add "have reacted" or other trailing text
+    nodesAfter.forEach((node) => titleEl.appendChild(node));
+
+    item.classList.add("content-processed");
+  }
+
   async function processNotification(item) {
     const usernameEls = item.querySelectorAll(".username, .username-coloured");
     const usernames = Array.from(usernameEls).map((el) =>
@@ -1618,6 +1723,15 @@
       if (lp && !lp.classList.contains("content-processed")) return;
       row.classList.add("content-processed");
     });
+
+    // Process cplist notifications
+    await Promise.all(
+      Array.from(
+        document.querySelectorAll(
+          ".topiclist.cplist .notifications:not(.content-processed)"
+        )
+      ).map(processCPListNotification)
+    );
 
     // Then process the containers, but only if all their li elements are processed
     if (!needsFetching) {
