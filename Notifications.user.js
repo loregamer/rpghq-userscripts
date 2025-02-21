@@ -608,8 +608,10 @@ SOFTWARE.
           const lastQuoteMatch = titleText.match(/"([^"]*)"$/);
 
           if (lastQuoteMatch) {
-            // Remove the quote from the title text
-            titleText = titleText.replace(/"[^"]*"$/, "").trim();
+            // Only remove the quote from title if it's not a "Quoted" notification
+            if (!titleText.includes("<strong>Quoted</strong>")) {
+              titleText = titleText.replace(/"[^"]*"$/, "").trim();
+            }
 
             // Create the new HTML structure
             const newHtml = `
