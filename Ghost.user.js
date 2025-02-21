@@ -858,6 +858,7 @@
     if (isQuoteOrMention && isUserIgnored(firstUsername)) {
       const row = item.closest("li.row");
       if (row) {
+        row.classList.add("ghosted-row", "ghosted-by-author");
         const markReadInput = row.querySelector('input[name^="mark"]');
         if (markReadInput) {
           try {
@@ -867,7 +868,6 @@
             console.error("Failed to mark notification as read:", err);
           }
         }
-        row.style.display = "none";
       }
       item.classList.add("content-processed");
       return;
@@ -884,6 +884,7 @@
     if (nonIgnored.length === 0) {
       const row = item.closest("li.row");
       if (row) {
+        row.classList.add("ghosted-row", "ghosted-by-author");
         const markReadInput = row.querySelector('input[name^="mark"]');
         if (markReadInput) {
           try {
@@ -893,7 +894,6 @@
             console.error("Failed to mark notification as read:", err);
           }
         }
-        row.style.display = "none";
       }
       item.classList.add("content-processed");
       return;
@@ -948,10 +948,10 @@
     if (isUserIgnored(firstUsername)) {
       const li = item.closest("li");
       if (li) {
-        const markReadLink = li.querySelector(".mark_read.icon-mark");
-        if (markReadLink) {
+        const markReadInput = li.querySelector('input[name^="mark"]');
+        if (markReadInput) {
           try {
-            markReadLink.click();
+            markReadInput.checked = true;
             await new Promise((resolve) => setTimeout(resolve, 100));
           } catch (err) {
             console.error("Failed to mark notification as read:", err);
@@ -1484,7 +1484,13 @@
 
     ghostedPosts.forEach((p) => p.classList.toggle("show", showGhostedPosts));
     ghostedQuotes.forEach((q) => q.classList.toggle("show", showGhostedPosts));
-    ghostedRows.forEach((r) => r.classList.toggle("show", showGhostedPosts));
+    ghostedRows.forEach((r) => {
+      r.classList.toggle("show", showGhostedPosts);
+      // For cplist notifications, we need to ensure the row is visible
+      if (r.closest(".topiclist.cplist")) {
+        r.style.display = showGhostedPosts ? "block" : "none";
+      }
+    });
     document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
 
     showToggleNotification();
