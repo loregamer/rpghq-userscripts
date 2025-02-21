@@ -610,6 +610,21 @@ SOFTWARE.
             if (parts.length === 2) {
               titleText = parts[0] + " " + parts[1];
 
+              // Apply text styling
+              titleText = titleText
+                .replace(
+                  /\b(by|and|in|from)\b(?!-)/g,
+                  '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>'
+                )
+                .replace(
+                  /<strong>Quoted<\/strong>/,
+                  '<strong style="color: #FF4A66;">Quoted</strong>'
+                )
+                .replace(
+                  /<strong>Reply<\/strong>/,
+                  '<strong style="color: #95DB00;">Reply</strong>'
+                );
+
               // Create the new HTML structure for mentions
               const newHtml = `
                 <div class="notification-block">
@@ -643,6 +658,21 @@ SOFTWARE.
                 titleText = titleText.replace(/"[^"]*"$/, "").trim();
               }
 
+              // Apply text styling
+              titleText = titleText
+                .replace(
+                  /\b(by|and|in|from)\b(?!-)/g,
+                  '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>'
+                )
+                .replace(
+                  /<strong>Quoted<\/strong>/,
+                  '<strong style="color: #FF4A66;">Quoted</strong>'
+                )
+                .replace(
+                  /<strong>Reply<\/strong>/,
+                  '<strong style="color: #95DB00;">Reply</strong>'
+                );
+
               // Create the new HTML structure
               const newHtml = `
                 <div class="notification-block">
@@ -667,6 +697,12 @@ SOFTWARE.
               }
             }
           }
+
+          // Convert username-coloured to username
+          anchorElement.querySelectorAll(".username-coloured").forEach((el) => {
+            el.classList.replace("username-coloured", "username");
+            el.style.color = "";
+          });
         }
 
         row.dataset.customized = "true";
