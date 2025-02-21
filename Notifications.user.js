@@ -636,10 +636,10 @@ SOFTWARE.
           }
           // Handle reaction notifications
           else if (titleText.includes("reacted to")) {
-            const usernameElements = titleElement.querySelectorAll(
-              ".username, .username-coloured"
+            const usernameElements = Array.from(
+              titleElement.querySelectorAll(".username, .username-coloured")
             );
-            const usernames = Array.from(usernameElements).map((el) =>
+            const usernames = usernameElements.map((el) =>
               el.textContent.trim()
             );
 
@@ -654,10 +654,17 @@ SOFTWARE.
               );
               const reactionHTML = Utils.formatReactions(filteredReactions);
 
-              titleText = titleText.replace(
-                /(have|has)\s+reacted.*$/,
-                `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
-              );
+              // Keep everything up to the first username
+              const firstPart = titleText.split(
+                usernameElements[0].outerHTML
+              )[0];
+              // Get all the HTML after "reacted to"
+              const endPart = titleText.split("reacted to")[1];
+
+              titleText =
+                firstPart +
+                usernameElements.map((el) => el.outerHTML).join(", ") +
+                ` <b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`;
 
               // Create the new HTML structure
               const newHtml = `
