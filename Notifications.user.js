@@ -608,9 +608,6 @@ SOFTWARE.
           const lastQuoteMatch = titleText.match(/"([^"]*)"$/);
 
           if (lastQuoteMatch) {
-            // Get the quote without the quotation marks
-            const quote = lastQuoteMatch[1];
-
             // Remove the quote from the title text
             titleText = titleText.replace(/"[^"]*"$/, "").trim();
 
@@ -619,12 +616,23 @@ SOFTWARE.
               <div class="notification-block">
                 <div class="notification-title">${titleText}</div>
                 <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
-                  ${quote}
+                  Loading...
                 </div>
               </div>
             `;
 
             anchorElement.innerHTML = newHtml;
+
+            // Queue the content fetch
+            const referenceElement = anchorElement.querySelector(
+              ".notification-reference"
+            );
+            if (referenceElement) {
+              NotificationCustomizer.queuePostContentFetch(
+                anchorElement.href,
+                referenceElement
+              );
+            }
           }
         }
 
