@@ -592,7 +592,7 @@ SOFTWARE.
     },
 
     customizeNotificationPage() {
-      document.querySelectorAll(".cplist .row").forEach((row) => {
+      document.querySelectorAll(".cplist .row").forEach(async (row) => {
         if (row.dataset.customized === "true") return;
 
         const notificationBlock = row.querySelector(".notifications");
@@ -610,22 +610,56 @@ SOFTWARE.
             if (parts.length === 2) {
               titleText = parts[0] + " " + parts[1];
 
-              // Apply text styling
-              titleText = titleText
-                .replace(
-                  /\b(by|and|in|from)\b(?!-)/g,
-                  '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>'
-                )
-                .replace(
-                  /<strong>Quoted<\/strong>/,
-                  '<strong style="color: #FF4A66;">Quoted</strong>'
-                )
-                .replace(
-                  /<strong>Reply<\/strong>/,
-                  '<strong style="color: #95DB00;">Reply</strong>'
-                );
-
               // Create the new HTML structure for mentions
+              const newHtml = `
+                <div class="notification-block">
+                  <div class="notification-title">${titleText}</div>
+                  <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
+                    Loading...
+                  </div>
+                </div>
+              `;
+
+              anchorElement.innerHTML = newHtml;
+
+              // Queue the content fetch
+              const referenceElement = anchorElement.querySelector(
+                ".notification-reference"
+              );
+              if (referenceElement) {
+                NotificationCustomizer.queuePostContentFetch(
+                  anchorElement.href,
+                  referenceElement
+                );
+              }
+            }
+          }
+          // Handle reaction notifications
+          else if (titleText.includes("reacted to")) {
+            const usernameElements = titleElement.querySelectorAll(
+              ".username, .username-coloured"
+            );
+            const usernames = Array.from(usernameElements).map((el) =>
+              el.textContent.trim()
+            );
+
+            const postId = Utils.extractPostId(anchorElement.href);
+            if (postId) {
+              const reactions = await ReactionHandler.fetchReactions(
+                postId,
+                false
+              );
+              const filteredReactions = reactions.filter((reaction) =>
+                usernames.includes(reaction.username)
+              );
+              const reactionHTML = Utils.formatReactions(filteredReactions);
+
+              titleText = titleText.replace(
+                /(have|has)\s+reacted.*$/,
+                `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
+              );
+
+              // Create the new HTML structure
               const newHtml = `
                 <div class="notification-block">
                   <div class="notification-title">${titleText}</div>
