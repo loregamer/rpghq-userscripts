@@ -604,36 +604,67 @@ SOFTWARE.
           );
           let titleText = titleElement.innerHTML;
 
-          // Find the last quoted text in the title
-          const lastQuoteMatch = titleText.match(/"([^"]*)"$/);
+          // Handle mentioned notifications specially
+          if (titleText.includes("You were mentioned by")) {
+            const parts = titleText.split("<br>");
+            if (parts.length === 2) {
+              titleText = parts[0] + " " + parts[1];
 
-          if (lastQuoteMatch) {
-            // Only remove the quote from title if it's not a "Quoted" notification
-            if (!titleText.includes("<strong>Quoted</strong>")) {
-              titleText = titleText.replace(/"[^"]*"$/, "").trim();
-            }
-
-            // Create the new HTML structure
-            const newHtml = `
-              <div class="notification-block">
-                <div class="notification-title">${titleText}</div>
-                <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
-                  Loading...
+              // Create the new HTML structure for mentions
+              const newHtml = `
+                <div class="notification-block">
+                  <div class="notification-title">${titleText}</div>
+                  <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
+                    Loading...
+                  </div>
                 </div>
-              </div>
-            `;
+              `;
 
-            anchorElement.innerHTML = newHtml;
+              anchorElement.innerHTML = newHtml;
 
-            // Queue the content fetch
-            const referenceElement = anchorElement.querySelector(
-              ".notification-reference"
-            );
-            if (referenceElement) {
-              NotificationCustomizer.queuePostContentFetch(
-                anchorElement.href,
-                referenceElement
+              // Queue the content fetch
+              const referenceElement = anchorElement.querySelector(
+                ".notification-reference"
               );
+              if (referenceElement) {
+                NotificationCustomizer.queuePostContentFetch(
+                  anchorElement.href,
+                  referenceElement
+                );
+              }
+            }
+          }
+          // Handle other notifications with quotes
+          else {
+            const lastQuoteMatch = titleText.match(/"([^"]*)"$/);
+            if (lastQuoteMatch) {
+              // Only remove the quote from title if it's not a "Quoted" notification
+              if (!titleText.includes("<strong>Quoted</strong>")) {
+                titleText = titleText.replace(/"[^"]*"$/, "").trim();
+              }
+
+              // Create the new HTML structure
+              const newHtml = `
+                <div class="notification-block">
+                  <div class="notification-title">${titleText}</div>
+                  <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
+                    Loading...
+                  </div>
+                </div>
+              `;
+
+              anchorElement.innerHTML = newHtml;
+
+              // Queue the content fetch
+              const referenceElement = anchorElement.querySelector(
+                ".notification-reference"
+              );
+              if (referenceElement) {
+                NotificationCustomizer.queuePostContentFetch(
+                  anchorElement.href,
+                  referenceElement
+                );
+              }
             }
           }
         }
