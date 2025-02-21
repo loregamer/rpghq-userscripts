@@ -658,12 +658,30 @@ SOFTWARE.
               const firstPart = titleText.split(
                 usernameElements[0].outerHTML
               )[0];
-              // Get all the HTML after "reacted to"
-              const endPart = titleText.split("reacted to")[1];
+
+              const smallAnd =
+                '<span style="font-size: 0.85em; padding: 0 0.25px;">and</span>';
+
+              // Format usernames based on count
+              let formattedUsernames;
+              if (usernameElements.length === 2) {
+                formattedUsernames = `${usernameElements[0].outerHTML} ${smallAnd} ${usernameElements[1].outerHTML}`;
+              } else if (usernameElements.length > 2) {
+                formattedUsernames =
+                  usernameElements
+                    .slice(0, -1)
+                    .map((el) => el.outerHTML)
+                    .join(", ") +
+                  `, ${smallAnd} ${
+                    usernameElements[usernameElements.length - 1].outerHTML
+                  }`;
+              } else {
+                formattedUsernames = usernameElements[0].outerHTML;
+              }
 
               titleText =
                 firstPart +
-                usernameElements.map((el) => el.outerHTML).join(", ") +
+                formattedUsernames +
                 ` <b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`;
 
               // Create the new HTML structure
