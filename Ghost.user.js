@@ -874,7 +874,8 @@
     }
 
     const nonIgnored = usernames.filter((u) => !isUserIgnored(u));
-    const hasIgnored = nonIgnored.length < usernames.length;
+    const ghosted = usernames.filter((u) => isUserIgnored(u));
+    const hasIgnored = ghosted.length > 0;
 
     if (!hasIgnored) {
       item.classList.add("content-processed");
@@ -899,6 +900,7 @@
       return;
     }
 
+    // Create the non-ghosted notification first
     // Find the last username element to get text after it
     const lastIgnoredEl = usernameEls[usernameEls.length - 1];
     const nodesAfter = [];
@@ -931,6 +933,41 @@
 
     // Add "have reacted" or other trailing text
     nodesAfter.forEach((node) => titleEl.appendChild(node));
+
+    // Now create ghosted notifications for each ghosted user
+    const row = item.closest("li.row");
+    if (row) {
+      ghosted.forEach((ghostedUsername) => {
+        const ghostedRow = row.cloneNode(true);
+        ghostedRow.classList.add("ghosted-row", "ghosted-by-author");
+
+        // Update the notification text for this ghosted user
+        const ghostedTitleEl = ghostedRow.querySelector(".notifications_title");
+        if (ghostedTitleEl) {
+          ghostedTitleEl.textContent = "";
+          const matchEl = Array.from(usernameEls).find(
+            (el) =>
+              el.textContent.trim().toLowerCase() ===
+              ghostedUsername.toLowerCase()
+          );
+          if (matchEl) {
+            ghostedTitleEl.appendChild(matchEl.cloneNode(true));
+          } else {
+            ghostedTitleEl.appendChild(
+              document.createTextNode(ghostedUsername)
+            );
+          }
+
+          // Add the trailing text
+          nodesAfter.forEach((node) =>
+            ghostedTitleEl.appendChild(node.cloneNode(true))
+          );
+        }
+
+        // Insert the ghosted row after the original
+        row.parentNode.insertBefore(ghostedRow, row.nextSibling);
+      });
+    }
 
     item.classList.add("content-processed");
   }
