@@ -41,6 +41,7 @@
       background: linear-gradient(45deg, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.2));
       border: 2px solid #ff0000;
       box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.2);
+      pointer-events: none;
     }
 
     .mod-warning-banner.warning {
@@ -252,13 +253,15 @@
 
       // Custom tooltip handlers
       const showTooltip = (e) => {
+        console.log("[Debug] Showing tooltip for label:", label);
         indicator.style.transform = "scale(1.2)";
-        let tooltipText = `[${label.type}] ${label.tooltip}`;
+        let tooltipText = label.tooltip;
         if (label.url) {
           tooltipText += "\nClick to learn more";
         }
         tooltip.textContent = tooltipText;
         tooltip.style.display = "block";
+        console.log("[Debug] Tooltip text set to:", tooltipText);
         updateTooltipPosition(e);
       };
 
@@ -332,10 +335,13 @@
 
   // Create warning banner
   function createWarningBanner(status) {
+    console.log("[Debug] Creating warning banner with status:", status);
     const banner = document.createElement("div");
     const statusType = STATUS_TYPES[status.type] || STATUS_TYPES.WARNING;
+    console.log("[Debug] Using status type:", statusType);
 
     banner.className = `mod-warning-banner ${statusType.class}`;
+    console.log("[Debug] Banner class:", banner.className);
 
     const iconContainer = document.createElement("div");
     iconContainer.className = "warning-icon-container";
@@ -355,9 +361,7 @@
 
     if (status.alternative) {
       const altLink = document.createElement("a");
-      altLink.href = `https://www.nexusmods.com/${
-        getGameAndModId().gameId
-      }/mods/${status.alternative}`;
+      altLink.href = `${status.alternative}`;
       altLink.className = "warning-button";
       altLink.textContent = "View Alternative";
       altLink.target = "_blank";
@@ -382,14 +386,22 @@
 
   // Add warning banner to page
   function addWarningBanner(status) {
+    console.log("[Debug] Adding warning banner to page");
     const featured = document.querySelector("#featured");
-    if (!featured) return;
+    if (!featured) {
+      console.warn("[Debug] Featured element not found");
+      return;
+    }
 
     const existingBanner = document.querySelector(".mod-warning-banner");
-    if (existingBanner) existingBanner.remove();
+    if (existingBanner) {
+      console.log("[Debug] Removing existing banner");
+      existingBanner.remove();
+    }
 
     const banner = createWarningBanner(status);
     featured.appendChild(banner);
+    console.log("[Debug] Banner added to featured element");
   }
 
   // DOM Observer setup
@@ -432,6 +444,7 @@
   // Main function to check mod status and update UI
   function checkModStatus() {
     const { gameId, modId } = getGameAndModId();
+    console.log("[Debug] Checking mod status for game:", gameId, "mod:", modId);
 
     GM_xmlhttpRequest({
       method: "GET",
@@ -439,30 +452,37 @@
       onload: function (response) {
         try {
           const modStatus = JSON.parse(response.responseText);
+          console.log("[Debug] Received mod status data:", modStatus);
 
           if (modStatus[gameId] && modStatus[gameId][modId]) {
             const status = modStatus[gameId][modId];
+            console.log("[Debug] Found status for current mod:", status);
 
-            if (status.broken) {
+            if (status.status === "BROKEN") {
+              console.log(
+                "[Debug] Mod is marked as broken, creating indicator"
+              );
               const indicatorStatus = {
-                type: status.type || "BROKEN",
+                type: status.status,
                 reason: status.reason || "This mod is marked as broken",
-                color:
-                  status.color || STATUS_TYPES[status.type]?.color || "#ff0000",
+                color: STATUS_TYPES[status.status]?.color || "#ff0000",
                 icon: status.icon,
                 url: status.url,
                 alternative: status.alternative,
               };
+              console.log("[Debug] Created indicator status:", indicatorStatus);
 
               addWarningBanner(indicatorStatus);
             }
+          } else {
+            console.log("[Debug] No status found for current mod");
           }
         } catch (error) {
-          console.error("Error processing mod status:", error);
+          console.error("[Debug] Error processing mod status:", error);
         }
       },
       onerror: function (error) {
-        console.error("Error fetching mod status:", error);
+        console.error("[Debug] Error fetching mod status:", error);
       },
     });
   }
