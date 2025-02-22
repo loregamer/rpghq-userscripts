@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Nexus Mods - Content Curator
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Adds warning labels to mods marked as broken or not recommended based on a GitHub-hosted database
 // @author       You
 // @match        https://www.nexusmods.com/*/mods/*
@@ -18,6 +18,84 @@
 
   const AUTHOR_STATUS_URL =
     "https://raw.githubusercontent.com/loregamer/rpghq-userscripts/refs/heads/main/Nexus/Resources/author-status.json";
+
+  // Enhanced warning styles
+  const styles = `
+    .mod-warning-banner {
+      margin: 10px 0;
+      padding: 15px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      animation: warning-pulse 2s infinite;
+    }
+
+    .mod-warning-banner.severe {
+      background: linear-gradient(45deg, #ff000033, #ff000066);
+      border: 2px solid #ff0000;
+    }
+
+    .mod-warning-banner.warning {
+      background: linear-gradient(45deg, #ffa50033, #ffa50066);
+      border: 2px solid #ffa500;
+    }
+
+    .mod-warning-banner.info {
+      background: linear-gradient(45deg, #0088ff33, #0088ff66);
+      border: 2px solid #0088ff;
+    }
+
+    .warning-icon-container {
+      display: flex;
+      gap: 5px;
+    }
+
+    .warning-icon {
+      font-size: 24px;
+      animation: bounce 1s infinite;
+    }
+
+    .warning-text {
+      flex-grow: 1;
+      color: white;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+
+    .warning-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .warning-button {
+      padding: 5px 10px;
+      border-radius: 3px;
+      color: white;
+      text-decoration: none;
+      background: rgba(255,255,255,0.2);
+      transition: background 0.3s;
+    }
+
+    .warning-button:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    @keyframes warning-pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.8; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+  `;
+
+  // Add styles to document
+  const styleSheet = document.createElement("style");
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
 
   // Create and setup tooltip element
   const tooltip = document.createElement("div");
@@ -165,6 +243,7 @@
     container.style.display = "inline-flex";
     container.style.gap = "2px";
     container.style.alignItems = "center";
+    container.classList.add("author-status-container"); // Add class for identification
 
     authorInfo.labels.forEach((label) => {
       // Create wrapper that will be either a span or anchor
@@ -248,7 +327,13 @@
 
           authorLinks.forEach((authorLink) => {
             const authorName = authorLink.textContent.trim();
-            if (authorStatus[authorName]) {
+            // Check if this author link already has status indicators
+            if (
+              authorStatus[authorName] &&
+              !authorLink.nextElementSibling?.classList.contains(
+                "author-status-container"
+              )
+            ) {
               addAuthorStatusIndicator(authorLink, authorStatus[authorName]);
             }
           });
@@ -259,6 +344,134 @@
       onerror: function (error) {
         console.error("Error fetching author status:", error);
       },
+    });
+  }
+
+  // Enhanced status types and icons
+  const STATUS_TYPES = {
+    MALICIOUS: {
+      icons: ["⚠️", "☠️", "⚠️"],
+      color: "#ff0000",
+      class: "severe",
+    },
+    BROKEN: {
+      icons: ["⚠️", "💔", "⚠️"],
+      color: "#ff0000",
+      class: "severe",
+    },
+    WARNING: {
+      icons: ["⚡", "⚠️"],
+      color: "#ffa500",
+      class: "warning",
+    },
+    INFO: {
+      icons: ["ℹ️"],
+      color: "#0088ff",
+      class: "info",
+    },
+    ABANDONED: {
+      icons: ["🚫", "⛔"],
+      color: "#ff0000",
+      class: "severe",
+    },
+  };
+
+  // Create warning banner
+  function createWarningBanner(status) {
+    const banner = document.createElement("div");
+    const statusType = STATUS_TYPES[status.type] || STATUS_TYPES.WARNING;
+
+    banner.className = `mod-warning-banner ${statusType.class}`;
+
+    const iconContainer = document.createElement("div");
+    iconContainer.className = "warning-icon-container";
+    statusType.icons.forEach((icon) => {
+      const span = document.createElement("span");
+      span.className = "warning-icon";
+      span.textContent = icon;
+      iconContainer.appendChild(span);
+    });
+
+    const textContainer = document.createElement("div");
+    textContainer.className = "warning-text";
+    textContainer.innerHTML = `<strong>${status.type}:</strong> ${status.reason}`;
+
+    const actionsContainer = document.createElement("div");
+    actionsContainer.className = "warning-actions";
+
+    if (status.alternative) {
+      const altLink = document.createElement("a");
+      altLink.href = `https://www.nexusmods.com/${
+        getGameAndModId().gameId
+      }/mods/${status.alternative}`;
+      altLink.className = "warning-button";
+      altLink.textContent = "View Alternative";
+      altLink.target = "_blank";
+      actionsContainer.appendChild(altLink);
+    }
+
+    if (status.url) {
+      const moreInfoLink = document.createElement("a");
+      moreInfoLink.href = status.url;
+      moreInfoLink.className = "warning-button";
+      moreInfoLink.textContent = "More Info";
+      moreInfoLink.target = "_blank";
+      actionsContainer.appendChild(moreInfoLink);
+    }
+
+    banner.appendChild(iconContainer);
+    banner.appendChild(textContainer);
+    banner.appendChild(actionsContainer);
+
+    return banner;
+  }
+
+  // Add warning banner to page
+  function addWarningBanner(status) {
+    const pageTitle = document.querySelector("#pagetitle");
+    if (!pageTitle) return;
+
+    const existingBanner = document.querySelector(".mod-warning-banner");
+    if (existingBanner) existingBanner.remove();
+
+    const banner = createWarningBanner(status);
+    pageTitle.insertAdjacentElement("afterend", banner);
+  }
+
+  // DOM Observer setup
+  function setupDOMObserver() {
+    let checkTimeout;
+    const observer = new MutationObserver((mutations) => {
+      // Clear any pending timeout
+      if (checkTimeout) {
+        clearTimeout(checkTimeout);
+      }
+
+      // Set a new timeout to run checks after mutations have settled
+      checkTimeout = setTimeout(() => {
+        const pageTitle = document.querySelector("#pagetitle");
+        if (pageTitle && !document.querySelector(".mod-warning-banner")) {
+          checkModStatus();
+        }
+
+        // Only check author status if we don't have all labels yet
+        const authorLinks = document.querySelectorAll("a[href*='/users/']");
+        const unlabeledAuthors = Array.from(authorLinks).some(
+          (link) =>
+            !link.nextElementSibling?.classList.contains(
+              "author-status-container"
+            )
+        );
+
+        if (unlabeledAuthors) {
+          checkAuthorStatus();
+        }
+      }, 100); // Wait 100ms after mutations stop before running checks
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
     });
   }
 
@@ -277,17 +490,18 @@
             const status = modStatus[gameId][modId];
 
             if (status.broken) {
-              // Convert the status to match our indicator format
               const indicatorStatus = {
-                type: status.type || "WARNING",
+                type: status.type || "BROKEN",
                 reason: status.reason || "This mod is marked as broken",
-                color: status.color || "red",
+                color:
+                  status.color || STATUS_TYPES[status.type]?.color || "#ff0000",
                 icon: status.icon,
                 url: status.url,
                 alternative: status.alternative,
               };
 
               addModStatusIndicator(indicatorStatus);
+              addWarningBanner(indicatorStatus);
             }
           }
         } catch (error) {
@@ -303,4 +517,5 @@
   // Run when the page loads
   checkModStatus();
   checkAuthorStatus();
+  setupDOMObserver();
 })();
