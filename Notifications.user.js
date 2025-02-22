@@ -952,13 +952,42 @@ SOFTWARE.
       NotificationCustomizer.customizeNotificationPage();
     }
 
+    // Add debouncing to prevent rapid re-processing
+    let debounceTimer;
+    const debouncedCustomize = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        NotificationCustomizer.customizeNotificationPanel();
+      }, 100);
+    };
+
     // Observe DOM changes to apply customizations dynamically
     const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
+      let shouldProcess = false;
+
+      for (const mutation of mutations) {
+        // Only process if new notification blocks are added
         if (mutation.type === "childList") {
-          NotificationCustomizer.customizeNotificationPanel();
+          const hasNewNotifications = Array.from(mutation.addedNodes).some(
+            (node) => {
+              return (
+                node.nodeType === Node.ELEMENT_NODE &&
+                (node.classList?.contains("notification-block") ||
+                  node.querySelector?.(".notification-block"))
+              );
+            }
+          );
+
+          if (hasNewNotifications) {
+            shouldProcess = true;
+            break;
+          }
         }
-      });
+      }
+
+      if (shouldProcess) {
+        debouncedCustomize();
+      }
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
