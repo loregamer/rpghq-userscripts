@@ -71,9 +71,12 @@
     .warning-text {
       flex-grow: 1;
       color: white;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      text-shadow: -1px -1px 0 #000,  
+                   1px -1px 0 #000,
+                   -1px 1px 0 #000,
+                   1px 1px 0 #000,
+                   2px 2px 4px rgba(0, 0, 0, 0.8);
       font-size: 1.2em;
-      font-weight: bold;
       pointer-events: auto;
     }
 
@@ -136,8 +139,21 @@
     pointer-events: none;
     border: 1px solid #444;
     line-height: 1.4;
+    white-space: pre-line;
   `;
   document.body.appendChild(tooltip);
+
+  // Helper function to format tooltip text
+  function formatTooltipText(text, additionalInfo = "") {
+    const formattedText = text
+      .replace(/\\n/g, "\n")
+      .replace(/\((.*?)\)/g, '<span style="font-size: 0.65em;">($1)</span>');
+    return `<div style="font-size: 14px; margin-bottom: 6px;">${formattedText}</div>${
+      additionalInfo
+        ? `<div style="font-size: 12px; color: #aaa; margin-top: 4px;">${additionalInfo}</div>`
+        : ""
+    }`;
+  }
 
   // Handle tooltip positioning
   function updateTooltipPosition(e) {
@@ -254,13 +270,12 @@
       const showTooltip = (e) => {
         console.log("[Debug] Showing tooltip for label:", label);
         indicator.style.transform = "scale(1.2)";
-        let tooltipText = `<div style="font-size: 14px; margin-bottom: 6px;">${label.tooltip}</div>`;
-        if (label.url) {
-          tooltipText += `<div style="font-size: 12px; color: #aaa; margin-top: 4px;">Click to learn more</div>`;
-        }
-        tooltip.innerHTML = tooltipText;
+        tooltip.innerHTML = formatTooltipText(
+          label.tooltip,
+          label.url ? "Click to learn more" : ""
+        );
         tooltip.style.display = "block";
-        console.log("[Debug] Tooltip text set to:", tooltipText);
+        console.log("[Debug] Tooltip text set to:", tooltip.innerHTML);
         updateTooltipPosition(e);
       };
 
@@ -356,7 +371,9 @@
       if (status.type === "CLOSED_PERMISSIONS") {
         // Add tooltip handlers
         const showTooltip = (e) => {
-          tooltip.innerHTML = `<div style="font-size: 14px; margin-bottom: 6px;">This mod has closed ${status.reason.toLowerCase()}</div>`;
+          tooltip.innerHTML = formatTooltipText(
+            `This mod has closed ${status.reason.toLowerCase()}`
+          );
           tooltip.style.display = "block";
           updateTooltipPosition(e);
         };
@@ -375,7 +392,12 @@
 
     const textContainer = document.createElement("div");
     textContainer.className = "warning-text";
-    textContainer.innerHTML = `<strong>${status.type}:</strong> ${status.reason}`;
+    // Format parenthetical text in warning banner
+    const formattedReason = status.reason.replace(
+      /\((.*?)\)/g,
+      '<span style="font-size: 0.85em;">($1)</span>'
+    );
+    textContainer.innerHTML = `<strong>${status.type}:</strong> ${formattedReason}`;
 
     const actionsContainer = document.createElement("div");
     actionsContainer.className = "warning-actions";
@@ -533,9 +555,9 @@
 
           // Add tooltip handlers
           const showTooltip = (e) => {
-            tooltip.innerHTML = `<div style="font-size: 14px; margin-bottom: 6px;">This mod has closed ${closedPermissions.join(
-              ", "
-            )} permissions</div>`;
+            tooltip.innerHTML = formatTooltipText(
+              `This mod has closed ${closedPermissions.join(", ")} permissions`
+            );
             tooltip.style.display = "block";
             updateTooltipPosition(e);
           };
