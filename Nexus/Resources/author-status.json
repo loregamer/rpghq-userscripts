@@ -2,7 +2,6 @@
   "Eralyne": {
     "labels": [
       {
-        "type": "MALICIOUS",
         "tooltip": "Known for including malware in mods",
         "icon": "https://f.rpghq.org/b1PMDDCK0hrc.png?n=pasted-file.png",
         "color": "red",
