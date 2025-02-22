@@ -1,22 +1,8 @@
 {
-  "2847": {
-    "broken": true,
-    "reason": "Incompatible with BG3 Patch 6 and above"
-  },
-  "1234": {
-    "notRecommended": true,
-    "reason": "Causes severe performance issues with large save files"
-  },
-  "5678": {
-    "broken": true,
-    "reason": "Mod author discontinued support, breaks character creation after Patch 5"
-  },
-  "9012": {
-    "notRecommended": true,
-    "reason": "Conflicts with most major overhaul mods, use with caution"
-  },
-  "3456": {
-    "broken": true,
-    "reason": "Crashes game after Hotfix #31, waiting for author update"
+  "baldursgate3": {
+    "899": {
+      "broken": true,
+      "reason": "This shit will break your game, for real"
+    }
   }
 }
