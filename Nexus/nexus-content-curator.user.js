@@ -396,17 +396,17 @@
   // Enhanced status types and icons
   const STATUS_TYPES = {
     MALICIOUS: {
-      icons: ["⚠️", "☠️", "⚠️"],
+      icons: ["⚠️"],
       color: "#ff0000",
       class: "severe",
     },
     BROKEN: {
-      icons: ["⚠️", "💔", "⚠️"],
+      icons: ["⚠️"],
       color: "#ff0000",
       class: "severe",
     },
     WARNING: {
-      icons: ["⚡", "⚠️"],
+      icons: ["⚡"],
       color: "#ffa500",
       class: "warning",
     },
@@ -416,7 +416,7 @@
       class: "info",
     },
     ABANDONED: {
-      icons: ["🚫", "⛔"],
+      icons: ["🪦"],
       color: "#ff0000",
       class: "severe",
     },
