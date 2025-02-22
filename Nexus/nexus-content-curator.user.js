@@ -354,7 +354,21 @@
       span.className = "warning-icon";
       span.textContent = icon;
       if (status.type === "CLOSED_PERMISSIONS") {
-        span.title = `This mod has closed ${status.reason.toLowerCase()}`;
+        // Add tooltip handlers
+        const showTooltip = (e) => {
+          tooltip.innerHTML = `<div style="font-size: 14px; margin-bottom: 6px;">This mod has closed ${status.reason.toLowerCase()}</div>`;
+          tooltip.style.display = "block";
+          updateTooltipPosition(e);
+        };
+
+        const hideTooltip = () => {
+          tooltip.style.display = "none";
+        };
+
+        span.addEventListener("mouseover", showTooltip);
+        span.addEventListener("mousemove", updateTooltipPosition);
+        span.addEventListener("mouseout", hideTooltip);
+        span.style.cursor = "help";
       }
       iconContainer.appendChild(span);
     });
@@ -514,10 +528,26 @@
           const lockSpan = document.createElement("span");
           lockSpan.className = "permissions-lock";
           lockSpan.style.marginLeft = "5px";
-          lockSpan.title = `This mod has closed ${closedPermissions.join(
-            ", "
-          )} permissions`;
+          lockSpan.style.cursor = "help";
           lockSpan.textContent = "🔒";
+
+          // Add tooltip handlers
+          const showTooltip = (e) => {
+            tooltip.innerHTML = `<div style="font-size: 14px; margin-bottom: 6px;">This mod has closed ${closedPermissions.join(
+              ", "
+            )} permissions</div>`;
+            tooltip.style.display = "block";
+            updateTooltipPosition(e);
+          };
+
+          const hideTooltip = () => {
+            tooltip.style.display = "none";
+          };
+
+          lockSpan.addEventListener("mouseover", showTooltip);
+          lockSpan.addEventListener("mousemove", updateTooltipPosition);
+          lockSpan.addEventListener("mouseout", hideTooltip);
+
           permissionsHeader.insertBefore(
             lockSpan,
             permissionsHeader.querySelector(".acc-status")
