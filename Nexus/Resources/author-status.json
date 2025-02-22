@@ -1,6 +1,12 @@
 {
   "Eralyne": {
-    "status": "MALICIOUS",
-    "tooltip": "Known for including malware in mods"
+    "labels": [
+      {
+        "type": "MALICIOUS",
+        "tooltip": "Known for including malware in mods",
+        "icon": "⚠️",
+        "color": "red"
+      }
+    ]
   }
 }

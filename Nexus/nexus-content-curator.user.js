@@ -82,44 +82,43 @@
   }
 
   // Add status indicator to author name
-  function addAuthorStatusIndicator(authorElement, status) {
-    const indicator = document.createElement("span");
-    indicator.style.marginLeft = "5px";
-    indicator.style.cursor = "help";
+  function addAuthorStatusIndicator(authorElement, authorInfo) {
+    const container = document.createElement("span");
+    container.style.marginLeft = "5px";
+    container.style.display = "inline-flex";
+    container.style.gap = "2px";
+    container.style.alignItems = "center";
 
-    // Set icon based on status
-    switch (status.status.toUpperCase()) {
-      case "MALICIOUS":
-        indicator.textContent = "⚠️";
-        indicator.style.color = "red";
-        break;
-      // Add more status types here as needed
-      default:
-        indicator.textContent = "ℹ️";
-        indicator.style.color = "orange";
-    }
+    authorInfo.labels.forEach((label) => {
+      const indicator = document.createElement("span");
+      indicator.style.cursor = "help";
+      indicator.textContent = label.icon || "ℹ️";
+      indicator.style.color = label.color || "orange";
 
-    // Add hover effect
-    indicator.style.transition = "transform 0.2s";
+      // Add hover effect
+      indicator.style.transition = "transform 0.2s";
 
-    // Custom tooltip handlers
-    indicator.addEventListener("mouseover", (e) => {
-      indicator.style.transform = "scale(1.2)";
-      tooltip.textContent = status.tooltip;
-      tooltip.style.display = "block";
-      updateTooltipPosition(e);
+      // Custom tooltip handlers
+      indicator.addEventListener("mouseover", (e) => {
+        indicator.style.transform = "scale(1.2)";
+        tooltip.textContent = `[${label.type}] ${label.tooltip}`;
+        tooltip.style.display = "block";
+        updateTooltipPosition(e);
+      });
+
+      indicator.addEventListener("mousemove", (e) => {
+        updateTooltipPosition(e);
+      });
+
+      indicator.addEventListener("mouseout", () => {
+        indicator.style.transform = "scale(1)";
+        tooltip.style.display = "none";
+      });
+
+      container.appendChild(indicator);
     });
 
-    indicator.addEventListener("mousemove", (e) => {
-      updateTooltipPosition(e);
-    });
-
-    indicator.addEventListener("mouseout", () => {
-      indicator.style.transform = "scale(1)";
-      tooltip.style.display = "none";
-    });
-
-    authorElement.insertAdjacentElement("afterend", indicator);
+    authorElement.insertAdjacentElement("afterend", container);
   }
 
   // Check author status
