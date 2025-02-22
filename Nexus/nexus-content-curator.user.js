@@ -22,49 +22,64 @@
   // Enhanced warning styles
   const styles = `
     .mod-warning-banner {
-      margin: 10px 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: 0;
       padding: 15px;
-      border-radius: 5px;
+      border-radius: 0;
       display: flex;
       align-items: center;
       gap: 15px;
-      animation: warning-pulse 2s infinite;
+      pointer-events: none;
+      z-index: 5;
     }
 
     .mod-warning-banner.severe {
-      background: linear-gradient(45deg, #ff000033, #ff000066);
+      background: linear-gradient(45deg, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.2));
       border: 2px solid #ff0000;
+      box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.2);
     }
 
     .mod-warning-banner.warning {
-      background: linear-gradient(45deg, #ffa50033, #ffa50066);
+      background: linear-gradient(45deg, rgba(255, 165, 0, 0.1), rgba(255, 165, 0, 0.2));
       border: 2px solid #ffa500;
+      box-shadow: inset 0 0 20px rgba(255, 165, 0, 0.2);
     }
 
     .mod-warning-banner.info {
-      background: linear-gradient(45deg, #0088ff33, #0088ff66);
+      background: linear-gradient(45deg, rgba(0, 136, 255, 0.1), rgba(0, 136, 255, 0.2));
       border: 2px solid #0088ff;
+      box-shadow: inset 0 0 20px rgba(0, 136, 255, 0.2);
     }
 
     .warning-icon-container {
       display: flex;
       gap: 5px;
+      pointer-events: auto;
     }
 
     .warning-icon {
       font-size: 24px;
       animation: bounce 1s infinite;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     }
 
     .warning-text {
       flex-grow: 1;
       color: white;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      font-size: 1.2em;
+      font-weight: bold;
+      pointer-events: auto;
     }
 
     .warning-actions {
       display: flex;
       gap: 10px;
+      pointer-events: auto;
     }
 
     .warning-button {
@@ -72,12 +87,15 @@
       border-radius: 3px;
       color: white;
       text-decoration: none;
-      background: rgba(255,255,255,0.2);
-      transition: background 0.3s;
+      background: rgba(255, 255, 255, 0.2);
+      transition: all 0.3s;
+      backdrop-filter: blur(5px);
     }
 
     .warning-button:hover {
-      background: rgba(255,255,255,0.3);
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
     @keyframes warning-pulse {
@@ -89,6 +107,10 @@
     @keyframes bounce {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-3px); }
+    }
+
+    #featured {
+      position: relative;
     }
   `;
 
@@ -239,17 +261,29 @@
   // Add status indicator to author name
   function addAuthorStatusIndicator(authorElement, authorInfo) {
     const container = document.createElement("span");
-    container.style.marginLeft = "5px";
-    container.style.display = "inline-flex";
-    container.style.gap = "2px";
-    container.style.alignItems = "center";
-    container.classList.add("author-status-container"); // Add class for identification
+    container.style.cssText = `
+      margin-left: 5px;
+      display: inline-flex;
+      gap: 2px;
+      align-items: center;
+      vertical-align: middle;
+      line-height: 1;
+      height: 16px; /* Match image height */
+    `;
+    container.classList.add("author-status-container");
 
     authorInfo.labels.forEach((label) => {
       // Create wrapper that will be either a span or anchor
       const wrapper = label.url
         ? document.createElement("a")
         : document.createElement("span");
+      wrapper.style.cssText = `
+        display: inline-flex;
+        align-items: center;
+        height: 16px;
+        vertical-align: middle;
+      `;
+
       if (label.url) {
         wrapper.href = label.url;
         wrapper.target = "_blank";
@@ -258,29 +292,41 @@
       }
 
       const indicator = document.createElement("span");
-      indicator.style.cursor = label.url ? "pointer" : "help";
+      indicator.style.cssText = `
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 16px;
+        cursor: ${label.url ? "pointer" : "help"};
+        vertical-align: middle;
+        line-height: 1;
+      `;
 
       // Create either an image or fallback text icon
       if (label.icon && label.icon.startsWith("http")) {
         const img = document.createElement("img");
+        img.style.cssText = `
+          width: 16px;
+          height: 16px;
+          vertical-align: middle;
+          object-fit: contain;
+          display: block;
+          ${label.color ? `filter: drop-shadow(0 0 2px ${label.color})` : ""}
+        `;
         img.src = label.icon;
-        img.style.width = "16px";
-        img.style.height = "16px";
-        img.style.verticalAlign = "middle";
-        img.style.filter = label.color
-          ? `drop-shadow(0 0 2px ${label.color})`
-          : "";
 
         // Fallback to emoji if image fails to load
         img.onerror = () => {
           indicator.textContent = DEFAULT_ICONS[label.type] || "ℹ️";
           indicator.style.color = label.color || "orange";
+          indicator.style.fontSize = "14px"; // Adjust emoji size to match image height
         };
 
         indicator.appendChild(img);
       } else {
         indicator.textContent = DEFAULT_ICONS[label.type] || "ℹ️";
         indicator.style.color = label.color || "orange";
+        indicator.style.fontSize = "14px"; // Adjust emoji size to match image height
       }
 
       // Add hover effect
@@ -428,14 +474,14 @@
 
   // Add warning banner to page
   function addWarningBanner(status) {
-    const pageTitle = document.querySelector("#pagetitle");
-    if (!pageTitle) return;
+    const featured = document.querySelector("#featured");
+    if (!featured) return;
 
     const existingBanner = document.querySelector(".mod-warning-banner");
     if (existingBanner) existingBanner.remove();
 
     const banner = createWarningBanner(status);
-    pageTitle.insertAdjacentElement("afterend", banner);
+    featured.appendChild(banner);
   }
 
   // DOM Observer setup
