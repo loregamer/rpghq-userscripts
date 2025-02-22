@@ -127,14 +127,15 @@
     display: none;
     background: #2a2a2a;
     color: white;
-    padding: 8px 12px;
-    border-radius: 4px;
+    padding: 12px 16px;
+    border-radius: 6px;
     font-size: 14px;
     max-width: 300px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 3px 12px rgba(0,0,0,0.3);
     z-index: 10000;
     pointer-events: none;
     border: 1px solid #444;
+    line-height: 1.4;
   `;
   document.body.appendChild(tooltip);
 
@@ -187,12 +188,11 @@
       align-items: center;
       vertical-align: middle;
       line-height: 1;
-      height: 16px; /* Match image height */
+      height: 16px;
     `;
     container.classList.add("author-status-container");
 
     authorInfo.labels.forEach((label) => {
-      // Create wrapper that will be either a span or anchor
       const wrapper = label.url
         ? document.createElement("a")
         : document.createElement("span");
@@ -230,7 +230,6 @@
           vertical-align: middle;
           object-fit: contain;
           display: block;
-          ${label.color ? `filter: drop-shadow(0 0 2px ${label.color})` : ""}
         `;
         img.src = label.icon;
 
@@ -255,11 +254,11 @@
       const showTooltip = (e) => {
         console.log("[Debug] Showing tooltip for label:", label);
         indicator.style.transform = "scale(1.2)";
-        let tooltipText = label.tooltip;
+        let tooltipText = `<div style="font-size: 14px; margin-bottom: 6px;">${label.tooltip}</div>`;
         if (label.url) {
-          tooltipText += "\nClick to learn more";
+          tooltipText += `<div style="font-size: 12px; color: #aaa; margin-top: 4px;">Click to learn more</div>`;
         }
-        tooltip.textContent = tooltipText;
+        tooltip.innerHTML = tooltipText;
         tooltip.style.display = "block";
         console.log("[Debug] Tooltip text set to:", tooltipText);
         updateTooltipPosition(e);
