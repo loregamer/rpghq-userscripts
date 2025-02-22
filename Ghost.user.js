@@ -1771,12 +1771,13 @@
     const paginationText = pagination.textContent.trim();
     if (!paginationText.includes("Page 1 of 1")) return;
 
-    const visiblePosts = document.querySelectorAll(
-      ".post:not(.ghosted-post)"
-    ).length;
-    const visibleMatches = document.querySelectorAll(
-      "li.row:not(.ghosted-row)"
-    ).length;
+    const visiblePosts = showGhostedPosts
+      ? document.querySelectorAll(".post").length
+      : document.querySelectorAll(".post:not(.ghosted-post)").length;
+
+    const visibleMatches = showGhostedPosts
+      ? document.querySelectorAll("li.row").length
+      : document.querySelectorAll("li.row:not(.ghosted-row)").length;
 
     const originalText = pagination.innerHTML;
     let newText = originalText;
