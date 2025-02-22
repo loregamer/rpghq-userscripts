@@ -330,6 +330,11 @@
       color: "#808080",
       class: "severe",
     },
+    CLOSED_PERMISSIONS: {
+      icons: ["🔒"],
+      color: "#ff4400",
+      class: "warning",
+    },
   };
 
   // Create warning banner
@@ -392,14 +397,43 @@
       return;
     }
 
-    const existingBanner = document.querySelector(".mod-warning-banner");
+    // Create a container for all banners if it doesn't exist
+    let bannerContainer = document.querySelector(".mod-warning-banners");
+    if (!bannerContainer) {
+      bannerContainer = document.createElement("div");
+      bannerContainer.className = "mod-warning-banners";
+      bannerContainer.style.display = "flex";
+      bannerContainer.style.flexDirection = "column";
+      bannerContainer.style.gap = "10px";
+      featured.appendChild(bannerContainer);
+    }
+
+    // Check for existing banner of the same type and remove it
+    const existingBanner = document.querySelector(
+      `.mod-warning-banner.${STATUS_TYPES[status.type].class}`
+    );
     if (existingBanner) {
-      console.log("[Debug] Removing existing banner");
+      console.log("[Debug] Removing existing banner of same type");
       existingBanner.remove();
     }
 
     const banner = createWarningBanner(status);
-    featured.appendChild(banner);
+
+    // If this is a BROKEN status, make all banners severe
+    if (status.type === "BROKEN") {
+      bannerContainer.querySelectorAll(".mod-warning-banner").forEach((b) => {
+        b.className = b.className.replace("warning", "severe");
+      });
+      banner.className = `mod-warning-banner severe`;
+    }
+
+    // Insert banner in correct order (CLOSED_PERMISSIONS first, then others)
+    if (status.type === "CLOSED_PERMISSIONS") {
+      bannerContainer.insertBefore(banner, bannerContainer.firstChild);
+    } else {
+      bannerContainer.appendChild(banner);
+    }
+
     console.log("[Debug] Banner added to featured element");
   }
 
@@ -440,10 +474,67 @@
     });
   }
 
+  // Function to check mod permissions
+  function checkModPermissions() {
+    const permissionsList = document.querySelectorAll(
+      ".permissions .permission-no"
+    );
+    const closedPermissions = [];
+
+    permissionsList.forEach((permission) => {
+      const titleElement = permission.querySelector(".permissions-title");
+      if (titleElement) {
+        const title = titleElement.textContent.trim();
+        if (
+          title === "Upload permission" ||
+          title === "Modification permission" ||
+          title === "Conversion permission"
+        ) {
+          closedPermissions.push(title.replace(" permission", ""));
+        }
+      }
+    });
+
+    if (closedPermissions.length > 0) {
+      // Add to permissions dropdown
+      const permissionsDD = document.querySelector("dd:has(.permissions)");
+      if (permissionsDD) {
+        const summaryDiv = document.createElement("div");
+        summaryDiv.className = "tabbed-block permissions-summary";
+        summaryDiv.innerHTML = `
+          <h3>Permissions Summary</h3>
+          <div class="inline-flex permission-summary-item">
+            <svg title="" class="icon icon-tickunsafe"><use xlink:href="https://www.nexusmods.com/assets/images/icons/icons.svg#icon-tickunsafe"></use></svg>
+            <span class="flex-copy">
+              <span class="permissions-title">Closed Permissions</span>
+              <span class="permissions-desc">This mod has closed ${closedPermissions.join(
+                ", "
+              )} permissions</span>
+            </span>
+          </div>
+        `;
+        permissionsDD.insertBefore(summaryDiv, permissionsDD.firstChild);
+      }
+
+      // Create permissions banner
+      const status = {
+        type: "CLOSED_PERMISSIONS",
+        reason: `This mod has closed ${closedPermissions.join(
+          ", "
+        )} permissions`,
+        color: STATUS_TYPES.CLOSED_PERMISSIONS.color,
+      };
+      addWarningBanner(status);
+    }
+  }
+
   // Main function to check mod status and update UI
   function checkModStatus() {
     const { gameId, modId } = getGameAndModId();
     console.log("[Debug] Checking mod status for game:", gameId, "mod:", modId);
+
+    // Check permissions first
+    checkModPermissions();
 
     GM_xmlhttpRequest({
       method: "GET",
