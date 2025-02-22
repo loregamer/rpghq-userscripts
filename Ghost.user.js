@@ -1765,42 +1765,49 @@
   }
 
   function updatePaginationPostCount() {
-    const pagination = document.querySelector(".pagination");
-    if (!pagination) return;
+    const paginationElements = document.querySelectorAll(".pagination");
+    if (!paginationElements.length) return;
 
-    const paginationText = pagination.textContent.trim();
-    if (!paginationText.includes("Page 1 of 1")) return;
+    paginationElements.forEach((pagination) => {
+      const paginationText = pagination.textContent.trim();
+      if (!paginationText.includes("Page 1 of 1")) {
+        pagination.classList.add("content-processed");
+        return;
+      }
 
-    const visiblePosts = showGhostedPosts
-      ? document.querySelectorAll(".post").length
-      : document.querySelectorAll(".post:not(.ghosted-post)").length;
+      const visiblePosts = showGhostedPosts
+        ? document.querySelectorAll(".post").length
+        : document.querySelectorAll(".post:not(.ghosted-post)").length;
 
-    const visibleMatches = showGhostedPosts
-      ? document.querySelectorAll("li.row").length
-      : document.querySelectorAll("li.row:not(.ghosted-row)").length;
+      const visibleMatches = showGhostedPosts
+        ? document.querySelectorAll("li.row").length
+        : document.querySelectorAll("li.row:not(.ghosted-row)").length;
 
-    const originalText = pagination.innerHTML;
-    let newText = originalText;
+      const originalText = pagination.innerHTML;
+      let newText = originalText;
 
-    // Update post count if this is a post page
-    const postCountMatch = paginationText.match(/(\d+) posts/);
-    if (postCountMatch) {
-      newText = newText.replace(/\d+ posts/, `${visiblePosts} posts`);
-    }
+      // Update post count if this is a post page
+      const postCountMatch = paginationText.match(/(\d+) posts/);
+      if (postCountMatch) {
+        newText = newText.replace(/\d+ posts/, `${visiblePosts} posts`);
+      }
 
-    // Update match count if this is a search page
-    const matchCountMatch = paginationText.match(/Search found (\d+) matches/);
-    if (matchCountMatch) {
-      newText = newText.replace(
-        /Search found \d+ matches/,
-        `Search found ${visibleMatches} matches`
+      // Update match count if this is a search page
+      const matchCountMatch = paginationText.match(
+        /Search found (\d+) matches/
       );
-    }
+      if (matchCountMatch) {
+        newText = newText.replace(
+          /Search found \d+ matches/,
+          `Search found ${visibleMatches} matches`
+        );
+      }
 
-    if (newText !== originalText) {
-      pagination.innerHTML = newText;
-    }
-    pagination.classList.add("content-processed");
+      if (newText !== originalText) {
+        pagination.innerHTML = newText;
+      }
+      pagination.classList.add("content-processed");
+    });
   }
 
   // ---------------------------------------------------------------------
