@@ -1,0 +1,22 @@
+{
+  "exampleauthor1": {
+    "status": "MALICIOUS",
+    "reason": "Known for including malware in mods"
+  },
+  "exampleauthor2": {
+    "status": "WARNING",
+    "reason": "History of abandoning mods without notice"
+  },
+  "exampleauthor3": {
+    "status": "CONTROVERSIAL",
+    "reason": "Frequently starts conflicts in mod community"
+  },
+  "exampleauthor4": {
+    "status": "INACTIVE",
+    "reason": "No activity or responses since 2023"
+  },
+  "exampleauthor5": {
+    "status": "TRUSTED",
+    "reason": "Long-time contributor with high-quality mods"
+  }
+}
