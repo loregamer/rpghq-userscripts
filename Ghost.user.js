@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.2
+// @version      5.2.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1260,16 +1260,28 @@
     // Optionally, clean up topic authors first:
     document.querySelectorAll("li.row").forEach(cleanupTopicAuthor);
 
+    await Promise.all(
+      Array.from(
+        document.querySelectorAll(".notification-block:not(.content-processed)")
+      ).map(processNotification)
+    );
+
     await cacheAllPosts();
+
     document.querySelectorAll("fieldset.polls").forEach(processPoll);
+
     setupPollRefreshDetection();
+
     document.querySelectorAll(".topic-poster").forEach(processTopicPoster);
+
     document
       .querySelectorAll(".post:not(.content-processed)")
       .forEach(processPost);
+
     document
       .querySelectorAll(".reaction-score-list")
       .forEach(processReactionList);
+
     const reactionObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
@@ -1282,20 +1294,20 @@
         });
       });
     });
+
     reactionObserver.observe(document.body, { childList: true, subtree: true });
-    await Promise.all(
-      Array.from(
-        document.querySelectorAll(".notification-block:not(.content-processed)")
-      ).map(processNotification)
-    );
     await new Promise((resolve) => setTimeout(resolve, 150));
+
     document
       .querySelectorAll("strong.badge:not(.content-processed)")
       .forEach((badge) => badge.classList.add("content-processed"));
+
     const lastPosts = document.querySelectorAll(
       "dd.lastpost:not(.content-processed), #recent-topics li dd.lastpost:not(.content-processed)"
     );
+
     await Promise.all(Array.from(lastPosts).map(processLastPost));
+
     document
       .querySelectorAll("li.row:not(.content-processed)")
       .forEach((row) => {
@@ -1754,6 +1766,13 @@
   // ---------------------------------------------------------------------
 
   document.addEventListener("DOMContentLoaded", async () => {
+    await Promise.all(
+      Array.from(
+        document.querySelectorAll(
+          ".topiclist.cplist .notifications:not(.content-processed)"
+        )
+      ).map(processCPListNotification)
+    );
     isMobileDevice = detectMobile();
     createTooltip();
     startPeriodicAvatarCheck();
@@ -1768,13 +1787,6 @@
     });
 
     // Process cplist notifications
-    await Promise.all(
-      Array.from(
-        document.querySelectorAll(
-          ".topiclist.cplist .notifications:not(.content-processed)"
-        )
-      ).map(processCPListNotification)
-    );
 
     // Then process the containers, but only if all their li elements are processed
     if (!needsFetching) {
