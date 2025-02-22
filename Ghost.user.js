@@ -113,7 +113,8 @@
     .post.bg1:not(.content-processed),
     .post.bg2:not(.content-processed),
     dd.lastpost:not(.content-processed),
-    .reaction-score-list:not(.content-processed) {
+    .reaction-score-list:not(.content-processed),
+    .pagination:not(.content-processed) {
       visibility: hidden !important;
     }
     /* Hide list rows until they are processed */
@@ -131,6 +132,7 @@
     .reaction-score-list.content-processed,
     li.row.content-processed,
     .notification-block,
+    .pagination.content-processed,
     .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote) {
       visibility: visible !important;
     }
@@ -1543,6 +1545,7 @@
     document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
 
     showToggleNotification();
+    updatePaginationPostCount();
 
     // If we're showing ghosted content, scroll to the first shown element
     if (showGhostedPosts) {
@@ -1761,6 +1764,44 @@
     }
   }
 
+  function updatePaginationPostCount() {
+    const pagination = document.querySelector(".pagination");
+    if (!pagination) return;
+
+    const paginationText = pagination.textContent.trim();
+    if (!paginationText.includes("Page 1 of 1")) return;
+
+    const visiblePosts = document.querySelectorAll(
+      ".post:not(.ghosted-post)"
+    ).length;
+    const visibleMatches = document.querySelectorAll(
+      "li.row:not(.ghosted-row)"
+    ).length;
+
+    const originalText = pagination.innerHTML;
+    let newText = originalText;
+
+    // Update post count if this is a post page
+    const postCountMatch = paginationText.match(/(\d+) posts/);
+    if (postCountMatch) {
+      newText = newText.replace(/\d+ posts/, `${visiblePosts} posts`);
+    }
+
+    // Update match count if this is a search page
+    const matchCountMatch = paginationText.match(/Search found (\d+) matches/);
+    if (matchCountMatch) {
+      newText = newText.replace(
+        /Search found \d+ matches/,
+        `Search found ${visibleMatches} matches`
+      );
+    }
+
+    if (newText !== originalText) {
+      pagination.innerHTML = newText;
+    }
+    pagination.classList.add("content-processed");
+  }
+
   // ---------------------------------------------------------------------
   // 11) INIT ON DOMContentLoaded
   // ---------------------------------------------------------------------
@@ -1821,6 +1862,7 @@
     processOnlineList();
     moveExternalLinkIcon();
     cleanGhostedQuotesInTextarea();
+    updatePaginationPostCount();
 
     // Final pass to ensure all containers are marked as processed, with the same li check
     document
