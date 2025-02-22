@@ -4,8 +4,9 @@
       {
         "type": "MALICIOUS",
         "tooltip": "Known for including malware in mods",
-        "icon": "⚠️",
-        "color": "red"
+        "icon": "https://f.rpghq.org/b1PMDDCK0hrc.png?n=pasted-file.png",
+        "color": "red",
+        "url": "https://example.com/evidence"
       }
     ]
   }

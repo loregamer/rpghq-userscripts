@@ -81,6 +81,14 @@
     }
   }
 
+  // Default icons for different status types
+  const DEFAULT_ICONS = {
+    MALICIOUS: "⚠️",
+    WARNING: "⚡",
+    INFO: "ℹ️",
+    ABANDONED: "🚫",
+  };
+
   // Add status indicator to author name
   function addAuthorStatusIndicator(authorElement, authorInfo) {
     const container = document.createElement("span");
@@ -90,32 +98,69 @@
     container.style.alignItems = "center";
 
     authorInfo.labels.forEach((label) => {
+      // Create wrapper that will be either a span or anchor
+      const wrapper = label.url
+        ? document.createElement("a")
+        : document.createElement("span");
+      if (label.url) {
+        wrapper.href = label.url;
+        wrapper.target = "_blank";
+        wrapper.rel = "noopener noreferrer";
+        wrapper.style.textDecoration = "none";
+      }
+
       const indicator = document.createElement("span");
-      indicator.style.cursor = "help";
-      indicator.textContent = label.icon || "ℹ️";
-      indicator.style.color = label.color || "orange";
+      indicator.style.cursor = label.url ? "pointer" : "help";
+
+      // Create either an image or fallback text icon
+      if (label.icon && label.icon.startsWith("http")) {
+        const img = document.createElement("img");
+        img.src = label.icon;
+        img.style.width = "16px";
+        img.style.height = "16px";
+        img.style.verticalAlign = "middle";
+        img.style.filter = label.color
+          ? `drop-shadow(0 0 2px ${label.color})`
+          : "";
+
+        // Fallback to emoji if image fails to load
+        img.onerror = () => {
+          indicator.textContent = DEFAULT_ICONS[label.type] || "ℹ️";
+          indicator.style.color = label.color || "orange";
+        };
+
+        indicator.appendChild(img);
+      } else {
+        indicator.textContent = DEFAULT_ICONS[label.type] || "ℹ️";
+        indicator.style.color = label.color || "orange";
+      }
 
       // Add hover effect
       indicator.style.transition = "transform 0.2s";
 
       // Custom tooltip handlers
-      indicator.addEventListener("mouseover", (e) => {
+      const showTooltip = (e) => {
         indicator.style.transform = "scale(1.2)";
-        tooltip.textContent = `[${label.type}] ${label.tooltip}`;
+        let tooltipText = `[${label.type}] ${label.tooltip}`;
+        if (label.url) {
+          tooltipText += "\nClick to learn more";
+        }
+        tooltip.textContent = tooltipText;
         tooltip.style.display = "block";
         updateTooltipPosition(e);
-      });
+      };
 
-      indicator.addEventListener("mousemove", (e) => {
-        updateTooltipPosition(e);
-      });
-
-      indicator.addEventListener("mouseout", () => {
+      const hideTooltip = () => {
         indicator.style.transform = "scale(1)";
         tooltip.style.display = "none";
-      });
+      };
 
-      container.appendChild(indicator);
+      indicator.addEventListener("mouseover", showTooltip);
+      indicator.addEventListener("mousemove", updateTooltipPosition);
+      indicator.addEventListener("mouseout", hideTooltip);
+
+      wrapper.appendChild(indicator);
+      container.appendChild(wrapper);
     });
 
     authorElement.insertAdjacentElement("afterend", container);
