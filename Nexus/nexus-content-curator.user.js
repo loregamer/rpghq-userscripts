@@ -397,7 +397,9 @@
       /\((.*?)\)/g,
       '<span style="font-size: 0.85em;">($1)</span>'
     );
-    textContainer.innerHTML = `<strong>${status.type}:</strong> ${formattedReason}`;
+    // Replace underscores with spaces in status type
+    const formattedType = status.type.replace(/_/g, " ");
+    textContainer.innerHTML = `<strong>${formattedType}:</strong> ${formattedReason}`;
 
     const actionsContainer = document.createElement("div");
     actionsContainer.className = "warning-actions";
@@ -556,7 +558,9 @@
           // Add tooltip handlers
           const showTooltip = (e) => {
             tooltip.innerHTML = formatTooltipText(
-              `This mod has closed ${closedPermissions.join(", ")} permissions`
+              `This mod has closed permissions <span style="font-size: 0.85em;">(${closedPermissions.join(
+                ", "
+              )})</span>`
             );
             tooltip.style.display = "block";
             updateTooltipPosition(e);
@@ -580,9 +584,9 @@
       // Create permissions banner
       const status = {
         type: "CLOSED_PERMISSIONS",
-        reason: `This mod has closed ${closedPermissions.join(
+        reason: `This mod has closed permissions <span style="font-style: italic; font-size: 0.85em;">(${closedPermissions.join(
           ", "
-        )} permissions`,
+        )})</span>.<br><br>Please bully and harass this mod author into being <a href="https://www.youtube.com/watch?v=edea7yMqOY8" target="_blank" style="color: inherit; text-decoration: underline;">Cathedral</a>.`,
         color: STATUS_TYPES.CLOSED_PERMISSIONS.color,
       };
       addWarningBanner(status);
