@@ -19,6 +19,47 @@
   const AUTHOR_STATUS_URL =
     "https://raw.githubusercontent.com/loregamer/rpghq-userscripts/refs/heads/main/Nexus/Resources/author-status.json";
 
+  // Create and setup tooltip element
+  const tooltip = document.createElement("div");
+  tooltip.style.cssText = `
+    position: fixed;
+    display: none;
+    background: #2a2a2a;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    max-width: 300px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 10000;
+    pointer-events: none;
+    border: 1px solid #444;
+  `;
+  document.body.appendChild(tooltip);
+
+  // Handle tooltip positioning
+  function updateTooltipPosition(e) {
+    const offset = 15; // Distance from cursor
+    let x = e.clientX + offset;
+    let y = e.clientY + offset;
+
+    // Check if tooltip would go off screen and adjust if needed
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    if (x + tooltipRect.width > viewportWidth) {
+      x = e.clientX - tooltipRect.width - offset;
+    }
+
+    if (y + tooltipRect.height > viewportHeight) {
+      y = e.clientY - tooltipRect.height - offset;
+    }
+
+    tooltip.style.left = x + "px";
+    tooltip.style.top = y + "px";
+  }
+
   // Extract game and mod ID from URL
   function getGameAndModId() {
     const urlParts = window.location.pathname.split("/");
@@ -58,16 +99,24 @@
         indicator.style.color = "orange";
     }
 
-    // Add tooltip
-    indicator.title = status.tooltip;
-
     // Add hover effect
     indicator.style.transition = "transform 0.2s";
-    indicator.addEventListener("mouseover", () => {
+
+    // Custom tooltip handlers
+    indicator.addEventListener("mouseover", (e) => {
       indicator.style.transform = "scale(1.2)";
+      tooltip.textContent = status.tooltip;
+      tooltip.style.display = "block";
+      updateTooltipPosition(e);
     });
+
+    indicator.addEventListener("mousemove", (e) => {
+      updateTooltipPosition(e);
+    });
+
     indicator.addEventListener("mouseout", () => {
       indicator.style.transform = "scale(1)";
+      tooltip.style.display = "none";
     });
 
     authorElement.insertAdjacentElement("afterend", indicator);
