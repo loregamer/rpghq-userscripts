@@ -168,88 +168,6 @@
     return { gameId, modId };
   }
 
-  // Add warning label to page title
-  function addModStatusIndicator(status) {
-    const pageTitle = document.querySelector("#pagetitle h1");
-    if (!pageTitle) return;
-
-    const container = document.createElement("span");
-    container.style.marginLeft = "10px";
-    container.style.display = "inline-flex";
-    container.style.gap = "2px";
-    container.style.alignItems = "center";
-    container.style.verticalAlign = "middle";
-
-    // Create wrapper that will be either a span or anchor
-    const wrapper = status.url
-      ? document.createElement("a")
-      : document.createElement("span");
-    if (status.url) {
-      wrapper.href = status.url;
-      wrapper.target = "_blank";
-      wrapper.rel = "noopener noreferrer";
-      wrapper.style.textDecoration = "none";
-    }
-
-    const indicator = document.createElement("span");
-    indicator.style.cursor = status.url ? "pointer" : "help";
-    indicator.style.fontSize = "0.8em";
-
-    // Create either an image or fallback text icon
-    if (status.icon && status.icon.startsWith("http")) {
-      const img = document.createElement("img");
-      img.src = status.icon;
-      img.style.width = "16px";
-      img.style.height = "16px";
-      img.style.verticalAlign = "middle";
-      img.style.filter = status.color
-        ? `drop-shadow(0 0 2px ${status.color})`
-        : "";
-
-      // Fallback to emoji if image fails to load
-      img.onerror = () => {
-        indicator.textContent = DEFAULT_ICONS[status.type] || "⚠️";
-        indicator.style.color = status.color || "red";
-      };
-
-      indicator.appendChild(img);
-    } else {
-      indicator.textContent = DEFAULT_ICONS[status.type] || "⚠️";
-      indicator.style.color = status.color || "red";
-    }
-
-    // Add hover effect
-    indicator.style.transition = "transform 0.2s";
-
-    // Custom tooltip handlers
-    const showTooltip = (e) => {
-      indicator.style.transform = "scale(1.2)";
-      let tooltipText = status.reason || "This mod has been flagged";
-      if (status.alternative) {
-        tooltipText += `\nRecommended alternative: ${status.alternative}`;
-      }
-      if (status.url) {
-        tooltipText += "\nClick to learn more";
-      }
-      tooltip.textContent = tooltipText;
-      tooltip.style.display = "block";
-      updateTooltipPosition(e);
-    };
-
-    const hideTooltip = () => {
-      indicator.style.transform = "scale(1)";
-      tooltip.style.display = "none";
-    };
-
-    indicator.addEventListener("mouseover", showTooltip);
-    indicator.addEventListener("mousemove", updateTooltipPosition);
-    indicator.addEventListener("mouseout", hideTooltip);
-
-    wrapper.appendChild(indicator);
-    container.appendChild(wrapper);
-    pageTitle.appendChild(container);
-  }
-
   // Default icons for different status types
   const DEFAULT_ICONS = {
     MALICIOUS: "⚠️",
@@ -546,7 +464,6 @@
                 alternative: status.alternative,
               };
 
-              addModStatusIndicator(indicatorStatus);
               addWarningBanner(indicatorStatus);
             }
           }
