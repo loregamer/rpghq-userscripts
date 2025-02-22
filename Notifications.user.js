@@ -427,23 +427,31 @@ SOFTWARE.
           ) {
             const imageUrl = trimmedContent.slice(5, -6).trim();
             imagePreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`;
-          }
 
-          if (referenceElement) {
-            referenceElement.textContent = Utils.removeURLs(
-              Utils.removeBBCode(postContent)
-            );
-            Utils.styleReference(referenceElement);
-            referenceElement.insertAdjacentElement("afterend", imagePreview);
-          } else {
-            referenceElement = Utils.createElement("span", {
-              className: "notification-reference",
-              textContent: Utils.removeURLs(Utils.removeBBCode(postContent)),
-            });
-            Utils.styleReference(referenceElement);
+            // If we have an image, remove any existing reference element and don't create a new one
+            if (referenceElement) {
+              referenceElement.remove();
+            }
             titleElement.appendChild(document.createElement("br"));
-            titleElement.appendChild(referenceElement);
-            referenceElement.insertAdjacentElement("afterend", imagePreview);
+            titleElement.appendChild(imagePreview);
+          } else {
+            // Only create/update reference element if there's no image
+            if (referenceElement) {
+              referenceElement.textContent = Utils.removeURLs(
+                Utils.removeBBCode(postContent)
+              );
+              Utils.styleReference(referenceElement);
+              referenceElement.insertAdjacentElement("afterend", imagePreview);
+            } else {
+              referenceElement = Utils.createElement("span", {
+                className: "notification-reference",
+                textContent: Utils.removeURLs(Utils.removeBBCode(postContent)),
+              });
+              Utils.styleReference(referenceElement);
+              titleElement.appendChild(document.createElement("br"));
+              titleElement.appendChild(referenceElement);
+              referenceElement.insertAdjacentElement("afterend", imagePreview);
+            }
           }
         }
       } else {
@@ -825,11 +833,15 @@ SOFTWARE.
           ) {
             const imageUrl = trimmedContent.slice(5, -6).trim();
             imagePreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`;
+            // Remove the placeholder and add the image preview
+            placeholder.parentNode.insertBefore(imagePreview, placeholder);
+            placeholder.remove();
+          } else {
+            // If not an image, update the placeholder with the text content
+            placeholder.insertAdjacentElement("afterend", imagePreview);
+            placeholder.textContent = Utils.removeBBCode(postContent);
+            Utils.styleReference(placeholder);
           }
-
-          placeholder.insertAdjacentElement("afterend", imagePreview);
-          placeholder.textContent = Utils.removeBBCode(postContent);
-          Utils.styleReference(placeholder);
         } else {
           placeholder.remove();
         }
