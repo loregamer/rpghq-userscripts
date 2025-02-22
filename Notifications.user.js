@@ -178,8 +178,6 @@ SOFTWARE.
         .replace(/\[url=[^\]]*\](.*?)\[\/url\]/gi, "$1")
         // Remove simple url tags
         .replace(/\[url\](.*?)\[\/url\]/gi, "$1")
-        // Remove img tags
-        .replace(/\[img\](.*?)\[\/img\]/gi, "")
         // Remove media tags
         .replace(/\[media\](.*?)\[\/media\]/gi, "")
         // Remove code tags
@@ -212,10 +210,31 @@ SOFTWARE.
     },
 
     extractSingleImageUrl: (text) => {
-      const imageUrls = text.match(/\[img\](.*?)\[\/img\]/gi);
-      if (imageUrls && imageUrls.length === 1) {
-        return imageUrls[0].replace(/\[img\](.*?)\[\/img\]/i, "$1");
+      console.log("Extracting image URL from text:", text);
+
+      // If the entire text is just an image tag, extract it
+      const trimmedText = text.trim();
+      console.log("Trimmed text:", trimmedText);
+
+      if (trimmedText.startsWith("[img]") && trimmedText.endsWith("[/img]")) {
+        console.log("Text is a single image tag");
+        const url = trimmedText.slice(5, -6).trim();
+        console.log("Extracted URL:", url);
+        return url;
       }
+
+      // Find all image tags
+      const imageUrls = text.match(/\[img\](.*?)\[\/img\]/gi);
+      console.log("Found image tags:", imageUrls);
+
+      if (imageUrls && imageUrls.length > 0) {
+        console.log("Using first image tag");
+        const url = imageUrls[0].replace(/\[img\](.*?)\[\/img\]/i, "$1").trim();
+        console.log("Extracted URL:", url);
+        return url;
+      }
+
+      console.log("No valid image URL found");
       return null;
     },
   };
@@ -393,15 +412,29 @@ SOFTWARE.
         );
         const postContent = await ReactionHandler.fetchPostContent(postId);
         if (postContent) {
-          // Extract image URL before removing BBCode
-          const imageUrl = Utils.extractSingleImageUrl(postContent);
-
+          const trimmedContent = postContent.trim();
           let referenceElement = block.querySelector(".notification-reference");
+
+          // Always create the image preview div
+          const imagePreview = Utils.createElement("div", {
+            className: "notification-image-preview",
+          });
+
+          // Check for image tag before any BBCode removal
+          if (
+            trimmedContent.startsWith("[img]") &&
+            trimmedContent.endsWith("[/img]")
+          ) {
+            const imageUrl = trimmedContent.slice(5, -6).trim();
+            imagePreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`;
+          }
+
           if (referenceElement) {
             referenceElement.textContent = Utils.removeURLs(
               Utils.removeBBCode(postContent)
             );
             Utils.styleReference(referenceElement);
+            referenceElement.insertAdjacentElement("afterend", imagePreview);
           } else {
             referenceElement = Utils.createElement("span", {
               className: "notification-reference",
@@ -410,14 +443,6 @@ SOFTWARE.
             Utils.styleReference(referenceElement);
             titleElement.appendChild(document.createElement("br"));
             titleElement.appendChild(referenceElement);
-          }
-
-          // Add image preview if we found one earlier
-          if (imageUrl && referenceElement) {
-            const imagePreview = Utils.createElement("div", {
-              className: "notification-image-preview",
-              innerHTML: `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`,
-            });
             referenceElement.insertAdjacentElement("afterend", imagePreview);
           }
         }
@@ -786,20 +811,25 @@ SOFTWARE.
       try {
         const postContent = await ReactionHandler.fetchPostContent(postId);
         if (postContent && placeholder.parentNode) {
-          // Extract image URL before removing BBCode
-          const imageUrl = Utils.extractSingleImageUrl(postContent);
+          const trimmedContent = postContent.trim();
 
+          // Always create the image preview div
+          const imagePreview = Utils.createElement("div", {
+            className: "notification-image-preview",
+          });
+
+          // Only add image if content is just an image tag
+          if (
+            trimmedContent.startsWith("[img]") &&
+            trimmedContent.endsWith("[/img]")
+          ) {
+            const imageUrl = trimmedContent.slice(5, -6).trim();
+            imagePreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`;
+          }
+
+          placeholder.insertAdjacentElement("afterend", imagePreview);
           placeholder.textContent = Utils.removeBBCode(postContent);
           Utils.styleReference(placeholder);
-
-          // Add image preview if we found one earlier
-          if (imageUrl) {
-            const imagePreview = Utils.createElement("div", {
-              className: "notification-image-preview",
-              innerHTML: `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`,
-            });
-            placeholder.insertAdjacentElement("afterend", imagePreview);
-          }
         } else {
           placeholder.remove();
         }
