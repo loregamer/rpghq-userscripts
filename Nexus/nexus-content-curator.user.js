@@ -353,6 +353,9 @@
       const span = document.createElement("span");
       span.className = "warning-icon";
       span.textContent = icon;
+      if (status.type === "CLOSED_PERMISSIONS") {
+        span.title = `This mod has closed ${status.reason.toLowerCase()}`;
+      }
       iconContainer.appendChild(span);
     });
 
@@ -404,13 +407,13 @@
       bannerContainer.className = "mod-warning-banners";
       bannerContainer.style.display = "flex";
       bannerContainer.style.flexDirection = "column";
-      bannerContainer.style.gap = "10px";
+      bannerContainer.style.gap = "0"; // No gap between banners
       featured.appendChild(bannerContainer);
     }
 
-    // Check for existing banner of the same type and remove it
+    // Check for existing banner of the same type
     const existingBanner = document.querySelector(
-      `.mod-warning-banner.${STATUS_TYPES[status.type].class}`
+      `.mod-warning-banner.${status.type.toLowerCase()}`
     );
     if (existingBanner) {
       console.log("[Debug] Removing existing banner of same type");
@@ -418,13 +421,14 @@
     }
 
     const banner = createWarningBanner(status);
+    banner.classList.add(status.type.toLowerCase());
 
     // If this is a BROKEN status, make all banners severe
     if (status.type === "BROKEN") {
       bannerContainer.querySelectorAll(".mod-warning-banner").forEach((b) => {
         b.className = b.className.replace("warning", "severe");
       });
-      banner.className = `mod-warning-banner severe`;
+      banner.className = `mod-warning-banner severe ${status.type.toLowerCase()}`;
     }
 
     // Insert banner in correct order (CLOSED_PERMISSIONS first, then others)
@@ -496,24 +500,29 @@
     });
 
     if (closedPermissions.length > 0) {
-      // Add to permissions dropdown
-      const permissionsDD = document.querySelector("dd:has(.permissions)");
-      if (permissionsDD) {
-        const summaryDiv = document.createElement("div");
-        summaryDiv.className = "tabbed-block permissions-summary";
-        summaryDiv.innerHTML = `
-          <h3>Permissions Summary</h3>
-          <div class="inline-flex permission-summary-item">
-            <svg title="" class="icon icon-tickunsafe"><use xlink:href="https://www.nexusmods.com/assets/images/icons/icons.svg#icon-tickunsafe"></use></svg>
-            <span class="flex-copy">
-              <span class="permissions-title">Closed Permissions</span>
-              <span class="permissions-desc">This mod has closed ${closedPermissions.join(
-                ", "
-              )} permissions</span>
-            </span>
-          </div>
-        `;
-        permissionsDD.insertBefore(summaryDiv, permissionsDD.firstChild);
+      // Add lock icon to permissions header
+      const permissionsHeaders = document.querySelectorAll("dt");
+      const permissionsHeader = Array.from(permissionsHeaders).find((dt) =>
+        dt.textContent.trim().startsWith("Permissions and credits")
+      );
+
+      if (permissionsHeader) {
+        // Check if we already added a lock icon
+        const existingLock =
+          permissionsHeader.querySelector(".permissions-lock");
+        if (!existingLock) {
+          const lockSpan = document.createElement("span");
+          lockSpan.className = "permissions-lock";
+          lockSpan.style.marginLeft = "5px";
+          lockSpan.title = `This mod has closed ${closedPermissions.join(
+            ", "
+          )} permissions`;
+          lockSpan.textContent = "🔒";
+          permissionsHeader.insertBefore(
+            lockSpan,
+            permissionsHeader.querySelector(".acc-status")
+          );
+        }
       }
 
       // Create permissions banner
