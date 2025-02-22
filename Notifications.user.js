@@ -59,6 +59,21 @@ SOFTWARE.
   };
   const FETCH_DELAY = 500; // Add delay between fetches
 
+  // Add notification block container style
+  const NOTIFICATION_BLOCK_STYLE = {
+    position: "relative",
+    paddingBottom: "20px", // Make room for the timestamp
+  };
+
+  // Add notification time style
+  const NOTIFICATION_TIME_STYLE = {
+    position: "absolute",
+    bottom: "2px",
+    right: "2px",
+    fontSize: "0.85em",
+    color: "#888",
+  };
+
   // --- Utility Functions ---
   const Utils = {
     createElement: (tag, attributes = {}, innerHTML = "") => {
@@ -178,6 +193,8 @@ SOFTWARE.
         .replace(/\[url=[^\]]*\](.*?)\[\/url\]/gi, "$1")
         // Remove simple url tags
         .replace(/\[url\](.*?)\[\/url\]/gi, "$1")
+        // Remove img tags
+        .replace(/\[img\](.*?)\[\/img\]/gi, "")
         // Remove media tags
         .replace(/\[media\](.*?)\[\/media\]/gi, "")
         // Remove code tags
@@ -385,6 +402,15 @@ SOFTWARE.
     async customizeReactionNotification(titleElement, block) {
       if (block.dataset.reactionCustomized === "true") return;
 
+      // Apply container styling to the block
+      Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
+
+      // Move time element to bottom right
+      const timeElement = block.querySelector(".notification-time");
+      if (timeElement) {
+        Object.assign(timeElement.style, NOTIFICATION_TIME_STYLE);
+      }
+
       const titleText = titleElement.innerHTML;
       const isUnread = block.href && block.href.includes("mark_notification");
       const postId = Utils.extractPostId(
@@ -464,6 +490,9 @@ SOFTWARE.
     },
 
     async customizeMentionNotification(notificationBlock) {
+      // Apply container styling to the block
+      Object.assign(notificationBlock.style, NOTIFICATION_BLOCK_STYLE);
+
       const notificationText =
         notificationBlock.querySelector(".notification_text");
       const titleElement = notificationText.querySelector(
@@ -505,15 +534,26 @@ SOFTWARE.
         referenceElement
       );
 
+      // Move time element to bottom right
       const timeElement = notificationText.querySelector(".notification-time");
       if (timeElement) {
-        notificationText.appendChild(timeElement);
+        Object.assign(timeElement.style, NOTIFICATION_TIME_STYLE);
       }
     },
 
-    customizePrivateMessageNotification(titleElement, referenceElement) {
-      const subject = referenceElement?.textContent
-        .trim()
+    customizePrivateMessageNotification(titleElement, block) {
+      // Apply container styling to the block
+      Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
+
+      // Move time element to bottom right
+      const timeElement = block.querySelector(".notification-time");
+      if (timeElement) {
+        Object.assign(timeElement.style, NOTIFICATION_TIME_STYLE);
+      }
+
+      const subject = block
+        .querySelector(".notification-reference")
+        ?.textContent.trim()
         .replace(/^"(.*)"$/, "$1");
       if (subject === "Board warning issued") {
         titleElement.innerHTML = titleElement.innerHTML
@@ -523,14 +563,25 @@ SOFTWARE.
           )
           .replace(/from/, "by")
           .replace(/:$/, "");
-        referenceElement?.remove();
+        block.querySelector(".notification-reference")?.remove();
       }
     },
 
     async customizeNotificationBlock(block) {
       if (block.dataset.customized === "true") return;
+
+      // Apply container styling to the block
+      Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
+
       const notificationText = block.querySelector(".notification_text");
       if (!notificationText) return;
+
+      // Move time element to bottom right
+      const timeElement = block.querySelector(".notification-time");
+      if (timeElement) {
+        Object.assign(timeElement.style, NOTIFICATION_TIME_STYLE);
+      }
+
       const titleElement = notificationText.querySelector(
         ".notification-title"
       );
@@ -542,10 +593,7 @@ SOFTWARE.
         } else if (titleText.includes("reacted to a message you posted")) {
           await this.customizeReactionNotification(titleElement, block);
         } else if (titleText.includes("Private Message")) {
-          this.customizePrivateMessageNotification(
-            titleElement,
-            notificationText.querySelector(".notification-reference")
-          );
+          this.customizePrivateMessageNotification(titleElement, block);
         } else if (titleText.includes("Report closed")) {
           titleElement.innerHTML = titleText.replace(
             /Report closed/,
