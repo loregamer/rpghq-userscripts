@@ -369,9 +369,127 @@
     }
   `;
 
+  // Add form styles
+  const formStyles = `
+    .mod-report-form {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 10000;
+      width: 400px;
+      max-width: 90vw;
+      color: white;
+    }
+
+    .mod-report-form.active {
+      display: block;
+    }
+
+    .mod-report-form h2 {
+      margin: 0 0 20px;
+      color: white;
+    }
+
+    .mod-report-form .form-group {
+      margin-bottom: 15px;
+    }
+
+    .mod-report-form label {
+      display: block;
+      margin-bottom: 5px;
+      color: #ddd;
+    }
+
+    .mod-report-form input[type="text"],
+    .mod-report-form select,
+    .mod-report-form textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #444;
+      border-radius: 4px;
+      background: #333;
+      color: white;
+    }
+
+    .mod-report-form .buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .mod-report-form button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background: #4a4a4a;
+      color: white;
+      transition: background 0.2s;
+    }
+
+    .mod-report-form button:hover {
+      background: #5a5a5a;
+    }
+
+    .mod-report-form button.primary {
+      background: #007bff;
+    }
+
+    .mod-report-form button.primary:hover {
+      background: #0056b3;
+    }
+
+    .mod-report-form .close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      font-size: 20px;
+      padding: 0;
+    }
+
+    .mod-report-form .close:hover {
+      color: white;
+    }
+
+    .form-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 9999;
+    }
+
+    .form-overlay.active {
+      display: block;
+    }
+
+    .mod-report-form .readonly-input {
+      background: #222;
+      cursor: default;
+      user-select: all;
+    }
+
+    .mod-report-form .readonly-input:focus {
+      outline: 1px solid #444;
+    }
+  `;
+
   // Add styles to document
   const styleSheet = document.createElement("style");
-  styleSheet.textContent = styles;
+  styleSheet.textContent = styles + formStyles;
   document.head.appendChild(styleSheet);
 
   // Create and setup tooltip element
@@ -848,7 +966,44 @@
     }
   }
 
-  // Extend DOM Observer setup
+  // Function to replace download buttons with report button
+  function addReportButton() {
+    const modActions = document.querySelector(".modactions.clearfix");
+    if (!modActions) return;
+
+    // Remove download label and buttons
+    const downloadLabel = modActions.querySelector(".dllabel");
+    if (downloadLabel) downloadLabel.remove();
+
+    const nmmButton = modActions.querySelector("#action-nmm");
+    if (nmmButton) nmmButton.remove();
+
+    const manualButton = modActions.querySelector("#action-manual");
+    if (manualButton) manualButton.remove();
+
+    // Check if report button already exists
+    if (modActions.querySelector("#action-report-hq")) return;
+
+    // Create report button
+    const reportLi = document.createElement("li");
+    reportLi.id = "action-report-hq";
+
+    const reportButton = document.createElement("a");
+    reportButton.className = "btn inline-flex";
+    reportButton.style.cssText = "padding: 5px 10px; font-size: 12px;"; // Make button smaller
+    reportButton.innerHTML = `
+      <svg class="icon icon-flag" title="" style="width: 14px; height: 14px;">
+        <use xlink:href="https://www.nexusmods.com/assets/images/icons/icons.svg#icon-flag"></use>
+      </svg>
+      <span class="flex-label">Report to HQ</span>
+    `;
+    reportButton.addEventListener("click", showReportForm);
+
+    reportLi.appendChild(reportButton);
+    modActions.appendChild(reportLi);
+  }
+
+  // Modify setupDOMObserver to use addReportButton instead of replaceVirusScanButton
   function setupDOMObserver() {
     let checkTimeout;
     const observer = new MutationObserver((mutations) => {
@@ -865,6 +1020,9 @@
 
       // Set a new timeout to run checks after mutations have settled
       checkTimeout = setTimeout(() => {
+        // Add report button
+        addReportButton();
+
         // Check if we're on a mod page and haven't checked it yet
         const pageTitle = document.querySelector("#pagetitle");
         if (
@@ -896,21 +1054,13 @@
         if (unlabeledAuthors) {
           checkAuthorStatus();
         }
-      }, 100); // Wait 100ms after mutations stop before running checks
+      }, 100);
     });
 
     observer.observe(document.body, {
       childList: true,
       subtree: true,
     });
-
-    // Initial check for search results
-    if (window.location.href.includes("/search")) {
-      const searchResults = document.querySelectorAll(".mod-tile, .tile");
-      searchResults.forEach((tile) => {
-        checkModTileStatus(tile);
-      });
-    }
   }
 
   // Function to check if a mod matches any keyword rules
@@ -1667,6 +1817,137 @@
       STORAGE_KEYS.MOD_STATUS,
       processModStatus
     );
+  }
+
+  // Create form HTML
+  function createFormHTML() {
+    return `
+      <div class="form-overlay">
+        <div class="mod-report-form">
+          <button class="close">&times;</button>
+          <h2>Report Mod Status</h2>
+          <div class="form-group">
+            <label>Game Shortname</label>
+            <input type="text" id="gameShortname" readonly class="readonly-input">
+          </div>
+          <div class="form-group">
+            <label>Mod ID</label>
+            <input type="text" id="modId" readonly class="readonly-input">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="modStatus">
+              <option value="BROKEN">Broken</option>
+              <option value="LAME">Sucks</option>
+              <option value="INFO">Info</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Reason (optional)</label>
+            <textarea id="modReason" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Alternative Mod Link (optional)</label>
+            <input type="text" id="modAlternative">
+          </div>
+          <div class="buttons">
+            <button class="primary" id="copyToClipboard">Copy to Clipboard</button>
+            <button id="closeForm">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Function to show form
+  function showReportForm() {
+    const { gameId, modId } = getGameAndModId();
+
+    // Create and add form if it doesn't exist
+    if (!document.querySelector(".form-overlay")) {
+      document.body.insertAdjacentHTML("beforeend", createFormHTML());
+
+      // Add event listeners
+      document
+        .querySelector(".close")
+        .addEventListener("click", hideReportForm);
+      document
+        .querySelector("#closeForm")
+        .addEventListener("click", hideReportForm);
+      document
+        .querySelector("#copyToClipboard")
+        .addEventListener("click", copyFormToClipboard);
+
+      // Close form when clicking overlay, but not when clicking the form or readonly inputs
+      document.querySelector(".form-overlay").addEventListener("click", (e) => {
+        if (
+          e.target.classList.contains("form-overlay") &&
+          !e.target.closest(".readonly-input")
+        ) {
+          hideReportForm();
+        }
+      });
+
+      // Prevent form closure when clicking readonly inputs
+      document.querySelectorAll(".readonly-input").forEach((input) => {
+        input.addEventListener("click", (e) => {
+          e.stopPropagation();
+        });
+      });
+    }
+
+    // Set initial values
+    document.querySelector("#gameShortname").value = gameId;
+    document.querySelector("#modId").value = modId;
+
+    // Show form
+    document.querySelector(".form-overlay").classList.add("active");
+    document.querySelector(".mod-report-form").classList.add("active");
+  }
+
+  // Function to hide form
+  function hideReportForm() {
+    document.querySelector(".form-overlay").classList.remove("active");
+    document.querySelector(".mod-report-form").classList.remove("active");
+  }
+
+  // Function to copy form data to clipboard
+  function copyFormToClipboard() {
+    const gameShortname = document.querySelector("#gameShortname").value;
+    const modId = document.querySelector("#modId").value;
+    const status = document.querySelector("#modStatus").value;
+    const reason = document.querySelector("#modReason").value;
+    const alternative = document.querySelector("#modAlternative").value;
+
+    let jsonData = {
+      "Mod Statuses": {
+        [gameShortname]: {
+          [status]: [modId],
+        },
+      },
+    };
+
+    if (reason || alternative) {
+      jsonData["Mod Descriptors"] = {
+        [gameShortname]: {
+          [modId]: {
+            reason: reason || undefined,
+            alternative: alternative || undefined,
+          },
+        },
+      };
+    }
+
+    // Copy to clipboard
+    navigator.clipboard
+      .writeText(JSON.stringify(jsonData, null, 2))
+      .then(() => {
+        alert("Copied to clipboard!");
+      })
+      .catch((err) => {
+        console.error("Failed to copy:", err);
+        alert("Failed to copy to clipboard");
+      });
   }
 
   // Run when the page loads
