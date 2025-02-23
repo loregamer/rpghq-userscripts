@@ -7,18 +7,23 @@
     },
     "Flight Risk": {
       "label": "Flight risk! (Will throw fit and leave if criticized too much)",
-      "authors": ["Eralyne"],
+      "authors": ["Eralyne", "Arthmoor"],
       "icon": "https://f.rpghq.org/nD9rLv9rzAZY.png"
     },
     "Bug Ignorer": {
       "label": "Ignores bugs. Will deny they exist and not fix them",
-      "authors": ["Eralyne"],
+      "authors": ["Arthmoor", "Eralyne"],
       "icon": "https://f.rpghq.org/H8CVupxrNCt3.png"
     },
     "Paywaller": {
       "label": "Paywaller",
       "authors": ["tashaweeds", "a9145056060904", "mantiiiss", "CobaltOwl1"],
       "icon": "https://f.rpghq.org/jV1J0KFe8Frw.png"
+    },
+    "Copystriker": {
+      "label": "Viciously gets patches and reuploads of mods taken down. Retardedly believes they own their mod legally.\n\nDoes this for the ego boost, not for the good of the modding community.",
+      "authors": ["Arthmoor"],
+      "icon": "https://f.rpghq.org/6mvPmU3pcMUM.png?n=pasted-file.pngg"
     }
   },
   "Tooltips": {
