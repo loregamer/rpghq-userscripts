@@ -440,14 +440,45 @@
 
           authorLinks.forEach((authorLink) => {
             const authorName = authorLink.textContent.trim();
-            // Check if this author link already has status indicators
+
+            // Skip if this author link already has status indicators
             if (
-              authorStatus[authorName] &&
-              !authorLink.nextElementSibling?.classList.contains(
+              authorLink.nextElementSibling?.classList.contains(
                 "author-status-container"
               )
             ) {
-              addAuthorStatusIndicator(authorLink, authorStatus[authorName]);
+              return;
+            }
+
+            // Build array of labels for this author
+            const authorLabels = [];
+
+            // Check each label to see if this author is included
+            for (const [labelKey, labelData] of Object.entries(
+              authorStatus.Labels
+            )) {
+              if (labelData.authors.includes(authorName)) {
+                const label = {
+                  label: labelData.label,
+                  icon: labelData.icon,
+                };
+
+                // Check if there's a custom tooltip for this author and label
+                if (authorStatus.Tooltips?.[authorName]?.[labelKey]) {
+                  const tooltip = authorStatus.Tooltips[authorName][labelKey];
+                  label.tooltip = tooltip.label;
+                  label.url = tooltip.referenceLink;
+                } else {
+                  label.tooltip = labelData.label;
+                }
+
+                authorLabels.push(label);
+              }
+            }
+
+            // If we found any labels, add them to the author element
+            if (authorLabels.length > 0) {
+              addAuthorStatusIndicator(authorLink, { labels: authorLabels });
             }
           });
         } catch (error) {
