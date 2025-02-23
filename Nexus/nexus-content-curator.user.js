@@ -442,7 +442,7 @@
 
   // Default icons for different status types
   const DEFAULT_ICONS = {
-    MALICIOUS: "⚠️",
+    MALICIOUS: "⛔",
     WARNING: "⚡",
     INFO: "ℹ️",
     ABANDONED: "🚫",
@@ -613,7 +613,7 @@
   // Enhanced status types and icons
   const STATUS_TYPES = {
     BROKEN: {
-      icons: ["⚠️"],
+      icons: ["⛔"],
       color: "#ff0000",
       class: "severe",
     },
@@ -818,7 +818,7 @@
     iconContainer.className = "warning-icon-container";
     const icon = document.createElement("span");
     icon.className = "warning-icon";
-    icon.textContent = STATUS_TYPES[status.type]?.icons[0] || "⚠️";
+    icon.textContent = STATUS_TYPES[status.type]?.icons[0] || "⛔";
     iconContainer.appendChild(icon);
 
     const textContainer = document.createElement("div");
@@ -1417,7 +1417,7 @@
       let icon = "ℹ️";
       switch (warning.type) {
         case "BROKEN":
-          icon = "⚠️";
+          icon = "⛔";
           break;
         case "CLOSED_PERMISSIONS":
           icon = "🔒";
