@@ -1362,16 +1362,21 @@
 
   // Add warning tags to the page
   function addWarningTags(warnings) {
-    const tagsContainer = document.querySelector(
-      ".sideitem.clearfix .tags span:first-child"
-    );
+    const tagsContainer = document.querySelector(".sideitem.clearfix .tags");
     if (!tagsContainer) {
       console.warn("[Debug] Tags container not found");
       return;
     }
 
+    // Get the first span that contains the visible tags
+    const firstSpan = tagsContainer.querySelector("span:first-child");
+    if (!firstSpan) {
+      console.warn("[Debug] First span not found in tags container");
+      return;
+    }
+
     // Remove any existing warning tags
-    const existingWarningTags = tagsContainer.querySelectorAll(
+    const existingWarningTags = firstSpan.querySelectorAll(
       "li[data-warning-tag]"
     );
     existingWarningTags.forEach((tag) => tag.remove());
@@ -1390,7 +1395,13 @@
     warnings.forEach((warning) => {
       const warningTag = createWarningTag(warning);
       warningTag.setAttribute("data-warning-tag", warning.type);
-      tagsContainer.insertBefore(warningTag, tagsContainer.firstChild);
+      // Insert before the first existing li element
+      const firstLi = firstSpan.querySelector("li");
+      if (firstLi) {
+        firstSpan.insertBefore(warningTag, firstLi);
+      } else {
+        firstSpan.appendChild(warningTag);
+      }
     });
   }
 
