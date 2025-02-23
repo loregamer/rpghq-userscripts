@@ -1162,7 +1162,8 @@
           lockSpan.textContent = "🔒";
         } else if (
           openPermissions.length > 0 &&
-          customPermissions.length === 0
+          customPermissions.length === 0 &&
+          closedPermissions.length === 0
         ) {
           lockSpan.textContent = "🔓";
         } else {
@@ -1178,7 +1179,8 @@
             )})</span>`;
           } else if (
             openPermissions.length > 0 &&
-            customPermissions.length === 0
+            customPermissions.length === 0 &&
+            closedPermissions.length === 0
           ) {
             tooltipText = `This mod has open permissions <span style="font-size: 0.85em;">(${openPermissions.join(
               ", "
@@ -1209,6 +1211,7 @@
       }
     }
 
+    // Always return a permissions status
     if (closedPermissions.length > 0) {
       return {
         type: "CLOSED_PERMISSIONS",
@@ -1218,7 +1221,11 @@
         color: STATUS_TYPES.CLOSED_PERMISSIONS.color,
         skipBanner: noFeatureElement ? true : false,
       };
-    } else if (openPermissions.length > 0 && customPermissions.length === 0) {
+    } else if (
+      openPermissions.length > 0 &&
+      customPermissions.length === 0 &&
+      closedPermissions.length === 0
+    ) {
       return {
         type: "OPEN_PERMISSIONS",
         reason: `This mod has open permissions <span style="font-style: italic; font-size: 0.85em;">(${openPermissions.join(
@@ -1227,18 +1234,20 @@
         color: STATUS_TYPES.OPEN_PERMISSIONS.color,
         skipBanner: true,
       };
-    } else if (permissionsList.length > 0) {
+    } else {
+      // Default fallback - always return CUSTOM_PERMISSIONS if not clearly OPEN or CLOSED
       const allPermissions = [...openPermissions, ...customPermissions];
       return {
         type: "CUSTOM_PERMISSIONS",
-        reason: `This mod has custom permissions <span style="font-style: italic; font-size: 0.85em;">(${allPermissions.join(
-          ", "
-        )})</span>`,
+        reason: `This mod has custom permissions <span style="font-style: italic; font-size: 0.85em;">(${
+          allPermissions.length > 0
+            ? allPermissions.join(", ")
+            : "No permissions specified"
+        })</span>`,
         color: STATUS_TYPES.CUSTOM_PERMISSIONS.color,
         skipBanner: true,
       };
     }
-    return null;
   }
 
   // Create warning tag element
