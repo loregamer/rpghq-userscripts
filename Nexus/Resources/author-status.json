@@ -2,7 +2,13 @@
   "Labels": {
     "Troon": {
       "label": "Troon",
-      "authors": ["Aether", "Eralyne", "jawstarion", "magnetuning"],
+      "authors": [
+        "Aether",
+        "Eralyne",
+        "jawstarion",
+        "magnetuning",
+        "Padme4000"
+      ],
       "icon": "https://f.rpghq.org/b1PMDDCK0hrc.png"
     },
     "Flight Risk": {
