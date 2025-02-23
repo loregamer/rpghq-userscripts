@@ -940,6 +940,28 @@
     });
   }
 
+  // Function to clean permission title
+  function cleanPermissionTitle(title) {
+    return title
+      .replace(" permission", "") // Remove standalone "permission"
+      .replace(" in mods/files that", " for files that"); // Clean up the "in mods/files that" phrase
+  }
+
+  // Function to filter unwanted permissions
+  function shouldIncludePermission(title) {
+    const excludedPermissions = [
+      "Asset use for files that are being sold",
+      "Asset use for files that earn donation points",
+      "Asset use permission in mods/files that are being sold",
+      "Asset use permission in mods/files that earn donation points",
+      "Asset use permission for files that are being sold",
+      "Asset use permission for files that earn donation points",
+    ];
+
+    const cleanedTitle = cleanPermissionTitle(title);
+    return !excludedPermissions.includes(cleanedTitle);
+  }
+
   // Function to fetch permissions from a specific mod page
   function fetchPermissionsFromModPage(modPageUrl) {
     return new Promise((resolve) => {
@@ -953,7 +975,7 @@
             "text/html"
           );
           const permissionsList = doc.querySelectorAll(
-            ".permissions .permission-no"
+            ".permissions .permission-no, .permissions .permission-maybe"
           );
           const closedPermissions = [];
 
@@ -961,12 +983,8 @@
             const titleElement = permission.querySelector(".permissions-title");
             if (titleElement) {
               const title = titleElement.textContent.trim();
-              if (
-                title === "Upload permission" ||
-                title === "Modification permission" ||
-                title === "Conversion permission"
-              ) {
-                closedPermissions.push(title.replace(" permission", ""));
+              if (shouldIncludePermission(title)) {
+                closedPermissions.push(cleanPermissionTitle(title));
               }
             }
           });
@@ -994,7 +1012,7 @@
 
     // First try to get permissions from current page
     const permissionsList = document.querySelectorAll(
-      ".permissions .permission-no"
+      ".permissions .permission-no, .permissions .permission-maybe"
     );
     let closedPermissions = [];
 
@@ -1009,12 +1027,8 @@
         const titleElement = permission.querySelector(".permissions-title");
         if (titleElement) {
           const title = titleElement.textContent.trim();
-          if (
-            title === "Upload permission" ||
-            title === "Modification permission" ||
-            title === "Conversion permission"
-          ) {
-            closedPermissions.push(title.replace(" permission", ""));
+          if (shouldIncludePermission(title)) {
+            closedPermissions.push(cleanPermissionTitle(title));
           }
         }
       });
@@ -1041,7 +1055,7 @@
           // Add tooltip handlers
           const showTooltip = (e) => {
             tooltip.innerHTML = formatTooltipText(
-              `This mod has closed permissions <span style="font-size: 0.85em;">(${closedPermissions.join(
+              `This mod has closed or restricted permissions <span style="font-size: 0.85em;">(${closedPermissions.join(
                 ", "
               )})</span>`
             );
@@ -1066,9 +1080,9 @@
 
       return {
         type: "CLOSED_PERMISSIONS",
-        reason: `This mod has closed permissions <span style="font-style: italic; font-size: 0.85em;">(${closedPermissions.join(
+        reason: `This mod has closed or restricted permissions <span style="font-style: italic; font-size: 0.85em;">(${closedPermissions.join(
           ", "
-        )})</span>.<br><br>Please bully and harass this mod author into being <a href="https://www.youtube.com/watch?v=edea7yMqOY8" target="_blank" style="color: inherit; text-decoration: underline;">Cathedral</a>.`,
+        )})</span>.<br><br>Please bully and harass this mod author into being <a href="https://www.youtube.com/watch?v=edea7yMqOY8" target="_blank" style="color: inherit; text-decoration: underline;">Cathedral</a>, and perhaps reupload on ModHQ if you are feeling cheeky.`,
         color: STATUS_TYPES.CLOSED_PERMISSIONS.color,
       };
     }
