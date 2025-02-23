@@ -19,7 +19,12 @@
         "37908",
         "71521",
         "60876",
-        "61173"
+        "61173",
+        "70204",
+        "35794",
+        "38527",
+        "59528",
+        "40040"
       ],
       "INFO": ["38844", "76009", "81185", "81332", "81010", "61173"]
     }
@@ -76,10 +81,6 @@
         "reason": "Contains unnecessary bloat and leftover features from a planned quest.",
         "alternative": "https://www.nexusmods.com/newvegas/mods/69226"
       },
-      "61173": {
-        "reason": "Has tons of unnecessary bloat such as new weapons, enemies, poison effects, skill books and more.",
-        "alternative": "https://www.nexusmods.com/newvegas/mods/71521"
-      },
       "60876": {
         "reason": "Use the remaster instead. Well, the re-remastered.",
         "alternative": "https://www.nexusmods.com/newvegas/mods/74218"
@@ -96,6 +97,11 @@
         {
           "pattern": "ENB",
           "reason": "ENBs are extremely buggy in New Vegas and will cause loads of issues"
+        },
+
+        {
+          "pattern": "Project Nevada",
+          "reason": "Project Nevada is horrible. Avoid avoid avoid. Check Viva New Vegas for recommended alternatives."
         }
       ]
     }
