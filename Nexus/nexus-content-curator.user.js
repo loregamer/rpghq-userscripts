@@ -881,16 +881,39 @@
         }
       }
 
-      // Create permissions banner
-      const status = {
+      return {
         type: "CLOSED_PERMISSIONS",
         reason: `This mod has closed permissions <span style="font-style: italic; font-size: 0.85em;">(${closedPermissions.join(
           ", "
-        )})</span>.<br>Please bully and harass this mod author into being <a href="https://www.youtube.com/watch?v=edea7yMqOY8" target="_blank" style="color: inherit; text-decoration: underline;">Cathedral</a>.`,
+        )})</span>.<br><br>Please bully and harass this mod author into being <a href="https://www.youtube.com/watch?v=edea7yMqOY8" target="_blank" style="color: inherit; text-decoration: underline;">Cathedral</a>.`,
         color: STATUS_TYPES.CLOSED_PERMISSIONS.color,
       };
-      addWarningBanner(status);
     }
+    return null;
+  }
+
+  // Function to add all warnings at once
+  function addAllWarnings(warnings) {
+    if (warnings.length === 0) return;
+
+    // Clear any existing warning banners
+    const existingBanners = document.querySelector(".mod-warning-banners");
+    if (existingBanners) {
+      existingBanners.remove();
+    }
+
+    // Add all warnings in order (BROKEN first, then CLOSED_PERMISSIONS, then others)
+    warnings
+      .sort((a, b) => {
+        if (a.type === "BROKEN") return -1;
+        if (b.type === "BROKEN") return 1;
+        if (a.type === "CLOSED_PERMISSIONS") return -1;
+        if (b.type === "CLOSED_PERMISSIONS") return 1;
+        return 0;
+      })
+      .forEach((warning) => {
+        addWarningBanner(warning);
+      });
   }
 
   // Main function to check mod status and update UI
@@ -898,8 +921,14 @@
     const { gameId, modId } = getGameAndModId();
     console.log("[Debug] Checking mod status for game:", gameId, "mod:", modId);
 
+    // Collect all warnings that apply to this mod
+    const warnings = [];
+
     // Check permissions first
-    checkModPermissions();
+    const permissionsWarning = checkModPermissions();
+    if (permissionsWarning) {
+      warnings.push(permissionsWarning);
+    }
 
     GM_xmlhttpRequest({
       method: "GET",
@@ -913,6 +942,8 @@
           const gameStatuses = modStatusData["Mod Statuses"]?.[gameId];
           if (!gameStatuses) {
             console.log("[Debug] No status lists found for game");
+            // Still show permissions warning if we have one
+            addAllWarnings(warnings);
             return;
           }
 
@@ -948,16 +979,23 @@
             }
 
             console.log("[Debug] Created indicator status:", indicatorStatus);
-            addWarningBanner(indicatorStatus);
+            warnings.push(indicatorStatus);
           } else {
             console.log("[Debug] No status found for current mod");
           }
+
+          // Add all collected warnings after we've gathered everything
+          addAllWarnings(warnings);
         } catch (error) {
           console.error("[Debug] Error processing mod status:", error);
+          // Still show permissions warning if we have one
+          addAllWarnings(warnings);
         }
       },
       onerror: function (error) {
         console.error("[Debug] Error fetching mod status:", error);
+        // Still show permissions warning if we have one
+        addAllWarnings(warnings);
       },
     });
   }
