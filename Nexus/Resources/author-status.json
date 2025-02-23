@@ -30,6 +30,11 @@
       "label": "Viciously gets patches and reuploads of mods taken down. Retardedly believes they own their mod legally.\n\nDoes this for the ego boost, not for the good of the modding community.",
       "authors": ["Arthmoor"],
       "icon": "https://f.rpghq.org/6mvPmU3pcMUM.png?n=pasted-file.pngg"
+    },
+    "Incident": {
+      "label": "Incident:",
+      "authors": ["magnetuning"],
+      "icon": "https://f.rpghq.org/xjhpiEPNoOV6.png"
     }
   },
   "Tooltips": {
@@ -37,6 +42,12 @@
       "Flight Risk": {
         "label": "Flight risk! (Will throw fit and leave if criticized too much)\n\nWas also involved in that lame Open Faerun garbage",
         "referenceLink": "https://rpghq.org/forums/viewtopic.php?p=63791-mod-seethe-thread-formerly-nexus-seethe-thread#p63791"
+      }
+    },
+    "magnetuning": {
+      "Incident": {
+        "label": "This guy made a mod to \"fix\" villain characters having crooked, \"Jewish\" noses, since he found that OUTDATED.\nHe's also very combative.",
+        "referenceLink": "https://rpghq.org/forums/viewtopic.php?p=207873-mod-seethe-thread-formerly-nexus-seethe-thread#p207873"
       }
     }
   }
