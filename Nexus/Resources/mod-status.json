@@ -30,9 +30,8 @@
     "newvegas": {
       "BROKEN": [
         {
-          "pattern": "ENB presets",
-          "reason": "ENBs are extremely buggy in New Vegas and will cause loads of issues",
-          "matchType": "title"
+          "pattern": "ENB",
+          "reason": "ENBs are extremely buggy in New Vegas and will cause loads of issues"
         }
       ]
     }

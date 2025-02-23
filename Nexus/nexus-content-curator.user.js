@@ -880,24 +880,26 @@
 
     // Get all text from breadcrumb categories
     const breadcrumbText = Array.from(
-      document.querySelectorAll("#breadcrumb li a")
+      document.querySelectorAll("#breadcrumb li a, #breadcrumb li")
     )
-      .map((a) => a.textContent.trim())
+      .map((el) => el.textContent.trim())
       .join(" ");
 
     // Get the mod title
     const h1Title =
       document.querySelector("#pagetitle h1")?.textContent.trim() || "";
 
+    // Get any category text
+    const categoryText =
+      document.querySelector(".category")?.textContent.trim() || "";
+
     // Combine all text to search through
-    const fullText = `${breadcrumbText} ${h1Title} ${modTitle}`.toLowerCase();
+    const fullText =
+      `${breadcrumbText} ${h1Title} ${modTitle} ${categoryText}`.toLowerCase();
 
     for (const [statusType, rules] of Object.entries(gameRules)) {
       for (const rule of rules) {
-        if (
-          rule.matchType === "title" &&
-          fullText.includes(rule.pattern.toLowerCase())
-        ) {
+        if (fullText.includes(rule.pattern.toLowerCase())) {
           return {
             type: statusType,
             reason: rule.reason,
@@ -1293,9 +1295,19 @@
     const { gameId, modId } = getGameAndModId();
     console.log("[Debug] Checking mod status for game:", gameId, "mod:", modId);
 
+    // Get all text from breadcrumb categories
+    const breadcrumbText = Array.from(
+      document.querySelectorAll("#breadcrumb li a")
+    )
+      .map((a) => a.textContent.trim())
+      .join(" ");
+
     // Get the mod title
-    const modTitle =
+    const h1Title =
       document.querySelector("#pagetitle h1")?.textContent.trim() || "";
+
+    // Combine all text to search through
+    const fullText = `${breadcrumbText} ${h1Title}`;
 
     // Collect all warnings that apply to this mod
     const warnings = [];
@@ -1355,7 +1367,7 @@
         const keywordStatus = checkKeywordRules(
           modStatusData,
           gameId,
-          modTitle
+          fullText
         );
         if (keywordStatus) {
           console.log("[Debug] Found keyword match:", keywordStatus);
