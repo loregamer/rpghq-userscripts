@@ -1842,11 +1842,11 @@
           <h2>Report Mod Status</h2>
           <div class="form-group">
             <label>Game Shortname</label>
-            <input type="text" id="gameShortname" readonly class="readonly-input">
+            <input type="text" id="gameShortname" readonly class="readonly-input" disabled>
           </div>
           <div class="form-group">
             <label>Mod ID</label>
-            <input type="text" id="modId" readonly class="readonly-input">
+            <input type="text" id="modId" readonly class="readonly-input" disabled>
           </div>
           <div class="form-group">
             <label>Status</label>
