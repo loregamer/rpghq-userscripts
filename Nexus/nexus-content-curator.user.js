@@ -43,22 +43,22 @@
     }
 
     .mod-warning-banner.severe {
-      background: linear-gradient(45deg, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.2));
-      border: 2px solid #ff0000;
-      box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.2);
+      background: linear-gradient(45deg, rgba(255, 0, 0, 0.05), rgba(255, 0, 0, 0.1));
+      border: 2px solid rgba(255, 0, 0, 0.3);
+      box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.1);
       pointer-events: none;
     }
 
     .mod-warning-banner.warning {
-      background: linear-gradient(45deg, rgba(255, 165, 0, 0.1), rgba(255, 165, 0, 0.2));
-      border: 2px solid #ffa500;
-      box-shadow: inset 0 0 20px rgba(255, 165, 0, 0.2);
+      background: linear-gradient(45deg, rgba(255, 165, 0, 0.05), rgba(255, 165, 0, 0.1));
+      border: 2px solid rgba(255, 165, 0, 0.3);
+      box-shadow: inset 0 0 20px rgba(255, 165, 0, 0.1);
     }
 
     .mod-warning-banner.info {
-      background: linear-gradient(45deg, rgba(0, 136, 255, 0.1), rgba(0, 136, 255, 0.2));
-      border: 2px solid #0088ff;
-      box-shadow: inset 0 0 20px rgba(0, 136, 255, 0.2);
+      background: linear-gradient(45deg, rgba(0, 136, 255, 0.05), rgba(0, 136, 255, 0.1));
+      border: 2px solid rgba(0, 136, 255, 0.3);
+      box-shadow: inset 0 0 20px rgba(0, 136, 255, 0.1);
     }
 
     .warning-icon-container {
@@ -154,9 +154,6 @@
     /* Red highlight for broken mods */
     .mod-tile.has-broken-warning {
       position: relative;
-      outline: 2px solid #ff0000;
-      outline-offset: -2px;
-      box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
     }
 
     .mod-tile.has-broken-warning::before {
@@ -166,13 +163,21 @@
       left: 0;
       right: 0;
       bottom: 0;
-      border: 2px solid #ff0000;
+      background: linear-gradient(45deg, rgba(255, 0, 0, 0.03), rgba(255, 0, 0, 0.08));
+      border: 2px solid rgba(255, 0, 0, 0.2);
       pointer-events: none;
-      z-index: 4;
+      z-index: 1;
     }
 
-    .mod-tile.has-broken-warning .mod-image {
-      opacity: 0.9;
+    .mod-tile.has-broken-warning .mod-warning-banner {
+      background: none;
+      border: none;
+      box-shadow: none;
+    }
+
+    .mod-tile.has-broken-warning .warning-text {
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+      font-weight: bold;
     }
   `;
 
@@ -541,17 +546,6 @@
   function addWarningBannerToTile(modTile, status) {
     console.log("[Debug] Adding warning banner to mod tile");
 
-    // Get mod ID and game ID from the tile
-    const modData = modTile.querySelector("[data-mod-id]");
-    if (!modData) {
-      console.warn("[Debug] Could not find mod data in tile");
-      return;
-    }
-
-    const modId = modData.dataset.modId;
-    const gameId =
-      GAME_ID_MAP[modData.dataset.gameId] || modData.dataset.gameId;
-
     // Check for existing banner
     const existingBanner = modTile.querySelector(".mod-warning-banner");
     if (existingBanner) {
@@ -559,11 +553,46 @@
       existingBanner.remove();
     }
 
-    const banner = createWarningBanner(status);
-    banner.classList.add(status.type.toLowerCase());
+    // Create a simplified banner for tiles
+    const banner = document.createElement("div");
+    banner.className = `mod-warning-banner ${status.type.toLowerCase()}`;
+    banner.style.position = "absolute";
+    banner.style.top = "10px";
+    banner.style.left = "10px";
+    banner.style.zIndex = "2";
+
+    const iconContainer = document.createElement("div");
+    iconContainer.className = "warning-icon-container";
+    const icon = document.createElement("span");
+    icon.className = "warning-icon";
+    icon.textContent = STATUS_TYPES[status.type]?.icons[0] || "⚠️";
+    iconContainer.appendChild(icon);
+
+    const textContainer = document.createElement("div");
+    textContainer.className = "warning-text";
+    textContainer.textContent = status.type;
+
+    banner.appendChild(iconContainer);
+    banner.appendChild(textContainer);
+
+    // Add tooltip with full details
+    const showTooltip = (e) => {
+      tooltip.innerHTML = formatTooltipText(status.reason);
+      tooltip.style.display = "block";
+      updateTooltipPosition(e);
+    };
+
+    const hideTooltip = () => {
+      tooltip.style.display = "none";
+    };
+
+    banner.addEventListener("mouseover", showTooltip);
+    banner.addEventListener("mousemove", updateTooltipPosition);
+    banner.addEventListener("mouseout", hideTooltip);
+    banner.style.cursor = "help";
 
     // Add banner to tile
-    modTile.querySelector(".mod-image")?.appendChild(banner);
+    modTile.appendChild(banner);
 
     // Add warning class to tile for highlighting
     if (status.type === "BROKEN") {
