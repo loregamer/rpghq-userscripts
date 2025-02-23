@@ -169,15 +169,29 @@
       z-index: 1;
     }
 
+    .mod-tile.has-broken-warning .mod-image {
+      position: relative;
+    }
+
     .mod-tile.has-broken-warning .mod-warning-banner {
-      background: none;
-      border: none;
-      box-shadow: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 4px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      white-space: nowrap;
     }
 
     .mod-tile.has-broken-warning .warning-text {
       text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
       font-weight: bold;
+      color: white;
+      font-size: 1.2em;
     }
   `;
 
@@ -556,10 +570,6 @@
     // Create a simplified banner for tiles
     const banner = document.createElement("div");
     banner.className = `mod-warning-banner ${status.type.toLowerCase()}`;
-    banner.style.position = "absolute";
-    banner.style.top = "10px";
-    banner.style.left = "10px";
-    banner.style.zIndex = "2";
 
     const iconContainer = document.createElement("div");
     iconContainer.className = "warning-icon-container";
@@ -591,8 +601,8 @@
     banner.addEventListener("mouseout", hideTooltip);
     banner.style.cursor = "help";
 
-    // Add banner to tile
-    modTile.appendChild(banner);
+    // Add banner to tile's image
+    modTile.querySelector(".mod-image")?.appendChild(banner);
 
     // Add warning class to tile for highlighting
     if (status.type === "BROKEN") {

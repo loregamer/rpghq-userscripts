@@ -3,7 +3,12 @@
     "899": {
       "status": "BROKEN",
       "reason": "This mod will break your game. It's a buggy mess. Avoid like the plague",
-      "alternative": "https://rpghq.org/forums/viewtopic.php?p=58778-bald-astarion-1-0-0-baldur-s-gate-3&hilit=bald+astarion"
+      "alternative": null
+    },
+    "2754": {
+      "status": "LAME",
+      "reason": "Stupid mod. Incompatible, headache to setup and maintain, and for TROONS",
+      "alternative": null
     }
   }
 }
