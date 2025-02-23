@@ -1,15 +1,16 @@
 // ==UserScript==
 // @name         Nexus Mods - Content Curator
 // @namespace    http://tampermonkey.net/
-// @version      1.1
-// @description  Adds warning labels to mods marked as broken or not recommended based on a GitHub-hosted database
-// @author       You
+// @version      1.0
+// @description  Adds warning labels to mods and their authors
+// @author       loregamer
 // @match        https://www.nexusmods.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @connect      raw.githubusercontent.com
 // @connect      rpghq.org
+// @icon         https://www.nexusmods.com/favicon.ico
 // ==/UserScript==
 
 (function () {
