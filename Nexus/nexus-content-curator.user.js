@@ -981,6 +981,13 @@
     const manualButton = modActions.querySelector("#action-manual");
     if (manualButton) manualButton.remove();
 
+    // Remove Vote and Add Media buttons
+    const voteButton = modActions.querySelector("li a .icon-vote");
+    if (voteButton) voteButton.closest("li").remove();
+
+    const addMediaButton = modActions.querySelector("#action-media");
+    if (addMediaButton) addMediaButton.remove();
+
     // Check if report button already exists
     if (modActions.querySelector("#action-report-hq")) return;
 
