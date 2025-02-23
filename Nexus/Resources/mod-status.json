@@ -5,6 +5,9 @@
       "LAME": ["2754"],
       "ABANDONED": [],
       "INFO": ["141"]
+    },
+    "newvegas": {
+      "BROKEN": []
     }
   },
   "Mod Descriptors": {
@@ -21,6 +24,17 @@
         "reason": "Stupid mod. Incompatible, headache to setup and maintain, and for TROONS",
         "alternative": null
       }
+    }
+  },
+  "Keyword Rules": {
+    "newvegas": {
+      "BROKEN": [
+        {
+          "pattern": "ENB Preset",
+          "reason": "ENBs are extremely buggy in New Vegas and will cause loads of issues",
+          "matchType": "title"
+        }
+      ]
     }
   }
 }

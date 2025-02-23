@@ -873,16 +873,50 @@
     }
   }
 
-  // Modify checkModTileStatus to handle search page tiles
+  // Function to check if a mod matches any keyword rules
+  function checkKeywordRules(modStatusData, gameName, modTitle) {
+    const gameRules = modStatusData["Keyword Rules"]?.[gameName];
+    if (!gameRules) return null;
+
+    // Get all text from breadcrumb categories
+    const breadcrumbText = Array.from(
+      document.querySelectorAll("#breadcrumb li a")
+    )
+      .map((a) => a.textContent.trim())
+      .join(" ");
+
+    // Get the mod title
+    const h1Title =
+      document.querySelector("#pagetitle h1")?.textContent.trim() || "";
+
+    // Combine all text to search through
+    const fullText = `${breadcrumbText} ${h1Title} ${modTitle}`.toLowerCase();
+
+    for (const [statusType, rules] of Object.entries(gameRules)) {
+      for (const rule of rules) {
+        if (
+          rule.matchType === "title" &&
+          fullText.includes(rule.pattern.toLowerCase())
+        ) {
+          return {
+            type: statusType,
+            reason: rule.reason,
+            color: STATUS_TYPES[statusType]?.color || "#ff0000",
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  // Modify checkModTileStatus to include keyword checking
   function checkModTileStatus(modTile) {
-    // Get mod ID and game ID from the title link
     const titleLink = modTile.querySelector(".tile-name a");
     if (!titleLink) {
       console.warn("[Debug] Could not find title link in tile");
       return;
     }
 
-    // Extract IDs from the URL
     const match = titleLink.href.match(/nexusmods\.com\/([^\/]+)\/mods\/(\d+)/);
     if (!match) {
       console.warn("[Debug] Could not parse game/mod ID from URL");
@@ -891,6 +925,12 @@
 
     const gameName = match[1];
     const modId = match[2];
+    const modTitle = titleLink.textContent.trim();
+
+    // Get category text from tile if available
+    const categoryText =
+      modTile.querySelector(".category")?.textContent.trim() || "";
+    const combinedTitle = `${categoryText} ${modTitle}`;
 
     console.log(
       "[Debug] Checking mod tile status for game:",
@@ -907,25 +947,20 @@
           const modStatusData = JSON.parse(response.responseText);
           console.log("[Debug] Received mod status data:", modStatusData);
 
-          // First check if we have any statuses for this game
+          // First check explicit mod statuses
           const gameStatuses = modStatusData["Mod Statuses"]?.[gameName];
-          if (!gameStatuses) {
-            console.log("[Debug] No status lists found for game");
-            return;
-          }
-
-          // Find which status list contains this mod
           let foundStatus = null;
-          for (const [statusType, modList] of Object.entries(gameStatuses)) {
-            if (modList.includes(modId)) {
-              foundStatus = statusType;
-              break;
+
+          if (gameStatuses) {
+            for (const [statusType, modList] of Object.entries(gameStatuses)) {
+              if (modList.includes(modId)) {
+                foundStatus = statusType;
+                break;
+              }
             }
           }
 
           if (foundStatus) {
-            console.log("[Debug] Found status for mod tile:", foundStatus);
-
             // Create base status object
             const indicatorStatus = {
               type: foundStatus,
@@ -948,7 +983,18 @@
             console.log("[Debug] Created indicator status:", indicatorStatus);
             addWarningBannerToTile(modTile, indicatorStatus);
           } else {
-            console.log("[Debug] No status found for mod tile");
+            // Check keyword rules if no explicit status was found
+            const keywordStatus = checkKeywordRules(
+              modStatusData,
+              gameName,
+              combinedTitle
+            );
+            if (keywordStatus) {
+              console.log("[Debug] Found keyword match:", keywordStatus);
+              addWarningBannerToTile(modTile, keywordStatus);
+            } else {
+              console.log("[Debug] No status found for mod tile");
+            }
           }
         } catch (error) {
           console.error("[Debug] Error processing mod tile status:", error);
@@ -1242,10 +1288,14 @@
     addWarningTags(warnings.filter((warning) => warning && warning.type));
   }
 
-  // Main function to check mod status and update UI
+  // Modify checkModStatus to include keyword checking
   async function checkModStatus() {
     const { gameId, modId } = getGameAndModId();
     console.log("[Debug] Checking mod status for game:", gameId, "mod:", modId);
+
+    // Get the mod title
+    const modTitle =
+      document.querySelector("#pagetitle h1")?.textContent.trim() || "";
 
     // Collect all warnings that apply to this mod
     const warnings = [];
@@ -1259,34 +1309,26 @@
     // Function to process mod status data
     function processModStatus(modStatusData) {
       if (!modStatusData) {
-        // Still show permissions warning if we have one
         addAllWarnings(warnings);
         return;
       }
 
       console.log("[Debug] Processing mod status data:", modStatusData);
 
-      // First check if we have any statuses for this game
+      // Check explicit mod statuses
       const gameStatuses = modStatusData["Mod Statuses"]?.[gameId];
-      if (!gameStatuses) {
-        console.log("[Debug] No status lists found for game");
-        // Still show permissions warning if we have one
-        addAllWarnings(warnings);
-        return;
-      }
-
-      // Find which status list contains this mod
       let foundStatus = null;
-      for (const [statusType, modList] of Object.entries(gameStatuses)) {
-        if (modList.includes(modId)) {
-          foundStatus = statusType;
-          break;
+
+      if (gameStatuses) {
+        for (const [statusType, modList] of Object.entries(gameStatuses)) {
+          if (modList.includes(modId)) {
+            foundStatus = statusType;
+            break;
+          }
         }
       }
 
       if (foundStatus) {
-        console.log("[Debug] Found status for current mod:", foundStatus);
-
         // Create base status object
         const indicatorStatus = {
           type: foundStatus,
@@ -1309,7 +1351,16 @@
         console.log("[Debug] Created indicator status:", indicatorStatus);
         warnings.push(indicatorStatus);
       } else {
-        console.log("[Debug] No status found for current mod");
+        // Check keyword rules if no explicit status was found
+        const keywordStatus = checkKeywordRules(
+          modStatusData,
+          gameId,
+          modTitle
+        );
+        if (keywordStatus) {
+          console.log("[Debug] Found keyword match:", keywordStatus);
+          warnings.push(keywordStatus);
+        }
       }
 
       // Add all collected warnings after we've gathered everything
