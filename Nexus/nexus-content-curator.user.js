@@ -6,6 +6,8 @@
 // @author       You
 // @match        https://www.nexusmods.com/*
 // @grant        GM_xmlhttpRequest
+// @grant        GM_setValue
+// @grant        GM_getValue
 // @connect      raw.githubusercontent.com
 // ==/UserScript==
 
@@ -18,6 +20,74 @@
 
   const AUTHOR_STATUS_URL =
     "https://raw.githubusercontent.com/loregamer/rpghq-userscripts/refs/heads/main/Nexus/Resources/author-status.json";
+
+  // Storage keys
+  const STORAGE_KEYS = {
+    MOD_STATUS: "nexus_mod_status_data",
+    AUTHOR_STATUS: "nexus_author_status_data",
+    LAST_UPDATE: "nexus_data_last_update",
+  };
+
+  // Cache duration in milliseconds (24 hours)
+  const CACHE_DURATION = 24 * 60 * 60 * 1000;
+
+  // Function to store data with timestamp
+  function storeData(key, data) {
+    GM_setValue(key, JSON.stringify(data));
+    GM_setValue(STORAGE_KEYS.LAST_UPDATE, Date.now());
+  }
+
+  // Function to get stored data
+  function getStoredData(key) {
+    try {
+      const data = GM_getValue(key);
+      return data ? JSON.parse(data) : null;
+    } catch (error) {
+      console.error(`[Debug] Error parsing stored data for ${key}:`, error);
+      return null;
+    }
+  }
+
+  // Function to check if cache is valid
+  function isCacheValid() {
+    const lastUpdate = GM_getValue(STORAGE_KEYS.LAST_UPDATE, 0);
+    return Date.now() - lastUpdate < CACHE_DURATION;
+  }
+
+  // Function to fetch and store JSON data
+  function fetchAndStoreJSON(url, storageKey, callback) {
+    GM_xmlhttpRequest({
+      method: "GET",
+      url: url,
+      onload: function (response) {
+        try {
+          const data = JSON.parse(response.responseText);
+          storeData(storageKey, data);
+          callback(data);
+        } catch (error) {
+          console.error(
+            `[Debug] Error fetching/parsing JSON from ${url}:`,
+            error
+          );
+          // Fall back to cached data
+          const cachedData = getStoredData(storageKey);
+          if (cachedData) {
+            console.log(`[Debug] Using cached data for ${storageKey}`);
+            callback(cachedData);
+          }
+        }
+      },
+      onerror: function (error) {
+        console.error(`[Debug] Error fetching ${url}:`, error);
+        // Fall back to cached data
+        const cachedData = getStoredData(storageKey);
+        if (cachedData) {
+          console.log(`[Debug] Using cached data for ${storageKey}`);
+          callback(cachedData);
+        }
+      },
+    });
+  }
 
   // Enhanced warning styles
   const styles = `
@@ -431,64 +501,74 @@
   function checkAuthorStatus() {
     const authorLinks = document.querySelectorAll("a[href*='/users/']");
 
-    GM_xmlhttpRequest({
-      method: "GET",
-      url: AUTHOR_STATUS_URL,
-      onload: function (response) {
-        try {
-          const authorStatus = JSON.parse(response.responseText);
+    // Function to process author status data
+    function processAuthorStatus(authorStatus) {
+      if (!authorStatus) return;
 
-          authorLinks.forEach((authorLink) => {
-            const authorName = authorLink.textContent.trim();
+      authorLinks.forEach((authorLink) => {
+        const authorName = authorLink.textContent.trim();
 
-            // Skip if this author link already has status indicators
-            if (
-              authorLink.nextElementSibling?.classList.contains(
-                "author-status-container"
-              )
-            ) {
-              return;
-            }
-
-            // Build array of labels for this author
-            const authorLabels = [];
-
-            // Check each label to see if this author is included
-            for (const [labelKey, labelData] of Object.entries(
-              authorStatus.Labels
-            )) {
-              if (labelData.authors.includes(authorName)) {
-                const label = {
-                  label: labelData.label,
-                  icon: labelData.icon,
-                };
-
-                // Check if there's a custom tooltip for this author and label
-                if (authorStatus.Tooltips?.[authorName]?.[labelKey]) {
-                  const tooltip = authorStatus.Tooltips[authorName][labelKey];
-                  label.tooltip = tooltip.label;
-                  label.url = tooltip.referenceLink;
-                } else {
-                  label.tooltip = labelData.label;
-                }
-
-                authorLabels.push(label);
-              }
-            }
-
-            // If we found any labels, add them to the author element
-            if (authorLabels.length > 0) {
-              addAuthorStatusIndicator(authorLink, { labels: authorLabels });
-            }
-          });
-        } catch (error) {
-          console.error("Error processing author status:", error);
+        // Skip if this author link already has status indicators
+        if (
+          authorLink.nextElementSibling?.classList.contains(
+            "author-status-container"
+          )
+        ) {
+          return;
         }
-      },
-      onerror: function (error) {
-        console.error("Error fetching author status:", error);
-      },
-    });
+
+        // Build array of labels for this author
+        const authorLabels = [];
+
+        // Check each label to see if this author is included
+        for (const [labelKey, labelData] of Object.entries(
+          authorStatus.Labels
+        )) {
+          if (labelData.authors.includes(authorName)) {
+            const label = {
+              label: labelData.label,
+              icon: labelData.icon,
+            };
+
+            // Check if there's a custom tooltip for this author and label
+            if (authorStatus.Tooltips?.[authorName]?.[labelKey]) {
+              const tooltip = authorStatus.Tooltips[authorName][labelKey];
+              label.tooltip = tooltip.label;
+              label.url = tooltip.referenceLink;
+            } else {
+              label.tooltip = labelData.label;
+            }
+
+            authorLabels.push(label);
+          }
+        }
+
+        // If we found any labels, add them to the author element
+        if (authorLabels.length > 0) {
+          addAuthorStatusIndicator(authorLink, { labels: authorLabels });
+        }
+      });
+    }
+
+    // Check if we need to fetch fresh data
+    if (!isCacheValid()) {
+      fetchAndStoreJSON(
+        AUTHOR_STATUS_URL,
+        STORAGE_KEYS.AUTHOR_STATUS,
+        processAuthorStatus
+      );
+    } else {
+      const cachedData = getStoredData(STORAGE_KEYS.AUTHOR_STATUS);
+      if (cachedData) {
+        processAuthorStatus(cachedData);
+      } else {
+        fetchAndStoreJSON(
+          AUTHOR_STATUS_URL,
+          STORAGE_KEYS.AUTHOR_STATUS,
+          processAuthorStatus
+        );
+      }
+    }
   }
 
   // Enhanced status types and icons
@@ -1050,74 +1130,85 @@
       warnings.push(permissionsWarning);
     }
 
-    GM_xmlhttpRequest({
-      method: "GET",
-      url: MOD_STATUS_URL,
-      onload: function (response) {
-        try {
-          const modStatusData = JSON.parse(response.responseText);
-          console.log("[Debug] Received mod status data:", modStatusData);
-
-          // First check if we have any statuses for this game
-          const gameStatuses = modStatusData["Mod Statuses"]?.[gameId];
-          if (!gameStatuses) {
-            console.log("[Debug] No status lists found for game");
-            // Still show permissions warning if we have one
-            addAllWarnings(warnings);
-            return;
-          }
-
-          // Find which status list contains this mod
-          let foundStatus = null;
-          for (const [statusType, modList] of Object.entries(gameStatuses)) {
-            if (modList.includes(modId)) {
-              foundStatus = statusType;
-              break;
-            }
-          }
-
-          if (foundStatus) {
-            console.log("[Debug] Found status for current mod:", foundStatus);
-
-            // Create base status object
-            const indicatorStatus = {
-              type: foundStatus,
-              reason: `This mod is marked as ${foundStatus.toLowerCase()}`,
-              color: STATUS_TYPES[foundStatus]?.color || "#ff0000",
-            };
-
-            // Check if we have additional descriptor info
-            const modDescriptor =
-              modStatusData["Mod Descriptors"]?.[gameId]?.[modId];
-            if (modDescriptor) {
-              if (modDescriptor.reason)
-                indicatorStatus.reason = modDescriptor.reason;
-              if (modDescriptor.alternative)
-                indicatorStatus.alternative = modDescriptor.alternative;
-              if (modDescriptor.url) indicatorStatus.url = modDescriptor.url;
-              if (modDescriptor.icon) indicatorStatus.icon = modDescriptor.icon;
-            }
-
-            console.log("[Debug] Created indicator status:", indicatorStatus);
-            warnings.push(indicatorStatus);
-          } else {
-            console.log("[Debug] No status found for current mod");
-          }
-
-          // Add all collected warnings after we've gathered everything
-          addAllWarnings(warnings);
-        } catch (error) {
-          console.error("[Debug] Error processing mod status:", error);
-          // Still show permissions warning if we have one
-          addAllWarnings(warnings);
-        }
-      },
-      onerror: function (error) {
-        console.error("[Debug] Error fetching mod status:", error);
+    // Function to process mod status data
+    function processModStatus(modStatusData) {
+      if (!modStatusData) {
         // Still show permissions warning if we have one
         addAllWarnings(warnings);
-      },
-    });
+        return;
+      }
+
+      console.log("[Debug] Processing mod status data:", modStatusData);
+
+      // First check if we have any statuses for this game
+      const gameStatuses = modStatusData["Mod Statuses"]?.[gameId];
+      if (!gameStatuses) {
+        console.log("[Debug] No status lists found for game");
+        // Still show permissions warning if we have one
+        addAllWarnings(warnings);
+        return;
+      }
+
+      // Find which status list contains this mod
+      let foundStatus = null;
+      for (const [statusType, modList] of Object.entries(gameStatuses)) {
+        if (modList.includes(modId)) {
+          foundStatus = statusType;
+          break;
+        }
+      }
+
+      if (foundStatus) {
+        console.log("[Debug] Found status for current mod:", foundStatus);
+
+        // Create base status object
+        const indicatorStatus = {
+          type: foundStatus,
+          reason: `This mod is marked as ${foundStatus.toLowerCase()}`,
+          color: STATUS_TYPES[foundStatus]?.color || "#ff0000",
+        };
+
+        // Check if we have additional descriptor info
+        const modDescriptor =
+          modStatusData["Mod Descriptors"]?.[gameId]?.[modId];
+        if (modDescriptor) {
+          if (modDescriptor.reason)
+            indicatorStatus.reason = modDescriptor.reason;
+          if (modDescriptor.alternative)
+            indicatorStatus.alternative = modDescriptor.alternative;
+          if (modDescriptor.url) indicatorStatus.url = modDescriptor.url;
+          if (modDescriptor.icon) indicatorStatus.icon = modDescriptor.icon;
+        }
+
+        console.log("[Debug] Created indicator status:", indicatorStatus);
+        warnings.push(indicatorStatus);
+      } else {
+        console.log("[Debug] No status found for current mod");
+      }
+
+      // Add all collected warnings after we've gathered everything
+      addAllWarnings(warnings);
+    }
+
+    // Check if we need to fetch fresh data
+    if (!isCacheValid()) {
+      fetchAndStoreJSON(
+        MOD_STATUS_URL,
+        STORAGE_KEYS.MOD_STATUS,
+        processModStatus
+      );
+    } else {
+      const cachedData = getStoredData(STORAGE_KEYS.MOD_STATUS);
+      if (cachedData) {
+        processModStatus(cachedData);
+      } else {
+        fetchAndStoreJSON(
+          MOD_STATUS_URL,
+          STORAGE_KEYS.MOD_STATUS,
+          processModStatus
+        );
+      }
+    }
   }
 
   // Run when the page loads
