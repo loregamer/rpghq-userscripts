@@ -597,7 +597,7 @@
       color: "#ff4400",
       class: "warning",
     },
-    BAD_AUTHOR: {
+    AUTHOR_SUCKS: {
       icons: ["👿"],
       color: "#ff4400",
       class: "warning",
@@ -1088,10 +1088,10 @@
     let closedPermissions = [];
 
     if (permissionsList.length === 0) {
-      // If no permissions found on current page, fetch from the reference mod
-      closedPermissions = await fetchPermissionsFromModPage(
-        "https://www.nexusmods.com/baldursgate3/mods/899?tab=description"
-      );
+      // If no permissions found on current page, fetch from the current mod's description tab
+      const currentUrl = window.location.href;
+      const descriptionUrl = currentUrl.split("?")[0] + "?tab=description";
+      closedPermissions = await fetchPermissionsFromModPage(descriptionUrl);
     } else {
       // Get permissions from current page
       permissionsList.forEach((permission) => {
@@ -1244,10 +1244,10 @@
     );
     existingWarningTags.forEach((tag) => tag.remove());
 
-    // Check if any author has warnings and add the BAD_AUTHOR tag if needed
+    // Check if any author has warnings and add the AUTHOR_SUCKS tag if needed
     if (hasAuthorWarnings()) {
       const badAuthorWarning = {
-        type: "BAD_AUTHOR",
+        type: "AUTHOR_SUCKS",
         reason: "This mod is from an author with warning labels",
         color: "#ff4400",
       };
