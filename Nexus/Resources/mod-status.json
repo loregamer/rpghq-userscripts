@@ -41,7 +41,14 @@
         "42428",
         "59757",
         "37002",
-        "60431"
+        "60431",
+        "66115",
+        "62531",
+        "63425",
+        "59444",
+        "58473",
+        "39157",
+        "65094"
       ],
       "INFO": ["38844", "76009", "81185", "81332", "81010", "61173"]
     }
@@ -131,7 +138,6 @@
           "pattern": "ENB",
           "reason": "ENBs are extremely buggy in New Vegas and will cause loads of issues"
         },
-
         {
           "pattern": "Project Nevada",
           "reason": "Project Nevada is horrible. Avoid avoid avoid. Check Viva New Vegas for recommended alternatives.",
@@ -141,6 +147,10 @@
           "pattern": "Unlimited Companions",
           "reason": "Unlimited Companions re-compiles every script in the game and will break many mods. Use JIP Companions Command and Control if you want unlimited companions at the same time or other companion-related features like equipment managing, infinite ammo, combat-ready companions and much more.",
           "alternative": "https://www.nexusmods.com/newvegas/mods/50468"
+        },
+        {
+          "pattern": "Monster Mod",
+          "reason": "Monster Mod has broken meshes that cause crashing and broken levelled lists."
         }
       ],
       "INFO": [
