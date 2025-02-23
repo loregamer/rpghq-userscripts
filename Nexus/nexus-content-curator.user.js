@@ -990,13 +990,19 @@
 
     const reportButton = document.createElement("a");
     reportButton.className = "btn inline-flex";
-    reportButton.style.cssText = "padding: 5px 10px; font-size: 12px;"; // Make button smaller
-    reportButton.innerHTML = `
-      <svg class="icon icon-flag" title="" style="width: 14px; height: 14px;">
-        <use xlink:href="https://www.nexusmods.com/assets/images/icons/icons.svg#icon-flag"></use>
-      </svg>
-      <span class="flex-label">Report to HQ</span>
-    `;
+    reportButton.style.cssText = "font-size: 12px;"; // Keep small font but remove custom padding
+
+    // Create custom icon image
+    const iconImg = document.createElement("img");
+    iconImg.src = "https://f.rpghq.org/6RPr3xG4432g.png";
+    iconImg.style.cssText = "width: 14px; height: 14px; display: block;"; // Remove margin and add display:block to match SVG behavior
+
+    const label = document.createElement("span");
+    label.className = "flex-label";
+    label.textContent = "Report to HQ";
+
+    reportButton.appendChild(iconImg);
+    reportButton.appendChild(label);
     reportButton.addEventListener("click", showReportForm);
 
     reportLi.appendChild(reportButton);
