@@ -1354,10 +1354,58 @@
 
   // Function to check if any author has warning labels
   function hasAuthorWarnings() {
-    const authorStatusContainers = document.querySelectorAll(
-      ".author-status-container"
+    // Get the mod author links from the file information section
+    const authorLinks = document.querySelectorAll(
+      '#fileinfo .sideitem a[href*="/users/"]'
     );
-    return authorStatusContainers.length > 0;
+    let hasWarnings = false;
+
+    // Find the "Created by" heading and its parent div
+    const createdByHeading = Array.from(
+      document.querySelectorAll("#fileinfo .sideitem h3")
+    ).find((h3) => h3.textContent.trim() === "Created by");
+
+    if (createdByHeading) {
+      // Get the text content of the "Created by" div
+      const createdByDiv = createdByHeading.parentElement;
+      if (createdByDiv) {
+        const authors = createdByDiv.textContent
+          .replace("Created by", "")
+          .trim()
+          .split(" and ")
+          .map((author) => author.trim());
+
+        // Check if any of these authors have warning containers
+        authors.forEach((author) => {
+          const authorElements = document.querySelectorAll(
+            `a[href*="/users/"]:not(.comments-link)`
+          );
+          authorElements.forEach((element) => {
+            if (
+              element.textContent.trim() === author &&
+              element.nextElementSibling?.classList.contains(
+                "author-status-container"
+              )
+            ) {
+              hasWarnings = true;
+            }
+          });
+        });
+      }
+    }
+
+    // Also check the "Uploaded by" author
+    authorLinks.forEach((authorLink) => {
+      if (
+        authorLink.nextElementSibling?.classList.contains(
+          "author-status-container"
+        )
+      ) {
+        hasWarnings = true;
+      }
+    });
+
+    return hasWarnings;
   }
 
   // Add warning tags to the page
