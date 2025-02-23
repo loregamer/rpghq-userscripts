@@ -602,25 +602,12 @@
       });
     }
 
-    // Check if we need to fetch fresh data
-    if (!isCacheValid()) {
-      fetchAndStoreJSON(
-        AUTHOR_STATUS_URL,
-        STORAGE_KEYS.AUTHOR_STATUS,
-        processAuthorStatus
-      );
-    } else {
-      const cachedData = getStoredData(STORAGE_KEYS.AUTHOR_STATUS);
-      if (cachedData) {
-        processAuthorStatus(cachedData);
-      } else {
-        fetchAndStoreJSON(
-          AUTHOR_STATUS_URL,
-          STORAGE_KEYS.AUTHOR_STATUS,
-          processAuthorStatus
-        );
-      }
-    }
+    // Always fetch fresh data first
+    fetchAndStoreJSON(
+      AUTHOR_STATUS_URL,
+      STORAGE_KEYS.AUTHOR_STATUS,
+      processAuthorStatus
+    );
   }
 
   // Enhanced status types and icons
@@ -999,71 +986,71 @@
       modId
     );
 
-    GM_xmlhttpRequest({
-      method: "GET",
-      url: MOD_STATUS_URL,
-      onload: function (response) {
-        try {
-          const modStatusData = JSON.parse(response.responseText);
-          console.log("[Debug] Received mod status data:", modStatusData);
+    function processModTileStatus(modStatusData) {
+      if (!modStatusData) {
+        console.log("[Debug] No mod status data available");
+        return;
+      }
 
-          // First check explicit mod statuses
-          const gameStatuses = modStatusData["Mod Statuses"]?.[gameName];
-          let foundStatus = null;
+      console.log("[Debug] Received mod status data:", modStatusData);
 
-          if (gameStatuses) {
-            for (const [statusType, modList] of Object.entries(gameStatuses)) {
-              if (modList.includes(modId)) {
-                foundStatus = statusType;
-                break;
-              }
-            }
+      // First check explicit mod statuses
+      const gameStatuses = modStatusData["Mod Statuses"]?.[gameName];
+      let foundStatus = null;
+
+      if (gameStatuses) {
+        for (const [statusType, modList] of Object.entries(gameStatuses)) {
+          if (modList.includes(modId)) {
+            foundStatus = statusType;
+            break;
           }
-
-          if (foundStatus) {
-            // Create base status object
-            const indicatorStatus = {
-              type: foundStatus,
-              reason: `This mod is marked as ${foundStatus.toLowerCase()}`,
-              color: STATUS_TYPES[foundStatus]?.color || "#ff0000",
-            };
-
-            // Check if we have additional descriptor info
-            const modDescriptor =
-              modStatusData["Mod Descriptors"]?.[gameName]?.[modId];
-            if (modDescriptor) {
-              if (modDescriptor.reason)
-                indicatorStatus.reason = modDescriptor.reason;
-              if (modDescriptor.alternative)
-                indicatorStatus.alternative = modDescriptor.alternative;
-              if (modDescriptor.url) indicatorStatus.url = modDescriptor.url;
-              if (modDescriptor.icon) indicatorStatus.icon = modDescriptor.icon;
-            }
-
-            console.log("[Debug] Created indicator status:", indicatorStatus);
-            addWarningBannerToTile(modTile, indicatorStatus);
-          } else {
-            // Check keyword rules if no explicit status was found
-            const keywordStatus = checkKeywordRules(
-              modStatusData,
-              gameName,
-              combinedTitle
-            );
-            if (keywordStatus) {
-              console.log("[Debug] Found keyword match:", keywordStatus);
-              addWarningBannerToTile(modTile, keywordStatus);
-            } else {
-              console.log("[Debug] No status found for mod tile");
-            }
-          }
-        } catch (error) {
-          console.error("[Debug] Error processing mod tile status:", error);
         }
-      },
-      onerror: function (error) {
-        console.error("[Debug] Error fetching mod tile status:", error);
-      },
-    });
+      }
+
+      if (foundStatus) {
+        // Create base status object
+        const indicatorStatus = {
+          type: foundStatus,
+          reason: `This mod is marked as ${foundStatus.toLowerCase()}`,
+          color: STATUS_TYPES[foundStatus]?.color || "#ff0000",
+        };
+
+        // Check if we have additional descriptor info
+        const modDescriptor =
+          modStatusData["Mod Descriptors"]?.[gameName]?.[modId];
+        if (modDescriptor) {
+          if (modDescriptor.reason)
+            indicatorStatus.reason = modDescriptor.reason;
+          if (modDescriptor.alternative)
+            indicatorStatus.alternative = modDescriptor.alternative;
+          if (modDescriptor.url) indicatorStatus.url = modDescriptor.url;
+          if (modDescriptor.icon) indicatorStatus.icon = modDescriptor.icon;
+        }
+
+        console.log("[Debug] Created indicator status:", indicatorStatus);
+        addWarningBannerToTile(modTile, indicatorStatus);
+      } else {
+        // Check keyword rules if no explicit status was found
+        const keywordStatus = checkKeywordRules(
+          modStatusData,
+          gameName,
+          combinedTitle
+        );
+        if (keywordStatus) {
+          console.log("[Debug] Found keyword match:", keywordStatus);
+          addWarningBannerToTile(modTile, keywordStatus);
+        } else {
+          console.log("[Debug] No status found for mod tile");
+        }
+      }
+    }
+
+    // Always fetch fresh data first
+    fetchAndStoreJSON(
+      MOD_STATUS_URL,
+      STORAGE_KEYS.MOD_STATUS,
+      processModTileStatus
+    );
   }
 
   // Function to clean permission title
@@ -1604,25 +1591,12 @@
       addAllWarnings(warnings);
     }
 
-    // Check if we need to fetch fresh data
-    if (!isCacheValid()) {
-      fetchAndStoreJSON(
-        MOD_STATUS_URL,
-        STORAGE_KEYS.MOD_STATUS,
-        processModStatus
-      );
-    } else {
-      const cachedData = getStoredData(STORAGE_KEYS.MOD_STATUS);
-      if (cachedData) {
-        processModStatus(cachedData);
-      } else {
-        fetchAndStoreJSON(
-          MOD_STATUS_URL,
-          STORAGE_KEYS.MOD_STATUS,
-          processModStatus
-        );
-      }
-    }
+    // Always fetch fresh data first
+    fetchAndStoreJSON(
+      MOD_STATUS_URL,
+      STORAGE_KEYS.MOD_STATUS,
+      processModStatus
+    );
   }
 
   // Run when the page loads
