@@ -602,6 +602,11 @@
       color: "#00aa00",
       class: "success",
     },
+    CUSTOM_PERMISSIONS: {
+      icons: ["⚖️"],
+      color: "#888888",
+      class: "info",
+    },
     AUTHOR_SUCKS: {
       icons: ["👿"],
       color: "#ff4400",
@@ -1052,6 +1057,7 @@
           );
           const closedPermissions = [];
           let openPermissions = [];
+          let customPermissions = [];
 
           permissionsList.forEach((permission) => {
             const titleElement = permission.querySelector(".permissions-title");
@@ -1060,17 +1066,23 @@
               if (shouldIncludePermission(title)) {
                 if (permission.classList.contains("permission-yes")) {
                   openPermissions.push(cleanPermissionTitle(title));
-                } else {
+                } else if (permission.classList.contains("permission-no")) {
                   closedPermissions.push(cleanPermissionTitle(title));
+                } else {
+                  customPermissions.push(cleanPermissionTitle(title));
                 }
               }
             }
           });
 
-          resolve({ closedPermissions, openPermissions });
+          resolve({ closedPermissions, openPermissions, customPermissions });
         },
         onerror: function () {
-          resolve({ closedPermissions: [], openPermissions: [] });
+          resolve({
+            closedPermissions: [],
+            openPermissions: [],
+            customPermissions: [],
+          });
         },
       });
     });
@@ -1097,6 +1109,7 @@
     );
     let closedPermissions = [];
     let openPermissions = [];
+    let customPermissions = [];
 
     if (permissionsList.length === 0) {
       // If no permissions found on current page, fetch from the current mod's description tab
@@ -1105,9 +1118,11 @@
       const {
         closedPermissions: fetchedClosedPermissions,
         openPermissions: fetchedOpenPermissions,
+        customPermissions: fetchedCustomPermissions,
       } = await fetchPermissionsFromModPage(descriptionUrl);
       closedPermissions = fetchedClosedPermissions;
       openPermissions = fetchedOpenPermissions;
+      customPermissions = fetchedCustomPermissions;
     } else {
       // Get permissions from current page
       permissionsList.forEach((permission) => {
@@ -1117,8 +1132,10 @@
           if (shouldIncludePermission(title)) {
             if (permission.classList.contains("permission-yes")) {
               openPermissions.push(cleanPermissionTitle(title));
-            } else {
+            } else if (permission.classList.contains("permission-no")) {
               closedPermissions.push(cleanPermissionTitle(title));
+            } else {
+              customPermissions.push(cleanPermissionTitle(title));
             }
           }
         }
@@ -1139,7 +1156,18 @@
         lockSpan.className = "permissions-lock";
         lockSpan.style.marginLeft = "5px";
         lockSpan.style.cursor = "help";
-        lockSpan.textContent = closedPermissions.length > 0 ? "🔒" : "🔓";
+
+        // Choose icon based on permissions status
+        if (closedPermissions.length > 0) {
+          lockSpan.textContent = "🔒";
+        } else if (
+          openPermissions.length > 0 &&
+          customPermissions.length === 0
+        ) {
+          lockSpan.textContent = "🔓";
+        } else {
+          lockSpan.textContent = "⚖️";
+        }
 
         // Add tooltip handlers
         const showTooltip = (e) => {
@@ -1148,8 +1176,16 @@
             tooltipText = `This mod has closed or restricted permissions <span style="font-size: 0.85em;">(${closedPermissions.join(
               ", "
             )})</span>`;
-          } else {
+          } else if (
+            openPermissions.length > 0 &&
+            customPermissions.length === 0
+          ) {
             tooltipText = `This mod has open permissions <span style="font-size: 0.85em;">(${openPermissions.join(
+              ", "
+            )})</span>`;
+          } else {
+            const allPermissions = [...openPermissions, ...customPermissions];
+            tooltipText = `This mod has custom permissions <span style="font-size: 0.85em;">(${allPermissions.join(
               ", "
             )})</span>`;
           }
@@ -1182,14 +1218,24 @@
         color: STATUS_TYPES.CLOSED_PERMISSIONS.color,
         skipBanner: noFeatureElement ? true : false,
       };
-    } else if (openPermissions.length > 0) {
+    } else if (openPermissions.length > 0 && customPermissions.length === 0) {
       return {
         type: "OPEN_PERMISSIONS",
         reason: `This mod has open permissions <span style="font-style: italic; font-size: 0.85em;">(${openPermissions.join(
           ", "
         )})</span>`,
         color: STATUS_TYPES.OPEN_PERMISSIONS.color,
-        skipBanner: true, // Don't show banner for open permissions
+        skipBanner: true,
+      };
+    } else if (permissionsList.length > 0) {
+      const allPermissions = [...openPermissions, ...customPermissions];
+      return {
+        type: "CUSTOM_PERMISSIONS",
+        reason: `This mod has custom permissions <span style="font-style: italic; font-size: 0.85em;">(${allPermissions.join(
+          ", "
+        )})</span>`,
+        color: STATUS_TYPES.CUSTOM_PERMISSIONS.color,
+        skipBanner: true,
       };
     }
     return null;
@@ -1221,6 +1267,10 @@
       case "OPEN_PERMISSIONS":
         bgColor =
           "linear-gradient(45deg, rgba(0, 170, 0, 0.8), rgba(0, 170, 0, 0.9))";
+        break;
+      case "CUSTOM_PERMISSIONS":
+        bgColor =
+          "linear-gradient(45deg, rgba(136, 136, 136, 0.8), rgba(136, 136, 136, 0.9))";
         break;
       default:
         bgColor =
