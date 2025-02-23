@@ -24,7 +24,23 @@
         "35794",
         "38527",
         "59528",
-        "40040"
+        "40040",
+        "35369",
+        "37473",
+        "47409",
+        "38056",
+        "55031",
+        "74093",
+        "72904",
+        "78408",
+        "38623",
+        "58762",
+        "57927",
+        "39651",
+        "35979",
+        "42428",
+        "59757",
+        "37002"
       ],
       "INFO": ["38844", "76009", "81185", "81332", "81010", "61173"]
     }
@@ -88,6 +104,22 @@
       "61173": {
         "reason": "Still not remastered enough. This one sucks. Use the re-remastered version instead.",
         "alternative": "https://www.nexusmods.com/newvegas/mods/74218"
+      },
+      "35369": {
+        "reason": "Poorly made mod with many dirty edits, ITMs, and UDRs. It will also severely reduce performance due to the amount of new NPCs.",
+        "alternative": "https://www.nexusmods.com/newvegas/mods/71037"
+      },
+      "35979": {
+        "reason": "Made in 2010 without the use of any script extenders, so many of the perks are broken or have poor implementation. Use More Perks Reimagined instead.",
+        "alternative": "https://www.nexusmods.com/newvegas/mods/76584"
+      },
+      "42428": {
+        "reason": "Made in 2010 without the use of any script extenders, so many of the perks are broken or have poor implementation. Use More Perks Reimagined instead.",
+        "alternative": "https://www.nexusmods.com/newvegas/mods/76584"
+      },
+      "37002": {
+        "reason": "Countless broken meshes and leveled lists that will cause crashes. Use Classic Fallout Weapons Remastered instead.",
+        "alternative": "https://www.nexusmods.com/newvegas/mods/73805"
       }
     }
   },
