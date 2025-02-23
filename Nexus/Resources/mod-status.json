@@ -4,13 +4,17 @@
       "BROKEN": ["899"],
       "LAME": ["2754"],
       "ABANDONED": [],
-      "INFO": []
+      "INFO": ["141"]
     }
   },
   "Mod Descriptors": {
     "baldursgate3": {
       "899": {
         "reason": "This mod will break your game. It's a buggy mess. Avoid like the plague",
+        "alternative": null
+      },
+      "141": {
+        "reason": "This mod is no longer necessary if you are on Patch 7 or later.",
         "alternative": null
       },
       "2754": {

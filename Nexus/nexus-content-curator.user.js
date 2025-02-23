@@ -1015,6 +1015,9 @@
       return null;
     }
 
+    // Check if the mod has id="nofeature"
+    const noFeatureElement = document.getElementById("nofeature");
+
     // First try to get permissions from current page
     const permissionsList = document.querySelectorAll(
       ".permissions .permission-no, .permissions .permission-maybe"
@@ -1087,8 +1090,9 @@
         type: "CLOSED_PERMISSIONS",
         reason: `This mod has closed or restricted permissions <span style="font-style: italic; font-size: 0.85em;">(${closedPermissions.join(
           ", "
-        )})</span>.<br><br>Please bully and harass this mod author into being <a href="https://www.youtube.com/watch?v=edea7yMqOY8" target="_blank" style="color: inherit; text-decoration: underline;">Cathedral</a>, and perhaps reupload on ModHQ if you are feeling cheeky.`,
+        )})</span>.<br>Please consider bullying and harassing this mod author into being <a href="https://www.youtube.com/watch?v=edea7yMqOY8" target="_blank" style="color: inherit; text-decoration: underline;">Cathedral</a>, and perhaps reupload on ModHQ if you are feeling spiteful.`,
         color: STATUS_TYPES.CLOSED_PERMISSIONS.color,
+        skipBanner: noFeatureElement ? true : false,
       };
     }
     return null;
@@ -1207,7 +1211,7 @@
 
     // Add all warnings in order (BROKEN first, then CLOSED_PERMISSIONS, then others)
     warnings
-      .filter((warning) => warning && warning.type) // Ensure warning and warning.type exist
+      .filter((warning) => warning && warning.type && !warning.skipBanner) // Don't show banner if skipBanner is true
       .sort((a, b) => {
         if (a.type === "BROKEN") return -1;
         if (b.type === "BROKEN") return 1;
@@ -1219,7 +1223,7 @@
         addWarningBanner(warning);
       });
 
-    // Add warning tags
+    // Add warning tags for all warnings, including those with skipBanner
     addWarningTags(warnings.filter((warning) => warning && warning.type));
   }
 
