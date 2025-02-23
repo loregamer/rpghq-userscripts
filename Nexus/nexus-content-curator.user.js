@@ -21,6 +21,10 @@
   const AUTHOR_STATUS_URL =
     "https://raw.githubusercontent.com/loregamer/rpghq-userscripts/refs/heads/main/Nexus/Resources/author-status.json";
 
+  // Flag to track if we've checked the current mod
+  let hasCheckedCurrentMod = false;
+  let lastUrl = window.location.href;
+
   // Storage keys
   const STORAGE_KEYS = {
     MOD_STATUS: "nexus_mod_status_data",
@@ -813,12 +817,23 @@
         clearTimeout(checkTimeout);
       }
 
+      // Check if URL has changed
+      if (window.location.href !== lastUrl) {
+        lastUrl = window.location.href;
+        hasCheckedCurrentMod = false;
+      }
+
       // Set a new timeout to run checks after mutations have settled
       checkTimeout = setTimeout(() => {
-        // Check if we're on a mod page
+        // Check if we're on a mod page and haven't checked it yet
         const pageTitle = document.querySelector("#pagetitle");
-        if (pageTitle && !document.querySelector(".mod-warning-banner")) {
+        if (
+          pageTitle &&
+          !hasCheckedCurrentMod &&
+          !document.querySelector(".mod-warning-banner")
+        ) {
           checkModStatus();
+          hasCheckedCurrentMod = true;
         }
 
         // Check mod tiles - both on mod pages and search results
@@ -1324,6 +1339,7 @@
 
   // Run when the page loads
   checkModStatus();
+  hasCheckedCurrentMod = true;
   checkAuthorStatus();
   setupDOMObserver();
 })();
