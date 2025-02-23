@@ -130,6 +130,67 @@
       box-shadow: inset 0 0 20px rgba(0, 136, 255, 0.1);
     }
 
+    /* Apply gradient styles to both #featured and #nofeature */
+    #featured, #nofeature {
+      position: relative;
+      overflow: hidden; /* Contain the gradient effect */
+    }
+
+    /* Container for warning banners */
+    .mod-warning-banners {
+      position: absolute;
+      z-index: 10;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+
+    /* Individual warning text containers */
+    .warning-text-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 4px;
+      margin-bottom: 5px;
+      pointer-events: auto;
+    }
+
+    .mod-warning-banner {
+      position: relative;
+      width: 100%;
+      margin: 0;
+      padding: 10px;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      z-index: 5;
+    }
+
+    /* Gradient overlays for both #featured and #nofeature */
+    #featured.has-severe-warning, #nofeature.has-severe-warning {
+      background: linear-gradient(45deg, rgba(255, 0, 0, 0.05), rgba(255, 0, 0, 0.1));
+      border: 2px solid rgba(255, 0, 0, 0.3);
+      box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.1);
+    }
+
+    #featured.has-warning, #nofeature.has-warning {
+      background: linear-gradient(45deg, rgba(255, 165, 0, 0.05), rgba(255, 165, 0, 0.1));
+      border: 2px solid rgba(255, 165, 0, 0.3);
+      box-shadow: inset 0 0 20px rgba(255, 165, 0, 0.1);
+    }
+
+    #featured.has-info, #nofeature.has-info {
+      background: linear-gradient(45deg, rgba(0, 136, 255, 0.05), rgba(0, 136, 255, 0.1));
+      border: 2px solid rgba(0, 136, 255, 0.3);
+      box-shadow: inset 0 0 20px rgba(0, 136, 255, 0.1);
+    }
+
     .warning-icon-container {
       display: flex;
       gap: 5px;
@@ -185,66 +246,6 @@
     @keyframes bounce {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-3px); }
-    }
-
-    #featured {
-      position: relative;
-      overflow: hidden; /* Contain the gradient effect */
-    }
-
-    /* Container for warning banners */
-    .mod-warning-banners {
-      position: absolute;
-      z-index: 10;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-    }
-
-    /* Individual warning text containers */
-    .warning-text-container {
-      position: relative;
-      z-index: 10;
-      width: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      border-radius: 4px;
-      margin-bottom: 5px;
-      pointer-events: auto;
-    }
-
-    .mod-warning-banner {
-      position: relative;
-      width: 100%;
-      margin: 0;
-      padding: 10px;
-      border-radius: 0;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      z-index: 5;
-    }
-
-    /* Gradient overlays */
-    #featured.has-severe-warning {
-      background: linear-gradient(45deg, rgba(255, 0, 0, 0.05), rgba(255, 0, 0, 0.1));
-      border: 2px solid rgba(255, 0, 0, 0.3);
-      box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.1);
-    }
-
-    #featured.has-warning {
-      background: linear-gradient(45deg, rgba(255, 165, 0, 0.05), rgba(255, 165, 0, 0.1));
-      border: 2px solid rgba(255, 165, 0, 0.3);
-      box-shadow: inset 0 0 20px rgba(255, 165, 0, 0.1);
-    }
-
-    #featured.has-info {
-      background: linear-gradient(45deg, rgba(0, 136, 255, 0.05), rgba(0, 136, 255, 0.1));
-      border: 2px solid rgba(0, 136, 255, 0.3);
-      box-shadow: inset 0 0 20px rgba(0, 136, 255, 0.1);
     }
 
     .mod-tile {
@@ -1532,9 +1533,24 @@
 
     const nofeature = document.querySelector("#nofeature");
 
-    // If nofeature exists, add icons to title instead of banners
+    // Add warning icons to title in both cases
+    addWarningIconsToTitle(warnings);
+
+    // Apply gradient effect based on most severe warning
+    let gradientClass = "";
+    if (warnings.some((w) => w.type === "BROKEN")) {
+      gradientClass = "has-severe-warning";
+    } else if (
+      warnings.some((w) => w.type === "CLOSED_PERMISSIONS" || w.type === "LAME")
+    ) {
+      gradientClass = "has-warning";
+    } else if (warnings.some((w) => w.type === "INFO")) {
+      gradientClass = "has-info";
+    }
+
+    // Apply gradient to either nofeature or featured element
     if (nofeature) {
-      addWarningIconsToTitle(warnings);
+      nofeature.className = gradientClass;
     } else {
       // Clear any existing warning banners
       const existingBanners = document.querySelector(".mod-warning-banners");
@@ -1542,7 +1558,7 @@
         existingBanners.remove();
       }
 
-      // Add all warnings in order (BROKEN first, then CLOSED_PERMISSIONS, then others)
+      // Add banners in order (BROKEN first, then CLOSED_PERMISSIONS, then others)
       warnings
         .filter((warning) => warning && warning.type && !warning.skipBanner)
         .sort((a, b) => {
@@ -1555,6 +1571,12 @@
         .forEach((warning) => {
           addWarningBanner(warning);
         });
+
+      // Apply gradient to featured element
+      const featured = document.querySelector("#featured");
+      if (featured) {
+        featured.className = gradientClass;
+      }
     }
 
     // Add warning tags for all warnings, including those with skipBanner
