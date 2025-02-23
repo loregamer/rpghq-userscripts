@@ -9,6 +9,7 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @connect      raw.githubusercontent.com
+// @connect      rpghq.org
 // ==/UserScript==
 
 (function () {
@@ -1951,11 +1952,36 @@
       };
     }
 
+    const jsonString = JSON.stringify(jsonData, null, 2);
+
     // Copy to clipboard
     navigator.clipboard
-      .writeText(JSON.stringify(jsonData, null, 2))
+      .writeText(jsonString)
       .then(() => {
-        alert("Copied to clipboard!");
+        // Open the forum thread in a new tab
+        const forumWindow = window.open(
+          "https://rpghq.org/forums/posting.php?mode=reply&t=2647",
+          "_blank"
+        );
+
+        // Wait for the forum page to load and then paste the content
+        if (forumWindow) {
+          forumWindow.onload = function () {
+            const messageBox = forumWindow.document.querySelector("#message");
+            if (messageBox) {
+              messageBox.value = jsonString;
+              alert("Copied to clipboard and pasted to forum!");
+            } else {
+              alert(
+                "Copied to clipboard but couldn't paste to forum - please paste manually"
+              );
+            }
+          };
+        } else {
+          alert(
+            "Copied to clipboard but popup was blocked - please enable popups and try again"
+          );
+        }
       })
       .catch((err) => {
         console.error("Failed to copy:", err);
