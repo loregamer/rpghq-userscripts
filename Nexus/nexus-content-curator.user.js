@@ -120,12 +120,15 @@
 
     /* Container for warning banners */
     .mod-warning-banners {
-      position: relative;
+      position: absolute;
       z-index: 10;
       width: 100%;
       display: flex;
       flex-direction: column;
       gap: 0;
+      top: 0;
+      left: 0;
+      pointer-events: none;
     }
 
     /* Individual warning text containers */
@@ -143,7 +146,7 @@
       position: relative;
       width: 100%;
       margin: 0;
-      padding: 15px;
+      padding: 10px;
       border-radius: 0;
       display: flex;
       align-items: center;
@@ -892,6 +895,66 @@
     return null;
   }
 
+  // Create warning tag element
+  function createWarningTag(status) {
+    const tagLi = document.createElement("li");
+
+    const tagBtn = document.createElement("a");
+    tagBtn.className = "btn inline-flex";
+    tagBtn.style.cssText = `
+      background-color: ${status.color || "#ff0000"};
+      opacity: 0.8;
+      pointer-events: none;
+      color: white;
+    `;
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "icon icon-tag");
+    svg.setAttribute("title", "");
+
+    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttributeNS(
+      "http://www.w3.org/1999/xlink",
+      "xlink:href",
+      "https://www.nexusmods.com/assets/images/icons/icons.svg#icon-tag"
+    );
+    svg.appendChild(use);
+
+    const label = document.createElement("span");
+    label.className = "flex-label";
+    label.textContent = status.type.replace(/_/g, " ");
+
+    tagBtn.appendChild(svg);
+    tagBtn.appendChild(label);
+    tagLi.appendChild(tagBtn);
+
+    return tagLi;
+  }
+
+  // Add warning tags to the page
+  function addWarningTags(warnings) {
+    const tagsContainer = document.querySelector(
+      ".sideitem.clearfix .tags span:first-child"
+    );
+    if (!tagsContainer) {
+      console.warn("[Debug] Tags container not found");
+      return;
+    }
+
+    // Remove any existing warning tags
+    const existingWarningTags = tagsContainer.querySelectorAll(
+      "li[data-warning-tag]"
+    );
+    existingWarningTags.forEach((tag) => tag.remove());
+
+    // Add new warning tags at the start of the tags list
+    warnings.forEach((warning) => {
+      const warningTag = createWarningTag(warning);
+      warningTag.setAttribute("data-warning-tag", warning.type);
+      tagsContainer.insertBefore(warningTag, tagsContainer.firstChild);
+    });
+  }
+
   // Function to add all warnings at once
   function addAllWarnings(warnings) {
     if (warnings.length === 0) return;
@@ -914,6 +977,9 @@
       .forEach((warning) => {
         addWarningBanner(warning);
       });
+
+    // Add warning tags
+    addWarningTags(warnings);
   }
 
   // Main function to check mod status and update UI
