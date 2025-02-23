@@ -446,7 +446,6 @@
     MALICIOUS: "⛔",
     WARNING: "⚡",
     INFO: "ℹ️",
-    ABANDONED: "🚫",
   };
 
   // Add status indicator to author name
@@ -622,11 +621,6 @@
       icons: ["👎"],
       color: "#ffa500",
       class: "warning",
-    },
-    ABANDONED: {
-      icons: ["🪦"],
-      color: "#808080",
-      class: "severe",
     },
     CLOSED_PERMISSIONS: {
       icons: ["🔒"],
@@ -1305,10 +1299,6 @@
         bgColor =
           "linear-gradient(45deg, rgba(255, 165, 0, 0.8), rgba(255, 165, 0, 0.9))";
         break;
-      case "ABANDONED":
-        bgColor =
-          "linear-gradient(45deg, rgba(128, 128, 128, 0.8), rgba(128, 128, 128, 0.9))";
-        break;
       case "OPEN_PERMISSIONS":
         bgColor =
           "linear-gradient(45deg, rgba(0, 170, 0, 0.8), rgba(0, 170, 0, 0.9))";
@@ -1487,9 +1477,6 @@
           break;
         case "CUSTOM_PERMISSIONS":
           icon = "⚖️";
-          break;
-        case "ABANDONED":
-          icon = "🪦";
           break;
         case "LAME":
           icon = "👎";
