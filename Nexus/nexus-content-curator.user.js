@@ -593,6 +593,11 @@
       color: "#ff4400",
       class: "warning",
     },
+    BAD_AUTHOR: {
+      icons: ["👿"],
+      color: "#ff4400",
+      class: "warning",
+    },
   };
 
   // Create warning banner
@@ -1148,6 +1153,14 @@
     return tagLi;
   }
 
+  // Function to check if any author has warning labels
+  function hasAuthorWarnings() {
+    const authorStatusContainers = document.querySelectorAll(
+      ".author-status-container"
+    );
+    return authorStatusContainers.length > 0;
+  }
+
   // Add warning tags to the page
   function addWarningTags(warnings) {
     const tagsContainer = document.querySelector(
@@ -1163,6 +1176,16 @@
       "li[data-warning-tag]"
     );
     existingWarningTags.forEach((tag) => tag.remove());
+
+    // Check if any author has warnings and add the BAD_AUTHOR tag if needed
+    if (hasAuthorWarnings()) {
+      const badAuthorWarning = {
+        type: "BAD_AUTHOR",
+        reason: "This mod is from an author with warning labels",
+        color: "#ff4400",
+      };
+      warnings.unshift(badAuthorWarning); // Add to beginning of warnings array
+    }
 
     // Add new warning tags at the start of the tags list
     warnings.forEach((warning) => {
