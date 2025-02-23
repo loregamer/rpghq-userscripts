@@ -1925,6 +1925,16 @@
     document.querySelector(".mod-report-form").classList.remove("active");
   }
 
+  // Function to strip emojis from text
+  function stripEmojis(text) {
+    return text
+      .replace(
+        /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}⚖️⛔️⚡️ℹ️👎🔒🔓👿]/gu,
+        ""
+      )
+      .trim();
+  }
+
   // Function to copy form data to clipboard
   function copyFormToClipboard() {
     const gameShortname = document.querySelector("#gameShortname").value;
@@ -1933,6 +1943,24 @@
     const reason = document.querySelector("#modReason").value;
     const alternative = document.querySelector("#modAlternative").value;
 
+    // Get the mod title from the page and strip emojis
+    const modTitle = stripEmojis(
+      document.querySelector("#pagetitle h1")?.textContent.trim() ||
+        "Unknown Mod"
+    );
+
+    // Create BBCode formatted message
+    const bbCodeMessage = `[b]Mod Report:[/b] [url=https://www.nexusmods.com/${gameShortname}/mods/${modId}]${modTitle}[/url]
+
+[code]
+Game Shortname: "${gameShortname}"
+Mod ID: "${modId}"
+Status: "${status}"${reason ? `\nReason: "${reason}"` : ""}${
+      alternative ? `\nAlternative: "${alternative}"` : ""
+    }
+[/code]`;
+
+    // Also create JSON data for database
     let jsonData = {
       "Mod Statuses": {
         [gameShortname]: {
@@ -1954,10 +1982,13 @@
 
     const jsonString = JSON.stringify(jsonData, null, 2);
 
-    // Copy to clipboard
+    // Copy BBCode to clipboard
     navigator.clipboard
-      .writeText(jsonString)
+      .writeText(bbCodeMessage)
       .then(() => {
+        // Store JSON data in localStorage for later use
+        localStorage.setItem("lastModReportJson", jsonString);
+
         // Open the forum thread in a new tab
         const forumWindow = window.open(
           "https://rpghq.org/forums/posting.php?mode=reply&t=2647",
@@ -1969,7 +2000,7 @@
           forumWindow.onload = function () {
             const messageBox = forumWindow.document.querySelector("#message");
             if (messageBox) {
-              messageBox.value = jsonString;
+              messageBox.value = bbCodeMessage;
               alert("Copied to clipboard and pasted to forum!");
             } else {
               alert(
