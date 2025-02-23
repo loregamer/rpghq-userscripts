@@ -901,11 +901,34 @@
 
     const tagBtn = document.createElement("a");
     tagBtn.className = "btn inline-flex";
+
+    // Use the same background colors as the warning banners
+    let bgColor;
+    switch (status.type) {
+      case "BROKEN":
+        bgColor =
+          "linear-gradient(45deg, rgba(255, 0, 0, 0.8), rgba(255, 0, 0, 0.9))";
+        break;
+      case "CLOSED_PERMISSIONS":
+      case "LAME":
+        bgColor =
+          "linear-gradient(45deg, rgba(255, 165, 0, 0.8), rgba(255, 165, 0, 0.9))";
+        break;
+      case "ABANDONED":
+        bgColor =
+          "linear-gradient(45deg, rgba(128, 128, 128, 0.8), rgba(128, 128, 128, 0.9))";
+        break;
+      default:
+        bgColor =
+          "linear-gradient(45deg, rgba(0, 136, 255, 0.8), rgba(0, 136, 255, 0.9))";
+    }
+
     tagBtn.style.cssText = `
-      background-color: ${status.color || "#ff0000"};
-      opacity: 0.8;
+      background: ${bgColor};
+      border: 1px solid rgba(255, 255, 255, 0.2);
       pointer-events: none;
       color: white;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
     `;
 
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
