@@ -1533,8 +1533,10 @@
 
     const nofeature = document.querySelector("#nofeature");
 
-    // Add warning icons to title in both cases
-    addWarningIconsToTitle(warnings);
+    // Add warning icons to title only if nofeature is present
+    if (nofeature) {
+      addWarningIconsToTitle(warnings);
+    }
 
     // Apply gradient effect based on most severe warning
     let gradientClass = "";
