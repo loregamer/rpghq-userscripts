@@ -4,7 +4,7 @@
 // @version      1.1
 // @description  Adds warning labels to mods marked as broken or not recommended based on a GitHub-hosted database
 // @author       You
-// @match        https://www.nexusmods.com/*/mods/*
+// @match        https://www.nexusmods.com/*
 // @grant        GM_xmlhttpRequest
 // @connect      raw.githubusercontent.com
 // ==/UserScript==
@@ -18,6 +18,11 @@
 
   const AUTHOR_STATUS_URL =
     "https://raw.githubusercontent.com/loregamer/rpghq-userscripts/refs/heads/main/Nexus/Resources/author-status.json";
+
+  // Game ID mapping
+  const GAME_ID_MAP = {
+    3474: "baldursgate3",
+  };
 
   // Enhanced warning styles
   const styles = `
@@ -115,6 +120,59 @@
 
     #featured {
       position: relative;
+    }
+
+    .mod-tile {
+      position: relative;
+    }
+
+    .mod-tile .mod-warning-banner {
+      font-size: 0.9em;
+      padding: 10px;
+      z-index: 10;
+    }
+
+    .mod-tile .warning-icon {
+      font-size: 18px;
+    }
+    .mod-tile .warning-text {
+      font-size: 1em;
+    }
+
+    .mod-tile .warning-button {
+      font-size: 0.9em;
+      padding: 3px 8px;
+    }
+
+    /* Smaller author icons in tiles */
+    .mod-tile .author-status-container {
+      transform: scale(0.8);
+      transform-origin: left center;
+      margin-left: 3px !important;
+    }
+
+    /* Red highlight for broken mods */
+    .mod-tile.has-broken-warning {
+      position: relative;
+      outline: 2px solid #ff0000;
+      outline-offset: -2px;
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+    }
+
+    .mod-tile.has-broken-warning::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 2px solid #ff0000;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .mod-tile.has-broken-warning .mod-image {
+      opacity: 0.9;
     }
   `;
 
@@ -479,7 +537,41 @@
     console.log("[Debug] Banner added to featured element");
   }
 
-  // DOM Observer setup
+  // Add warning banner to mod tile
+  function addWarningBannerToTile(modTile, status) {
+    console.log("[Debug] Adding warning banner to mod tile");
+
+    // Get mod ID and game ID from the tile
+    const modData = modTile.querySelector("[data-mod-id]");
+    if (!modData) {
+      console.warn("[Debug] Could not find mod data in tile");
+      return;
+    }
+
+    const modId = modData.dataset.modId;
+    const gameId =
+      GAME_ID_MAP[modData.dataset.gameId] || modData.dataset.gameId;
+
+    // Check for existing banner
+    const existingBanner = modTile.querySelector(".mod-warning-banner");
+    if (existingBanner) {
+      console.log("[Debug] Removing existing banner");
+      existingBanner.remove();
+    }
+
+    const banner = createWarningBanner(status);
+    banner.classList.add(status.type.toLowerCase());
+
+    // Add banner to tile
+    modTile.querySelector(".mod-image")?.appendChild(banner);
+
+    // Add warning class to tile for highlighting
+    if (status.type === "BROKEN") {
+      modTile.classList.add("has-broken-warning");
+    }
+  }
+
+  // Extend DOM Observer setup
   function setupDOMObserver() {
     let checkTimeout;
     const observer = new MutationObserver((mutations) => {
@@ -490,10 +582,19 @@
 
       // Set a new timeout to run checks after mutations have settled
       checkTimeout = setTimeout(() => {
+        // Check if we're on a mod page
         const pageTitle = document.querySelector("#pagetitle");
         if (pageTitle && !document.querySelector(".mod-warning-banner")) {
           checkModStatus();
         }
+
+        // Check mod tiles - both on mod pages and search results
+        const modTiles = document.querySelectorAll(".mod-tile, .tile");
+        modTiles.forEach((tile) => {
+          if (!tile.querySelector(".mod-warning-banner")) {
+            checkModTileStatus(tile);
+          }
+        });
 
         // Only check author status if we don't have all labels yet
         const authorLinks = document.querySelectorAll("a[href*='/users/']");
@@ -513,6 +614,81 @@
     observer.observe(document.body, {
       childList: true,
       subtree: true,
+    });
+
+    // Initial check for search results
+    if (window.location.href.includes("/search")) {
+      const searchResults = document.querySelectorAll(".mod-tile, .tile");
+      searchResults.forEach((tile) => {
+        checkModTileStatus(tile);
+      });
+    }
+  }
+
+  // Modify checkModTileStatus to handle search page tiles
+  function checkModTileStatus(modTile) {
+    // Get mod ID and game ID from the title link
+    const titleLink = modTile.querySelector(".tile-name a");
+    if (!titleLink) {
+      console.warn("[Debug] Could not find title link in tile");
+      return;
+    }
+
+    // Extract IDs from the URL
+    const match = titleLink.href.match(/nexusmods\.com\/([^\/]+)\/mods\/(\d+)/);
+    if (!match) {
+      console.warn("[Debug] Could not parse game/mod ID from URL");
+      return;
+    }
+
+    const gameId = match[1];
+    const modId = match[2];
+
+    console.log(
+      "[Debug] Checking mod tile status for game:",
+      gameId,
+      "mod:",
+      modId
+    );
+
+    GM_xmlhttpRequest({
+      method: "GET",
+      url: MOD_STATUS_URL,
+      onload: function (response) {
+        try {
+          const modStatus = JSON.parse(response.responseText);
+          console.log("[Debug] Received mod status data:", modStatus);
+
+          if (modStatus[gameId] && modStatus[gameId][modId]) {
+            const status = modStatus[gameId][modId];
+            console.log("[Debug] Found status for mod tile:", status);
+
+            if (status.status === "BROKEN") {
+              console.log(
+                "[Debug] Mod tile is marked as broken, creating indicator"
+              );
+              const indicatorStatus = {
+                type: status.status,
+                reason: status.reason || "This mod is marked as broken",
+                color: STATUS_TYPES[status.status]?.color || "#ff0000",
+                icon: status.icon,
+                url: status.url,
+                alternative: status.alternative,
+              };
+              console.log("[Debug] Created indicator status:", indicatorStatus);
+
+              addWarningBannerToTile(modTile, indicatorStatus);
+            }
+          } else {
+            console.log("[Debug] No status found for mod tile");
+          }
+        } catch (error) {
+          console.error("[Debug] Error processing mod tile status:", error);
+        }
+      },
+      onerror: function (error) {
+        console.error("[Debug] Error fetching mod tile status:", error);
+      },
     });
   }
 
