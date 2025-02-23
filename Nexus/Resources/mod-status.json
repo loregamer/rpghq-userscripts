@@ -4,7 +4,7 @@
       "BROKEN": ["899"],
       "LAME": ["2754"],
       "ABANDONED": [],
-      "INFO": ["141"]
+      "INFO": ["141", "880"]
     },
     "newvegas": {
       "BROKEN": [
@@ -65,6 +65,10 @@
       },
       "2754": {
         "reason": "Stupid mod. Incompatible, headache to setup and maintain, and for TROONS",
+        "alternative": null
+      },
+      "880": {
+        "reason": "Requires patches to work. Very outdated.",
         "alternative": null
       }
     },
