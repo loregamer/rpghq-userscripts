@@ -674,6 +674,11 @@
 
   // Add warning banner to page
   function addWarningBanner(status) {
+    if (!status || !status.type) {
+      console.warn("[Debug] Invalid status object:", status);
+      return;
+    }
+
     console.log("[Debug] Adding warning banner to page");
     const featured = document.querySelector("#featured");
     if (!featured) {
@@ -699,6 +704,11 @@
     }
 
     const banner = createWarningBanner(status);
+    if (!banner) {
+      console.warn("[Debug] Failed to create warning banner");
+      return;
+    }
+
     banner.classList.add(status.type.toLowerCase());
 
     // Create a container for the warning text
@@ -930,26 +940,85 @@
     });
   }
 
+  // Function to fetch permissions from a specific mod page
+  function fetchPermissionsFromModPage(modPageUrl) {
+    return new Promise((resolve) => {
+      GM_xmlhttpRequest({
+        method: "GET",
+        url: modPageUrl,
+        onload: function (response) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(
+            response.responseText,
+            "text/html"
+          );
+          const permissionsList = doc.querySelectorAll(
+            ".permissions .permission-no"
+          );
+          const closedPermissions = [];
+
+          permissionsList.forEach((permission) => {
+            const titleElement = permission.querySelector(".permissions-title");
+            if (titleElement) {
+              const title = titleElement.textContent.trim();
+              if (
+                title === "Upload permission" ||
+                title === "Modification permission" ||
+                title === "Conversion permission"
+              ) {
+                closedPermissions.push(title.replace(" permission", ""));
+              }
+            }
+          });
+
+          resolve(closedPermissions);
+        },
+        onerror: function () {
+          resolve([]);
+        },
+      });
+    });
+  }
+
+  // Function to check if current page is a mod page
+  function isModPage() {
+    return /nexusmods\.com\/[^\/]+\/mods\/\d+/.test(window.location.href);
+  }
+
   // Function to check mod permissions
-  function checkModPermissions() {
+  async function checkModPermissions() {
+    // Only check permissions on mod pages
+    if (!isModPage()) {
+      return null;
+    }
+
+    // First try to get permissions from current page
     const permissionsList = document.querySelectorAll(
       ".permissions .permission-no"
     );
-    const closedPermissions = [];
+    let closedPermissions = [];
 
-    permissionsList.forEach((permission) => {
-      const titleElement = permission.querySelector(".permissions-title");
-      if (titleElement) {
-        const title = titleElement.textContent.trim();
-        if (
-          title === "Upload permission" ||
-          title === "Modification permission" ||
-          title === "Conversion permission"
-        ) {
-          closedPermissions.push(title.replace(" permission", ""));
+    if (permissionsList.length === 0) {
+      // If no permissions found on current page, fetch from the reference mod
+      closedPermissions = await fetchPermissionsFromModPage(
+        "https://www.nexusmods.com/baldursgate3/mods/899?tab=description"
+      );
+    } else {
+      // Get permissions from current page
+      permissionsList.forEach((permission) => {
+        const titleElement = permission.querySelector(".permissions-title");
+        if (titleElement) {
+          const title = titleElement.textContent.trim();
+          if (
+            title === "Upload permission" ||
+            title === "Modification permission" ||
+            title === "Conversion permission"
+          ) {
+            closedPermissions.push(title.replace(" permission", ""));
+          }
         }
-      }
-    });
+      });
+    }
 
     if (closedPermissions.length > 0) {
       // Add lock icon to permissions header
@@ -1091,7 +1160,7 @@
 
   // Function to add all warnings at once
   function addAllWarnings(warnings) {
-    if (warnings.length === 0) return;
+    if (!warnings || warnings.length === 0) return;
 
     // Clear any existing warning banners
     const existingBanners = document.querySelector(".mod-warning-banners");
@@ -1101,6 +1170,7 @@
 
     // Add all warnings in order (BROKEN first, then CLOSED_PERMISSIONS, then others)
     warnings
+      .filter((warning) => warning && warning.type) // Ensure warning and warning.type exist
       .sort((a, b) => {
         if (a.type === "BROKEN") return -1;
         if (b.type === "BROKEN") return 1;
@@ -1113,11 +1183,11 @@
       });
 
     // Add warning tags
-    addWarningTags(warnings);
+    addWarningTags(warnings.filter((warning) => warning && warning.type));
   }
 
   // Main function to check mod status and update UI
-  function checkModStatus() {
+  async function checkModStatus() {
     const { gameId, modId } = getGameAndModId();
     console.log("[Debug] Checking mod status for game:", gameId, "mod:", modId);
 
@@ -1125,7 +1195,7 @@
     const warnings = [];
 
     // Check permissions first
-    const permissionsWarning = checkModPermissions();
+    const permissionsWarning = await checkModPermissions();
     if (permissionsWarning) {
       warnings.push(permissionsWarning);
     }
