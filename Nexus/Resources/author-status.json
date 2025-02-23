@@ -13,7 +13,7 @@
     "Bug Ignorer": {
       "label": "Ignores bugs. Will deny they exist and not fix them",
       "authors": ["Eralyne"],
-      "icon": "https://f.rpghq.org/b1PMDDCK0hrc.png"
+      "icon": "https://rpghq.org/forums/ext/canidev/reactions/images/reaction/cancel.svg"
     }
   },
   "Tooltips": {
