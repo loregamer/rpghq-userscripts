@@ -10,12 +10,10 @@
   "Mod Descriptors": {
     "baldursgate3": {
       "899": {
-        "status": "BROKEN",
         "reason": "This mod will break your game. It's a buggy mess. Avoid like the plague",
         "alternative": null
       },
       "2754": {
-        "status": "LAME",
         "reason": "Stupid mod. Incompatible, headache to setup and maintain, and for TROONS",
         "alternative": null
       }

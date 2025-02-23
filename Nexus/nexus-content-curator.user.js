@@ -19,11 +19,6 @@
   const AUTHOR_STATUS_URL =
     "https://raw.githubusercontent.com/loregamer/rpghq-userscripts/refs/heads/main/Nexus/Resources/author-status.json";
 
-  // Game ID mapping
-  const GAME_ID_MAP = {
-    3474: "baldursgate3",
-  };
-
   // Enhanced warning styles
   const styles = `
     .mod-warning-banner {
@@ -120,6 +115,59 @@
 
     #featured {
       position: relative;
+      overflow: hidden; /* Contain the gradient effect */
+    }
+
+    /* Container for warning banners */
+    .mod-warning-banners {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    /* Individual warning text containers */
+    .warning-text-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 4px;
+      margin-bottom: 5px;
+      pointer-events: auto;
+    }
+
+    .mod-warning-banner {
+      position: relative;
+      width: 100%;
+      margin: 0;
+      padding: 15px;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      z-index: 5;
+    }
+
+    /* Gradient overlays */
+    #featured.has-severe-warning {
+      background: linear-gradient(45deg, rgba(255, 0, 0, 0.05), rgba(255, 0, 0, 0.1));
+      border: 2px solid rgba(255, 0, 0, 0.3);
+      box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.1);
+    }
+
+    #featured.has-warning {
+      background: linear-gradient(45deg, rgba(255, 165, 0, 0.05), rgba(255, 165, 0, 0.1));
+      border: 2px solid rgba(255, 165, 0, 0.3);
+      box-shadow: inset 0 0 20px rgba(255, 165, 0, 0.1);
+    }
+
+    #featured.has-info {
+      background: linear-gradient(45deg, rgba(0, 136, 255, 0.05), rgba(0, 136, 255, 0.1));
+      border: 2px solid rgba(0, 136, 255, 0.3);
+      box-shadow: inset 0 0 20px rgba(0, 136, 255, 0.1);
     }
 
     .mod-tile {
@@ -257,10 +305,14 @@
 
   // Extract game and mod ID from URL
   function getGameAndModId() {
-    const urlParts = window.location.pathname.split("/");
-    const gameId = urlParts[1];
-    const modId = urlParts[3];
-    return { gameId, modId };
+    const match = window.location.href.match(
+      /nexusmods\.com\/([^\/]+)\/mods\/(\d+)/
+    );
+    if (!match) {
+      console.warn("[Debug] Could not parse game/mod ID from URL");
+      return {};
+    }
+    return { gameId: match[1], modId: match[2] };
   }
 
   // Default icons for different status types
@@ -520,10 +572,7 @@
     if (!bannerContainer) {
       bannerContainer = document.createElement("div");
       bannerContainer.className = "mod-warning-banners";
-      bannerContainer.style.display = "flex";
-      bannerContainer.style.flexDirection = "column";
-      bannerContainer.style.gap = "0"; // No gap between banners
-      featured.appendChild(bannerContainer);
+      featured.insertBefore(bannerContainer, featured.firstChild);
     }
 
     // Check for existing banner of the same type
@@ -532,25 +581,41 @@
     );
     if (existingBanner) {
       console.log("[Debug] Removing existing banner of same type");
-      existingBanner.remove();
+      existingBanner.closest(".warning-text-container").remove();
     }
 
     const banner = createWarningBanner(status);
     banner.classList.add(status.type.toLowerCase());
 
-    // If this is a BROKEN status, make all banners severe
-    if (status.type === "BROKEN") {
-      bannerContainer.querySelectorAll(".mod-warning-banner").forEach((b) => {
-        b.className = b.className.replace("warning", "severe");
-      });
-      banner.className = `mod-warning-banner severe ${status.type.toLowerCase()}`;
-    }
+    // Create a container for the warning text
+    const textContainer = document.createElement("div");
+    textContainer.className = "warning-text-container";
+    textContainer.appendChild(banner);
 
-    // Insert banner in correct order (CLOSED_PERMISSIONS first, then others)
-    if (status.type === "CLOSED_PERMISSIONS") {
-      bannerContainer.insertBefore(banner, bannerContainer.firstChild);
+    // If this is a BROKEN status, make all banners severe and update Featured class
+    if (status.type === "BROKEN") {
+      featured.className = "has-severe-warning";
+      bannerContainer.insertBefore(textContainer, bannerContainer.firstChild);
+    }
+    // Insert CLOSED_PERMISSIONS after BROKEN but before others
+    else if (status.type === "CLOSED_PERMISSIONS") {
+      if (!featured.className.includes("has-severe-warning")) {
+        featured.className = "has-warning";
+      }
+      const brokenBanner = bannerContainer.querySelector(
+        ".warning-text-container"
+      );
+      if (brokenBanner) {
+        bannerContainer.insertBefore(textContainer, brokenBanner.nextSibling);
+      } else {
+        bannerContainer.insertBefore(textContainer, bannerContainer.firstChild);
+      }
     } else {
-      bannerContainer.appendChild(banner);
+      if (!featured.className.includes("has-severe-warning")) {
+        featured.className =
+          status.type === "INFO" ? "has-info" : "has-warning";
+      }
+      bannerContainer.appendChild(textContainer);
     }
 
     console.log("[Debug] Banner added to featured element");
@@ -680,12 +745,12 @@
       return;
     }
 
-    const gameId = match[1];
+    const gameName = match[1];
     const modId = match[2];
 
     console.log(
       "[Debug] Checking mod tile status for game:",
-      gameId,
+      gameName,
       "mod:",
       modId
     );
@@ -698,22 +763,16 @@
           const modStatusData = JSON.parse(response.responseText);
           console.log("[Debug] Received mod status data:", modStatusData);
 
-          // Get game name from ID map
-          const gameName = GAME_ID_MAP[gameId];
-          if (!gameName) {
-            console.log("[Debug] Game not found in ID map");
-            return;
-          }
-
-          // Check if mod is in any of the status lists
-          const modStatuses = modStatusData["Mod Statuses"]?.[gameName];
-          if (!modStatuses) {
+          // First check if we have any statuses for this game
+          const gameStatuses = modStatusData["Mod Statuses"]?.[gameName];
+          if (!gameStatuses) {
             console.log("[Debug] No status lists found for game");
             return;
           }
 
+          // Find which status list contains this mod
           let foundStatus = null;
-          for (const [statusType, modList] of Object.entries(modStatuses)) {
+          for (const [statusType, modList] of Object.entries(gameStatuses)) {
             if (modList.includes(modId)) {
               foundStatus = statusType;
               break;
@@ -723,20 +782,24 @@
           if (foundStatus) {
             console.log("[Debug] Found status for mod tile:", foundStatus);
 
-            // Get additional details from Mod Descriptors if available
-            const modDescriptor =
-              modStatusData["Mod Descriptors"]?.[gameName]?.[modId];
-
+            // Create base status object
             const indicatorStatus = {
               type: foundStatus,
-              reason:
-                modDescriptor?.reason ||
-                `This mod is marked as ${foundStatus.toLowerCase()}`,
+              reason: `This mod is marked as ${foundStatus.toLowerCase()}`,
               color: STATUS_TYPES[foundStatus]?.color || "#ff0000",
-              icon: modDescriptor?.icon,
-              url: modDescriptor?.url,
-              alternative: modDescriptor?.alternative,
             };
+
+            // Check if we have additional descriptor info
+            const modDescriptor =
+              modStatusData["Mod Descriptors"]?.[gameName]?.[modId];
+            if (modDescriptor) {
+              if (modDescriptor.reason)
+                indicatorStatus.reason = modDescriptor.reason;
+              if (modDescriptor.alternative)
+                indicatorStatus.alternative = modDescriptor.alternative;
+              if (modDescriptor.url) indicatorStatus.url = modDescriptor.url;
+              if (modDescriptor.icon) indicatorStatus.icon = modDescriptor.icon;
+            }
 
             console.log("[Debug] Created indicator status:", indicatorStatus);
             addWarningBannerToTile(modTile, indicatorStatus);
@@ -823,7 +886,7 @@
         type: "CLOSED_PERMISSIONS",
         reason: `This mod has closed permissions <span style="font-style: italic; font-size: 0.85em;">(${closedPermissions.join(
           ", "
-        )})</span>.<br><br>Please bully and harass this mod author into being <a href="https://www.youtube.com/watch?v=edea7yMqOY8" target="_blank" style="color: inherit; text-decoration: underline;">Cathedral</a>.`,
+        )})</span>.<br>Please bully and harass this mod author into being <a href="https://www.youtube.com/watch?v=edea7yMqOY8" target="_blank" style="color: inherit; text-decoration: underline;">Cathedral</a>.`,
         color: STATUS_TYPES.CLOSED_PERMISSIONS.color,
       };
       addWarningBanner(status);
@@ -846,22 +909,16 @@
           const modStatusData = JSON.parse(response.responseText);
           console.log("[Debug] Received mod status data:", modStatusData);
 
-          // Get game name from ID map
-          const gameName = GAME_ID_MAP[gameId];
-          if (!gameName) {
-            console.log("[Debug] Game not found in ID map");
-            return;
-          }
-
-          // Check if mod is in any of the status lists
-          const modStatuses = modStatusData["Mod Statuses"]?.[gameName];
-          if (!modStatuses) {
+          // First check if we have any statuses for this game
+          const gameStatuses = modStatusData["Mod Statuses"]?.[gameId];
+          if (!gameStatuses) {
             console.log("[Debug] No status lists found for game");
             return;
           }
 
+          // Find which status list contains this mod
           let foundStatus = null;
-          for (const [statusType, modList] of Object.entries(modStatuses)) {
+          for (const [statusType, modList] of Object.entries(gameStatuses)) {
             if (modList.includes(modId)) {
               foundStatus = statusType;
               break;
@@ -871,20 +928,24 @@
           if (foundStatus) {
             console.log("[Debug] Found status for current mod:", foundStatus);
 
-            // Get additional details from Mod Descriptors if available
-            const modDescriptor =
-              modStatusData["Mod Descriptors"]?.[gameName]?.[modId];
-
+            // Create base status object
             const indicatorStatus = {
               type: foundStatus,
-              reason:
-                modDescriptor?.reason ||
-                `This mod is marked as ${foundStatus.toLowerCase()}`,
+              reason: `This mod is marked as ${foundStatus.toLowerCase()}`,
               color: STATUS_TYPES[foundStatus]?.color || "#ff0000",
-              icon: modDescriptor?.icon,
-              url: modDescriptor?.url,
-              alternative: modDescriptor?.alternative,
             };
+
+            // Check if we have additional descriptor info
+            const modDescriptor =
+              modStatusData["Mod Descriptors"]?.[gameId]?.[modId];
+            if (modDescriptor) {
+              if (modDescriptor.reason)
+                indicatorStatus.reason = modDescriptor.reason;
+              if (modDescriptor.alternative)
+                indicatorStatus.alternative = modDescriptor.alternative;
+              if (modDescriptor.url) indicatorStatus.url = modDescriptor.url;
+              if (modDescriptor.icon) indicatorStatus.icon = modDescriptor.icon;
+            }
 
             console.log("[Debug] Created indicator status:", indicatorStatus);
             addWarningBanner(indicatorStatus);
