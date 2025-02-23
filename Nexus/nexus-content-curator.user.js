@@ -318,6 +318,54 @@
       color: white;
       font-size: 1.2em;
     }
+
+    /* Title warning icons styles */
+    .title-warning-icons {
+      display: inline-flex;
+      gap: 5px;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    .title-warning-icon {
+      font-size: 24px;
+      animation: bounce 1s infinite;
+      cursor: help;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      transition: transform 0.2s;
+    }
+
+    .title-warning-icon:hover {
+      transform: scale(1.2);
+    }
+
+    /* Title tooltip styles */
+    .title-tooltip {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      max-width: 300px;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      left: 50%;
+      transform: translateX(-50%);
+      top: 100%;
+      margin-top: 5px;
+      white-space: nowrap;
+    }
+
+    .title-warning-icon:hover .title-tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
   `;
 
   // Add styles to document
@@ -1359,29 +1407,109 @@
     });
   }
 
-  // Function to add all warnings at once
+  // Function to add warning icons to page title
+  function addWarningIconsToTitle(warnings) {
+    const pageTitle = document.querySelector("#pagetitle h1");
+    if (!pageTitle) return;
+
+    // Remove any existing warning icons
+    const existingIcons = pageTitle.querySelector(".title-warning-icons");
+    if (existingIcons) existingIcons.remove();
+
+    // Create container for icons
+    const iconsContainer = document.createElement("span");
+    iconsContainer.className = "title-warning-icons";
+
+    warnings.forEach((warning) => {
+      if (!warning || !warning.type) return;
+
+      const iconWrapper = document.createElement("span");
+      iconWrapper.className = "title-warning-icon";
+
+      // Get icon based on warning type
+      let icon = "ℹ️";
+      switch (warning.type) {
+        case "BROKEN":
+          icon = "⚠️";
+          break;
+        case "CLOSED_PERMISSIONS":
+          icon = "🔒";
+          break;
+        case "OPEN_PERMISSIONS":
+          icon = "🔓";
+          break;
+        case "CUSTOM_PERMISSIONS":
+          icon = "⚖️";
+          break;
+        case "ABANDONED":
+          icon = "🪦";
+          break;
+        case "LAME":
+          icon = "👎";
+          break;
+        case "AUTHOR_SUCKS":
+          icon = "👿";
+          break;
+      }
+      iconWrapper.textContent = icon;
+
+      // Format the warning type to be more readable
+      const formattedType = warning.type.replace(/_/g, " ");
+
+      // Add tooltip handlers
+      const showTooltip = (e) => {
+        tooltip.innerHTML = formatTooltipText(
+          `<strong>${formattedType}:</strong> ${warning.reason}`
+        );
+        tooltip.style.display = "block";
+        updateTooltipPosition(e);
+      };
+
+      const hideTooltip = () => {
+        tooltip.style.display = "none";
+      };
+
+      iconWrapper.addEventListener("mouseover", showTooltip);
+      iconWrapper.addEventListener("mousemove", updateTooltipPosition);
+      iconWrapper.addEventListener("mouseout", hideTooltip);
+
+      iconsContainer.appendChild(iconWrapper);
+    });
+
+    // Insert icons before the title text
+    pageTitle.insertBefore(iconsContainer, pageTitle.firstChild);
+  }
+
+  // Modify addAllWarnings function
   function addAllWarnings(warnings) {
     if (!warnings || warnings.length === 0) return;
 
-    // Clear any existing warning banners
-    const existingBanners = document.querySelector(".mod-warning-banners");
-    if (existingBanners) {
-      existingBanners.remove();
-    }
+    const nofeature = document.querySelector("#nofeature");
 
-    // Add all warnings in order (BROKEN first, then CLOSED_PERMISSIONS, then others)
-    warnings
-      .filter((warning) => warning && warning.type && !warning.skipBanner) // Don't show banner if skipBanner is true
-      .sort((a, b) => {
-        if (a.type === "BROKEN") return -1;
-        if (b.type === "BROKEN") return 1;
-        if (a.type === "CLOSED_PERMISSIONS") return -1;
-        if (b.type === "CLOSED_PERMISSIONS") return 1;
-        return 0;
-      })
-      .forEach((warning) => {
-        addWarningBanner(warning);
-      });
+    // If nofeature exists, add icons to title instead of banners
+    if (nofeature) {
+      addWarningIconsToTitle(warnings);
+    } else {
+      // Clear any existing warning banners
+      const existingBanners = document.querySelector(".mod-warning-banners");
+      if (existingBanners) {
+        existingBanners.remove();
+      }
+
+      // Add all warnings in order (BROKEN first, then CLOSED_PERMISSIONS, then others)
+      warnings
+        .filter((warning) => warning && warning.type && !warning.skipBanner)
+        .sort((a, b) => {
+          if (a.type === "BROKEN") return -1;
+          if (b.type === "BROKEN") return 1;
+          if (a.type === "CLOSED_PERMISSIONS") return -1;
+          if (b.type === "CLOSED_PERMISSIONS") return 1;
+          return 0;
+        })
+        .forEach((warning) => {
+          addWarningBanner(warning);
+        });
+    }
 
     // Add warning tags for all warnings, including those with skipBanner
     addWarningTags(warnings.filter((warning) => warning && warning.type));
