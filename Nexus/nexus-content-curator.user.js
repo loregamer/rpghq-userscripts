@@ -597,6 +597,11 @@
       color: "#ff4400",
       class: "warning",
     },
+    OPEN_PERMISSIONS: {
+      icons: ["🔓"],
+      color: "#00aa00",
+      class: "success",
+    },
     AUTHOR_SUCKS: {
       icons: ["👿"],
       color: "#ff4400",
@@ -1043,24 +1048,29 @@
             "text/html"
           );
           const permissionsList = doc.querySelectorAll(
-            ".permissions .permission-no, .permissions .permission-maybe"
+            ".permissions .permission-no, .permissions .permission-maybe, .permissions .permission-yes"
           );
           const closedPermissions = [];
+          let openPermissions = [];
 
           permissionsList.forEach((permission) => {
             const titleElement = permission.querySelector(".permissions-title");
             if (titleElement) {
               const title = titleElement.textContent.trim();
               if (shouldIncludePermission(title)) {
-                closedPermissions.push(cleanPermissionTitle(title));
+                if (permission.classList.contains("permission-yes")) {
+                  openPermissions.push(cleanPermissionTitle(title));
+                } else {
+                  closedPermissions.push(cleanPermissionTitle(title));
+                }
               }
             }
           });
 
-          resolve(closedPermissions);
+          resolve({ closedPermissions, openPermissions });
         },
         onerror: function () {
-          resolve([]);
+          resolve({ closedPermissions: [], openPermissions: [] });
         },
       });
     });
@@ -1083,15 +1093,21 @@
 
     // First try to get permissions from current page
     const permissionsList = document.querySelectorAll(
-      ".permissions .permission-no, .permissions .permission-maybe"
+      ".permissions .permission-no, .permissions .permission-maybe, .permissions .permission-yes"
     );
     let closedPermissions = [];
+    let openPermissions = [];
 
     if (permissionsList.length === 0) {
       // If no permissions found on current page, fetch from the current mod's description tab
       const currentUrl = window.location.href;
       const descriptionUrl = currentUrl.split("?")[0] + "?tab=description";
-      closedPermissions = await fetchPermissionsFromModPage(descriptionUrl);
+      const {
+        closedPermissions: fetchedClosedPermissions,
+        openPermissions: fetchedOpenPermissions,
+      } = await fetchPermissionsFromModPage(descriptionUrl);
+      closedPermissions = fetchedClosedPermissions;
+      openPermissions = fetchedOpenPermissions;
     } else {
       // Get permissions from current page
       permissionsList.forEach((permission) => {
@@ -1099,56 +1115,65 @@
         if (titleElement) {
           const title = titleElement.textContent.trim();
           if (shouldIncludePermission(title)) {
-            closedPermissions.push(cleanPermissionTitle(title));
+            if (permission.classList.contains("permission-yes")) {
+              openPermissions.push(cleanPermissionTitle(title));
+            } else {
+              closedPermissions.push(cleanPermissionTitle(title));
+            }
           }
         }
       });
     }
 
-    if (closedPermissions.length > 0) {
-      // Add lock icon to permissions header
-      const permissionsHeaders = document.querySelectorAll("dt");
-      const permissionsHeader = Array.from(permissionsHeaders).find((dt) =>
-        dt.textContent.trim().startsWith("Permissions and credits")
-      );
+    // Add lock icon to permissions header
+    const permissionsHeaders = document.querySelectorAll("dt");
+    const permissionsHeader = Array.from(permissionsHeaders).find((dt) =>
+      dt.textContent.trim().startsWith("Permissions and credits")
+    );
 
-      if (permissionsHeader) {
-        // Check if we already added a lock icon
-        const existingLock =
-          permissionsHeader.querySelector(".permissions-lock");
-        if (!existingLock) {
-          const lockSpan = document.createElement("span");
-          lockSpan.className = "permissions-lock";
-          lockSpan.style.marginLeft = "5px";
-          lockSpan.style.cursor = "help";
-          lockSpan.textContent = "🔒";
+    if (permissionsHeader) {
+      // Check if we already added a lock icon
+      const existingLock = permissionsHeader.querySelector(".permissions-lock");
+      if (!existingLock) {
+        const lockSpan = document.createElement("span");
+        lockSpan.className = "permissions-lock";
+        lockSpan.style.marginLeft = "5px";
+        lockSpan.style.cursor = "help";
+        lockSpan.textContent = closedPermissions.length > 0 ? "🔒" : "🔓";
 
-          // Add tooltip handlers
-          const showTooltip = (e) => {
-            tooltip.innerHTML = formatTooltipText(
-              `This mod has closed or restricted permissions <span style="font-size: 0.85em;">(${closedPermissions.join(
-                ", "
-              )})</span>`
-            );
-            tooltip.style.display = "block";
-            updateTooltipPosition(e);
-          };
+        // Add tooltip handlers
+        const showTooltip = (e) => {
+          let tooltipText = "";
+          if (closedPermissions.length > 0) {
+            tooltipText = `This mod has closed or restricted permissions <span style="font-size: 0.85em;">(${closedPermissions.join(
+              ", "
+            )})</span>`;
+          } else {
+            tooltipText = `This mod has open permissions <span style="font-size: 0.85em;">(${openPermissions.join(
+              ", "
+            )})</span>`;
+          }
+          tooltip.innerHTML = formatTooltipText(tooltipText);
+          tooltip.style.display = "block";
+          updateTooltipPosition(e);
+        };
 
-          const hideTooltip = () => {
-            tooltip.style.display = "none";
-          };
+        const hideTooltip = () => {
+          tooltip.style.display = "none";
+        };
 
-          lockSpan.addEventListener("mouseover", showTooltip);
-          lockSpan.addEventListener("mousemove", updateTooltipPosition);
-          lockSpan.addEventListener("mouseout", hideTooltip);
+        lockSpan.addEventListener("mouseover", showTooltip);
+        lockSpan.addEventListener("mousemove", updateTooltipPosition);
+        lockSpan.addEventListener("mouseout", hideTooltip);
 
-          permissionsHeader.insertBefore(
-            lockSpan,
-            permissionsHeader.querySelector(".acc-status")
-          );
-        }
+        permissionsHeader.insertBefore(
+          lockSpan,
+          permissionsHeader.querySelector(".acc-status")
+        );
       }
+    }
 
+    if (closedPermissions.length > 0) {
       return {
         type: "CLOSED_PERMISSIONS",
         reason: `This mod has closed or restricted permissions <span style="font-style: italic; font-size: 0.85em;">(${closedPermissions.join(
@@ -1156,6 +1181,15 @@
         )})</span>.<br>Please consider bullying and harassing this mod author into being <a href="https://www.youtube.com/watch?v=edea7yMqOY8" target="_blank" style="color: inherit; text-decoration: underline;">Cathedral</a>, and perhaps reupload on ModHQ if you are feeling spiteful.`,
         color: STATUS_TYPES.CLOSED_PERMISSIONS.color,
         skipBanner: noFeatureElement ? true : false,
+      };
+    } else if (openPermissions.length > 0) {
+      return {
+        type: "OPEN_PERMISSIONS",
+        reason: `This mod has open permissions <span style="font-style: italic; font-size: 0.85em;">(${openPermissions.join(
+          ", "
+        )})</span>`,
+        color: STATUS_TYPES.OPEN_PERMISSIONS.color,
+        skipBanner: true, // Don't show banner for open permissions
       };
     }
     return null;
@@ -1183,6 +1217,10 @@
       case "ABANDONED":
         bgColor =
           "linear-gradient(45deg, rgba(128, 128, 128, 0.8), rgba(128, 128, 128, 0.9))";
+        break;
+      case "OPEN_PERMISSIONS":
+        bgColor =
+          "linear-gradient(45deg, rgba(0, 170, 0, 0.8), rgba(0, 170, 0, 0.9))";
         break;
       default:
         bgColor =
