@@ -1,16 +1,27 @@
 {
-  "Eralyne": {
-    "labels": [
-      {
-        "tooltip": "Troon",
-        "icon": "https://f.rpghq.org/b1PMDDCK0hrc.png?n=pasted-file.png",
-        "url": null
-      },
-      {
-        "tooltip": "Flight risk! (Will throw fit and leave if criticized too much)\n\nWas involved in that lame Open Faerun garbage",
-        "icon": "https://f.rpghq.org/nD9rLv9rzAZY.png?n=pasted-file.png",
-        "url": "https://rpghq.org/forums/viewtopic.php?p=63791-mod-seethe-thread-formerly-nexus-seethe-thread#p63791"
+  "Labels": {
+    "Troon": {
+      "label": "Troon",
+      "authors": ["Eralyne"],
+      "icon": "https://f.rpghq.org/b1PMDDCK0hrc.png"
+    },
+    "Flight Risk": {
+      "label": "Flight risk! (Will throw fit and leave if criticized too much)",
+      "authors": ["Eralyne"],
+      "icon": "https://f.rpghq.org/nD9rLv9rzAZY.png"
+    },
+    "Bug Ignorer": {
+      "label": "Ignores bugs. Will deny they exist and not fix them",
+      "authors": ["Eralyne"],
+      "icon": "https://f.rpghq.org/b1PMDDCK0hrc.png"
+    }
+  },
+  "Tooltips": {
+    "Eralyne": {
+      "Flight Risk": {
+        "label": "Flight risk! (Will throw fit and leave if criticized too much)\n\nWas also involved in that lame Open Faerun garbage",
+        "referenceLink": "https://rpghq.org/forums/viewtopic.php?p=63791-mod-seethe-thread-formerly-nexus-seethe-thread#p63791"
       }
-    ]
+    }
   }
 }
