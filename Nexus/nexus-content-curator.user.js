@@ -695,29 +695,51 @@
       url: MOD_STATUS_URL,
       onload: function (response) {
         try {
-          const modStatus = JSON.parse(response.responseText);
-          console.log("[Debug] Received mod status data:", modStatus);
+          const modStatusData = JSON.parse(response.responseText);
+          console.log("[Debug] Received mod status data:", modStatusData);
 
-          if (modStatus[gameId] && modStatus[gameId][modId]) {
-            const status = modStatus[gameId][modId];
-            console.log("[Debug] Found status for mod tile:", status);
+          // Get game name from ID map
+          const gameName = GAME_ID_MAP[gameId];
+          if (!gameName) {
+            console.log("[Debug] Game not found in ID map");
+            return;
+          }
 
-            if (status.status === "BROKEN") {
-              console.log(
-                "[Debug] Mod tile is marked as broken, creating indicator"
-              );
-              const indicatorStatus = {
-                type: status.status,
-                reason: status.reason || "This mod is marked as broken",
-                color: STATUS_TYPES[status.status]?.color || "#ff0000",
-                icon: status.icon,
-                url: status.url,
-                alternative: status.alternative,
-              };
-              console.log("[Debug] Created indicator status:", indicatorStatus);
+          // Check if mod is in any of the status lists
+          const modStatuses = modStatusData["Mod Statuses"]?.[gameName];
+          if (!modStatuses) {
+            console.log("[Debug] No status lists found for game");
+            return;
+          }
 
-              addWarningBannerToTile(modTile, indicatorStatus);
+          let foundStatus = null;
+          for (const [statusType, modList] of Object.entries(modStatuses)) {
+            if (modList.includes(modId)) {
+              foundStatus = statusType;
+              break;
             }
+          }
+
+          if (foundStatus) {
+            console.log("[Debug] Found status for mod tile:", foundStatus);
+
+            // Get additional details from Mod Descriptors if available
+            const modDescriptor =
+              modStatusData["Mod Descriptors"]?.[gameName]?.[modId];
+
+            const indicatorStatus = {
+              type: foundStatus,
+              reason:
+                modDescriptor?.reason ||
+                `This mod is marked as ${foundStatus.toLowerCase()}`,
+              color: STATUS_TYPES[foundStatus]?.color || "#ff0000",
+              icon: modDescriptor?.icon,
+              url: modDescriptor?.url,
+              alternative: modDescriptor?.alternative,
+            };
+
+            console.log("[Debug] Created indicator status:", indicatorStatus);
+            addWarningBannerToTile(modTile, indicatorStatus);
           } else {
             console.log("[Debug] No status found for mod tile");
           }
@@ -821,29 +843,51 @@
       url: MOD_STATUS_URL,
       onload: function (response) {
         try {
-          const modStatus = JSON.parse(response.responseText);
-          console.log("[Debug] Received mod status data:", modStatus);
+          const modStatusData = JSON.parse(response.responseText);
+          console.log("[Debug] Received mod status data:", modStatusData);
 
-          if (modStatus[gameId] && modStatus[gameId][modId]) {
-            const status = modStatus[gameId][modId];
-            console.log("[Debug] Found status for current mod:", status);
+          // Get game name from ID map
+          const gameName = GAME_ID_MAP[gameId];
+          if (!gameName) {
+            console.log("[Debug] Game not found in ID map");
+            return;
+          }
 
-            if (status.status === "BROKEN") {
-              console.log(
-                "[Debug] Mod is marked as broken, creating indicator"
-              );
-              const indicatorStatus = {
-                type: status.status,
-                reason: status.reason || "This mod is marked as broken",
-                color: STATUS_TYPES[status.status]?.color || "#ff0000",
-                icon: status.icon,
-                url: status.url,
-                alternative: status.alternative,
-              };
-              console.log("[Debug] Created indicator status:", indicatorStatus);
+          // Check if mod is in any of the status lists
+          const modStatuses = modStatusData["Mod Statuses"]?.[gameName];
+          if (!modStatuses) {
+            console.log("[Debug] No status lists found for game");
+            return;
+          }
 
-              addWarningBanner(indicatorStatus);
+          let foundStatus = null;
+          for (const [statusType, modList] of Object.entries(modStatuses)) {
+            if (modList.includes(modId)) {
+              foundStatus = statusType;
+              break;
             }
+          }
+
+          if (foundStatus) {
+            console.log("[Debug] Found status for current mod:", foundStatus);
+
+            // Get additional details from Mod Descriptors if available
+            const modDescriptor =
+              modStatusData["Mod Descriptors"]?.[gameName]?.[modId];
+
+            const indicatorStatus = {
+              type: foundStatus,
+              reason:
+                modDescriptor?.reason ||
+                `This mod is marked as ${foundStatus.toLowerCase()}`,
+              color: STATUS_TYPES[foundStatus]?.color || "#ff0000",
+              icon: modDescriptor?.icon,
+              url: modDescriptor?.url,
+              alternative: modDescriptor?.alternative,
+            };
+
+            console.log("[Debug] Created indicator status:", indicatorStatus);
+            addWarningBanner(indicatorStatus);
           } else {
             console.log("[Debug] No status found for current mod");
           }
