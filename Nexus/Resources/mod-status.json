@@ -7,7 +7,17 @@
       "INFO": ["141"]
     },
     "newvegas": {
-      "BROKEN": []
+      "BROKEN": [
+        "34832",
+        "49319",
+        "52428",
+        "56390",
+        "34684",
+        "44204",
+        "53635",
+        "54460"
+      ],
+      "INFO": ["38844", "76009", "81185", "81332", "81010"]
     }
   },
   "Mod Descriptors": {
@@ -22,6 +32,42 @@
       },
       "2754": {
         "reason": "Stupid mod. Incompatible, headache to setup and maintain, and for TROONS",
+        "alternative": null
+      },
+      "34832": {
+        "reason": "Will cause periodic crashes. New Vegas Tick Fix and New Vegas Heap Replacer replace NVSR while also doing more.",
+        "alternative": "https://vivanewvegas.moddinglinked.com/avoid-mods.html"
+      },
+      "53635": {
+        "reason": "A lot of bad shit LOL, do not download",
+        "alternative": "https://vivanewvegas.moddinglinked.com/avoid-mods.html"
+      },
+      "54460": {
+        "reason": "Broken file paths, auto-selected patches in the installer, untouched NPCs, performance issues, and reverting YUP fixes.",
+        "alternative": "https://vivanewvegas.moddinglinked.com/avoid-mods.html"
+      },
+      "54460": {
+        "reason": "Broken file paths, auto-selected patches in the installer, untouched NPCs, performance issues, and reverting YUP fixes.",
+        "alternative": "https://vivanewvegas.moddinglinked.com/avoid-mods.html"
+      },
+      "38844": {
+        "reason": "Handheld Pip-Boys will run into some visual issues. Not a huge deal, but it can be irritating.",
+        "alternative": null
+      },
+      "76009": {
+        "reason": "Handheld Pip-Boys will run into some visual issues. Not a huge deal, but it can be irritating.",
+        "alternative": null
+      },
+      "81185": {
+        "reason": "Handheld Pip-Boys will run into some visual issues. Not a huge deal, but it can be irritating.",
+        "alternative": null
+      },
+      "81332": {
+        "reason": "Handheld Pip-Boys will run into some visual issues. Not a huge deal, but it can be irritating.",
+        "alternative": null
+      },
+      "81010": {
+        "reason": "Handheld Pip-Boys will run into some visual issues. Not a huge deal, but it can be irritating.",
         "alternative": null
       }
     }
