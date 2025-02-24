@@ -53,7 +53,7 @@
                         <span style="font-size: 12px; color: #dcddde;">${
                           reaction.count
                         }</span>
-                        <div class="reaction-users-popup" style="display: none; position: fixed; background-color: #191919; border: 1px solid #202225; border-radius: 4px; padding: 8px; z-index: 1000; color: #dcddde; font-size: 12px; width: 200px; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div class="reaction-users-popup" style="display: none; position: fixed; background-color: #191919; border: 1px solid #202225; border-radius: 4px; padding: 8px; z-index: 1000; color: #dcddde; font-size: 12px; min-width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                             <div style="font-weight: bold; margin-bottom: 8px;">${
                               reaction.title
                             }</div>
