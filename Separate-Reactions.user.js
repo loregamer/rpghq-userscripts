@@ -17,13 +17,35 @@
   "use strict";
 
   function createReactionList(postId, reactions) {
+    console.log(
+      "createReactionList: Starting to create reaction list for post",
+      postId
+    );
+    const pollVotes = getPollVotes();
+    console.log("createReactionList: Got poll votes:", pollVotes);
+
     const displayStyle = reactions.length === 0 ? "display: none;" : "";
-    return `
+    console.log(
+      "createReactionList: Processing",
+      reactions.length,
+      "reactions"
+    );
+
+    const html = `
         <div class="reaction-score-list content-processed" data-post-id="${postId}" data-title="Reactions" style="padding-top: 10px !important; ${displayStyle}">
             <div class="list-scores" style="display: flex; flex-wrap: wrap; gap: 4px;">
                 ${reactions
-                  .map(
-                    (reaction) => `
+                  .map((reaction, reactionIndex) => {
+                    console.log(
+                      `createReactionList: Processing reaction #${
+                        reactionIndex + 1
+                      }:`,
+                      {
+                        title: reaction.title,
+                        userCount: reaction.users.length,
+                      }
+                    );
+                    return `
                     <div class="reaction-group" style="display: flex; align-items: center; background-color: #3A404A; border-radius: 8px; padding: 2px 6px; position: relative;">
                         <img src="${reaction.image}" alt="${
                       reaction.title
@@ -37,17 +59,41 @@
                             }</div>
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 ${reaction.users
-                                  .map(
-                                    (user) => `
-                                    <div style="display: flex; align-items: center;">
-                                        <div style="width: 24px; height: 24px; margin-right: 8px; flex-shrink: 0;">
-                                            ${
-                                              user.avatar
-                                                ? `<img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">`
-                                                : ""
-                                            }
-                                        </div>
-                                        <a href="${user.profileUrl}" style="${
+                                  .map((user, userIndex) => {
+                                    console.log(
+                                      `createReactionList: Reaction #${
+                                        reactionIndex + 1
+                                      }, processing user #${userIndex + 1}:`,
+                                      {
+                                        username: user.username,
+                                        pollVote:
+                                          pollVotes[
+                                            user.username.toLowerCase()
+                                          ],
+                                      }
+                                    );
+                                    const pollVote =
+                                      pollVotes[user.username.toLowerCase()];
+                                    const pollInfo = pollVote
+                                      ? `<span style="margin-left: 4px; font-size: 11px; color: ${
+                                          pollVote.isColoured
+                                            ? pollVote.color
+                                            : "#dcddde"
+                                        };">[${pollVote.option}]</span>`
+                                      : "";
+                                    return `
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="width: 24px; height: 24px; margin-right: 8px; flex-shrink: 0;">
+                                                ${
+                                                  user.avatar
+                                                    ? `<img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">`
+                                                    : ""
+                                                }
+                                            </div>
+                                            <div style="display: flex; align-items: center; flex-wrap: wrap;">
+                                                <a href="${
+                                                  user.profileUrl
+                                                }" style="${
                                       user.isColoured
                                         ? `color: ${user.color};`
                                         : ""
@@ -56,19 +102,23 @@
                                         ? "username-coloured"
                                         : "username"
                                     }">${user.username}</a>
-                                    </div>
-                                `
-                                  )
+                                                ${pollInfo}
+                                            </div>
+                                        </div>
+                                    `;
+                                  })
                                   .join("")}
                             </div>
                         </div>
                     </div>
-                `
-                  )
+                `;
+                  })
                   .join("")}
             </div>
         </div>
     `;
+    console.log("createReactionList: Finished creating HTML");
+    return html;
   }
 
   function parseReactions(htmlContent) {
@@ -103,6 +153,76 @@
     });
 
     return reactions;
+  }
+
+  function getPollVotes() {
+    console.log("getPollVotes: Starting to collect poll votes");
+    const pollVotes = {};
+    const polls = document.querySelectorAll(".polls");
+    console.log("getPollVotes: Found polls:", polls.length);
+
+    polls.forEach((poll, pollIndex) => {
+      console.log(`getPollVotes: Processing poll #${pollIndex + 1}`);
+      const dls = poll.querySelectorAll("dl");
+      console.log(
+        `getPollVotes: Found ${dls.length} dl elements in poll #${
+          pollIndex + 1
+        }`
+      );
+
+      let currentOption = null;
+
+      dls.forEach((dl, dlIndex) => {
+        // First check if this is an option DL
+        const optionDt = dl.querySelector("dt");
+        if (
+          optionDt &&
+          !dl.classList.contains("poll_voters_box") &&
+          !dl.classList.contains("poll_total_votes")
+        ) {
+          currentOption = optionDt.textContent.trim();
+          console.log(`getPollVotes: Found option: "${currentOption}"`);
+        }
+
+        // Then check if this is a voters box for the current option
+        if (dl.classList.contains("poll_voters_box") && currentOption) {
+          console.log(
+            `getPollVotes: Processing voters for option: "${currentOption}"`
+          );
+          const votersSpan = dl.querySelector(".poll_voters");
+          if (!votersSpan) return;
+
+          const voters = votersSpan.querySelectorAll("span[name]");
+          console.log(
+            `getPollVotes: Found ${voters.length} voters for this option`
+          );
+
+          voters.forEach((voter, voterIndex) => {
+            const username = voter.getAttribute("name");
+            const userLink = voter.querySelector("a");
+            console.log(`getPollVotes: Processing voter #${voterIndex + 1}:`, {
+              username,
+              hasUserLink: !!userLink,
+              linkText: userLink?.textContent,
+              option: currentOption,
+              isColoured: userLink?.classList.contains("username-coloured"),
+              color: userLink?.style.color,
+            });
+
+            if (username && userLink) {
+              pollVotes[username.toLowerCase()] = {
+                option: currentOption,
+                isColoured: userLink.classList.contains("username-coloured"),
+                color: userLink.style.color || null,
+              };
+            }
+          });
+        }
+      });
+    });
+
+    console.log("getPollVotes: Final collected votes:", pollVotes);
+    return pollVotes;
   }
 
   function fetchReactions(postId) {
