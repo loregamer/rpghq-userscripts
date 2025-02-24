@@ -1059,12 +1059,9 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     neverIgnoreButton.id = "never-ignore-user-button";
     neverIgnoreButton.className = "button button-secondary";
     neverIgnoreButton.href = "#";
-    neverIgnoreButton.style.cssText = isUserNeverIgnored(userId)
-      ? "background-color: #5cb85c;"
-      : "";
     neverIgnoreButton.title = isUserNeverIgnored(userId)
       ? "Remove from Never Ignore list"
-      : "Never hide threads from this user";
+      : "Never hide threads that this user posted in";
     neverIgnoreButton.textContent = isUserNeverIgnored(userId)
       ? "Remove Never Ignore"
       : "Never Ignore";
@@ -1072,10 +1069,9 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     neverIgnoreButton.addEventListener("click", function (e) {
       e.preventDefault();
       toggleNeverIgnoreUser(userId, username);
-      this.style.backgroundColor = isUserNeverIgnored(userId) ? "#5cb85c" : "";
       this.title = isUserNeverIgnored(userId)
         ? "Remove from Never Ignore list"
-        : "Never hide threads from this user";
+        : "Never hide threads that this user posted in";
       this.textContent = isUserNeverIgnored(userId)
         ? "Remove Never Ignore"
         : "Never Ignore";
