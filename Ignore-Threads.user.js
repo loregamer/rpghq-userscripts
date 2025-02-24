@@ -1054,27 +1054,27 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       titleElement.appendChild(buttonContainer);
     }
 
-    // Create the Never Ignore button
+    // Create the Never Iggy button
     const neverIgnoreButton = document.createElement("a");
     neverIgnoreButton.id = "never-ignore-user-button";
     neverIgnoreButton.className = "button button-secondary";
     neverIgnoreButton.href = "#";
     neverIgnoreButton.title = isUserNeverIgnored(userId)
-      ? "Remove from Never Ignore list"
+      ? "Remove from Never Iggy list"
       : "Never hide threads that this user posted in";
     neverIgnoreButton.textContent = isUserNeverIgnored(userId)
-      ? "Remove Never Ignore"
-      : "Never Ignore";
+      ? "Remove Never Iggy"
+      : "Never Iggy";
 
     neverIgnoreButton.addEventListener("click", function (e) {
       e.preventDefault();
       toggleNeverIgnoreUser(userId, username);
       this.title = isUserNeverIgnored(userId)
-        ? "Remove from Never Ignore list"
+        ? "Remove from Never Iggy list"
         : "Never hide threads that this user posted in";
       this.textContent = isUserNeverIgnored(userId)
-        ? "Remove Never Ignore"
-        : "Never Ignore";
+        ? "Remove Never Iggy"
+        : "Never Iggy";
     });
 
     buttonContainer.appendChild(neverIgnoreButton);
@@ -1113,7 +1113,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       align-items: center;
     `;
     const title = document.createElement("h2");
-    title.textContent = "Never Ignored Users";
+    title.textContent = "Never Iggyd Users";
     title.style.cssText = "margin: 0; color: #c5d0db; font-size: 1.2em;";
     const closeButton = document.createElement("button");
     closeButton.textContent = "×";
@@ -1173,7 +1173,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
           listItem.remove();
           if (userList.children.length === 0) {
             userList.innerHTML =
-              '<p style="color: #c5d0db;">No users in the Never Ignore list.</p>';
+              '<p style="color: #c5d0db;">No users in the Never Iggy list.</p>';
           }
         };
 
@@ -1190,7 +1190,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
 
     if (Object.keys(neverIgnoredUsers).length === 0) {
       userList.innerHTML =
-        '<p style="color: #c5d0db;">No users in the Never Ignore list.</p>';
+        '<p style="color: #c5d0db;">No users in the Never Iggy list.</p>';
     }
 
     content.appendChild(userList);
@@ -1213,10 +1213,10 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       const showButton = document.createElement("a");
       showButton.id = "show-never-ignored-users-button";
       showButton.href = "#";
-      showButton.title = "Never Ignored Users";
+      showButton.title = "Never Iggyd Users";
       showButton.role = "menuitem";
       showButton.innerHTML =
-        '<i class="icon fa-user-shield fa-fw" aria-hidden="true"></i><span>Never Ignored Users</span>';
+        '<i class="icon fa-user-shield fa-fw" aria-hidden="true"></i><span>Never Iggyd Users</span>';
 
       showButton.addEventListener("click", function (e) {
         e.preventDefault();
