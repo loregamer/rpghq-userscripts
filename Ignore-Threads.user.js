@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      3.5
+// @version      3.6
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads with an improved review overlay
 // @match        https://rpghq.org/forums/*
+// @match        https://rpghq.org/forums/memberlist.php*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
@@ -45,6 +46,7 @@ SOFTWARE.
 
   let ignoredThreads = GM_getValue("ignoredThreads", {});
   let ignoreModeActive = GM_getValue("ignoreModeActive", false);
+  let neverIgnoredUsers = GM_getValue("neverIgnoredUsers", {});
 
   // Add CSS early to prevent flash
   const style = document.createElement("style");
@@ -85,6 +87,32 @@ SOFTWARE.
     );
   }
 
+  function isUserNeverIgnored(userId) {
+    return neverIgnoredUsers.hasOwnProperty(userId);
+  }
+
+  function toggleNeverIgnoreUser(userId, username) {
+    if (isUserNeverIgnored(userId)) {
+      delete neverIgnoredUsers[userId];
+    } else {
+      neverIgnoredUsers[userId] = username;
+    }
+    GM_setValue("neverIgnoredUsers", neverIgnoredUsers);
+  }
+
+  function getLastPosterInfo(element) {
+    const lastPostLink = element.querySelector('dd.lastpost a[href*="u="]');
+    if (!lastPostLink) return null;
+
+    const userIdMatch = lastPostLink.href.match(/[?&]u=(\d+)/);
+    if (!userIdMatch) return null;
+
+    return {
+      userId: userIdMatch[1],
+      username: lastPostLink.textContent.trim(),
+    };
+  }
+
   // Pre-hide ignored threads as early as possible
   function hideIgnoredThreadsEarly(mutations) {
     const threadItems = document.querySelectorAll(
@@ -97,7 +125,13 @@ SOFTWARE.
         const threadIdMatch = threadLink.href.match(/[?&]t=(\d+)/);
         const threadId = threadIdMatch ? threadIdMatch[1] : null;
         const ignoreStatus = isThreadIgnored(threadTitle, threadId);
-        if (ignoreStatus.ignored) {
+
+        // Check if the last poster is never-ignored
+        const lastPoster = getLastPosterInfo(item);
+        const isLastPosterNeverIgnored =
+          lastPoster && isUserNeverIgnored(lastPoster.userId);
+
+        if (ignoreStatus.ignored && !isLastPosterNeverIgnored) {
           // Only mark as read if it's an unread thread and we should mark as read
           if (isUnreadThread(item) && shouldMarkAsRead()) {
             const ids = extractLastPostIds(item);
@@ -117,9 +151,13 @@ SOFTWARE.
       if (lastPostLink) {
         const threadTitle = lastPostLink.getAttribute("title");
         if (threadTitle) {
-          // For lastposts, only check by title since they link to specific posts
+          // For lastposts, check both title and last poster
           const ignoreStatus = isThreadIgnored(threadTitle);
-          if (ignoreStatus.ignored) {
+          const lastPoster = getLastPosterInfo(lastPost.parentElement);
+          const isLastPosterNeverIgnored =
+            lastPoster && isUserNeverIgnored(lastPoster.userId);
+
+          if (ignoreStatus.ignored && !isLastPosterNeverIgnored) {
             lastPost.remove();
           }
         }
@@ -346,7 +384,13 @@ SOFTWARE.
         const threadIdMatch = threadLink.href.match(/[?&]t=(\d+)/);
         const threadId = threadIdMatch ? threadIdMatch[1] : null;
         const ignoreStatus = isThreadIgnored(threadTitle, threadId);
-        if (ignoreStatus.ignored) {
+
+        // Check if the last poster is never-ignored
+        const lastPoster = getLastPosterInfo(item);
+        const isLastPosterNeverIgnored =
+          lastPoster && isUserNeverIgnored(lastPoster.userId);
+
+        if (ignoreStatus.ignored && !isLastPosterNeverIgnored) {
           item.remove();
         }
       }
@@ -358,9 +402,13 @@ SOFTWARE.
       if (lastPostLink) {
         const threadTitle = lastPostLink.getAttribute("title");
         if (threadTitle) {
-          // For lastposts, only check by title since they link to specific posts
+          // For lastposts, check both title and last poster
           const ignoreStatus = isThreadIgnored(threadTitle);
-          if (ignoreStatus.ignored) {
+          const lastPoster = getLastPosterInfo(lastPost.parentElement);
+          const isLastPosterNeverIgnored =
+            lastPoster && isUserNeverIgnored(lastPoster.userId);
+
+          if (ignoreStatus.ignored && !isLastPosterNeverIgnored) {
             lastPost.remove();
           }
         }
@@ -982,10 +1030,214 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     }
   }
 
+  function addNeverIgnoreButton() {
+    if (!window.location.href.includes("memberlist.php")) return;
+
+    const titleElement = document.querySelector(".memberlist-title");
+    if (!titleElement) return;
+
+    // Extract user ID and username from the URL/title
+    const userIdMatch = window.location.href.match(/[?&]u=(\d+)/);
+    if (!userIdMatch) return;
+    const userId = userIdMatch[1];
+    const username = titleElement.textContent.match(
+      /Viewing profile - (.+?)(?:\s*<|$)/
+    )?.[1];
+    if (!username) return;
+
+    // Create button container if it doesn't exist
+    let buttonContainer = titleElement.querySelector("div");
+    if (!buttonContainer) {
+      buttonContainer = document.createElement("div");
+      buttonContainer.style.cssText =
+        "display: inline-block; margin-left: 10px;";
+      titleElement.appendChild(buttonContainer);
+    }
+
+    // Create the Never Ignore button
+    const neverIgnoreButton = document.createElement("a");
+    neverIgnoreButton.id = "never-ignore-user-button";
+    neverIgnoreButton.className = "button button-secondary";
+    neverIgnoreButton.href = "#";
+    neverIgnoreButton.style.cssText = isUserNeverIgnored(userId)
+      ? "background-color: #5cb85c;"
+      : "";
+    neverIgnoreButton.title = isUserNeverIgnored(userId)
+      ? "Remove from Never Ignore list"
+      : "Never hide threads from this user";
+    neverIgnoreButton.textContent = isUserNeverIgnored(userId)
+      ? "Remove Never Ignore"
+      : "Never Ignore";
+
+    neverIgnoreButton.addEventListener("click", function (e) {
+      e.preventDefault();
+      toggleNeverIgnoreUser(userId, username);
+      this.style.backgroundColor = isUserNeverIgnored(userId) ? "#5cb85c" : "";
+      this.title = isUserNeverIgnored(userId)
+        ? "Remove from Never Ignore list"
+        : "Never hide threads from this user";
+      this.textContent = isUserNeverIgnored(userId)
+        ? "Remove Never Ignore"
+        : "Never Ignore";
+    });
+
+    buttonContainer.appendChild(neverIgnoreButton);
+  }
+
+  function showNeverIgnoredUsersPopup() {
+    // Create popup container
+    const popup = document.createElement("div");
+    popup.id = "never-ignored-users-popup";
+    popup.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #2a2e36;
+      border: 1px solid #3a3f4b;
+      border-radius: 5px;
+      width: 80%;
+      max-width: 600px;
+      height: 80%;
+      max-height: 600px;
+      display: flex;
+      flex-direction: column;
+      z-index: 9999;
+      font-family: 'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif;
+    `;
+
+    // Header with title and close button
+    const header = document.createElement("div");
+    header.style.cssText = `
+      padding: 10px;
+      background-color: #2a2e36;
+      border-bottom: 1px solid #3a3f4b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    `;
+    const title = document.createElement("h2");
+    title.textContent = "Never Ignored Users";
+    title.style.cssText = "margin: 0; color: #c5d0db; font-size: 1.2em;";
+    const closeButton = document.createElement("button");
+    closeButton.textContent = "×";
+    closeButton.style.cssText = `
+      background-color: transparent;
+      color: #c5d0db;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+    `;
+    closeButton.onclick = () => document.body.removeChild(popup);
+    header.appendChild(title);
+    header.appendChild(closeButton);
+
+    // Content area for the user list
+    const content = document.createElement("div");
+    content.style.cssText = `
+      padding: 10px;
+      overflow-y: auto;
+      flex-grow: 1;
+      background-color: #2a2e36;
+    `;
+    const userList = document.createElement("ul");
+    userList.style.cssText = `
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    `;
+
+    // Render user list
+    Object.entries(neverIgnoredUsers)
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .forEach(([userId, username]) => {
+        const listItem = document.createElement("li");
+        listItem.style.cssText = `
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        padding: 5px;
+        border-bottom: 1px solid #3a3f4b;
+      `;
+
+        const removeButton = document.createElement("button");
+        removeButton.textContent = "Remove";
+        removeButton.style.cssText = `
+        background-color: #4a5464;
+        color: #c5d0db;
+        border: none;
+        padding: 2px 5px;
+        border-radius: 3px;
+        cursor: pointer;
+        margin-right: 10px;
+        font-size: 0.8em;
+      `;
+        removeButton.onclick = () => {
+          toggleNeverIgnoreUser(userId);
+          listItem.remove();
+          if (userList.children.length === 0) {
+            userList.innerHTML =
+              '<p style="color: #c5d0db;">No users in the Never Ignore list.</p>';
+          }
+        };
+
+        const userLink = document.createElement("a");
+        userLink.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
+        userLink.textContent = username;
+        userLink.style.cssText =
+          "color: #4a90e2; text-decoration: none; flex-grow: 1;";
+
+        listItem.appendChild(removeButton);
+        listItem.appendChild(userLink);
+        userList.appendChild(listItem);
+      });
+
+    if (Object.keys(neverIgnoredUsers).length === 0) {
+      userList.innerHTML =
+        '<p style="color: #c5d0db;">No users in the Never Ignore list.</p>';
+    }
+
+    content.appendChild(userList);
+
+    // Assemble the popup
+    popup.appendChild(header);
+    popup.appendChild(content);
+    document.body.appendChild(popup);
+  }
+
+  function addShowNeverIgnoredUsersButton() {
+    const dropdown = document.querySelector(
+      "#username_logged_in .dropdown-contents"
+    );
+    if (
+      dropdown &&
+      !document.getElementById("show-never-ignored-users-button")
+    ) {
+      const listItem = document.createElement("li");
+      const showButton = document.createElement("a");
+      showButton.id = "show-never-ignored-users-button";
+      showButton.href = "#";
+      showButton.title = "Never Ignored Users";
+      showButton.role = "menuitem";
+      showButton.innerHTML =
+        '<i class="icon fa-user-shield fa-fw" aria-hidden="true"></i><span>Never Ignored Users</span>';
+
+      showButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        showNeverIgnoredUsersPopup();
+      });
+
+      listItem.appendChild(showButton);
+      dropdown.insertBefore(listItem, dropdown.lastElementChild);
+    }
+  }
+
   function initializeScript() {
     hideIgnoredThreads();
     addIgnoreButton();
     addShowIgnoredThreadsButton();
+    addShowNeverIgnoredUsersButton();
+    addNeverIgnoreButton();
     if (I_Want_To_Devlishly_Ignore_Many_Many_Threads) {
       addToggleIgnoreModeButton();
       if (ignoreModeActive) {
