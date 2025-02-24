@@ -66,23 +66,21 @@
                                       }, processing user #${userIndex + 1}:`,
                                       {
                                         username: user.username,
-                                        pollVote:
-                                          pollVotes[
-                                            user.username.toLowerCase()
-                                          ],
+                                        pollVotes:
+                                          pollVotes[user.username.toLowerCase()]
+                                            ?.options,
                                       }
                                     );
-                                    const pollVote =
+                                    const userPollVotes =
                                       pollVotes[user.username.toLowerCase()];
-                                    const pollInfo = pollVote
-                                      ? `<span style="margin-left: 4px; font-size: 8.5px; opacity: 0.8; color: ${
-                                          pollVote.isColoured
-                                            ? pollVote.color
-                                            : "#dcddde"
-                                        };">${pollVote.option}</span>`
-                                      : "";
+                                    const pollInfo =
+                                      userPollVotes?.options?.length > 0
+                                        ? `<div style="font-size: 8.5px; opacity: 0.8; color: #dcddde; margin-top: 2px;">${userPollVotes.options.join(
+                                            ", "
+                                          )}</div>`
+                                        : "";
                                     return `
-                                        <div style="display: flex; align-items: center;">
+                                        <div style="display: flex; align-items: flex-start;">
                                             <div style="width: 24px; height: 24px; margin-right: 8px; flex-shrink: 0;">
                                                 ${
                                                   user.avatar
@@ -90,7 +88,7 @@
                                                     : ""
                                                 }
                                             </div>
-                                            <div style="display: flex; align-items: baseline;">
+                                            <div style="display: flex; flex-direction: column;">
                                                 <a href="${
                                                   user.profileUrl
                                                 }" style="${
@@ -102,13 +100,7 @@
                                         ? "username-coloured"
                                         : "username"
                                     }">${user.username}</a>
-                                                <span style="margin-left: 4px; font-size: 10px; opacity: 0.7; white-space: nowrap; color: ${
-                                                  pollVote?.isColoured
-                                                    ? pollVote.color
-                                                    : "#dcddde"
-                                                };">${
-                                      pollVote ? pollVote.option : ""
-                                    }</span>
+                                                ${pollInfo}
                                             </div>
                                         </div>
                                     `;
@@ -216,11 +208,15 @@
             });
 
             if (username && userLink) {
-              pollVotes[username.toLowerCase()] = {
-                option: currentOption,
-                isColoured: userLink.classList.contains("username-coloured"),
-                color: userLink.style.color || null,
-              };
+              const lowerUsername = username.toLowerCase();
+              if (!pollVotes[lowerUsername]) {
+                pollVotes[lowerUsername] = {
+                  options: [],
+                  isColoured: userLink.classList.contains("username-coloured"),
+                  color: userLink.style.color || null,
+                };
+              }
+              pollVotes[lowerUsername].options.push(currentOption);
             }
           });
         }
