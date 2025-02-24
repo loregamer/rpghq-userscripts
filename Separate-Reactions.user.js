@@ -76,15 +76,19 @@
                                     const pollInfo =
                                       userPollVotes?.options?.length > 0
                                         ? `<div style="font-size: 8.5px; opacity: 0.8; color: #dcddde; margin-top: 2px;">
-                                            ${userPollVotes.options
-                                              .map(
-                                                (option) =>
-                                                  `<div style="display: flex; align-items: baseline; gap: 4px;">
-                                                <span style="font-size: 8px;">•</span>
-                                                <span>${option}</span>
-                                              </div>`
-                                              )
-                                              .join("")}
+                                            ${
+                                              userPollVotes.options.length === 1
+                                                ? `<div>${userPollVotes.options[0]}</div>`
+                                                : userPollVotes.options
+                                                    .map(
+                                                      (option) =>
+                                                        `<div style="display: flex; align-items: baseline; gap: 4px;">
+                                                  <span style="font-size: 8px;">•</span>
+                                                  <span>${option}</span>
+                                                </div>`
+                                                    )
+                                                    .join("")
+                                            }
                                           </div>`
                                         : "";
                                     return `
