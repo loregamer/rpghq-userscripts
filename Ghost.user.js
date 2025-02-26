@@ -464,9 +464,28 @@
   // 3) IGNORE / GHOST USERS FUNCTIONS
   // ---------------------------------------------------------------------
 
+  function cleanUsername(username) {
+    if (!username) return "";
+
+    // First remove any HTML tags that might be in the username
+    let cleaned = username.replace(/<[^>]*>/g, "");
+
+    // Remove "Never Iggy" and other button text that might be in the username
+    cleaned = cleaned.replace(
+      /never iggy|unghost user|replace avatar|ghost user/gi,
+      ""
+    );
+
+    // Remove any extra whitespace
+    cleaned = cleaned.replace(/\s+/g, " ").trim();
+
+    return cleaned;
+  }
+
   function isUserIgnored(usernameOrId) {
     if (ignoredUsers.hasOwnProperty(usernameOrId)) return true;
-    const lower = usernameOrId.toLowerCase();
+    const cleanedUsername = cleanUsername(usernameOrId);
+    const lower = cleanedUsername.toLowerCase();
     return Object.values(ignoredUsers).includes(lower);
   }
 
@@ -476,10 +495,11 @@
   }
 
   function toggleUserGhost(userId, username) {
+    const cleanedUsername = cleanUsername(username);
     if (ignoredUsers.hasOwnProperty(userId)) {
       delete ignoredUsers[userId];
     } else {
-      ignoredUsers[userId] = username.toLowerCase();
+      ignoredUsers[userId] = cleanedUsername.toLowerCase();
     }
     GM_setValue("ignoredUsers", ignoredUsers);
   }
@@ -1376,7 +1396,10 @@
 
     // Extract the username after the dash
     const parts = titleText.split("-");
-    const username = parts[1]?.trim() || "Unknown User";
+    let username = parts[1]?.trim() || "Unknown User";
+
+    // Clean the username to remove any button text that might have been included
+    username = cleanUsername(username);
 
     if (!userId) return;
     const container = document.createElement("div");
