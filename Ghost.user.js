@@ -1675,7 +1675,202 @@
   }
 
   // ---------------------------------------------------------------------
-  // 10) RT PAGE INJECTION
+  // 10) IGNORED USERS MANAGEMENT
+  // ---------------------------------------------------------------------
+
+  function showIgnoredUsersPopup() {
+    // Create popup container
+    const popup = document.createElement("div");
+    popup.id = "ignored-users-popup";
+    popup.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #2a2e36;
+      border: 1px solid #3a3f4b;
+      border-radius: 5px;
+      width: 80%;
+      max-width: 600px;
+      height: 80%;
+      max-height: 600px;
+      display: flex;
+      flex-direction: column;
+      z-index: 9999;
+      font-family: 'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif;
+    `;
+
+    // Header with title and close button
+    const header = document.createElement("div");
+    header.style.cssText = `
+      padding: 10px;
+      background-color: #2a2e36;
+      border-bottom: 1px solid #3a3f4b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    `;
+    const title = document.createElement("h2");
+    title.textContent = "Ghosted Users";
+    title.style.cssText = "margin: 0; color: #c5d0db; font-size: 1.2em;";
+    const closeButton = document.createElement("button");
+    closeButton.textContent = "×";
+    closeButton.style.cssText = `
+      background-color: transparent;
+      color: #c5d0db;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+    `;
+    closeButton.onclick = () => document.body.removeChild(popup);
+    header.appendChild(title);
+    header.appendChild(closeButton);
+
+    // Content area for the user list
+    const content = document.createElement("div");
+    content.style.cssText = `
+      padding: 10px;
+      overflow-y: auto;
+      flex-grow: 1;
+      background-color: #2a2e36;
+    `;
+    const userList = document.createElement("ul");
+    userList.style.cssText = `
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    `;
+
+    // Render user list
+    const userEntries = Object.entries(ignoredUsers).map(
+      ([userId, username]) => ({
+        userId,
+        username: typeof username === "string" ? username : "Unknown User",
+      })
+    );
+
+    userEntries.sort((a, b) => a.username.localeCompare(b.username));
+
+    userEntries.forEach(({ userId, username }) => {
+      const listItem = document.createElement("li");
+      listItem.style.cssText = `
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        padding: 5px;
+        border-bottom: 1px solid #3a3f4b;
+      `;
+
+      const unghostedButton = document.createElement("button");
+      unghostedButton.textContent = "Unghost";
+      unghostedButton.style.cssText = `
+        background-color: #4a5464;
+        color: #c5d0db;
+        border: none;
+        padding: 2px 5px;
+        border-radius: 3px;
+        cursor: pointer;
+        margin-right: 10px;
+        font-size: 0.8em;
+      `;
+      unghostedButton.onclick = () => {
+        toggleUserGhost(userId, username);
+        listItem.remove();
+        if (userList.children.length === 0) {
+          userList.innerHTML =
+            '<p style="color: #c5d0db;">No ghosted users.</p>';
+        }
+      };
+
+      const userLink = document.createElement("a");
+      userLink.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
+      userLink.textContent = username;
+      userLink.style.cssText =
+        "color: #4a90e2; text-decoration: none; flex-grow: 1;";
+
+      listItem.appendChild(unghostedButton);
+      listItem.appendChild(userLink);
+      userList.appendChild(listItem);
+    });
+
+    if (Object.keys(ignoredUsers).length === 0) {
+      userList.innerHTML = '<p style="color: #c5d0db;">No ghosted users.</p>';
+    }
+
+    content.appendChild(userList);
+
+    // Bottom controls with buttons
+    const bottomControls = document.createElement("div");
+    bottomControls.style.cssText = `
+      padding: 10px;
+      background-color: #2a2e36;
+      border-top: 1px solid #3a3f4b;
+      text-align: center;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    `;
+
+    // Mass Unghost button
+    const massUnghostButton = document.createElement("button");
+    massUnghostButton.innerHTML =
+      '<i class="icon fa-trash fa-fw" aria-hidden="true"></i> Unghost All';
+    massUnghostButton.style.cssText = `
+      background-color: #4a5464;
+      color: #c5d0db;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    `;
+    massUnghostButton.onclick = () => {
+      if (confirm("Are you sure you want to unghost all users?")) {
+        GM_setValue("ignoredUsers", {});
+        ignoredUsers = {};
+        userList.innerHTML = '<p style="color: #c5d0db;">No ghosted users.</p>';
+        alert("All users have been unghosted.");
+      }
+    };
+
+    bottomControls.appendChild(massUnghostButton);
+
+    // Assemble the popup
+    popup.appendChild(header);
+    popup.appendChild(content);
+    popup.appendChild(bottomControls);
+    document.body.appendChild(popup);
+  }
+
+  function addShowIgnoredUsersButton() {
+    const dropdown = document.querySelector(
+      "#username_logged_in .dropdown-contents"
+    );
+    if (dropdown && !document.getElementById("show-ignored-users-button")) {
+      const listItem = document.createElement("li");
+      const showButton = document.createElement("a");
+      showButton.id = "show-ignored-users-button";
+      showButton.href = "#";
+      showButton.title = "Ghosted Users";
+      showButton.role = "menuitem";
+      showButton.innerHTML =
+        '<i class="icon fa-ghost fa-fw" aria-hidden="true"></i><span>Ghosted Users</span>';
+
+      showButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        showIgnoredUsersPopup();
+      });
+
+      listItem.appendChild(showButton);
+      dropdown.insertBefore(listItem, dropdown.lastElementChild);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // 11) RT PAGE INJECTION
   // ---------------------------------------------------------------------
 
   async function injectRTContent() {
@@ -1843,7 +2038,7 @@
   }
 
   // ---------------------------------------------------------------------
-  // 11) INIT ON DOMContentLoaded
+  // 12) INIT ON DOMContentLoaded
   // ---------------------------------------------------------------------
 
   document.addEventListener("DOMContentLoaded", async () => {
@@ -1899,6 +2094,7 @@
     await processIgnoredContentOnce();
     replaceUserAvatars();
     addGhostButtonsIfOnProfile();
+    addShowIgnoredUsersButton();
     processOnlineList();
     moveExternalLinkIcon();
     cleanGhostedQuotesInTextarea();
