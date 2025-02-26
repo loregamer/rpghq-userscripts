@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.3
+// @version      5.3.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1367,8 +1367,17 @@
     if (!memberlistTitle || document.getElementById("ghost-user-button"))
       return;
     const userId = getUserIdFromUrl();
-    const parts = memberlistTitle.textContent.split("-");
+
+    // Get just the direct text content, not including child divs
+    const titleText = Array.from(memberlistTitle.childNodes)
+      .filter((node) => node.nodeType === Node.TEXT_NODE)
+      .map((node) => node.textContent.trim())
+      .join(" ");
+
+    // Extract the username after the dash
+    const parts = titleText.split("-");
     const username = parts[1]?.trim() || "Unknown User";
+
     if (!userId) return;
     const container = document.createElement("div");
     container.style.display = "inline-block";
