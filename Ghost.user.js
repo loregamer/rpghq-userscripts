@@ -1857,7 +1857,7 @@
       showButton.title = "Ghosted Users";
       showButton.role = "menuitem";
       showButton.innerHTML =
-        '<i class="icon fa-ghost fa-fw" aria-hidden="true"></i><span>Ghosted Users</span>';
+        '<i class="icon fa-ban fa-fw" aria-hidden="true"></i><span>Ghosted Users</span>';
 
       showButton.addEventListener("click", function (e) {
         e.preventDefault();
