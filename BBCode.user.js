@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      5.2
-// @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags and save/restore form content
+// @version      5.3
+// @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags, save/restore form content, and prevent accidental tab closing
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php?mode=post*
 // @match        https://rpghq.org/forums/posting.php?mode=quote*
@@ -1864,6 +1864,13 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       setTimeout(initialize, 500);
     }
   }
+
+  window.addEventListener("beforeunload", function (e) {
+    const confirmationMessage =
+      "You have unsaved changes. Are you sure you want to leave?";
+    e.returnValue = confirmationMessage; // Standard for most browsers
+    return confirmationMessage; // For older browsers
+  });
 
   // Run the initialize function on page load
   window.addEventListener("load", function () {
