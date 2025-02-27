@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      5.1
-// @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags
+// @version      5.2
+// @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags and save/restore form content
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php?mode=post*
 // @match        https://rpghq.org/forums/posting.php?mode=quote*
@@ -1357,6 +1357,137 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
 
       // Start checking for updates
       checkForUpdates();
+
+      // Find the "Submit a new mod" heading and add copy/paste buttons next to it
+      document.querySelectorAll("h3").forEach((heading) => {
+        if (heading.textContent.trim() === "Submit a new mod") {
+          // Create a container for the copy/paste buttons
+          const headerContainer = document.createElement("div");
+          headerContainer.style.cssText = `
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+          `;
+
+          // Create the heading clone
+          const headingClone = document.createElement("h3");
+          headingClone.textContent = heading.textContent;
+          headingClone.style.margin = "0 10px 0 0";
+
+          // Copy any classes from the original heading
+          if (heading.className) {
+            headingClone.className = heading.className;
+          }
+
+          // Preserve any inline styles from the original heading
+          Array.from(heading.style).forEach((property) => {
+            if (property !== "margin") {
+              // Skip margin as we've already set it
+              headingClone.style[property] = heading.style[property];
+            }
+          });
+
+          // Create the "Copy" button
+          const copyButton = document.createElement("button");
+          copyButton.textContent = "Copy";
+          copyButton.style.cssText = `
+            background-color: #4a5464;
+            color: #c5d0db;
+            border: none;
+            padding: 5px 10px;
+            margin-right: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+          `;
+
+          // Create the "Paste" button
+          const pasteButton = document.createElement("button");
+          pasteButton.textContent = "Paste";
+          pasteButton.style.cssText = `
+            background-color: #4a5464;
+            color: #c5d0db;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+          `;
+
+          // Add event listener for the "Copy" button
+          copyButton.addEventListener("click", function () {
+            // Get the textarea value
+            const message = document.getElementById("message").value;
+
+            // Save the data using GM_setValue
+            GM_setValue("savedFormData", JSON.stringify({ message: message }));
+
+            // Show feedback to the user
+            const notification = document.createElement("div");
+            notification.textContent = "Form data saved!";
+            notification.style.cssText = `
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              background-color: #4a5464;
+              color: #c5d0db;
+              padding: 10px;
+              border-radius: 5px;
+              z-index: 9999;
+              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            `;
+            document.body.appendChild(notification);
+
+            // Remove the notification after 2 seconds
+            setTimeout(() => {
+              document.body.removeChild(notification);
+            }, 2000);
+          });
+
+          // Add event listener for the "Paste" button
+          pasteButton.addEventListener("click", function () {
+            // Retrieve saved data
+            const savedData = GM_getValue("savedFormData", "{}");
+            const formData = JSON.parse(savedData);
+
+            // If the saved data contains a message, restore it
+            if (formData.message) {
+              document.getElementById("message").value = formData.message;
+
+              // Refresh the syntax highlighting and adjust the textarea size
+              updateHighlight();
+              adjustTextareaAndHighlight();
+
+              // Show feedback to the user
+              const notification = document.createElement("div");
+              notification.textContent = "Form data restored!";
+              notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #4a5464;
+                color: #c5d0db;
+                padding: 10px;
+                border-radius: 5px;
+                z-index: 9999;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+              `;
+              document.body.appendChild(notification);
+
+              // Remove the notification after 2 seconds
+              setTimeout(() => {
+                document.body.removeChild(notification);
+              }, 2000);
+            }
+          });
+
+          // Append elements to the container
+          headerContainer.appendChild(headingClone);
+          headerContainer.appendChild(copyButton);
+          headerContainer.appendChild(pasteButton);
+
+          // Replace the original heading with our container
+          heading.parentNode.replaceChild(headerContainer, heading);
+        }
+      });
 
       // Add custom smiley buttons
       addCustomSmileyButtons();
