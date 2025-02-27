@@ -247,15 +247,21 @@
         // User entry
         resultItem.setAttribute("data-user-id", item.user_id);
 
-        // Use default avatar path
-        const avatarUrl =
-          `https://rpghq.org/forums/download/file.php?avatar=${item.user_id}` ||
-          "https://rpghq.org/forums/styles/prosilver/theme/images/no_avatar.gif";
-
+        // Create avatar URL with proper format
+        const userId = item.user_id;
         const username = item.value || item.key || "Unknown User";
 
+        // Default fallback avatar
+        const defaultAvatar =
+          "https://rpghq.org/forums/styles/prosilver/theme/images/no_avatar.gif";
+
+        // Create the result item with image that tries multiple extensions
         resultItem.innerHTML = `
-          <img src="${avatarUrl}" alt="${username}'s avatar" onerror="this.src='https://rpghq.org/forums/styles/prosilver/theme/images/no_avatar.gif';">
+          <img 
+            src="https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg" 
+            alt="${username}'s avatar" 
+            onerror="if(this.src.endsWith('.jpg')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.png';}else if(this.src.endsWith('.png')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.gif';}else{this.src='${defaultAvatar}';}"
+          >
           <span>${username}</span>
         `;
 
