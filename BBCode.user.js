@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      5.4
+// @version      5.4.1
 // @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags, save/restore form content, and prevent accidental tab closing
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php?mode=post*
@@ -48,11 +48,14 @@ SOFTWARE.
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get("mode");
 
-    if (mode === "reply") {
-      const postingTitleElement = document.querySelector(".posting-title a");
-      if (postingTitleElement) {
-        const threadTitle = postingTitleElement.textContent.trim();
+    const postingTitleElement = document.querySelector(".posting-title a");
+    if (postingTitleElement) {
+      const threadTitle = postingTitleElement.textContent.trim();
+
+      if (mode === "reply" || mode === "quote") {
         document.title = `RPGHQ - Replying to "${threadTitle}"`;
+      } else if (mode === "edit") {
+        document.title = `RPGHQ - Editing post in "${threadTitle}"`;
       }
     }
   }
