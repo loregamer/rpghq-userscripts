@@ -65,104 +65,24 @@ SOFTWARE.
   // Define separator line
   const SEPARATOR_LINE = "----------------------------------------";
 
-  // Function to extract code blocks from posts containing "Mod Report"
-  function extractModReportCodeBlocks() {
-    const codeBlocks = [];
+  // Function to extract all code blocks and categorize them
+  function extractCodeBlocks() {
+    const modReports = [];
+    const authorReports = [];
 
-    // Find all posts
-    document.querySelectorAll(".post").forEach((post) => {
-      const postContent = post.querySelector(".content");
+    // Find all code blocks in the page
+    document.querySelectorAll(".codebox pre code").forEach((codeBlock) => {
+      const content = codeBlock.textContent.trim();
 
-      // Check if post content exists and contains "Mod Report"
-      if (postContent && postContent.textContent.includes("Mod Report")) {
-        // Find code blocks within this post
-        const codeBox = postContent.querySelector(".codebox pre code");
-        if (codeBox) {
-          codeBlocks.push(codeBox.textContent.trim());
-        }
+      // Categorize based on content
+      if (content.startsWith("Game Shortname:")) {
+        modReports.push(content);
+      } else if (content.startsWith("Username:")) {
+        authorReports.push(content);
       }
     });
 
-    return codeBlocks;
-  }
-
-  // Function to extract code blocks from posts containing "Author Report"
-  function extractAuthorReportCodeBlocks() {
-    const codeBlocks = [];
-
-    // Find all posts
-    document.querySelectorAll(".post").forEach((post) => {
-      const postContent = post.querySelector(".content");
-
-      // Check if post content exists and contains "Author Report"
-      if (postContent && postContent.textContent.includes("Author Report")) {
-        // Find code blocks within this post
-        const codeBox = postContent.querySelector(".codebox pre code");
-        if (codeBox) {
-          codeBlocks.push(codeBox.textContent.trim());
-        }
-      }
-    });
-
-    return codeBlocks;
-  }
-
-  // Function to extract mod names from the page (kept for backward compatibility)
-  function extractMods() {
-    const modNames = new Set();
-
-    // Look for mod names in post content
-    document.querySelectorAll(".content").forEach((content) => {
-      // Look for links that might contain mod names
-      const modLinks = content.querySelectorAll('a[href*="nexusmods.com"]');
-      modLinks.forEach((link) => {
-        const url = link.href;
-        const modNameMatch = url.match(
-          /nexusmods\.com\/[^\/]+\/mods\/([^\/\?#]+)/
-        );
-        if (modNameMatch && modNameMatch[1]) {
-          let modName = modNameMatch[1].replace(/-/g, " ");
-          modName = modName.replace(/\b\w/g, (l) => l.toUpperCase()); // Capitalize first letter of each word
-          modNames.add(modName);
-        } else {
-          // If no match in URL, use the link text as a fallback
-          const linkText = link.textContent.trim();
-          if (linkText && !linkText.includes("nexusmods.com")) {
-            modNames.add(linkText);
-          }
-        }
-      });
-
-      // Look for text that might mention mods
-      const text = content.textContent;
-      const modMatches = text.match(
-        /(?:mod|addon|add-on|plugin):\s*([^\n.,]+)/gi
-      );
-      if (modMatches) {
-        modMatches.forEach((match) => {
-          const modName = match
-            .replace(/(?:mod|addon|add-on|plugin):\s*/i, "")
-            .trim();
-          if (modName) {
-            modNames.add(modName);
-          }
-        });
-      }
-    });
-
-    return Array.from(modNames);
-  }
-
-  // Function to extract author names from the page
-  function extractAuthors() {
-    const authors = new Set();
-
-    // Get all usernames from posts
-    document.querySelectorAll(".postprofile .username").forEach((username) => {
-      authors.add(username.textContent.trim());
-    });
-
-    return Array.from(authors);
+    return { modReports, authorReports };
   }
 
   // Function to copy text to clipboard
@@ -246,12 +166,14 @@ SOFTWARE.
     copyAuthorsButton.appendChild(authorsText);
     copyAuthorsContainer.appendChild(copyAuthorsButton);
 
+    // Extract all code blocks once when buttons are added
+    const { modReports, authorReports } = extractCodeBlocks();
+
     // Add event listeners
     copyModsButton.addEventListener("click", function (e) {
       e.preventDefault();
-      const codeBlocks = extractModReportCodeBlocks();
-      if (codeBlocks.length > 0) {
-        copyToClipboard(codeBlocks.join(`\n\n${SEPARATOR_LINE}\n\n`));
+      if (modReports.length > 0) {
+        copyToClipboard(modReports.join(`\n\n${SEPARATOR_LINE}\n\n`));
       } else {
         copyToClipboard("No mod reports found");
       }
@@ -259,9 +181,8 @@ SOFTWARE.
 
     copyAuthorsButton.addEventListener("click", function (e) {
       e.preventDefault();
-      const authorCodeBlocks = extractAuthorReportCodeBlocks();
-      if (authorCodeBlocks.length > 0) {
-        copyToClipboard(authorCodeBlocks.join(`\n\n${SEPARATOR_LINE}\n\n`));
+      if (authorReports.length > 0) {
+        copyToClipboard(authorReports.join(`\n\n${SEPARATOR_LINE}\n\n`));
       } else {
         copyToClipboard("No author reports found");
       }
