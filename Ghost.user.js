@@ -184,27 +184,6 @@
       border-radius: 4px;
       padding: 6px;
     }
-    
-    /* Special styling for posts hidden due to mentions */
-    .ghosted-post.ghosted-by-mention.show {
-      border: 3px solid;
-      border-image: linear-gradient(to right, #ff9e4a, #ffd700) 1;
-      border-image-slice: 1;
-      background-color: rgba(255, 158, 74, 0.05);
-    }
-    
-    /* Add a label to indicate why the post was hidden */
-    .ghosted-post.ghosted-by-mention.show::before {
-      content: "Hidden due to @mention of ghosted user";
-      display: block;
-      background-color: rgba(255, 158, 74, 0.2);
-      color: #fff;
-      padding: 2px 8px;
-      margin-bottom: 5px;
-      font-size: 0.8em;
-      border-radius: 3px;
-      width: fit-content;
-    }
 
     /* -----------------------------------------------------------------
        5) Post preview tooltip & custom quote styling
@@ -1153,8 +1132,8 @@
     // Check for @mentions of ghosted users
     if (!hideIt && postContentContainsMentionedGhosted(post)) {
       hideIt = true;
-      // Add a special class to indicate it was hidden due to mentions
-      post.classList.add("ghosted-by-mention");
+      // Use the existing ghosted-by-content class
+      post.classList.add("ghosted-by-content");
     }
     if (hideIt) {
       post.classList.add("ghosted-post");
