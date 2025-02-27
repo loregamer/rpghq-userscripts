@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.4
-// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, now with a single spinner per container
+// @version      5.5
+// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users
 // @author       You
 // @match        https://rpghq.org/*/*
 // @run-at       document-start
@@ -183,6 +183,27 @@
       border-image-slice: 1;
       border-radius: 4px;
       padding: 6px;
+    }
+    
+    /* Special styling for posts hidden due to mentions */
+    .ghosted-post.ghosted-by-mention.show {
+      border: 3px solid;
+      border-image: linear-gradient(to right, #ff9e4a, #ffd700) 1;
+      border-image-slice: 1;
+      background-color: rgba(255, 158, 74, 0.05);
+    }
+    
+    /* Add a label to indicate why the post was hidden */
+    .ghosted-post.ghosted-by-mention.show::before {
+      content: "Hidden due to @mention of ghosted user";
+      display: block;
+      background-color: rgba(255, 158, 74, 0.2);
+      color: #fff;
+      padding: 2px 8px;
+      margin-bottom: 5px;
+      font-size: 0.8em;
+      border-radius: 3px;
+      width: fit-content;
     }
 
     /* -----------------------------------------------------------------
@@ -608,6 +629,29 @@
         if (isUserIgnored(quotedName)) return true;
       }
     }
+    return false;
+  }
+
+  // Check if post content contains @mentions of ghosted users
+  function postContentContainsMentionedGhosted(post) {
+    // Get the post content div
+    const contentDiv = post.querySelector(".content");
+    if (!contentDiv) return false;
+
+    // Get the text content of the post
+    const postText = contentDiv.textContent;
+    if (!postText) return false;
+
+    // Check for @username mentions of ghosted users
+    for (const userId in ignoredUsers) {
+      const username = ignoredUsers[userId];
+      // Look for @username pattern with word boundary
+      const mentionRegex = new RegExp(`@${username}\\b`, "i");
+      if (mentionRegex.test(postText)) {
+        return true;
+      }
+    }
+
     return false;
   }
 
@@ -1105,6 +1149,12 @@
     }
     if (usernameEl && isUserIgnored(usernameEl.textContent.trim())) {
       hideIt = true;
+    }
+    // Check for @mentions of ghosted users
+    if (!hideIt && postContentContainsMentionedGhosted(post)) {
+      hideIt = true;
+      // Add a special class to indicate it was hidden due to mentions
+      post.classList.add("ghosted-by-mention");
     }
     if (hideIt) {
       post.classList.add("ghosted-post");
