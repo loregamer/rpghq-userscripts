@@ -1417,8 +1417,68 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
             // Get the textarea value
             const message = document.getElementById("message").value;
 
+            // Collect all form data from the mod submission form
+            const formData = {
+              message: message,
+            };
+
+            // Get values from the modwrangler form fields if they exist
+            if (document.getElementById("modwrangler-wrapper")) {
+              // Game selection
+              if (document.getElementById("gameSelect")) {
+                formData.gameSelect =
+                  document.getElementById("gameSelect").value;
+              }
+
+              // Mod name
+              if (document.getElementById("modName")) {
+                formData.modName = document.getElementById("modName").value;
+              }
+
+              // Version
+              if (document.getElementById("modVersion")) {
+                formData.modVersion =
+                  document.getElementById("modVersion").value;
+              }
+
+              // Author
+              if (document.getElementById("modAuthorName")) {
+                formData.modAuthorName =
+                  document.getElementById("modAuthorName").value;
+              }
+
+              // Tags (checkboxes)
+              formData.tags = [];
+              const tagCheckboxes = document.querySelectorAll(
+                'input[type="checkbox"][id^="tag-"]'
+              );
+              tagCheckboxes.forEach((checkbox) => {
+                if (checkbox.checked) {
+                  formData.tags.push(checkbox.value);
+                }
+              });
+
+              // Thumbnail URL
+              if (document.getElementById("thumbnailURL")) {
+                formData.thumbnailURL =
+                  document.getElementById("thumbnailURL").value;
+              }
+
+              // Mod download URL
+              if (document.getElementById("vaultFileName")) {
+                formData.vaultFileName =
+                  document.getElementById("vaultFileName").value;
+              }
+
+              // Description
+              if (document.getElementById("modDescription")) {
+                formData.modDescription =
+                  document.getElementById("modDescription").value;
+              }
+            }
+
             // Save the data using GM_setValue
-            GM_setValue("savedFormData", JSON.stringify({ message: message }));
+            GM_setValue("savedFormData", JSON.stringify(formData));
 
             // Show feedback to the user
             const notification = document.createElement("div");
@@ -1455,28 +1515,112 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
               // Refresh the syntax highlighting and adjust the textarea size
               updateHighlight();
               adjustTextareaAndHighlight();
-
-              // Show feedback to the user
-              const notification = document.createElement("div");
-              notification.textContent = "Form data restored!";
-              notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background-color: #4a5464;
-                color: #c5d0db;
-                padding: 10px;
-                border-radius: 5px;
-                z-index: 9999;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-              `;
-              document.body.appendChild(notification);
-
-              // Remove the notification after 2 seconds
-              setTimeout(() => {
-                document.body.removeChild(notification);
-              }, 2000);
             }
+
+            // Restore values to the modwrangler form fields if they exist
+            if (document.getElementById("modwrangler-wrapper")) {
+              // Game selection
+              if (
+                document.getElementById("gameSelect") &&
+                formData.gameSelect
+              ) {
+                document.getElementById("gameSelect").value =
+                  formData.gameSelect;
+              }
+
+              // Mod name
+              if (document.getElementById("modName") && formData.modName) {
+                document.getElementById("modName").value = formData.modName;
+              }
+
+              // Version
+              if (
+                document.getElementById("modVersion") &&
+                formData.modVersion
+              ) {
+                document.getElementById("modVersion").value =
+                  formData.modVersion;
+              }
+
+              // Author
+              if (
+                document.getElementById("modAuthorName") &&
+                formData.modAuthorName
+              ) {
+                document.getElementById("modAuthorName").value =
+                  formData.modAuthorName;
+              }
+
+              // Tags (checkboxes)
+              if (formData.tags && Array.isArray(formData.tags)) {
+                // First, uncheck all checkboxes
+                const tagCheckboxes = document.querySelectorAll(
+                  'input[type="checkbox"][id^="tag-"]'
+                );
+                tagCheckboxes.forEach((checkbox) => {
+                  checkbox.checked = false;
+                });
+
+                // Then check the ones that were saved
+                formData.tags.forEach((tag) => {
+                  // Find the checkbox with the matching value, not ID
+                  const checkbox = document.querySelector(
+                    `input[type="checkbox"][value="${tag}"]`
+                  );
+                  if (checkbox) {
+                    checkbox.checked = true;
+                  }
+                });
+              }
+
+              // Thumbnail URL
+              if (
+                document.getElementById("thumbnailURL") &&
+                formData.thumbnailURL
+              ) {
+                document.getElementById("thumbnailURL").value =
+                  formData.thumbnailURL;
+              }
+
+              // Mod download URL
+              if (
+                document.getElementById("vaultFileName") &&
+                formData.vaultFileName
+              ) {
+                document.getElementById("vaultFileName").value =
+                  formData.vaultFileName;
+              }
+
+              // Description
+              if (
+                document.getElementById("modDescription") &&
+                formData.modDescription
+              ) {
+                document.getElementById("modDescription").value =
+                  formData.modDescription;
+              }
+            }
+
+            // Show feedback to the user
+            const notification = document.createElement("div");
+            notification.textContent = "Form data restored!";
+            notification.style.cssText = `
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              background-color: #4a5464;
+              color: #c5d0db;
+              padding: 10px;
+              border-radius: 5px;
+              z-index: 9999;
+              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            `;
+            document.body.appendChild(notification);
+
+            // Remove the notification after 2 seconds
+            setTimeout(() => {
+              document.body.removeChild(notification);
+            }, 2000);
           });
 
           // Append elements to the container
