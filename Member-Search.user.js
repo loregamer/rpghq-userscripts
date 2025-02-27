@@ -33,11 +33,14 @@
             background-color: #1e232b;
             border: 1px solid #292e37;
             border-radius: 4px;
-            width: 400px;
-            max-width: 90%;
+            width: 350px;
+            max-width: 80%;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            padding: 20px;
+            padding: 20px 20px;
             position: relative;
+            z-index: 1001;
+            margin: 0 auto;
+            box-sizing: border-box;
         }
         .member-search-close {
             position: absolute;
@@ -57,7 +60,7 @@
             text-align: center;
         }
         .member-search-input {
-            width: 100%;
+            width: calc(100% - 20px);
             padding: 8px 10px;
             border: 1px solid #292e37;
             border-radius: 4px;
@@ -65,6 +68,11 @@
             color: #fff;
             margin-bottom: 10px;
             font-size: 14px;
+            position: relative;
+            z-index: 1002;
+            margin-left: 10px;
+            margin-right: 10px;
+            box-sizing: border-box;
         }
         .member-search-input:focus {
             outline: none;
@@ -122,7 +130,7 @@
     modal.innerHTML = `
             <div class="member-search-container">
                 <div class="member-search-close">&times;</div>
-                <div class="member-search-title">Find Member</div>
+                <div class="member-search-title">Member Search</div>
                 <input type="text" class="member-search-input" placeholder="Search for a member...">
                 <div class="member-search-results"></div>
             </div>
@@ -136,12 +144,8 @@
       modal.classList.remove("active");
     });
 
-    // Close modal when clicking outside of the search container
-    modal.addEventListener("click", function (e) {
-      if (e.target === modal) {
-        modal.classList.remove("active");
-      }
-    });
+    // Remove the event listener that closes the modal when clicking outside
+    // This ensures users must click the X to close the overlay
 
     // Setup search functionality
     setupSearchFunctionality(modal);
