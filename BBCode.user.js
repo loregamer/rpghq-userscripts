@@ -1389,7 +1389,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
 
           // Create the "Copy" button
           const copyButton = document.createElement("button");
-          copyButton.textContent = "Copy";
+          copyButton.innerHTML =
+            '<i class="icon fa-copy fa-fw" aria-hidden="true"></i> Copy';
           copyButton.style.cssText = `
             background-color: #4a5464;
             color: #c5d0db;
@@ -1398,11 +1399,15 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
             margin-right: 5px;
             border-radius: 3px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
           `;
 
           // Create the "Paste" button
           const pasteButton = document.createElement("button");
-          pasteButton.textContent = "Paste";
+          pasteButton.innerHTML =
+            '<i class="icon fa-paste fa-fw" aria-hidden="true"></i> Paste';
           pasteButton.style.cssText = `
             background-color: #4a5464;
             color: #c5d0db;
@@ -1410,10 +1415,17 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
             padding: 5px 10px;
             border-radius: 3px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
           `;
 
           // Add event listener for the "Copy" button
-          copyButton.addEventListener("click", function () {
+          copyButton.addEventListener("click", function (e) {
+            // Prevent default action and event propagation to avoid page reload
+            e.preventDefault();
+            e.stopPropagation();
+
             // Get the textarea value
             const message = document.getElementById("message").value;
 
@@ -1503,7 +1515,11 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
           });
 
           // Add event listener for the "Paste" button
-          pasteButton.addEventListener("click", function () {
+          pasteButton.addEventListener("click", function (e) {
+            // Prevent default action and event propagation to avoid page reload
+            e.preventDefault();
+            e.stopPropagation();
+
             // Retrieve saved data
             const savedData = GM_getValue("savedFormData", "{}");
             const formData = JSON.parse(savedData);
