@@ -43,6 +43,20 @@ SOFTWARE.
 (function () {
   "use strict";
 
+  // Function to update the page title for reply mode
+  function updatePageTitle() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get("mode");
+
+    if (mode === "reply") {
+      const postingTitleElement = document.querySelector(".posting-title a");
+      if (postingTitleElement) {
+        const threadTitle = postingTitleElement.textContent.trim();
+        document.title = `RPGHQ - Replying to "${threadTitle}"`;
+      }
+    }
+  }
+
   window.resizeTextArea = function ($items, options) {
     return;
   };
@@ -1239,6 +1253,9 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
   }
 
   function initialize() {
+    // Update the page title for reply mode
+    updatePageTitle();
+
     const textArea = document.getElementById("message");
     if (textArea) {
       removeInterferingEventListeners();
