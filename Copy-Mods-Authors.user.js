@@ -85,6 +85,12 @@ SOFTWARE.
     return { modReports, authorReports };
   }
 
+  // Function to replace standalone "-" with "null" in report text
+  function replaceHyphensWithNull(text) {
+    // Replace standalone "-" that appears after a colon and whitespace
+    return text.replace(/:\s*-(\s|$)/g, ": null$1");
+  }
+
   // Function to copy text to clipboard
   function copyToClipboard(text) {
     const textarea = document.createElement("textarea");
@@ -173,7 +179,11 @@ SOFTWARE.
     copyModsButton.addEventListener("click", function (e) {
       e.preventDefault();
       if (modReports.length > 0) {
-        copyToClipboard(modReports.join(`\n\n${SEPARATOR_LINE}\n\n`));
+        // Process each report to replace hyphens with null
+        const processedReports = modReports.map((report) =>
+          replaceHyphensWithNull(report)
+        );
+        copyToClipboard(processedReports.join(`\n\n${SEPARATOR_LINE}\n\n`));
       } else {
         copyToClipboard("No mod reports found");
       }
@@ -182,7 +192,11 @@ SOFTWARE.
     copyAuthorsButton.addEventListener("click", function (e) {
       e.preventDefault();
       if (authorReports.length > 0) {
-        copyToClipboard(authorReports.join(`\n\n${SEPARATOR_LINE}\n\n`));
+        // Process each report to replace hyphens with null
+        const processedReports = authorReports.map((report) =>
+          replaceHyphensWithNull(report)
+        );
+        copyToClipboard(processedReports.join(`\n\n${SEPARATOR_LINE}\n\n`));
       } else {
         copyToClipboard("No author reports found");
       }
