@@ -205,8 +205,8 @@ SOFTWARE.
     // Insert buttons before the pagination
     const paginationDiv = actionBar.querySelector(".pagination");
     if (paginationDiv) {
-      actionBar.insertBefore(copyAuthorsContainer, paginationDiv);
       actionBar.insertBefore(copyModsContainer, paginationDiv);
+      actionBar.insertBefore(copyAuthorsContainer, paginationDiv);
     } else {
       // If pagination not found, append to the end
       actionBar.appendChild(copyModsContainer);
