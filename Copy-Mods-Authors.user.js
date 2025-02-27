@@ -83,6 +83,27 @@ SOFTWARE.
     return codeBlocks;
   }
 
+  // Function to extract code blocks from posts containing "Author Report"
+  function extractAuthorReportCodeBlocks() {
+    const codeBlocks = [];
+
+    // Find all posts
+    document.querySelectorAll(".post").forEach((post) => {
+      const postContent = post.querySelector(".content");
+
+      // Check if post content exists and contains "Author Report"
+      if (postContent && postContent.textContent.includes("Author Report")) {
+        // Find code blocks within this post
+        const codeBox = postContent.querySelector(".codebox pre code");
+        if (codeBox) {
+          codeBlocks.push(codeBox.textContent.trim());
+        }
+      }
+    });
+
+    return codeBlocks;
+  }
+
   // Function to extract mod names from the page (kept for backward compatibility)
   function extractMods() {
     const modNames = new Set();
@@ -209,7 +230,7 @@ SOFTWARE.
     copyAuthorsButton.id = "copy-authors-button";
     copyAuthorsButton.className =
       "button button-secondary dropdown-trigger copy-button";
-    copyAuthorsButton.title = "Copy Author Names";
+    copyAuthorsButton.title = "Copy Author Reports";
 
     const authorsIcon = document.createElement("i");
     authorsIcon.className = "icon fa-users fa-fw";
@@ -235,11 +256,11 @@ SOFTWARE.
 
     copyAuthorsButton.addEventListener("click", function (e) {
       e.preventDefault();
-      const authors = extractAuthors();
-      if (authors.length > 0) {
-        copyToClipboard(authors.join("\n"));
+      const authorCodeBlocks = extractAuthorReportCodeBlocks();
+      if (authorCodeBlocks.length > 0) {
+        copyToClipboard(authorCodeBlocks.join("\n\n"));
       } else {
-        copyToClipboard("No authors found");
+        copyToClipboard("No author reports found");
       }
     });
 
