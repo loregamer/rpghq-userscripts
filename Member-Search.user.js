@@ -253,7 +253,7 @@
 
         // Default fallback avatar
         const defaultAvatar =
-          "https://rpghq.org/forums/styles/prosilver/theme/images/no_avatar.gif";
+          "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
 
         // Create the result item with image that tries multiple extensions
         resultItem.innerHTML = `
