@@ -105,6 +105,14 @@
             padding: 10px;
             color: #8a8a8a;
         }
+        .member-search-group {
+            background-color: #272e38;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 6px;
+            font-size: 0.8em;
+            color: #aaa;
+        }
     `);
 
   // Create member search modal
@@ -225,28 +233,54 @@
 
     const fragment = document.createDocumentFragment();
 
-    data.forEach((member) => {
-      if (!member || !member.id) return;
+    // Sort to show users first, then groups
+    data.sort((a, b) => {
+      if (a.type === b.type) return 0;
+      return a.type === "user" ? -1 : 1;
+    });
 
+    data.forEach((item) => {
       const resultItem = document.createElement("div");
       resultItem.className = "member-search-result";
-      resultItem.setAttribute("data-user-id", member.id);
 
-      let avatarUrl =
-        member.avatar ||
-        "https://rpghq.org/forums/styles/prosilver/theme/images/no_avatar.gif";
-      let username = member.name || "Unknown User";
-      let userColor = member.color ? `color: ${member.color};` : "";
+      if (item.type === "user") {
+        // User entry
+        resultItem.setAttribute("data-user-id", item.user_id);
 
-      resultItem.innerHTML = `
-                <img src="${avatarUrl}" alt="${username}'s avatar">
-                <span style="${userColor}">${username}</span>
-            `;
+        // Use default avatar path
+        const avatarUrl =
+          `https://rpghq.org/forums/download/file.php?avatar=${item.user_id}` ||
+          "https://rpghq.org/forums/styles/prosilver/theme/images/no_avatar.gif";
 
-      resultItem.addEventListener("click", function () {
-        const userId = this.getAttribute("data-user-id");
-        window.location.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
-      });
+        const username = item.value || item.key || "Unknown User";
+
+        resultItem.innerHTML = `
+          <img src="${avatarUrl}" alt="${username}'s avatar" onerror="this.src='https://rpghq.org/forums/styles/prosilver/theme/images/no_avatar.gif';">
+          <span>${username}</span>
+        `;
+
+        resultItem.addEventListener("click", function () {
+          const userId = this.getAttribute("data-user-id");
+          window.location.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
+        });
+      } else if (item.type === "group") {
+        // Group entry
+        resultItem.setAttribute("data-group-id", item.group_id);
+
+        const groupName = item.value || item.key || "Unknown Group";
+        const count = item.cnt ? `(${item.cnt})` : "";
+
+        resultItem.innerHTML = `
+          <i class="icon fa-users fa-fw" aria-hidden="true" style="font-size: 18px; margin-right: 10px;"></i>
+          <span>${groupName} ${count}</span>
+          <span class="member-search-group">Group</span>
+        `;
+
+        resultItem.addEventListener("click", function () {
+          const groupId = this.getAttribute("data-group-id");
+          window.location.href = `https://rpghq.org/forums/memberlist.php?mode=group&g=${groupId}`;
+        });
+      }
 
       fragment.appendChild(resultItem);
     });
