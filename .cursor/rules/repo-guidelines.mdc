@@ -3,6 +3,8 @@ description: Guidelines for the repo.
 globs: 
 alwaysApply: false
 ---
+This is my repo for storing and updating rpghq userscripts.
+
 All userscripts are for rpghq.org unless otherwise specified. The forum uses phpBB 3.
 
 The headers should always be:
