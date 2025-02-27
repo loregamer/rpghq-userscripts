@@ -62,6 +62,9 @@ SOFTWARE.
     }
   `);
 
+  // Define separator line
+  const SEPARATOR_LINE = "----------------------------------------";
+
   // Function to extract code blocks from posts containing "Mod Report"
   function extractModReportCodeBlocks() {
     const codeBlocks = [];
@@ -248,7 +251,7 @@ SOFTWARE.
       e.preventDefault();
       const codeBlocks = extractModReportCodeBlocks();
       if (codeBlocks.length > 0) {
-        copyToClipboard(codeBlocks.join("\n\n"));
+        copyToClipboard(codeBlocks.join(`\n\n${SEPARATOR_LINE}\n\n`));
       } else {
         copyToClipboard("No mod reports found");
       }
@@ -258,7 +261,7 @@ SOFTWARE.
       e.preventDefault();
       const authorCodeBlocks = extractAuthorReportCodeBlocks();
       if (authorCodeBlocks.length > 0) {
-        copyToClipboard(authorCodeBlocks.join("\n\n"));
+        copyToClipboard(authorCodeBlocks.join(`\n\n${SEPARATOR_LINE}\n\n`));
       } else {
         copyToClipboard("No author reports found");
       }
