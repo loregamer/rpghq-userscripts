@@ -62,7 +62,28 @@ SOFTWARE.
     }
   `);
 
-  // Function to extract mod names from the page
+  // Function to extract code blocks from posts containing "Mod Report"
+  function extractModReportCodeBlocks() {
+    const codeBlocks = [];
+
+    // Find all posts
+    document.querySelectorAll(".post").forEach((post) => {
+      const postContent = post.querySelector(".content");
+
+      // Check if post content exists and contains "Mod Report"
+      if (postContent && postContent.textContent.includes("Mod Report")) {
+        // Find code blocks within this post
+        const codeBox = postContent.querySelector(".codebox pre code");
+        if (codeBox) {
+          codeBlocks.push(codeBox.textContent.trim());
+        }
+      }
+    });
+
+    return codeBlocks;
+  }
+
+  // Function to extract mod names from the page (kept for backward compatibility)
   function extractMods() {
     const modNames = new Set();
 
@@ -166,7 +187,7 @@ SOFTWARE.
     copyModsButton.id = "copy-mods-button";
     copyModsButton.className =
       "button button-secondary dropdown-trigger copy-button";
-    copyModsButton.title = "Copy Mod Names";
+    copyModsButton.title = "Copy Mod Reports";
 
     const modsIcon = document.createElement("i");
     modsIcon.className = "icon fa-clipboard fa-fw";
@@ -204,11 +225,11 @@ SOFTWARE.
     // Add event listeners
     copyModsButton.addEventListener("click", function (e) {
       e.preventDefault();
-      const mods = extractMods();
-      if (mods.length > 0) {
-        copyToClipboard(mods.join("\n"));
+      const codeBlocks = extractModReportCodeBlocks();
+      if (codeBlocks.length > 0) {
+        copyToClipboard(codeBlocks.join("\n\n"));
       } else {
-        copyToClipboard("No mods found");
+        copyToClipboard("No mod reports found");
       }
     });
 
