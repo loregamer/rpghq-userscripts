@@ -1885,7 +1885,25 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     }
   }
 
+  // Track if we're submitting the form
+  let isFormSubmitting = false;
+
+  // Listen for form submissions
+  function setupFormSubmitTracking() {
+    const postForm = document.getElementById("postform");
+    if (postForm) {
+      postForm.addEventListener("submit", function () {
+        isFormSubmitting = true;
+      });
+    }
+  }
+
   window.addEventListener("beforeunload", function (e) {
+    // Only show the warning if we're not submitting the form
+    if (isFormSubmitting) {
+      return undefined;
+    }
+
     const confirmationMessage =
       "You have unsaved changes. Are you sure you want to leave?";
     e.returnValue = confirmationMessage; // Standard for most browsers
@@ -1895,5 +1913,6 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
   // Run the initialize function on page load
   window.addEventListener("load", function () {
     initialize();
+    setupFormSubmitTracking();
   });
 })();
