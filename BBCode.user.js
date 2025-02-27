@@ -1426,92 +1426,253 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
             e.preventDefault();
             e.stopPropagation();
 
-            // Get the textarea value
-            const message = document.getElementById("message").value;
+            // Check if there's already saved form data
+            const existingSavedData = GM_getValue("savedFormData", null);
 
-            // Collect all form data from the mod submission form
-            const formData = {
-              message: message,
-            };
+            // If there's existing data, ask for confirmation with a styled dialog
+            if (existingSavedData) {
+              // Create the confirmation dialog
+              const confirmDialog = document.createElement("div");
+              confirmDialog.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+              `;
 
-            // Get values from the modwrangler form fields if they exist
-            if (document.getElementById("modwrangler-wrapper")) {
-              // Game selection
-              if (document.getElementById("gameSelect")) {
-                formData.gameSelect =
-                  document.getElementById("gameSelect").value;
+              const dialogContent = document.createElement("div");
+              dialogContent.style.cssText = `
+                background-color: #3A404A;
+                border-radius: 5px;
+                padding: 20px;
+                max-width: 450px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+              `;
+
+              const title = document.createElement("h3");
+              title.textContent = "Confirm Overwrite";
+              title.style.cssText = `
+                color: #c5d0db;
+                margin-top: 0;
+                margin-bottom: 15px;
+                font-size: 16px;
+                border-bottom: 1px solid #4a5464;
+                padding-bottom: 10px;
+              `;
+
+              const message = document.createElement("p");
+              message.textContent =
+                "There's already saved form data in your clipboard. Do you want to overwrite it?";
+              message.style.cssText = `
+                color: #c5d0db;
+                margin-bottom: 15px;
+                font-size: 14px;
+              `;
+
+              // Parse the existing data
+              const parsedData = JSON.parse(existingSavedData);
+
+              // Create a preview of the existing data
+              const previewContainer = document.createElement("div");
+              previewContainer.style.cssText = `
+                background-color: #2a2e36;
+                border-radius: 3px;
+                padding: 10px;
+                margin-bottom: 15px;
+                max-height: 150px;
+                overflow-y: auto;
+                font-size: 12px;
+                color: #a0a0a0;
+              `;
+
+              // Create preview content based on saved data
+              let previewHTML = "";
+
+              // Mod name (if exists)
+              if (parsedData.modName) {
+                previewHTML += `<strong>Mod Name:</strong> ${parsedData.modName}<br>`;
               }
 
-              // Mod name
-              if (document.getElementById("modName")) {
-                formData.modName = document.getElementById("modName").value;
+              // Version (if exists)
+              if (parsedData.modVersion) {
+                previewHTML += `<strong>Version:</strong> ${parsedData.modVersion}<br>`;
               }
 
-              // Version
-              if (document.getElementById("modVersion")) {
-                formData.modVersion =
-                  document.getElementById("modVersion").value;
+              // Author (if exists)
+              if (parsedData.modAuthorName) {
+                previewHTML += `<strong>Author:</strong> ${parsedData.modAuthorName}<br>`;
               }
 
-              // Author
-              if (document.getElementById("modAuthorName")) {
-                formData.modAuthorName =
-                  document.getElementById("modAuthorName").value;
+              // Message preview (truncate if too long)
+              if (parsedData.message) {
+                const messagePreview =
+                  parsedData.message.length > 100
+                    ? parsedData.message.substring(0, 100) + "..."
+                    : parsedData.message;
+                previewHTML += `<strong>Message:</strong> ${messagePreview}<br>`;
               }
 
-              // Tags (checkboxes)
-              formData.tags = [];
-              const tagCheckboxes = document.querySelectorAll(
-                'input[type="checkbox"][id^="tag-"]'
-              );
-              tagCheckboxes.forEach((checkbox) => {
-                if (checkbox.checked) {
-                  formData.tags.push(checkbox.value);
-                }
+              // If there are tags
+              if (parsedData.tags && parsedData.tags.length > 0) {
+                previewHTML += `<strong>Tags:</strong> ${parsedData.tags.join(
+                  ", "
+                )}<br>`;
+              }
+
+              // Set the preview HTML
+              previewContainer.innerHTML =
+                previewHTML || "No preview available";
+
+              const buttonContainer = document.createElement("div");
+              buttonContainer.style.cssText = `
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+              `;
+
+              const cancelButton = document.createElement("button");
+              cancelButton.textContent = "Cancel";
+              cancelButton.style.cssText = `
+                background-color: #4a5464;
+                color: #c5d0db;
+                border: none;
+                padding: 8px 15px;
+                border-radius: 3px;
+                cursor: pointer;
+              `;
+
+              const confirmButton = document.createElement("button");
+              confirmButton.textContent = "Overwrite";
+              confirmButton.style.cssText = `
+                background-color: #9C4343;
+                color: #c5d0db;
+                border: none;
+                padding: 8px 15px;
+                border-radius: 3px;
+                cursor: pointer;
+              `;
+
+              // Assemble the dialog
+              dialogContent.appendChild(title);
+              dialogContent.appendChild(message);
+              dialogContent.appendChild(previewContainer);
+              buttonContainer.appendChild(cancelButton);
+              buttonContainer.appendChild(confirmButton);
+              dialogContent.appendChild(buttonContainer);
+              confirmDialog.appendChild(dialogContent);
+              document.body.appendChild(confirmDialog);
+
+              // Add event listeners to the buttons
+              cancelButton.addEventListener("click", function () {
+                document.body.removeChild(confirmDialog);
               });
 
-              // Thumbnail URL
-              if (document.getElementById("thumbnailURL")) {
-                formData.thumbnailURL =
-                  document.getElementById("thumbnailURL").value;
-              }
+              confirmButton.addEventListener("click", function () {
+                document.body.removeChild(confirmDialog);
+                saveFormData();
+              });
 
-              // Mod download URL
-              if (document.getElementById("vaultFileName")) {
-                formData.vaultFileName =
-                  document.getElementById("vaultFileName").value;
-              }
-
-              // Description
-              if (document.getElementById("modDescription")) {
-                formData.modDescription =
-                  document.getElementById("modDescription").value;
-              }
+              return; // Wait for user interaction
+            } else {
+              // No existing data, save immediately
+              saveFormData();
             }
 
-            // Save the data using GM_setValue
-            GM_setValue("savedFormData", JSON.stringify(formData));
+            // Function to save the form data
+            function saveFormData() {
+              // Get the textarea value
+              const message = document.getElementById("message").value;
 
-            // Show feedback to the user
-            const notification = document.createElement("div");
-            notification.textContent = "Form data saved!";
-            notification.style.cssText = `
-              position: fixed;
-              top: 20px;
-              right: 20px;
-              background-color: #4a5464;
-              color: #c5d0db;
-              padding: 10px;
-              border-radius: 5px;
-              z-index: 9999;
-              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            `;
-            document.body.appendChild(notification);
+              // Collect all form data from the mod submission form
+              const formData = {
+                message: message,
+              };
 
-            // Remove the notification after 2 seconds
-            setTimeout(() => {
-              document.body.removeChild(notification);
-            }, 2000);
+              // Get values from the modwrangler form fields if they exist
+              if (document.getElementById("modwrangler-wrapper")) {
+                // Game selection
+                if (document.getElementById("gameSelect")) {
+                  formData.gameSelect =
+                    document.getElementById("gameSelect").value;
+                }
+
+                // Mod name
+                if (document.getElementById("modName")) {
+                  formData.modName = document.getElementById("modName").value;
+                }
+
+                // Version
+                if (document.getElementById("modVersion")) {
+                  formData.modVersion =
+                    document.getElementById("modVersion").value;
+                }
+
+                // Author
+                if (document.getElementById("modAuthorName")) {
+                  formData.modAuthorName =
+                    document.getElementById("modAuthorName").value;
+                }
+
+                // Tags (checkboxes)
+                formData.tags = [];
+                const tagCheckboxes = document.querySelectorAll(
+                  'input[type="checkbox"][id^="tag-"]'
+                );
+                tagCheckboxes.forEach((checkbox) => {
+                  if (checkbox.checked) {
+                    formData.tags.push(checkbox.value);
+                  }
+                });
+
+                // Thumbnail URL
+                if (document.getElementById("thumbnailURL")) {
+                  formData.thumbnailURL =
+                    document.getElementById("thumbnailURL").value;
+                }
+
+                // Mod download URL
+                if (document.getElementById("vaultFileName")) {
+                  formData.vaultFileName =
+                    document.getElementById("vaultFileName").value;
+                }
+
+                // Description
+                if (document.getElementById("modDescription")) {
+                  formData.modDescription =
+                    document.getElementById("modDescription").value;
+                }
+              }
+
+              // Save the data using GM_setValue
+              GM_setValue("savedFormData", JSON.stringify(formData));
+
+              // Show feedback to the user
+              const notification = document.createElement("div");
+              notification.textContent = "Form data saved!";
+              notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #4a5464;
+                color: #c5d0db;
+                padding: 10px;
+                border-radius: 5px;
+                z-index: 9999;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+              `;
+              document.body.appendChild(notification);
+
+              // Remove the notification after 2 seconds
+              setTimeout(() => {
+                document.body.removeChild(notification);
+              }, 2000);
+            }
           });
 
           // Add event listener for the "Paste" button
