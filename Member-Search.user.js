@@ -225,7 +225,10 @@
   function displaySearchResults(data, resultsContainer) {
     resultsContainer.innerHTML = "";
 
-    if (!data || data.length === 0) {
+    // Filter to only include users, exclude groups
+    const filteredData = data.filter((item) => item.type === "user");
+
+    if (!filteredData || filteredData.length === 0) {
       resultsContainer.innerHTML =
         '<div class="member-search-no-results">No members found</div>';
       return;
@@ -233,60 +236,37 @@
 
     const fragment = document.createDocumentFragment();
 
-    // Sort to show users first, then groups
-    data.sort((a, b) => {
-      if (a.type === b.type) return 0;
-      return a.type === "user" ? -1 : 1;
-    });
+    // No need to sort since we're only showing users now
 
-    data.forEach((item) => {
+    filteredData.forEach((item) => {
       const resultItem = document.createElement("div");
       resultItem.className = "member-search-result";
 
-      if (item.type === "user") {
-        // User entry
-        resultItem.setAttribute("data-user-id", item.user_id);
+      // User entry
+      resultItem.setAttribute("data-user-id", item.user_id);
 
-        // Create avatar URL with proper format
-        const userId = item.user_id;
-        const username = item.value || item.key || "Unknown User";
+      // Create avatar URL with proper format
+      const userId = item.user_id;
+      const username = item.value || item.key || "Unknown User";
 
-        // Default fallback avatar
-        const defaultAvatar =
-          "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
+      // Default fallback avatar
+      const defaultAvatar =
+        "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
 
-        // Create the result item with image that tries multiple extensions
-        resultItem.innerHTML = `
-          <img 
-            src="https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg" 
-            alt="${username}'s avatar" 
-            onerror="if(this.src.endsWith('.jpg')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.png';}else if(this.src.endsWith('.png')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.gif';}else{this.src='${defaultAvatar}';}"
-          >
-          <span>${username}</span>
-        `;
+      // Create the result item with image that tries multiple extensions
+      resultItem.innerHTML = `
+        <img 
+          src="https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg" 
+          alt="${username}'s avatar" 
+          onerror="if(this.src.endsWith('.jpg')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.png';}else if(this.src.endsWith('.png')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.gif';}else{this.src='${defaultAvatar}';}"
+        >
+        <span>${username}</span>
+      `;
 
-        resultItem.addEventListener("click", function () {
-          const userId = this.getAttribute("data-user-id");
-          window.location.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
-        });
-      } else if (item.type === "group") {
-        // Group entry
-        resultItem.setAttribute("data-group-id", item.group_id);
-
-        const groupName = item.value || item.key || "Unknown Group";
-        const count = item.cnt ? `(${item.cnt})` : "";
-
-        resultItem.innerHTML = `
-          <i class="icon fa-users fa-fw" aria-hidden="true" style="font-size: 18px; margin-right: 10px;"></i>
-          <span>${groupName} ${count}</span>
-          <span class="member-search-group">Group</span>
-        `;
-
-        resultItem.addEventListener("click", function () {
-          const groupId = this.getAttribute("data-group-id");
-          window.location.href = `https://rpghq.org/forums/memberlist.php?mode=group&g=${groupId}`;
-        });
-      }
+      resultItem.addEventListener("click", function () {
+        const userId = this.getAttribute("data-user-id");
+        window.location.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
+      });
 
       fragment.appendChild(resultItem);
     });
