@@ -1326,6 +1326,25 @@
     });
   }
 
+  function processReactionImages() {
+    // Find all reaction images with reaction-username attribute
+    const reactionImages = document.querySelectorAll("img[reaction-username]");
+
+    reactionImages.forEach((img) => {
+      const username = img.getAttribute("reaction-username");
+      if (username) {
+        // Convert username to lowercase for comparison
+        const lowercaseUsername = username.toLowerCase();
+
+        // Check if this user is ignored
+        if (isUserIgnored(lowercaseUsername)) {
+          // Remove the image
+          img.remove();
+        }
+      }
+    });
+  }
+
   async function processIgnoredContentOnce() {
     // Optionally, clean up topic authors first:
     document.querySelectorAll("li.row").forEach(cleanupTopicAuthor);
@@ -1352,6 +1371,9 @@
       .querySelectorAll(".reaction-score-list")
       .forEach(processReactionList);
 
+    // Process reaction images from ignored users
+    processReactionImages();
+
     const reactionObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
@@ -1360,6 +1382,14 @@
               ? [node]
               : node.querySelectorAll(".reaction-score-list");
             lists.forEach((list) => processReactionList(list));
+
+            // Also check for reaction images in added nodes
+            if (node.querySelectorAll) {
+              const images = node.querySelectorAll("img[reaction-username]");
+              if (images.length > 0) {
+                processReactionImages();
+              }
+            }
           }
         });
       });
@@ -2089,6 +2119,14 @@
   // 12) INIT ON DOMContentLoaded
   // ---------------------------------------------------------------------
 
+  function startPeriodicReactionCheck() {
+    // Initial check
+    processReactionImages();
+
+    // Set up interval to check every 2 seconds
+    setInterval(processReactionImages, 2000);
+  }
+
   document.addEventListener("DOMContentLoaded", async () => {
     await Promise.all(
       Array.from(
@@ -2100,6 +2138,7 @@
     isMobileDevice = detectMobile();
     createTooltip();
     startPeriodicAvatarCheck();
+    startPeriodicReactionCheck();
     await injectRTContent();
     const needsFetching = await cacheAllPosts();
 
