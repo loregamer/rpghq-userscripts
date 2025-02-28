@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Copy Mods and Authors
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.4
 // @description  Adds "Copy Mods" and "Copy Authors" buttons to forum threads
 // @match        https://rpghq.org/forums/viewtopic.php?t=3511*
 // @match        https://rpghq.org/forums/viewtopic.php*submissions-for-nexus*
@@ -69,6 +69,15 @@ SOFTWARE.
     .post.hidden-post {
       display: none !important;
     }
+    
+    .hide-all-button {
+      background-color: #d9534f !important;
+      color: white !important;
+    }
+    
+    .hide-all-button:hover {
+      background-color: #c9302c !important;
+    }
   `);
 
   // Define separator line
@@ -86,6 +95,12 @@ SOFTWARE.
       const postElement = codeBlock.closest(".post");
       if (postElement && hiddenPosts.includes(postElement.id)) {
         // Skip this code block as it's in a hidden post
+        return;
+      }
+
+      // Check if the code block is inside a blockquote
+      if (codeBlock.closest("blockquote")) {
+        // Skip this code block as it's inside a blockquote
         return;
       }
 
@@ -189,6 +204,28 @@ SOFTWARE.
     copyAuthorsButton.appendChild(authorsText);
     copyAuthorsContainer.appendChild(copyAuthorsButton);
 
+    // Create Hide All button
+    const hideAllContainer = document.createElement("div");
+    hideAllContainer.className =
+      "dropdown-container dropdown-button-control topic-tools";
+
+    const hideAllButton = document.createElement("span");
+    hideAllButton.id = "hide-all-button";
+    hideAllButton.className =
+      "button button-secondary dropdown-trigger copy-button hide-all-button";
+    hideAllButton.title = "Hide All Report Posts";
+
+    const hideIcon = document.createElement("i");
+    hideIcon.className = "icon fa-eye-slash fa-fw";
+    hideIcon.setAttribute("aria-hidden", "true");
+
+    const hideText = document.createElement("span");
+    hideText.textContent = "Hide All";
+
+    hideAllButton.appendChild(hideIcon);
+    hideAllButton.appendChild(hideText);
+    hideAllContainer.appendChild(hideAllButton);
+
     // Add event listeners
     copyModsButton.addEventListener("click", function (e) {
       e.preventDefault();
@@ -220,15 +257,23 @@ SOFTWARE.
       }
     });
 
+    hideAllButton.addEventListener("click", function (e) {
+      e.preventDefault();
+      // Hide all report posts
+      hideAllReportPosts();
+    });
+
     // Insert buttons before the pagination
     const paginationDiv = actionBar.querySelector(".pagination");
     if (paginationDiv) {
       actionBar.insertBefore(copyModsContainer, paginationDiv);
       actionBar.insertBefore(copyAuthorsContainer, paginationDiv);
+      actionBar.insertBefore(hideAllContainer, paginationDiv);
     } else {
       // If pagination not found, append to the end
       actionBar.appendChild(copyModsContainer);
       actionBar.appendChild(copyAuthorsContainer);
+      actionBar.appendChild(hideAllContainer);
     }
   }
 
@@ -259,6 +304,66 @@ SOFTWARE.
       // Show notification
       showCopiedMessage("Post removed");
     }
+  }
+
+  // Function to check if a post has a single blockquote
+  function hasSingleBlockquote(postElement) {
+    const blockquotes = postElement.querySelectorAll("blockquote");
+    return blockquotes.length === 1;
+  }
+
+  // Function to hide all report posts
+  function hideAllReportPosts() {
+    let hiddenCount = 0;
+    const hiddenPosts = GM_getValue("hiddenPosts", []);
+
+    // Find all posts with code blocks that contain reports
+    document.querySelectorAll(".post").forEach((postElement) => {
+      // Skip if already hidden
+      if (hiddenPosts.includes(postElement.id)) {
+        return;
+      }
+
+      // Skip posts with a single blockquote
+      if (hasSingleBlockquote(postElement)) {
+        return;
+      }
+
+      // Check if post contains a report
+      const codeBlocks = postElement.querySelectorAll(".codebox pre code");
+      let hasReport = false;
+
+      for (const codeBlock of codeBlocks) {
+        // Skip code blocks in blockquotes
+        if (codeBlock.closest("blockquote")) {
+          continue;
+        }
+
+        const content = codeBlock.textContent.trim();
+        if (
+          content.startsWith("Game Shortname:") ||
+          content.startsWith("Username:")
+        ) {
+          hasReport = true;
+          break;
+        }
+      }
+
+      if (hasReport) {
+        const postId = postElement.id;
+
+        // Save post ID
+        saveHiddenPost(postId);
+
+        // Remove the post from DOM
+        postElement.remove();
+
+        hiddenCount++;
+      }
+    });
+
+    // Show notification
+    showCopiedMessage(`${hiddenCount} posts hidden`);
   }
 
   // Function to hide posts that were previously deleted
