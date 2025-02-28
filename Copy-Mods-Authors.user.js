@@ -1,11 +1,13 @@
 // ==UserScript==
 // @name         RPGHQ - Copy Mods and Authors
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Adds "Copy Mods" and "Copy Authors" buttons to forum threads
 // @match        https://rpghq.org/forums/viewtopic.php?t=3511*
 // @match        https://rpghq.org/forums/viewtopic.php*submissions-for-nexus*
 // @grant        GM_addStyle
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @license      MIT
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Copy-Mods-Authors.user.js
@@ -62,6 +64,10 @@ SOFTWARE.
     
     .copied-message.show {
       opacity: 1;
+    }
+
+    .post.hidden-post {
+      display: none !important;
     }
   `);
 
@@ -217,12 +223,74 @@ SOFTWARE.
     }
   }
 
+  // Function to save hidden posts to storage
+  function saveHiddenPost(postId) {
+    const hiddenPosts = GM_getValue("hiddenPosts", []);
+    if (!hiddenPosts.includes(postId)) {
+      hiddenPosts.push(postId);
+      GM_setValue("hiddenPosts", hiddenPosts);
+    }
+  }
+
+  // Function to handle post deletion
+  function handlePostDeletion(event) {
+    event.preventDefault();
+    const deleteButton = event.currentTarget;
+    const postElement = deleteButton.closest(".post");
+
+    if (postElement) {
+      const postId = postElement.id;
+
+      // Save post ID
+      saveHiddenPost(postId);
+
+      // Add hidden class
+      postElement.classList.add("hidden-post");
+
+      // Show notification
+      showCopiedMessage("Post hidden");
+    }
+  }
+
+  // Function to hide posts that were previously deleted
+  function hideStoredPosts() {
+    const hiddenPosts = GM_getValue("hiddenPosts", []);
+
+    // Loop through stored hidden post IDs
+    hiddenPosts.forEach((postId) => {
+      const postElement = document.getElementById(postId);
+      if (postElement) {
+        postElement.classList.add("hidden-post");
+      }
+    });
+  }
+
+  // Function to modify delete buttons
+  function modifyDeleteButtons() {
+    document
+      .querySelectorAll('.post-buttons .button[title="Delete post"]')
+      .forEach((button) => {
+        // Remove original click event listeners
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+
+        // Add our custom event listener
+        newButton.addEventListener("click", handlePostDeletion);
+      });
+  }
+
   // Initialize the script when the page is loaded
   function init() {
     if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", addCopyButtons);
+      document.addEventListener("DOMContentLoaded", () => {
+        hideStoredPosts();
+        addCopyButtons();
+        modifyDeleteButtons();
+      });
     } else {
+      hideStoredPosts();
       addCopyButtons();
+      modifyDeleteButtons();
     }
   }
 
