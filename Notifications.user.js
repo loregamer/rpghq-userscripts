@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Notifications Customization
 // @namespace    http://tampermonkey.net/
-// @version      4.4.2
+// @version      4.4.3
 // @description  Customize RPGHQ notifications display
 // @author       LOREGAMER
 // @match        https://rpghq.org/*/*
@@ -70,6 +70,15 @@ SOFTWARE.
     position: "absolute",
     bottom: "2px",
     right: "2px",
+    fontSize: "0.85em",
+    color: "#888",
+  };
+
+  // Add notification time style for notification page
+  const NOTIFICATIONS_TIME_STYLE = {
+    position: "absolute",
+    bottom: "2px",
+    left: "2px",
     fontSize: "0.85em",
     color: "#888",
   };
@@ -685,6 +694,16 @@ SOFTWARE.
       document.querySelectorAll(".cplist .row").forEach(async (row) => {
         if (row.dataset.customized === "true") return;
 
+        // Ensure row has position relative for absolute positioning
+        row.style.position = "relative";
+        row.style.paddingBottom = "20px"; // Make room for timestamp
+
+        // Handle the notifications_time elements
+        const timeElement = row.querySelector(".notifications_time");
+        if (timeElement) {
+          Object.assign(timeElement.style, NOTIFICATIONS_TIME_STYLE);
+        }
+
         const notificationBlock = row.querySelector(".notifications");
         const anchorElement = notificationBlock.querySelector("a");
 
@@ -954,6 +973,15 @@ SOFTWARE.
 
   // --- Initialization ---
   const init = () => {
+    // Add CSS override to set max-width to 50px for .row .list-inner img
+    const styleElement = document.createElement("style");
+    styleElement.textContent = `
+      .row .list-inner img {
+        max-width: 50px !important;
+      }
+    `;
+    document.head.appendChild(styleElement);
+
     NotificationCustomizer.customizeNotificationPanel();
     NotificationMarker.checkAndMarkNotifications();
 
