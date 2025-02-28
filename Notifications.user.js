@@ -197,6 +197,7 @@ SOFTWARE.
         .replace(/\[img\](.*?)\[\/img\]/gi, "")
         // Remove media tags
         .replace(/\[media\](.*?)\[\/media\]/gi, "")
+        .replace(/\[webm\](.*?)\[\/webm\]/gi, "")
         // Remove code tags
         .replace(/\[code\](.*?)\[\/code\]/gi, "$1")
         // Remove list tags
