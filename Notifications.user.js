@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Notifications Customization
 // @namespace    http://tampermonkey.net/
-// @version      4.4.1
+// @version      4.4.2
 // @description  Customize RPGHQ notifications display
 // @author       LOREGAMER
 // @match        https://rpghq.org/*/*
@@ -442,6 +442,15 @@ SOFTWARE.
           const trimmedContent = postContent.trim();
           let referenceElement = block.querySelector(".notification-reference");
 
+          if (!referenceElement) {
+            referenceElement = Utils.createElement("span", {
+              className: "notification-reference",
+            });
+            Utils.styleReference(referenceElement);
+            titleElement.appendChild(document.createElement("br"));
+            titleElement.appendChild(referenceElement);
+          }
+
           // Always create the image preview div
           const imagePreview = Utils.createElement("div", {
             className: "notification-image-preview",
@@ -459,7 +468,6 @@ SOFTWARE.
             if (referenceElement) {
               referenceElement.remove();
             }
-            titleElement.appendChild(document.createElement("br"));
             titleElement.appendChild(imagePreview);
           } else {
             // Only create/update reference element if there's no image
