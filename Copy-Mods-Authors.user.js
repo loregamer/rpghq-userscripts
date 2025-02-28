@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Copy Mods and Authors
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.2
 // @description  Adds "Copy Mods" and "Copy Authors" buttons to forum threads
 // @match        https://rpghq.org/forums/viewtopic.php?t=3511*
 // @match        https://rpghq.org/forums/viewtopic.php*submissions-for-nexus*
@@ -108,23 +108,6 @@ SOFTWARE.
     return text.replace(/:\s*-(\s|$)/g, ": null$1");
   }
 
-  // Function to replace line breaks after "Reason:" with "\n" string
-  function processReasonLineBreaks(text) {
-    // Check if the text contains "Reason:"
-    if (text.includes("Reason:")) {
-      // Split the text at "Reason:"
-      const parts = text.split("Reason:");
-      // The first part remains unchanged
-      const firstPart = parts[0];
-      // For the second part (after "Reason:"), replace all line breaks with "\n"
-      const secondPart = parts[1].replace(/\r?\n/g, "\\n");
-      // Combine the parts back together
-      return firstPart + "Reason:" + secondPart;
-    }
-    // If no "Reason:" is found, return the original text
-    return text;
-  }
-
   // Function to copy text to clipboard
   function copyToClipboard(text) {
     const textarea = document.createElement("textarea");
@@ -212,11 +195,10 @@ SOFTWARE.
       // Extract code blocks on-demand when button is clicked
       const { modReports } = extractCodeBlocks();
       if (modReports.length > 0) {
-        // Process each report to replace hyphens with null and handle line breaks after "Reason:"
-        const processedReports = modReports.map((report) => {
-          const withNulls = replaceHyphensWithNull(report);
-          return processReasonLineBreaks(withNulls);
-        });
+        // Process each report to replace hyphens with null
+        const processedReports = modReports.map((report) =>
+          replaceHyphensWithNull(report)
+        );
         copyToClipboard(processedReports.join(`\n\n${SEPARATOR_LINE}\n\n`));
       } else {
         copyToClipboard("No mod reports found");
