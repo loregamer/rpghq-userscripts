@@ -857,9 +857,28 @@
       userLinks.forEach((link) => {
         const uid = link.href.match(/u=(\d+)/)?.[1];
         if (uid && isUserIgnored(uid)) {
-          const userDiv = link.closest("div");
-          if (userDiv) {
-            userDiv.remove();
+          // Start from the link and traverse upward to find the complete user entry container
+          // Look for a more specific parent that contains the entire user entry with avatar
+          let userRow = link;
+          let parent = link.parentElement;
+
+          // Go up several levels to ensure we get the complete structure
+          // This traverses up to find the outermost flex container that has the avatar and username
+          while (parent && parent !== popup) {
+            userRow = parent;
+            if (
+              parent.style &&
+              parent.style.display === "flex" &&
+              parent.querySelector("img[alt]") &&
+              parent.textContent.trim().includes(link.textContent.trim())
+            ) {
+              break; // Found the complete container with both avatar and username
+            }
+            parent = parent.parentElement;
+          }
+
+          if (userRow) {
+            userRow.remove();
             removedCount++;
           }
         }
