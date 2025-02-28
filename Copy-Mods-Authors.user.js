@@ -78,9 +78,17 @@ SOFTWARE.
   function extractCodeBlocks() {
     const modReports = [];
     const authorReports = [];
+    const hiddenPosts = GM_getValue("hiddenPosts", []);
 
     // Find all code blocks in the page
     document.querySelectorAll(".codebox pre code").forEach((codeBlock) => {
+      // Check if the code block is inside a hidden post
+      const postElement = codeBlock.closest(".post");
+      if (postElement && hiddenPosts.includes(postElement.id)) {
+        // Skip this code block as it's in a hidden post
+        return;
+      }
+
       const content = codeBlock.textContent.trim();
 
       // Categorize based on content
@@ -181,12 +189,11 @@ SOFTWARE.
     copyAuthorsButton.appendChild(authorsText);
     copyAuthorsContainer.appendChild(copyAuthorsButton);
 
-    // Extract all code blocks once when buttons are added
-    const { modReports, authorReports } = extractCodeBlocks();
-
     // Add event listeners
     copyModsButton.addEventListener("click", function (e) {
       e.preventDefault();
+      // Extract code blocks on-demand when button is clicked
+      const { modReports } = extractCodeBlocks();
       if (modReports.length > 0) {
         // Process each report to replace hyphens with null
         const processedReports = modReports.map((report) =>
@@ -200,6 +207,8 @@ SOFTWARE.
 
     copyAuthorsButton.addEventListener("click", function (e) {
       e.preventDefault();
+      // Extract code blocks on-demand when button is clicked
+      const { authorReports } = extractCodeBlocks();
       if (authorReports.length > 0) {
         // Process each report to replace hyphens with null
         const processedReports = authorReports.map((report) =>
@@ -244,11 +253,11 @@ SOFTWARE.
       // Save post ID
       saveHiddenPost(postId);
 
-      // Add hidden class
-      postElement.classList.add("hidden-post");
+      // Remove the post from DOM
+      postElement.remove();
 
       // Show notification
-      showCopiedMessage("Post hidden");
+      showCopiedMessage("Post removed");
     }
   }
 
@@ -256,11 +265,11 @@ SOFTWARE.
   function hideStoredPosts() {
     const hiddenPosts = GM_getValue("hiddenPosts", []);
 
-    // Loop through stored hidden post IDs
+    // Loop through stored hidden post IDs and remove them from DOM
     hiddenPosts.forEach((postId) => {
       const postElement = document.getElementById(postId);
       if (postElement) {
-        postElement.classList.add("hidden-post");
+        postElement.remove();
       }
     });
   }
