@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Notifications Customization
 // @namespace    http://tampermonkey.net/
-// @version      4.4.3
+// @version      4.4.4
 // @description  Customize RPGHQ notifications display
 // @author       LOREGAMER
 // @match        https://rpghq.org/*/*
@@ -97,7 +97,8 @@ SOFTWARE.
         ${reactions
           .map(
             (reaction) => `
-          <img src="${reaction.image}" alt="${reaction.name}" title="${reaction.name}" 
+          <img src="${reaction.image}" alt="${reaction.name}" title="${reaction.username}: ${reaction.name}" 
+               reaction-username="${reaction.username}"
                style="height: 1em !important; width: auto !important; vertical-align: middle !important; margin-right: 2px !important;">
         `
           )
