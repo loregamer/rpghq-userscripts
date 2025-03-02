@@ -198,16 +198,16 @@ SOFTWARE.
         // Special handling for list items ([*])
         if (keyword === "*") {
           return (
-            `<span class="bbcode-bracket">[</span>` +
+            `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span>` +
             `<span class="bbcode-list-item">*</span>` +
-            `<span class="bbcode-bracket">]</span>`
+            `<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>`
           );
         }
 
         // Special handling for smention: force a fixed color.
         if (keyword.toLowerCase() === "smention") {
           let out =
-            `<span class="bbcode-bracket">[</span>` +
+            `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span>` +
             `<span class="bbcode-tag-smention" style="color:#FFC107;">${escapeHTML(
               slash + keyword
             )}</span>`;
@@ -230,14 +230,14 @@ SOFTWARE.
               }
             }
           }
-          out += `<span class="bbcode-bracket">]</span>`;
+          out += `<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>`;
           return out;
         }
 
         // For all other tags, assign colors using the tagColorMap.
         const colorIndex = getColorIndex(keyword);
         let out =
-          `<span class="bbcode-bracket">[</span>` +
+          `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span>` +
           `<span class="bbcode-tag-${colorIndex}">${escapeHTML(
             slash + keyword
           )}</span>`;
@@ -286,13 +286,12 @@ SOFTWARE.
             }
           }
         }
-        out += `<span class="bbcode-bracket">]</span>`;
+        out += `<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>`;
         return out;
       }
     );
 
-    // Second pass: Wrap any URLs in the output (even those inside BBCode content)
-    // with a span using the "bbcode-link" class.
+    // Second pass: Wrap any URLs in the output with a span using the "bbcode-link" class.
     output = output.replace(/(https?:\/\/[^\s<]+)/g, (match) => {
       return `<span class="bbcode-link">${match}</span>`;
     });
