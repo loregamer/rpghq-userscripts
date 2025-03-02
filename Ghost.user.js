@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.5.1
+// @version      5.6
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -604,15 +604,23 @@
 
   function postContentContainsGhosted(content) {
     if (!content) return false;
-    const quoteMatches = content.match(/\[quote=([^\]]+)/g);
-    if (quoteMatches) {
-      for (const q of quoteMatches) {
-        const userIdMatch = q.match(/user_id=(\d+)/);
-        if (userIdMatch && isUserIgnored(userIdMatch[1])) return true;
-        const quotedName = q.replace("[quote=", "").split(" ")[0];
-        if (isUserIgnored(quotedName)) return true;
+    // const quoteMatches = content.match(/\[quote=([^\]]+)/g);
+    // if (quoteMatches) {
+    //   for (const q of quoteMatches) {
+    //     const userIdMatch = q.match(/user_id=(\d+)/);
+    //     if (userIdMatch && isUserIgnored(userIdMatch[1])) return true;
+    //     const quotedName = q.replace("[quote=", "").split(" ")[0];
+    //     if (isUserIgnored(quotedName)) return true;
+    //   }
+    // }
+
+    for (const userId in ignoredUsers) {
+      const username = ignoredUsers[userId];
+      if (content.toLowerCase().includes(username.toLowerCase())) {
+        return true;
       }
     }
+
     return false;
   }
 
@@ -630,8 +638,11 @@
     for (const userId in ignoredUsers) {
       const username = ignoredUsers[userId];
       // Look for @username pattern with word boundary
-      const mentionRegex = new RegExp(`@${username}\\b`, "i");
-      if (mentionRegex.test(postText)) {
+      // const mentionRegex = new RegExp(`@${username}\\b`, "i");
+      // if (mentionRegex.test(postText)) {
+      //   return true;
+      // }
+      if (postText.toLowerCase().includes(username.toLowerCase())) {
         return true;
       }
     }
