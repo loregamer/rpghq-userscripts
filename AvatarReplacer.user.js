@@ -19,15 +19,14 @@
   // 1) DATA LOAD
   //----------------------------------------------------------------------
 
-  // Store replaced avatars in GM storage
-  // Key: userId => Value: image URL
+  // Map userId -> custom avatar URL
   let replacedAvatars = GM_getValue("replacedAvatars", {});
 
   //----------------------------------------------------------------------
   // 2) AVATAR REPLACEMENT
   //----------------------------------------------------------------------
 
-  // Replace any <img> whose src includes 'avatar=[userid]' if we have a custom URL
+  // Check all <img> with "avatar=USER_ID" in src and swap if replaced
   function replaceUserAvatars() {
     document.querySelectorAll("img").forEach((img) => {
       const match = img.src.match(/avatar=(\d+)/);
@@ -40,7 +39,7 @@
     });
   }
 
-  // Validate image is 128x128 or smaller, then store & refresh
+  // Validate the new image is <= 128x128, then store & refresh
   function validateAndReplaceAvatar(userId, url) {
     const testImg = new Image();
     testImg.onload = function () {
@@ -59,19 +58,12 @@
     testImg.src = url;
   }
 
-  // Periodically re-check the page for new avatars that might load dynamically
-  function startPeriodicAvatarCheck() {
-    replaceUserAvatars();
-    setInterval(replaceUserAvatars, 1500);
-  }
-
   //----------------------------------------------------------------------
   // 3) OYSTER SAUCE COLOR
   //----------------------------------------------------------------------
 
-  // Ensure Oyster Sauce's username is always green
-  // and re-check on dynamic updates
-  function changeOysterSauceColor() {
+  // Force "Oyster Sauce" to always appear green
+  function colorOysterSauce() {
     document.querySelectorAll("a.username-coloured").forEach((link) => {
       if (link.textContent.trim() === "Oyster Sauce") {
         link.style.color = "#00AA00";
@@ -79,45 +71,38 @@
     });
   }
 
-  function observeOysterSauceColor() {
-    // MutationObserver to catch new nodes
-    const observer = new MutationObserver(() => changeOysterSauceColor());
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
-
   //----------------------------------------------------------------------
-  // 4) REPLACE AVATAR BUTTON ON PROFILE
+  // 4) PROFILE POPUP FOR AVATAR REPLACEMENT
   //----------------------------------------------------------------------
 
-  // Get user ID from profile URL (memberlist.php?mode=viewprofile&u=1234-username)
+  // Extract user ID from "u=1234" in URL
   function getUserIdFromUrl() {
     const match = window.location.href.match(/u=(\d+)/);
     return match ? match[1] : null;
   }
 
-  // Show a small popup to allow entering a custom image URL
   function showReplaceAvatarPopup(userId) {
     const popup = document.createElement("div");
     popup.style.cssText = `
-        position: fixed; top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #2a2a2a; color: #e0e0e0; padding: 20px;
-        border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 9999;
-        width: 300px;
-      `;
+          position: fixed; top: 50%; left: 50%;
+          transform: translate(-50%, -50%);
+          background-color: #2a2a2a; color: #e0e0e0; padding: 20px;
+          border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 9999;
+          width: 300px;
+        `;
+
     const title = document.createElement("h3");
     title.textContent = "Replace Avatar";
-    title.style.marginTop = "0";
-    title.style.marginBottom = "15px";
+    title.style.margin = "0 0 15px 0";
     popup.appendChild(title);
 
     const input = document.createElement("input");
     input.type = "text";
     input.placeholder = "Enter image URL (128×128 or smaller)";
     input.style.cssText = `
-        width: 100%; padding: 5px; margin-bottom: 15px; background: #3a3a3a;
-        border: 1px solid #4a4a4a; color: #e0e0e0; border-radius: 3px;
-      `;
+          width: 100%; padding: 5px; margin-bottom: 15px; background: #3a3a3a;
+          border: 1px solid #4a4a4a; color: #e0e0e0; border-radius: 3px;
+        `;
     popup.appendChild(input);
 
     const btnContainer = document.createElement("div");
@@ -129,17 +114,15 @@
       const b = document.createElement("button");
       b.textContent = label;
       b.style.cssText = `
-          background-color: #3a3a3a; color: #e0e0e0; border: none;
-          padding: 5px 10px; border-radius: 3px; cursor: pointer;
-        `;
-      b.addEventListener(
-        "mouseover",
-        () => (b.style.backgroundColor = "#4a4a4a")
-      );
-      b.addEventListener(
-        "mouseout",
-        () => (b.style.backgroundColor = "#3a3a3a")
-      );
+            background-color: #3a3a3a; color: #e0e0e0; border: none;
+            padding: 5px 10px; border-radius: 3px; cursor: pointer;
+          `;
+      b.addEventListener("mouseover", () => {
+        b.style.backgroundColor = "#4a4a4a";
+      });
+      b.addEventListener("mouseout", () => {
+        b.style.backgroundColor = "#3a3a3a";
+      });
       return b;
     }
 
@@ -149,7 +132,7 @@
       document.body.removeChild(popup);
     });
 
-    const resetB = makeBtn("Reset to Default");
+    const resetB = makeBtn("Reset");
     resetB.addEventListener("click", () => {
       delete replacedAvatars[userId];
       GM_setValue("replacedAvatars", replacedAvatars);
@@ -169,11 +152,11 @@
     document.body.appendChild(popup);
   }
 
-  // Add “Replace Avatar” button when on a user’s profile
   function addReplaceAvatarButtonToProfile() {
     const memberlistTitle = document.querySelector(".memberlist-title");
     if (!memberlistTitle || document.getElementById("replace-avatar-button"))
       return;
+
     const userId = getUserIdFromUrl();
     if (!userId) return;
 
@@ -197,18 +180,25 @@
   }
 
   //----------------------------------------------------------------------
-  // 5) DOMContentLoaded INIT
+  // 5) MUTATION OBSERVER (so we can replace avatars & recolor OS early)
   //----------------------------------------------------------------------
 
+  // Whenever new DOM nodes appear, re-check for avatars and "Oyster Sauce"
+  const observer = new MutationObserver(() => {
+    replaceUserAvatars();
+    colorOysterSauce();
+  });
+
+  // Start the observer at document-start
+  observer.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
+
+  // Also do a quick pass once DOM is ready (in case something was missed)
   document.addEventListener("DOMContentLoaded", () => {
-    // Periodically replace avatars
-    startPeriodicAvatarCheck();
-
-    // Change Oyster Sauce color (and watch for dynamic changes)
-    changeOysterSauceColor();
-    observeOysterSauceColor();
-
-    // Add “Replace Avatar” button if on a profile page
+    replaceUserAvatars();
+    colorOysterSauce();
     addReplaceAvatarButtonToProfile();
   });
 })();
