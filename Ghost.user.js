@@ -44,7 +44,6 @@
   // ---------------------------------------------------------------------
 
   const ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => lowercased username
-  let semiIgnoredUsers = GM_getValue("semiIgnoredUsers", {}); // userId => lowercased username
   const replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   const postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
   const userColors = GM_getValue("userColors", {}); // username => color
@@ -503,18 +502,11 @@
   function toggleUserGhost(userId, username) {
     const cleanedUsername = cleanUsername(username);
     if (ignoredUsers.hasOwnProperty(userId)) {
-      // Already fully ghosted – clicking will unghost the user.
       delete ignoredUsers[userId];
-    } else if (semiIgnoredUsers.hasOwnProperty(userId)) {
-      // Currently semi-ghosted – clicking will fully ghost them.
-      delete semiIgnoredUsers[userId];
-      ignoredUsers[userId] = cleanedUsername.toLowerCase();
     } else {
-      // Not ghosted – clicking will add them to semiIgnoredUsers.
-      semiIgnoredUsers[userId] = cleanedUsername.toLowerCase();
+      ignoredUsers[userId] = cleanedUsername.toLowerCase();
     }
     GM_setValue("ignoredUsers", ignoredUsers);
-    GM_setValue("semiIgnoredUsers", semiIgnoredUsers);
   }
 
   // ---------------------------------------------------------------------
@@ -1521,18 +1513,11 @@
     container.appendChild(replaceBtn);
     memberlistTitle.appendChild(container);
     function refreshGhostBtn() {
-      if (ignoredUsers.hasOwnProperty(userId)) {
-        ghostBtn.innerHTML =
-          '<i class="icon fa fa-user-times"></i> Unghost User';
-        ghostBtn.title = "Stop ignoring this user";
-      } else if (semiIgnoredUsers.hasOwnProperty(userId)) {
-        ghostBtn.innerHTML =
-          '<i class="icon fa fa-user-secret"></i> Ghost User';
-        ghostBtn.title = "Fully ghost this user";
-      } else {
-        ghostBtn.innerHTML = '<i class="icon fa fa-user"></i> SemiGhost User';
-        ghostBtn.title = "Semi ghost this user";
-      }
+      const isGhosted = ignoredUsers.hasOwnProperty(userId);
+      ghostBtn.textContent = isGhosted ? "Unghost User" : "Ghost User";
+      ghostBtn.title = isGhosted
+        ? "Stop ignoring this user"
+        : "Ignore this user";
     }
     refreshGhostBtn();
     ghostBtn.addEventListener("click", (e) => {
