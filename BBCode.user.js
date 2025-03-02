@@ -194,7 +194,7 @@ SOFTWARE.
     return text.replace(
       /\[(\/?)([a-zA-Z0-9*]+)([^\]]*)\]/g,
       (match, slash, keyword, rest) => {
-        // Special handling for the list-item tag [*]
+        // Handle list items ([*]) separately
         if (keyword === "*") {
           return (
             `<span class="bbcode-bracket">[</span>` +
@@ -203,24 +203,50 @@ SOFTWARE.
           );
         }
 
+        // Special handling for smention tags with a fixed color (#FFC107)
+        if (keyword.toLowerCase() === "smention") {
+          let output =
+            `<span class="bbcode-bracket">[</span>` +
+            `<span class="bbcode-tag-smention" style="color:#FFC107;">${escapeHTML(
+              slash + keyword
+            )}</span>`;
+          if (rest) {
+            const leadingWs = rest.match(/^\s*/)[0];
+            let params = rest.slice(leadingWs.length);
+            if (params) {
+              if (params.startsWith("=")) {
+                const paramValue = params.slice(1).trim();
+                output +=
+                  leadingWs +
+                  `<span class="bbcode-attribute">=</span>` +
+                  `<span class="bbcode-attribute">${escapeHTML(
+                    paramValue
+                  )}</span>`;
+              } else {
+                output +=
+                  leadingWs +
+                  `<span class="bbcode-attribute">${escapeHTML(params)}</span>`;
+              }
+            }
+          }
+          output += `<span class="bbcode-bracket">]</span>`;
+          return output;
+        }
+
+        // For other tags, use the standard color assignment
         const colorIndex = getColorIndex(keyword);
         let output =
           `<span class="bbcode-bracket">[</span>` +
           `<span class="bbcode-tag-${colorIndex}">${escapeHTML(
             slash + keyword
           )}</span>`;
-
-        // Process any parameters/attributes if present.
         if (rest) {
-          // Capture any leading whitespace (e.g. the space before parameters in [img size=30])
           const leadingWs = rest.match(/^\s*/)[0];
           let params = rest.slice(leadingWs.length);
           if (params) {
-            // If the parameter starts with an '=', handle it accordingly.
             if (params.startsWith("=")) {
               const paramValue = params.slice(1).trim();
               if (keyword.toLowerCase() === "color") {
-                // For the color tag, if the parameter is a hex code, highlight it specially.
                 const hexMatch = paramValue.match(/^(#[0-9A-Fa-f]{6})/);
                 if (hexMatch) {
                   const hex = hexMatch[1];
@@ -230,7 +256,6 @@ SOFTWARE.
                     `<span class="bbcode-color-preview" style="background-color:${hex}; color:${getContrastColor(
                       hex
                     )};">${escapeHTML(hex)}</span>`;
-                  // Append any extra attribute text that follows the hex code.
                   const extra = paramValue.slice(hex.length);
                   if (extra) {
                     output += `<span class="bbcode-attribute">${escapeHTML(
@@ -254,7 +279,6 @@ SOFTWARE.
                   )}</span>`;
               }
             } else {
-              // For parameters that start with a space (e.g. [img size=30]), wrap them in the attribute style.
               output +=
                 leadingWs +
                 `<span class="bbcode-attribute">${escapeHTML(params)}</span>`;
