@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Simple Avatar Replacer + Oyster Sauce Color
+// @name         RPGHQ - Avatar Replacer
 // @namespace    http://tampermonkey.net/
 // @version      1.0
-// @description  Replaces user avatars and sets Oyster Sauce name color to #00AA00
+// @description  Replaces user avatars
 // @author       You
 // @match        https://rpghq.org/*/*
 // @run-at       document-start
