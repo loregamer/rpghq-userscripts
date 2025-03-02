@@ -44,7 +44,7 @@
   // ---------------------------------------------------------------------
 
   const ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => lowercased username
-  let semiIgnoredUsers = GM_getValue("semiIgnoredUsers", {}); // userId => lowercased username
+  const semiIgnoredUsers = GM_getValue("semiIgnoredUsers", {}); // userId => lowercased username
   const replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   const postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
   const userColors = GM_getValue("userColors", {}); // username => color
@@ -493,6 +493,13 @@
     const cleanedUsername = cleanUsername(usernameOrId);
     const lower = cleanedUsername.toLowerCase();
     return Object.values(ignoredUsers).includes(lower);
+  }
+
+  function isUserSemiIgnored(usernameOrId) {
+    if (semiIgnoredUsers.hasOwnProperty(usernameOrId)) return true;
+    const cleanedUsername = cleanUsername(usernameOrId);
+    const lower = cleanedUsername.toLowerCase();
+    return Object.values(semiIgnoredUsers).includes(lower);
   }
 
   function getUserIdFromUrl() {
