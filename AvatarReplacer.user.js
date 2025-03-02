@@ -21,8 +21,25 @@
   // 1) DATA LOAD
   //----------------------------------------------------------------------
 
+  // Default avatar replacements
+  const defaultAvatars = {
+    256: "https://f.rpghq.org/sfium5E49qiZ.png?n=pasted-file.png",
+    3301: "https://f.rpghq.org/ClFMmeBrDSeF.png?n=pasted-file.png",
+  };
+
+  // Check if this is the first time running the script
+  const isFirstRun = GM_getValue("replacedAvatars") === undefined;
+
   // Map userId -> custom avatar URL
-  let replacedAvatars = GM_getValue("replacedAvatars", {});
+  // If first run, use the default avatars
+  let replacedAvatars = isFirstRun
+    ? defaultAvatars
+    : GM_getValue("replacedAvatars", {});
+
+  // Save the default avatars if this is the first run
+  if (isFirstRun) {
+    GM_setValue("replacedAvatars", replacedAvatars);
+  }
 
   //----------------------------------------------------------------------
   // 2) AVATAR REPLACEMENT
