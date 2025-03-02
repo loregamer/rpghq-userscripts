@@ -158,20 +158,6 @@
     .ghosted-row.show.ghosted-by-content {
       background-color: rgba(255, 128, 0, 0.1) !important;
     }
-
-    /* -----------------------------------------------------------------
-       5) Semi-ghosted element styling
-       ----------------------------------------------------------------- */
-    .semi-ghosted-row {
-      border: 2px solid rgba(255, 165, 0, 0.5) !important;
-      border-radius: 4px;
-      padding: 4px;
-      margin: 4px 0;
-    }
-    .semi-ghosted-row:hover {
-      border-color: rgba(255, 165, 0, 0.8) !important;
-    }
-
     /* For forum lists and viewforum: hide lastpost details unless shown */
     .topiclist.forums .ghosted-row,
     body[class*="viewforum-"] .ghosted-row {
@@ -720,20 +706,6 @@
   function hideTopicRow(element) {
     const recentTopicLi = element.closest("#recent-topics li");
     if (recentTopicLi) {
-      // Check for semi-ignored first
-      const authorLinks = recentTopicLi.querySelectorAll(
-        "a.username, a.username-coloured"
-      );
-      const authorNames = Array.from(authorLinks).map((link) =>
-        link.textContent.trim()
-      );
-      const hasSemiGhostedAuthor = authorNames.some((name) =>
-        isUserSemiIgnored(name)
-      );
-      if (hasSemiGhostedAuthor) {
-        recentTopicLi.classList.add("semi-ghosted-row");
-        return;
-      }
       recentTopicLi.classList.add("ghosted-row", "ghosted-by-author");
       return;
     }
@@ -759,18 +731,10 @@
           const authorLink = lastpostCell.querySelector(
             "a.username, a.username-coloured"
           );
-          if (authorLink) {
-            const authorName = authorLink.textContent.trim();
-            if (isUserSemiIgnored(authorName)) {
-              if (isViewForum) lastpostCell.classList.add("semi-ghosted-row");
-              rowItem.classList.add("semi-ghosted-row");
-              return;
-            }
-            if (isUserIgnored(authorName)) {
-              if (isViewForum)
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
-              rowItem.classList.add("ghosted-row", "ghosted-by-author");
-            }
+          if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
+            if (isViewForum)
+              lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+            rowItem.classList.add("ghosted-row", "ghosted-by-author");
           } else {
             const allLinks = rowItem.querySelectorAll(
               "a.username, a.username-coloured"
@@ -778,17 +742,9 @@
             const nonAuthorLinks = Array.from(allLinks).filter(
               (link) => !link.closest(".responsive-hide.left-box")
             );
-            const hasSemiGhostedUser = nonAuthorLinks.some((link) =>
-              isUserSemiIgnored(link.textContent.trim())
-            );
             const hasGhostedUser = nonAuthorLinks.some((link) =>
               isUserIgnored(link.textContent.trim())
             );
-            if (hasSemiGhostedUser) {
-              if (isViewForum) lastpostCell.classList.add("semi-ghosted-row");
-              rowItem.classList.add("semi-ghosted-row");
-              return;
-            }
             if (hasGhostedUser) {
               if (isViewForum)
                 lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
@@ -808,24 +764,12 @@
       const authorNames = Array.from(authorLinks).map((link) =>
         link.textContent.trim()
       );
-      const hasSemiGhostedAuthor = authorNames.some((name) =>
-        isUserSemiIgnored(name)
-      );
       const hasGhostedAuthor = authorNames.some((name) => isUserIgnored(name));
-      const hasSemiGhostedClass = Array.from(rowItem.classList).some(
-        (cls) =>
-          cls.startsWith("author-name-") &&
-          isUserSemiIgnored(cls.replace("author-name-", ""))
-      );
       const hasGhostedClass = Array.from(rowItem.classList).some(
         (cls) =>
           cls.startsWith("author-name-") &&
           isUserIgnored(cls.replace("author-name-", ""))
       );
-      if (hasSemiGhostedAuthor || hasSemiGhostedClass) {
-        rowItem.classList.add("semi-ghosted-row");
-        return;
-      }
       if (hasGhostedAuthor || hasGhostedClass) {
         rowItem.classList.add("ghosted-row", "ghosted-by-author");
         return;
@@ -833,16 +777,9 @@
       const innerDiv = rowItem.querySelector(".list-inner");
       if (innerDiv) {
         const byText = innerDiv.textContent.toLowerCase();
-        const hasSemiGhostedInBy = Object.values(semiIgnoredUsers).some(
-          (username) => byText.includes(`by ${username.toLowerCase()}`)
-        );
         const hasGhostedInBy = Object.values(ignoredUsers).some((username) =>
           byText.includes(`by ${username.toLowerCase()}`)
         );
-        if (hasSemiGhostedInBy) {
-          rowItem.classList.add("semi-ghosted-row");
-          return;
-        }
         if (hasGhostedInBy) {
           rowItem.classList.add("ghosted-row", "ghosted-by-author");
           return;
@@ -869,33 +806,17 @@
         "a.username, a.username-coloured"
       );
       for (const link of authorLinks) {
-        const authorName = link.textContent.trim();
-        if (isUserSemiIgnored(authorName)) {
-          row.classList.add("semi-ghosted-row");
-          element.classList.add("content-processed");
-          return;
-        }
-        if (isUserIgnored(authorName)) {
+        if (isUserIgnored(link.textContent.trim())) {
           hideTopicRow(row);
           element.classList.add("content-processed");
           return;
         }
       }
-      const hasSemiGhostedClass = Array.from(row.classList).some(
-        (cls) =>
-          cls.startsWith("author-name-") &&
-          isUserSemiIgnored(cls.replace("author-name-", ""))
-      );
       const hasGhostedClass = Array.from(row.classList).some(
         (cls) =>
           cls.startsWith("author-name-") &&
           isUserIgnored(cls.replace("author-name-", ""))
       );
-      if (hasSemiGhostedClass) {
-        row.classList.add("semi-ghosted-row");
-        element.classList.add("content-processed");
-        return;
-      }
       if (hasGhostedClass) {
         hideTopicRow(row);
         element.classList.add("content-processed");
@@ -934,9 +855,7 @@
       if (link) {
         const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
         if (pid) {
-          if (userEl && isUserSemiIgnored(userEl.textContent.trim())) {
-            row.classList.add("semi-ghosted-row");
-          } else if (userEl && isUserIgnored(userEl.textContent.trim())) {
+          if (userEl && isUserIgnored(userEl.textContent.trim())) {
             hideTopicRow(element);
           } else {
             try {
