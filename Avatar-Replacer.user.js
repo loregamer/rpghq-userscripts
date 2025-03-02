@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Avatar Replacer
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.0
 // @description  Replaces user avatars
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -10,8 +10,8 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @license      MIT
-// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/AvatarReplacer.user.js
-// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/AvatarReplacer.user.js
+// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Avatar-Replacer.user.js
+// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Avatar-Replacer.user.js
 // ==/UserScript==
 
 (function () {
