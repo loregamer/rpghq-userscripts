@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.6
-// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users
+// @version      5.7
+// @description  Hides content from ghosted users (fully ghosted), optionally replaces avatars, reformats quotes in previews, and hides posts with @mentions of ghosted users. Now supports a two-stage ghost mode: first SemiGhost (highlight posts/rows) then Full Ghost (hide content).
 // @author       You
 // @match        https://rpghq.org/*/*
 // @run-at       document-start
@@ -18,7 +18,9 @@
 (function () {
   "use strict";
 
-  // Inject a small inline script to override the page's activeNotifications update interval.
+  // ---------------------------------------------------------------------
+  // 0) OVERRIDE activeNotifications update interval
+  // ---------------------------------------------------------------------
   const overrideCode = `(${function () {
     function overrideUpdateInterval() {
       if (
@@ -33,17 +35,17 @@
     }
     overrideUpdateInterval();
   }.toString()})();`;
-
   const overrideScript = document.createElement("script");
   overrideScript.textContent = overrideCode;
   (document.head || document.documentElement).appendChild(overrideScript);
   overrideScript.remove();
 
   // ---------------------------------------------------------------------
-  // 1) DATA LOAD + INITIAL STYLES
+  // 1) DATA LOAD & INITIAL STYLES
   // ---------------------------------------------------------------------
 
-  const ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => lowercased username
+  // Now ignoredUsers stores an object: userId => { username, mode } (mode: "semi" or "full")
+  let ignoredUsers = GM_getValue("ignoredUsers", {});
   const replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   const postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
   const userColors = GM_getValue("userColors", {}); // username => color
@@ -64,12 +66,10 @@
     .forEach((key) => delete postCache[key]);
   GM_setValue("postCache", postCache);
 
-  // Inject style at document-start
+  // Inject CSS styles
   const mainStyle = document.createElement("style");
   mainStyle.textContent = `
-    /* -----------------------------------------------------------------
-       1) Spinner styling for containers that are not yet processed
-       ----------------------------------------------------------------- */
+    /* --- Spinner styling for unprocessed containers --- */
     #recent-topics:not(.content-processed),
     .topiclist.forums:not(.content-processed),
     fieldset.polls:not(.content-processed),
@@ -100,21 +100,16 @@
       to { transform: rotate(360deg); }
     }
 
-    /* -----------------------------------------------------------------
-       2) Hide unprocessed content
-       ----------------------------------------------------------------- */
-    /* Hide child elements in these containers until processed */
+    /* --- Hide unprocessed content --- */
     #recent-topics:not(.content-processed) > *:not(style),
     .topiclist.forums:not(.content-processed) > *:not(style),
     .topiclist.topics:not(.content-processed) > *:not(style),
     fieldset.polls:not(.content-processed) > *:not(style) {
       visibility: hidden;
     }
-    /* Hide badges until processed */
     strong.badge:not(.content-processed) {
       display: none !important;
     }
-    /* Hide main post containers until processed */
     .post.bg1:not(.content-processed),
     .post.bg2:not(.content-processed),
     dd.lastpost:not(.content-processed),
@@ -122,14 +117,11 @@
     .pagination:not(.content-processed) {
       visibility: hidden !important;
     }
-    /* Hide list rows until they are processed */
     li.row:not(.content-processed) {
       display: none !important;
     }
 
-    /* -----------------------------------------------------------------
-       3) Reveal content once processing is complete
-       ----------------------------------------------------------------- */
+    /* --- Reveal processed content --- */
     #recent-topics.content-processed > *,
     .topiclist.forums.content-processed > *,
     fieldset.polls.content-processed > *,
@@ -142,9 +134,7 @@
       visibility: visible !important;
     }
 
-    /* -----------------------------------------------------------------
-       4) Ghosted element styling
-       ----------------------------------------------------------------- */
+    /* --- Ghosted element styling --- */
     .ghosted-row {
       display: none !important;
     }
@@ -156,25 +146,6 @@
     }
     .ghosted-row.show.ghosted-by-content {
       background-color: rgba(255, 128, 0, 0.1) !important;
-    }
-    /* For forum lists and viewforum: hide lastpost details unless shown */
-    .topiclist.forums .ghosted-row,
-    body[class*="viewforum-"] .ghosted-row {
-      display: block !important;
-    }
-    .topiclist.forums .ghosted-row:not(.show) dd.lastpost,
-    body[class*="viewforum-"] .ghosted-row:not(.show) dd.lastpost {
-      display: none !important;
-    }
-    .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-author,
-    body[class*="viewforum-"] .ghosted-row.show dd.lastpost.ghosted-by-author {
-      display: block !important;
-      background-color: rgba(255, 0, 0, 0.1) !important;
-    }
-    .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-content,
-    body[class*="viewforum-"] .ghosted-row.show dd.lastpost.ghosted-by-content {
-      display: block !important;
-      background-color: rgba(255, 255, 0, 0.1) !important;
     }
     .ghosted-post,
     .ghosted-quote {
@@ -190,9 +161,23 @@
       padding: 6px;
     }
 
-    /* -----------------------------------------------------------------
-       5) Post preview tooltip & custom quote styling
-       ----------------------------------------------------------------- */
+    /* --- (Optional) If you want SemiGhost styling, you can add it here --- */
+    .semighosted-post,
+    .semighosted-quote {
+      display: block !important;
+      border: 3px dashed;
+      border-image: linear-gradient(to right, violet, indigo, blue, green, yellow, orange, red) 1;
+      border-image-slice: 1;
+      border-radius: 4px;
+      padding: 6px;
+      background-color: rgba(255, 255, 0, 0.1) !important;
+    }
+    .semighosted-row {
+      display: block !important;
+      background-color: rgba(255, 255, 0, 0.1) !important;
+    }
+
+    /* --- Post preview tooltip & custom quote styling --- */
     .post-preview-tooltip {
       position: absolute;
       background: #171b24;
@@ -291,13 +276,11 @@
   document.documentElement.appendChild(mainStyle);
 
   // ---------------------------------------------------------------------
-  // 2) TOOLTIP, MOBILE DETECTION & BBCode/Quote PARSING
+  // 2) TOOLTIP, MOBILE DETECTION & BBCode/QUOTE PARSING
   // ---------------------------------------------------------------------
-
   let tooltip = null;
   let currentHoverTimeout = null;
   let isMobileDevice = false;
-
   function detectMobile() {
     return (
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -308,13 +291,11 @@
       navigator.maxTouchPoints > 0
     );
   }
-
   function removeRemainingBrackets(text) {
     text = text.replace(/\[[^\]]*\][^\[]*\[\/[^\]]*\]/g, "");
     text = text.replace(/\[[^\]]*\]/g, "");
     return text;
   }
-
   function parseBBCode(text) {
     if (!text) return "";
     const patterns = {
@@ -387,7 +368,6 @@
     }
     return removeRemainingBrackets(processedText);
   }
-
   function parseQuotes(text) {
     if (!text) return "";
     const quoteRegex =
@@ -419,14 +399,12 @@
     }
     return output + text.slice(lastIndex);
   }
-
   function createTooltip() {
     if (tooltip) return;
     tooltip = document.createElement("div");
     tooltip.className = "post-preview-tooltip";
     document.body.appendChild(tooltip);
   }
-
   async function showPostPreview(event, postId) {
     if (isMobileDevice) return;
     if (!tooltip) return;
@@ -455,7 +433,6 @@
       tooltip.addEventListener("mouseleave", hidePostPreview);
     }, 200);
   }
-
   function hidePostPreview() {
     if (!tooltip) return;
     if (currentHoverTimeout) {
@@ -468,43 +445,60 @@
   // ---------------------------------------------------------------------
   // 3) IGNORE / GHOST USERS FUNCTIONS
   // ---------------------------------------------------------------------
-
   function cleanUsername(username) {
     if (!username) return "";
-
-    // First remove any HTML tags that might be in the username
     let cleaned = username.replace(/<[^>]*>/g, "");
-
-    // Remove "Never Iggy" and other button text that might be in the username
     cleaned = cleaned.replace(
       /never iggy|unghost user|replace avatar|ghost user/gi,
       ""
     );
-
-    // Remove any extra whitespace
     cleaned = cleaned.replace(/\s+/g, " ").trim();
-
     return cleaned;
   }
-
+  // Updated: isUserIgnored now checks our ignoredUsers object (which maps userId to an object)
   function isUserIgnored(usernameOrId) {
     if (ignoredUsers.hasOwnProperty(usernameOrId)) return true;
-    const cleanedUsername = cleanUsername(usernameOrId);
-    const lower = cleanedUsername.toLowerCase();
-    return Object.values(ignoredUsers).includes(lower);
+    const cleaned = cleanUsername(usernameOrId).toLowerCase();
+    for (const key in ignoredUsers) {
+      if (ignoredUsers[key].username === cleaned) return true;
+    }
+    return false;
   }
-
+  // Helper to get userId from URL
   function getUserIdFromUrl() {
     const match = window.location.href.match(/u=(\d+)/);
     return match ? match[1] : null;
   }
-
+  // New: getGhostState returns "none", "semi", or "full"
+  function getGhostState(identifier) {
+    if (ignoredUsers.hasOwnProperty(identifier)) {
+      return ignoredUsers[identifier].mode;
+    }
+    const cleaned = cleanUsername(identifier).toLowerCase();
+    for (const key in ignoredUsers) {
+      if (ignoredUsers[key].username === cleaned) {
+        return ignoredUsers[key].mode;
+      }
+    }
+    return "none";
+  }
+  // Updated: toggleUserGhost now cycles through: not ghosted → SemiGhost → Full Ghost → not ghosted.
   function toggleUserGhost(userId, username) {
     const cleanedUsername = cleanUsername(username);
-    if (ignoredUsers.hasOwnProperty(userId)) {
-      delete ignoredUsers[userId];
+    if (!ignoredUsers.hasOwnProperty(userId)) {
+      // First ghost: set as SemiGhost
+      ignoredUsers[userId] = {
+        username: cleanedUsername.toLowerCase(),
+        mode: "semi",
+      };
     } else {
-      ignoredUsers[userId] = cleanedUsername.toLowerCase();
+      if (ignoredUsers[userId].mode === "semi") {
+        // Promote to full ghost
+        ignoredUsers[userId].mode = "full";
+      } else {
+        // Remove ghosting
+        delete ignoredUsers[userId];
+      }
     }
     GM_setValue("ignoredUsers", ignoredUsers);
   }
@@ -512,14 +506,12 @@
   // ---------------------------------------------------------------------
   // 4) POST FETCH, CACHING & CLEANUP
   // ---------------------------------------------------------------------
-
   function cleanupPostContent(content) {
     content = content.replace(/\[quote="([^"]+)"/g, "[quote=$1");
     content = content.replace(/^(\[quote=[^\]]+\]\s*)/, "");
     content = content.replace(/\[\/quote\]\s*$/, "");
     return removeNestedQuotes(content);
   }
-
   function removeNestedQuotes(str) {
     let result = "",
       i = 0,
@@ -552,7 +544,6 @@
     }
     return result;
   }
-
   async function fetchAndCachePost(postId) {
     const cached = postCache[postId];
     if (
@@ -582,7 +573,6 @@
     }
     return null;
   }
-
   async function cacheAllPosts() {
     const lastPostLinks = document.querySelectorAll(
       'a[title="Go to last post"], a[title="View the latest post"]'
@@ -601,55 +591,30 @@
   // ---------------------------------------------------------------------
   // 5) CONTENT PROCESSING / HIDING LOGIC
   // ---------------------------------------------------------------------
-
   function postContentContainsGhosted(content) {
     if (!content) return false;
-    // const quoteMatches = content.match(/\[quote=([^\]]+)/g);
-    // if (quoteMatches) {
-    //   for (const q of quoteMatches) {
-    //     const userIdMatch = q.match(/user_id=(\d+)/);
-    //     if (userIdMatch && isUserIgnored(userIdMatch[1])) return true;
-    //     const quotedName = q.replace("[quote=", "").split(" ")[0];
-    //     if (isUserIgnored(quotedName)) return true;
-    //   }
-    // }
-
     for (const userId in ignoredUsers) {
-      const username = ignoredUsers[userId];
+      const username = ignoredUsers[userId].username;
       if (content.toLowerCase().includes(username.toLowerCase())) {
         return true;
       }
     }
-
     return false;
   }
-
-  // Check if post content contains @mentions of ghosted users
   function postContentContainsMentionedGhosted(post) {
-    // Get the post content div
     const contentDiv = post.querySelector(".content");
     if (!contentDiv) return false;
-
-    // Get the text content of the post
     const postText = contentDiv.textContent;
     if (!postText) return false;
-
-    // Check for @username mentions of ghosted users
     for (const userId in ignoredUsers) {
-      const username = ignoredUsers[userId];
-      // Look for @username pattern with word boundary
-      // const mentionRegex = new RegExp(`@${username}\\b`, "i");
-      // if (mentionRegex.test(postText)) {
-      //   return true;
-      // }
+      const username = ignoredUsers[userId].username;
       if (postText.toLowerCase().includes(username.toLowerCase())) {
         return true;
       }
     }
-
     return false;
   }
-
+  // Original cleanupTopicAuthor (restores author info in topic rows)
   function cleanupTopicAuthor(element) {
     const row = element.closest("li.row");
     if (row) {
@@ -687,7 +652,6 @@
       }
     }
   }
-
   function hideTopicRow(element) {
     const recentTopicLi = element.closest("#recent-topics li");
     if (recentTopicLi) {
@@ -762,8 +726,8 @@
       const innerDiv = rowItem.querySelector(".list-inner");
       if (innerDiv) {
         const byText = innerDiv.textContent.toLowerCase();
-        const hasGhostedInBy = Object.values(ignoredUsers).some((username) =>
-          byText.includes(`by ${username.toLowerCase()}`)
+        const hasGhostedInBy = Object.values(ignoredUsers).some((obj) =>
+          byText.includes(`by ${obj.username.toLowerCase()}`)
         );
         if (hasGhostedInBy) {
           rowItem.classList.add("ghosted-row", "ghosted-by-author");
@@ -775,7 +739,6 @@
       element.classList.add("ghosted-row", "ghosted-by-author");
     }
   }
-
   async function processLastPost(element) {
     const linksWithIcons = element.querySelectorAll("a:has(i.icon)");
     linksWithIcons.forEach((link) => {
@@ -857,7 +820,6 @@
     }
     element.classList.add("content-processed");
   }
-
   function processReactionList(list) {
     const reactionGroups = list.querySelectorAll(".reaction-group");
     reactionGroups.forEach((group) => {
@@ -873,13 +835,8 @@
       userLinks.forEach((link) => {
         const uid = link.href.match(/u=(\d+)/)?.[1];
         if (uid && isUserIgnored(uid)) {
-          // Start from the link and traverse upward to find the complete user entry container
-          // Look for a more specific parent that contains the entire user entry with avatar
           let userRow = link;
           let parent = link.parentElement;
-
-          // Go up several levels to ensure we get the complete structure
-          // This traverses up to find the outermost flex container that has the avatar and username
           while (parent && parent !== popup) {
             userRow = parent;
             if (
@@ -888,11 +845,10 @@
               parent.querySelector("img[alt]") &&
               parent.textContent.trim().includes(link.textContent.trim())
             ) {
-              break; // Found the complete container with both avatar and username
+              break;
             }
             parent = parent.parentElement;
           }
-
           if (userRow) {
             userRow.remove();
             removedCount++;
@@ -909,32 +865,26 @@
       }
     });
   }
-
   async function processCPListNotification(item) {
     const titleEl = item.querySelector(".notifications_title");
     if (!titleEl) {
       item.classList.add("content-processed");
       return;
     }
-
     const usernameEls = titleEl.querySelectorAll(
       ".username, .username-coloured"
     );
     const usernames = Array.from(usernameEls).map((el) =>
       el.textContent.trim()
     );
-
     if (usernames.length === 0) {
       item.classList.add("content-processed");
       return;
     }
-
-    // For notifications that start with "Quoted by" or "You were mentioned by", the first username is the key user
     const titleText = titleEl.textContent.trim();
     const isQuoteOrMention =
       titleText.startsWith("Quoted") || titleText.includes("mentioned by");
     const firstUsername = usernames[0];
-
     if (isQuoteOrMention && isUserIgnored(firstUsername)) {
       const row = item.closest("li.row");
       if (row) {
@@ -952,16 +902,13 @@
       item.classList.add("content-processed");
       return;
     }
-
     const nonIgnored = usernames.filter((u) => !isUserIgnored(u));
     const ghosted = usernames.filter((u) => isUserIgnored(u));
     const hasIgnored = ghosted.length > 0;
-
     if (!hasIgnored) {
       item.classList.add("content-processed");
       return;
     }
-
     if (nonIgnored.length === 0) {
       const row = item.closest("li.row");
       if (row) {
@@ -979,9 +926,6 @@
       item.classList.add("content-processed");
       return;
     }
-
-    // Create the non-ghosted notification first
-    // Find the last username element to get text after it
     const lastIgnoredEl = usernameEls[usernameEls.length - 1];
     const nodesAfter = [];
     let nxt = lastIgnoredEl?.nextSibling;
@@ -989,11 +933,7 @@
       nodesAfter.push(nxt.cloneNode(true));
       nxt = nxt.nextSibling;
     }
-
-    // Clear the title element
     titleEl.textContent = "";
-
-    // Add non-ignored usernames with appropriate separators
     nonIgnored.forEach((username, i) => {
       const matchEl = Array.from(usernameEls).find(
         (el) => el.textContent.trim().toLowerCase() === username.toLowerCase()
@@ -1003,25 +943,18 @@
       } else {
         titleEl.appendChild(document.createTextNode(username));
       }
-
       if (i < nonIgnored.length - 2) {
         titleEl.appendChild(document.createTextNode(", "));
       } else if (i === nonIgnored.length - 2) {
         titleEl.appendChild(document.createTextNode(" and "));
       }
     });
-
-    // Add "have reacted" or other trailing text
     nodesAfter.forEach((node) => titleEl.appendChild(node));
-
-    // Now create ghosted notifications for each ghosted user
     const row = item.closest("li.row");
     if (row) {
       ghosted.forEach((ghostedUsername) => {
         const ghostedRow = row.cloneNode(true);
         ghostedRow.classList.add("ghosted-row", "ghosted-by-author");
-
-        // Update the notification text for this ghosted user
         const ghostedTitleEl = ghostedRow.querySelector(".notifications_title");
         if (ghostedTitleEl) {
           ghostedTitleEl.textContent = "";
@@ -1037,21 +970,15 @@
               document.createTextNode(ghostedUsername)
             );
           }
-
-          // Add the trailing text
           nodesAfter.forEach((node) =>
             ghostedTitleEl.appendChild(node.cloneNode(true))
           );
         }
-
-        // Insert the ghosted row after the original
         row.parentNode.insertBefore(ghostedRow, row.nextSibling);
       });
     }
-
     item.classList.add("content-processed");
   }
-
   async function processNotification(item) {
     const usernameEls = item.querySelectorAll(".username, .username-coloured");
     const usernames = Array.from(usernameEls).map((el) =>
@@ -1167,7 +1094,6 @@
     // Check for @mentions of ghosted users
     if (!hideIt && postContentContainsMentionedGhosted(post)) {
       hideIt = true;
-      // Use the existing ghosted-by-content class
       post.classList.add("ghosted-by-content");
     }
     if (hideIt) {
@@ -1343,18 +1269,12 @@
   }
 
   function processReactionImages() {
-    // Find all reaction images with reaction-username attribute
     const reactionImages = document.querySelectorAll("img[reaction-username]");
-
     reactionImages.forEach((img) => {
       const username = img.getAttribute("reaction-username");
       if (username) {
-        // Convert username to lowercase for comparison
         const lowercaseUsername = username.toLowerCase();
-
-        // Check if this user is ignored
         if (isUserIgnored(lowercaseUsername)) {
-          // Remove the image
           img.remove();
         }
       }
@@ -1362,34 +1282,24 @@
   }
 
   async function processIgnoredContentOnce() {
-    // Optionally, clean up topic authors first:
+    // Clean up topic authors first:
     document.querySelectorAll("li.row").forEach(cleanupTopicAuthor);
-
     await Promise.all(
       Array.from(
         document.querySelectorAll(".notification-block:not(.content-processed)")
       ).map(processNotification)
     );
-
     await cacheAllPosts();
-
     document.querySelectorAll("fieldset.polls").forEach(processPoll);
-
     setupPollRefreshDetection();
-
     document.querySelectorAll(".topic-poster").forEach(processTopicPoster);
-
     document
       .querySelectorAll(".post:not(.content-processed)")
       .forEach(processPost);
-
     document
       .querySelectorAll(".reaction-score-list")
       .forEach(processReactionList);
-
-    // Process reaction images from ignored users
     processReactionImages();
-
     const reactionObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
@@ -1398,8 +1308,6 @@
               ? [node]
               : node.querySelectorAll(".reaction-score-list");
             lists.forEach((list) => processReactionList(list));
-
-            // Also check for reaction images in added nodes
             if (node.querySelectorAll) {
               const images = node.querySelectorAll("img[reaction-username]");
               if (images.length > 0) {
@@ -1410,20 +1318,15 @@
         });
       });
     });
-
     reactionObserver.observe(document.body, { childList: true, subtree: true });
     await new Promise((resolve) => setTimeout(resolve, 150));
-
     document
       .querySelectorAll("strong.badge:not(.content-processed)")
       .forEach((badge) => badge.classList.add("content-processed"));
-
     const lastPosts = document.querySelectorAll(
       "dd.lastpost:not(.content-processed), #recent-topics li dd.lastpost:not(.content-processed)"
     );
-
     await Promise.all(Array.from(lastPosts).map(processLastPost));
-
     document
       .querySelectorAll("li.row:not(.content-processed)")
       .forEach((row) => {
@@ -1436,7 +1339,6 @@
   // ---------------------------------------------------------------------
   // 6) AVATAR REPLACEMENT
   // ---------------------------------------------------------------------
-
   function replaceUserAvatars() {
     document.querySelectorAll("img").forEach((img) => {
       const match = img.src.match(/avatar=(\d+)/);
@@ -1448,12 +1350,10 @@
       }
     });
   }
-
   function startPeriodicAvatarCheck() {
     replaceUserAvatars();
     setInterval(replaceUserAvatars, 1500);
   }
-
   function validateAndReplaceAvatar(userId, url) {
     const testImg = new Image();
     testImg.onload = function () {
@@ -1475,26 +1375,18 @@
   // ---------------------------------------------------------------------
   // 7) PROFILE BUTTONS: GHOST + REPLACE AVATAR
   // ---------------------------------------------------------------------
-
   function addGhostButtonsIfOnProfile() {
     const memberlistTitle = document.querySelector(".memberlist-title");
     if (!memberlistTitle || document.getElementById("ghost-user-button"))
       return;
     const userId = getUserIdFromUrl();
-
-    // Get just the direct text content, not including child divs
     const titleText = Array.from(memberlistTitle.childNodes)
       .filter((node) => node.nodeType === Node.TEXT_NODE)
       .map((node) => node.textContent.trim())
       .join(" ");
-
-    // Extract the username after the dash
     const parts = titleText.split("-");
     let username = parts[1]?.trim() || "Unknown User";
-
-    // Clean the username to remove any button text that might have been included
     username = cleanUsername(username);
-
     if (!userId) return;
     const container = document.createElement("div");
     container.style.display = "inline-block";
@@ -1530,7 +1422,6 @@
       showReplaceAvatarPopup(userId);
     });
   }
-
   function showReplaceAvatarPopup(userId) {
     const popup = document.createElement("div");
     popup.style.cssText = `
@@ -1600,7 +1491,6 @@
   // ---------------------------------------------------------------------
   // 8) SHOW/HIDE GHOSTED POSTS TOGGLE VIA KEYBOARD
   // ---------------------------------------------------------------------
-
   function showToggleNotification() {
     const notification = document.createElement("div");
     notification.style.cssText = `
@@ -1623,17 +1513,14 @@
       setTimeout(() => notification.remove(), 300);
     }, 1500);
   }
-
   function toggleGhostedPosts() {
     const ghostedPosts = document.querySelectorAll(".post.ghosted-post");
     const ghostedQuotes = document.querySelectorAll(".ghosted-quote");
     const ghostedRows = document.querySelectorAll(".ghosted-row");
-
     const hasGhostedContent =
       ghostedPosts.length > 0 ||
       ghostedQuotes.length > 0 ||
       ghostedRows.length > 0;
-
     if (!hasGhostedContent) {
       console.log("No ghosted content found on this page");
       const notification = document.createElement("div");
@@ -1656,30 +1543,23 @@
       }, 1500);
       return;
     }
-
     showGhostedPosts = !showGhostedPosts;
-
     ghostedPosts.forEach((p) => p.classList.toggle("show", showGhostedPosts));
     ghostedQuotes.forEach((q) => q.classList.toggle("show", showGhostedPosts));
     ghostedRows.forEach((r) => {
       r.classList.toggle("show", showGhostedPosts);
-      // For cplist notifications, we need to ensure the row is visible
       if (r.closest(".topiclist.cplist")) {
         r.style.display = showGhostedPosts ? "block" : "none";
       }
     });
     document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
-
     showToggleNotification();
     updatePaginationPostCount();
-
-    // If we're showing ghosted content, scroll to the first shown element
     if (showGhostedPosts) {
       const firstShownElement =
         document.querySelector(".post.ghosted-post.show") ||
         document.querySelector(".ghosted-quote.show") ||
         document.querySelector(".ghosted-row.show");
-
       if (firstShownElement) {
         firstShownElement.scrollIntoView({
           behavior: "smooth",
@@ -1688,15 +1568,8 @@
       }
     }
   }
-
-  // Add keyboard shortcut listener
   document.addEventListener("keydown", (e) => {
-    // Check if we're in a text input
-    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
-      return;
-    }
-
-    // Check for backslash key
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
     if (e.key === "\\") {
       e.preventDefault();
       toggleGhostedPosts();
@@ -1706,7 +1579,6 @@
   // ---------------------------------------------------------------------
   // 9) MISC HELPER FUNCTIONS
   // ---------------------------------------------------------------------
-
   function moveExternalLinkIcon() {
     const lastPostSpans = document.querySelectorAll(
       "dd.lastpost span:not(.icon-moved)"
@@ -1722,7 +1594,6 @@
       }
     });
   }
-
   function cleanGhostedQuotesInTextarea() {
     const textarea = document.querySelector("textarea#message");
     if (!textarea || !textarea.value.includes("[quote")) return;
@@ -1738,7 +1609,6 @@
       textarea.value = text;
     }
   }
-
   function processOnlineList() {
     const onlineList = document.querySelector(".stat-block.online-list p");
     if (!onlineList) return;
@@ -1771,9 +1641,7 @@
   // ---------------------------------------------------------------------
   // 10) IGNORED USERS MANAGEMENT
   // ---------------------------------------------------------------------
-
   function showIgnoredUsersPopup() {
-    // Create popup container
     const popup = document.createElement("div");
     popup.id = "ignored-users-popup";
     popup.style.cssText = `
@@ -1793,8 +1661,6 @@
       z-index: 9999;
       font-family: 'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif;
     `;
-
-    // Header with title and close button
     const header = document.createElement("div");
     header.style.cssText = `
       padding: 10px;
@@ -1819,8 +1685,6 @@
     closeButton.onclick = () => document.body.removeChild(popup);
     header.appendChild(title);
     header.appendChild(closeButton);
-
-    // Content area for the user list
     const content = document.createElement("div");
     content.style.cssText = `
       padding: 10px;
@@ -1834,17 +1698,11 @@
       padding: 0;
       margin: 0;
     `;
-
-    // Render user list
-    const userEntries = Object.entries(ignoredUsers).map(
-      ([userId, username]) => ({
-        userId,
-        username: typeof username === "string" ? username : "Unknown User",
-      })
-    );
-
+    const userEntries = Object.entries(ignoredUsers).map(([userId, data]) => ({
+      userId,
+      username: typeof data === "string" ? data : data.username,
+    }));
     userEntries.sort((a, b) => a.username.localeCompare(b.username));
-
     userEntries.forEach(({ userId, username }) => {
       const listItem = document.createElement("li");
       listItem.style.cssText = `
@@ -1854,7 +1712,6 @@
         padding: 5px;
         border-bottom: 1px solid #3a3f4b;
       `;
-
       const unghostedButton = document.createElement("button");
       unghostedButton.textContent = "Unghost";
       unghostedButton.style.cssText = `
@@ -1875,25 +1732,19 @@
             '<p style="color: #c5d0db;">No ghosted users.</p>';
         }
       };
-
       const userLink = document.createElement("a");
       userLink.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
       userLink.textContent = username;
       userLink.style.cssText =
         "color: #4a90e2; text-decoration: none; flex-grow: 1;";
-
       listItem.appendChild(unghostedButton);
       listItem.appendChild(userLink);
       userList.appendChild(listItem);
     });
-
     if (Object.keys(ignoredUsers).length === 0) {
       userList.innerHTML = '<p style="color: #c5d0db;">No ghosted users.</p>';
     }
-
     content.appendChild(userList);
-
-    // Bottom controls with buttons
     const bottomControls = document.createElement("div");
     bottomControls.style.cssText = `
       padding: 10px;
@@ -1905,8 +1756,6 @@
       gap: 10px;
       flex-wrap: wrap;
     `;
-
-    // Mass Unghost button
     const massUnghostButton = document.createElement("button");
     massUnghostButton.innerHTML =
       '<i class="icon fa-trash fa-fw" aria-hidden="true"></i> Unghost All';
@@ -1929,16 +1778,12 @@
         alert("All users have been unghosted.");
       }
     };
-
     bottomControls.appendChild(massUnghostButton);
-
-    // Assemble the popup
     popup.appendChild(header);
     popup.appendChild(content);
     popup.appendChild(bottomControls);
     document.body.appendChild(popup);
   }
-
   function addShowIgnoredUsersButton() {
     const dropdown = document.querySelector(
       "#username_logged_in .dropdown-contents"
@@ -1952,29 +1797,24 @@
       showButton.role = "menuitem";
       showButton.innerHTML =
         '<i class="icon fa-ban fa-fw" aria-hidden="true"></i><span>Ghosted Users</span>';
-
       showButton.addEventListener("click", function (e) {
         e.preventDefault();
         showIgnoredUsersPopup();
       });
-
       listItem.appendChild(showButton);
       dropdown.insertBefore(listItem, dropdown.lastElementChild);
     }
   }
 
   // ---------------------------------------------------------------------
-  // 11) RT PAGE INJECTION
+  // 11) RT PAGE INJECTION & PAGINATION UPDATE
   // ---------------------------------------------------------------------
-
   async function injectRTContent() {
     if (!window.location.href.includes("search.php?search_id=newposts")) return;
     try {
       const pagebody = document.querySelector("#page-body");
       const innerDiv = pagebody.querySelector(".inner:not(.column1)");
       if (!innerDiv) return;
-
-      // Immediately replace with loading state
       innerDiv.innerHTML = `
         <ul class="topiclist">
             <li class="header">
@@ -1989,8 +1829,6 @@
         <ul class="topiclist topics collapsible">
         </ul>
       `;
-
-      const originalAvatars = new Map();
       const response = await fetch(
         "https://rpghq.org/forums/rt?recent_topics_start=0"
       );
@@ -1999,14 +1837,12 @@
       const rtDoc = parser.parseFromString(text, "text/html");
       const rtInner = rtDoc.querySelector(".inner:not(.column1)");
       if (!rtInner) throw new Error("Could not find inner div in RT page");
-
       const targetList = innerDiv.querySelector("ul.topiclist.topics");
       const rtListItems = rtInner.querySelectorAll("li.row");
       console.log(`Found ${rtListItems.length} topics on first RT page`);
       rtListItems.forEach((row) => {
         targetList.appendChild(row.cloneNode(true));
       });
-
       if (rtListItems.length === 35) {
         console.log("Found 35 items, fetching second page...");
         const secondResponse = await fetch(
@@ -2025,18 +1861,14 @@
           });
         }
       }
-
       innerDiv.querySelectorAll('a[href^="./"]').forEach((link) => {
         link.href = link.href.replace("./", "https://rpghq.org/forums/");
       });
-
-      // Change Oyster Sauce's username color to #00AA00
       innerDiv.querySelectorAll("a.username-coloured").forEach((link) => {
         if (link.textContent.trim() === "Oyster Sauce") {
           link.style.color = "#00AA00";
         }
       });
-
       innerDiv.querySelectorAll("li.row").forEach((row) => {
         const responsiveHide = row.querySelector(".responsive-hide");
         if (responsiveHide) {
@@ -2050,7 +1882,6 @@
             otherLink.remove();
           }
         }
-
         const isUnread =
           row.querySelector(".row-item").classList.contains("topic_unread") ||
           row
@@ -2064,7 +1895,6 @@
             .querySelector(".row-item")
             .classList.contains("sticky_unread_mine") ||
           row.querySelector(".row-item").classList.contains("announce_unread");
-
         const topicTitle = row.querySelector("a.topictitle");
         if (topicTitle) {
           if (isUnread) {
@@ -2091,36 +1921,27 @@
       console.error("Failed to inject RT content:", error);
     }
   }
-
   function updatePaginationPostCount() {
     const paginationElements = document.querySelectorAll(".pagination");
     if (!paginationElements.length) return;
-
     paginationElements.forEach((pagination) => {
       const paginationText = pagination.textContent.trim();
       if (!paginationText.includes("Page 1 of 1")) {
         pagination.classList.add("content-processed");
         return;
       }
-
       const visiblePosts = showGhostedPosts
         ? document.querySelectorAll(".post").length
         : document.querySelectorAll(".post:not(.ghosted-post)").length;
-
       const visibleMatches = showGhostedPosts
         ? document.querySelectorAll("li.row").length
         : document.querySelectorAll("li.row:not(.ghosted-row)").length;
-
       const originalText = pagination.innerHTML;
       let newText = originalText;
-
-      // Update post count if this is a post page
       const postCountMatch = paginationText.match(/(\d+) posts/);
       if (postCountMatch) {
         newText = newText.replace(/\d+ posts/, `${visiblePosts} posts`);
       }
-
-      // Update match count if this is a search page
       const matchCountMatch = paginationText.match(
         /Search found (\d+) matches/
       );
@@ -2130,7 +1951,6 @@
           `Search found ${visibleMatches} matches`
         );
       }
-
       if (newText !== originalText) {
         pagination.innerHTML = newText;
       }
@@ -2139,36 +1959,26 @@
   }
 
   // ---------------------------------------------------------------------
-  // 12) INIT ON DOMContentLoaded
+  // 12) PERIODIC REACTION CHECK & OTHERS
   // ---------------------------------------------------------------------
-
   function startPeriodicReactionCheck() {
-    // Initial check
     processReactionImages();
-
-    // Set up interval to check every 2 seconds
     setInterval(processReactionImages, 2000);
   }
-
-  // Function to change Oyster Sauce's username color to #00AA00
   function changeOysterSauceColor() {
     document.querySelectorAll("a.username-coloured").forEach((link) => {
       if (link.textContent.trim() === "Oyster Sauce") {
         link.style.color = "#00AA00";
       }
     });
-
-    // Set up a MutationObserver to handle dynamically loaded content
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.addedNodes && mutation.addedNodes.length > 0) {
           mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === 1) {
-              // Element node
-              const usernameLinks = node.querySelectorAll
-                ? node.querySelectorAll("a.username-coloured")
-                : [];
-
+            if (node.nodeType === 1 && node.querySelectorAll) {
+              const usernameLinks = node.querySelectorAll(
+                "a.username-coloured"
+              );
               usernameLinks.forEach((link) => {
                 if (link.textContent.trim() === "Oyster Sauce") {
                   link.style.color = "#00AA00";
@@ -2179,11 +1989,12 @@
         }
       });
     });
-
-    // Start observing the document with the configured parameters
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
+  // ---------------------------------------------------------------------
+  // 13) INIT ON DOMContentLoaded
+  // ---------------------------------------------------------------------
   document.addEventListener("DOMContentLoaded", async () => {
     await Promise.all(
       Array.from(
@@ -2198,24 +2009,17 @@
     startPeriodicReactionCheck();
     await injectRTContent();
     const needsFetching = await cacheAllPosts();
-
-    // Process li.row elements first
     document.querySelectorAll("li.row").forEach((row) => {
       const lp = row.querySelector("dd.lastpost");
       if (lp && !lp.classList.contains("content-processed")) return;
       row.classList.add("content-processed");
     });
-
-    // Process cplist notifications
-
-    // Then process the containers, but only if all their li elements are processed
     if (!needsFetching) {
       document
         .querySelectorAll(
           ".topiclist.topics, #recent-topics, .topiclist.forums"
         )
         .forEach((container) => {
-          // For topiclist.topics and recent-topics, only add content-processed if all li's are processed
           if (
             (container.classList.contains("topiclist") &&
               container.classList.contains("topics")) ||
@@ -2229,12 +2033,10 @@
               container.classList.add("content-processed");
             }
           } else {
-            // For other containers, proceed as before
             container.classList.add("content-processed");
           }
         });
     }
-
     await processIgnoredContentOnce();
     replaceUserAvatars();
     addGhostButtonsIfOnProfile();
@@ -2244,8 +2046,6 @@
     cleanGhostedQuotesInTextarea();
     updatePaginationPostCount();
     changeOysterSauceColor();
-
-    // Final pass to ensure all containers are marked as processed, with the same li check
     document
       .querySelectorAll(".topiclist.topics, #recent-topics, .topiclist.forums")
       .forEach((container) => {
