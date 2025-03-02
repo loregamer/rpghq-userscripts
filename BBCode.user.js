@@ -191,102 +191,80 @@ SOFTWARE.
   // BBCode Highlighting
   // =============================
   const highlightBBCode = (text) => {
-    const codeBlocks = [];
-    text = text.replace(/\[code\]([\s\S]*?)\[\/code\]/gi, (m, code) => {
-      codeBlocks.push(code);
-      return `[CODE_PLACEHOLDER_${codeBlocks.length - 1}]`;
-    });
-    text = text.replace(/:([a-z0-9-]+):/gi, (m, name) => {
-      const custom = customSmileys.find((url) => url.includes(name));
-      return custom
-        ? `<span class="bbcode-smiley" title="${m}"><img src="${custom}" alt="${m}" /></span>`
-        : `<span class="bbcode-smiley">${escapeHTML(m)}</span>`;
-    });
-    text = text.replace(
-      /\[(img|media|webm)\](.*?)\[\/\1\]/gi,
-      (m, tag, url) => {
-        const color = getColorIndex(tag);
-        return `<span class="bbcode-bracket">[</span><span class="bbcode-tag-${color}">${tag}</span><span class="bbcode-bracket">]</span><span class="bbcode-link">${escapeHTML(
-          url
-        )}</span><span class="bbcode-bracket">[</span><span class="bbcode-tag-${color}">/${tag}</span><span class="bbcode-bracket">]</span>`;
-      }
-    );
-    text = text.replace(
-      /\[(img|media)(\s+[a-z]+=[^\]]+)+\](.*?)\[\/\1\]/gi,
-      (m, tag, attrs, url) => {
-        const color = getColorIndex(tag);
-        return `<span class="bbcode-bracket">[</span><span class="bbcode-tag-${color}">${tag}</span><span class="bbcode-attribute">${escapeHTML(
-          attrs
-        )}</span><span class="bbcode-bracket">]</span><span class="bbcode-link">${escapeHTML(
-          url
-        )}</span><span class="bbcode-bracket">[</span><span class="bbcode-tag-${color}">/${tag}</span><span class="bbcode-bracket">]</span>`;
-      }
-    );
-    text = text.replace(
-      /\[([a-zA-Z0-9*]+)((?:=[^\]]+)?|(?:\s+[a-z]+=[^\]]+)+)?\]|\[\/([a-zA-Z0-9*]+)\]|(https?:\/\/[^\s\]]+)/g,
-      (m, openTag, attr, closeTag) => {
-        if (openTag) {
-          const color = getColorIndex(openTag);
-          if (openTag.toLowerCase() === "color" && attr) {
-            const match = attr.match(/=(#[0-9A-Fa-f]{6})/);
-            if (match) {
-              const hex = match[1];
-              return `<span class="bbcode-bracket">[</span><span class="bbcode-tag-${color}">${escapeHTML(
-                openTag
-              )}</span><span class="bbcode-attribute">=</span><span class="bbcode-color-preview" style="background-color:${hex}; color:${getContrastColor(
-                hex
-              )};">${escapeHTML(
-                hex
-              )}</span><span class="bbcode-bracket">]</span>`;
+    return text.replace(
+      /\[(\/?)([a-zA-Z0-9*]+)([^\]]*)\]/g,
+      (match, slash, keyword, rest) => {
+        // Special handling for the list-item tag [*]
+        if (keyword === "*") {
+          return (
+            `<span class="bbcode-bracket">[</span>` +
+            `<span class="bbcode-list-item">*</span>` +
+            `<span class="bbcode-bracket">]</span>`
+          );
+        }
+
+        const colorIndex = getColorIndex(keyword);
+        let output =
+          `<span class="bbcode-bracket">[</span>` +
+          `<span class="bbcode-tag-${colorIndex}">${escapeHTML(
+            slash + keyword
+          )}</span>`;
+
+        // Process any parameters/attributes if present.
+        if (rest) {
+          // Capture any leading whitespace (e.g. the space before parameters in [img size=30])
+          const leadingWs = rest.match(/^\s*/)[0];
+          let params = rest.slice(leadingWs.length);
+          if (params) {
+            // If the parameter starts with an '=', handle it accordingly.
+            if (params.startsWith("=")) {
+              const paramValue = params.slice(1).trim();
+              if (keyword.toLowerCase() === "color") {
+                // For the color tag, if the parameter is a hex code, highlight it specially.
+                const hexMatch = paramValue.match(/^(#[0-9A-Fa-f]{6})/);
+                if (hexMatch) {
+                  const hex = hexMatch[1];
+                  output +=
+                    leadingWs +
+                    `<span class="bbcode-attribute">=</span>` +
+                    `<span class="bbcode-color-preview" style="background-color:${hex}; color:${getContrastColor(
+                      hex
+                    )};">${escapeHTML(hex)}</span>`;
+                  // Append any extra attribute text that follows the hex code.
+                  const extra = paramValue.slice(hex.length);
+                  if (extra) {
+                    output += `<span class="bbcode-attribute">${escapeHTML(
+                      extra
+                    )}</span>`;
+                  }
+                } else {
+                  output +=
+                    leadingWs +
+                    `<span class="bbcode-attribute">=</span>` +
+                    `<span class="bbcode-attribute">${escapeHTML(
+                      paramValue
+                    )}</span>`;
+                }
+              } else {
+                output +=
+                  leadingWs +
+                  `<span class="bbcode-attribute">=</span>` +
+                  `<span class="bbcode-attribute">${escapeHTML(
+                    paramValue
+                  )}</span>`;
+              }
+            } else {
+              // For parameters that start with a space (e.g. [img size=30]), wrap them in the attribute style.
+              output +=
+                leadingWs +
+                `<span class="bbcode-attribute">${escapeHTML(params)}</span>`;
             }
           }
-          if (openTag === "*") {
-            return `<span class="bbcode-bracket">[</span><span class="bbcode-list-item">*</span><span class="bbcode-bracket">]</span>`;
-          }
-          if (openTag.toLowerCase() === "url" && attr) {
-            const urlMatch = attr.match(/=(https?:\/\/[^\]]+)/);
-            if (urlMatch) {
-              return `<span class="bbcode-bracket">[</span><span class="bbcode-tag-${color}">${escapeHTML(
-                openTag
-              )}</span><span class="bbcode-attribute">=<span class="bbcode-link">${escapeHTML(
-                urlMatch[1]
-              )}</span></span><span class="bbcode-bracket">]</span>`;
-            }
-          }
-          if (openTag.toLowerCase() === "smention") {
-            return `<span class="bbcode-bracket">[</span><span class="bbcode-tag-smention" style="color:#FFC107;">${escapeHTML(
-              openTag
-            )}</span>${
-              attr
-                ? `<span class="bbcode-attribute">${escapeHTML(attr)}</span>`
-                : ""
-            }<span class="bbcode-bracket">]</span>`;
-          }
-          return `<span class="bbcode-bracket">[</span><span class="bbcode-tag-${color}">${escapeHTML(
-            openTag
-          )}</span>${
-            attr
-              ? `<span class="bbcode-attribute">${escapeHTML(attr)}</span>`
-              : ""
-          }<span class="bbcode-bracket">]</span>`;
         }
-        if (closeTag) {
-          const color = getColorIndex(closeTag);
-          return `<span class="bbcode-bracket">[</span><span class="bbcode-tag-${color}">/${escapeHTML(
-            closeTag
-          )}</span><span class="bbcode-bracket">]</span>`;
-        }
-        return m;
+        output += `<span class="bbcode-bracket">]</span>`;
+        return output;
       }
     );
-    text = text.replace(
-      /\[CODE_PLACEHOLDER_(\d+)\]/g,
-      (m, index) =>
-        `<span class="bbcode-bracket">[</span><span class="bbcode-tag-0">code</span><span class="bbcode-bracket">]</span><span style="color:#2E8B57;">${escapeHTML(
-          codeBlocks[index]
-        )}</span><span class="bbcode-bracket">[</span><span class="bbcode-tag-0">/code</span><span class="bbcode-bracket">]</span>`
-    );
-    return text;
   };
 
   // =============================
