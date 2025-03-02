@@ -191,10 +191,11 @@ SOFTWARE.
   // BBCode Highlighting
   // =============================
   const highlightBBCode = (text) => {
-    return text.replace(
+    // First, process all BBCode tags.
+    let output = text.replace(
       /\[(\/?)([a-zA-Z0-9*]+)([^\]]*)\]/g,
       (match, slash, keyword, rest) => {
-        // Handle list items ([*]) separately
+        // Special handling for list items ([*])
         if (keyword === "*") {
           return (
             `<span class="bbcode-bracket">[</span>` +
@@ -203,46 +204,46 @@ SOFTWARE.
           );
         }
 
-        // Special handling for smention tags with a fixed color (#FFC107)
+        // Special handling for smention: force a fixed color.
         if (keyword.toLowerCase() === "smention") {
-          let output =
+          let out =
             `<span class="bbcode-bracket">[</span>` +
             `<span class="bbcode-tag-smention" style="color:#FFC107;">${escapeHTML(
               slash + keyword
             )}</span>`;
           if (rest) {
             const leadingWs = rest.match(/^\s*/)[0];
-            let params = rest.slice(leadingWs.length);
+            const params = rest.slice(leadingWs.length);
             if (params) {
               if (params.startsWith("=")) {
                 const paramValue = params.slice(1).trim();
-                output +=
+                out +=
                   leadingWs +
                   `<span class="bbcode-attribute">=</span>` +
                   `<span class="bbcode-attribute">${escapeHTML(
                     paramValue
                   )}</span>`;
               } else {
-                output +=
+                out +=
                   leadingWs +
                   `<span class="bbcode-attribute">${escapeHTML(params)}</span>`;
               }
             }
           }
-          output += `<span class="bbcode-bracket">]</span>`;
-          return output;
+          out += `<span class="bbcode-bracket">]</span>`;
+          return out;
         }
 
-        // For other tags, use the standard color assignment
+        // For all other tags, assign colors using the tagColorMap.
         const colorIndex = getColorIndex(keyword);
-        let output =
+        let out =
           `<span class="bbcode-bracket">[</span>` +
           `<span class="bbcode-tag-${colorIndex}">${escapeHTML(
             slash + keyword
           )}</span>`;
         if (rest) {
           const leadingWs = rest.match(/^\s*/)[0];
-          let params = rest.slice(leadingWs.length);
+          const params = rest.slice(leadingWs.length);
           if (params) {
             if (params.startsWith("=")) {
               const paramValue = params.slice(1).trim();
@@ -250,7 +251,7 @@ SOFTWARE.
                 const hexMatch = paramValue.match(/^(#[0-9A-Fa-f]{6})/);
                 if (hexMatch) {
                   const hex = hexMatch[1];
-                  output +=
+                  out +=
                     leadingWs +
                     `<span class="bbcode-attribute">=</span>` +
                     `<span class="bbcode-color-preview" style="background-color:${hex}; color:${getContrastColor(
@@ -258,12 +259,12 @@ SOFTWARE.
                     )};">${escapeHTML(hex)}</span>`;
                   const extra = paramValue.slice(hex.length);
                   if (extra) {
-                    output += `<span class="bbcode-attribute">${escapeHTML(
+                    out += `<span class="bbcode-attribute">${escapeHTML(
                       extra
                     )}</span>`;
                   }
                 } else {
-                  output +=
+                  out +=
                     leadingWs +
                     `<span class="bbcode-attribute">=</span>` +
                     `<span class="bbcode-attribute">${escapeHTML(
@@ -271,7 +272,7 @@ SOFTWARE.
                     )}</span>`;
                 }
               } else {
-                output +=
+                out +=
                   leadingWs +
                   `<span class="bbcode-attribute">=</span>` +
                   `<span class="bbcode-attribute">${escapeHTML(
@@ -279,16 +280,24 @@ SOFTWARE.
                   )}</span>`;
               }
             } else {
-              output +=
+              out +=
                 leadingWs +
                 `<span class="bbcode-attribute">${escapeHTML(params)}</span>`;
             }
           }
         }
-        output += `<span class="bbcode-bracket">]</span>`;
-        return output;
+        out += `<span class="bbcode-bracket">]</span>`;
+        return out;
       }
     );
+
+    // Second pass: Wrap any URLs in the output (even those inside BBCode content)
+    // with a span using the "bbcode-link" class.
+    output = output.replace(/(https?:\/\/[^\s<]+)/g, (match) => {
+      return `<span class="bbcode-link">${match}</span>`;
+    });
+
+    return output;
   };
 
   // =============================
