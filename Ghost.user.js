@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.6
+// @version      5.6.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -495,7 +495,8 @@
   }
 
   function getUserIdFromUrl() {
-    const match = window.location.href.match(/u=(\d+)/);
+    // Extract just the numeric ID part, even if followed by a dash and username
+    const match = window.location.href.match(/u=(\d+)(?:-[\w-]+)?/);
     return match ? match[1] : null;
   }
 
@@ -1488,9 +1489,12 @@
       .map((node) => node.textContent.trim())
       .join(" ");
 
-    // Extract the username after the dash
-    const parts = titleText.split("-");
-    let username = parts[1]?.trim() || "Unknown User";
+    // Extract the username using the standard format "Viewing profile - username"
+    let username = "Unknown User";
+    const match = titleText.match(/Viewing profile - (.+)/);
+    if (match && match[1]) {
+      username = match[1].trim();
+    }
 
     // Clean the username to remove any button text that might have been included
     username = cleanUsername(username);
