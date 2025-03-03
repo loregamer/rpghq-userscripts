@@ -87,6 +87,9 @@
       if (link.textContent.trim() === "Oyster Sauce") {
         link.style.color = "#00AA00";
       }
+      if (link.textContent.trim() === "rusty_shackleford") {
+        link.style.color = "#F5575D";
+      }
     });
   }
 
