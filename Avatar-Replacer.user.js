@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Avatar Replacer
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Replaces user avatars
 // @author       You
 // @match        https://rpghq.org/*/*
