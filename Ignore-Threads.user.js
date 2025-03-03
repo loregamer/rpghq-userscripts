@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      3.6.1
+// @version      3.6.2
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads with an improved review overlay
 // @match        https://rpghq.org/forums/*
 // @match        https://rpghq.org/forums/memberlist.php*
@@ -1001,7 +1001,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       showButton.title = "Ignored Threads";
       showButton.role = "menuitem";
       showButton.innerHTML =
-        '<i class="icon fa-eye fa-fw" aria-hidden="true"></i><span>Ignored Threads</span>';
+        '<i class="icon fa-eye-slash fa-fw" aria-hidden="true"></i><span>Ignored Threads</span>';
 
       showButton.addEventListener("click", function (e) {
         e.preventDefault();
@@ -1216,7 +1216,7 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
       showButton.title = "Never Iggyd Users";
       showButton.role = "menuitem";
       showButton.innerHTML =
-        '<i class="icon fa-heart fa-fw" aria-hidden="true"></i><span>Never Iggyd Users</span>';
+        '<i class="icon fa-users fa-fw" aria-hidden="true"></i><span>Never Iggyd Users</span>';
 
       showButton.addEventListener("click", function (e) {
         e.preventDefault();

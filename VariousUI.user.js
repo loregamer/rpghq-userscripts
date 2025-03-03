@@ -1,14 +1,15 @@
 // ==UserScript==
 // @name         RPGHQ - Various UI Tweaks
 // @namespace    http://tampermonkey.net/
-// @version      1.3.3
+// @version      1.7.1
 // @description  Various UI improvements for rpghq.org
 // @match        https://rpghq.org/*
-// @grant        none
+// @grant        GM_setValue
+// @grant        GM_getValue
 // @license      MIT
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
-// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/refs/heads/ghosted-users/VariousUI.user.js
-// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/refs/heads/ghosted-users/VariousUI.user.js
+// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/VariousUI.user.js
+// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/VariousUI.user.js
 // ==/UserScript==
 
 /*
@@ -38,7 +39,28 @@ SOFTWARE.
 (function () {
   "use strict";
 
+  const settings = {
+    betterQuoteBoxes: true,
+    betterFileLinks: true,
+    unreadLastPostButton: true,
+    replaceReadTopicLinks: true,
+    cleanerEditedNotice: false,
+    topicLinkCopyButton: true,
+    highlightCurrentPost: true,
+  };
+
   const utils = {
+    saveSettings() {
+      GM_setValue("rpghqUITweaks", JSON.stringify(settings));
+    },
+
+    loadSettings() {
+      const savedSettings = GM_getValue("rpghqUITweaks");
+      if (savedSettings) {
+        Object.assign(settings, JSON.parse(savedSettings));
+      }
+    },
+
     applyStyles(styles) {
       const style = document.createElement("style");
       style.textContent = styles;
@@ -87,17 +109,39 @@ SOFTWARE.
       }
     },
 
-    removeReadMoreButtons() {
-      document
-        .querySelectorAll(".imcger-quote-button")
-        .forEach((button) => button.remove());
-      document
-        .querySelectorAll(".imcger-quote-shadow")
-        .forEach((shadow) => shadow.remove());
-      document.querySelectorAll(".imcger-quote-text").forEach((text) => {
-        text.style.maxHeight = "none";
-        text.style.overflow = "visible";
+    createToggleItem(id, text, isEnabled, onClickHandler) {
+      const li = document.createElement("li");
+      li.id = id;
+      li.innerHTML = `
+        <a href="#" role="menuitem" class="ui-tweak-toggle">
+          <span class="toggle-content">
+            <i class="icon ${
+              isEnabled ? "fa-toggle-on" : "fa-toggle-off"
+            } fa-fw" aria-hidden="true"></i>
+            ${text}
+          </span>
+        </a>
+      `;
+      const link = li.querySelector("a");
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        isEnabled = !isEnabled;
+        onClickHandler(isEnabled);
+        this.updateToggleUI(link, isEnabled);
       });
+      return li;
+    },
+
+    updateToggleUI(element, isEnabled) {
+      const icon = element.querySelector(".toggle-content i");
+      if (icon) {
+        icon.className = `icon ${
+          isEnabled ? "fa-toggle-on" : "fa-toggle-off"
+        } fa-fw`;
+      }
+      element.title = isEnabled
+        ? `Disable ${element.textContent.trim()}`
+        : `Enable ${element.textContent.trim()}`;
     },
   };
 
@@ -105,7 +149,7 @@ SOFTWARE.
     init() {
       this.applyStyles();
       this.processQuoteBoxes();
-      utils.removeReadMoreButtons();
+      this.removeReadMoreButtons();
       this.colorizeUsernames();
       this.processAvatars();
     },
@@ -559,6 +603,118 @@ SOFTWARE.
       };
       quoteBox.appendChild(toggle);
     },
+
+    removeReadMoreButtons() {
+      document
+        .querySelectorAll(".imcger-quote-button")
+        .forEach((button) => button.remove());
+      document
+        .querySelectorAll(".imcger-quote-shadow")
+        .forEach((shadow) => shadow.remove());
+      document.querySelectorAll(".imcger-quote-text").forEach((text) => {
+        text.style.maxHeight = "none";
+        text.style.overflow = "visible";
+      });
+    },
+  };
+
+  const betterFileLinks = {
+    init() {
+      this.processFileLinks();
+    },
+
+    processFileLinks() {
+      const fileLinks = document.querySelectorAll(
+        'a[href^="https://f.rpghq.org/"]'
+      );
+      fileLinks.forEach((link) => {
+        const url = new URL(link.href);
+        const filename = url.searchParams.get("n");
+        if (
+          filename &&
+          link.textContent.trim().startsWith("https://f.rpghq.org/")
+        ) {
+          const downloadSvg =
+            '<img alt="📥" class="emoji smilies" draggable="false" src="//cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/svg/1f4e5.svg">';
+          link.innerHTML = `${downloadSvg} ${filename}`;
+          link.title = link.href;
+        }
+      });
+    },
+  };
+
+  const unreadLastPostButton = {
+    init() {
+      this.processRows();
+    },
+
+    processRows() {
+      const topicRows = document.querySelectorAll('.row-item[class*="topic_"]');
+      topicRows.forEach((row) => {
+        if (this.isUnreadTopic(row)) {
+          this.updateLastPostButton(row);
+        }
+      });
+
+      const forumRows = document.querySelectorAll(
+        ".row-item.forum_read, .row-item.forum_unread"
+      );
+      forumRows.forEach((row) => this.checkForumLastPost(row));
+    },
+
+    isUnreadTopic(row) {
+      return (
+        row.classList.contains("topic_unread") ||
+        row.classList.contains("topic_unread_mine") ||
+        row.classList.contains("topic_unread_hot") ||
+        row.classList.contains("topic_unread_hot_mine")
+      );
+    },
+
+    updateLastPostButton(row) {
+      const lastPostLink = row.querySelector(
+        '.lastpost a[title="Go to last post"], .lastpost a[title="View the latest post"]'
+      );
+      if (lastPostLink) {
+        const icon = lastPostLink.querySelector("i.icon");
+        if (icon) {
+          icon.classList.remove("icon-lightgray");
+          icon.classList.add("icon-red");
+        }
+      }
+    },
+
+    checkForumLastPost(forumRow) {
+      const forumLink = forumRow.querySelector("a.forumtitle");
+      const lastPostTitle = forumRow.querySelector(".lastpost .lastsubject");
+      if (forumLink && lastPostTitle) {
+        const forumUrl = forumLink.href;
+        const lastPostText = lastPostTitle.textContent.trim();
+        fetch(forumUrl)
+          .then((response) => response.text())
+          .then((html) => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const topicRows = doc.querySelectorAll(
+              '.row-item[class*="topic_"]'
+            );
+            const hasUnreadTopic = Array.from(topicRows).some((row) => {
+              const topicTitle = row.querySelector(".topictitle");
+              return (
+                this.isUnreadTopic(row) &&
+                topicTitle &&
+                topicTitle.textContent.trim() === lastPostText
+              );
+            });
+            if (hasUnreadTopic) {
+              this.updateLastPostButton(forumRow);
+            }
+          })
+          .catch((error) =>
+            console.error("Error checking forum last post:", error)
+          );
+      }
+    },
   };
 
   const replaceReadTopicLinks = {
@@ -583,14 +739,25 @@ SOFTWARE.
       );
 
       if (topicLink && lastPostLink) {
-        topicLink.href = lastPostLink.href;
+        // Extract the post ID from the last post link
+        const postMatch = lastPostLink.href.match(/#p(\d+)$/);
+        if (postMatch) {
+          const postId = postMatch[1];
+          // Preserve the original topic URL and add the post parameter
+          const newUrl = new URL(topicLink.href);
+          newUrl.searchParams.set("p", postId);
+          newUrl.hash = `#p${postId}`;
+          topicLink.href = newUrl.toString();
+        }
       }
     },
   };
 
   const cleanerEditedNotice = {
     init() {
-      this.applyStyles();
+      if (settings.cleanerEditedNotice) {
+        this.applyStyles();
+      }
     },
 
     applyStyles() {
@@ -621,10 +788,87 @@ SOFTWARE.
     },
   };
 
+  const topicLinkCopyButton = {
+    init() {
+      if (settings.topicLinkCopyButton) {
+        this.addCopyButtons();
+        this.addCopiedMessageStyles();
+      }
+    },
+
+    addCopyButtons() {
+      const topicTitles = document.querySelectorAll(".topic-title");
+      topicTitles.forEach((titleElement) => {
+        const link = titleElement.querySelector("a");
+        if (link) {
+          const copyButton = this.createCopyButton(link);
+          titleElement.appendChild(copyButton);
+        }
+      });
+    },
+
+    createCopyButton(link) {
+      const button = document.createElement("button");
+      button.className = "topic-copy-button";
+      button.innerHTML =
+        '<i class="icon fa-copy fa-fw" aria-hidden="true"></i>';
+      button.title = "Copy BBCode link";
+      button.style.marginLeft = "7px";
+      button.style.padding = "0 3px";
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        this.copyBBCode(link);
+      });
+      return button;
+    },
+
+    copyBBCode(link) {
+      const bbcode = `[size=150][b][url=${link.href}]${link.textContent}[/url][/b][/size]`;
+      navigator.clipboard
+        .writeText(bbcode)
+        .then(() => {
+          this.showCopiedMessage();
+        })
+        .catch((err) => {
+          console.error("Failed to copy text: ", err);
+        });
+    },
+
+    showCopiedMessage() {
+      const message = document.createElement("div");
+      message.textContent = "BBCode copied!";
+      message.className = "copy-message";
+      document.body.appendChild(message);
+      setTimeout(() => {
+        message.remove();
+      }, 2000);
+    },
+
+    addCopiedMessageStyles() {
+      const style = document.createElement("style");
+      style.textContent = `
+        .copy-message {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          background-color: rgba(0, 0, 0, 0.8);
+          color: white;
+          padding: 10px 20px;
+          border-radius: 5px;
+          z-index: 9999;
+          font-size: 14px;
+        }
+      `;
+      document.head.appendChild(style);
+    },
+  };
+
   const highlightCurrentPost = {
     init() {
-      this.applyStyles();
-      this.highlightPost();
+      if (settings.highlightCurrentPost) {
+        this.applyStyles();
+        this.highlightPost();
+      }
     },
 
     applyStyles() {
@@ -647,25 +891,14 @@ SOFTWARE.
 
     highlightPost() {
       const hash = window.location.hash;
+      const postId = hash ? hash.slice(1) : null;
+
+      // Also check for p parameter in URL
       const urlParams = new URLSearchParams(window.location.search);
       const postParam = urlParams.get("p");
-      const viewParam = urlParams.get("view");
 
-      // Check for unread view first
-      if (viewParam === "unread" && hash === "#unread") {
-        const unreadPosts = document.querySelectorAll(".post.unreadpost");
-        for (const post of unreadPosts) {
-          if (!post.classList.contains("ghosted-post")) {
-            post.classList.add("highlighted-current-post");
-            post.scrollIntoView({ behavior: "smooth", block: "center" });
-            break; // Only highlight the first one
-          }
-        }
-        return;
-      }
+      const targetPostId = postId || postParam;
 
-      // Handle regular post highlighting
-      const targetPostId = hash ? hash.slice(1) : postParam;
       if (targetPostId) {
         const postElement = document.getElementById(targetPostId);
         if (postElement) {
@@ -678,23 +911,284 @@ SOFTWARE.
     },
   };
 
+  const uiTweaks = {
+    init() {
+      // Only add the UI Tweaks dropdown if the URL contains "ucp.php"
+      if (window.location.href.includes("ucp.php")) {
+        this.addUITweaksDropdown();
+        this.applyCustomStyles();
+      }
+    },
+
+    addUITweaksDropdown() {
+      const navMain = document.getElementById("nav-main");
+      if (!navMain) return;
+
+      const notificationsLi = document.querySelector(
+        "#nav-main .dropdown-container.dropdown-right.rightside"
+      );
+      if (!notificationsLi) return;
+
+      const dropdownLi = document.createElement("li");
+      dropdownLi.className = "dropdown-container dropdown-right rightside";
+      // Remove the inline style that was adding extra margin
+      // dropdownLi.style.marginRight = "5px";
+
+      dropdownLi.innerHTML = `
+        <a href="#" class="dropdown-trigger">
+          <i class="icon fa-cogs fa-fw" aria-hidden="true"></i>
+          <span>UI Tweaks</span>
+        </a>
+        <div class="dropdown">
+          <div class="pointer"><div class="pointer-inner"></div></div>
+          <ul class="dropdown-contents" role="menu">
+          </ul>
+        </div>
+      `;
+
+      const dropdownContents = dropdownLi.querySelector(".dropdown-contents");
+
+      // Add toggle items for each setting
+      this.addToggleItem(
+        dropdownContents,
+        "betterFileLinks",
+        "Better File Links",
+        this.toggleBetterFileLinks.bind(this)
+      );
+      this.addToggleItem(
+        dropdownContents,
+        "betterQuoteBoxes",
+        "Better Quote Boxes",
+        this.toggleBetterQuoteBoxes.bind(this)
+      );
+      this.addToggleItem(
+        dropdownContents,
+        "cleanerEditedNotice",
+        "Cleaner Edited Notice",
+        this.toggleCleanerEditedNotice.bind(this)
+      );
+      this.addToggleItem(
+        dropdownContents,
+        "replaceReadTopicLinks",
+        "Jump to Last Read",
+        this.toggleReplaceReadTopicLinks.bind(this)
+      );
+      this.addToggleItem(
+        dropdownContents,
+        "topicLinkCopyButton",
+        "Topic Link Copy Button",
+        this.toggleTopicLinkCopyButton.bind(this)
+      );
+      this.addToggleItem(
+        dropdownContents,
+        "unreadLastPostButton",
+        "Unread Last Post Button",
+        this.toggleUnreadLastPostButton.bind(this)
+      );
+      this.addToggleItem(
+        dropdownContents,
+        "highlightCurrentPost",
+        "Highlight Current Post",
+        this.toggleHighlightCurrentPost.bind(this)
+      );
+      // Add more toggle items here as needed
+
+      // Add Save button
+      const saveButton = document.createElement("li");
+      saveButton.innerHTML = `
+        <input type="button" value="Save Changes" class="button1 ui-tweak-save">
+      `;
+      saveButton.querySelector("input").addEventListener("click", (e) => {
+        e.preventDefault();
+        this.saveChanges();
+      });
+      dropdownContents.appendChild(saveButton);
+
+      navMain.insertBefore(dropdownLi, notificationsLi);
+    },
+
+    addToggleItem(container, settingKey, text, toggleFunction) {
+      const toggleItem = utils.createToggleItem(
+        `toggle-${settingKey}`,
+        text,
+        settings[settingKey],
+        (isEnabled) => {
+          // Update the UI and store the new state temporarily
+          toggleItem.dataset.enabled = isEnabled;
+        }
+      );
+      container.appendChild(toggleItem);
+    },
+
+    saveChanges() {
+      // Update settings based on current toggle states
+      const toggles = document.querySelectorAll(".ui-tweak-toggle");
+      toggles.forEach((toggle) => {
+        const settingKey = toggle.closest("li").id.replace("toggle-", "");
+        const isEnabled = toggle
+          .querySelector(".icon")
+          .classList.contains("fa-toggle-on");
+        settings[settingKey] = isEnabled;
+      });
+
+      // Save settings and refresh the page
+      utils.saveSettings();
+      window.location.reload();
+    },
+
+    toggleTopicLinkCopyButton() {
+      if (settings.topicLinkCopyButton) {
+        topicLinkCopyButton.init();
+      } else {
+        window.location.reload();
+      }
+    },
+
+    toggleBetterQuoteBoxes() {
+      if (settings.betterQuoteBoxes) {
+        betterQuotes.init();
+      } else {
+        // Implement reverting changes if needed
+      }
+    },
+
+    toggleBetterFileLinks() {
+      if (settings.betterFileLinks) {
+        betterFileLinks.init();
+      } else {
+        // Implement reverting changes if needed
+        window.location.reload();
+      }
+    },
+
+    toggleUnreadLastPostButton() {
+      if (settings.unreadLastPostButton) {
+        unreadLastPostButton.init();
+      } else {
+        // Revert changes if needed
+        window.location.reload();
+      }
+    },
+
+    toggleReplaceReadTopicLinks() {
+      if (settings.replaceReadTopicLinks) {
+        replaceReadTopicLinks.init();
+      } else {
+        // Revert changes if needed
+        window.location.reload();
+      }
+    },
+
+    toggleCleanerEditedNotice() {
+      if (settings.cleanerEditedNotice) {
+        cleanerEditedNotice.init();
+      } else {
+        // Revert changes if needed
+        window.location.reload();
+      }
+    },
+
+    toggleHighlightCurrentPost() {
+      if (settings.highlightCurrentPost) {
+        highlightCurrentPost.init();
+      } else {
+        // Remove highlight from any highlighted posts
+        document
+          .querySelectorAll(".highlighted-current-post")
+          .forEach((post) => {
+            post.classList.remove("highlighted-current-post");
+          });
+      }
+    },
+
+    applyCustomStyles() {
+      utils.applyStyles(`
+          .ui-tweak-toggle {
+            display: flex !important;
+            align-items: center;
+            padding: 5px 10px;
+            text-decoration: none !important; /* Remove underline */
+          }
+          .ui-tweak-toggle .toggle-content {
+            display: flex;
+            align-items: center;
+          }
+          .ui-tweak-toggle .icon {
+            margin-right: 5px; /* Reduced from 10px to 5px */
+            display: flex;
+            align-items: center;
+            position: relative;
+            top: 2px; /* Adjust this value to move the icon down */
+          }
+          .ui-tweak-toggle .toggle-text {
+            flex-grow: 1;
+            line-height: 1; /* Ensure text is vertically centered */
+          }
+          .ui-tweak-toggle:hover {
+            text-decoration: none !important; /* Ensure no underline on hover */
+          }
+          /* Ensure no underline for all states */
+          .ui-tweak-toggle:hover,
+          .ui-tweak-toggle:focus,
+          .ui-tweak-toggle:active {
+            text-decoration: none !important;
+          }
+          .dropdown-contents li {
+            display: flex;
+            align-items: center;
+          }
+          .ui-tweak-save {
+            display: block;
+            width: calc(100% - 20px); /* Adjust width to account for padding */
+            margin: 10px auto;
+            text-align: center;
+            padding: 5px 10px;
+          }
+          /* Ensure the icon is vertically centered */
+          .ui-tweak-toggle .icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+          }
+          /* Adjust spacing for UI Tweaks dropdown */
+          #nav-main .dropdown-container.dropdown-right.rightside:not(:last-child) {
+            margin-right: 5px;
+          }
+          /* Ensure consistent spacing for rightside elements */
+          #nav-main .rightside {
+            margin-left: 5px;
+          }
+        `);
+    },
+  };
+
   function init() {
-    // Always run replaceReadTopicLinks
-    replaceReadTopicLinks.init();
-
-    // Skip other UI modifications if URL contains index.php
-    if (
-      window.location.href.includes("index.php") ||
-      window.location.href.includes("search.php")
-    ) {
-      return;
-    }
-
+    utils.loadSettings();
     utils.addPostIdsToUsernames();
-    betterQuotes.init();
-    utils.scrollToPost();
-    cleanerEditedNotice.init();
-    highlightCurrentPost.init();
+    uiTweaks.init();
+    if (settings.betterQuoteBoxes) {
+      betterQuotes.init();
+      utils.scrollToPost();
+    }
+    if (settings.betterFileLinks) {
+      betterFileLinks.init();
+    }
+    if (settings.unreadLastPostButton) {
+      unreadLastPostButton.init();
+    }
+    if (settings.replaceReadTopicLinks) {
+      replaceReadTopicLinks.init();
+    }
+    if (settings.cleanerEditedNotice) {
+      cleanerEditedNotice.init();
+    }
+    if (settings.topicLinkCopyButton) {
+      topicLinkCopyButton.init();
+    }
+    if (settings.highlightCurrentPost) {
+      highlightCurrentPost.init();
+    }
   }
 
   if (
