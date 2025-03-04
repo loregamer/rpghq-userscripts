@@ -530,22 +530,29 @@ SOFTWARE.
             titleElement.appendChild(referenceElement);
           }
 
-          // Always create the image preview div
-          const imagePreview = Utils.createElement("div", {
+          // Always create the image/video preview div
+          const mediaPreview = Utils.createElement("div", {
             className: "notification-image-preview",
           });
 
-          // Check for video content first
-          const videoData = Utils.extractVideoUrl(trimmedContent);
-          if (videoData) {
-            // Create video element for preview
-            imagePreview.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay></video>`;
+          // Check for video content first - only if the entire content is just a video tag
+          if (
+            (trimmedContent.startsWith("[webm]") &&
+              trimmedContent.endsWith("[/webm]")) ||
+            (trimmedContent.startsWith("[media]") &&
+              trimmedContent.endsWith("[/media]"))
+          ) {
+            const videoData = Utils.extractVideoUrl(trimmedContent);
+            if (videoData) {
+              // Create video element for preview
+              mediaPreview.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay></video>`;
 
-            // If we have a video, remove any existing reference element and don't create a new one
-            if (referenceElement) {
-              referenceElement.remove();
+              // If we have a video, remove any existing reference element and don't create a new one
+              if (referenceElement) {
+                referenceElement.remove();
+              }
+              titleElement.appendChild(mediaPreview);
             }
-            titleElement.appendChild(imagePreview);
           }
           // If no video, check for image tag before any BBCode removal
           else if (
@@ -566,13 +573,13 @@ SOFTWARE.
               imageUrl = paramMatch[1].trim();
             }
 
-            imagePreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`;
+            mediaPreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`;
 
             // If we have an image, remove any existing reference element and don't create a new one
             if (referenceElement) {
               referenceElement.remove();
             }
-            titleElement.appendChild(imagePreview);
+            titleElement.appendChild(mediaPreview);
           } else {
             // Only create/update reference element if there's no image or video
             if (referenceElement) {
@@ -580,7 +587,7 @@ SOFTWARE.
                 Utils.removeBBCode(postContent)
               );
               Utils.styleReference(referenceElement);
-              referenceElement.insertAdjacentElement("afterend", imagePreview);
+              referenceElement.insertAdjacentElement("afterend", mediaPreview);
             } else {
               referenceElement = Utils.createElement("span", {
                 className: "notification-reference",
@@ -589,7 +596,7 @@ SOFTWARE.
               Utils.styleReference(referenceElement);
               titleElement.appendChild(document.createElement("br"));
               titleElement.appendChild(referenceElement);
-              referenceElement.insertAdjacentElement("afterend", imagePreview);
+              referenceElement.insertAdjacentElement("afterend", mediaPreview);
             }
           }
         }
@@ -992,20 +999,27 @@ SOFTWARE.
         if (postContent && placeholder.parentNode) {
           const trimmedContent = postContent.trim();
 
-          // Always create the image preview div
-          const imagePreview = Utils.createElement("div", {
+          // Always create the image/video preview div
+          const mediaPreview = Utils.createElement("div", {
             className: "notification-image-preview",
           });
 
-          // Check for video content first
-          const videoData = Utils.extractVideoUrl(trimmedContent);
-          if (videoData) {
-            // Create video element for preview
-            imagePreview.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay></video>`;
+          // Check for video content first - only if the entire content is just a video tag
+          if (
+            (trimmedContent.startsWith("[webm]") &&
+              trimmedContent.endsWith("[/webm]")) ||
+            (trimmedContent.startsWith("[media]") &&
+              trimmedContent.endsWith("[/media]"))
+          ) {
+            const videoData = Utils.extractVideoUrl(trimmedContent);
+            if (videoData) {
+              // Create video element for preview
+              mediaPreview.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay></video>`;
 
-            // Remove the placeholder and add the video preview
-            placeholder.parentNode.insertBefore(imagePreview, placeholder);
-            placeholder.remove();
+              // Remove the placeholder and add the video preview
+              placeholder.parentNode.insertBefore(mediaPreview, placeholder);
+              placeholder.remove();
+            }
           }
           // Only add image if content is just an image tag
           else if (
@@ -1026,13 +1040,13 @@ SOFTWARE.
               imageUrl = paramMatch[1].trim();
             }
 
-            imagePreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`;
+            mediaPreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`;
             // Remove the placeholder and add the image preview
-            placeholder.parentNode.insertBefore(imagePreview, placeholder);
+            placeholder.parentNode.insertBefore(mediaPreview, placeholder);
             placeholder.remove();
           } else {
             // If not an image or video, update the placeholder with the text content
-            placeholder.insertAdjacentElement("afterend", imagePreview);
+            placeholder.insertAdjacentElement("afterend", mediaPreview);
             placeholder.textContent = Utils.removeBBCode(postContent);
             Utils.styleReference(placeholder);
           }
