@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Notifications Customization
 // @namespace    http://tampermonkey.net/
-// @version      4.4.4
+// @version      4.5.0
 // @description  Customize RPGHQ notifications display
 // @author       LOREGAMER
 // @match        https://rpghq.org/*/*
@@ -294,6 +294,46 @@ SOFTWARE.
       console.log("No valid image URL found");
       return null;
     },
+
+    extractVideoUrl: (text) => {
+      console.log("Extracting video URL from text:", text);
+      const trimmedText = text.trim();
+
+      // Handle [webm] tags
+      if (trimmedText.startsWith("[webm]") && trimmedText.endsWith("[/webm]")) {
+        console.log("Text is a single webm tag");
+        const url = trimmedText.slice(6, -7).trim();
+        console.log("Extracted webm URL:", url);
+        return { url, type: "webm" };
+      }
+
+      // Handle [media] tags
+      if (
+        trimmedText.startsWith("[media]") &&
+        trimmedText.endsWith("[/media]")
+      ) {
+        console.log("Text is a single media tag");
+        const url = trimmedText.slice(7, -8).trim();
+        console.log("Extracted media URL:", url);
+        return { url, type: "media" };
+      }
+
+      // Find all video tags
+      const webmMatch = text.match(/\[webm\](.*?)\[\/webm\]/i);
+      if (webmMatch) {
+        console.log("Found webm tag");
+        return { url: webmMatch[1].trim(), type: "webm" };
+      }
+
+      const mediaMatch = text.match(/\[media\](.*?)\[\/media\]/i);
+      if (mediaMatch) {
+        console.log("Found media tag");
+        return { url: mediaMatch[1].trim(), type: "media" };
+      }
+
+      console.log("No valid video URL found");
+      return null;
+    },
   };
 
   // --- Storage Helpers ---
@@ -495,8 +535,20 @@ SOFTWARE.
             className: "notification-image-preview",
           });
 
-          // Check for image tag before any BBCode removal
-          if (
+          // Check for video content first
+          const videoData = Utils.extractVideoUrl(trimmedContent);
+          if (videoData) {
+            // Create video element for preview
+            imagePreview.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay></video>`;
+
+            // If we have a video, remove any existing reference element and don't create a new one
+            if (referenceElement) {
+              referenceElement.remove();
+            }
+            titleElement.appendChild(imagePreview);
+          }
+          // If no video, check for image tag before any BBCode removal
+          else if (
             (trimmedContent.startsWith("[img]") &&
               trimmedContent.endsWith("[/img]")) ||
             trimmedContent.match(/^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i)
@@ -522,7 +574,7 @@ SOFTWARE.
             }
             titleElement.appendChild(imagePreview);
           } else {
-            // Only create/update reference element if there's no image
+            // Only create/update reference element if there's no image or video
             if (referenceElement) {
               referenceElement.textContent = Utils.removeURLs(
                 Utils.removeBBCode(postContent)
@@ -945,8 +997,18 @@ SOFTWARE.
             className: "notification-image-preview",
           });
 
+          // Check for video content first
+          const videoData = Utils.extractVideoUrl(trimmedContent);
+          if (videoData) {
+            // Create video element for preview
+            imagePreview.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay></video>`;
+
+            // Remove the placeholder and add the video preview
+            placeholder.parentNode.insertBefore(imagePreview, placeholder);
+            placeholder.remove();
+          }
           // Only add image if content is just an image tag
-          if (
+          else if (
             (trimmedContent.startsWith("[img]") &&
               trimmedContent.endsWith("[/img]")) ||
             trimmedContent.match(/^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i)
@@ -969,7 +1031,7 @@ SOFTWARE.
             placeholder.parentNode.insertBefore(imagePreview, placeholder);
             placeholder.remove();
           } else {
-            // If not an image, update the placeholder with the text content
+            // If not an image or video, update the placeholder with the text content
             placeholder.insertAdjacentElement("afterend", imagePreview);
             placeholder.textContent = Utils.removeBBCode(postContent);
             Utils.styleReference(placeholder);
