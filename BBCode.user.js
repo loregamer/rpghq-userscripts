@@ -884,6 +884,241 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
   };
 
   // =============================
+  // Custom Color Palette
+  // =============================
+  const addCustomColorsToPalette = () => {
+    // Immediate check for existing palette
+    const colorPalette = document.querySelector(
+      ".colour-palette.horizontal-palette"
+    );
+    if (colorPalette) {
+      addCustomColorsToExistingPalette(colorPalette);
+    }
+
+    // Set up a mutation observer to watch for the palette being added to the DOM
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const palette =
+                node.classList && node.classList.contains("colour-palette")
+                  ? node
+                  : node.querySelector(".colour-palette.horizontal-palette");
+
+              if (palette) {
+                addCustomColorsToExistingPalette(palette);
+              }
+            }
+          });
+        }
+      });
+    });
+
+    // Start observing the document body for palette additions
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Add direct event listeners to color buttons - but only once
+    const addColorButtonListeners = () => {
+      // Use a more specific selector to find color buttons
+      const colorButtons = document.querySelectorAll(
+        '.bbcode-palette-colour, .color-palette-trigger, [data-bbcode="color"], .colour-palette-trigger'
+      );
+
+      colorButtons.forEach((button) => {
+        // Skip if we've already added a listener
+        if (button.dataset.customListenerAdded === "true") return;
+
+        // Add a click listener that will add our custom colors when the palette appears
+        button.addEventListener(
+          "click",
+          () => {
+            // Wait a short time for the palette to be added to the DOM
+            setTimeout(() => {
+              const palette = document.querySelector(
+                ".colour-palette.horizontal-palette"
+              );
+              if (palette) {
+                addCustomColorsToExistingPalette(palette);
+              }
+            }, 50);
+          },
+          { once: false }
+        ); // Allow multiple clicks
+
+        // Mark this button as having a listener added
+        button.dataset.customListenerAdded = "true";
+      });
+    };
+
+    // Initial call
+    addColorButtonListeners();
+
+    // Set up an interval to check for new color buttons, but limit it to run for 30 seconds
+    // after page load to avoid unnecessary processing
+    let checkCount = 0;
+    const intervalId = setInterval(() => {
+      addColorButtonListeners();
+      checkCount++;
+      if (checkCount >= 30) {
+        clearInterval(intervalId);
+      }
+    }, 1000);
+  };
+
+  // Helper function to add custom colors to an existing palette
+  const addCustomColorsToExistingPalette = (colorPalette) => {
+    // Check if we've already added our custom row to this palette
+    if (colorPalette.dataset.customColorsAdded === "true") {
+      return;
+    }
+
+    // Also check if our custom colors are already present in the palette
+    const existingColors = Array.from(
+      colorPalette.querySelectorAll("a[data-color]")
+    ).map((a) => `#${a.getAttribute("data-color")}`.toUpperCase());
+
+    // Custom colors to add
+    const customColors = [
+      "#F5575D", // Red
+      "#3889ED", // Blue
+      "#FFC107", // Yellow/Gold
+      "#00AA00", // Green
+    ];
+
+    // If all our custom colors are already present, mark as added and exit
+    if (
+      customColors.every((color) =>
+        existingColors.includes(color.toUpperCase())
+      )
+    ) {
+      colorPalette.dataset.customColorsAdded = "true";
+      return;
+    }
+
+    // Create a new row for custom colors
+    let tbody = colorPalette.querySelector("tbody");
+
+    // If there's no tbody, create one
+    if (!tbody) {
+      tbody = document.createElement("tbody");
+      colorPalette.appendChild(tbody);
+    }
+
+    // Get the first row to determine the number of cells
+    const firstRow = tbody.querySelector("tr");
+    if (!firstRow) {
+      // If there are no rows, we can't determine the cell count
+      // Create a default row with 25 cells (standard palette width)
+      const newRow = document.createElement("tr");
+
+      // Create cells for each custom color
+      customColors.forEach((color) => {
+        const td = document.createElement("td");
+        td.style.backgroundColor = color;
+        td.style.width = "15px";
+        td.style.height = "12px";
+
+        const a = document.createElement("a");
+        a.href = "#";
+        a.setAttribute("data-color", color.substring(1)); // Remove # from color code
+        a.style.display = "block";
+        a.style.width = "15px";
+        a.style.height = "12px";
+        a.setAttribute("alt", color);
+        a.setAttribute("title", color);
+
+        // Use the same click behavior as the original color cells
+        a.onclick = function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // This is the standard behavior for color palette links
+          const colorCode = this.getAttribute("data-color");
+          const textarea = document.getElementById("message");
+          if (textarea) {
+            // Use the existing wrapSelectedText function
+            wrapSelectedText(textarea, `color=#${colorCode}`);
+            updateHighlight();
+            adjustTextareaAndHighlight();
+          }
+
+          // Close the palette
+          document.body.click();
+          return false;
+        };
+
+        td.appendChild(a);
+        newRow.appendChild(td);
+      });
+
+      // Add the new row to the palette
+      tbody.appendChild(newRow);
+
+      // Mark this palette as having custom colors added
+      colorPalette.dataset.customColorsAdded = "true";
+      return;
+    }
+
+    const newRow = document.createElement("tr");
+
+    // Create cells for each custom color
+    customColors.forEach((color) => {
+      const td = document.createElement("td");
+      td.style.backgroundColor = color;
+      td.style.width = "15px";
+      td.style.height = "12px";
+
+      const a = document.createElement("a");
+      a.href = "#";
+      a.setAttribute("data-color", color.substring(1)); // Remove # from color code
+      a.style.display = "block";
+      a.style.width = "15px";
+      a.style.height = "12px";
+      a.setAttribute("alt", color);
+      a.setAttribute("title", color);
+
+      // Use the same click behavior as the original color cells
+      a.onclick = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // This is the standard behavior for color palette links
+        const colorCode = this.getAttribute("data-color");
+        const textarea = document.getElementById("message");
+        if (textarea) {
+          // Use the existing wrapSelectedText function
+          wrapSelectedText(textarea, `color=#${colorCode}`);
+          updateHighlight();
+          adjustTextareaAndHighlight();
+        }
+
+        // Close the palette
+        document.body.click();
+        return false;
+      };
+
+      td.appendChild(a);
+      newRow.appendChild(td);
+    });
+
+    // Add empty cells to fill the row
+    const totalCells = firstRow.childElementCount;
+    for (let i = customColors.length; i < totalCells; i++) {
+      const td = document.createElement("td");
+      td.style.width = "15px";
+      td.style.height = "12px";
+      newRow.appendChild(td);
+    }
+
+    // Add the new row to the palette
+    tbody.appendChild(newRow);
+
+    // Mark this palette as having custom colors added
+    colorPalette.dataset.customColorsAdded = "true";
+  };
+
+  // =============================
   // Initialization
   // =============================
   const initialize = () => {
@@ -1310,5 +1545,6 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     addStyles();
     initialize();
     setupFormSubmitTracking();
+    addCustomColorsToPalette();
   });
 })();
