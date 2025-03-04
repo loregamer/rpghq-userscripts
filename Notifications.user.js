@@ -203,7 +203,9 @@ SOFTWARE.
         .replace(/\[url=[^\]]*\](.*?)\[\/url\]/gi, "$1")
         // Remove simple url tags
         .replace(/\[url\](.*?)\[\/url\]/gi, "$1")
-        // Remove img tags
+        // Remove img tags with parameters
+        .replace(/\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]/gi, "")
+        // Remove simple img tags
         .replace(/\[img\](.*?)\[\/img\]/gi, "")
         // Remove media tags
         .replace(/\[media\](.*?)\[\/media\]/gi, "")
@@ -244,6 +246,7 @@ SOFTWARE.
       const trimmedText = text.trim();
       console.log("Trimmed text:", trimmedText);
 
+      // Handle standard [img]url[/img] format
       if (trimmedText.startsWith("[img]") && trimmedText.endsWith("[/img]")) {
         console.log("Text is a single image tag");
         const url = trimmedText.slice(5, -6).trim();
@@ -251,13 +254,39 @@ SOFTWARE.
         return url;
       }
 
-      // Find all image tags
-      const imageUrls = text.match(/\[img\](.*?)\[\/img\]/gi);
+      // Handle [img size=X]url[/img] format with parameters
+      const paramImgMatch = trimmedText.match(
+        /^\[img\s+([^=\]]+)=([^\]]+)\](.*?)\[\/img\]$/i
+      );
+      if (paramImgMatch) {
+        console.log("Text is a single image tag with parameters");
+        const url = paramImgMatch[3].trim();
+        console.log("Extracted URL:", url);
+        return url;
+      }
+
+      // Find all image tags (both with and without parameters)
+      const imageUrls = text.match(
+        /\[img(?:\s+[^=\]]+=[^\]]+)?\](.*?)\[\/img\]/gi
+      );
       console.log("Found image tags:", imageUrls);
 
       if (imageUrls && imageUrls.length > 0) {
         console.log("Using first image tag");
-        const url = imageUrls[0].replace(/\[img\](.*?)\[\/img\]/i, "$1").trim();
+        // Extract URL from the first image tag, handling both formats
+        const firstTag = imageUrls[0];
+        let url;
+
+        if (firstTag.startsWith("[img]")) {
+          // Standard format
+          url = firstTag.replace(/\[img\](.*?)\[\/img\]/i, "$1").trim();
+        } else {
+          // Format with parameters
+          url = firstTag
+            .replace(/\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]/i, "$1")
+            .trim();
+        }
+
         console.log("Extracted URL:", url);
         return url;
       }
@@ -468,10 +497,23 @@ SOFTWARE.
 
           // Check for image tag before any BBCode removal
           if (
-            trimmedContent.startsWith("[img]") &&
-            trimmedContent.endsWith("[/img]")
+            (trimmedContent.startsWith("[img]") &&
+              trimmedContent.endsWith("[/img]")) ||
+            trimmedContent.match(/^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i)
           ) {
-            const imageUrl = trimmedContent.slice(5, -6).trim();
+            let imageUrl;
+
+            if (trimmedContent.startsWith("[img]")) {
+              // Standard format
+              imageUrl = trimmedContent.slice(5, -6).trim();
+            } else {
+              // Format with parameters
+              const paramMatch = trimmedContent.match(
+                /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i
+              );
+              imageUrl = paramMatch[1].trim();
+            }
+
             imagePreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`;
 
             // If we have an image, remove any existing reference element and don't create a new one
@@ -905,10 +947,23 @@ SOFTWARE.
 
           // Only add image if content is just an image tag
           if (
-            trimmedContent.startsWith("[img]") &&
-            trimmedContent.endsWith("[/img]")
+            (trimmedContent.startsWith("[img]") &&
+              trimmedContent.endsWith("[/img]")) ||
+            trimmedContent.match(/^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i)
           ) {
-            const imageUrl = trimmedContent.slice(5, -6).trim();
+            let imageUrl;
+
+            if (trimmedContent.startsWith("[img]")) {
+              // Standard format
+              imageUrl = trimmedContent.slice(5, -6).trim();
+            } else {
+              // Format with parameters
+              const paramMatch = trimmedContent.match(
+                /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i
+              );
+              imageUrl = paramMatch[1].trim();
+            }
+
             imagePreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`;
             // Remove the placeholder and add the image preview
             placeholder.parentNode.insertBefore(imagePreview, placeholder);
