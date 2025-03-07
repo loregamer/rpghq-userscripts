@@ -1673,14 +1673,21 @@
   // RPGHQ Reaction List Integration
   // ---------------------------------------------------------------------
 
-  // Function to add preventDefault to reaction list elements
+  // Function to add preventDefault to reaction list elements and show custom popup
   function addPreventDefaultToReactionList(reactionList) {
-    // Add click event listener to prevent default action on the container
+    // Add click event listener to show custom popup on the container
     reactionList.addEventListener(
       "click",
       (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        // Get post ID from the reaction list
+        const postId = reactionList.dataset.postId;
+        if (postId) {
+          showCustomReactionsPopup(postId);
+        }
+
         return false;
       },
       true
@@ -1693,11 +1700,196 @@
         (e) => {
           e.preventDefault();
           e.stopPropagation();
+
+          // Get post ID from the reaction list
+          const postId = reactionList.dataset.postId;
+          if (postId) {
+            showCustomReactionsPopup(postId);
+          }
+
           return false;
         },
         true
       );
     });
+  }
+
+  // Function to create and show a custom reactions popup
+  function showCustomReactionsPopup(postId) {
+    // Remove any existing popup
+    const existingPopup = document.querySelector(".reactions-view-dialog");
+    if (existingPopup) {
+      existingPopup.remove();
+    }
+
+    // Create popup container
+    const popup = document.createElement("div");
+    popup.className = "cbb-dialog reactions-view-dialog fixed";
+    popup.title = "";
+    popup.style.width = "600px";
+    popup.style.position = "fixed";
+
+    // Calculate position to ensure it's centered and fully visible
+    const totalHeight = 440; // 400px content + ~40px header
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+
+    // Center horizontally
+    popup.style.left = Math.max(0, (viewportWidth - 600) / 2) + "px";
+
+    // Center vertically, but ensure it's fully visible
+    if (totalHeight > viewportHeight) {
+      // If popup is taller than viewport, position at top with small margin
+      popup.style.top = "10px";
+    } else {
+      // Otherwise center it
+      popup.style.top = Math.max(0, (viewportHeight - totalHeight) / 2) + "px";
+    }
+
+    popup.style.zIndex = "9999";
+    popup.style.backgroundColor = "#fff";
+    popup.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
+
+    // Create popup header
+    const header = document.createElement("div");
+    header.className = "cbb-dialog-header";
+
+    const closeButton = document.createElement("a");
+    closeButton.href = "#";
+    closeButton.dataset.action = "close";
+    closeButton.className = "cbb-dialog-close";
+    closeButton.innerHTML = '<i class="fa fa-remove" aria-hidden="true"></i>';
+    closeButton.addEventListener("click", (e) => {
+      e.preventDefault();
+      popup.remove();
+    });
+
+    const title = document.createElement("span");
+    title.className = "cbb-dialog-title";
+    title.textContent = "Reactions";
+
+    header.appendChild(closeButton);
+    header.appendChild(title);
+
+    // Create popup content
+    const content = document.createElement("div");
+    content.className = "cbb-dialog-content";
+    content.style.height = "400px"; // Keep the exact 400px height
+    content.style.overflowY = "auto";
+
+    // Show loading indicator
+    content.innerHTML =
+      '<div style="text-align: center; padding: 20px;"><i class="fa fa-spinner fa-spin fa-3x"></i></div>';
+
+    // Add header and content to popup
+    popup.appendChild(header);
+    popup.appendChild(content);
+
+    // Add popup to document
+    document.body.appendChild(popup);
+
+    // Add event listener to close on escape key
+    const escapeHandler = (e) => {
+      if (e.key === "Escape") {
+        popup.remove();
+        document.removeEventListener("keydown", escapeHandler);
+      }
+    };
+    document.addEventListener("keydown", escapeHandler);
+
+    // Fetch reaction data
+    fetch(`https://rpghq.org/forums/reactions?mode=view&post=${postId}`, {
+      method: "POST",
+      headers: {
+        accept: "application/json, text/javascript, */*; q=0.01",
+        "x-requested-with": "XMLHttpRequest",
+      },
+      credentials: "include",
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.htmlContent) {
+          // Parse the reaction data
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(data.htmlContent, "text/html");
+
+          // Create reactions list container
+          const reactionsList = document.createElement("div");
+          reactionsList.className = "reactions-list";
+
+          // Get tab header and content
+          const tabHeader = doc.querySelector(".tab-header");
+          const tabContents = doc.querySelectorAll(".tab-content");
+
+          if (tabHeader) {
+            // Clone the tab header
+            const newTabHeader = tabHeader.cloneNode(true);
+
+            // Fix tab links
+            newTabHeader.querySelectorAll("a").forEach((link) => {
+              link.href = "#";
+              link.addEventListener("click", (e) => {
+                e.preventDefault();
+
+                // Set active tab
+                newTabHeader
+                  .querySelectorAll("a")
+                  .forEach((a) => a.classList.remove("active"));
+                link.classList.add("active");
+
+                // Show corresponding tab content
+                const tabId = link.dataset.id;
+                reactionsList
+                  .querySelectorAll(".tab-content")
+                  .forEach((tab) => {
+                    if (tab.dataset.id === tabId) {
+                      tab.classList.remove("cbb-helper-hidden");
+                    } else {
+                      tab.classList.add("cbb-helper-hidden");
+                    }
+                  });
+              });
+            });
+
+            reactionsList.appendChild(newTabHeader);
+          }
+
+          // Add tab contents
+          tabContents.forEach((tabContent) => {
+            const newTabContent = tabContent.cloneNode(true);
+
+            // Filter out ignored users if needed
+            if (GM_getValue("hideGhostedContent", true)) {
+              newTabContent.querySelectorAll("li").forEach((li) => {
+                const usernameElement = li.querySelector(".cbb-helper-text a");
+                if (usernameElement) {
+                  const username = usernameElement.textContent.trim();
+                  if (isUserIgnored(username)) {
+                    li.remove();
+                  }
+                }
+              });
+            }
+
+            reactionsList.appendChild(newTabContent);
+          });
+
+          // Update content
+          content.innerHTML = "";
+          content.appendChild(reactionsList);
+
+          // Add click handlers to tab links
+          const firstTab = popup.querySelector(".tab-header a");
+          if (firstTab) {
+            firstTab.click();
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching reaction data:", error);
+        content.innerHTML =
+          '<div style="text-align: center; padding: 20px;">Error loading reactions</div>';
+      });
   }
 
   // Process reaction lists to exclude ignored users from the displayed text
@@ -1851,18 +2043,5 @@
 
     // Process existing reaction lists
     processReactionLists();
-  }
-
-  // Initialize the reaction list processing when the DOM is ready
-  document.addEventListener("DOMContentLoaded", function () {
-    observeReactionLists();
-  });
-
-  // Also run it now in case the DOM is already loaded
-  if (
-    document.readyState === "complete" ||
-    document.readyState === "interactive"
-  ) {
-    observeReactionLists();
   }
 })();
