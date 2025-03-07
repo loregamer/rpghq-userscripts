@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         True Iggy Enhanced (Highlight Instead of Hide)
+// @name         RPGHQ - Iggy Iggy Iggy
 // @namespace    http://tampermonkey.net/
 // @version      1.0
 // @description  Highlights content from iggy'd users rather than hiding them, while leaving reaction score list logic intact.
