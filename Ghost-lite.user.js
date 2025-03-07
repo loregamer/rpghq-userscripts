@@ -44,7 +44,6 @@
   // ---------------------------------------------------------------------
 
   const ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => lowercased username
-  const replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   const postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
   const userColors = GM_getValue("userColors", {}); // username => color
 
@@ -190,104 +189,6 @@
       border-radius: 4px;
       padding: 6px;
     }
-
-    /* -----------------------------------------------------------------
-       5) Post preview tooltip & custom quote styling
-       ----------------------------------------------------------------- */
-    .post-preview-tooltip {
-      position: absolute;
-      background: #171b24;
-      padding: 15px;
-      border-radius: 5px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      z-index: 9999;
-      max-width: 600px;
-      min-width: 400px;
-      font-size: 12px;
-      line-height: 1.4;
-      word-break: break-word;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .post-preview-tooltip.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .post-preview-tooltip .post-content {
-      max-height: 500px;
-      overflow-y: auto;
-      padding-right: 10px;
-    }
-    .post-preview-tooltip pre.code {
-      background: #1a1a1a;
-      padding: 8px;
-      border-radius: 3px;
-      font-family: monospace;
-      font-size: 11px;
-      overflow-x: auto;
-    }
-    .post-preview-tooltip ul,
-    .post-preview-tooltip ol {
-      padding-left: 20px;
-      margin: 5px 0;
-    }
-    .post-preview-tooltip li {
-      margin: 2px 0;
-    }
-    .post-preview-tooltip details {
-      margin: 5px 0;
-      padding: 5px;
-      background: #253450;
-      border: 1px solid #959595;
-      border-radius: 3px;
-    }
-    .post-preview-tooltip summary {
-      cursor: pointer;
-      user-select: none;
-    }
-    .post-preview-tooltip table {
-      border-collapse: collapse;
-      margin: 5px 0;
-    }
-    .post-preview-tooltip td {
-      border: 1px solid #4a4a4a;
-      padding: 3px 6px;
-    }
-    .custom-quote {
-      background-color: #242a36;
-      border-left: 3px solid #4a90e2;
-      padding: 10px;
-      margin: 10px 0;
-      font-size: 0.9em;
-      line-height: 1.4;
-    }
-    .custom-quote-header {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-bottom: 8px;
-    }
-    .custom-quote-header a {
-      color: #89a6cf;
-      text-decoration: none;
-      font-weight: 700;
-    }
-    .custom-quote .custom-quote {
-      border-left-color: #ff9e4a;
-      margin: 10px 0;
-    }
-    .custom-quote .custom-quote .custom-quote-header a {
-      color: #ff9e4a;
-    }
-    .custom-quote .custom-quote .custom-quote-header a:hover {
-      color: #ffa85e;
-    }
-    @media (max-width: 700px) {
-      .show-ghosted-posts span:not(.icon) {
-        display: none;
-      }
-    }
   `;
   document.documentElement.appendChild(mainStyle);
 
@@ -419,51 +320,6 @@
       lastIndex = quoteRegex.lastIndex;
     }
     return output + text.slice(lastIndex);
-  }
-
-  function createTooltip() {
-    if (tooltip) return;
-    tooltip = document.createElement("div");
-    tooltip.className = "post-preview-tooltip";
-    document.body.appendChild(tooltip);
-  }
-
-  async function showPostPreview(event, postId) {
-    if (isMobileDevice) return;
-    if (!tooltip) return;
-    if (currentHoverTimeout) clearTimeout(currentHoverTimeout);
-    currentHoverTimeout = setTimeout(async () => {
-      let content = await fetchAndCachePost(postId);
-      if (!content) return;
-      content = parseQuotes(content);
-      content = parseBBCode(content);
-      Object.entries(userColors).forEach(([username, color]) => {
-        const usernameRegex = new RegExp(`<a[^>]*>${username}</a>`, "g");
-        content = content.replace(
-          usernameRegex,
-          `<a href="#" style="color: ${color};">${username}</a>`
-        );
-      });
-      tooltip.innerHTML = `<div class="post-content">${content}</div>`;
-      const tooltipX = Math.max(10, event.pageX - tooltip.offsetWidth - 100);
-      const tooltipY = Math.max(10, event.pageY - tooltip.offsetHeight / 2);
-      tooltip.style.left = `${tooltipX}px`;
-      tooltip.style.top = `${tooltipY}px`;
-      tooltip.classList.add("visible");
-      tooltip.addEventListener("mouseenter", () => {
-        if (currentHoverTimeout) clearTimeout(currentHoverTimeout);
-      });
-      tooltip.addEventListener("mouseleave", hidePostPreview);
-    }, 200);
-  }
-
-  function hidePostPreview() {
-    if (!tooltip) return;
-    if (currentHoverTimeout) {
-      clearTimeout(currentHoverTimeout);
-      currentHoverTimeout = null;
-    }
-    tooltip.classList.remove("visible");
   }
 
   // ---------------------------------------------------------------------
@@ -779,14 +635,6 @@
   }
 
   async function processLastPost(element) {
-    const linksWithIcons = element.querySelectorAll("a:has(i.icon)");
-    linksWithIcons.forEach((link) => {
-      const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
-      if (pid) {
-        link.addEventListener("mouseenter", (e) => showPostPreview(e, pid));
-        link.addEventListener("mouseleave", hidePostPreview);
-      }
-    });
     const row = element.closest("li.row");
     if (row) {
       const authorLinks = row.querySelectorAll(
@@ -1436,46 +1284,7 @@
   }
 
   // ---------------------------------------------------------------------
-  // 6) AVATAR REPLACEMENT
-  // ---------------------------------------------------------------------
-
-  function replaceUserAvatars() {
-    document.querySelectorAll("img").forEach((img) => {
-      const match = img.src.match(/avatar=(\d+)/);
-      if (match) {
-        const uid = match[1];
-        if (replacedAvatars.hasOwnProperty(uid)) {
-          img.src = replacedAvatars[uid];
-        }
-      }
-    });
-  }
-
-  function startPeriodicAvatarCheck() {
-    replaceUserAvatars();
-    setInterval(replaceUserAvatars, 1500);
-  }
-
-  function validateAndReplaceAvatar(userId, url) {
-    const testImg = new Image();
-    testImg.onload = function () {
-      if (this.width <= 128 && this.height <= 128) {
-        replacedAvatars[userId] = url;
-        GM_setValue("replacedAvatars", replacedAvatars);
-        alert("Avatar replaced!");
-        replaceUserAvatars();
-      } else {
-        alert("Image must be 128x128 or smaller.");
-      }
-    };
-    testImg.onerror = function () {
-      alert("Could not load image from the provided URL.");
-    };
-    testImg.src = url;
-  }
-
-  // ---------------------------------------------------------------------
-  // 7) PROFILE BUTTONS: GHOST + REPLACE AVATAR
+  // 6) PROFILE BUTTONS: GHOST + REPLACE AVATAR
   // ---------------------------------------------------------------------
 
   function addGhostButtonsIfOnProfile() {
@@ -1508,15 +1317,9 @@
     ghostBtn.id = "ghost-user-button";
     ghostBtn.className = "button button-secondary";
     ghostBtn.href = "#";
-    const replaceBtn = document.createElement("a");
-    replaceBtn.id = "replace-avatar-button";
-    replaceBtn.className = "button button-secondary";
-    replaceBtn.href = "#";
-    replaceBtn.textContent = "Replace Avatar";
-    replaceBtn.style.marginLeft = "5px";
     container.appendChild(ghostBtn);
-    container.appendChild(replaceBtn);
     memberlistTitle.appendChild(container);
+
     function refreshGhostBtn() {
       const isGhosted = ignoredUsers.hasOwnProperty(userId);
       ghostBtn.textContent = isGhosted ? "Unghost User" : "Ghost User";
@@ -1530,80 +1333,10 @@
       toggleUserGhost(userId, username);
       refreshGhostBtn();
     });
-    replaceBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      showReplaceAvatarPopup(userId);
-    });
-  }
-
-  function showReplaceAvatarPopup(userId) {
-    const popup = document.createElement("div");
-    popup.style.cssText = `
-      position: fixed; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: #2a2a2a; color: #e0e0e0; padding: 20px;
-      border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 9999;
-      width: 300px;
-    `;
-    const title = document.createElement("h3");
-    title.textContent = "Replace Avatar";
-    title.style.marginTop = "0";
-    title.style.marginBottom = "15px";
-    popup.appendChild(title);
-    const input = document.createElement("input");
-    input.type = "text";
-    input.placeholder = "Enter image URL (128x128 or smaller)";
-    input.style.cssText = `
-      width: 100%; padding: 5px; margin-bottom: 15px; background: #3a3a3a;
-      border: 1px solid #4a4a4a; color: #e0e0e0; border-radius: 3px;
-    `;
-    popup.appendChild(input);
-    const btnContainer = document.createElement("div");
-    btnContainer.style.display = "flex";
-    btnContainer.style.justifyContent = "space-between";
-    popup.appendChild(btnContainer);
-    function makeBtn(label) {
-      const b = document.createElement("button");
-      b.textContent = label;
-      b.style.cssText = `
-        background-color: #3a3a3a; color: #e0e0e0; border: none;
-        padding: 5px 10px; border-radius: 3px; cursor: pointer;
-      `;
-      b.addEventListener(
-        "mouseover",
-        () => (b.style.backgroundColor = "#4a4a4a")
-      );
-      b.addEventListener(
-        "mouseout",
-        () => (b.style.backgroundColor = "#3a3a3a")
-      );
-      return b;
-    }
-    const replaceB = makeBtn("Replace");
-    replaceB.addEventListener("click", () => {
-      validateAndReplaceAvatar(userId, input.value);
-      document.body.removeChild(popup);
-    });
-    const resetB = makeBtn("Reset to Default");
-    resetB.addEventListener("click", () => {
-      delete replacedAvatars[userId];
-      GM_setValue("replacedAvatars", replacedAvatars);
-      alert("Avatar reset to default.");
-      replaceUserAvatars();
-      document.body.removeChild(popup);
-    });
-    const cancelB = makeBtn("Cancel");
-    cancelB.addEventListener("click", () => {
-      document.body.removeChild(popup);
-    });
-    btnContainer.appendChild(replaceB);
-    btnContainer.appendChild(resetB);
-    btnContainer.appendChild(cancelB);
-    document.body.appendChild(popup);
   }
 
   // ---------------------------------------------------------------------
-  // 8) SHOW/HIDE GHOSTED POSTS TOGGLE VIA KEYBOARD
+  // 7) SHOW/HIDE GHOSTED POSTS TOGGLE VIA KEYBOARD
   // ---------------------------------------------------------------------
 
   function showToggleNotification() {
@@ -1709,7 +1442,7 @@
   });
 
   // ---------------------------------------------------------------------
-  // 9) MISC HELPER FUNCTIONS
+  // 8) MISC HELPER FUNCTIONS
   // ---------------------------------------------------------------------
 
   function moveExternalLinkIcon() {
@@ -1774,7 +1507,7 @@
   }
 
   // ---------------------------------------------------------------------
-  // 10) IGNORED USERS MANAGEMENT
+  // 9) IGNORED USERS MANAGEMENT
   // ---------------------------------------------------------------------
 
   function showIgnoredUsersPopup() {
@@ -1969,7 +1702,7 @@
   }
 
   // ---------------------------------------------------------------------
-  // 11) RT PAGE INJECTION
+  // 10) RT PAGE INJECTION
   // ---------------------------------------------------------------------
 
   async function injectRTContent() {
@@ -2147,7 +1880,7 @@
   }
 
   // ---------------------------------------------------------------------
-  // 12) INIT ON DOMContentLoaded
+  // 11) INIT ON DOMContentLoaded
   // ---------------------------------------------------------------------
 
   function startPeriodicReactionCheck() {
@@ -2203,9 +1936,8 @@
         )
       ).map(processCPListNotification)
     );
+
     isMobileDevice = detectMobile();
-    createTooltip();
-    startPeriodicAvatarCheck();
     startPeriodicReactionCheck();
     await injectRTContent();
     const needsFetching = await cacheAllPosts();
@@ -2217,8 +1949,6 @@
       row.classList.add("content-processed");
     });
 
-    // Process cplist notifications
-
     // Then process the containers, but only if all their li elements are processed
     if (!needsFetching) {
       document
@@ -2226,7 +1956,6 @@
           ".topiclist.topics, #recent-topics, .topiclist.forums"
         )
         .forEach((container) => {
-          // For topiclist.topics and recent-topics, only add content-processed if all li's are processed
           if (
             (container.classList.contains("topiclist") &&
               container.classList.contains("topics")) ||
@@ -2240,14 +1969,12 @@
               container.classList.add("content-processed");
             }
           } else {
-            // For other containers, proceed as before
             container.classList.add("content-processed");
           }
         });
     }
 
     await processIgnoredContentOnce();
-    replaceUserAvatars();
     addGhostButtonsIfOnProfile();
     addShowIgnoredUsersButton();
     processOnlineList();
@@ -2256,7 +1983,7 @@
     updatePaginationPostCount();
     changeOysterSauceColor();
 
-    // Final pass to ensure all containers are marked as processed, with the same li check
+    // Final pass to ensure all containers are marked as processed
     document
       .querySelectorAll(".topiclist.topics, #recent-topics, .topiclist.forums")
       .forEach((container) => {
