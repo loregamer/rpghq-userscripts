@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         True Iggy
+// @name         True Iggy Enhanced
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  Hides content from iggy'd users
+// @version      1.1
+// @description  Hides content from iggy'd users and removes them from reaction lists
 // @author       You
 // @match        https://rpghq.org/*/*
 // @run-at       document-start
@@ -10,6 +10,7 @@
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_registerMenuCommand
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/ghosted-users/Ghost-lite.user.js
 // @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/ghosted-users/Ghost-lite.user.js
 // @license      MIT
@@ -1017,6 +1018,15 @@
     if (hideIt) {
       post.classList.add("ghosted-post");
     }
+
+    // Process reaction lists in this post if they exist
+    const reactionLists = post.querySelectorAll(
+      ".reaction-score-list:not(.content-processed)"
+    );
+    if (reactionLists.length > 0) {
+      processReactionLists();
+    }
+
     post.classList.add("content-processed");
   }
 
@@ -1939,25 +1949,135 @@
     cleanGhostedQuotesInTextarea();
     updatePaginationPostCount();
 
-    // Final pass to ensure all containers are marked as processed
+    // Initialize reaction list processing
+    observeReactionLists();
+  });
+
+  // ---------------------------------------------------------------------
+  // RPGHQ Reaction List Integration
+  // ---------------------------------------------------------------------
+
+  // Process reaction lists to exclude ignored users from the displayed text
+  function processReactionLists() {
     document
-      .querySelectorAll(".topiclist.topics, #recent-topics, .topiclist.forums")
-      .forEach((container) => {
-        if (
-          (container.classList.contains("topiclist") &&
-            container.classList.contains("topics")) ||
-          container.id === "recent-topics"
-        ) {
-          const allLis = container.querySelectorAll("li.row");
-          const allProcessed = Array.from(allLis).every((li) =>
-            li.classList.contains("content-processed")
-          );
-          if (allProcessed) {
-            container.classList.add("content-processed");
-          }
-        } else {
-          container.classList.add("content-processed");
+      .querySelectorAll(".reaction-score-list:not(.content-processed)")
+      .forEach((reactionList) => {
+        const listLabel = reactionList.querySelector(".list-label a");
+        if (!listLabel) return;
+
+        const postId = reactionList.dataset.postId;
+        if (!postId) return;
+
+        // Fetch the full reaction data to check for ignored users
+        fetch(`https://rpghq.org/forums/reactions?mode=view&post=${postId}`, {
+          method: "POST",
+          headers: {
+            accept: "application/json, text/javascript, */*; q=0.01",
+            "x-requested-with": "XMLHttpRequest",
+          },
+          credentials: "include",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data.htmlContent) return;
+
+            // Parse the reaction data to get user information
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data.htmlContent, "text/html");
+
+            // Get all non-ignored users who reacted - only from the "All" tab to avoid duplicates
+            const allUsers = [];
+            doc
+              .querySelectorAll(
+                '.tab-content[data-id="0"] li .cbb-helper-text a'
+              )
+              .forEach((userLink) => {
+                const username = userLink.textContent.trim();
+                if (username && !isUserIgnored(username)) {
+                  allUsers.push(username);
+                }
+              });
+
+            // Update the reaction list label text
+            if (allUsers.length > 0) {
+              let newText = "";
+              if (allUsers.length === 1) {
+                newText = allUsers[0];
+              } else if (allUsers.length === 2) {
+                newText = `${allUsers[0]} and ${allUsers[1]}`;
+              } else {
+                const firstTwo = allUsers.slice(0, 2);
+                newText = `${firstTwo.join(", ")} and ${
+                  allUsers.length - 2
+                } other user${allUsers.length - 2 > 1 ? "s" : ""}`;
+              }
+              listLabel.textContent = newText;
+              reactionList.style.display = "";
+            } else {
+              // If all users are ignored, hide the reaction list
+              reactionList.style.display = "none";
+            }
+          })
+          .catch((error) =>
+            console.error("Error processing reaction list:", error)
+          )
+          .finally(() => {
+            // Mark as processed regardless of success or failure
+            reactionList.classList.add("content-processed");
+          });
+      });
+  }
+
+  // Simplified observer for reaction lists
+  function observeReactionLists() {
+    const observer = new MutationObserver((mutations) => {
+      let shouldProcess = false;
+
+      mutations.forEach((mutation) => {
+        if (mutation.type === "childList") {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              // Check if the added node is or contains a reaction list
+              if (
+                node.classList &&
+                node.classList.contains("reaction-score-list")
+              ) {
+                shouldProcess = true;
+              } else if (
+                node.querySelectorAll &&
+                node.querySelectorAll(".reaction-score-list").length > 0
+              ) {
+                shouldProcess = true;
+              }
+            }
+          });
         }
       });
+
+      if (shouldProcess) {
+        processReactionLists();
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    // Process existing reaction lists
+    processReactionLists();
+  }
+
+  // Initialize the reaction list processing when the DOM is ready
+  document.addEventListener("DOMContentLoaded", function () {
+    observeReactionLists();
   });
+
+  // Also run it now in case the DOM is already loaded
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
+    observeReactionLists();
+  }
 })();
