@@ -1744,8 +1744,6 @@
     }
 
     popup.style.zIndex = "9999";
-    popup.style.backgroundColor = "#fff";
-    popup.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.5)";
 
     // Create popup header
     const header = document.createElement("div");
@@ -1818,9 +1816,12 @@
           const tabHeader = doc.querySelector(".tab-header");
           const tabContents = doc.querySelectorAll(".tab-content");
 
+          // Variable to store the tab header element, will be defined if tabHeader exists
+          let newTabHeader = null;
+
           if (tabHeader) {
             // Clone the tab header
-            const newTabHeader = tabHeader.cloneNode(true);
+            newTabHeader = tabHeader.cloneNode(true);
 
             // Fix tab links
             newTabHeader.querySelectorAll("a").forEach((link) => {
@@ -1852,24 +1853,103 @@
           }
 
           // Add tab contents
+          let totalIgnoredUsers = new Set(); // Track unique ignored users across all tabs
+
+          // Keep track of which tabs have no non-ignored users
+          let tabsToRemove = new Set();
+
           tabContents.forEach((tabContent) => {
             const newTabContent = tabContent.cloneNode(true);
 
+            // Track how many users are ignored in this tab
+            let ignoredCount = 0;
+            let totalCount = 0;
+            const tabId = newTabContent.dataset.id;
+
             // Filter out ignored users if needed
             if (GM_getValue("hideGhostedContent", true)) {
+              // Count total users in this tab
+              totalCount = newTabContent.querySelectorAll("li").length;
+
               newTabContent.querySelectorAll("li").forEach((li) => {
                 const usernameElement = li.querySelector(".cbb-helper-text a");
                 if (usernameElement) {
                   const username = usernameElement.textContent.trim();
                   if (isUserIgnored(username)) {
                     li.remove();
+                    ignoredCount++;
+
+                    // Add to the set of all ignored users
+                    totalIgnoredUsers.add(username);
                   }
                 }
               });
+
+              // If all users in this tab are ignored, mark the tab for removal
+              // Skip the "All" tab (tabId === "0")
+              if (
+                tabId !== "0" &&
+                ignoredCount > 0 &&
+                ignoredCount >= totalCount
+              ) {
+                tabsToRemove.add(tabId);
+              }
+            }
+
+            // Update the count in the tab header if we removed any users
+            if (ignoredCount > 0 && newTabHeader) {
+              const tabLink = newTabHeader.querySelector(
+                `a[data-id="${tabId}"]`
+              );
+              if (tabLink && tabId !== "0") {
+                // Skip updating the "All" tab here
+                // Extract the current count from the tab text
+                const countMatch = tabLink.textContent.match(/\((\d+)\)/);
+                if (countMatch && countMatch[1]) {
+                  const originalCount = parseInt(countMatch[1], 10);
+                  const newCount = Math.max(0, originalCount - ignoredCount);
+                  // Replace the count in the tab text
+                  tabLink.textContent = tabLink.textContent.replace(
+                    /\(\d+\)/,
+                    `(${newCount})`
+                  );
+                }
+              }
             }
 
             reactionsList.appendChild(newTabContent);
           });
+
+          // Remove tabs where all users were ignored
+          if (newTabHeader && tabsToRemove.size > 0) {
+            tabsToRemove.forEach((tabId) => {
+              const tabToRemove = newTabHeader.querySelector(
+                `a[data-id="${tabId}"]`
+              );
+              if (tabToRemove) {
+                tabToRemove.remove();
+              }
+            });
+          }
+
+          // Update the "All" tab count based on the total number of unique ignored users
+          if (totalIgnoredUsers.size > 0 && newTabHeader) {
+            const allTabLink = newTabHeader.querySelector('a[data-id="0"]');
+            if (allTabLink) {
+              const allCountMatch = allTabLink.textContent.match(/\((\d+)\)/);
+              if (allCountMatch && allCountMatch[1]) {
+                const allOriginalCount = parseInt(allCountMatch[1], 10);
+                const allNewCount = Math.max(
+                  0,
+                  allOriginalCount - totalIgnoredUsers.size
+                );
+                allTabLink.textContent = allTabLink.textContent.replace(
+                  /\(\d+\)/,
+                  `(${allNewCount})`
+                );
+              }
+            }
+          }
 
           // Update content
           content.innerHTML = "";
