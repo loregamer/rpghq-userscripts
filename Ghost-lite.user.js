@@ -1998,6 +1998,29 @@
                 }
               });
 
+            // Track which reaction types have non-ignored users
+            const validReactionIds = new Set();
+            doc
+              .querySelectorAll(".tab-header a:not(.active)")
+              .forEach((reactionTab) => {
+                const reactionId = reactionTab.getAttribute("data-id");
+                if (!reactionId) return;
+
+                // Check if any non-ignored users made this reaction
+                const hasNonIgnoredUsers = Array.from(
+                  doc.querySelectorAll(
+                    `.tab-content[data-id="${reactionId}"] li .cbb-helper-text a`
+                  )
+                ).some((userLink) => {
+                  const username = userLink.textContent.trim();
+                  return username && !isUserIgnored(username);
+                });
+
+                if (hasNonIgnoredUsers) {
+                  validReactionIds.add(reactionId);
+                }
+              });
+
             // Update the reaction list label text
             if (allUsers.length > 0) {
               let newText = "";
@@ -2012,6 +2035,19 @@
                 } other user${allUsers.length - 2 > 1 ? "s" : ""}`;
               }
               listLabel.textContent = newText;
+
+              // Hide reaction images for reactions that only have ignored users
+              const listScores = reactionList.querySelector(".list-scores");
+              if (listScores) {
+                listScores.querySelectorAll("a").forEach((reactionLink) => {
+                  const reactionId =
+                    reactionLink.href.match(/reaction=(\d+)/)?.[1];
+                  if (reactionId && !validReactionIds.has(reactionId)) {
+                    reactionLink.style.display = "none";
+                  }
+                });
+              }
+
               reactionList.style.display = "";
             } else {
               // If all users are ignored, hide the reaction list
