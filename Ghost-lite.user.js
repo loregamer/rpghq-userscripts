@@ -1713,6 +1713,44 @@
     });
   }
 
+  // Add a cache for reactions data
+  const reactionsCache = new Map();
+
+  // Function to fetch reactions with caching
+  async function fetchReactionsWithCache(postId) {
+    // Return cached data if available
+    if (reactionsCache.has(postId)) {
+      return reactionsCache.get(postId);
+    }
+
+    // Fetch new data if not cached
+    try {
+      const response = await fetch(
+        `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
+        {
+          method: "POST",
+          headers: {
+            accept: "application/json, text/javascript, */*; q=0.01",
+            "x-requested-with": "XMLHttpRequest",
+          },
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+
+      // Cache the result
+      if (data && data.htmlContent) {
+        reactionsCache.set(postId, data);
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error fetching reaction data:", error);
+      throw error;
+    }
+  }
+
   // Function to create and show a custom reactions popup
   function showCustomReactionsPopup(postId) {
     // Remove any existing popup
@@ -1792,16 +1830,8 @@
     };
     document.addEventListener("keydown", escapeHandler);
 
-    // Fetch reaction data
-    fetch(`https://rpghq.org/forums/reactions?mode=view&post=${postId}`, {
-      method: "POST",
-      headers: {
-        accept: "application/json, text/javascript, */*; q=0.01",
-        "x-requested-with": "XMLHttpRequest",
-      },
-      credentials: "include",
-    })
-      .then((response) => response.json())
+    // Fetch reaction data using the cache
+    fetchReactionsWithCache(postId)
       .then((data) => {
         if (data.htmlContent) {
           // Parse the reaction data
@@ -1983,16 +2013,8 @@
         const postId = reactionList.dataset.postId;
         if (!postId) return;
 
-        // Fetch the full reaction data to check for ignored users
-        fetch(`https://rpghq.org/forums/reactions?mode=view&post=${postId}`, {
-          method: "POST",
-          headers: {
-            accept: "application/json, text/javascript, */*; q=0.01",
-            "x-requested-with": "XMLHttpRequest",
-          },
-          credentials: "include",
-        })
-          .then((response) => response.json())
+        // Fetch the full reaction data to check for ignored users using the cache
+        fetchReactionsWithCache(postId)
           .then((data) => {
             if (!data.htmlContent) return;
 
