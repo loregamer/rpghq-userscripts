@@ -114,9 +114,6 @@
     .post.bg2:not(.content-processed),
     dd.lastpost:not(.content-processed),
     .reaction-score-list:not(.content-processed),
-    .pagination:not(.content-processed) {
-      visibility: hidden !important;
-    }
     /* Hide list rows until they are processed */
     li.row:not(.content-processed) {
       display: none !important;
@@ -132,7 +129,6 @@
     .reaction-score-list.content-processed,
     li.row.content-processed,
     .notification-block,
-    .pagination.content-processed,
     .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote) {
       visibility: visible !important;
     }
@@ -1308,7 +1304,6 @@
     document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
 
     showToggleNotification();
-    updatePaginationPostCount();
 
     // If we're showing ghosted content, scroll to the first shown element
     if (showGhostedPosts) {
@@ -1662,7 +1657,6 @@
     processOnlineList();
     moveExternalLinkIcon();
     cleanGhostedQuotesInTextarea();
-    updatePaginationPostCount();
 
     // Initialize reaction list processing
     observeReactionLists();
@@ -1749,6 +1743,48 @@
       console.error("Error fetching reaction data:", error);
       throw error;
     }
+  }
+
+  // Function to invalidate cache for a specific post
+  function invalidateReactionsCache(postId) {
+    if (reactionsCache.has(postId)) {
+      reactionsCache.delete(postId);
+      console.log(`Invalidated reactions cache for post ${postId}`);
+    }
+  }
+
+  // Function to detect when a user reacts to a post
+  function setupReactionChangeDetection() {
+    // Listen for clicks on reaction buttons (the ones that add/remove reactions)
+    document.addEventListener("click", async (e) => {
+      // Check if the click is on a reaction button or inside a reaction button
+      const reactionButton = e.target.closest("a[href*='reactions?mode=give']");
+      if (!reactionButton) return;
+
+      // Extract post ID from the href attribute
+      const hrefMatch = reactionButton.href.match(/post=(\d+)/);
+      const postId = hrefMatch ? hrefMatch[1] : null;
+
+      if (postId) {
+        console.log(`Detected reaction click for post ${postId}`);
+
+        // Wait a short time for the server to process the reaction
+        setTimeout(() => {
+          // Invalidate the cache for this post
+          invalidateReactionsCache(postId);
+
+          // Find and reprocess all reaction lists for this post
+          document
+            .querySelectorAll(`.reaction-score-list[data-post-id="${postId}"]`)
+            .forEach((list) => {
+              list.classList.remove("content-processed");
+            });
+
+          // Force reprocessing of reaction lists
+          processReactionLists();
+        }, 1000); // 1000ms delay to allow server to process the reaction
+      }
+    });
   }
 
   // Function to create and show a custom reactions popup
@@ -2107,40 +2143,116 @@
   // Simplified observer for reaction lists
   function observeReactionLists() {
     const observer = new MutationObserver((mutations) => {
-      let shouldProcess = false;
+      let needsProcessing = false;
+      let changedPostIds = new Set();
 
-      mutations.forEach((mutation) => {
+      for (const mutation of mutations) {
+        // Check for added nodes that are or contain reaction lists
         if (mutation.type === "childList") {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              // Check if the added node is or contains a reaction list
-              if (
-                node.classList &&
-                node.classList.contains("reaction-score-list")
-              ) {
-                shouldProcess = true;
-              } else if (
-                node.querySelectorAll &&
-                node.querySelectorAll(".reaction-score-list").length > 0
-              ) {
-                shouldProcess = true;
+          for (const node of mutation.addedNodes) {
+            if (node.nodeType !== Node.ELEMENT_NODE) continue;
+
+            // Check if the node is a reaction list
+            if (
+              node.classList &&
+              node.classList.contains("reaction-score-list")
+            ) {
+              const postId = node.dataset.postId;
+              if (postId) {
+                changedPostIds.add(postId);
+                node.classList.remove("content-processed");
+                needsProcessing = true;
               }
             }
-          });
-        }
-      });
 
-      if (shouldProcess) {
+            // Check if the node contains reaction lists
+            const lists = node.querySelectorAll?.(".reaction-score-list");
+            if (lists && lists.length > 0) {
+              lists.forEach((list) => {
+                const postId = list.dataset.postId;
+                if (postId) {
+                  changedPostIds.add(postId);
+                  list.classList.remove("content-processed");
+                  needsProcessing = true;
+                }
+              });
+            }
+          }
+        }
+
+        // Check for attribute changes on reaction lists
+        if (
+          mutation.type === "attributes" &&
+          mutation.target.classList &&
+          mutation.target.classList.contains("reaction-score-list")
+        ) {
+          const postId = mutation.target.dataset.postId;
+          if (postId) {
+            changedPostIds.add(postId);
+            mutation.target.classList.remove("content-processed");
+            needsProcessing = true;
+          }
+        }
+
+        // Check for changes to the list-scores or list-label elements inside reaction lists
+        if (mutation.type === "childList" || mutation.type === "attributes") {
+          const reactionList = mutation.target.closest?.(
+            ".reaction-score-list"
+          );
+          if (reactionList) {
+            const postId = reactionList.dataset.postId;
+            if (postId) {
+              changedPostIds.add(postId);
+              reactionList.classList.remove("content-processed");
+              needsProcessing = true;
+            }
+          }
+        }
+      }
+
+      // Invalidate cache for changed posts
+      if (changedPostIds.size > 0) {
+        console.log(
+          `Detected changes for posts: ${Array.from(changedPostIds).join(", ")}`
+        );
+        changedPostIds.forEach((postId) => {
+          invalidateReactionsCache(postId);
+        });
+      }
+
+      // Process reaction lists if needed
+      if (needsProcessing) {
         processReactionLists();
       }
     });
 
+    // Observe the entire document for changes
     observer.observe(document.body, {
       childList: true,
       subtree: true,
+      attributes: true,
+      characterData: true,
+      attributeFilter: ["class", "data-post-id", "style"],
     });
 
     // Process existing reaction lists
     processReactionLists();
+
+    // Setup detection for user reactions
+    setupReactionChangeDetection();
+
+    // Also periodically check for unprocessed reaction lists
+    // This is a fallback in case the mutation observer misses something
+    setInterval(() => {
+      const unprocessedLists = document.querySelectorAll(
+        ".reaction-score-list:not(.content-processed)"
+      );
+      if (unprocessedLists.length > 0) {
+        console.log(
+          `Found ${unprocessedLists.length} unprocessed reaction lists during interval check`
+        );
+        processReactionLists();
+      }
+    }, 2000); // Check every 2 seconds
   }
 })();
