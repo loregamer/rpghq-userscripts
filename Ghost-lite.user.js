@@ -1416,7 +1416,6 @@
     popup.style.cssText = `
       position: fixed;
       top: 50%;
-      left: 50%;
       transform: translate(-50%, -50%);
       background-color: #2a2e36;
       border: 1px solid #3a3f4b;
@@ -1732,10 +1731,8 @@
     // Calculate position to ensure it's centered and fully visible
     const totalHeight = 440; // 400px content + ~40px header
     const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
 
-    // Center horizontally
-    popup.style.left = Math.max(0, (viewportWidth - 600) / 2) + "px";
+    // Center horizontally - use 50% and negative margin for perfect centering
 
     // Center vertically, but ensure it's fully visible
     if (totalHeight > viewportHeight) {
