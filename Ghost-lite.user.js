@@ -1673,11 +1673,41 @@
   // RPGHQ Reaction List Integration
   // ---------------------------------------------------------------------
 
+  // Function to add preventDefault to reaction list elements
+  function addPreventDefaultToReactionList(reactionList) {
+    // Add click event listener to prevent default action on the container
+    reactionList.addEventListener(
+      "click",
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      },
+      true
+    );
+
+    // Add click event listeners to all links inside the reaction list
+    reactionList.querySelectorAll("a").forEach((link) => {
+      link.addEventListener(
+        "click",
+        (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        },
+        true
+      );
+    });
+  }
+
   // Process reaction lists to exclude ignored users from the displayed text
   function processReactionLists() {
     document
       .querySelectorAll(".reaction-score-list:not(.content-processed)")
       .forEach((reactionList) => {
+        // Add preventDefault to all clickable elements
+        addPreventDefaultToReactionList(reactionList);
+
         const listLabel = reactionList.querySelector(".list-label a");
         if (!listLabel) return;
 
@@ -1776,6 +1806,9 @@
           .finally(() => {
             // Mark as processed regardless of success or failure
             reactionList.classList.add("content-processed");
+
+            // Re-apply preventDefault after content has been updated
+            addPreventDefaultToReactionList(reactionList);
           });
       });
   }
