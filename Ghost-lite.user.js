@@ -153,30 +153,19 @@
     body[class*="viewforum-"] .ghosted-row {
       display: block !important;
     }
-    /* Make sure this rule doesn't apply to dd.lastpost elements that have ghosted-row class directly */
-    .topiclist.forums li.ghosted-row,
-    body[class*="viewforum-"] li.ghosted-row {
-      display: block !important;
-    }
-    /* Hide lastpost elements with ghosted-row class */
-    .topiclist.forums dd.lastpost.ghosted-row,
-    body[class*="viewforum-"] dd.lastpost.ghosted-row,
-    dd.lastpost.ghosted-row {
-      display: none !important;
-    }
     .topiclist.forums .ghosted-row:not(.show) dd.lastpost,
     body[class*="viewforum-"] .ghosted-row:not(.show) dd.lastpost {
       display: none !important;
     }
-    /* Show lastpost elements with ghosted-row class when .show is present */
-    dd.lastpost.ghosted-row.show {
+    .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-author,
+    body[class*="viewforum-"] .ghosted-row.show dd.lastpost.ghosted-by-author {
       display: block !important;
-    }
-    dd.lastpost.ghosted-row.ghosted-by-author {
       background-color: rgba(255, 0, 0, 0.1) !important;
     }
-    dd.lastpost.ghosted-row.ghosted-by-content {
-      background-color: rgba(255, 128, 0, 0.1) !important;
+    .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-content,
+    body[class*="viewforum-"] .ghosted-row.show dd.lastpost.ghosted-by-content {
+      display: block !important;
+      background-color: rgba(255, 255, 0, 0.1) !important;
     }
     .ghosted-post,
     .ghosted-quote {
@@ -533,25 +522,13 @@
 
   async function processLastPost(element) {
     const row = element.closest("li.row");
-    const isForumList = row && row.closest(".topiclist.forums");
-
     if (row) {
       const authorLinks = row.querySelectorAll(
         "a.username, a.username-coloured"
       );
       for (const link of authorLinks) {
         if (isUserIgnored(link.textContent.trim())) {
-          if (isForumList) {
-            // Only hide the lastpost element if in a forums list
-            const lastpostCell = element.closest("dd.lastpost");
-            if (lastpostCell) {
-              lastpostCell.style.display = "none";
-              // Store the reason for hiding
-              lastpostCell.dataset.ghostReason = "author";
-            }
-          } else {
-            hideTopicRow(row);
-          }
+          hideTopicRow(row);
           element.classList.add("content-processed");
           return;
         }
@@ -562,17 +539,7 @@
           isUserIgnored(cls.replace("author-name-", ""))
       );
       if (hasGhostedClass) {
-        if (isForumList) {
-          // Only hide the lastpost element if in a forums list
-          const lastpostCell = element.closest("dd.lastpost");
-          if (lastpostCell) {
-            lastpostCell.style.display = "none";
-            // Store the reason for hiding
-            lastpostCell.dataset.ghostReason = "author";
-          }
-        } else {
-          hideTopicRow(row);
-        }
+        hideTopicRow(row);
         element.classList.add("content-processed");
         return;
       }
@@ -610,45 +577,15 @@
         const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
         if (pid) {
           if (userEl && isUserIgnored(userEl.textContent.trim())) {
-            if (isForumList) {
-              // Only hide the lastpost element if in a forums list
-              const lastpostCell = element.closest("dd.lastpost");
-              if (lastpostCell) {
-                lastpostCell.style.display = "none";
-                // Store the reason for hiding
-                lastpostCell.dataset.ghostReason = "author";
-              }
-            } else {
-              hideTopicRow(element);
-            }
+            hideTopicRow(element);
           } else {
             try {
               const content = await fetchAndCachePost(pid);
               if (!content || postContentContainsGhosted(content)) {
-                if (isForumList) {
-                  // Only hide the lastpost element if in a forums list
-                  const lastpostCell = element.closest("dd.lastpost");
-                  if (lastpostCell) {
-                    lastpostCell.style.display = "none";
-                    // Store the reason for hiding
-                    lastpostCell.dataset.ghostReason = "content";
-                  }
-                } else {
-                  hideTopicRow(element);
-                }
-              }
-            } catch (err) {
-              if (isForumList) {
-                // Only hide the lastpost element if in a forums list
-                const lastpostCell = element.closest("dd.lastpost");
-                if (lastpostCell) {
-                  lastpostCell.style.display = "none";
-                  // Store the reason for hiding
-                  lastpostCell.dataset.ghostReason = "content";
-                }
-              } else {
                 hideTopicRow(element);
               }
+            } catch (err) {
+              hideTopicRow(element);
             }
           }
         }
@@ -1364,31 +1301,6 @@
         r.style.display = showGhostedPosts ? "block" : "none";
       }
     });
-
-    // Handle lastpost cells that were hidden with direct style manipulation
-    const forumLists = document.querySelectorAll(".topiclist.forums");
-    forumLists.forEach((list) => {
-      const lastpostCells = list.querySelectorAll(
-        "dd.lastpost[data-ghost-reason]"
-      );
-      lastpostCells.forEach((cell) => {
-        // Toggle display based on showGhostedPosts for all cells with a ghost reason
-        if (showGhostedPosts) {
-          cell.style.display = "block";
-          // Apply appropriate background color based on the reason for hiding
-          if (cell.dataset.ghostReason === "author") {
-            cell.style.backgroundColor = "rgba(255, 0, 0, 0.1)";
-          } else if (cell.dataset.ghostReason === "content") {
-            cell.style.backgroundColor = "rgba(255, 128, 0, 0.1)";
-          }
-        } else {
-          cell.style.display = "none";
-          // Clear background color when hiding
-          cell.style.backgroundColor = "";
-        }
-      });
-    });
-
     document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
 
     showToggleNotification();
