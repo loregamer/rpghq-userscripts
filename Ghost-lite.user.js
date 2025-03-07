@@ -2123,8 +2123,8 @@
 
               reactionList.style.display = "";
             } else {
-              // If all users are ignored, hide the reaction list
-              reactionList.style.display = "none";
+              // If all users are ignored, we don't need to set display: none
+              // Not having content-processed already handles this
             }
           })
           .catch((error) =>
@@ -2179,35 +2179,6 @@
             }
           }
         }
-
-        // Check for attribute changes on reaction lists
-        if (
-          mutation.type === "attributes" &&
-          mutation.target.classList &&
-          mutation.target.classList.contains("reaction-score-list")
-        ) {
-          const postId = mutation.target.dataset.postId;
-          if (postId) {
-            changedPostIds.add(postId);
-            mutation.target.classList.remove("content-processed");
-            needsProcessing = true;
-          }
-        }
-
-        // Check for changes to the list-scores or list-label elements inside reaction lists
-        if (mutation.type === "childList" || mutation.type === "attributes") {
-          const reactionList = mutation.target.closest?.(
-            ".reaction-score-list"
-          );
-          if (reactionList) {
-            const postId = reactionList.dataset.postId;
-            if (postId) {
-              changedPostIds.add(postId);
-              reactionList.classList.remove("content-processed");
-              needsProcessing = true;
-            }
-          }
-        }
       }
 
       // Invalidate cache for changed posts
@@ -2226,13 +2197,10 @@
       }
     });
 
-    // Observe the entire document for changes
+    // Observe the entire document for childList changes
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-      attributes: true,
-      characterData: true,
-      attributeFilter: ["class", "data-post-id", "style"],
     });
 
     // Process existing reaction lists
