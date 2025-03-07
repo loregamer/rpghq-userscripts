@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         True Iggy Enhanced (Highlight Instead of Hide)
 // @namespace    http://tampermonkey.net/
-// @version      1.1-mod
+// @version      1.0
 // @description  Highlights content from iggy'd users rather than hiding them, while leaving reaction score list logic intact.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -288,7 +288,6 @@
     return false;
   }
 
-  // Check if post content contains @mentions of ghosted users
   function postContentContainsMentionedGhosted(post) {
     const contentDiv = post.querySelector(".content");
     if (!contentDiv) return false;
@@ -303,204 +302,174 @@
     return false;
   }
 
-  function cleanupTopicAuthor(element) {
-    const row = element.closest("li.row");
-    if (row) {
-      Array.from(row.classList).forEach((cls) => {
-        if (cls.startsWith("author-name-")) row.classList.remove(cls);
-      });
-    }
-    const responsiveHide = element.querySelector(".responsive-hide");
-    if (!responsiveHide) return;
-    const textContent = responsiveHide.textContent.trim();
-    if (!textContent.includes("» in")) return;
-    const masWrap = responsiveHide.querySelector(".mas-wrap");
-    if (!masWrap) return;
-    const userLink = masWrap.querySelector(".mas-username a");
-    if (!userLink) return;
-    const userId = userLink.href.match(/u=(\d+)/)?.[1];
-    const username = userLink.textContent.trim();
-    if ((userId && isUserIgnored(userId)) || isUserIgnored(username)) {
-      const nodes = Array.from(responsiveHide.childNodes);
-      const byTextNodeIndex = nodes.findIndex(
-        (node) =>
-          node.nodeType === Node.TEXT_NODE &&
-          node.textContent.trim().toLowerCase() === "by"
-      );
-      if (byTextNodeIndex !== -1) {
-        const arrowTextNode = nodes.find(
-          (node, index) =>
-            index < byTextNodeIndex &&
-            node.nodeType === Node.TEXT_NODE &&
-            node.textContent.includes("»")
-        );
-        if (arrowTextNode) responsiveHide.removeChild(arrowTextNode);
-        responsiveHide.removeChild(nodes[byTextNodeIndex]);
-        masWrap.remove();
-      }
-    }
-  }
-
-  function hideTopicRow(element) {
+  /**
+   * Consolidated function to process topic rows and determine if they should be ghosted
+   * @param {Element} element - The element to process (row or cell)
+   * @param {boolean} markProcessed - Whether to mark the element as processed
+   * @returns {Promise<void>}
+   */
+  async function processTopicRow(element, markProcessed = true) {
+    // Find the row element
     const recentTopicLi = element.closest("#recent-topics li");
-    if (recentTopicLi) {
-      recentTopicLi.classList.add("ghosted-row", "ghosted-by-author");
-      return;
-    }
-    const rowItem = element.closest("li.row");
-    if (rowItem) {
-      const forumLinks = rowItem.querySelectorAll(
-        ".forum-links a, .responsive-hide a"
-      );
-      const forumNames = Array.from(forumLinks).map((link) =>
-        link.textContent.trim()
-      );
-      if (
-        forumNames.includes("Moderation Station") ||
-        forumNames.includes("Chat With Staff")
-      )
-        return;
-      const isForumList = rowItem.closest(".topiclist.forums");
-      const isViewForum = window.location.href.includes("/viewforum.php");
-      const isSearch = window.location.href.includes("/search.php");
-      if (isViewForum || isSearch) {
-        const lastpostCell = rowItem.querySelector("dd.lastpost");
-        if (lastpostCell) {
-          const authorLink = lastpostCell.querySelector(
-            "a.username, a.username-coloured"
-          );
-          if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
-            if (isViewForum)
-              lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
-            rowItem.classList.add("ghosted-row", "ghosted-by-author");
-          } else {
-            const allLinks = rowItem.querySelectorAll(
-              "a.username, a.username-coloured"
-            );
-            const nonAuthorLinks = Array.from(allLinks).filter(
-              (link) => !link.closest(".responsive-hide.left-box")
-            );
-            const hasGhostedUser = nonAuthorLinks.some((link) =>
-              isUserIgnored(link.textContent.trim())
-            );
-            if (hasGhostedUser) {
-              if (isViewForum)
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
-              rowItem.classList.add("ghosted-row", "ghosted-by-author");
-            } else {
-              if (isViewForum)
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
-              rowItem.classList.add("ghosted-row", "ghosted-by-content");
-            }
-          }
-          return;
-        }
-      }
-      const authorLinks = rowItem.querySelectorAll(
-        "a.username, a.username-coloured"
-      );
-      const authorNames = Array.from(authorLinks).map((link) =>
-        link.textContent.trim()
-      );
-      const hasGhostedAuthor = authorNames.some((name) => isUserIgnored(name));
-      const hasGhostedClass = Array.from(rowItem.classList).some(
-        (cls) =>
-          cls.startsWith("author-name-") &&
-          isUserIgnored(cls.replace("author-name-", ""))
-      );
-      if (hasGhostedAuthor || hasGhostedClass) {
-        rowItem.classList.add("ghosted-row", "ghosted-by-author");
-        return;
-      }
-      const innerDiv = rowItem.querySelector(".list-inner");
-      if (innerDiv) {
-        const byText = innerDiv.textContent.toLowerCase();
-        const hasGhostedInBy = Object.values(ignoredUsers).some((username) =>
-          byText.includes(`by ${username.toLowerCase()}`)
-        );
-        if (hasGhostedInBy) {
-          rowItem.classList.add("ghosted-row", "ghosted-by-author");
-          return;
-        }
-      }
-      rowItem.classList.add("ghosted-row", "ghosted-by-content");
-    } else {
-      element.classList.add("ghosted-row", "ghosted-by-author");
-    }
-  }
+    const rowItem = recentTopicLi || element.closest("li.row");
 
-  async function processLastPost(element) {
-    const row = element.closest("li.row");
-    if (row) {
-      const authorLinks = row.querySelectorAll(
-        "a.username, a.username-coloured"
-      );
-      for (const link of authorLinks) {
-        if (isUserIgnored(link.textContent.trim())) {
-          hideTopicRow(row);
-          element.classList.add("content-processed");
-          return;
-        }
-      }
-      const hasGhostedClass = Array.from(row.classList).some(
-        (cls) =>
-          cls.startsWith("author-name-") &&
-          isUserIgnored(cls.replace("author-name-", ""))
-      );
-      if (hasGhostedClass) {
-        hideTopicRow(row);
-        element.classList.add("content-processed");
-        return;
-      }
-    }
-    const spanEl = element.querySelector("span");
-    if (!spanEl) {
-      element.classList.add("content-processed");
+    if (!rowItem) {
+      // If no row found, just mark the element itself as processed
+      if (markProcessed) element.classList.add("content-processed");
       return;
     }
-    const byTextNode = Array.from(spanEl.childNodes).find(
-      (node) =>
-        node.nodeType === Node.TEXT_NODE &&
-        node.textContent.trim().toLowerCase() === "by"
+
+    // Skip certain forums
+    const forumLinks = rowItem.querySelectorAll(
+      ".forum-links a, .responsive-hide a"
     );
-    if (!byTextNode) {
-      element.classList.add("content-processed");
+    const forumNames = Array.from(forumLinks).map((link) =>
+      link.textContent.trim()
+    );
+    if (
+      forumNames.includes("Moderation Station") ||
+      forumNames.includes("Chat With Staff")
+    ) {
+      if (markProcessed) element.classList.add("content-processed");
       return;
     }
-    const nextEl = byTextNode.nextElementSibling;
-    if (
-      nextEl &&
-      (nextEl.classList.contains("mas-wrap") ||
-        nextEl.classList.contains("username") ||
-        nextEl.classList.contains("username-coloured"))
-    ) {
-      const userEl =
-        nextEl.classList.contains("username") ||
-        nextEl.classList.contains("username-coloured")
-          ? nextEl
-          : nextEl.querySelector(".username, .username-coloured");
-      const link = element.querySelector(
-        'a[href*="viewtopic.php"][href*="#p"]'
+
+    // Clean up author-name classes
+    Array.from(rowItem.classList).forEach((cls) => {
+      if (cls.startsWith("author-name-")) rowItem.classList.remove(cls);
+    });
+
+    // Check for ghosted authors in the row
+    const authorLinks = rowItem.querySelectorAll(
+      "a.username, a.username-coloured"
+    );
+    const authorNames = Array.from(authorLinks).map((link) =>
+      link.textContent.trim()
+    );
+    const hasGhostedAuthor = authorNames.some((name) => isUserIgnored(name));
+
+    // Check for ghosted class
+    const hasGhostedClass = Array.from(rowItem.classList).some(
+      (cls) =>
+        cls.startsWith("author-name-") &&
+        isUserIgnored(cls.replace("author-name-", ""))
+    );
+
+    // Check for "by username" text
+    let hasGhostedInBy = false;
+    const innerDiv = rowItem.querySelector(".list-inner");
+    if (innerDiv) {
+      const byText = innerDiv.textContent.toLowerCase();
+      hasGhostedInBy = Object.values(ignoredUsers).some((username) =>
+        byText.includes(`by ${username.toLowerCase()}`)
       );
-      if (link) {
-        const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
-        if (pid) {
-          if (userEl && isUserIgnored(userEl.textContent.trim())) {
-            hideTopicRow(element);
-          } else {
-            try {
-              const content = await fetchAndCachePost(pid);
-              if (!content || postContentContainsGhosted(content)) {
-                hideTopicRow(element);
-              }
-            } catch (err) {
-              hideTopicRow(element);
+    }
+
+    // Process responsive-hide element (from cleanupTopicAuthor)
+    const responsiveHide = element.querySelector(".responsive-hide");
+    if (responsiveHide && responsiveHide.textContent.trim().includes("» in")) {
+      const masWrap = responsiveHide.querySelector(".mas-wrap");
+      if (masWrap) {
+        const userLink = masWrap.querySelector(".mas-username a");
+        if (userLink) {
+          const userId = userLink.href.match(/u=(\d+)/)?.[1];
+          const username = userLink.textContent.trim();
+
+          if ((userId && isUserIgnored(userId)) || isUserIgnored(username)) {
+            const nodes = Array.from(responsiveHide.childNodes);
+            const byTextNodeIndex = nodes.findIndex(
+              (node) =>
+                node.nodeType === Node.TEXT_NODE &&
+                node.textContent.trim().toLowerCase() === "by"
+            );
+
+            if (byTextNodeIndex !== -1) {
+              const arrowTextNode = nodes.find(
+                (node, index) =>
+                  index < byTextNodeIndex &&
+                  node.nodeType === Node.TEXT_NODE &&
+                  node.textContent.includes("»")
+              );
+
+              if (arrowTextNode) responsiveHide.removeChild(arrowTextNode);
+              responsiveHide.removeChild(nodes[byTextNodeIndex]);
+              masWrap.remove();
+
+              // Mark as ghosted by author since we removed author info
+              rowItem.classList.add("ghosted-row", "ghosted-by-author");
             }
           }
         }
       }
     }
-    element.classList.add("content-processed");
+
+    // Check if we're in a forum or search view
+    const isViewForum = window.location.href.includes("/viewforum.php");
+    const isSearch = window.location.href.includes("/search.php");
+    let shouldGhostByContent = false;
+    let shouldGhostByAuthor =
+      hasGhostedAuthor || hasGhostedClass || hasGhostedInBy;
+
+    // Check for post content in lastpost
+    const lastpostCell = rowItem.querySelector("dd.lastpost");
+    if (lastpostCell) {
+      const authorLink = lastpostCell.querySelector(
+        "a.username, a.username-coloured"
+      );
+
+      if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
+        // Last post author is ghosted
+        if (isViewForum)
+          lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+        shouldGhostByAuthor = true;
+      } else {
+        // Check post content
+        const link = lastpostCell.querySelector(
+          'a[href*="viewtopic.php"][href*="#p"]'
+        );
+        if (link) {
+          const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
+          if (pid) {
+            // First check if the post is already in the cache
+            if (postCache[pid] && postCache[pid].content) {
+              const content = postCache[pid].content;
+              if (postContentContainsGhosted(content)) {
+                if (isViewForum)
+                  lastpostCell.classList.add(
+                    "ghosted-row",
+                    "ghosted-by-content"
+                  );
+                shouldGhostByContent = true;
+              }
+            } else {
+              // If not in cache, fetch it
+              try {
+                const content = await fetchAndCachePost(pid);
+                if (content && postContentContainsGhosted(content)) {
+                  if (isViewForum)
+                    lastpostCell.classList.add(
+                      "ghosted-row",
+                      "ghosted-by-content"
+                    );
+                  shouldGhostByContent = true;
+                }
+              } catch (err) {
+                console.error(`Error fetching post ${pid}:`, err);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Apply ghosting based on what we found
+    if (shouldGhostByAuthor) {
+      rowItem.classList.add("ghosted-row", "ghosted-by-author");
+    } else if (shouldGhostByContent) {
+      rowItem.classList.add("ghosted-row", "ghosted-by-content");
+    }
+
+    if (markProcessed) element.classList.add("content-processed");
   }
 
   function processReactionList(list) {
@@ -954,7 +923,9 @@
   }
 
   async function processIgnoredContentOnce() {
-    document.querySelectorAll("li.row").forEach(cleanupTopicAuthor);
+    document.querySelectorAll("li.row").forEach(async (row) => {
+      await processTopicRow(row);
+    });
     await Promise.all(
       Array.from(
         document.querySelectorAll(".notification-block:not(.content-processed)")
@@ -997,7 +968,11 @@
     const lastPosts = document.querySelectorAll(
       "dd.lastpost:not(.content-processed), #recent-topics li dd.lastpost:not(.content-processed)"
     );
-    await Promise.all(Array.from(lastPosts).map(processLastPost));
+    await Promise.all(
+      Array.from(lastPosts).map(async (lp) => {
+        await processTopicRow(lp, false);
+      })
+    );
     document
       .querySelectorAll("li.row:not(.content-processed)")
       .forEach((row) => {
