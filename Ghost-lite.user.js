@@ -45,12 +45,6 @@
 
   const ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => lowercased username
   const postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
-  const userColors = GM_getValue("userColors", {}); // username => color
-
-  // Set Oyster Sauce's username color
-  userColors["Oyster Sauce"] = "#00AA00";
-  userColors["rusty_shackleford"] = "#ff6e6e";
-  GM_setValue("userColors", userColors);
 
   let showGhostedPosts = false; // Always start hidden
 
@@ -1891,43 +1885,6 @@
     setInterval(processReactionImages, 2000);
   }
 
-  // Function to change Oyster Sauce's username color to #00AA00
-  function changeOysterSauceColor() {
-    document.querySelectorAll("a.username-coloured").forEach((link) => {
-      if (link.textContent.trim() === "Oyster Sauce") {
-        link.style.color = "#00AA00";
-      }
-      if (link.textContent.trim() === "rusty_shackleford") {
-        link.style.color = "#ff6e6e";
-      }
-    });
-
-    // Set up a MutationObserver to handle dynamically loaded content
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.addedNodes && mutation.addedNodes.length > 0) {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === 1) {
-              // Element node
-              const usernameLinks = node.querySelectorAll
-                ? node.querySelectorAll("a.username-coloured")
-                : [];
-
-              usernameLinks.forEach((link) => {
-                if (link.textContent.trim() === "Oyster Sauce") {
-                  link.style.color = "#00AA00";
-                }
-              });
-            }
-          });
-        }
-      });
-    });
-
-    // Start observing the document with the configured parameters
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
-
   document.addEventListener("DOMContentLoaded", async () => {
     await Promise.all(
       Array.from(
@@ -1981,7 +1938,6 @@
     moveExternalLinkIcon();
     cleanGhostedQuotesInTextarea();
     updatePaginationPostCount();
-    changeOysterSauceColor();
 
     // Final pass to ensure all containers are marked as processed
     document
