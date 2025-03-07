@@ -1968,17 +1968,29 @@
                 `a[data-id="${tabId}"]`
               );
               if (tabLink && tabId !== "0") {
-                // Skip updating the "All" tab here
-                // Extract the current count from the tab text
-                const countMatch = tabLink.textContent.match(/\((\d+)\)/);
-                if (countMatch && countMatch[1]) {
-                  const originalCount = parseInt(countMatch[1], 10);
-                  const newCount = Math.max(0, originalCount - ignoredCount);
-                  // Replace the count in the tab text
-                  tabLink.textContent = tabLink.textContent.replace(
-                    /\(\d+\)/,
-                    `(${newCount})`
+                // For reaction tabs with span.tab-counter
+                const tabCounter = tabLink.querySelector(".tab-counter");
+                if (tabCounter) {
+                  const currentCount = parseInt(
+                    tabCounter.textContent.trim(),
+                    10
                   );
+                  if (!isNaN(currentCount)) {
+                    const newCount = Math.max(0, currentCount - ignoredCount);
+                    tabCounter.textContent = newCount.toString();
+                  }
+                } else {
+                  // For older format with (X) in the text
+                  const countMatch = tabLink.textContent.match(/\((\d+)\)/);
+                  if (countMatch && countMatch[1]) {
+                    const originalCount = parseInt(countMatch[1], 10);
+                    const newCount = Math.max(0, originalCount - ignoredCount);
+                    // Replace the count in the tab text
+                    tabLink.textContent = tabLink.textContent.replace(
+                      /\(\d+\)/,
+                      `(${newCount})`
+                    );
+                  }
                 }
               }
             }
@@ -2002,17 +2014,34 @@
           if (totalIgnoredUsers.size > 0 && newTabHeader) {
             const allTabLink = newTabHeader.querySelector('a[data-id="0"]');
             if (allTabLink) {
-              const allCountMatch = allTabLink.textContent.match(/\((\d+)\)/);
-              if (allCountMatch && allCountMatch[1]) {
-                const allOriginalCount = parseInt(allCountMatch[1], 10);
-                const allNewCount = Math.max(
-                  0,
-                  allOriginalCount - totalIgnoredUsers.size
+              // Check if the format is "All (X)" or has a span.tab-counter
+              const tabCounter = allTabLink.querySelector(".tab-counter");
+              if (tabCounter) {
+                const currentCount = parseInt(
+                  tabCounter.textContent.trim(),
+                  10
                 );
-                allTabLink.textContent = allTabLink.textContent.replace(
-                  /\(\d+\)/,
-                  `(${allNewCount})`
-                );
+                if (!isNaN(currentCount)) {
+                  const newCount = Math.max(
+                    0,
+                    currentCount - totalIgnoredUsers.size
+                  );
+                  tabCounter.textContent = newCount.toString();
+                }
+              } else {
+                // For older format with (X) in the text
+                const allCountMatch = allTabLink.textContent.match(/\((\d+)\)/);
+                if (allCountMatch && allCountMatch[1]) {
+                  const allOriginalCount = parseInt(allCountMatch[1], 10);
+                  const allNewCount = Math.max(
+                    0,
+                    allOriginalCount - totalIgnoredUsers.size
+                  );
+                  allTabLink.textContent = allTabLink.textContent.replace(
+                    /\(\d+\)/,
+                    `(${allNewCount})`
+                  );
+                }
               }
             }
           }
@@ -2060,39 +2089,92 @@
 
             // Get all non-ignored users who reacted - only from the "All" tab to avoid duplicates
             const allUsers = [];
+            const ignoredUsers = new Set(); // Track ignored users
+
+            // Process all users to separate ignored from non-ignored
             doc
               .querySelectorAll(
                 '.tab-content[data-id="0"] li .cbb-helper-text a'
               )
               .forEach((userLink) => {
                 const username = userLink.textContent.trim();
-                if (username && !isUserIgnored(username)) {
-                  allUsers.push(username);
+                if (username) {
+                  if (isUserIgnored(username)) {
+                    ignoredUsers.add(username);
+                  } else {
+                    allUsers.push(username);
+                  }
                 }
               });
 
-            // Track which reaction types have non-ignored users
+            // Track which reaction types have non-ignored users and count ignored users per reaction type
             const validReactionIds = new Set();
+            const ignoredCountByReaction = new Map();
+
             doc
               .querySelectorAll(".tab-header a:not(.active)")
               .forEach((reactionTab) => {
                 const reactionId = reactionTab.getAttribute("data-id");
                 if (!reactionId) return;
 
-                // Check if any non-ignored users made this reaction
-                const hasNonIgnoredUsers = Array.from(
+                // Count ignored users for this reaction type
+                let ignoredCount = 0;
+                let hasNonIgnoredUsers = false;
+
+                Array.from(
                   doc.querySelectorAll(
                     `.tab-content[data-id="${reactionId}"] li .cbb-helper-text a`
                   )
-                ).some((userLink) => {
+                ).forEach((userLink) => {
                   const username = userLink.textContent.trim();
-                  return username && !isUserIgnored(username);
+                  if (username) {
+                    if (isUserIgnored(username)) {
+                      ignoredCount++;
+                    } else {
+                      hasNonIgnoredUsers = true;
+                    }
+                  }
                 });
+
+                // Store the count of ignored users for this reaction
+                ignoredCountByReaction.set(reactionId, ignoredCount);
 
                 if (hasNonIgnoredUsers) {
                   validReactionIds.add(reactionId);
                 }
               });
+
+            // Update reaction counts in the list scores to subtract ignored users
+            const listScores = reactionList.querySelector(".list-scores");
+            if (listScores && ignoredUsers.size > 0) {
+              listScores.querySelectorAll("a").forEach((reactionLink) => {
+                const reactionId =
+                  reactionLink.href.match(/reaction=(\d+)/)?.[1];
+                if (reactionId) {
+                  // Get the count element
+                  const countElement =
+                    reactionLink.querySelector(".reaction-score");
+                  if (countElement) {
+                    const currentCount = parseInt(
+                      countElement.textContent.trim(),
+                      10
+                    );
+                    if (!isNaN(currentCount)) {
+                      // Subtract the number of ignored users for this reaction type
+                      const ignoredCount =
+                        ignoredCountByReaction.get(reactionId) || 0;
+                      const newCount = Math.max(0, currentCount - ignoredCount);
+                      countElement.textContent = newCount.toString();
+
+                      // If count is zero, hide the reaction
+                      if (newCount === 0) {
+                        reactionLink.style.display = "none";
+                      }
+                    }
+                  }
+                }
+              });
+            }
 
             // Update the reaction list label text
             if (allUsers.length > 0) {
@@ -2110,7 +2192,6 @@
               listLabel.textContent = newText;
 
               // Hide reaction images for reactions that only have ignored users
-              const listScores = reactionList.querySelector(".list-scores");
               if (listScores) {
                 listScores.querySelectorAll("a").forEach((reactionLink) => {
                   const reactionId =
@@ -2122,18 +2203,20 @@
               }
 
               reactionList.style.display = "";
+
+              // Mark as processed only if there are non-ignored users
+              reactionList.classList.add("content-processed");
             } else {
-              // If all users are ignored, we don't need to set display: none
-              // Not having content-processed already handles this
+              // If all users are ignored, don't add the content-processed class
+              // This will allow the reaction list to be processed again if needed
+              reactionList.style.display = "none";
             }
           })
-          .catch((error) =>
-            console.error("Error processing reaction list:", error)
-          )
+          .catch((error) => {
+            console.error("Error processing reaction list:", error);
+            // Don't mark as processed on error to allow retry
+          })
           .finally(() => {
-            // Mark as processed regardless of success or failure
-            reactionList.classList.add("content-processed");
-
             // Re-apply preventDefault after content has been updated
             addPreventDefaultToReactionList(reactionList);
           });
