@@ -157,11 +157,6 @@
     .ghosted-row.show.ghosted-by-content {
       background-color: rgba(255, 128, 0, 0.1) !important;
     }
-    /* For forum lists and viewforum: hide lastpost details unless shown */
-    .topiclist.forums .ghosted-row,
-    body[class*="viewforum-"] .ghosted-row {
-      display: block !important;
-    }
     .topiclist.forums .ghosted-row:not(.show) dd.lastpost,
     body[class*="viewforum-"] .ghosted-row:not(.show) dd.lastpost {
       display: none !important;
