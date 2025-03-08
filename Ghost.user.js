@@ -776,6 +776,209 @@
     }
   }
 
+  /**
+   * Process topiclist forums rows - only hide lastpost section
+   */
+  function processTopiclistForumsRow() {
+    // Get all rows in the topiclist forums
+    const rows = document.querySelectorAll("ul.topiclist.forums > li.row");
+
+    rows.forEach((row) => {
+      // Skip if not a valid row
+      if (!row) return;
+
+      // Check for special forums we don't want to process
+      const forumLinks = row.querySelectorAll(
+        ".forum-links a, .responsive-hide a"
+      );
+      const forumNames = Array.from(forumLinks).map((link) =>
+        link.textContent.trim()
+      );
+      if (
+        forumNames.includes("Moderation Station") ||
+        forumNames.includes("Chat With Staff")
+      ) {
+        return;
+      }
+
+      // Get the lastpost cell
+      const lastpostCell = row.querySelector("dd.lastpost");
+      if (!lastpostCell) return;
+
+      // Get the author link in the lastpost cell
+      const authorLink = lastpostCell.querySelector(
+        "a.username, a.username-coloured"
+      );
+      if (!authorLink) return;
+
+      const authorName = authorLink.textContent.trim();
+
+      // Check if the author is ignored
+      if (isUserIgnored(authorName)) {
+        // Author is ghosted, add ghosted-by-author class
+        lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+        return;
+      }
+
+      // If author isn't ignored, check the post content
+      const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
+      if (postLink) {
+        const postId = postLink.href.match(/p=(\d+)/)?.[1];
+        if (postId && postCache[postId]) {
+          const postContent = postCache[postId].content;
+          if (postContent && postContentContainsGhosted(postContent)) {
+            // Post content contains ghosted username, add ghosted-by-content class
+            lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Process recent topics rows - hide entire row
+   * @param {Element} element - The element to process
+   */
+  function processRecentTopicsRows() {
+    // Get all rows in the recent topics section
+    const rows = document.querySelectorAll("#recent-topics > ul > li.row");
+
+    rows.forEach((row) => {
+      // Skip if not a valid row
+      if (!row) return;
+
+      // Check for author links
+      const authorLinks = row.querySelectorAll(
+        "a.username, a.username-coloured"
+      );
+      const authorNames = Array.from(authorLinks).map((link) =>
+        link.textContent.trim()
+      );
+
+      // Check if any author is ignored
+      const hasGhostedAuthor = authorNames.some((name) => isUserIgnored(name));
+
+      // Check for ghosted class
+      const hasGhostedClass = Array.from(row.classList).some(
+        (cls) =>
+          cls.startsWith("author-name-") &&
+          isUserIgnored(cls.replace("author-name-", ""))
+      );
+
+      if (hasGhostedAuthor || hasGhostedClass) {
+        // Author is ghosted, add ghosted-by-author class
+        row.classList.add("ghosted-row", "ghosted-by-author");
+        return;
+      }
+
+      // Check for post content with ghosted mentions
+      const postLink = row.querySelector("a[href*='viewtopic.php']");
+      if (postLink) {
+        const postId = postLink.href.match(/p=(\d+)/)?.[1];
+        if (postId && postCache[postId]) {
+          const postContent = postCache[postId].content;
+          if (postContent && postContentContainsGhosted(postContent)) {
+            row.classList.add("ghosted-row", "ghosted-by-content");
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Process topiclist topics rows - hide entire row
+   * @param {Element} element - The element to process
+   */
+  function processTopiclistTopicsRows() {
+    // Get all rows in the topiclist topics
+    const rows = document.querySelectorAll("ul.topiclist.topics > li.row");
+
+    rows.forEach((row) => {
+      // Skip if not a valid row
+      if (!row) return;
+
+      // Check for special forums we don't want to process
+      const forumLinks = row.querySelectorAll(
+        ".forum-links a, .responsive-hide a"
+      );
+      const forumNames = Array.from(forumLinks).map((link) =>
+        link.textContent.trim()
+      );
+      if (
+        forumNames.includes("Moderation Station") ||
+        forumNames.includes("Chat With Staff")
+      ) {
+        return;
+      }
+
+      // Check for author links
+      const authorLinks = row.querySelectorAll(
+        "a.username, a.username-coloured"
+      );
+      const authorNames = Array.from(authorLinks).map((link) =>
+        link.textContent.trim()
+      );
+
+      // Check if any author is ignored
+      const hasGhostedAuthor = authorNames.some((name) => isUserIgnored(name));
+
+      // Check for ghosted class
+      const hasGhostedClass = Array.from(row.classList).some(
+        (cls) =>
+          cls.startsWith("author-name-") &&
+          isUserIgnored(cls.replace("author-name-", ""))
+      );
+
+      if (hasGhostedAuthor || hasGhostedClass) {
+        // Author is ghosted, add ghosted-by-author class
+        row.classList.add("ghosted-row", "ghosted-by-author");
+        return;
+      }
+
+      // Check for post content with ghosted mentions
+      const postLink = row.querySelector("a[href*='viewtopic.php']");
+      if (postLink) {
+        const postId = postLink.href.match(/p=(\d+)/)?.[1];
+        if (postId && postCache[postId]) {
+          const postContent = postCache[postId].content;
+          if (postContent && postContentContainsGhosted(postContent)) {
+            row.classList.add("ghosted-row", "ghosted-by-content");
+          }
+        }
+      }
+    });
+  }
+
+  // Legacy function for backward compatibility
+  function hideTopicRow(element) {
+    const recentTopicLi = element.closest("#recent-topics li");
+    if (recentTopicLi) {
+      processRecentTopicsRows();
+      return;
+    }
+
+    const rowItem = element.closest("li.row");
+    if (!rowItem) {
+      element.classList.add("ghosted-row", "ghosted-by-author");
+      return;
+    }
+
+    const isForumList = rowItem.closest(".topiclist.forums");
+    if (isForumList) {
+      processTopiclistForumsRow();
+      return;
+    }
+
+    const isTopicList = rowItem.closest(".topiclist.topics");
+    if (isTopicList) {
+      processTopiclistTopicsRows();
+      return;
+    }
+
+    // Default fallback behavior
+    rowItem.classList.add("ghosted-row", "ghosted-by-content");
+  }
+
   async function processLastPost(element) {
     const linksWithIcons = element.querySelectorAll("a:has(i.icon)");
     linksWithIcons.forEach((link) => {
@@ -1372,6 +1575,11 @@
     );
 
     await cacheAllPosts();
+
+    // Process the different types of topiclist rows
+    processTopiclistForumsRow();
+    processRecentTopicsRows();
+    processTopiclistTopicsRows();
 
     document.querySelectorAll("fieldset.polls").forEach(processPoll);
 
