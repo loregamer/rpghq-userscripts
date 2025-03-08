@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.6.2
+// @version      5.6.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -50,7 +50,6 @@
 
   // Set Oyster Sauce's username color
   userColors["Oyster Sauce"] = "#00AA00";
-  userColors["rusty_shackleford"] = "#F5575D";
   GM_setValue("userColors", userColors);
 
   let showGhostedPosts = false; // Always start hidden
@@ -2040,9 +2039,6 @@
         if (link.textContent.trim() === "Oyster Sauce") {
           link.style.color = "#00AA00";
         }
-        if (link.textContent.trim() === "rusty_shackleford") {
-          link.style.color = "#F5575D";
-        }
       });
 
       innerDiv.querySelectorAll("li.row").forEach((row) => {
@@ -2163,9 +2159,6 @@
     document.querySelectorAll("a.username-coloured").forEach((link) => {
       if (link.textContent.trim() === "Oyster Sauce") {
         link.style.color = "#00AA00";
-      }
-      if (link.textContent.trim() === "rusty_shackleford") {
-        link.style.color = "#F5575D";
       }
     });
 
