@@ -624,10 +624,18 @@
       item.classList.add("content-processed");
       return;
     }
+
+    // Check if this is a reaction notification
+    const titleEl = item.querySelector(".notification-title");
+    const isReactionNotification =
+      titleEl &&
+      titleEl.textContent.includes("has reacted to a message you posted");
+
     const firstUsername = usernames[0];
     if (isUserIgnored(firstUsername)) {
       const li = item.closest("li");
       if (li) {
+        // Try to find the mark read input first
         const markReadInput = li.querySelector('input[name^="mark"]');
         if (markReadInput) {
           try {
@@ -636,23 +644,38 @@
           } catch (err) {
             console.error("Failed to mark notification as read:", err);
           }
+        } else {
+          // If no input found, try to find the mark read link (for reaction notifications)
+          const markReadLink = li.querySelector(".mark_read.icon-mark");
+          if (markReadLink) {
+            try {
+              markReadLink.click();
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            } catch (err) {
+              console.error("Failed to mark notification as read:", err);
+            }
+          }
         }
-        li.style.display = "none"; // Removed this line
+
+        // Hide the notification regardless of type
+        li.style.display = "none";
       }
       item.classList.add("content-processed");
       return;
     }
+
     const nonIgnored = usernames.filter((u) => !isUserIgnored(u));
     const hasIgnored = nonIgnored.length < usernames.length;
     if (!hasIgnored) {
       item.classList.add("content-processed");
       return;
     }
-    const titleEl = item.querySelector(".notification-title");
+
     if (!titleEl) {
       item.classList.add("content-processed");
       return;
     }
+
     if (nonIgnored.length === 0) {
       const li = item.closest("li");
       if (li) {
@@ -665,11 +688,14 @@
             console.error("Failed to mark notification as read:", err);
           }
         }
-        li.classList.add("ghosted-row", "ghosted-by-author");
+
+        // Hide the notification regardless of type
+        li.style.display = "none";
       }
       item.classList.add("content-processed");
       return;
     }
+
     const lastIgnoredEl = usernameEls[usernameEls.length - 1];
     const nodesAfter = [];
     let nxt = lastIgnoredEl?.nextSibling;
@@ -677,6 +703,7 @@
       nodesAfter.push(nxt.cloneNode(true));
       nxt = nxt.nextSibling;
     }
+
     titleEl.textContent = "";
     nonIgnored.forEach((usr, i) => {
       const matchEl = Array.from(usernameEls).find(
