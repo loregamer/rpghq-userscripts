@@ -11,8 +11,8 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
-// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Iggy-Real.user.js
-// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Iggy-Real.user.js
+// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Iggy-For-Real.user.js
+// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Iggy-For-Real.user.js
 // @license      MIT
 // ==/UserScript==
 
@@ -1470,10 +1470,6 @@
     overlay.style.zIndex = "9998"; // One less than the popup
     document.body.appendChild(overlay);
 
-    // Prevent scrolling
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
     const popup = document.createElement("div");
     popup.className = "cbb-dialog reactions-view-dialog fixed";
     popup.title = "";
@@ -1498,8 +1494,6 @@
       e.preventDefault();
       popup.remove();
       overlay.remove();
-      // Restore scrolling
-      document.body.style.overflow = originalOverflow;
     });
     const title = document.createElement("span");
     title.className = "cbb-dialog-title";
@@ -1520,16 +1514,12 @@
     overlay.addEventListener("click", () => {
       popup.remove();
       overlay.remove();
-      // Restore scrolling
-      document.body.style.overflow = originalOverflow;
     });
 
     const escapeHandler = (e) => {
       if (e.key === "Escape") {
         popup.remove();
         overlay.remove();
-        // Restore scrolling
-        document.body.style.overflow = originalOverflow;
         document.removeEventListener("keydown", escapeHandler);
       }
     };
