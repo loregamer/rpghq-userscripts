@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.6
+// @version      5.7
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1137,15 +1137,7 @@
       const row = item.closest("li.row");
       if (row) {
         row.classList.add("ghosted-row", "ghosted-by-author");
-        const markReadInput = row.querySelector('input[name^="mark"]');
-        if (markReadInput) {
-          try {
-            markReadInput.checked = true;
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          } catch (err) {
-            console.error("Failed to mark notification as read:", err);
-          }
-        }
+        await markNotificationAsRead(item);
       }
       item.classList.add("content-processed");
       return;
@@ -1164,15 +1156,7 @@
       const row = item.closest("li.row");
       if (row) {
         row.classList.add("ghosted-row", "ghosted-by-author");
-        const markReadInput = row.querySelector('input[name^="mark"]');
-        if (markReadInput) {
-          try {
-            markReadInput.checked = true;
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          } catch (err) {
-            console.error("Failed to mark notification as read:", err);
-          }
-        }
+        await markNotificationAsRead(item);
       }
       item.classList.add("content-processed");
       return;
@@ -1263,15 +1247,7 @@
     if (isUserIgnored(firstUsername)) {
       const li = item.closest("li");
       if (li) {
-        const markReadInput = li.querySelector('input[name^="mark"]');
-        if (markReadInput) {
-          try {
-            markReadInput.checked = true;
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          } catch (err) {
-            console.error("Failed to mark notification as read:", err);
-          }
-        }
+        await markNotificationAsRead(item);
         li.style.display = "none";
       }
       item.classList.add("content-processed");
@@ -1291,15 +1267,7 @@
     if (nonIgnored.length === 0) {
       const li = item.closest("li");
       if (li) {
-        const markReadLink = li.querySelector(".mark_read.icon-mark");
-        if (markReadLink) {
-          try {
-            markReadLink.click();
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          } catch (err) {
-            console.error("Failed to mark notification as read:", err);
-          }
-        }
+        await markNotificationAsRead(item);
         li.style.display = "none";
       }
       item.classList.add("content-processed");
@@ -1567,6 +1535,15 @@
       Array.from(
         document.querySelectorAll(".notification-block:not(.content-processed)")
       ).map(processNotification)
+    );
+
+    // Process reaction notification blocks
+    await Promise.all(
+      Array.from(
+        document.querySelectorAll(
+          "a.notification-block[data-real-url]:not(.content-processed)"
+        )
+      ).map(processReactionNotificationBlock)
     );
 
     await cacheAllPosts();
@@ -2469,4 +2446,102 @@
         }
       });
   });
+
+  /**
+   * Marks a notification as read before hiding it
+   * @param {Element} notificationElement - The notification element to mark as read
+   * @returns {Promise<boolean>} - Whether the notification was successfully marked as read
+   */
+  async function markNotificationAsRead(notificationElement) {
+    try {
+      // First try to find the mark read input checkbox (for notification center)
+      const container = notificationElement.closest(
+        "li, div.notification-block"
+      );
+      if (!container) return false;
+
+      // Try to find the mark read checkbox
+      const markReadInput = container.querySelector('input[name^="mark"]');
+      if (markReadInput) {
+        markReadInput.checked = true;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        return true;
+      }
+
+      // Try to find the mark read icon/link
+      const markReadLink = container.querySelector(".mark_read.icon-mark");
+      if (markReadLink) {
+        markReadLink.click();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        return true;
+      }
+
+      // Try to extract the mark notification URL from the href attribute
+      if (
+        notificationElement.href &&
+        notificationElement.href.includes("mark_notification")
+      ) {
+        // Extract the notification ID and hash from the URL
+        const markUrl = notificationElement.href;
+
+        // Create a hidden iframe to load the mark as read URL
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        iframe.src = markUrl;
+        document.body.appendChild(iframe);
+
+        // Wait for the iframe to load
+        await new Promise((resolve) => {
+          iframe.onload = resolve;
+          // Timeout after 2 seconds in case the iframe doesn't load
+          setTimeout(resolve, 2000);
+        });
+
+        // Remove the iframe
+        document.body.removeChild(iframe);
+        return true;
+      }
+
+      return false;
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err);
+      return false;
+    }
+  }
+
+  /**
+   * Process reaction notification blocks (the ones with data-real-url attribute)
+   * @param {Element} notificationBlock - The notification block element
+   */
+  async function processReactionNotificationBlock(notificationBlock) {
+    try {
+      // Skip if already processed
+      if (notificationBlock.classList.contains("content-processed")) {
+        return;
+      }
+
+      // Find username elements
+      const usernameEl = notificationBlock.querySelector(".username");
+      if (!usernameEl) {
+        notificationBlock.classList.add("content-processed");
+        return;
+      }
+
+      const username = usernameEl.textContent.trim();
+
+      // Check if the user who reacted is ignored
+      if (isUserIgnored(username)) {
+        // Mark as read before hiding
+        await markNotificationAsRead(notificationBlock);
+
+        // Hide the notification
+        notificationBlock.style.display = "none";
+      }
+
+      notificationBlock.classList.add("content-processed");
+    } catch (err) {
+      console.error("Error processing reaction notification block:", err);
+      notificationBlock.classList.add("content-processed");
+    }
+  }
 })();
