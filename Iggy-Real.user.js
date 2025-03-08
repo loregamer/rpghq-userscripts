@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Iggy Iggy Iggy
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Highlights content from iggy'd users rather than hiding them, while leaving reaction score list logic intact.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -11,8 +11,8 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
-// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Ghost-lite.user.js
-// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Ghost-lite.user.js
+// @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Iggy-Real.user.js
+// @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Iggy-Real.user.js
 // @license      MIT
 // ==/UserScript==
 
