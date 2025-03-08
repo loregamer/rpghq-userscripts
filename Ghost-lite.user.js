@@ -1419,9 +1419,34 @@
 
   function showCustomReactionsPopup(postId) {
     const existingPopup = document.querySelector(".reactions-view-dialog");
+    const existingOverlay = document.querySelector(
+      ".cbb-overlay.js-dialog-overlay"
+    );
+
     if (existingPopup) {
       existingPopup.remove();
     }
+
+    if (existingOverlay) {
+      existingOverlay.remove();
+    }
+
+    // Create overlay
+    const overlay = document.createElement("div");
+    overlay.className = "cbb-overlay js-dialog-overlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+    overlay.style.zIndex = "9998"; // One less than the popup
+    document.body.appendChild(overlay);
+
+    // Prevent scrolling
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     const popup = document.createElement("div");
     popup.className = "cbb-dialog reactions-view-dialog fixed";
     popup.title = "";
@@ -1445,6 +1470,9 @@
     closeButton.addEventListener("click", (e) => {
       e.preventDefault();
       popup.remove();
+      overlay.remove();
+      // Restore scrolling
+      document.body.style.overflow = originalOverflow;
     });
     const title = document.createElement("span");
     title.className = "cbb-dialog-title";
@@ -1460,9 +1488,21 @@
     popup.appendChild(header);
     popup.appendChild(content);
     document.body.appendChild(popup);
+
+    // Add click handler to overlay to close popup
+    overlay.addEventListener("click", () => {
+      popup.remove();
+      overlay.remove();
+      // Restore scrolling
+      document.body.style.overflow = originalOverflow;
+    });
+
     const escapeHandler = (e) => {
       if (e.key === "Escape") {
         popup.remove();
+        overlay.remove();
+        // Restore scrolling
+        document.body.style.overflow = originalOverflow;
         document.removeEventListener("keydown", escapeHandler);
       }
     };
