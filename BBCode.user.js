@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      5.5
+// @version      5.5.1
 // @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags, save/restore form content, and prevent accidental tab closing
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php?mode=post*
@@ -984,6 +984,8 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       "#3889ED", // Blue
       "#FFC107", // Yellow/Gold
       "#00AA00", // Green
+      "#FC8A92",
+      "#F7E6E7",
     ];
 
     // If all our custom colors are already present, mark as added and exit
