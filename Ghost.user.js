@@ -646,12 +646,30 @@
   }
 
   function hideTopicRow(element) {
+    // First, check if the element or its parent row has author-name-* class
+    // which indicates it's authored by a ghosted user
+    const rowItem = element.closest("li.row");
+    const hasGhostedClass = rowItem && Array.from(rowItem.classList).some(
+      (cls) => cls.startsWith("author-name-") && 
+      isUserIgnored(cls.replace("author-name-", ""))
+    );
+    
+    if (hasGhostedClass) {
+      // If it's authored by a ghosted user, only add ghosted-by-author
+      if (rowItem) {
+        rowItem.classList.add("ghosted-row", "ghosted-by-author");
+      } else {
+        element.classList.add("ghosted-row", "ghosted-by-author");
+      }
+      return;
+    }
+    
     const recentTopicLi = element.closest("#recent-topics li");
     if (recentTopicLi) {
       recentTopicLi.classList.add("ghosted-row", "ghosted-by-author");
       return;
     }
-    const rowItem = element.closest("li.row");
+    
     if (rowItem) {
       const forumLinks = rowItem.querySelectorAll(
         ".forum-links a, .responsive-hide a"
@@ -664,9 +682,11 @@
         forumNames.includes("Chat With Staff")
       )
         return;
+      
       const isForumList = rowItem.closest(".topiclist.forums");
       const isViewForum = window.location.href.includes("/viewforum.php");
       const isSearch = window.location.href.includes("/search.php");
+      
       if (isViewForum || isSearch) {
         const lastpostCell = rowItem.querySelector("dd.lastpost");
         if (lastpostCell) {
@@ -674,9 +694,11 @@
             "a.username, a.username-coloured"
           );
           if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
+            // Author is ghosted, only add ghosted-by-author
             if (isViewForum)
               lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
             rowItem.classList.add("ghosted-row", "ghosted-by-author");
+            return;
           } else {
             const allLinks = rowItem.querySelectorAll(
               "a.username, a.username-coloured"
@@ -688,10 +710,12 @@
               isUserIgnored(link.textContent.trim())
             );
             if (hasGhostedUser) {
+              // Has ghosted user in content, add ghosted-by-author
               if (isViewForum)
                 lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
               rowItem.classList.add("ghosted-row", "ghosted-by-author");
             } else {
+              // No ghosted author, but content might contain ghosted references
               if (isViewForum)
                 lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
               rowItem.classList.add("ghosted-row", "ghosted-by-content");
@@ -700,6 +724,8 @@
           return;
         }
       }
+      
+      // Check for ghosted authors in the row
       const authorLinks = rowItem.querySelectorAll(
         "a.username, a.username-coloured"
       );
@@ -707,15 +733,12 @@
         link.textContent.trim()
       );
       const hasGhostedAuthor = authorNames.some((name) => isUserIgnored(name));
-      const hasGhostedClass = Array.from(rowItem.classList).some(
-        (cls) =>
-          cls.startsWith("author-name-") &&
-          isUserIgnored(cls.replace("author-name-", ""))
-      );
-      if (hasGhostedAuthor || hasGhostedClass) {
+      
+      if (hasGhostedAuthor) {
         rowItem.classList.add("ghosted-row", "ghosted-by-author");
         return;
       }
+      
       const innerDiv = rowItem.querySelector(".list-inner");
       if (innerDiv) {
         const byText = innerDiv.textContent.toLowerCase();
@@ -727,6 +750,8 @@
           return;
         }
       }
+      
+      // If we get here, it's content-based ghosting
       rowItem.classList.add("ghosted-row", "ghosted-by-content");
     } else {
       element.classList.add("ghosted-row", "ghosted-by-author");
@@ -820,7 +845,19 @@
           const postId = postLink.href.match(/p=(\d+)/)?.[1];
           if (postId && postCache[postId]) {
             const postContent = postCache[postId].content;
-            if (postContent && postContentContainsGhosted(postContent)) {
+            // Check if the lastPostCell contains the username of a ghosted user
+            const lastpostCell = row.querySelector("dd.lastpost");
+            if (lastpostCell) {
+              const authorLink = lastpostCell.querySelector("a.username, a.username-coloured");
+              if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
+                // If author is ghosted, ONLY add ghosted-by-author and stop processing
+                row.classList.add("ghosted-row", "ghosted-by-author");
+                return; // Stop here, don't check content
+              } else if (postContent && postContentContainsGhosted(postContent)) {
+                // Only if author is not ghosted, check content
+                row.classList.add("ghosted-row", "ghosted-by-content");
+              }
+            } else if (postContent && postContentContainsGhosted(postContent)) {
               row.classList.add("ghosted-row", "ghosted-by-content");
             }
           }
@@ -2293,6 +2330,17 @@
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
+  // Function to clean up any elements that have both ghosted-by-author and ghosted-by-content classes
+  function cleanupGhostedClasses() {
+    // Find all elements with both classes
+    const elementsWithBothClasses = document.querySelectorAll('.ghosted-by-author.ghosted-by-content');
+    
+    // Remove ghosted-by-content from these elements
+    elementsWithBothClasses.forEach(element => {
+      element.classList.remove('ghosted-by-content');
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", async () => {
     await Promise.all(
       Array.from(
@@ -2369,6 +2417,27 @@
           container.classList.add("content-processed");
         }
       });
+      
+    // Clean up any elements that have both ghosted-by-author and ghosted-by-content classes
+    cleanupGhostedClasses();
+    
+    // Set up a MutationObserver to clean up any elements that get both classes in the future
+    const ghostedClassesObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && 
+            mutation.attributeName === 'class' && 
+            mutation.target.classList.contains('ghosted-by-author') && 
+            mutation.target.classList.contains('ghosted-by-content')) {
+          mutation.target.classList.remove('ghosted-by-content');
+        }
+      });
+    });
+    
+    ghostedClassesObserver.observe(document.body, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class']
+    });
   });
 
   /**
