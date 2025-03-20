@@ -645,44 +645,6 @@
     return false;
   }
 
-  function cleanupTopicAuthor(element) {
-    const row = element.closest("li.row");
-    if (row) {
-      Array.from(row.classList).forEach((cls) => {
-        if (cls.startsWith("author-name-")) row.classList.remove(cls);
-      });
-    }
-    const responsiveHide = element.querySelector(".responsive-hide");
-    if (!responsiveHide) return;
-    const textContent = responsiveHide.textContent.trim();
-    if (!textContent.includes("» in")) return;
-    const masWrap = responsiveHide.querySelector(".mas-wrap");
-    if (!masWrap) return;
-    const userLink = masWrap.querySelector(".mas-username a");
-    if (!userLink) return;
-    const userId = userLink.href.match(/u=(\d+)/)?.[1];
-    const username = userLink.textContent.trim();
-    if ((userId && isUserIgnored(userId)) || isUserIgnored(username)) {
-      const nodes = Array.from(responsiveHide.childNodes);
-      const byTextNodeIndex = nodes.findIndex(
-        (node) =>
-          node.nodeType === Node.TEXT_NODE &&
-          node.textContent.trim().toLowerCase() === "by"
-      );
-      if (byTextNodeIndex !== -1) {
-        const arrowTextNode = nodes.find(
-          (node, index) =>
-            index < byTextNodeIndex &&
-            node.nodeType === Node.TEXT_NODE &&
-            node.textContent.includes("»")
-        );
-        if (arrowTextNode) responsiveHide.removeChild(arrowTextNode);
-        responsiveHide.removeChild(nodes[byTextNodeIndex]);
-        masWrap.remove();
-      }
-    }
-  }
-
   function hideTopicRow(element) {
     const recentTopicLi = element.closest("#recent-topics li");
     if (recentTopicLi) {
@@ -772,7 +734,7 @@
   }
 
   /**
-   * Process topiclist rows - can hide just lastpost or the whole row
+   * Process topiclist rows - hide entire row except for forum rows where we only hide lastpost
    * @param {string} rowType - The type of row to process ('forum' or 'topic')
    */
   function processTopicListRow(rowType) {
@@ -810,20 +772,20 @@
         return;
       }
 
+      // Get the lastpost cell
+      const lastpostCell = row.querySelector("dd.lastpost");
+      if (!lastpostCell) return;
+
+      // Get the author link in the lastpost cell
+      const authorLink = lastpostCell.querySelector(
+        "a.username, a.username-coloured"
+      );
+      if (!authorLink) return;
+
+      const authorName = authorLink.textContent.trim();
+
       // For forum rows, we only hide the lastpost section
       if (rowType === 'forum') {
-        // Get the lastpost cell
-        const lastpostCell = row.querySelector("dd.lastpost");
-        if (!lastpostCell) return;
-
-        // Get the author link in the lastpost cell
-        const authorLink = lastpostCell.querySelector(
-          "a.username, a.username-coloured"
-        );
-        if (!authorLink) return;
-
-        const authorName = authorLink.textContent.trim();
-
         // Check if the author is ignored
         if (isUserIgnored(authorName)) {
           // Author is ghosted, add ghosted-by-author class
@@ -845,32 +807,15 @@
         }
       } else {
         // For topic and recent rows, we hide the entire row
-        // Check for author links
-        const authorLinks = row.querySelectorAll(
-          "a.username, a.username-coloured"
-        );
-        const authorNames = Array.from(authorLinks).map((link) =>
-          link.textContent.trim()
-        );
-
-        // Check if any author is ignored
-        const hasGhostedAuthor = authorNames.some((name) => isUserIgnored(name));
-
-        // Check for ghosted class
-        const hasGhostedClass = Array.from(row.classList).some(
-          (cls) =>
-            cls.startsWith("author-name-") &&
-            isUserIgnored(cls.replace("author-name-", ""))
-        );
-
-        if (hasGhostedAuthor || hasGhostedClass) {
-          // Author is ghosted, add ghosted-by-author class
+        // Check if the author is ignored
+        if (isUserIgnored(authorName)) {
+          // Author is ghosted, add ghosted-by-author class to the entire row
           row.classList.add("ghosted-row", "ghosted-by-author");
           return;
         }
 
         // Check for post content with ghosted mentions
-        const postLink = row.querySelector("a[href*='viewtopic.php']");
+        const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
         if (postLink) {
           const postId = postLink.href.match(/p=(\d+)/)?.[1];
           if (postId && postCache[postId]) {
@@ -897,11 +842,11 @@
     processTopicListRow('topic');
   }
 
-  // Legacy function for backward compatibility
+  // Legacy function for backward compatibility - hide entire row except for forum rows
   function hideTopicRow(element) {
     const recentTopicLi = element.closest("#recent-topics li");
     if (recentTopicLi) {
-      processRecentTopicsRows();
+      recentTopicLi.classList.add("ghosted-row", "ghosted-by-author");
       return;
     }
 
@@ -913,17 +858,33 @@
 
     const isForumList = rowItem.closest(".topiclist.forums");
     if (isForumList) {
-      processTopiclistForumsRow();
+      // For forum rows, only hide the lastpost
+      const lastpostCell = rowItem.querySelector("dd.lastpost");
+      if (lastpostCell) {
+        // Get the author link in the lastpost cell
+        const authorLink = lastpostCell.querySelector(
+          "a.username, a.username-coloured"
+        );
+        if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
+          lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+        } else {
+          // Check post content
+          const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
+          if (postLink) {
+            const postId = postLink.href.match(/p=(\d+)/)?.[1];
+            if (postId && postCache[postId]) {
+              const postContent = postCache[postId].content;
+              if (postContent && postContentContainsGhosted(postContent)) {
+                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+              }
+            }
+          }
+        }
+      }
       return;
     }
 
-    const isTopicList = rowItem.closest(".topiclist.topics");
-    if (isTopicList) {
-      processTopiclistTopicsRows();
-      return;
-    }
-
-    // Default fallback behavior
+    // For all other row types, hide the entire row
     rowItem.classList.add("ghosted-row", "ghosted-by-content");
   }
 
@@ -936,43 +897,41 @@
         link.addEventListener("mouseleave", hidePostPreview);
       }
     });
+    
     const row = element.closest("li.row");
-    if (row) {
-      const authorLinks = row.querySelectorAll(
-        "a.username, a.username-coloured"
-      );
-      for (const link of authorLinks) {
-        if (isUserIgnored(link.textContent.trim())) {
-          hideTopicRow(row);
-          element.classList.add("content-processed");
-          return;
-        }
-      }
-      const hasGhostedClass = Array.from(row.classList).some(
-        (cls) =>
-          cls.startsWith("author-name-") &&
-          isUserIgnored(cls.replace("author-name-", ""))
-      );
-      if (hasGhostedClass) {
+    const isForumList = row && row.closest(".topiclist.forums");
+    
+    // Check if the lastpost author is ignored
+    const authorLink = element.querySelector("a.username, a.username-coloured");
+    if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
+      if (isForumList) {
+        // For forum rows, only hide the lastpost
+        element.classList.add("ghosted-row", "ghosted-by-author");
+      } else if (row) {
+        // For other rows, hide the entire row
         hideTopicRow(row);
-        element.classList.add("content-processed");
-        return;
       }
+      element.classList.add("content-processed");
+      return;
     }
+    
     const spanEl = element.querySelector("span");
     if (!spanEl) {
       element.classList.add("content-processed");
       return;
     }
+    
     const byTextNode = Array.from(spanEl.childNodes).find(
       (node) =>
         node.nodeType === Node.TEXT_NODE &&
         node.textContent.trim().toLowerCase() === "by"
     );
+    
     if (!byTextNode) {
       element.classList.add("content-processed");
       return;
     }
+    
     const nextEl = byTextNode.nextElementSibling;
     if (
       nextEl &&
@@ -985,27 +944,48 @@
         nextEl.classList.contains("username-coloured")
           ? nextEl
           : nextEl.querySelector(".username, .username-coloured");
+      
       const link = element.querySelector(
         'a[href*="viewtopic.php"][href*="#p"]'
       );
+      
       if (link) {
         const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
         if (pid) {
           if (userEl && isUserIgnored(userEl.textContent.trim())) {
-            hideTopicRow(element);
+            if (isForumList) {
+              // For forum rows, only hide the lastpost
+              element.classList.add("ghosted-row", "ghosted-by-author");
+            } else if (row) {
+              // For other rows, hide the entire row
+              hideTopicRow(row);
+            }
           } else {
             try {
               const content = await fetchAndCachePost(pid);
               if (!content || postContentContainsGhosted(content)) {
-                hideTopicRow(element);
+                if (isForumList) {
+                  // For forum rows, only hide the lastpost
+                  element.classList.add("ghosted-row", "ghosted-by-content");
+                } else if (row) {
+                  // For other rows, hide the entire row
+                  hideTopicRow(row);
+                }
               }
             } catch (err) {
-              hideTopicRow(element);
+              if (isForumList) {
+                // For forum rows, only hide the lastpost
+                element.classList.add("ghosted-row", "ghosted-by-content");
+              } else if (row) {
+                // For other rows, hide the entire row
+                hideTopicRow(row);
+              }
             }
           }
         }
       }
     }
+    
     element.classList.add("content-processed");
   }
 
@@ -1481,9 +1461,6 @@
   }
 
   async function processIgnoredContentOnce() {
-    // Optionally, clean up topic authors first:
-    document.querySelectorAll("li.row").forEach(cleanupTopicAuthor);
-
     await Promise.all(
       Array.from(
         document.querySelectorAll(".notification-block:not(.content-processed)")
@@ -1794,13 +1771,12 @@
 
     ghostedPosts.forEach((p) => p.classList.toggle("show", showGhostedPosts));
     ghostedQuotes.forEach((q) => q.classList.toggle("show", showGhostedPosts));
+    
+    // For ghosted rows (which are now only lastpost cells), toggle visibility
     ghostedRows.forEach((r) => {
       r.classList.toggle("show", showGhostedPosts);
-      // For cplist notifications, we need to ensure the row is visible
-      if (r.closest(".topiclist.cplist")) {
-        r.style.display = showGhostedPosts ? "block" : "none";
-      }
     });
+    
     document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
 
     showToggleNotification();
