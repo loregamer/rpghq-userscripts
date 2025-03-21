@@ -166,29 +166,35 @@
             [ExecutionPhase.CUSTOM_EVENT]: {}
         },
 
-        register: function(phase, scriptId, scriptData, callback) {
-            if (phase === ExecutionPhase.CUSTOM_EVENT) {
-                if (!scriptData.eventName) {
-                    console.error(`Cannot register script ${scriptId} for custom event without an event name`);
+        register: function(phases, scriptId, scriptData, callback) {
+            if (!Array.isArray(phases)) {
+                phases = [phases];
+            }
+
+            for (const phase of phases) {
+                if (phase === ExecutionPhase.CUSTOM_EVENT) {
+                    if (!scriptData.eventName) {
+                        console.error(`Cannot register script ${scriptId} for custom event without an event name`);
+                        return false;
+                    }
+                    if (!this.queues[ExecutionPhase.CUSTOM_EVENT][scriptData.eventName]) {
+                        this.queues[ExecutionPhase.CUSTOM_EVENT][scriptData.eventName] = [];
+                    }
+                    this.queues[ExecutionPhase.CUSTOM_EVENT][scriptData.eventName].push({
+                        scriptId,
+                        scriptData,
+                        callback
+                    });
+                } else if (this.queues[phase]) {
+                    this.queues[phase].push({
+                        scriptId,
+                        scriptData,
+                        callback
+                    });
+                } else {
+                    console.error(`Unknown execution phase: ${phase}`);
                     return false;
                 }
-                if (!this.queues[ExecutionPhase.CUSTOM_EVENT][scriptData.eventName]) {
-                    this.queues[ExecutionPhase.CUSTOM_EVENT][scriptData.eventName] = [];
-                }
-                this.queues[ExecutionPhase.CUSTOM_EVENT][scriptData.eventName].push({
-                    scriptId,
-                    scriptData,
-                    callback
-                });
-            } else if (this.queues[phase]) {
-                this.queues[phase].push({
-                    scriptId,
-                    scriptData,
-                    callback
-                });
-            } else {
-                console.error(`Unknown execution phase: ${phase}`);
-                return false;
             }
             return true;
         },
@@ -363,23 +369,63 @@
                     console.error(`Script code not found for ${scriptName} (${scriptId})`);
                     return;
                 }
-                const executionPhase = scriptData.executionPhase || ExecutionPhase.DOCUMENT_READY;
-                const executeFunction = (id, data) => {
-                    try {
-                        const scriptCode = `
-                            var scriptSettings = ${JSON.stringify(data.settings || {})};
-                            ${code}
-                        `;
-                        const scriptElement = document.createElement('script');
-                        scriptElement.textContent = scriptCode;
-                        document.head.appendChild(scriptElement);
-                        document.head.removeChild(scriptElement);
-                        console.log(`Executed script: ${scriptName} v${data.version} at phase ${executionPhase}`);
-                    } catch (e) {
-                        console.error(`Error executing script ${data.name || id}:`, e);
+
+                let scriptExports = {};
+                let executionPhases = [];
+                try {
+                    // Evaluate the script code to get the exports
+                    scriptExports = eval(code);
+                } catch (e) {
+                    console.error(`Error evaluating script ${scriptName}:`, e);
+                    return false;
+                }
+
+                
+                if (scriptExports && typeof scriptExports === 'object') {
+                    if (scriptExports.documentStart && typeof scriptExports.documentStart === 'function') {
+                        executionPhases.push(ExecutionPhase.DOCUMENT_START);
+                    }
+                    if (scriptExports.documentReady && typeof scriptExports.documentReady === 'function') {
+                        executionPhases.push(ExecutionPhase.DOCUMENT_READY);
+                    }
+                } else {
+                    executionPhases = scriptData.executionPhases || [ExecutionPhase.DOCUMENT_READY];
+                }
+
+                const executeScriptExports = (id, data) => {
+                    if (scriptExports && typeof scriptExports === 'object') {
+                        Object.keys(scriptExports).forEach(exportName => {
+                            if (typeof scriptExports[exportName] === 'function') {
+                                // Execute the function directly if it's a function
+                                try {
+                                    scriptExports[exportName](id, data);
+                                    console.log(`Executed script ${scriptName} v${data.version} export ${exportName} at phases ${executionPhases.join(', ')}`);
+                                } catch (e) {
+                                    console.error(`Error executing script ${scriptName} v${data.version} export ${exportName}:`, e);
+                                }
+                            } else if (typeof scriptExports[exportName] === 'string') {
+                                // If it's a string, assume it's a reference to a global function
+                                const globalFunctionName = scriptExports[exportName];
+                                if (typeof window[globalFunctionName] === 'function') {
+                                    try {
+                                        window[globalFunctionName](id, data);
+                                        console.log(`Executed script ${scriptName} v${data.version} export ${exportName} (global function ${globalFunctionName}) at phases ${executionPhases.join(', ')}`);
+                                    } catch (e) {
+                                        console.error(`Error executing script ${scriptName} v${data.version} export ${exportName} (global function ${globalFunctionName}):`, e);
+                                    }
+                                } else {
+                                    console.error(`Error: script ${scriptName} export ${exportName} references unknown global function ${globalFunctionName}`);
+                                }
+                            } else {
+                                console.error(`Error: script ${scriptName} export ${exportName} is not a function or a string`);
+                            }
+                        });
                     }
                 };
-                ExecutionFramework.register(executionPhase, scriptId, scriptData, executeFunction);
+
+                // Modify how the script is executed
+                ExecutionFramework.register(executionPhases, scriptId, scriptData, (id, data) => executeScriptExports(id, data));
+
                 return true;
             } catch (e) {
                 console.error(`Error registering script ${scriptData.name || scriptId}:`, e);
