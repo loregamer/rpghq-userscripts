@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Notifications Customization
 // @namespace    http://tampermonkey.net/
-// @version      4.6.0
+// @version      4.5.0
 // @description  Customize RPGHQ notifications display
 // @author       LOREGAMER
 // @match        https://rpghq.org/*/*
@@ -42,27 +42,6 @@ SOFTWARE.
 
 (function () {
   "use strict";
-
-  // Inject a small inline script to override the page's activeNotifications update interval.
-  const overrideCode = `(${function () {
-    function overrideUpdateInterval() {
-      if (
-        window.activeNotifications &&
-        typeof window.activeNotifications === "object"
-      ) {
-        window.activeNotifications.updateInterval = 999999;
-        console.log("activeNotifications.updateInterval set to 999999");
-      } else {
-        setTimeout(overrideUpdateInterval, 50);
-      }
-    }
-    overrideUpdateInterval();
-  }.toString()})();`;
-
-  const overrideScript = document.createElement("script");
-  overrideScript.textContent = overrideCode;
-  (document.head || document.documentElement).appendChild(overrideScript);
-  overrideScript.remove();
 
   // --- Constants ---
   const ONE_DAY = 24 * 60 * 60 * 1000;
@@ -824,13 +803,7 @@ SOFTWARE.
         // Handle the notifications_time elements
         const timeElement = row.querySelector(".notifications_time");
         if (timeElement) {
-          // Directly set the styles to ensure they override any existing styles
-          timeElement.style.position = "absolute";
-          timeElement.style.bottom = "2px";
-          timeElement.style.left = "2px";
-          timeElement.style.fontSize = "0.85em";
-          timeElement.style.color = "#888";
-          timeElement.style.zIndex = "1"; // Ensure it's above other elements
+          Object.assign(timeElement.style, NOTIFICATIONS_TIME_STYLE);
         }
 
         const notificationBlock = row.querySelector(".notifications");
@@ -1154,16 +1127,38 @@ SOFTWARE.
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         NotificationCustomizer.customizeNotificationPanel();
-
-        // Also customize the notification page if we're on that page
-        if (window.location.href.includes("ucp.php?i=ucp_notifications")) {
-          NotificationCustomizer.customizeNotificationPage();
-        }
       }, 100);
     };
 
-    // Set up mutation observer to detect DOM changes
-    const observer = new MutationObserver(debouncedCustomize);
+    // Observe DOM changes to apply customizations dynamically
+    const observer = new MutationObserver((mutations) => {
+      let shouldProcess = false;
+
+      for (const mutation of mutations) {
+        // Only process if new notification blocks are added
+        if (mutation.type === "childList") {
+          const hasNewNotifications = Array.from(mutation.addedNodes).some(
+            (node) => {
+              return (
+                node.nodeType === Node.ELEMENT_NODE &&
+                (node.classList?.contains("notification-block") ||
+                  node.querySelector?.(".notification-block"))
+              );
+            }
+          );
+
+          if (hasNewNotifications) {
+            shouldProcess = true;
+            break;
+          }
+        }
+      }
+
+      if (shouldProcess) {
+        debouncedCustomize();
+      }
+    });
+
     observer.observe(document.body, { childList: true, subtree: true });
 
     // Run storage cleanup last
