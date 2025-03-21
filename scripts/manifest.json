@@ -20,6 +20,54 @@
           "default": false
         }
       ]
+    },
+    {
+      "id": "ignore-users",
+      "name": "Ignore Users",
+      "version": "1.0.0",
+      "description": "Hides content from ghosted users with customizable settings.",
+      "author": "You",
+      "filename": "ignore-users.js",
+      "matches": ["https://rpghq.org/*/*"],
+      "executionPhase": "document-start",
+      "category": "Content Filtering",
+      "settings": [
+        {
+          "id": "defaultHighlightColor",
+          "label": "Default Highlight Color",
+          "description": "Default color to highlight content from ignored users.",
+          "type": "color",
+          "default": "#FFFF00"
+        },
+        {
+          "id": "defaultAvatar",
+          "label": "Default Avatar URL",
+          "description": "URL of the default avatar to use for ignored users.",
+          "type": "text",
+          "default": ""
+        },
+        {
+          "id": "toggleButtonVisibility",
+          "label": "Show Toggle Button",
+          "description": "Whether to show the toggle button to display/hide ghosted content.",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "id": "keyboardShortcut",
+          "label": "Keyboard Shortcut",
+          "description": "Keyboard shortcut to toggle ghosted content (e.g., \\).",
+          "type": "text",
+          "default": "\\"
+        },
+        {
+          "id": "users",
+          "label": "User Rules",
+          "description": "Define rules for specific users.",
+          "type": "userRules",
+          "default": {}
+        }
+      ]
     }
   ],
   "schema": {
