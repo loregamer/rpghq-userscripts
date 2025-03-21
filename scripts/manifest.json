@@ -3,7 +3,7 @@
     {
       "id": "notifications",
       "name": "Notifications Improved",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "description": "Adds reaction smileys to notifications and makes them formatted better",
       "filename": "notifications.js",
       "matches": ["https://rpghq.org/forums/*"],
