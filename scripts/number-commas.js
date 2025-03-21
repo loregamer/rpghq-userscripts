@@ -1,5 +1,5 @@
 // Number Commas Script
-// Version: 2.1.2
+// Version: 2.1.4
 // Description: Add commas to numbers
 // Author: loregamer
 
