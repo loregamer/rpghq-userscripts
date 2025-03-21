@@ -7,9 +7,10 @@
       "description": "Add commas to numbers",
       "author": "loregamer",
       "filename": "number-commas.js",
-      "image": "https://example.com/thumbnail-number-commas.jpg",
       "matches": ["https://rpghq.org/forums/*"],
       "executionPhase": "document-ready",
+      "category": "Aesthetic",
+      "image": "https://f.rpghq.org/pbf9uMq0KtSA.png?n=pasted-file.png",
       "settings": [
         {
           "id": "formatFourDigits",
@@ -17,6 +18,27 @@
           "description": "Whether to add commas to 4-digit numbers (e.g., 1,000) or only 5+ digit numbers",
           "type": "boolean",
           "default": false
+        }
+      ]
+    },
+    {
+      "id": "color-theme",
+      "name": "Color Theme Switcher",
+      "version": "1.0.0",
+      "description": "Change your forum's color theme",
+      "author": "loregamer",
+      "filename": "color-theme.js",
+      "matches": ["https://rpghq.org/forums/*"],
+      "executionPhase": "document-ready",
+      "category": "Aesthetic",
+      "image": "https://example.com/thumbnail-color-theme.jpg",
+      "settings": [
+        {
+          "id": "defaultTheme",
+          "label": "Default Theme",
+          "description": "Choose the default theme",
+          "type": "text",
+          "default": "dark"
         }
       ]
     }
