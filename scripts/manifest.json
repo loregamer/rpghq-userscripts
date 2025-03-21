@@ -74,9 +74,9 @@
       "version": "1.0.0",
       "description": "Adds a pin button to the forum",
       "filename": "pin-threads.js",
-      "matches": ["https://rpghq.org/forums/*"],
+      "matches": ["https://rpghq.org/forums/index.php/*"],
       "executionPhase": "document-ready",
-      "category": "Iggy Stuff",
+      "category": "Utility",
       "image": "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
       "settings": []
     },
@@ -88,7 +88,7 @@
       "filename": "member-search.js",
       "matches": ["https://rpghq.org/forums/*"],
       "executionPhase": "document-ready",
-      "category": "Iggy Stuff",
+      "category": "Utility",
       "image": "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
       "settings": []
     },
@@ -100,7 +100,7 @@
       "filename": "random-topic.js",
       "matches": ["https://rpghq.org/forums/*"],
       "executionPhase": "document-ready",
-      "category": "Iggy Stuff",
+      "category": "Utility",
       "image": "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
       "settings": []
     }
