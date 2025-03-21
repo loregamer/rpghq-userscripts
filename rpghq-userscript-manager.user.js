@@ -26,15 +26,81 @@
     
     // ===== Storage Management =====
     const Storage = {
-        // Get all stored data
-        getData: function() {
+        // Storage version for future compatibility
+        STORAGE_VERSION: 1,
+        
+        // Initialize storage with default structure
+        init: function() {
+            const data = this.getRawData();
+            if (!data) {
+                // Create initial storage structure
+                const initialData = {
+                    version: this.STORAGE_VERSION,
+                    installedScripts: {},
+                    lastUpdate: Date.now()
+                };
+                this.saveRawData(initialData);
+                return initialData;
+            }
+            
+            // Check if we need to upgrade storage structure in the future
+            if (data.version < this.STORAGE_VERSION) {
+                // Handle version upgrades here when needed
+                data.version = this.STORAGE_VERSION;
+                this.saveRawData(data);
+            }
+            
+            return data;
+        },
+        
+        // Get raw data from GM storage
+        getRawData: function() {
             const data = GM_getValue(STORAGE_KEY);
-            return data ? JSON.parse(data) : { installedScripts: {} };
+            return data ? JSON.parse(data) : null;
+        },
+        
+        // Save raw data to GM storage
+        saveRawData: function(data) {
+            data.lastUpdate = Date.now();
+            // Use pretty-printing for better readability (2-space indentation)
+            GM_setValue(STORAGE_KEY, JSON.stringify(data, null, 2));
+        },
+        
+        // Get all stored data, initializing if needed
+        getData: function() {
+            return this.getRawData() || this.init();
         },
         
         // Save all data
         saveData: function(data) {
-            GM_setValue(STORAGE_KEY, JSON.stringify(data));
+            // Ensure we preserve the version
+            const currentData = this.getData();
+            data.version = currentData.version;
+            this.saveRawData(data);
+        },
+        
+        // Get script code storage key
+        getScriptCodeKey: function(scriptId, scriptName) {
+            // Use script name for better readability if provided
+            // Clean the name to ensure it's a valid storage key
+            const key = scriptName ? scriptName.replace(/[^a-zA-Z0-9_]/g, '_') : scriptId;
+            // Use a shorter prefix for script code storage
+            return `script_${key}`;
+        },
+        
+        // Save script code separately
+        saveScriptCode: function(scriptId, scriptName, code) {
+            GM_setValue(this.getScriptCodeKey(scriptId, scriptName), code);
+        },
+        
+        // Get script code
+        getScriptCode: function(scriptId, scriptName) {
+            return GM_getValue(this.getScriptCodeKey(scriptId, scriptName), '');
+        },
+        
+        // Delete script code
+        deleteScriptCode: function(scriptId, scriptName) {
+            GM_deleteValue(this.getScriptCodeKey(scriptId, scriptName));
         },
         
         // Get installed scripts
@@ -48,6 +114,29 @@
             if (!data.installedScripts) {
                 data.installedScripts = {};
             }
+            
+            // Store script name for better readability
+            const scriptName = scriptData.name || scriptId;
+            
+            // Store script code separately
+            if (scriptData.code) {
+                this.saveScriptCode(scriptId, scriptName, scriptData.code);
+                // Remove code from metadata to avoid storage issues
+                delete scriptData.code;
+            }
+            
+            // Add installation timestamp if it's a new installation
+            if (!data.installedScripts[scriptId]) {
+                scriptData.installedAt = Date.now();
+            } else {
+                // Preserve installation date if updating
+                scriptData.installedAt = data.installedScripts[scriptId].installedAt;
+                scriptData.updatedAt = Date.now();
+            }
+            
+            // Store script name in metadata
+            scriptData.name = scriptName;
+            
             data.installedScripts[scriptId] = scriptData;
             this.saveData(data);
         },
@@ -56,7 +145,9 @@
         removeInstalledScript: function(scriptId) {
             const data = this.getData();
             if (data.installedScripts && data.installedScripts[scriptId]) {
+                const scriptName = data.installedScripts[scriptId].name || scriptId;
                 delete data.installedScripts[scriptId];
+                this.deleteScriptCode(scriptId, scriptName);
                 this.saveData(data);
                 return true;
             }
@@ -71,13 +162,28 @@
         
         // Save script settings
         saveScriptSettings: function(scriptId, settings) {
-            const installedScripts = this.getInstalledScripts();
-            if (installedScripts[scriptId]) {
+            const data = this.getData();
+            const installedScripts = data.installedScripts;
+            
+            if (installedScripts && installedScripts[scriptId]) {
                 installedScripts[scriptId].settings = settings;
-                this.saveData({ installedScripts });
+                installedScripts[scriptId].settingsUpdatedAt = Date.now();
+                this.saveData(data);
                 return true;
             }
             return false;
+        },
+        
+        // Get last update time
+        getLastUpdateTime: function() {
+            const data = this.getData();
+            return data.lastUpdate || 0;
+        },
+        
+        // Clear all data (for debugging/reset)
+        clearAll: function() {
+            GM_deleteValue(STORAGE_KEY);
+            return this.init();
         }
     };
     
@@ -192,8 +298,9 @@
                             });
                         }
                         
-                        // Save script data
+                        // Save script data with name from manifest
                         Storage.saveInstalledScript(scriptId, {
+                            name: scriptInfo.name,
                             version: scriptInfo.version,
                             code: scriptCode,
                             enabled: true,
@@ -226,11 +333,21 @@
         // Execute a single script
         executeScript: function(scriptId, scriptData) {
             try {
+                // Get the script name for better readability in logs
+                const scriptName = scriptData.name || scriptId;
+                
+                // Get the script code from storage
+                const code = Storage.getScriptCode(scriptId, scriptName);
+                if (!code) {
+                    console.error(`Script code not found for ${scriptName} (${scriptId})`);
+                    return;
+                }
+                
                 // Create a global settings object for the script to access
                 // Define scriptSettings in the global scope to ensure it's available
                 const scriptCode = `
                     var scriptSettings = ${JSON.stringify(scriptData.settings || {})};
-                    ${scriptData.code}
+                    ${code}
                 `;
                 
                 // Create a script element and execute it
@@ -238,8 +355,10 @@
                 scriptElement.textContent = scriptCode;
                 document.head.appendChild(scriptElement);
                 document.head.removeChild(scriptElement);
+                
+                console.log(`Executed script: ${scriptName} v${scriptData.version}`);
             } catch (e) {
-                console.error('Error executing script ' + scriptId + ':', e);
+                console.error(`Error executing script ${scriptData.name || scriptId}:`, e);
             }
         }
     };
@@ -535,12 +654,17 @@
         
         // Add the Userscripts button to the dropdown menu
         addUserscriptsButton: function() {
-            const dropdownMenu = document.querySelector('.dropdown-contents[role="menu"]');
-            if (!dropdownMenu) return false;
+            // Try to find the dropdown menu in the user profile dropdown
+            const profileDropdown = document.querySelector('.header-profile.dropdown-container .dropdown-contents[role="menu"]');
+            if (!profileDropdown) return false;
             
-            // Find the separator
-            const separator = dropdownMenu.querySelector('.separator');
-            if (!separator) return false;
+            // Find the logout button to use as a reference point
+            const logoutButton = Array.from(profileDropdown.querySelectorAll('li')).find(li => {
+                return li.textContent.trim().includes('Logout') || 
+                       li.querySelector('a[title="Logout"]');
+            });
+            
+            if (!logoutButton) return false;
             
             // Create the Userscripts button
             const userscriptsButton = document.createElement('li');
@@ -550,8 +674,8 @@
                 </a>
             `;
             
-            // Insert before the separator
-            dropdownMenu.insertBefore(userscriptsButton, separator);
+            // Insert before the logout button
+            logoutButton.parentNode.insertBefore(userscriptsButton, logoutButton);
             
             // Add click event
             userscriptsButton.querySelector('a').addEventListener('click', (e) => {
