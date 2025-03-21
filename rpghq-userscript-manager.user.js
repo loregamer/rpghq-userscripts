@@ -947,7 +947,6 @@
                 : false;
               const displayName = installedData.name;
               const displayVersion = installedData.version;
-              const author = manifestScript ? manifestScript.author : "Unknown";
               html += `<li class="mod-list-item" data-script-id="${scriptId}">
                                         <div class="mod-list-item-info">
                                             <p class="mod-list-item-title">
@@ -958,7 +957,6 @@
                                                     : ""
                                                 }
                                             </p>
-                                            <p class="mod-list-item-author">By ${author}</p>
                                         </div>
                                         <div class="mod-list-item-actions">`;
               if (manifestScript && needsUpdate) {
