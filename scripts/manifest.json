@@ -3,7 +3,7 @@
     {
       "id": "number-commas",
       "name": "Commas on Numbers",
-      "version": "2.1.3",
+      "version": "2.1.4",
       "description": "Add commas to numbers",
       "author": "loregamer",
       "filename": "number-commas.js",
