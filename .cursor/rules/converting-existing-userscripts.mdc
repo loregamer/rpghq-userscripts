@@ -1,0 +1,296 @@
+---
+description: 
+globs: *.user.js
+alwaysApply: false
+---
+# Guide to Converting Userscripts for the RPGHQ Userscript Manager
+
+This guide will help you adapt your existing userscripts to work with the RPGHQ Userscript Manager. The manager provides a centralized way to manage scripts with benefits like organized script management, execution control, and settings management.
+
+## Basic Structure
+
+When converting your userscript, you'll need to:
+
+1. Strip the userscript metadata header (`// ==UserScript==` section)
+2. Update how you handle execution timing and storage
+3. Add your script to the manifest
+
+## Execution Phases
+
+The manager offers five execution phases to control when your script runs:
+
+| Phase | ID | Description | Best For |
+|-------|----|--------------------|----------|
+| Document Start | `document-start` | Before DOM parsing begins | CSS injections, early page modifications |
+| Document Ready | `document-ready` | Basic DOM available but before resources loaded | Most UI modifications |
+| Document Loaded | `document-loaded` | After page fully loaded | Scripts that need images and resources |
+| Document Idle | `document-idle` | After a short delay when page is idle | Non-critical enhancements |
+| Custom Event | `custom-event` | Execute on custom events | Scripts that depend on specific actions |
+
+### Converting Your Execution Timing
+
+Instead of using the old `@run-at` metadata directive, specify the execution phase in your script's manifest entry:
+
+#### Original Script
+```js
+// ==UserScript==
+// @name         My Script
+// @run-at       document-idle
+// ...
+// ==/UserScript==
+
+(function() {
+    // Your code
+})();
+```
+
+#### Converted For Manager
+```js
+// In manifest.json
+{
+  "scripts": [
+    {
+      "id": "my-script",
+      "name": "My Script",
+      "executionPhase": "document-idle",
+      // ...
+    }
+  ]
+}
+
+// In your script file
+(function() {
+    // Your code - wrapper function is still recommended
+})();
+```
+
+## Storage and Settings
+
+### Accessing Settings
+
+The manager automatically injects your script's settings into a global `scriptSettings` object.
+
+#### Original Script
+```js
+// ==UserScript==
+// @grant        GM_getValue
+// @grant        GM_setValue
+// ==/UserScript==
+
+(function() {
+    const mySetting = GM_getValue('mySetting', 'default');
+    
+    function saveSettings() {
+        GM_setValue('mySetting', 'new value');
+    }
+})();
+```
+
+#### Converted For Manager
+```js
+// In manifest.json
+{
+  "scripts": [
+    {
+      "id": "my-script",
+      "settings": [
+        {
+          "id": "mySetting",
+          "label": "My Setting",
+          "description": "Description of setting",
+          "type": "string",
+          "default": "default"
+        }
+      ]
+    }
+  ]
+}
+
+// In your script file
+(function() {
+    // Access setting directly from the injected scriptSettings object
+    const mySetting = scriptSettings.mySetting || 'default';
+    
+    // No need to handle saving - the manager handles that through its UI
+})();
+```
+
+### Setting Types
+
+The manager supports three types of settings:
+
+1. `boolean` - For toggle options
+2. `number` - For numeric values
+3. `string` - For text input
+
+### Example Setting Definition
+
+```json
+{
+  "id": "formatFourDigits",
+  "label": "Format 4-digit numbers",
+  "description": "Whether to add commas to 4-digit numbers",
+  "type": "boolean",
+  "default": false
+}
+```
+
+## Practical Conversion Example
+
+Let's convert a simple script:
+
+### Original Script
+```js
+// ==UserScript==
+// @name         Number Formatter
+// @namespace    https://rpghq.org/
+// @version      1.0.0
+// @description  Add commas to numbers
+// @author       YourName
+// @match        https://rpghq.org/forums/*
+// @run-at       document-loaded
+// @grant        GM_getValue
+// @grant        GM_setValue
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    
+    // Get saved setting, default to false
+    const formatFourDigits = GM_getValue('formatFourDigits', false);
+    
+    // Determine regex based on settings
+    const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
+    
+    function formatNumberWithCommas(number) {
+        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    
+    // Process elements on the page
+    function processElements() {
+        const elements = document.querySelectorAll('dd.posts, dd.views');
+        
+        elements.forEach(element => {
+            element.childNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE && numberRegex.test(node.nodeValue)) {
+                    node.nodeValue = node.nodeValue.replace(numberRegex, match => 
+                        formatNumberWithCommas(match)
+                    );
+                }
+            });
+        });
+    }
+    
+    // Run initial processing
+    processElements();
+    
+    // Set up mutation observer to handle dynamic content
+    const observer = new MutationObserver(mutations => {
+        processElements();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+})();
+```
+
+### Converted Script for Manager
+
+#### 1. Add to manifest.json
+```json
+{
+  "scripts": [
+    {
+      "id": "number-formatter",
+      "name": "Number Formatter",
+      "version": "1.0.0",
+      "description": "Add commas to numbers",
+      "author": "YourName",
+      "filename": "number-formatter.js",
+      "matches": ["https://rpghq.org/forums/*"],
+      "executionPhase": "document-loaded",
+      "settings": [
+        {
+          "id": "formatFourDigits",
+          "label": "Format 4-digit numbers",
+          "description": "Whether to add commas to 4-digit numbers (e.g., 1,000) or only 5+ digit numbers",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### 2. Create your script file (number-formatter.js)
+```js
+// Number Formatter
+// Version: 1.0.0
+// Description: Add commas to numbers
+// Author: YourName
+
+(function() {
+    'use strict';
+    
+    // Get setting from the script manager
+    const formatFourDigits = scriptSettings.formatFourDigits || false;
+    
+    // Determine regex based on settings
+    const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
+    
+    function formatNumberWithCommas(number) {
+        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    
+    // Process elements on the page
+    function processElements() {
+        const elements = document.querySelectorAll('dd.posts, dd.views');
+        
+        elements.forEach(element => {
+            element.childNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE && numberRegex.test(node.nodeValue)) {
+                    node.nodeValue = node.nodeValue.replace(numberRegex, match => 
+                        formatNumberWithCommas(match)
+                    );
+                }
+            });
+        });
+    }
+    
+    // Run initial processing
+    processElements();
+    
+    // Set up mutation observer to handle dynamic content
+    const observer = new MutationObserver(mutations => {
+        processElements();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+})();
+```
+
+## Best Practices
+
+1. **Keep the IIFE Wrapper**: Maintain the `(function() { ... })();` pattern to avoid polluting the global scope.
+
+2. **Script Comments**: Include basic metadata as comments at the top of your script.
+
+3. **Default Values**: Always provide fallbacks when accessing settings:
+   ```js
+   const mySetting = scriptSettings.mySetting || defaultValue;
+   ```
+
+4. **Choose the Right Execution Phase**: Select the earliest phase that will work for your script to improve performance.
+
+5. **Testing**: Test your script with different settings configurations to ensure it handles all cases correctly.
+
+6. **Descriptive Settings**: Make setting labels and descriptions user-friendly and clear.
+
+## Migration Checklist
+
+- [ ] Remove the userscript metadata header
+- [ ] Add your script to the manifest.json
+- [ ] Replace GM_getValue/GM_setValue with scriptSettings
+- [ ] Define settings with appropriate types and defaults
+- [ ] Choose the correct execution phase
+- [ ] Test your script
+
+By following these guidelines, you can successfully convert your userscripts to work with the RPGHQ Userscript Manager.
