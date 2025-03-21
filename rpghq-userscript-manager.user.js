@@ -2,7 +2,7 @@
 // @name         RPGHQ Userscript Manager (Mod Manager UI)
 // @namespace    https://rpghq.org/
 // @version      3.0.0
-// @description  A reimagined userscript manager popup featuring a tabbed interface with a gallery viewer (with enhanced visuals, filters, and install buttons), installed mods view, and global settings. Also includes per‐mod settings with robust controls.
+// @description  A reimagined userscript manager popup featuring an enhanced gallery (with filters, version display, install buttons, and installed banners), an installed mods view, and a much-improved settings UI with Font Awesome icons.
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
 // @run-at       document-start
@@ -392,6 +392,9 @@
     const UI = {
         addStyles: function() {
             GM_addStyle(`
+                /* Import Font Awesome */
+                @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css');
+
                 :root {
                     --primary-color: #2196F3;
                     --primary-dark: #1976D2;
@@ -464,7 +467,7 @@
                     flex: 1;
                     overflow-y: auto;
                 }
-                /* Gallery view styles */
+                /* Gallery filter styles */
                 .mod-gallery-filters {
                     margin-bottom: 10px;
                     display: flex;
@@ -477,6 +480,7 @@
                     border: 1px solid var(--border-color);
                     border-radius: 3px;
                 }
+                /* Gallery view styles */
                 .mod-gallery {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -488,12 +492,27 @@
                     border-radius: 4px;
                     padding: 8px;
                     text-align: center;
+                    position: relative;
                 }
                 .mod-gallery-item img {
                     width: 100%;
                     height: 100px;
                     object-fit: cover;
                     border-radius: 4px;
+                }
+                /* Installed banner over image */
+                .installed-banner {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    background-color: rgba(76, 175, 80, 0.85);
+                    color: #fff;
+                    padding: 2px 6px;
+                    font-size: 0.8em;
+                    font-weight: bold;
+                    border-top-left-radius: 4px;
+                    border-bottom-right-radius: 4px;
+                    z-index: 10;
                 }
                 .mod-gallery-item-title {
                     margin-top: 6px;
@@ -520,14 +539,34 @@
                 .btn-primary {
                     background-color: var(--primary-color);
                     color: #fff;
+                    border: none;
+                    border-radius: 4px;
+                    padding: 6px 10px;
+                    cursor: pointer;
                 }
                 .btn-danger {
                     background-color: var(--danger-color);
                     color: #fff;
+                    border: none;
+                    border-radius: 4px;
+                    padding: 6px 10px;
+                    cursor: pointer;
                 }
                 .btn-warning {
                     background-color: var(--warning-color);
                     color: #fff;
+                    border: none;
+                    border-radius: 4px;
+                    padding: 6px 10px;
+                    cursor: pointer;
+                }
+                .btn-secondary {
+                    background-color: #777;
+                    color: #fff;
+                    border: none;
+                    border-radius: 4px;
+                    padding: 6px 10px;
+                    cursor: pointer;
                 }
                 /* List (Installed) view styles */
                 .mod-list {
@@ -564,26 +603,47 @@
                     border: none;
                     border-radius: 3px;
                 }
-                /* Settings view styles */
+                /* Enhanced Settings view styles */
                 .mod-settings {
-                    font-size: 0.9em;
+                    background-color: var(--bg-card);
+                    padding: 20px;
+                    border-radius: 6px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+                    margin: 10px;
                 }
                 .mod-settings h3 {
-                    margin-bottom: 8px;
+                    font-size: 1.5em;
+                    margin-bottom: 20px;
+                    border-bottom: 1px solid var(--border-color);
+                    padding-bottom: 10px;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                .mod-settings-content {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 15px;
                 }
                 .mod-setting-item {
-                    margin-bottom: 10px;
+                    display: flex;
+                    flex-direction: column;
                 }
                 .mod-setting-item label {
-                    display: block;
-                    margin-bottom: 4px;
-                    font-size: 0.9em;
+                    font-weight: bold;
+                    margin-bottom: 5px;
                 }
-                .mod-setting-item input {
-                    width: 100%;
-                    padding: 4px;
+                .mod-setting-item input[type="text"],
+                .mod-setting-item input[type="number"] {
+                    padding: 8px;
                     border: 1px solid var(--border-color);
-                    border-radius: 3px;
+                    border-radius: 4px;
+                    background-color: var(--bg-dark);
+                    color: var(--text-primary);
+                }
+                .mod-setting-item small {
+                    color: var(--text-secondary);
+                    margin-top: 5px;
                 }
             `);
         },
@@ -686,7 +746,7 @@
                 <div class="mod-gallery-filters">
                     <select id="gallery-category-filter">${categoryOptions}</select>
                     <input type="text" id="gallery-search-filter" placeholder="Search mods...">
-                    <button id="gallery-filter-button" class="btn-primary">Filter</button>
+                    <button id="gallery-filter-button" class="btn-primary"><i class="fa fa-filter"></i> Filter</button>
                 </div>
             `;
             const galleryItemsHtml = UI.renderGalleryItems(scripts, installedScripts);
@@ -717,24 +777,27 @@
                     needsUpdate = ScriptManager.needsUpdate(script.id);
                 }
                 let statusHtml = isInstalled
-                    ? `<span class="installed-status" style="color:green;">Installed</span>`
-                    : `<span class="not-installed-status" style="color:red;">Not Installed</span>`;
+                    ? `<span class="mod-gallery-item-status" style="color:green;"><i class="fa fa-check"></i> Installed</span>`
+                    : `<span class="mod-gallery-item-status" style="color:red;"><i class="fa fa-times"></i> Not Installed</span>`;
                 if (isInstalled && needsUpdate) {
-                    statusHtml += `<span class="update-status" style="color:orange;"> (Update available: v${script.version})</span>`;
+                    statusHtml += `<span class="mod-gallery-item-status" style="color:orange;"> (Update available: v${script.version})</span>`;
                 }
                 let buttonHtml = '';
                 if (!isInstalled) {
-                    buttonHtml = `<button class="btn-primary mod-install" data-script-id="${script.id}">Install</button>`;
+                    buttonHtml = `<button class="btn-primary mod-install" data-script-id="${script.id}"><i class="fa fa-download"></i> Install</button>`;
                 } else {
                     if (needsUpdate) {
-                        buttonHtml = `<button class="btn-warning mod-update" data-script-id="${script.id}">Update</button>`;
+                        buttonHtml = `<button class="btn-warning mod-update" data-script-id="${script.id}"><i class="fa fa-refresh"></i> Update</button>`;
                     }
-                    buttonHtml += `<button class="btn-danger mod-uninstall" data-script-id="${script.id}">Uninstall</button>
-                                   <button class="btn-primary mod-settings" data-script-id="${script.id}">Settings</button>`;
+                    buttonHtml += `<button class="btn-danger mod-uninstall" data-script-id="${script.id}"><i class="fa fa-trash"></i> Uninstall</button>
+                                   <button class="btn-primary mod-settings" data-script-id="${script.id}"><i class="fa fa-cog"></i> Settings</button>`;
                 }
                 html += `
                     <div class="mod-gallery-item" data-script-id="${script.id}" data-category="${script.category}">
-                        <img src="${script.image || 'https://via.placeholder.com/150x100?text=No+Image'}" alt="${script.name}">
+                        <div class="mod-gallery-item-image">
+                            <img src="${script.image || 'https://via.placeholder.com/150x100?text=No+Image'}" alt="${script.name}">
+                            ${isInstalled ? '<div class="installed-banner"><i class="fa fa-check"></i> Installed</div>' : ''}
+                        </div>
                         <div class="mod-gallery-item-title">${script.name}</div>
                         <div class="mod-gallery-item-version">v${script.version}</div>
                         <div class="mod-gallery-item-status">${statusHtml}</div>
@@ -826,10 +889,10 @@
                                         </div>
                                         <div class="mod-list-item-actions">`;
                             if (manifestScript && needsUpdate) {
-                                html += `<button class="btn-warning mod-update" data-script-id="${scriptId}">Update</button>`;
+                                html += `<button class="btn-warning mod-update" data-script-id="${scriptId}"><i class="fa fa-refresh"></i> Update</button>`;
                             }
-                            html += `<button class="btn-danger mod-uninstall" data-script-id="${scriptId}">Uninstall</button>
-                                     <button class="btn-primary mod-settings" data-script-id="${scriptId}">Settings</button>`;
+                            html += `<button class="btn-danger mod-uninstall" data-script-id="${scriptId}"><i class="fa fa-trash"></i> Uninstall</button>
+                                     <button class="btn-primary mod-settings" data-script-id="${scriptId}"><i class="fa fa-cog"></i> Settings</button>`;
                             html += `   </div>
                                     </li>`;
                         });
@@ -855,20 +918,22 @@
                 Storage.saveGlobalSettings(settings);
             }
             let html = `<div class="mod-settings">
-                <h3>Global Settings</h3>
-                <div class="mod-setting-item">
-                    <label for="global-theme">Theme (light/dark)</label>
-                    <input type="text" id="global-theme" value="${settings.theme}">
+                <h3><i class="fa fa-cog"></i> Global Settings</h3>
+                <div class="mod-settings-content">
+                    <div class="mod-setting-item">
+                        <label for="global-theme">Theme (light/dark)</label>
+                        <input type="text" id="global-theme" value="${settings.theme}">
+                    </div>
+                    <div class="mod-setting-item">
+                        <label for="global-notifications">Enable Notifications</label>
+                        <input type="checkbox" id="global-notifications" ${settings.notifications ? 'checked' : ''}>
+                    </div>
+                    <div class="mod-setting-item">
+                        <label for="global-itemsPerPage">Items per Page</label>
+                        <input type="number" id="global-itemsPerPage" value="${settings.itemsPerPage}">
+                    </div>
                 </div>
-                <div class="mod-setting-item">
-                    <label for="global-notifications">Enable Notifications</label>
-                    <input type="checkbox" id="global-notifications" ${settings.notifications ? 'checked' : ''}>
-                </div>
-                <div class="mod-setting-item">
-                    <label for="global-itemsPerPage">Items per Page</label>
-                    <input type="number" id="global-itemsPerPage" value="${settings.itemsPerPage}">
-                </div>
-                <button id="save-global-settings" class="btn-primary" style="width:100%; padding:6px;">Save Global Settings</button>
+                <button id="save-global-settings" class="btn-primary" style="width:100%; margin-top:15px;"><i class="fa fa-save"></i> Save Global Settings</button>
             </div>`;
             content.innerHTML = html;
             document.getElementById('save-global-settings').addEventListener('click', function() {
@@ -882,40 +947,91 @@
             });
         },
 
-        showModDetails: function(scriptId) {
+        // Improved settings view for an individual mod.
+        showModSettingsView: function(script) {
             const content = document.getElementById('mod-manager-content');
-            const script = ScriptManager.manifest.scripts.find(s => s.id === scriptId);
-            if (!script) {
-                content.innerHTML = `<p>Mod details not found.</p>`;
-                return;
-            }
             let installedScripts = Storage.getInstalledScripts();
-            const isInstalled = !!installedScripts[script.id];
-            const needsUpdate = isInstalled && ScriptManager.needsUpdate(script.id);
-            let html = `<div>
-                <h3>${script.name}</h3>
-                <p>Author: ${script.author}</p>
-                <p>Version: ${isInstalled ? installedScripts[script.id].version : script.version} ${needsUpdate ? '(Update available)' : ''}</p>
-                <p>${script.description || 'No description available.'}</p>
-                <div style="margin-top:10px;">`;
-            if (!isInstalled) {
-                html += `<button class="btn-primary mod-install" data-script-id="${script.id}">Install</button>`;
-            } else {
-                if (needsUpdate) {
-                    html += `<button class="btn-warning mod-update" data-script-id="${script.id}">Update</button>`;
-                }
-                html += `<button class="btn-danger mod-uninstall" data-script-id="${script.id}">Uninstall</button>
-                         <button class="btn-primary mod-settings" data-script-id="${script.id}">Settings</button>`;
+            let scriptData = installedScripts[script.id] || { settings: {} };
+            let settings = {};
+            if (script.settings && script.settings.length > 0) {
+                script.settings.forEach(setting => {
+                    settings[setting.id] = (scriptData.settings && scriptData.settings[setting.id] !== undefined)
+                        ? scriptData.settings[setting.id]
+                        : setting.default;
+                });
             }
-            html += `</div>
-            <button id="back-to-gallery" class="btn-primary" style="margin-top:10px;">Back to Gallery</button>
+            let html = `<div class="mod-settings">
+                <h3><i class="fa fa-cog"></i> Settings for ${script.name}</h3>
+                <div class="mod-settings-content">`;
+            if (script.settings && script.settings.length > 0) {
+                script.settings.forEach(setting => {
+                    const value = settings[setting.id];
+                    html += `<div class="mod-setting-item">`;
+                    if (setting.type === 'boolean') {
+                        // Render a row with the toggle icon on the left and the label on the right.
+                        html += `<div class="mod-setting-row" style="display: flex; align-items: center; gap: 10px;">
+                                    <span id="mod-setting-${script.id}-${setting.id}" class="toggle-switch" data-value="${value}" style="cursor:pointer;">
+                                        ${value ? '<i class="fa fa-toggle-on"></i>' : '<i class="fa fa-toggle-off"></i>'}
+                                    </span>
+                                    <label for="mod-setting-${script.id}-${setting.id}" style="margin:0;">${setting.label}</label>
+                                 </div>`;
+                    } else if (setting.type === 'number') {
+                        html += `<label for="mod-setting-${script.id}-${setting.id}">${setting.label}</label>
+                                 <input type="number" id="mod-setting-${script.id}-${setting.id}" value="${value}">`;
+                    } else {
+                        html += `<label for="mod-setting-${script.id}-${setting.id}">${setting.label}</label>
+                                 <input type="text" id="mod-setting-${script.id}-${setting.id}" value="${value}">`;
+                    }
+                    html += `<small>${setting.description}</small>
+                    </div>`;
+                });
+                html += `</div>
+                <button id="save-mod-settings" class="btn-primary" data-script-id="${script.id}" style="width:100%; margin-top:15px;">
+                    <i class="fa fa-save"></i> Save Settings
+                </button>`;
+            } else {
+                html += `<p>No settings available for this mod.</p>`;
+            }
+            html += `<button id="back-to-installed" class="btn-secondary" style="width:100%; margin-top:15px;">
+                        <i class="fa fa-arrow-left"></i> Back
+                     </button>
             </div>`;
             content.innerHTML = html;
-            document.getElementById('back-to-gallery').addEventListener('click', function() {
-                UI.switchTab('gallery');
+            // Add event listener to toggle boolean values.
+            document.querySelectorAll('.toggle-switch').forEach(el => {
+                el.addEventListener('click', function() {
+                    let currentValue = this.getAttribute('data-value') === 'true';
+                    let newValue = !currentValue;
+                    this.setAttribute('data-value', newValue);
+                    this.innerHTML = newValue ? '<i class="fa fa-toggle-on"></i>' : '<i class="fa fa-toggle-off"></i>';
+                });
             });
-            UI.addGalleryEventListeners();
+            document.getElementById('save-mod-settings')?.addEventListener('click', function() {
+                let newSettings = {};
+                if (script.settings && script.settings.length > 0) {
+                    script.settings.forEach(setting => {
+                        let inputElem = document.getElementById(`mod-setting-${script.id}-${setting.id}`);
+                        if (inputElem) {
+                            if (setting.type === 'boolean') {
+                                // Read the value from our toggle's data attribute.
+                                newSettings[setting.id] = inputElem.getAttribute('data-value') === 'true';
+                            } else if (setting.type === 'number') {
+                                newSettings[setting.id] = parseFloat(inputElem.value);
+                            } else {
+                                newSettings[setting.id] = inputElem.value;
+                            }
+                        }
+                    });
+                }
+                Storage.saveScriptSettings(script.id, newSettings);
+                alert('Settings saved!');
+                UI.switchTab('installed');
+            });
+            document.getElementById('back-to-installed').addEventListener('click', function() {
+                UI.switchTab('installed');
+            });
         },
+        
 
         // Event listeners for the Installed view
         addInstalledEventListeners: function() {
@@ -952,67 +1068,6 @@
                     }
                 });
             });
-        },
-
-        showModSettingsView: function(script) {
-            const content = document.getElementById('mod-manager-content');
-            let installedScripts = Storage.getInstalledScripts();
-            let scriptData = installedScripts[script.id] || { settings: {} };
-            let settings = {};
-            if (script.settings && script.settings.length > 0) {
-                script.settings.forEach(setting => {
-                    settings[setting.id] = (scriptData.settings && scriptData.settings[setting.id] !== undefined)
-                        ? scriptData.settings[setting.id]
-                        : setting.default;
-                });
-            }
-            let html = `<div class="mod-settings">
-                <h3>Settings for ${script.name}</h3>`;
-            if (script.settings && script.settings.length > 0) {
-                script.settings.forEach(setting => {
-                    const value = settings[setting.id];
-                    html += `<div class="mod-setting-item">
-                        <label for="mod-setting-${script.id}-${setting.id}">${setting.label}</label>`;
-                    if (setting.type === 'boolean') {
-                        html += `<input type="checkbox" id="mod-setting-${script.id}-${setting.id}" ${value ? 'checked' : ''}>`;
-                    } else if (setting.type === 'number') {
-                        html += `<input type="number" id="mod-setting-${script.id}-${setting.id}" value="${value}">`;
-                    } else {
-                        html += `<input type="text" id="mod-setting-${script.id}-${setting.id}" value="${value}">`;
-                    }
-                    html += `<small>${setting.description}</small>
-                    </div>`;
-                });
-                html += `<button id="save-mod-settings" class="btn-primary" data-script-id="${script.id}" style="width:100%; padding:6px; margin-top:8px;">Save Settings</button>`;
-            } else {
-                html += `<p>No settings available for this mod.</p>`;
-            }
-            html += `<button id="back-to-installed" class="btn-primary" style="width:100%; padding:6px; margin-top:8px;">Back</button>
-            </div>`;
-            content.innerHTML = html;
-            document.getElementById('save-mod-settings')?.addEventListener('click', function() {
-                let newSettings = {};
-                if (script.settings && script.settings.length > 0) {
-                    script.settings.forEach(setting => {
-                        let inputElem = document.getElementById(`mod-setting-${script.id}-${setting.id}`);
-                        if (inputElem) {
-                            if (setting.type === 'boolean') {
-                                newSettings[setting.id] = inputElem.checked;
-                            } else if (setting.type === 'number') {
-                                newSettings[setting.id] = parseFloat(inputElem.value);
-                            } else {
-                                newSettings[setting.id] = inputElem.value;
-                            }
-                        }
-                    });
-                }
-                Storage.saveScriptSettings(script.id, newSettings);
-                alert('Settings saved!');
-                UI.switchTab('installed');
-            });
-            document.getElementById('back-to-installed').addEventListener('click', function() {
-                UI.switchTab('installed');
-            });
         }
     };
 
@@ -1046,7 +1101,7 @@
         const userscriptsButton = document.createElement('li');
         userscriptsButton.innerHTML = `
             <a href="#" title="Manage Userscripts" role="menuitem" style="font-size:0.9em;">
-                <i class="icon fa-code fa-fw" aria-hidden="true"></i><span>Userscripts</span>
+                <i class="fa fa-code fa-fw"></i><span> Userscripts</span>
             </a>
         `;
         logoutButton.parentNode.insertBefore(userscriptsButton, logoutButton);
