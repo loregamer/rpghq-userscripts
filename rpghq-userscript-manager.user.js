@@ -1,0 +1,865 @@
+// ==UserScript==
+// @name         RPGHQ Userscript Manager
+// @namespace    https://rpghq.org/
+// @version      1.0.0
+// @description  A centralized manager for RPGHQ userscripts
+// @author       loregamer
+// @match        https://rpghq.org/forums/*
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_deleteValue
+// @grant        GM_xmlhttpRequest
+// @grant        GM_getResourceText
+// @grant        GM_addStyle
+// @grant        GM_registerMenuCommand
+// @connect      github.com
+// @connect      raw.githubusercontent.com
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // ===== Constants =====
+    const MANIFEST_URL = 'https://raw.githubusercontent.com/loregamer/rpghq-userscripts/userscript-manager/scripts/manifest.json';
+    const SCRIPT_BASE_URL = 'https://raw.githubusercontent.com/loregamer/rpghq-userscripts/userscript-manager/scripts/';
+    const STORAGE_KEY = 'rpghq_userscript_manager';
+    
+    // ===== Storage Management =====
+    const Storage = {
+        // Get all stored data
+        getData: function() {
+            const data = GM_getValue(STORAGE_KEY);
+            return data ? JSON.parse(data) : { installedScripts: {} };
+        },
+        
+        // Save all data
+        saveData: function(data) {
+            GM_setValue(STORAGE_KEY, JSON.stringify(data));
+        },
+        
+        // Get installed scripts
+        getInstalledScripts: function() {
+            return this.getData().installedScripts || {};
+        },
+        
+        // Save an installed script
+        saveInstalledScript: function(scriptId, scriptData) {
+            const data = this.getData();
+            if (!data.installedScripts) {
+                data.installedScripts = {};
+            }
+            data.installedScripts[scriptId] = scriptData;
+            this.saveData(data);
+        },
+        
+        // Remove an installed script
+        removeInstalledScript: function(scriptId) {
+            const data = this.getData();
+            if (data.installedScripts && data.installedScripts[scriptId]) {
+                delete data.installedScripts[scriptId];
+                this.saveData(data);
+                return true;
+            }
+            return false;
+        },
+        
+        // Get script settings
+        getScriptSettings: function(scriptId) {
+            const installedScripts = this.getInstalledScripts();
+            return (installedScripts[scriptId] && installedScripts[scriptId].settings) || {};
+        },
+        
+        // Save script settings
+        saveScriptSettings: function(scriptId, settings) {
+            const installedScripts = this.getInstalledScripts();
+            if (installedScripts[scriptId]) {
+                installedScripts[scriptId].settings = settings;
+                this.saveData({ installedScripts });
+                return true;
+            }
+            return false;
+        }
+    };
+    
+    // ===== Script Management =====
+    const ScriptManager = {
+        manifest: null,
+        
+        // Fetch the manifest from GitHub
+        fetchManifest: function() {
+            return new Promise((resolve, reject) => {
+                GM_xmlhttpRequest({
+                    method: 'GET',
+                    url: MANIFEST_URL,
+                    onload: function(response) {
+                        if (response.status === 200) {
+                            try {
+                                const manifest = JSON.parse(response.responseText);
+                                resolve(manifest);
+                            } catch (e) {
+                                reject('Failed to parse manifest: ' + e.message);
+                            }
+                        } else {
+                            reject('Failed to fetch manifest: ' + response.statusText);
+                        }
+                    },
+                    onerror: function(error) {
+                        reject('Error fetching manifest: ' + error);
+                    }
+                });
+            });
+        },
+        
+        // Fetch a script by ID
+        fetchScript: function(scriptId) {
+            return new Promise((resolve, reject) => {
+                const scriptInfo = this.getScriptInfoById(scriptId);
+                if (!scriptInfo) {
+                    reject('Script not found in manifest: ' + scriptId);
+                    return;
+                }
+                
+                const scriptUrl = SCRIPT_BASE_URL + scriptInfo.filename;
+                
+                GM_xmlhttpRequest({
+                    method: 'GET',
+                    url: scriptUrl,
+                    onload: function(response) {
+                        if (response.status === 200) {
+                            resolve(response.responseText);
+                        } else {
+                            reject('Failed to fetch script: ' + response.statusText);
+                        }
+                    },
+                    onerror: function(error) {
+                        reject('Error fetching script: ' + error);
+                    }
+                });
+            });
+        },
+        
+        // Get script info from manifest by ID
+        getScriptInfoById: function(scriptId) {
+            if (!this.manifest || !this.manifest.scripts) return null;
+            return this.manifest.scripts.find(script => script.id === scriptId);
+        },
+        
+        // Check if a script needs update
+        needsUpdate: function(scriptId) {
+            const installedScripts = Storage.getInstalledScripts();
+            const scriptInfo = this.getScriptInfoById(scriptId);
+            
+            if (!scriptInfo || !installedScripts[scriptId]) return false;
+            
+            const installedVersion = installedScripts[scriptId].version;
+            const manifestVersion = scriptInfo.version;
+            
+            return this.compareVersions(manifestVersion, installedVersion) > 0;
+        },
+        
+        // Compare two version strings (returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal)
+        compareVersions: function(v1, v2) {
+            const v1parts = v1.split('.').map(Number);
+            const v2parts = v2.split('.').map(Number);
+            
+            for (let i = 0; i < Math.max(v1parts.length, v2parts.length); i++) {
+                const v1part = v1parts[i] || 0;
+                const v2part = v2parts[i] || 0;
+                
+                if (v1part > v2part) return 1;
+                if (v1part < v2part) return -1;
+            }
+            
+            return 0;
+        },
+        
+        // Install or update a script
+        installScript: function(scriptId) {
+            return new Promise((resolve, reject) => {
+                const scriptInfo = this.getScriptInfoById(scriptId);
+                if (!scriptInfo) {
+                    reject('Script not found in manifest: ' + scriptId);
+                    return;
+                }
+                
+                this.fetchScript(scriptId)
+                    .then(scriptCode => {
+                        // Prepare default settings
+                        const settings = {};
+                        if (scriptInfo.settings) {
+                            scriptInfo.settings.forEach(setting => {
+                                settings[setting.id] = setting.default;
+                            });
+                        }
+                        
+                        // Save script data
+                        Storage.saveInstalledScript(scriptId, {
+                            version: scriptInfo.version,
+                            code: scriptCode,
+                            enabled: true,
+                            settings: settings
+                        });
+                        
+                        resolve(scriptInfo);
+                    })
+                    .catch(reject);
+            });
+        },
+        
+        // Uninstall a script
+        uninstallScript: function(scriptId) {
+            return Storage.removeInstalledScript(scriptId);
+        },
+        
+        // Execute all enabled scripts
+        executeScripts: function() {
+            const installedScripts = Storage.getInstalledScripts();
+            
+            Object.keys(installedScripts).forEach(scriptId => {
+                const scriptData = installedScripts[scriptId];
+                if (scriptData.enabled) {
+                    this.executeScript(scriptId, scriptData);
+                }
+            });
+        },
+        
+        // Execute a single script
+        executeScript: function(scriptId, scriptData) {
+            try {
+                // Create a global settings object for the script to access
+                window.scriptSettings = scriptData.settings || {};
+                
+                // Create a script element and execute it
+                const scriptElement = document.createElement('script');
+                scriptElement.textContent = scriptData.code;
+                document.head.appendChild(scriptElement);
+                document.head.removeChild(scriptElement);
+                
+                // Clean up global settings
+                window.scriptSettings = undefined;
+            } catch (e) {
+                console.error('Error executing script ' + scriptId + ':', e);
+            }
+        }
+    };
+    
+    // ===== UI Components =====
+    const UI = {
+        // Add styles to the page
+        addStyles: function() {
+            GM_addStyle(`
+                /* Modal styles */
+                .rpghq-userscript-modal {
+                    display: none;
+                    position: fixed;
+                    z-index: 1000;
+                    left: 0;
+                    top: 0;
+                    width: 100%;
+                    height: 100%;
+                    overflow: auto;
+                    background-color: rgba(0, 0, 0, 0.4);
+                }
+                
+                .rpghq-userscript-modal-content {
+                    background-color: #f9f9f9;
+                    margin: 5% auto;
+                    padding: 20px;
+                    border: 1px solid #888;
+                    width: 80%;
+                    max-width: 800px;
+                    border-radius: 3px;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                }
+                
+                .rpghq-userscript-close {
+                    color: #aaa;
+                    float: right;
+                    font-size: 28px;
+                    font-weight: bold;
+                    cursor: pointer;
+                }
+                
+                .rpghq-userscript-close:hover,
+                .rpghq-userscript-close:focus {
+                    color: black;
+                    text-decoration: none;
+                }
+                
+                .rpghq-userscript-header {
+                    padding-bottom: 10px;
+                    margin-bottom: 20px;
+                    border-bottom: 1px solid #ddd;
+                }
+                
+                .rpghq-userscript-title {
+                    margin: 0;
+                    font-size: 1.5em;
+                    color: #333;
+                }
+                
+                /* Script list styles */
+                .rpghq-userscript-list {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                
+                .rpghq-userscript-item {
+                    padding: 15px;
+                    margin-bottom: 10px;
+                    background-color: #fff;
+                    border: 1px solid #ddd;
+                    border-radius: 3px;
+                }
+                
+                .rpghq-userscript-item-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 10px;
+                }
+                
+                .rpghq-userscript-item-title {
+                    font-weight: bold;
+                    font-size: 1.1em;
+                    margin: 0;
+                }
+                
+                .rpghq-userscript-item-version {
+                    font-size: 0.9em;
+                    color: #666;
+                    margin-left: 10px;
+                }
+                
+                .rpghq-userscript-item-description {
+                    margin: 10px 0;
+                    color: #555;
+                }
+                
+                .rpghq-userscript-item-author {
+                    font-size: 0.9em;
+                    color: #666;
+                }
+                
+                .rpghq-userscript-item-actions {
+                    margin-top: 10px;
+                }
+                
+                /* Button styles */
+                .rpghq-userscript-btn {
+                    display: inline-block;
+                    padding: 6px 12px;
+                    margin-right: 5px;
+                    font-size: 14px;
+                    font-weight: 400;
+                    line-height: 1.42857143;
+                    text-align: center;
+                    white-space: nowrap;
+                    vertical-align: middle;
+                    cursor: pointer;
+                    border: 1px solid transparent;
+                    border-radius: 4px;
+                }
+                
+                .rpghq-userscript-btn-primary {
+                    color: #fff;
+                    background-color: #337ab7;
+                    border-color: #2e6da4;
+                }
+                
+                .rpghq-userscript-btn-primary:hover {
+                    background-color: #286090;
+                    border-color: #204d74;
+                }
+                
+                .rpghq-userscript-btn-danger {
+                    color: #fff;
+                    background-color: #d9534f;
+                    border-color: #d43f3a;
+                }
+                
+                .rpghq-userscript-btn-danger:hover {
+                    background-color: #c9302c;
+                    border-color: #ac2925;
+                }
+                
+                .rpghq-userscript-btn-success {
+                    color: #fff;
+                    background-color: #5cb85c;
+                    border-color: #4cae4c;
+                }
+                
+                .rpghq-userscript-btn-success:hover {
+                    background-color: #449d44;
+                    border-color: #398439;
+                }
+                
+                .rpghq-userscript-btn-warning {
+                    color: #fff;
+                    background-color: #f0ad4e;
+                    border-color: #eea236;
+                }
+                
+                .rpghq-userscript-btn-warning:hover {
+                    background-color: #ec971f;
+                    border-color: #d58512;
+                }
+                
+                /* Settings styles */
+                .rpghq-userscript-settings {
+                    margin-top: 15px;
+                    padding-top: 15px;
+                    border-top: 1px solid #eee;
+                    display: none;
+                }
+                
+                .rpghq-userscript-settings-title {
+                    font-weight: bold;
+                    margin-bottom: 10px;
+                }
+                
+                .rpghq-userscript-setting {
+                    margin-bottom: 10px;
+                }
+                
+                .rpghq-userscript-setting label {
+                    display: block;
+                    margin-bottom: 5px;
+                    font-weight: bold;
+                }
+                
+                .rpghq-userscript-setting-description {
+                    font-size: 0.9em;
+                    color: #666;
+                    margin-bottom: 5px;
+                }
+                
+                /* Toggle switch */
+                .rpghq-userscript-switch {
+                    position: relative;
+                    display: inline-block;
+                    width: 60px;
+                    height: 34px;
+                }
+                
+                .rpghq-userscript-switch input {
+                    opacity: 0;
+                    width: 0;
+                    height: 0;
+                }
+                
+                .rpghq-userscript-slider {
+                    position: absolute;
+                    cursor: pointer;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: #ccc;
+                    transition: .4s;
+                    border-radius: 34px;
+                }
+                
+                .rpghq-userscript-slider:before {
+                    position: absolute;
+                    content: "";
+                    height: 26px;
+                    width: 26px;
+                    left: 4px;
+                    bottom: 4px;
+                    background-color: white;
+                    transition: .4s;
+                    border-radius: 50%;
+                }
+                
+                input:checked + .rpghq-userscript-slider {
+                    background-color: #2196F3;
+                }
+                
+                input:focus + .rpghq-userscript-slider {
+                    box-shadow: 0 0 1px #2196F3;
+                }
+                
+                input:checked + .rpghq-userscript-slider:before {
+                    transform: translateX(26px);
+                }
+                
+                /* Status indicator */
+                .rpghq-userscript-status {
+                    display: inline-block;
+                    padding: 3px 6px;
+                    border-radius: 3px;
+                    font-size: 0.8em;
+                    margin-left: 5px;
+                }
+                
+                .rpghq-userscript-status-installed {
+                    background-color: #dff0d8;
+                    color: #3c763d;
+                }
+                
+                .rpghq-userscript-status-update {
+                    background-color: #fcf8e3;
+                    color: #8a6d3b;
+                }
+            `);
+        },
+        
+        // Add the Userscripts button to the dropdown menu
+        addUserscriptsButton: function() {
+            const dropdownMenu = document.querySelector('.dropdown-contents[role="menu"]');
+            if (!dropdownMenu) return false;
+            
+            // Find the separator
+            const separator = dropdownMenu.querySelector('.separator');
+            if (!separator) return false;
+            
+            // Create the Userscripts button
+            const userscriptsButton = document.createElement('li');
+            userscriptsButton.innerHTML = `
+                <a href="#" title="Manage Userscripts" role="menuitem">
+                    <i class="icon fa-code fa-fw" aria-hidden="true"></i><span>Userscripts</span>
+                </a>
+            `;
+            
+            // Insert before the separator
+            dropdownMenu.insertBefore(userscriptsButton, separator);
+            
+            // Add click event
+            userscriptsButton.querySelector('a').addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showUserscriptsModal();
+            });
+            
+            return true;
+        },
+        
+        // Create and show the userscripts modal
+        showUserscriptsModal: function() {
+            // Create modal if it doesn't exist
+            let modal = document.getElementById('rpghq-userscript-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'rpghq-userscript-modal';
+                modal.className = 'rpghq-userscript-modal';
+                modal.innerHTML = `
+                    <div class="rpghq-userscript-modal-content">
+                        <span class="rpghq-userscript-close">&times;</span>
+                        <div class="rpghq-userscript-header">
+                            <h2 class="rpghq-userscript-title">RPGHQ Userscript Manager</h2>
+                        </div>
+                        <div id="rpghq-userscript-loading">Loading scripts...</div>
+                        <ul id="rpghq-userscript-list" class="rpghq-userscript-list"></ul>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+                // Close button event
+                modal.querySelector('.rpghq-userscript-close').addEventListener('click', () => {
+                    modal.style.display = 'none';
+                });
+                
+                // Close when clicking outside the modal
+                window.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Show the modal
+            modal.style.display = 'block';
+            
+            // Load scripts
+            this.loadScripts();
+        },
+        
+        // Load scripts into the modal
+        loadScripts: function() {
+            const loadingElement = document.getElementById('rpghq-userscript-loading');
+            const scriptListElement = document.getElementById('rpghq-userscript-list');
+            
+            if (!loadingElement || !scriptListElement) return;
+            
+            loadingElement.style.display = 'block';
+            scriptListElement.innerHTML = '';
+            
+            ScriptManager.fetchManifest()
+                .then(manifest => {
+                    ScriptManager.manifest = manifest;
+                    loadingElement.style.display = 'none';
+                    
+                    if (!manifest.scripts || manifest.scripts.length === 0) {
+                        scriptListElement.innerHTML = '<p>No scripts available.</p>';
+                        return;
+                    }
+                    
+                    const installedScripts = Storage.getInstalledScripts();
+                    
+                    manifest.scripts.forEach(script => {
+                        const isInstalled = !!installedScripts[script.id];
+                        const needsUpdate = isInstalled && ScriptManager.needsUpdate(script.id);
+                        const scriptData = isInstalled ? installedScripts[script.id] : null;
+                        
+                        const scriptElement = document.createElement('li');
+                        scriptElement.className = 'rpghq-userscript-item';
+                        scriptElement.dataset.scriptId = script.id;
+                        
+                        let statusHtml = '';
+                        if (isInstalled) {
+                            if (needsUpdate) {
+                                statusHtml = `<span class="rpghq-userscript-status rpghq-userscript-status-update">Update Available</span>`;
+                            } else {
+                                statusHtml = `<span class="rpghq-userscript-status rpghq-userscript-status-installed">Installed</span>`;
+                            }
+                        }
+                        
+                        scriptElement.innerHTML = `
+                            <div class="rpghq-userscript-item-header">
+                                <h3 class="rpghq-userscript-item-title">
+                                    ${script.name}
+                                    <span class="rpghq-userscript-item-version">v${script.version}</span>
+                                    ${statusHtml}
+                                </h3>
+                            </div>
+                            <div class="rpghq-userscript-item-description">${script.description}</div>
+                            <div class="rpghq-userscript-item-author">By ${script.author}</div>
+                            <div class="rpghq-userscript-item-actions">
+                                ${this.getScriptActionButtons(script, isInstalled, needsUpdate, scriptData)}
+                            </div>
+                            ${this.getScriptSettingsHtml(script, scriptData)}
+                        `;
+                        
+                        scriptListElement.appendChild(scriptElement);
+                        
+                        // Add event listeners for buttons
+                        this.addScriptEventListeners(scriptElement, script);
+                    });
+                })
+                .catch(error => {
+                    loadingElement.style.display = 'none';
+                    scriptListElement.innerHTML = `<p>Error loading scripts: ${error}</p>`;
+                });
+        },
+        
+        // Get HTML for script action buttons
+        getScriptActionButtons: function(script, isInstalled, needsUpdate, scriptData) {
+            if (!isInstalled) {
+                return `<button class="rpghq-userscript-btn rpghq-userscript-btn-primary rpghq-userscript-install" data-script-id="${script.id}">Install</button>`;
+            }
+            
+            const enabledClass = scriptData.enabled ? 'rpghq-userscript-btn-danger' : 'rpghq-userscript-btn-success';
+            const enabledText = scriptData.enabled ? 'Disable' : 'Enable';
+            
+            let html = `
+                <button class="rpghq-userscript-btn ${enabledClass} rpghq-userscript-toggle" data-script-id="${script.id}" data-enabled="${scriptData.enabled}">${enabledText}</button>
+                <button class="rpghq-userscript-btn rpghq-userscript-btn-danger rpghq-userscript-uninstall" data-script-id="${script.id}">Uninstall</button>
+            `;
+            
+            if (needsUpdate) {
+                html = `<button class="rpghq-userscript-btn rpghq-userscript-btn-warning rpghq-userscript-update" data-script-id="${script.id}">Update</button>` + html;
+            }
+            
+            if (script.settings && script.settings.length > 0) {
+                html += `<button class="rpghq-userscript-btn rpghq-userscript-btn-primary rpghq-userscript-settings-toggle" data-script-id="${script.id}">Settings</button>`;
+            }
+            
+            return html;
+        },
+        
+        // Get HTML for script settings
+        getScriptSettingsHtml: function(script, scriptData) {
+            if (!script.settings || script.settings.length === 0) {
+                return '';
+            }
+            
+            const settings = scriptData ? scriptData.settings : {};
+            
+            let settingsHtml = `
+                <div class="rpghq-userscript-settings" id="rpghq-userscript-settings-${script.id}">
+                    <div class="rpghq-userscript-settings-title">Settings</div>
+            `;
+            
+            script.settings.forEach(setting => {
+                const value = settings[setting.id] !== undefined ? settings[setting.id] : setting.default;
+                
+                settingsHtml += `
+                    <div class="rpghq-userscript-setting">
+                        <label for="rpghq-setting-${script.id}-${setting.id}">${setting.label}</label>
+                        <div class="rpghq-userscript-setting-description">${setting.description}</div>
+                `;
+                
+                if (setting.type === 'boolean') {
+                    settingsHtml += `
+                        <label class="rpghq-userscript-switch">
+                            <input type="checkbox" id="rpghq-setting-${script.id}-${setting.id}" 
+                                data-script-id="${script.id}" 
+                                data-setting-id="${setting.id}" 
+                                data-setting-type="${setting.type}" 
+                                ${value ? 'checked' : ''}>
+                            <span class="rpghq-userscript-slider"></span>
+                        </label>
+                    `;
+                } else if (setting.type === 'number') {
+                    settingsHtml += `
+                        <input type="number" id="rpghq-setting-${script.id}-${setting.id}" 
+                            data-script-id="${script.id}" 
+                            data-setting-id="${setting.id}" 
+                            data-setting-type="${setting.type}" 
+                            value="${value}">
+                    `;
+                } else {
+                    settingsHtml += `
+                        <input type="text" id="rpghq-setting-${script.id}-${setting.id}" 
+                            data-script-id="${script.id}" 
+                            data-setting-id="${setting.id}" 
+                            data-setting-type="${setting.type}" 
+                            value="${value}">
+                    `;
+                }
+                
+                settingsHtml += `</div>`;
+            });
+            
+            settingsHtml += `
+                <div class="rpghq-userscript-item-actions">
+                    <button class="rpghq-userscript-btn rpghq-userscript-btn-primary rpghq-userscript-save-settings" data-script-id="${script.id}">Save Settings</button>
+                </div>
+            `;
+            
+            settingsHtml += `</div>`;
+            
+            return settingsHtml;
+        },
+        
+        // Add event listeners for script buttons
+        addScriptEventListeners: function(scriptElement, script) {
+            // Install button
+            const installButton = scriptElement.querySelector('.rpghq-userscript-install');
+            if (installButton) {
+                installButton.addEventListener('click', () => {
+                    installButton.textContent = 'Installing...';
+                    installButton.disabled = true;
+                    
+                    ScriptManager.installScript(script.id)
+                        .then(() => {
+                            this.loadScripts(); // Reload the script list
+                        })
+                        .catch(error => {
+                            alert('Error installing script: ' + error);
+                            installButton.textContent = 'Install';
+                            installButton.disabled = false;
+                        });
+                });
+            }
+            
+            // Update button
+            const updateButton = scriptElement.querySelector('.rpghq-userscript-update');
+            if (updateButton) {
+                updateButton.addEventListener('click', () => {
+                    updateButton.textContent = 'Updating...';
+                    updateButton.disabled = true;
+                    
+                    ScriptManager.installScript(script.id)
+                        .then(() => {
+                            this.loadScripts(); // Reload the script list
+                        })
+                        .catch(error => {
+                            alert('Error updating script: ' + error);
+                            updateButton.textContent = 'Update';
+                            updateButton.disabled = false;
+                        });
+                });
+            }
+            
+            // Uninstall button
+            const uninstallButton = scriptElement.querySelector('.rpghq-userscript-uninstall');
+            if (uninstallButton) {
+                uninstallButton.addEventListener('click', () => {
+                    if (confirm(`Are you sure you want to uninstall ${script.name}?`)) {
+                        ScriptManager.uninstallScript(script.id);
+                        this.loadScripts(); // Reload the script list
+                    }
+                });
+            }
+            
+            // Toggle button
+            const toggleButton = scriptElement.querySelector('.rpghq-userscript-toggle');
+            if (toggleButton) {
+                toggleButton.addEventListener('click', () => {
+                    const enabled = toggleButton.dataset.enabled === 'true';
+                    const installedScripts = Storage.getInstalledScripts();
+                    
+                    if (installedScripts[script.id]) {
+                        installedScripts[script.id].enabled = !enabled;
+                        Storage.saveData({ installedScripts });
+                        this.loadScripts(); // Reload the script list
+                    }
+                });
+            }
+            
+            // Settings toggle button
+            const settingsToggleButton = scriptElement.querySelector('.rpghq-userscript-settings-toggle');
+            if (settingsToggleButton) {
+                settingsToggleButton.addEventListener('click', () => {
+                    const settingsElement = document.getElementById(`rpghq-userscript-settings-${script.id}`);
+                    if (settingsElement) {
+                        const isVisible = settingsElement.style.display === 'block';
+                        settingsElement.style.display = isVisible ? 'none' : 'block';
+                        settingsToggleButton.textContent = isVisible ? 'Settings' : 'Hide Settings';
+                    }
+                });
+            }
+            
+            // Save settings button
+            const saveSettingsButton = scriptElement.querySelector('.rpghq-userscript-save-settings');
+            if (saveSettingsButton) {
+                saveSettingsButton.addEventListener('click', () => {
+                    const settings = {};
+                    const settingInputs = scriptElement.querySelectorAll('[data-setting-id]');
+                    
+                    settingInputs.forEach(input => {
+                        const settingId = input.dataset.settingId;
+                        const settingType = input.dataset.settingType;
+                        
+                        if (settingType === 'boolean') {
+                            settings[settingId] = input.checked;
+                        } else if (settingType === 'number') {
+                            settings[settingId] = parseFloat(input.value);
+                        } else {
+                            settings[settingId] = input.value;
+                        }
+                    });
+                    
+                    Storage.saveScriptSettings(script.id, settings);
+                    alert('Settings saved!');
+                });
+            }
+        }
+    };
+    
+    // ===== Main Initialization =====
+    function init() {
+        // Add styles
+        UI.addStyles();
+        
+        // Add Userscripts button to dropdown menu
+        UI.addUserscriptsButton();
+        
+        // Execute installed scripts
+        ScriptManager.executeScripts();
+        
+        // Register menu command
+        GM_registerMenuCommand('RPGHQ Userscript Manager', () => {
+            UI.showUserscriptsModal();
+        });
+    }
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
