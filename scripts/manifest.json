@@ -69,18 +69,6 @@
       ]
     },
     {
-      "id": "ignore-users",
-      "name": "Ignore Users",
-      "version": "1.0.0",
-      "description": "Actually iggy users",
-      "filename": "ignore-users.js",
-      "matches": ["https://rpghq.org/forums/*"],
-      "executionPhase": "document-start",
-      "category": "Iggy Stuff",
-      "image": "https://f.rpghq.org/v4iqrprFCWq0.png?n=pasted-file.png",
-      "settings": []
-    },
-    {
       "id": "pin-threads",
       "name": "Pin Threads",
       "version": "1.0.0",
