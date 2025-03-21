@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
 // @namespace    https://rpghq.org/
-// @version      2.2.0
-// @description  A centralized manager for RPGHQ userscripts with a compact, no‑animation popup. Quickly scroll your small list of scripts, toggle them from the left, and click “Settings” to see settings for that extension—all in one popup.
+// @version      2.3.2
+// @description  A centralized manager for RPGHQ userscripts with a larger popup that blocks background scrolling, toggle buttons with Font Awesome icons, and displays the stored version along with update info. Script code is stored by ID and the storage data is saved in a compact format.
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
 // @run-at       document-start
@@ -61,9 +61,10 @@
             return data ? JSON.parse(data) : null;
         },
 
+        // Save storage in compact format (minified JSON)
         saveRawData: function(data) {
             data.lastUpdate = Date.now();
-            GM_setValue(STORAGE_KEY, JSON.stringify(data, null, 2));
+            GM_setValue(STORAGE_KEY, JSON.stringify(data));
         },
 
         getData: function() {
@@ -76,21 +77,21 @@
             this.saveRawData(data);
         },
 
-        getScriptCodeKey: function(scriptId, scriptName) {
-            const key = scriptName ? scriptName.replace(/[^a-zA-Z0-9_]/g, '_') : scriptId;
-            return `script_${key}`;
+        // Always use the script ID for storing code
+        getScriptCodeKey: function(scriptId) {
+            return `script_${scriptId}`;
         },
 
-        saveScriptCode: function(scriptId, scriptName, code) {
-            GM_setValue(this.getScriptCodeKey(scriptId, scriptName), code);
+        saveScriptCode: function(scriptId, code) {
+            GM_setValue(this.getScriptCodeKey(scriptId), code);
         },
 
-        getScriptCode: function(scriptId, scriptName) {
-            return GM_getValue(this.getScriptCodeKey(scriptId, scriptName), '');
+        getScriptCode: function(scriptId) {
+            return GM_getValue(this.getScriptCodeKey(scriptId), '');
         },
 
-        deleteScriptCode: function(scriptId, scriptName) {
-            GM_deleteValue(this.getScriptCodeKey(scriptId, scriptName));
+        deleteScriptCode: function(scriptId) {
+            GM_deleteValue(this.getScriptCodeKey(scriptId));
         },
 
         getInstalledScripts: function() {
@@ -102,9 +103,9 @@
             if (!data.installedScripts) {
                 data.installedScripts = {};
             }
-            const scriptName = scriptData.name || scriptId;
+            // Save the script code (if present) by ID only
             if (scriptData.code) {
-                this.saveScriptCode(scriptId, scriptName, scriptData.code);
+                this.saveScriptCode(scriptId, scriptData.code);
                 delete scriptData.code;
             }
             if (!data.installedScripts[scriptId]) {
@@ -113,7 +114,7 @@
                 scriptData.installedAt = data.installedScripts[scriptId].installedAt;
                 scriptData.updatedAt = Date.now();
             }
-            scriptData.name = scriptName;
+            // Preserve the script's name from the manifest for display purposes
             data.installedScripts[scriptId] = scriptData;
             this.saveData(data);
         },
@@ -121,9 +122,8 @@
         removeInstalledScript: function(scriptId) {
             const data = this.getData();
             if (data.installedScripts && data.installedScripts[scriptId]) {
-                const scriptName = data.installedScripts[scriptId].name || scriptId;
                 delete data.installedScripts[scriptId];
-                this.deleteScriptCode(scriptId, scriptName);
+                this.deleteScriptCode(scriptId);
                 this.saveData(data);
                 return true;
             }
@@ -350,7 +350,7 @@
         executeScript: function(scriptId, scriptData) {
             try {
                 const scriptName = scriptData.name || scriptId;
-                const code = Storage.getScriptCode(scriptId, scriptName);
+                const code = Storage.getScriptCode(scriptId);
                 if (!code) {
                     console.error(`Script code not found for ${scriptName} (${scriptId})`);
                     return;
@@ -382,7 +382,6 @@
 
     // ===== UI Components =====
     const UI = {
-        // Add simplified, compact styles without animations
         addStyles: function() {
             GM_addStyle(`
                 :root {
@@ -397,8 +396,8 @@
                     --rpghq-warning: #FFC107;
                     --rpghq-danger: #F44336;
                 }
-
-                /* Compact modal without animations */
+                
+                /* Bigger modal that blocks background scrolling */
                 .rpghq-userscript-modal {
                     display: none;
                     position: fixed;
@@ -409,13 +408,13 @@
                     height: 100%;
                     background-color: rgba(0, 0, 0, 0.8);
                 }
-
+                
                 .rpghq-userscript-modal-content {
                     background-color: var(--rpghq-bg-dark);
                     margin: 5% auto;
                     padding: 10px;
                     border: 1px solid var(--rpghq-border);
-                    width: 350px;
+                    width: 600px;
                     max-height: 80vh;
                     border-radius: 4px;
                     color: var(--rpghq-text-primary);
@@ -423,46 +422,43 @@
                     flex-direction: column;
                     overflow: auto;
                 }
-
+                
                 .rpghq-userscript-header {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
                     margin-bottom: 8px;
                 }
-
+                
                 .rpghq-userscript-title {
                     margin: 0;
-                    font-size: 1.2em;
-                    font-weight: normal;
+                    font-size: 1.4em;
                 }
-
-                /* Back button appears in settings view */
+                
                 .rpghq-userscript-back-button {
                     background: none;
                     border: none;
                     color: var(--rpghq-primary);
                     font-size: 1em;
                     cursor: pointer;
+                    display: none;
                 }
-
-                /* Close button */
+                
                 .rpghq-userscript-close {
-                    font-size: 1.2em;
+                    font-size: 1.4em;
                     cursor: pointer;
                 }
-
-                /* List view styles */
+                
                 .rpghq-userscript-list-container {
                     overflow-y: auto;
                 }
-
+                
                 .rpghq-userscript-list {
                     list-style: none;
                     padding: 0;
                     margin: 0;
                 }
-
+                
                 .rpghq-userscript-item {
                     display: flex;
                     align-items: center;
@@ -473,22 +469,28 @@
                     border-radius: 4px;
                     font-size: 0.9em;
                 }
-
+                
                 .rpghq-userscript-item-info {
                     flex: 1;
                     padding-left: 6px;
                 }
-
+                
                 .rpghq-userscript-item-title {
                     margin: 0;
                     font-weight: bold;
                 }
-
+                
                 .rpghq-userscript-item-version {
                     font-size: 0.8em;
                     color: var(--rpghq-text-secondary);
                 }
-
+                
+                .rpghq-userscript-status-update {
+                    color: var(--rpghq-warning);
+                    font-size: 0.8em;
+                    margin-left: 4px;
+                }
+                
                 .rpghq-userscript-item-actions button {
                     margin-left: 4px;
                     font-size: 0.8em;
@@ -497,39 +499,32 @@
                     border: none;
                     border-radius: 3px;
                 }
-
+                
                 .rpghq-userscript-btn-primary {
                     background-color: var(--rpghq-primary);
                     color: #fff;
                 }
-
+                
                 .rpghq-userscript-btn-danger {
                     background-color: var(--rpghq-danger);
                     color: #fff;
                 }
-
+                
                 .rpghq-userscript-btn-warning {
                     background-color: var(--rpghq-warning);
                     color: #fff;
                 }
-
-                /* Toggle button styled as a small switch */
+                
+                /* Toggle button using Font Awesome icons */
                 .rpghq-userscript-toggle {
-                    width: 30px;
-                    height: 20px;
-                    border-radius: 10px;
-                    background-color: #555;
                     border: none;
+                    background: none;
                     cursor: pointer;
-                }
-
-                .rpghq-userscript-toggle.on {
-                    background-color: var(--rpghq-success);
+                    padding: 0;
                 }
             `);
         },
 
-        // Create the single modal with a header and content area (list or settings)
         showUserscriptsModal: function() {
             let modal = document.getElementById('rpghq-userscript-modal');
             if (!modal) {
@@ -539,7 +534,7 @@
                 modal.innerHTML = `
                     <div class="rpghq-userscript-modal-content">
                         <div class="rpghq-userscript-header">
-                            <button id="rpghq-back-button" class="rpghq-userscript-back-button" style="display:none;">←</button>
+                            <button id="rpghq-back-button" class="rpghq-userscript-back-button">←</button>
                             <h2 class="rpghq-userscript-title">Userscripts</h2>
                             <span class="rpghq-userscript-close">&times;</span>
                         </div>
@@ -548,11 +543,11 @@
                 `;
                 document.body.appendChild(modal);
                 modal.querySelector('.rpghq-userscript-close').addEventListener('click', () => {
-                    modal.style.display = 'none';
+                    UI.hideModal();
                 });
                 window.addEventListener('click', (e) => {
                     if (e.target === modal) {
-                        modal.style.display = 'none';
+                        UI.hideModal();
                     }
                 });
                 document.getElementById('rpghq-back-button').addEventListener('click', () => {
@@ -560,10 +555,18 @@
                 });
             }
             modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
             UI.showListView();
         },
 
-        // Render the list view (quick scrolling list with toggle buttons on the left)
+        hideModal: function() {
+            const modal = document.getElementById('rpghq-userscript-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = '';
+            }
+        },
+
         showListView: function() {
             const content = document.getElementById('rpghq-userscript-content');
             const backButton = document.getElementById('rpghq-back-button');
@@ -582,11 +585,19 @@
                             const isInstalled = !!installedScripts[script.id];
                             const needsUpdate = isInstalled && ScriptManager.needsUpdate(script.id);
                             const scriptData = isInstalled ? installedScripts[script.id] : null;
-                            // Build a compact list item:
+                            // Use stored name and version if installed; otherwise use manifest values.
+                            const displayName = isInstalled ? scriptData.name : script.name;
+                            const displayVersion = isInstalled ? scriptData.version : script.version;
+                            
                             html += `<li class="rpghq-userscript-item" data-script-id="${script.id}">
-                                <button class="rpghq-userscript-toggle ${isInstalled && scriptData.enabled ? 'on' : ''}" data-script-id="${script.id}"></button>
+                                <button class="rpghq-userscript-toggle" data-script-id="${script.id}">
+                                    <i class="${isInstalled && scriptData.enabled ? 'icon fa-toggle-on fa-fw' : 'icon fa-toggle-off fa-fw'}"></i>
+                                </button>
                                 <div class="rpghq-userscript-item-info">
-                                    <p class="rpghq-userscript-item-title">${script.name} <span class="rpghq-userscript-item-version">v${script.version}</span></p>
+                                    <p class="rpghq-userscript-item-title">
+                                        ${displayName} <span class="rpghq-userscript-item-version">v${displayVersion}</span>
+                                        ${needsUpdate ? `<span class="rpghq-userscript-status-update">(Update: v${script.version} available)</span>` : ''}
+                                    </p>
                                     <p class="rpghq-userscript-item-author">By ${script.author}</p>
                                 </div>
                                 <div class="rpghq-userscript-item-actions">`;
@@ -612,9 +623,7 @@
                 });
         },
 
-        // Add event listeners for buttons in list view
         addListEventListeners: function() {
-            // Install button
             document.querySelectorAll('.rpghq-userscript-install').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const scriptId = this.dataset.scriptId;
@@ -629,7 +638,6 @@
                         });
                 });
             });
-            // Update button
             document.querySelectorAll('.rpghq-userscript-update').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const scriptId = this.dataset.scriptId;
@@ -644,7 +652,6 @@
                         });
                 });
             });
-            // Uninstall button
             document.querySelectorAll('.rpghq-userscript-uninstall').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const scriptId = this.dataset.scriptId;
@@ -655,7 +662,6 @@
                     }
                 });
             });
-            // Toggle button (enable/disable)
             document.querySelectorAll('.rpghq-userscript-toggle').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const scriptId = this.dataset.scriptId;
@@ -667,7 +673,6 @@
                     }
                 });
             });
-            // Settings button
             document.querySelectorAll('.rpghq-userscript-settings').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const scriptId = this.dataset.scriptId;
@@ -679,7 +684,6 @@
             });
         },
 
-        // Show settings view for a given script (within the same popup)
         showSettingsView: function(script) {
             const content = document.getElementById('rpghq-userscript-content');
             document.getElementById('rpghq-back-button').style.display = 'inline-block';
@@ -747,7 +751,6 @@
         GM_registerMenuCommand('RPGHQ Userscript Manager', () => {
             UI.showUserscriptsModal();
         });
-        // Add the Userscripts button to the profile dropdown when DOM is ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 addUserscriptsButtonToDropdown();
@@ -757,7 +760,6 @@
         }
     }
 
-    // Add a button into the dropdown menu
     function addUserscriptsButtonToDropdown() {
         const profileDropdown = document.querySelector('.header-profile.dropdown-container .dropdown-contents[role="menu"]');
         if (!profileDropdown) return;
@@ -778,6 +780,6 @@
             UI.showUserscriptsModal();
         });
     }
-
+    
     init();
 })();
