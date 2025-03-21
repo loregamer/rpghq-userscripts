@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
 // @namespace    https://rpghq.org/
-// @version      1.0.0
-// @description  A centralized manager for RPGHQ userscripts
+// @version      2.0.0
+// @description  A modern, centralized manager for RPGHQ userscripts
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
+// @run-at       document-start
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_deleteValue
@@ -23,6 +24,15 @@
     const MANIFEST_URL = 'https://raw.githubusercontent.com/loregamer/rpghq-userscripts/userscript-manager/scripts/manifest.json';
     const SCRIPT_BASE_URL = 'https://raw.githubusercontent.com/loregamer/rpghq-userscripts/userscript-manager/scripts/';
     const STORAGE_KEY = 'rpghq_userscript_manager';
+    
+    // ===== Execution Phases =====
+    const ExecutionPhase = {
+        DOCUMENT_START: 'document-start',     // Before DOM parsing begins
+        DOCUMENT_READY: 'document-ready',     // Basic DOM available but before resources loaded
+        DOCUMENT_LOADED: 'document-loaded',   // After page fully loaded
+        DOCUMENT_IDLE: 'document-idle',       // After a short delay when page is idle
+        CUSTOM_EVENT: 'custom-event'          // Execute on custom events
+    };
     
     // ===== Storage Management =====
     const Storage = {
@@ -187,6 +197,104 @@
         }
     };
     
+    // ===== Execution Framework =====
+    const ExecutionFramework = {
+        // Queue for each execution phase
+        queues: {
+            [ExecutionPhase.DOCUMENT_START]: [],
+            [ExecutionPhase.DOCUMENT_READY]: [],
+            [ExecutionPhase.DOCUMENT_LOADED]: [],
+            [ExecutionPhase.DOCUMENT_IDLE]: [],
+            [ExecutionPhase.CUSTOM_EVENT]: {}
+        },
+        
+        // Register a script for execution at a specific phase
+        register: function(phase, scriptId, scriptData, callback) {
+            if (phase === ExecutionPhase.CUSTOM_EVENT) {
+                // For custom events, we need an event name
+                if (!scriptData.eventName) {
+                    console.error(`Cannot register script ${scriptId} for custom event without an event name`);
+                    return false;
+                }
+                
+                // Initialize the event queue if it doesn't exist
+                if (!this.queues[ExecutionPhase.CUSTOM_EVENT][scriptData.eventName]) {
+                    this.queues[ExecutionPhase.CUSTOM_EVENT][scriptData.eventName] = [];
+                }
+                
+                this.queues[ExecutionPhase.CUSTOM_EVENT][scriptData.eventName].push({
+                    scriptId,
+                    scriptData,
+                    callback
+                });
+            } else if (this.queues[phase]) {
+                this.queues[phase].push({
+                    scriptId,
+                    scriptData,
+                    callback
+                });
+            } else {
+                console.error(`Unknown execution phase: ${phase}`);
+                return false;
+            }
+            
+            return true;
+        },
+        
+        // Execute all scripts for a specific phase
+        execute: function(phase, eventName = null) {
+            if (phase === ExecutionPhase.CUSTOM_EVENT) {
+                if (!eventName || !this.queues[ExecutionPhase.CUSTOM_EVENT][eventName]) {
+                    return;
+                }
+                
+                this.queues[ExecutionPhase.CUSTOM_EVENT][eventName].forEach(item => {
+                    try {
+                        item.callback(item.scriptId, item.scriptData);
+                    } catch (e) {
+                        console.error(`Error executing script ${item.scriptId} for event ${eventName}:`, e);
+                    }
+                });
+            } else if (this.queues[phase]) {
+                this.queues[phase].forEach(item => {
+                    try {
+                        item.callback(item.scriptId, item.scriptData);
+                    } catch (e) {
+                        console.error(`Error executing script ${item.scriptId} for phase ${phase}:`, e);
+                    }
+                });
+            }
+        },
+        
+        // Trigger a custom event
+        triggerEvent: function(eventName, data = {}) {
+            this.execute(ExecutionPhase.CUSTOM_EVENT, eventName, data);
+        },
+        
+        // Initialize the execution framework
+        init: function() {
+            // Set up event listeners for different phases
+            
+            // Document ready (DOMContentLoaded)
+            document.addEventListener('DOMContentLoaded', () => {
+                this.execute(ExecutionPhase.DOCUMENT_READY);
+            });
+            
+            // Document loaded (load)
+            window.addEventListener('load', () => {
+                this.execute(ExecutionPhase.DOCUMENT_LOADED);
+                
+                // Execute idle phase after a short delay
+                setTimeout(() => {
+                    this.execute(ExecutionPhase.DOCUMENT_IDLE);
+                }, 500);
+            });
+            
+            // Execute document-start phase immediately
+            this.execute(ExecutionPhase.DOCUMENT_START);
+        }
+    };
+    
     // ===== Script Management =====
     const ScriptManager = {
         manifest: null,
@@ -343,22 +451,37 @@
                     return;
                 }
                 
-                // Create a global settings object for the script to access
-                // Define scriptSettings in the global scope to ensure it's available
-                const scriptCode = `
-                    var scriptSettings = ${JSON.stringify(scriptData.settings || {})};
-                    ${code}
-                `;
+                // Determine execution phase from script metadata or default to DOCUMENT_READY
+                const executionPhase = scriptData.executionPhase || ExecutionPhase.DOCUMENT_READY;
                 
-                // Create a script element and execute it
-                const scriptElement = document.createElement('script');
-                scriptElement.textContent = scriptCode;
-                document.head.appendChild(scriptElement);
-                document.head.removeChild(scriptElement);
+                // Create the execution function
+                const executeFunction = (id, data) => {
+                    try {
+                        // Create a global settings object for the script to access
+                        const scriptCode = `
+                            var scriptSettings = ${JSON.stringify(data.settings || {})};
+                            ${code}
+                        `;
+                        
+                        // Create a script element and execute it
+                        const scriptElement = document.createElement('script');
+                        scriptElement.textContent = scriptCode;
+                        document.head.appendChild(scriptElement);
+                        document.head.removeChild(scriptElement);
+                        
+                        console.log(`Executed script: ${scriptName} v${data.version} at phase ${executionPhase}`);
+                    } catch (e) {
+                        console.error(`Error executing script ${data.name || id}:`, e);
+                    }
+                };
                 
-                console.log(`Executed script: ${scriptName} v${scriptData.version}`);
+                // Register the script with the execution framework
+                ExecutionFramework.register(executionPhase, scriptId, scriptData, executeFunction);
+                
+                return true;
             } catch (e) {
-                console.error(`Error executing script ${scriptData.name || scriptId}:`, e);
+                console.error(`Error registering script ${scriptData.name || scriptId}:`, e);
+                return false;
             }
         }
     };
@@ -368,6 +491,24 @@
         // Add styles to the page
         addStyles: function() {
             GM_addStyle(`
+                /* Variables */
+                :root {
+                    --rpghq-primary: #2196F3;
+                    --rpghq-primary-dark: #1976D2;
+                    --rpghq-primary-light: #BBDEFB;
+                    --rpghq-accent: #FF4081;
+                    --rpghq-text-primary: #FFFFFF;
+                    --rpghq-text-secondary: #B0BEC5;
+                    --rpghq-bg-dark: #1E1E1E;
+                    --rpghq-bg-card: #2D2D2D;
+                    --rpghq-border: #444444;
+                    --rpghq-success: #4CAF50;
+                    --rpghq-warning: #FFC107;
+                    --rpghq-danger: #F44336;
+                    --rpghq-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+                    --rpghq-transition: all 0.3s ease;
+                }
+                
                 /* Modal styles */
                 .rpghq-userscript-modal {
                     display: none;
@@ -377,46 +518,105 @@
                     top: 0;
                     width: 100%;
                     height: 100%;
-                    overflow: auto;
-                    background-color: rgba(0, 0, 0, 0.7);
+                    overflow: hidden;
+                    background-color: rgba(0, 0, 0, 0.8);
+                    backdrop-filter: blur(3px);
+                    transition: var(--rpghq-transition);
                 }
                 
                 .rpghq-userscript-modal-content {
-                    background-color: #222;
-                    margin: 5% auto;
-                    padding: 20px;
-                    border: 1px solid #444;
-                    width: 80%;
-                    max-width: 800px;
-                    border-radius: 3px;
-                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-                    color: #eee;
+                    background-color: var(--rpghq-bg-dark);
+                    margin: 2% auto;
+                    padding: 25px;
+                    border: 1px solid var(--rpghq-border);
+                    width: 85%;
+                    max-width: 900px;
+                    max-height: 90vh;
+                    border-radius: 8px;
+                    box-shadow: var(--rpghq-shadow);
+                    color: var(--rpghq-text-primary);
+                    display: flex;
+                    flex-direction: column;
+                    animation: modalFadeIn 0.3s ease;
+                    overflow: hidden;
+                }
+                
+                @keyframes modalFadeIn {
+                    from { opacity: 0; transform: translateY(-20px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
                 
                 .rpghq-userscript-close {
-                    color: #999;
+                    color: var(--rpghq-text-secondary);
                     float: right;
                     font-size: 28px;
                     font-weight: bold;
                     cursor: pointer;
+                    transition: var(--rpghq-transition);
                 }
                 
                 .rpghq-userscript-close:hover,
                 .rpghq-userscript-close:focus {
-                    color: #fff;
+                    color: var(--rpghq-text-primary);
                     text-decoration: none;
+                    transform: scale(1.1);
                 }
                 
                 .rpghq-userscript-header {
-                    padding-bottom: 10px;
+                    padding-bottom: 15px;
                     margin-bottom: 20px;
-                    border-bottom: 1px solid #444;
+                    border-bottom: 1px solid var(--rpghq-border);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
                 }
                 
                 .rpghq-userscript-title {
                     margin: 0;
-                    font-size: 1.5em;
-                    color: #fff;
+                    font-size: 1.8em;
+                    color: var(--rpghq-text-primary);
+                    font-weight: 300;
+                }
+                
+                /* Script list container */
+                .rpghq-userscript-modal-content {
+                    display: flex;
+                    flex-direction: column;
+                }
+                
+                #rpghq-userscript-loading {
+                    padding: 20px;
+                    text-align: center;
+                    color: var(--rpghq-text-secondary);
+                    font-size: 1.1em;
+                }
+                
+                /* Scrollable list container */
+                .rpghq-userscript-list-container {
+                    flex: 1;
+                    overflow-y: auto;
+                    max-height: calc(90vh - 120px);
+                    margin: 0 -10px;
+                    padding: 0 10px;
+                    scrollbar-width: thin;
+                    scrollbar-color: var(--rpghq-border) transparent;
+                }
+                
+                .rpghq-userscript-list-container::-webkit-scrollbar {
+                    width: 8px;
+                }
+                
+                .rpghq-userscript-list-container::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                
+                .rpghq-userscript-list-container::-webkit-scrollbar-thumb {
+                    background-color: var(--rpghq-border);
+                    border-radius: 4px;
+                }
+                
+                .rpghq-userscript-list-container::-webkit-scrollbar-thumb:hover {
+                    background-color: #555;
                 }
                 
                 /* Script list styles */
@@ -427,41 +627,53 @@
                 }
                 
                 .rpghq-userscript-item {
-                    padding: 15px;
-                    margin-bottom: 10px;
-                    background-color: #333;
-                    border: 1px solid #444;
-                    border-radius: 3px;
+                    padding: 18px;
+                    margin-bottom: 15px;
+                    background-color: var(--rpghq-bg-card);
+                    border: 1px solid var(--rpghq-border);
+                    border-radius: 8px;
+                    box-shadow: var(--rpghq-shadow);
+                    transition: var(--rpghq-transition);
+                }
+                
+                .rpghq-userscript-item:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
                 }
                 
                 .rpghq-userscript-item-header {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 10px;
+                    margin-bottom: 12px;
                 }
                 
                 .rpghq-userscript-item-title {
-                    font-weight: bold;
-                    font-size: 1.1em;
+                    font-weight: 500;
+                    font-size: 1.2em;
                     margin: 0;
-                    color: #fff;
+                    color: var(--rpghq-text-primary);
+                    display: flex;
+                    align-items: center;
                 }
                 
                 .rpghq-userscript-item-version {
-                    font-size: 0.9em;
-                    color: #aaa;
+                    font-size: 0.85em;
+                    color: var(--rpghq-text-secondary);
                     margin-left: 10px;
+                    opacity: 0.8;
                 }
                 
                 .rpghq-userscript-item-description {
-                    margin: 10px 0;
-                    color: #ccc;
+                    margin: 12px 0;
+                    color: var(--rpghq-text-secondary);
+                    line-height: 1.5;
                 }
                 
                 .rpghq-userscript-item-author {
                     font-size: 0.9em;
-                    color: #aaa;
+                    color: var(--rpghq-text-secondary);
+                    opacity: 0.8;
                 }
                 
                 .rpghq-userscript-item-actions {
@@ -470,93 +682,161 @@
                 
                 /* Button styles */
                 .rpghq-userscript-btn {
-                    display: inline-block;
-                    padding: 6px 12px;
-                    margin-right: 5px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 8px 16px;
+                    margin-right: 8px;
+                    margin-bottom: 8px;
                     font-size: 14px;
-                    font-weight: 400;
-                    line-height: 1.42857143;
+                    font-weight: 500;
+                    line-height: 1.4;
                     text-align: center;
                     white-space: nowrap;
                     vertical-align: middle;
                     cursor: pointer;
-                    border: 1px solid transparent;
-                    border-radius: 4px;
+                    border: none;
+                    border-radius: 6px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                    transition: all 0.2s ease;
+                    position: relative;
+                    overflow: hidden;
+                }
+                
+                .rpghq-userscript-btn:after {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 5px;
+                    height: 5px;
+                    background: rgba(255, 255, 255, 0.5);
+                    opacity: 0;
+                    border-radius: 100%;
+                    transform: scale(1, 1) translate(-50%);
+                    transform-origin: 50% 50%;
+                }
+                
+                .rpghq-userscript-btn:focus:not(:active)::after {
+                    animation: ripple 1s ease-out;
+                }
+                
+                @keyframes ripple {
+                    0% {
+                        transform: scale(0, 0);
+                        opacity: 0.5;
+                    }
+                    20% {
+                        transform: scale(25, 25);
+                        opacity: 0.3;
+                    }
+                    100% {
+                        opacity: 0;
+                        transform: scale(40, 40);
+                    }
+                }
+                
+                .rpghq-userscript-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+                }
+                
+                .rpghq-userscript-btn:active {
+                    transform: translateY(1px);
+                    box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
                 }
                 
                 .rpghq-userscript-btn-primary {
                     color: #fff;
-                    background-color: #337ab7;
-                    border-color: #2e6da4;
+                    background-color: var(--rpghq-primary);
                 }
                 
                 .rpghq-userscript-btn-primary:hover {
-                    background-color: #286090;
-                    border-color: #204d74;
+                    background-color: var(--rpghq-primary-dark);
                 }
                 
                 .rpghq-userscript-btn-danger {
                     color: #fff;
-                    background-color: #d9534f;
-                    border-color: #d43f3a;
+                    background-color: var(--rpghq-danger);
                 }
                 
                 .rpghq-userscript-btn-danger:hover {
-                    background-color: #c9302c;
-                    border-color: #ac2925;
+                    background-color: #d32f2f;
                 }
                 
                 .rpghq-userscript-btn-success {
                     color: #fff;
-                    background-color: #5cb85c;
-                    border-color: #4cae4c;
+                    background-color: var(--rpghq-success);
                 }
                 
                 .rpghq-userscript-btn-success:hover {
-                    background-color: #449d44;
-                    border-color: #398439;
+                    background-color: #388e3c;
                 }
                 
                 .rpghq-userscript-btn-warning {
                     color: #fff;
-                    background-color: #f0ad4e;
-                    border-color: #eea236;
+                    background-color: var(--rpghq-warning);
                 }
                 
                 .rpghq-userscript-btn-warning:hover {
-                    background-color: #ec971f;
-                    border-color: #d58512;
+                    background-color: #ffa000;
                 }
                 
                 /* Settings styles */
                 .rpghq-userscript-settings {
-                    margin-top: 15px;
-                    padding-top: 15px;
-                    border-top: 1px solid #444;
+                    margin-top: 18px;
+                    padding: 18px;
+                    border-top: 1px solid var(--rpghq-border);
+                    background-color: rgba(0, 0, 0, 0.2);
+                    border-radius: 6px;
                     display: none;
+                    animation: settingsFadeIn 0.3s ease;
+                }
+                
+                @keyframes settingsFadeIn {
+                    from { opacity: 0; transform: translateY(-10px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
                 
                 .rpghq-userscript-settings-title {
-                    font-weight: bold;
-                    margin-bottom: 10px;
-                    color: #fff;
+                    font-weight: 500;
+                    font-size: 1.1em;
+                    margin-bottom: 15px;
+                    color: var(--rpghq-text-primary);
+                    display: flex;
+                    align-items: center;
+                }
+                
+                .rpghq-userscript-settings-title:before {
+                    content: "⚙️";
+                    margin-right: 8px;
+                    font-size: 1.1em;
                 }
                 
                 .rpghq-userscript-setting {
-                    margin-bottom: 10px;
+                    margin-bottom: 16px;
+                    padding-bottom: 16px;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                }
+                
+                .rpghq-userscript-setting:last-child {
+                    border-bottom: none;
+                    margin-bottom: 0;
+                    padding-bottom: 0;
                 }
                 
                 .rpghq-userscript-setting label {
                     display: block;
-                    margin-bottom: 5px;
-                    font-weight: bold;
-                    color: #ddd;
+                    margin-bottom: 6px;
+                    font-weight: 500;
+                    color: var(--rpghq-text-primary);
                 }
                 
                 .rpghq-userscript-setting-description {
                     font-size: 0.9em;
-                    color: #aaa;
-                    margin-bottom: 5px;
+                    color: var(--rpghq-text-secondary);
+                    margin-bottom: 10px;
+                    line-height: 1.4;
                 }
                 
                 /* Toggle switch */
@@ -696,12 +976,14 @@
                 modal.className = 'rpghq-userscript-modal';
                 modal.innerHTML = `
                     <div class="rpghq-userscript-modal-content">
-                        <span class="rpghq-userscript-close">&times;</span>
                         <div class="rpghq-userscript-header">
                             <h2 class="rpghq-userscript-title">RPGHQ Userscript Manager</h2>
+                            <span class="rpghq-userscript-close">&times;</span>
                         </div>
                         <div id="rpghq-userscript-loading">Loading scripts...</div>
-                        <ul id="rpghq-userscript-list" class="rpghq-userscript-list"></ul>
+                        <div class="rpghq-userscript-list-container">
+                            <ul id="rpghq-userscript-list" class="rpghq-userscript-list"></ul>
+                        </div>
                     </div>
                 `;
                 document.body.appendChild(modal);
@@ -717,9 +999,16 @@
                         modal.style.display = 'none';
                     }
                 });
+                
+                // Close on Escape key
+                window.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && modal.style.display === 'block') {
+                        modal.style.display = 'none';
+                    }
+                });
             }
             
-            // Show the modal
+            // Show the modal with animation
             modal.style.display = 'block';
             
             // Load scripts
@@ -995,8 +1284,8 @@
         // Add styles
         UI.addStyles();
         
-        // Add Userscripts button to dropdown menu
-        UI.addUserscriptsButton();
+        // Initialize the execution framework
+        ExecutionFramework.init();
         
         // Execute installed scripts
         ScriptManager.executeScripts();
@@ -1005,12 +1294,17 @@
         GM_registerMenuCommand('RPGHQ Userscript Manager', () => {
             UI.showUserscriptsModal();
         });
+        
+        // Add Userscripts button to dropdown menu when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                UI.addUserscriptsButton();
+            });
+        } else {
+            UI.addUserscriptsButton();
+        }
     }
     
-    // Initialize when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    // Initialize immediately since we're running at document-start
+    init();
 })();
