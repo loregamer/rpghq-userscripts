@@ -386,15 +386,15 @@
         const executeFunction = (id, data) => {
           try {
             const scriptCode = `
-                            var scriptSettings = ${JSON.stringify(
-                              data.settings || {}
-                            )};
-                            ${code}
+                            (function() {
+                                var scriptSettings = ${JSON.stringify(
+                                  data.settings || {}
+                                )};
+                                ${code}
+                            })();
                         `;
-            const scriptElement = document.createElement("script");
-            scriptElement.textContent = scriptCode;
-            document.head.appendChild(scriptElement);
-            document.head.removeChild(scriptElement);
+            // Use eval to execute the script in the correct scope
+            eval(scriptCode);
             console.log(
               `Executed script: ${scriptName} v${data.version} at phase ${executionPhase}`
             );
