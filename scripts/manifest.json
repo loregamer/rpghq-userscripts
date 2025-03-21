@@ -1,10 +1,46 @@
 {
   "scripts": [
     {
+      "id": "notifications",
+      "name": "Better Notifications",
+      "version": "1.0.0",
+      "description": "Adds reaction smileys to notifications and makes them formatted better",
+      "filename": "notifications.js",
+      "matches": ["https://rpghq.org/forums/*"],
+      "executionPhase": "document-ready",
+      "category": "Aesthetic",
+      "image": "https://f.rpghq.org/rso7uNB6S4H9.png",
+      "settings": []
+    },
+    {
+      "id": "bbcode",
+      "name": "BBCode Highlighter",
+      "version": "1.0.0",
+      "description": "Adds reaction smileys to notifications and makes them formatted better",
+      "filename": "bbcode.js",
+      "matches": ["https://rpghq.org/forums/*"],
+      "executionPhase": "document-ready",
+      "category": "Aesthetic",
+      "image": "https://f.rpghq.org/rso7uNB6S4H9.png",
+      "settings": []
+    },
+    {
       "id": "ignore-threads",
       "name": "Ignore Threads",
       "version": "1.0.0",
       "description": "Ignore threads",
+      "filename": "ignore-threads.js",
+      "matches": ["https://rpghq.org/forums/*"],
+      "executionPhase": "document-start",
+      "category": "Iggy Stuff",
+      "image": "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+      "settings": []
+    },
+    {
+      "id": "ignore-users",
+      "name": "Ignore Users",
+      "version": "1.0.0",
+      "description": "(Actually) ignore users",
       "filename": "ignore-threads.js",
       "matches": ["https://rpghq.org/forums/*"],
       "executionPhase": "document-start",
@@ -42,6 +78,42 @@
       "executionPhase": "document-start",
       "category": "Iggy Stuff",
       "image": "https://f.rpghq.org/v4iqrprFCWq0.png?n=pasted-file.png",
+      "settings": []
+    },
+    {
+      "id": "pin-threads",
+      "name": "Pin Threads",
+      "version": "1.0.0",
+      "description": "Adds a pin button to the forum",
+      "filename": "pin-threads.js",
+      "matches": ["https://rpghq.org/forums/*"],
+      "executionPhase": "document-ready",
+      "category": "Iggy Stuff",
+      "image": "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+      "settings": []
+    },
+    {
+      "id": "member-search",
+      "name": "Member Search Button",
+      "version": "1.0.0",
+      "description": "Adds a member search button to the forum",
+      "filename": "member-search.js",
+      "matches": ["https://rpghq.org/forums/*"],
+      "executionPhase": "document-ready",
+      "category": "Iggy Stuff",
+      "image": "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+      "settings": []
+    },
+    {
+      "id": "random-topic",
+      "name": "Random Topic Button",
+      "version": "1.0.0",
+      "description": "Adds a random topic button to the forum",
+      "filename": "random-topic.js",
+      "matches": ["https://rpghq.org/forums/*"],
+      "executionPhase": "document-ready",
+      "category": "Iggy Stuff",
+      "image": "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
       "settings": []
     }
   ],
