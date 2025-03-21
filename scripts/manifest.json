@@ -1,0 +1,22 @@
+{
+  "scripts": [
+    {
+      "id": "number-commas",
+      "name": "RPGHQ - Thousands Comma Formatter",
+      "version": "2.1.2",
+      "description": "Add commas to numbers",
+      "author": "loregamer",
+      "filename": "number-commas.js",
+      "matches": ["https://rpghq.org/forums/*"],
+      "settings": [
+        {
+          "id": "formatFourDigits",
+          "label": "Format 4-digit numbers",
+          "description": "Whether to add commas to 4-digit numbers (e.g., 1,000) or only 5+ digit numbers",
+          "type": "boolean",
+          "default": false
+        }
+      ]
+    }
+  ]
+}
