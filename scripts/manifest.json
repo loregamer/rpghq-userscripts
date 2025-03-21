@@ -7,6 +7,7 @@
       "description": "Add commas to numbers",
       "author": "loregamer",
       "filename": "number-commas.js",
+      "image": "https://example.com/thumbnail-number-commas.jpg",
       "matches": ["https://rpghq.org/forums/*"],
       "executionPhase": "document-ready",
       "settings": [

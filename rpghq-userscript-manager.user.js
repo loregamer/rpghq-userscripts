@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         RPGHQ Userscript Manager
+// @name         RPGHQ Userscript Manager (Mod Manager UI)
 // @namespace    https://rpghq.org/
-// @version      2.3.2
-// @description  A centralized manager for RPGHQ userscripts with a larger popup that blocks background scrolling, toggle buttons with Font Awesome icons, and displays the stored version along with update info. Script code is stored by ID and the storage data is saved in a compact format.
+// @version      3.0.0
+// @description  A reimagined userscript manager popup featuring a tabbed interface with a gallery viewer, list view, and global settings. Also includes per‐mod settings with robust controls.
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
 // @run-at       document-start
@@ -20,7 +20,7 @@
 (function() {
     'use strict';
 
-    // ===== Constants =====
+    // ===== Constants & URLs =====
     const MANIFEST_URL = 'https://raw.githubusercontent.com/loregamer/rpghq-userscripts/userscript-manager/scripts/manifest.json';
     const SCRIPT_BASE_URL = 'https://raw.githubusercontent.com/loregamer/rpghq-userscripts/userscript-manager/scripts/';
     const STORAGE_KEY = 'rpghq_userscript_manager';
@@ -77,7 +77,6 @@
             this.saveRawData(data);
         },
 
-        // Always use the script ID for storing code
         getScriptCodeKey: function(scriptId) {
             return `script_${scriptId}`;
         },
@@ -114,7 +113,6 @@
                 scriptData.installedAt = data.installedScripts[scriptId].installedAt;
                 scriptData.updatedAt = Date.now();
             }
-            // Preserve the script's name from the manifest for display purposes
             data.installedScripts[scriptId] = scriptData;
             this.saveData(data);
         },
@@ -145,6 +143,16 @@
                 return true;
             }
             return false;
+        },
+
+        // Global settings for the entire mod manager (example)
+        getGlobalSettings: function() {
+            const settings = GM_getValue('global_settings');
+            return settings ? JSON.parse(settings) : {};
+        },
+
+        saveGlobalSettings: function(settings) {
+            GM_setValue('global_settings', JSON.stringify(settings));
         }
     };
 
@@ -385,20 +393,19 @@
         addStyles: function() {
             GM_addStyle(`
                 :root {
-                    --rpghq-primary: #2196F3;
-                    --rpghq-primary-dark: #1976D2;
-                    --rpghq-text-primary: #FFFFFF;
-                    --rpghq-text-secondary: #B0BEC5;
-                    --rpghq-bg-dark: #1E1E1E;
-                    --rpghq-bg-card: #2D2D2D;
-                    --rpghq-border: #444444;
-                    --rpghq-success: #4CAF50;
-                    --rpghq-warning: #FFC107;
-                    --rpghq-danger: #F44336;
+                    --primary-color: #2196F3;
+                    --primary-dark: #1976D2;
+                    --text-primary: #FFFFFF;
+                    --text-secondary: #B0BEC5;
+                    --bg-dark: #1E1E1E;
+                    --bg-card: #2D2D2D;
+                    --border-color: #444444;
+                    --success-color: #4CAF50;
+                    --warning-color: #FFC107;
+                    --danger-color: #F44336;
                 }
-                
-                /* Bigger modal that blocks background scrolling */
-                .rpghq-userscript-modal {
+                /* Modal container */
+                .mod-manager-modal {
                     display: none;
                     position: fixed;
                     z-index: 1000;
@@ -408,90 +415,107 @@
                     height: 100%;
                     background-color: rgba(0, 0, 0, 0.8);
                 }
-                
-                .rpghq-userscript-modal-content {
-                    background-color: var(--rpghq-bg-dark);
-                    margin: 5% auto;
+                /* Modal content box */
+                .mod-manager-modal-content {
+                    background-color: var(--bg-dark);
+                    margin: 2% auto;
                     padding: 10px;
-                    border: 1px solid var(--rpghq-border);
-                    width: 600px;
-                    max-height: 80vh;
+                    border: 1px solid var(--border-color);
+                    width: 80%;
+                    max-height: 90vh;
                     border-radius: 4px;
-                    color: var(--rpghq-text-primary);
+                    color: var(--text-primary);
                     display: flex;
                     flex-direction: column;
-                    overflow: auto;
                 }
-                
-                .rpghq-userscript-header {
+                /* Header and close button */
+                .mod-manager-header {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
                     margin-bottom: 8px;
                 }
-                
-                .rpghq-userscript-title {
+                .mod-manager-title {
                     margin: 0;
-                    font-size: 1.4em;
+                    font-size: 1.8em;
                 }
-                
-                .rpghq-userscript-back-button {
-                    background: none;
-                    border: none;
-                    color: var(--rpghq-primary);
+                .mod-manager-close {
+                    font-size: 1.8em;
+                    cursor: pointer;
+                }
+                /* Tab bar */
+                .mod-manager-tabs {
+                    display: flex;
+                    border-bottom: 1px solid var(--border-color);
+                    margin-bottom: 10px;
+                }
+                .mod-manager-tab {
+                    padding: 8px 16px;
+                    cursor: pointer;
                     font-size: 1em;
-                    cursor: pointer;
-                    display: none;
+                    color: var(--text-secondary);
                 }
-                
-                .rpghq-userscript-close {
-                    font-size: 1.4em;
-                    cursor: pointer;
+                .mod-manager-tab.active {
+                    border-bottom: 2px solid var(--primary-color);
+                    color: var(--text-primary);
                 }
-                
-                .rpghq-userscript-list-container {
+                /* Content area */
+                .mod-manager-content {
+                    flex: 1;
                     overflow-y: auto;
                 }
-                
-                .rpghq-userscript-list {
+                /* Gallery view styles */
+                .mod-gallery {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                    gap: 10px;
+                }
+                .mod-gallery-item {
+                    background-color: var(--bg-card);
+                    border: 1px solid var(--border-color);
+                    border-radius: 4px;
+                    padding: 8px;
+                    text-align: center;
+                }
+                .mod-gallery-item img {
+                    width: 100%;
+                    height: 100px;
+                    object-fit: cover;
+                    border-radius: 4px;
+                }
+                .mod-gallery-item-title {
+                    margin-top: 6px;
+                    font-size: 0.9em;
+                    font-weight: bold;
+                }
+                /* List view styles */
+                .mod-list {
                     list-style: none;
                     padding: 0;
                     margin: 0;
                 }
-                
-                .rpghq-userscript-item {
+                .mod-list-item {
                     display: flex;
                     align-items: center;
                     padding: 6px;
                     margin-bottom: 6px;
-                    background-color: var(--rpghq-bg-card);
-                    border: 1px solid var(--rpghq-border);
+                    background-color: var(--bg-card);
+                    border: 1px solid var(--border-color);
                     border-radius: 4px;
-                    font-size: 0.9em;
                 }
-                
-                .rpghq-userscript-item-info {
+                .mod-list-item-info {
                     flex: 1;
                     padding-left: 6px;
                 }
-                
-                .rpghq-userscript-item-title {
+                .mod-list-item-title {
                     margin: 0;
                     font-weight: bold;
                 }
-                
-                .rpghq-userscript-item-version {
+                .mod-list-item-version {
                     font-size: 0.8em;
-                    color: var(--rpghq-text-secondary);
+                    color: var(--text-secondary);
                 }
-                
-                .rpghq-userscript-status-update {
-                    color: var(--rpghq-warning);
-                    font-size: 0.8em;
-                    margin-left: 4px;
-                }
-                
-                .rpghq-userscript-item-actions button {
+                .mod-list-item-actions button {
                     margin-left: 4px;
                     font-size: 0.8em;
                     padding: 2px 4px;
@@ -499,194 +523,323 @@
                     border: none;
                     border-radius: 3px;
                 }
-                
-                .rpghq-userscript-btn-primary {
-                    background-color: var(--rpghq-primary);
+                .btn-primary {
+                    background-color: var(--primary-color);
                     color: #fff;
                 }
-                
-                .rpghq-userscript-btn-danger {
-                    background-color: var(--rpghq-danger);
+                .btn-danger {
+                    background-color: var(--danger-color);
                     color: #fff;
                 }
-                
-                .rpghq-userscript-btn-warning {
-                    background-color: var(--rpghq-warning);
+                .btn-warning {
+                    background-color: var(--warning-color);
                     color: #fff;
                 }
-                
-                /* Toggle button using Font Awesome icons */
-                .rpghq-userscript-toggle {
-                    border: none;
-                    background: none;
-                    cursor: pointer;
-                    padding: 0;
+                /* Settings view styles */
+                .mod-settings {
+                    font-size: 0.9em;
+                }
+                .mod-settings h3 {
+                    margin-bottom: 8px;
+                }
+                .mod-setting-item {
+                    margin-bottom: 10px;
+                }
+                .mod-setting-item label {
+                    display: block;
+                    margin-bottom: 4px;
+                    font-size: 0.9em;
+                }
+                .mod-setting-item input {
+                    width: 100%;
+                    padding: 4px;
+                    border: 1px solid var(--border-color);
+                    border-radius: 3px;
                 }
             `);
         },
 
-        showUserscriptsModal: function() {
-            let modal = document.getElementById('rpghq-userscript-modal');
+        showModal: function() {
+            let modal = document.getElementById('mod-manager-modal');
             if (!modal) {
                 modal = document.createElement('div');
-                modal.id = 'rpghq-userscript-modal';
-                modal.className = 'rpghq-userscript-modal';
+                modal.id = 'mod-manager-modal';
+                modal.className = 'mod-manager-modal';
                 modal.innerHTML = `
-                    <div class="rpghq-userscript-modal-content">
-                        <div class="rpghq-userscript-header">
-                            <button id="rpghq-back-button" class="rpghq-userscript-back-button">←</button>
-                            <h2 class="rpghq-userscript-title">Userscripts</h2>
-                            <span class="rpghq-userscript-close">&times;</span>
+                    <div class="mod-manager-modal-content">
+                        <div class="mod-manager-header">
+                            <h2 class="mod-manager-title">Mod Manager</h2>
+                            <span class="mod-manager-close">&times;</span>
                         </div>
-                        <div id="rpghq-userscript-content"></div>
+                        <div class="mod-manager-tabs">
+                            <div class="mod-manager-tab active" data-tab="gallery">Gallery</div>
+                            <div class="mod-manager-tab" data-tab="list">List</div>
+                            <div class="mod-manager-tab" data-tab="settings">Global Settings</div>
+                        </div>
+                        <div class="mod-manager-content" id="mod-manager-content">
+                            <!-- Content loaded dynamically -->
+                        </div>
                     </div>
                 `;
                 document.body.appendChild(modal);
-                modal.querySelector('.rpghq-userscript-close').addEventListener('click', () => {
+                modal.querySelector('.mod-manager-close').addEventListener('click', () => {
                     UI.hideModal();
                 });
-                window.addEventListener('click', (e) => {
+                modal.addEventListener('click', (e) => {
                     if (e.target === modal) {
                         UI.hideModal();
                     }
                 });
-                document.getElementById('rpghq-back-button').addEventListener('click', () => {
-                    UI.showListView();
+                modal.querySelectorAll('.mod-manager-tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        UI.switchTab(this.dataset.tab);
+                    });
                 });
             }
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
-            UI.showListView();
+            UI.switchTab('gallery');
         },
 
         hideModal: function() {
-            const modal = document.getElementById('rpghq-userscript-modal');
+            const modal = document.getElementById('mod-manager-modal');
             if (modal) {
                 modal.style.display = 'none';
                 document.body.style.overflow = '';
             }
         },
 
+        switchTab: function(tabName) {
+            document.querySelectorAll('.mod-manager-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.tab === tabName);
+            });
+            if (tabName === 'gallery') {
+                UI.showGalleryView();
+            } else if (tabName === 'list') {
+                UI.showListView();
+            } else if (tabName === 'settings') {
+                UI.showGlobalSettingsView();
+            }
+        },
+
+        showGalleryView: function() {
+            const content = document.getElementById('mod-manager-content');
+            if (!ScriptManager.manifest) {
+                content.innerHTML = '<p>Loading mods...</p>';
+                ScriptManager.fetchManifest()
+                    .then(manifest => {
+                        ScriptManager.manifest = manifest;
+                        UI.renderGallery(manifest.scripts);
+                    })
+                    .catch(err => {
+                        content.innerHTML = `<p>Error loading mods: ${err}</p>`;
+                    });
+            } else {
+                UI.renderGallery(ScriptManager.manifest.scripts);
+            }
+        },
+
+        renderGallery: function(scripts) {
+            const content = document.getElementById('mod-manager-content');
+            if (!scripts || scripts.length === 0) {
+                content.innerHTML = '<p>No mods available.</p>';
+                return;
+            }
+            let html = `<div class="mod-gallery">`;
+            scripts.forEach(script => {
+                // Use script.image if provided; otherwise use a placeholder image
+                const thumbnail = script.image || 'https://via.placeholder.com/150x100?text=No+Image';
+                html += `
+                    <div class="mod-gallery-item" data-script-id="${script.id}">
+                        <img src="${thumbnail}" alt="${script.name}">
+                        <div class="mod-gallery-item-title">${script.name}</div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            content.innerHTML = html;
+            document.querySelectorAll('.mod-gallery-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const scriptId = this.dataset.scriptId;
+                    UI.showModDetails(scriptId);
+                });
+            });
+        },
+
         showListView: function() {
-            const content = document.getElementById('rpghq-userscript-content');
-            const backButton = document.getElementById('rpghq-back-button');
-            backButton.style.display = 'none';
-            content.innerHTML = `<div id="rpghq-userscript-loading">Loading scripts...</div>`;
+            const content = document.getElementById('mod-manager-content');
+            content.innerHTML = '<p>Loading mods...</p>';
             ScriptManager.fetchManifest()
                 .then(manifest => {
                     ScriptManager.manifest = manifest;
                     const installedScripts = Storage.getInstalledScripts();
-                    let html = `<div class="rpghq-userscript-list-container">
-                        <ul class="rpghq-userscript-list">`;
+                    let html = `<ul class="mod-list">`;
                     if (!manifest.scripts || manifest.scripts.length === 0) {
-                        html += '<li>No scripts available.</li>';
+                        html += '<li>No mods available.</li>';
                     } else {
                         manifest.scripts.forEach(script => {
                             const isInstalled = !!installedScripts[script.id];
                             const needsUpdate = isInstalled && ScriptManager.needsUpdate(script.id);
                             const scriptData = isInstalled ? installedScripts[script.id] : null;
-                            // Use stored name and version if installed; otherwise use manifest values.
                             const displayName = isInstalled ? scriptData.name : script.name;
                             const displayVersion = isInstalled ? scriptData.version : script.version;
-                            
-                            html += `<li class="rpghq-userscript-item" data-script-id="${script.id}">
-                                <button class="rpghq-userscript-toggle" data-script-id="${script.id}">
-                                    <i class="${isInstalled && scriptData.enabled ? 'icon fa-toggle-on fa-fw' : 'icon fa-toggle-off fa-fw'}"></i>
-                                </button>
-                                <div class="rpghq-userscript-item-info">
-                                    <p class="rpghq-userscript-item-title">
-                                        ${displayName} <span class="rpghq-userscript-item-version">v${displayVersion}</span>
-                                        ${needsUpdate ? `<span class="rpghq-userscript-status-update">(Update: v${script.version} available)</span>` : ''}
+                            html += `<li class="mod-list-item" data-script-id="${script.id}">
+                                <div class="mod-list-item-info">
+                                    <p class="mod-list-item-title">
+                                        ${displayName} <span class="mod-list-item-version">v${displayVersion}</span>
+                                        ${needsUpdate ? `<span class="mod-list-item-version">(Update available: v${script.version})</span>` : ''}
                                     </p>
-                                    <p class="rpghq-userscript-item-author">By ${script.author}</p>
+                                    <p class="mod-list-item-author">By ${script.author}</p>
                                 </div>
-                                <div class="rpghq-userscript-item-actions">`;
+                                <div class="mod-list-item-actions">`;
                             if (!isInstalled) {
-                                html += `<button class="rpghq-userscript-btn-primary rpghq-userscript-install" data-script-id="${script.id}">Install</button>`;
+                                html += `<button class="btn-primary mod-install" data-script-id="${script.id}">Install</button>`;
                             } else {
                                 if (needsUpdate) {
-                                    html += `<button class="rpghq-userscript-btn-warning rpghq-userscript-update" data-script-id="${script.id}">Update</button>`;
+                                    html += `<button class="btn-warning mod-update" data-script-id="${script.id}">Update</button>`;
                                 }
-                                html += `<button class="rpghq-userscript-btn-danger rpghq-userscript-uninstall" data-script-id="${script.id}">Uninstall</button>
-                                         <button class="rpghq-userscript-btn-primary rpghq-userscript-settings" data-script-id="${script.id}">Settings</button>`;
+                                html += `<button class="btn-danger mod-uninstall" data-script-id="${script.id}">Uninstall</button>
+                                         <button class="btn-primary mod-settings" data-script-id="${script.id}">Settings</button>`;
                             }
                             html += `   </div>
                             </li>`;
                         });
                     }
-                    html += `</ul></div>`;
+                    html += `</ul>`;
                     content.innerHTML = html;
                     UI.addListEventListeners();
                 })
                 .catch(error => {
-                    document.getElementById('rpghq-userscript-loading').innerHTML = `Error loading scripts: ${error}`;
+                    content.innerHTML = `<p>Error loading mods: ${error}</p>`;
                 });
         },
 
+        showGlobalSettingsView: function() {
+            const content = document.getElementById('mod-manager-content');
+            let settings = Storage.getGlobalSettings();
+            if (!settings || Object.keys(settings).length === 0) {
+                settings = {
+                    theme: 'dark',
+                    notifications: true,
+                    itemsPerPage: 12
+                };
+                Storage.saveGlobalSettings(settings);
+            }
+            let html = `<div class="mod-settings">
+                <h3>Global Settings</h3>
+                <div class="mod-setting-item">
+                    <label for="global-theme">Theme (light/dark)</label>
+                    <input type="text" id="global-theme" value="${settings.theme}">
+                </div>
+                <div class="mod-setting-item">
+                    <label for="global-notifications">Enable Notifications</label>
+                    <input type="checkbox" id="global-notifications" ${settings.notifications ? 'checked' : ''}>
+                </div>
+                <div class="mod-setting-item">
+                    <label for="global-itemsPerPage">Items per Page</label>
+                    <input type="number" id="global-itemsPerPage" value="${settings.itemsPerPage}">
+                </div>
+                <button id="save-global-settings" class="btn-primary" style="width:100%; padding:6px;">Save Global Settings</button>
+            </div>`;
+            content.innerHTML = html;
+            document.getElementById('save-global-settings').addEventListener('click', function() {
+                const newSettings = {
+                    theme: document.getElementById('global-theme').value,
+                    notifications: document.getElementById('global-notifications').checked,
+                    itemsPerPage: parseInt(document.getElementById('global-itemsPerPage').value)
+                };
+                Storage.saveGlobalSettings(newSettings);
+                alert('Global settings saved!');
+            });
+        },
+
+        showModDetails: function(scriptId) {
+            const content = document.getElementById('mod-manager-content');
+            const script = ScriptManager.manifest.scripts.find(s => s.id === scriptId);
+            if (!script) {
+                content.innerHTML = `<p>Mod details not found.</p>`;
+                return;
+            }
+            let installedScripts = Storage.getInstalledScripts();
+            const isInstalled = !!installedScripts[script.id];
+            const needsUpdate = isInstalled && ScriptManager.needsUpdate(script.id);
+            let html = `<div>
+                <h3>${script.name}</h3>
+                <p>Author: ${script.author}</p>
+                <p>Version: ${isInstalled ? installedScripts[script.id].version : script.version} ${needsUpdate ? '(Update available)' : ''}</p>
+                <p>${script.description || 'No description available.'}</p>
+                <div style="margin-top:10px;">`;
+            if (!isInstalled) {
+                html += `<button class="btn-primary mod-install" data-script-id="${script.id}">Install</button>`;
+            } else {
+                if (needsUpdate) {
+                    html += `<button class="btn-warning mod-update" data-script-id="${script.id}">Update</button>`;
+                }
+                html += `<button class="btn-danger mod-uninstall" data-script-id="${script.id}">Uninstall</button>
+                         <button class="btn-primary mod-settings" data-script-id="${script.id}">Settings</button>`;
+            }
+            html += `</div>
+            <button id="back-to-gallery" class="btn-primary" style="margin-top:10px;">Back to Gallery</button>
+            </div>`;
+            content.innerHTML = html;
+            document.getElementById('back-to-gallery').addEventListener('click', function() {
+                UI.switchTab('gallery');
+            });
+            UI.addListEventListeners();
+        },
+
         addListEventListeners: function() {
-            document.querySelectorAll('.rpghq-userscript-install').forEach(btn => {
+            document.querySelectorAll('.mod-install').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const scriptId = this.dataset.scriptId;
                     this.textContent = 'Installing...';
                     this.disabled = true;
                     ScriptManager.installScript(scriptId)
-                        .then(() => UI.showListView())
+                        .then(() => UI.switchTab('list'))
                         .catch(error => {
-                            alert('Error installing script: ' + error);
+                            alert('Error installing mod: ' + error);
                             this.textContent = 'Install';
                             this.disabled = false;
                         });
                 });
             });
-            document.querySelectorAll('.rpghq-userscript-update').forEach(btn => {
+            document.querySelectorAll('.mod-update').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const scriptId = this.dataset.scriptId;
                     this.textContent = 'Updating...';
                     this.disabled = true;
                     ScriptManager.installScript(scriptId)
-                        .then(() => UI.showListView())
+                        .then(() => UI.switchTab('list'))
                         .catch(error => {
-                            alert('Error updating script: ' + error);
+                            alert('Error updating mod: ' + error);
                             this.textContent = 'Update';
                             this.disabled = false;
                         });
                 });
             });
-            document.querySelectorAll('.rpghq-userscript-uninstall').forEach(btn => {
+            document.querySelectorAll('.mod-uninstall').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const scriptId = this.dataset.scriptId;
-                    const scriptName = document.querySelector(`li[data-script-id="${scriptId}"] .rpghq-userscript-item-title`).innerText;
-                    if (confirm(`Are you sure you want to uninstall ${scriptName}?`)) {
+                    const modName = document.querySelector(`[data-script-id="${scriptId}"] .mod-list-item-title`)?.innerText || 'this mod';
+                    if (confirm(`Are you sure you want to uninstall ${modName}?`)) {
                         ScriptManager.uninstallScript(scriptId);
-                        UI.showListView();
+                        UI.switchTab('list');
                     }
                 });
             });
-            document.querySelectorAll('.rpghq-userscript-toggle').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const scriptId = this.dataset.scriptId;
-                    let installedScripts = Storage.getInstalledScripts();
-                    if (installedScripts[scriptId]) {
-                        installedScripts[scriptId].enabled = !installedScripts[scriptId].enabled;
-                        Storage.saveData({ installedScripts });
-                        UI.showListView();
-                    }
-                });
-            });
-            document.querySelectorAll('.rpghq-userscript-settings').forEach(btn => {
+            document.querySelectorAll('.mod-settings').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const scriptId = this.dataset.scriptId;
                     const script = ScriptManager.manifest.scripts.find(s => s.id === scriptId);
                     if (script) {
-                        UI.showSettingsView(script);
+                        UI.showModSettingsView(script);
                     }
                 });
             });
         },
 
-        showSettingsView: function(script) {
-            const content = document.getElementById('rpghq-userscript-content');
-            document.getElementById('rpghq-back-button').style.display = 'inline-block';
+        showModSettingsView: function(script) {
+            const content = document.getElementById('mod-manager-content');
             let installedScripts = Storage.getInstalledScripts();
             let scriptData = installedScripts[script.id] || { settings: {} };
             let settings = {};
@@ -697,34 +850,35 @@
                         : setting.default;
                 });
             }
-            let html = `<div>
-                <h3 style="font-size:1em; margin-bottom:4px;">Settings for ${script.name}</h3>`;
+            let html = `<div class="mod-settings">
+                <h3>Settings for ${script.name}</h3>`;
             if (script.settings && script.settings.length > 0) {
                 script.settings.forEach(setting => {
                     const value = settings[setting.id];
-                    html += `<div style="margin-bottom:6px;">
-                        <label style="display:block; font-size:0.9em;">${setting.label}</label>`;
+                    html += `<div class="mod-setting-item">
+                        <label for="mod-setting-${script.id}-${setting.id}">${setting.label}</label>`;
                     if (setting.type === 'boolean') {
-                        html += `<input type="checkbox" id="rpghq-setting-${script.id}-${setting.id}" ${value ? 'checked' : ''}>`;
+                        html += `<input type="checkbox" id="mod-setting-${script.id}-${setting.id}" ${value ? 'checked' : ''}>`;
                     } else if (setting.type === 'number') {
-                        html += `<input type="number" id="rpghq-setting-${script.id}-${setting.id}" value="${value}" style="width:100%;">`;
+                        html += `<input type="number" id="mod-setting-${script.id}-${setting.id}" value="${value}">`;
                     } else {
-                        html += `<input type="text" id="rpghq-setting-${script.id}-${setting.id}" value="${value}" style="width:100%;">`;
+                        html += `<input type="text" id="mod-setting-${script.id}-${setting.id}" value="${value}">`;
                     }
-                    html += `<small style="color: var(--rpghq-text-secondary); font-size:0.8em;">${setting.description}</small>
+                    html += `<small>${setting.description}</small>
                     </div>`;
                 });
-                html += `<button id="rpghq-save-settings" class="rpghq-userscript-btn-primary" data-script-id="${script.id}" style="width:100%; padding:4px;">Save Settings</button>`;
+                html += `<button id="save-mod-settings" class="btn-primary" data-script-id="${script.id}" style="width:100%; padding:6px; margin-top:8px;">Save Settings</button>`;
             } else {
-                html += `<p style="font-size:0.9em;">No settings available for this script.</p>`;
+                html += `<p>No settings available for this mod.</p>`;
             }
-            html += `</div>`;
+            html += `<button id="back-to-list" class="btn-primary" style="width:100%; padding:6px; margin-top:8px;">Back</button>
+            </div>`;
             content.innerHTML = html;
-            document.getElementById('rpghq-save-settings').addEventListener('click', function() {
+            document.getElementById('save-mod-settings')?.addEventListener('click', function() {
                 let newSettings = {};
                 if (script.settings && script.settings.length > 0) {
                     script.settings.forEach(setting => {
-                        let inputElem = document.getElementById(`rpghq-setting-${script.id}-${setting.id}`);
+                        let inputElem = document.getElementById(`mod-setting-${script.id}-${setting.id}`);
                         if (inputElem) {
                             if (setting.type === 'boolean') {
                                 newSettings[setting.id] = inputElem.checked;
@@ -738,19 +892,24 @@
                 }
                 Storage.saveScriptSettings(script.id, newSettings);
                 alert('Settings saved!');
-                UI.showListView();
+                UI.switchTab('list');
+            });
+            document.getElementById('back-to-list').addEventListener('click', function() {
+                UI.switchTab('list');
             });
         }
     };
 
     // ===== Main Initialization =====
     function init() {
+        Storage.init();
         UI.addStyles();
         ExecutionFramework.init();
         ScriptManager.executeScripts();
         GM_registerMenuCommand('RPGHQ Userscript Manager', () => {
-            UI.showUserscriptsModal();
+            UI.showModal();
         });
+        // Optionally, add a button to your page (e.g., in a dropdown)
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 addUserscriptsButtonToDropdown();
@@ -777,9 +936,9 @@
         logoutButton.parentNode.insertBefore(userscriptsButton, logoutButton);
         userscriptsButton.querySelector('a').addEventListener('click', (e) => {
             e.preventDefault();
-            UI.showUserscriptsModal();
+            UI.showModal();
         });
     }
-    
+
     init();
 })();
