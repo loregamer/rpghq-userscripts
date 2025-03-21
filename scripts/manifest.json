@@ -1,6 +1,18 @@
 {
   "scripts": [
     {
+      "id": "ignore-threads",
+      "name": "Ignore Threads",
+      "version": "1.0.0",
+      "description": "Ignore threads",
+      "filename": "ignore-threads.js",
+      "matches": ["https://rpghq.org/forums/*"],
+      "executionPhase": "document-start",
+      "category": "Iggy Stuff",
+      "image": "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+      "settings": []
+    },
+    {
       "id": "number-commas",
       "name": "Commas on Numbers",
       "version": "2.1.2",
