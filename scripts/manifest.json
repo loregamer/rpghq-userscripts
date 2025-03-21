@@ -41,7 +41,7 @@
       "name": "Ignore Users",
       "version": "1.0.0",
       "description": "(Actually) ignore users",
-      "filename": "ignore-threads.js",
+      "filename": "ignore-users.js",
       "matches": ["https://rpghq.org/forums/*"],
       "executionPhase": "document-start",
       "category": "Iggy Stuff",
