@@ -3,9 +3,8 @@
     {
       "id": "number-commas",
       "name": "Commas on Numbers",
-      "version": "2.1.3",
+      "version": "2.1.2",
       "description": "Add commas to numbers",
-      "author": "loregamer",
       "filename": "number-commas.js",
       "matches": ["https://rpghq.org/forums/*"],
       "executionPhase": "document-ready",
@@ -20,6 +19,18 @@
           "default": false
         }
       ]
+    },
+    {
+      "id": "ignore-users",
+      "name": "Ignore Users",
+      "version": "1.0.0",
+      "description": "Actually iggy users",
+      "filename": "ignore-users.js",
+      "matches": ["https://rpghq.org/forums/*"],
+      "executionPhase": "document-start",
+      "category": "Iggy Stuff",
+      "image": "https://f.rpghq.org/v4iqrprFCWq0.png?n=pasted-file.png",
+      "settings": []
     }
   ],
   "schema": {
