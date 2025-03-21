@@ -18,7 +18,12 @@
       "version": "1.0.0",
       "description": "Adds reaction smileys to notifications and makes them formatted better",
       "filename": "bbcode.js",
-      "matches": ["https://rpghq.org/forums/*"],
+      "matches": [
+        "https://rpghq.org/forums/posting.php?mode=post*",
+        "https://rpghq.org/forums/posting.php?mode=quote*",
+        "https://rpghq.org/forums/posting.php?mode=reply*",
+        "https://rpghq.org/forums/posting.php?mode=edit*"
+      ],
       "executionPhase": "document-ready",
       "category": "Aesthetic",
       "image": "https://f.rpghq.org/rso7uNB6S4H9.png",
