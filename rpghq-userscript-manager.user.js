@@ -227,16 +227,17 @@
         executeScript: function(scriptId, scriptData) {
             try {
                 // Create a global settings object for the script to access
-                window.scriptSettings = scriptData.settings || {};
+                // Define scriptSettings in the global scope to ensure it's available
+                const scriptCode = `
+                    var scriptSettings = ${JSON.stringify(scriptData.settings || {})};
+                    ${scriptData.code}
+                `;
                 
                 // Create a script element and execute it
                 const scriptElement = document.createElement('script');
-                scriptElement.textContent = scriptData.code;
+                scriptElement.textContent = scriptCode;
                 document.head.appendChild(scriptElement);
                 document.head.removeChild(scriptElement);
-                
-                // Clean up global settings
-                window.scriptSettings = undefined;
             } catch (e) {
                 console.error('Error executing script ' + scriptId + ':', e);
             }
@@ -258,22 +259,23 @@
                     width: 100%;
                     height: 100%;
                     overflow: auto;
-                    background-color: rgba(0, 0, 0, 0.4);
+                    background-color: rgba(0, 0, 0, 0.7);
                 }
                 
                 .rpghq-userscript-modal-content {
-                    background-color: #f9f9f9;
+                    background-color: #222;
                     margin: 5% auto;
                     padding: 20px;
-                    border: 1px solid #888;
+                    border: 1px solid #444;
                     width: 80%;
                     max-width: 800px;
                     border-radius: 3px;
-                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+                    color: #eee;
                 }
                 
                 .rpghq-userscript-close {
-                    color: #aaa;
+                    color: #999;
                     float: right;
                     font-size: 28px;
                     font-weight: bold;
@@ -282,20 +284,20 @@
                 
                 .rpghq-userscript-close:hover,
                 .rpghq-userscript-close:focus {
-                    color: black;
+                    color: #fff;
                     text-decoration: none;
                 }
                 
                 .rpghq-userscript-header {
                     padding-bottom: 10px;
                     margin-bottom: 20px;
-                    border-bottom: 1px solid #ddd;
+                    border-bottom: 1px solid #444;
                 }
                 
                 .rpghq-userscript-title {
                     margin: 0;
                     font-size: 1.5em;
-                    color: #333;
+                    color: #fff;
                 }
                 
                 /* Script list styles */
@@ -308,8 +310,8 @@
                 .rpghq-userscript-item {
                     padding: 15px;
                     margin-bottom: 10px;
-                    background-color: #fff;
-                    border: 1px solid #ddd;
+                    background-color: #333;
+                    border: 1px solid #444;
                     border-radius: 3px;
                 }
                 
@@ -324,22 +326,23 @@
                     font-weight: bold;
                     font-size: 1.1em;
                     margin: 0;
+                    color: #fff;
                 }
                 
                 .rpghq-userscript-item-version {
                     font-size: 0.9em;
-                    color: #666;
+                    color: #aaa;
                     margin-left: 10px;
                 }
                 
                 .rpghq-userscript-item-description {
                     margin: 10px 0;
-                    color: #555;
+                    color: #ccc;
                 }
                 
                 .rpghq-userscript-item-author {
                     font-size: 0.9em;
-                    color: #666;
+                    color: #aaa;
                 }
                 
                 .rpghq-userscript-item-actions {
@@ -410,13 +413,14 @@
                 .rpghq-userscript-settings {
                     margin-top: 15px;
                     padding-top: 15px;
-                    border-top: 1px solid #eee;
+                    border-top: 1px solid #444;
                     display: none;
                 }
                 
                 .rpghq-userscript-settings-title {
                     font-weight: bold;
                     margin-bottom: 10px;
+                    color: #fff;
                 }
                 
                 .rpghq-userscript-setting {
@@ -427,11 +431,12 @@
                     display: block;
                     margin-bottom: 5px;
                     font-weight: bold;
+                    color: #ddd;
                 }
                 
                 .rpghq-userscript-setting-description {
                     font-size: 0.9em;
-                    color: #666;
+                    color: #aaa;
                     margin-bottom: 5px;
                 }
                 
@@ -495,13 +500,35 @@
                 }
                 
                 .rpghq-userscript-status-installed {
-                    background-color: #dff0d8;
-                    color: #3c763d;
+                    background-color: #2a5934;
+                    color: #a3e8b2;
                 }
                 
                 .rpghq-userscript-status-update {
-                    background-color: #fcf8e3;
-                    color: #8a6d3b;
+                    background-color: #5c4a1a;
+                    color: #f8e9b0;
+                }
+                
+                /* Input styles for dark mode */
+                .rpghq-userscript-setting input[type="text"],
+                .rpghq-userscript-setting input[type="number"] {
+                    background-color: #444;
+                    border: 1px solid #555;
+                    color: #eee;
+                    padding: 5px;
+                    border-radius: 3px;
+                }
+                
+                .rpghq-userscript-setting input[type="text"]:focus,
+                .rpghq-userscript-setting input[type="number"]:focus {
+                    outline: none;
+                    border-color: #2196F3;
+                    box-shadow: 0 0 3px rgba(33, 150, 243, 0.5);
+                }
+                
+                /* Loading text color */
+                #rpghq-userscript-loading {
+                    color: #ccc;
                 }
             `);
         },
