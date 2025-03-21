@@ -2,7 +2,7 @@
 // @name         RPGHQ Userscript Manager (Mod Manager UI)
 // @namespace    https://rpghq.org/
 // @version      3.0.0
-// @description  A reimagined userscript manager popup featuring a tabbed interface with a gallery viewer, list view, and global settings. Also includes per‐mod settings with robust controls.
+// @description  A reimagined userscript manager popup featuring a tabbed interface with a gallery viewer (with enhanced visuals, filters, and install buttons), installed mods view, and global settings. Also includes per‐mod settings with robust controls.
 // @author       loregamer
 // @match        https://rpghq.org/forums/*
 // @run-at       document-start
@@ -465,6 +465,18 @@
                     overflow-y: auto;
                 }
                 /* Gallery view styles */
+                .mod-gallery-filters {
+                    margin-bottom: 10px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .mod-gallery-filters select,
+                .mod-gallery-filters input {
+                    padding: 4px;
+                    border: 1px solid var(--border-color);
+                    border-radius: 3px;
+                }
                 .mod-gallery {
                     display: grid;
                     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -485,10 +497,39 @@
                 }
                 .mod-gallery-item-title {
                     margin-top: 6px;
-                    font-size: 0.9em;
+                    font-size: 1em;
                     font-weight: bold;
                 }
-                /* List view styles */
+                .mod-gallery-item-version {
+                    font-size: 0.85em;
+                    color: var(--text-secondary);
+                    margin: 4px 0;
+                }
+                .mod-gallery-item-status {
+                    font-size: 0.8em;
+                    margin-bottom: 4px;
+                }
+                .mod-gallery-item-actions button {
+                    margin: 2px;
+                    font-size: 0.8em;
+                    padding: 2px 4px;
+                    cursor: pointer;
+                    border: none;
+                    border-radius: 3px;
+                }
+                .btn-primary {
+                    background-color: var(--primary-color);
+                    color: #fff;
+                }
+                .btn-danger {
+                    background-color: var(--danger-color);
+                    color: #fff;
+                }
+                .btn-warning {
+                    background-color: var(--warning-color);
+                    color: #fff;
+                }
+                /* List (Installed) view styles */
                 .mod-list {
                     list-style: none;
                     padding: 0;
@@ -522,18 +563,6 @@
                     cursor: pointer;
                     border: none;
                     border-radius: 3px;
-                }
-                .btn-primary {
-                    background-color: var(--primary-color);
-                    color: #fff;
-                }
-                .btn-danger {
-                    background-color: var(--danger-color);
-                    color: #fff;
-                }
-                .btn-warning {
-                    background-color: var(--warning-color);
-                    color: #fff;
                 }
                 /* Settings view styles */
                 .mod-settings {
@@ -573,7 +602,7 @@
                         </div>
                         <div class="mod-manager-tabs">
                             <div class="mod-manager-tab active" data-tab="gallery">Gallery</div>
-                            <div class="mod-manager-tab" data-tab="list">List</div>
+                            <div class="mod-manager-tab" data-tab="installed">Installed</div>
                             <div class="mod-manager-tab" data-tab="settings">Global Settings</div>
                         </div>
                         <div class="mod-manager-content" id="mod-manager-content">
@@ -615,8 +644,8 @@
             });
             if (tabName === 'gallery') {
                 UI.showGalleryView();
-            } else if (tabName === 'list') {
-                UI.showListView();
+            } else if (tabName === 'installed') {
+                UI.showInstalledView();
             } else if (tabName === 'settings') {
                 UI.showGlobalSettingsView();
             }
@@ -639,78 +668,178 @@
             }
         },
 
+        // Renders the filter bar and gallery items.
         renderGallery: function(scripts) {
+            // Store the full list for filtering
+            UI.allScripts = scripts;
+            const installedScripts = Storage.getInstalledScripts();
+            // Build the filter bar based on categories from the manifest
+            let categories = new Set();
+            scripts.forEach(script => {
+                if (script.category) categories.add(script.category);
+            });
+            let categoryOptions = '<option value="all">All Categories</option>';
+            categories.forEach(cat => {
+                categoryOptions += `<option value="${cat}">${cat}</option>`;
+            });
+            const filterHtml = `
+                <div class="mod-gallery-filters">
+                    <select id="gallery-category-filter">${categoryOptions}</select>
+                    <input type="text" id="gallery-search-filter" placeholder="Search mods...">
+                    <button id="gallery-filter-button" class="btn-primary">Filter</button>
+                </div>
+            `;
+            const galleryItemsHtml = UI.renderGalleryItems(scripts, installedScripts);
             const content = document.getElementById('mod-manager-content');
-            if (!scripts || scripts.length === 0) {
-                content.innerHTML = '<p>No mods available.</p>';
-                return;
-            }
+            content.innerHTML = filterHtml + `<div id="mod-gallery-items">${galleryItemsHtml}</div>`;
+            document.getElementById('gallery-filter-button').addEventListener('click', function(){
+                const selectedCategory = document.getElementById('gallery-category-filter').value;
+                const searchQuery = document.getElementById('gallery-search-filter').value.toLowerCase();
+                const filteredScripts = UI.allScripts.filter(script => {
+                    const matchesCategory = selectedCategory === 'all' || script.category === selectedCategory;
+                    const matchesSearch = script.name.toLowerCase().includes(searchQuery) || (script.description && script.description.toLowerCase().includes(searchQuery));
+                    return matchesCategory && matchesSearch;
+                });
+                const newGalleryHtml = UI.renderGalleryItems(filteredScripts, installedScripts);
+                document.getElementById('mod-gallery-items').innerHTML = newGalleryHtml;
+                UI.addGalleryEventListeners();
+            });
+            UI.addGalleryEventListeners();
+        },
+
+        // Generates the HTML for the gallery items based on a (possibly filtered) scripts list.
+        renderGalleryItems: function(scripts, installedScripts) {
             let html = `<div class="mod-gallery">`;
             scripts.forEach(script => {
-                // Use script.image if provided; otherwise use a placeholder image
-                const thumbnail = script.image || 'https://via.placeholder.com/150x100?text=No+Image';
+                const isInstalled = installedScripts.hasOwnProperty(script.id);
+                let needsUpdate = false;
+                if (isInstalled) {
+                    needsUpdate = ScriptManager.needsUpdate(script.id);
+                }
+                let statusHtml = isInstalled
+                    ? `<span class="installed-status" style="color:green;">Installed</span>`
+                    : `<span class="not-installed-status" style="color:red;">Not Installed</span>`;
+                if (isInstalled && needsUpdate) {
+                    statusHtml += `<span class="update-status" style="color:orange;"> (Update available: v${script.version})</span>`;
+                }
+                let buttonHtml = '';
+                if (!isInstalled) {
+                    buttonHtml = `<button class="btn-primary mod-install" data-script-id="${script.id}">Install</button>`;
+                } else {
+                    if (needsUpdate) {
+                        buttonHtml = `<button class="btn-warning mod-update" data-script-id="${script.id}">Update</button>`;
+                    }
+                    buttonHtml += `<button class="btn-danger mod-uninstall" data-script-id="${script.id}">Uninstall</button>
+                                   <button class="btn-primary mod-settings" data-script-id="${script.id}">Settings</button>`;
+                }
                 html += `
-                    <div class="mod-gallery-item" data-script-id="${script.id}">
-                        <img src="${thumbnail}" alt="${script.name}">
+                    <div class="mod-gallery-item" data-script-id="${script.id}" data-category="${script.category}">
+                        <img src="${script.image || 'https://via.placeholder.com/150x100?text=No+Image'}" alt="${script.name}">
                         <div class="mod-gallery-item-title">${script.name}</div>
+                        <div class="mod-gallery-item-version">v${script.version}</div>
+                        <div class="mod-gallery-item-status">${statusHtml}</div>
+                        <div class="mod-gallery-item-actions">${buttonHtml}</div>
                     </div>
                 `;
             });
             html += `</div>`;
-            content.innerHTML = html;
-            document.querySelectorAll('.mod-gallery-item').forEach(item => {
-                item.addEventListener('click', function() {
+            return html;
+        },
+
+        // Attaches event listeners for install, update, uninstall, and settings buttons in the gallery view.
+        addGalleryEventListeners: function() {
+            document.querySelectorAll('.mod-install').forEach(btn => {
+                btn.addEventListener('click', function() {
                     const scriptId = this.dataset.scriptId;
-                    UI.showModDetails(scriptId);
+                    this.textContent = 'Installing...';
+                    this.disabled = true;
+                    ScriptManager.installScript(scriptId)
+                        .then(() => UI.switchTab('gallery'))
+                        .catch(error => {
+                            alert('Error installing mod: ' + error);
+                            this.textContent = 'Install';
+                            this.disabled = false;
+                        });
+                });
+            });
+            document.querySelectorAll('.mod-update').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const scriptId = this.dataset.scriptId;
+                    this.textContent = 'Updating...';
+                    this.disabled = true;
+                    ScriptManager.installScript(scriptId)
+                        .then(() => UI.switchTab('gallery'))
+                        .catch(error => {
+                            alert('Error updating mod: ' + error);
+                            this.textContent = 'Update';
+                            this.disabled = false;
+                        });
+                });
+            });
+            document.querySelectorAll('.mod-uninstall').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const scriptId = this.dataset.scriptId;
+                    const modName = document.querySelector(`[data-script-id="${scriptId}"] .mod-gallery-item-title`)?.innerText || 'this mod';
+                    if (confirm(`Are you sure you want to uninstall ${modName}?`)) {
+                        ScriptManager.uninstallScript(scriptId);
+                        UI.switchTab('gallery');
+                    }
+                });
+            });
+            document.querySelectorAll('.mod-settings').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const scriptId = this.dataset.scriptId;
+                    const script = ScriptManager.manifest.scripts.find(s => s.id === scriptId);
+                    if (script) {
+                        UI.showModSettingsView(script);
+                    }
                 });
             });
         },
 
-        showListView: function() {
+        showInstalledView: function() {
             const content = document.getElementById('mod-manager-content');
-            content.innerHTML = '<p>Loading mods...</p>';
+            content.innerHTML = '<p>Loading installed mods...</p>';
             ScriptManager.fetchManifest()
                 .then(manifest => {
                     ScriptManager.manifest = manifest;
                     const installedScripts = Storage.getInstalledScripts();
                     let html = `<ul class="mod-list">`;
-                    if (!manifest.scripts || manifest.scripts.length === 0) {
-                        html += '<li>No mods available.</li>';
+                    const installedIds = Object.keys(installedScripts);
+                    if (installedIds.length === 0) {
+                        html += '<li>No installed mods.</li>';
                     } else {
-                        manifest.scripts.forEach(script => {
-                            const isInstalled = !!installedScripts[script.id];
-                            const needsUpdate = isInstalled && ScriptManager.needsUpdate(script.id);
-                            const scriptData = isInstalled ? installedScripts[script.id] : null;
-                            const displayName = isInstalled ? scriptData.name : script.name;
-                            const displayVersion = isInstalled ? scriptData.version : script.version;
-                            html += `<li class="mod-list-item" data-script-id="${script.id}">
-                                <div class="mod-list-item-info">
-                                    <p class="mod-list-item-title">
-                                        ${displayName} <span class="mod-list-item-version">v${displayVersion}</span>
-                                        ${needsUpdate ? `<span class="mod-list-item-version">(Update available: v${script.version})</span>` : ''}
-                                    </p>
-                                    <p class="mod-list-item-author">By ${script.author}</p>
-                                </div>
-                                <div class="mod-list-item-actions">`;
-                            if (!isInstalled) {
-                                html += `<button class="btn-primary mod-install" data-script-id="${script.id}">Install</button>`;
-                            } else {
-                                if (needsUpdate) {
-                                    html += `<button class="btn-warning mod-update" data-script-id="${script.id}">Update</button>`;
-                                }
-                                html += `<button class="btn-danger mod-uninstall" data-script-id="${script.id}">Uninstall</button>
-                                         <button class="btn-primary mod-settings" data-script-id="${script.id}">Settings</button>`;
+                        installedIds.forEach(scriptId => {
+                            const installedData = installedScripts[scriptId];
+                            const manifestScript = manifest.scripts.find(s => s.id === scriptId);
+                            const needsUpdate = manifestScript ? ScriptManager.needsUpdate(scriptId) : false;
+                            const displayName = installedData.name;
+                            const displayVersion = installedData.version;
+                            const author = manifestScript ? manifestScript.author : 'Unknown';
+                            html += `<li class="mod-list-item" data-script-id="${scriptId}">
+                                        <div class="mod-list-item-info">
+                                            <p class="mod-list-item-title">
+                                                ${displayName} <span class="mod-list-item-version">v${displayVersion}</span>
+                                                ${needsUpdate && manifestScript ? `<span class="mod-list-item-version">(Update available: v${manifestScript.version})</span>` : ''}
+                                            </p>
+                                            <p class="mod-list-item-author">By ${author}</p>
+                                        </div>
+                                        <div class="mod-list-item-actions">`;
+                            if (manifestScript && needsUpdate) {
+                                html += `<button class="btn-warning mod-update" data-script-id="${scriptId}">Update</button>`;
                             }
+                            html += `<button class="btn-danger mod-uninstall" data-script-id="${scriptId}">Uninstall</button>
+                                     <button class="btn-primary mod-settings" data-script-id="${scriptId}">Settings</button>`;
                             html += `   </div>
-                            </li>`;
+                                    </li>`;
                         });
                     }
                     html += `</ul>`;
                     content.innerHTML = html;
-                    UI.addListEventListeners();
+                    UI.addInstalledEventListeners();
                 })
                 .catch(error => {
-                    content.innerHTML = `<p>Error loading mods: ${error}</p>`;
+                    content.innerHTML = `<p>Error loading installed mods: ${error}</p>`;
                 });
         },
 
@@ -785,31 +914,18 @@
             document.getElementById('back-to-gallery').addEventListener('click', function() {
                 UI.switchTab('gallery');
             });
-            UI.addListEventListeners();
+            UI.addGalleryEventListeners();
         },
 
-        addListEventListeners: function() {
-            document.querySelectorAll('.mod-install').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const scriptId = this.dataset.scriptId;
-                    this.textContent = 'Installing...';
-                    this.disabled = true;
-                    ScriptManager.installScript(scriptId)
-                        .then(() => UI.switchTab('list'))
-                        .catch(error => {
-                            alert('Error installing mod: ' + error);
-                            this.textContent = 'Install';
-                            this.disabled = false;
-                        });
-                });
-            });
+        // Event listeners for the Installed view
+        addInstalledEventListeners: function() {
             document.querySelectorAll('.mod-update').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const scriptId = this.dataset.scriptId;
                     this.textContent = 'Updating...';
                     this.disabled = true;
                     ScriptManager.installScript(scriptId)
-                        .then(() => UI.switchTab('list'))
+                        .then(() => UI.switchTab('installed'))
                         .catch(error => {
                             alert('Error updating mod: ' + error);
                             this.textContent = 'Update';
@@ -823,7 +939,7 @@
                     const modName = document.querySelector(`[data-script-id="${scriptId}"] .mod-list-item-title`)?.innerText || 'this mod';
                     if (confirm(`Are you sure you want to uninstall ${modName}?`)) {
                         ScriptManager.uninstallScript(scriptId);
-                        UI.switchTab('list');
+                        UI.switchTab('installed');
                     }
                 });
             });
@@ -871,7 +987,7 @@
             } else {
                 html += `<p>No settings available for this mod.</p>`;
             }
-            html += `<button id="back-to-list" class="btn-primary" style="width:100%; padding:6px; margin-top:8px;">Back</button>
+            html += `<button id="back-to-installed" class="btn-primary" style="width:100%; padding:6px; margin-top:8px;">Back</button>
             </div>`;
             content.innerHTML = html;
             document.getElementById('save-mod-settings')?.addEventListener('click', function() {
@@ -892,10 +1008,10 @@
                 }
                 Storage.saveScriptSettings(script.id, newSettings);
                 alert('Settings saved!');
-                UI.switchTab('list');
+                UI.switchTab('installed');
             });
-            document.getElementById('back-to-list').addEventListener('click', function() {
-                UI.switchTab('list');
+            document.getElementById('back-to-installed').addEventListener('click', function() {
+                UI.switchTab('installed');
             });
         }
     };
