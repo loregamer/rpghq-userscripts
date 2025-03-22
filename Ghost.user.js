@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.8
+// @version      5.8.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -124,6 +124,9 @@
     }
     /* Hide list rows until they are processed */
     li.row:not(.content-processed) {
+      display: none !important;
+    }
+    .loading_indicator:not(.content-processed) {
       display: none !important;
     }
 
@@ -649,11 +652,14 @@
     // First, check if the element or its parent row has author-name-* class
     // which indicates it's authored by a ghosted user
     const rowItem = element.closest("li.row");
-    const hasGhostedClass = rowItem && Array.from(rowItem.classList).some(
-      (cls) => cls.startsWith("author-name-") && 
-      isUserIgnored(cls.replace("author-name-", ""))
-    );
-    
+    const hasGhostedClass =
+      rowItem &&
+      Array.from(rowItem.classList).some(
+        (cls) =>
+          cls.startsWith("author-name-") &&
+          isUserIgnored(cls.replace("author-name-", ""))
+      );
+
     if (hasGhostedClass) {
       // If it's authored by a ghosted user, only add ghosted-by-author
       if (rowItem) {
@@ -663,13 +669,13 @@
       }
       return;
     }
-    
+
     const recentTopicLi = element.closest("#recent-topics li");
     if (recentTopicLi) {
       recentTopicLi.classList.add("ghosted-row", "ghosted-by-author");
       return;
     }
-    
+
     if (rowItem) {
       const forumLinks = rowItem.querySelectorAll(
         ".forum-links a, .responsive-hide a"
@@ -682,11 +688,11 @@
         forumNames.includes("Chat With Staff")
       )
         return;
-      
+
       const isForumList = rowItem.closest(".topiclist.forums");
       const isViewForum = window.location.href.includes("/viewforum.php");
       const isSearch = window.location.href.includes("/search.php");
-      
+
       if (isViewForum || isSearch) {
         const lastpostCell = rowItem.querySelector("dd.lastpost");
         if (lastpostCell) {
@@ -724,7 +730,7 @@
           return;
         }
       }
-      
+
       // Check for ghosted authors in the row
       const authorLinks = rowItem.querySelectorAll(
         "a.username, a.username-coloured"
@@ -733,12 +739,12 @@
         link.textContent.trim()
       );
       const hasGhostedAuthor = authorNames.some((name) => isUserIgnored(name));
-      
+
       if (hasGhostedAuthor) {
         rowItem.classList.add("ghosted-row", "ghosted-by-author");
         return;
       }
-      
+
       const innerDiv = rowItem.querySelector(".list-inner");
       if (innerDiv) {
         const byText = innerDiv.textContent.toLowerCase();
@@ -750,7 +756,7 @@
           return;
         }
       }
-      
+
       // If we get here, it's content-based ghosting
       rowItem.classList.add("ghosted-row", "ghosted-by-content");
     } else {
@@ -765,14 +771,17 @@
   function processTopicListRow(rowType) {
     // Determine selector based on rowType
     let selector;
-    if (rowType === 'forum') {
+    if (rowType === "forum") {
       selector = "ul.topiclist.forums > li.row";
-    } else if (rowType === 'topic') {
+    } else if (rowType === "topic") {
       selector = "ul.topiclist.topics > li.row";
-    } else if (rowType === 'recent') {
+    } else if (rowType === "recent") {
       selector = "#recent-topics > ul > li.row";
     } else {
-      console.error("Invalid rowType provided to processTopicListRow:", rowType);
+      console.error(
+        "Invalid rowType provided to processTopicListRow:",
+        rowType
+      );
       return;
     }
 
@@ -810,7 +819,7 @@
       const authorName = authorLink.textContent.trim();
 
       // For forum rows, we only hide the lastpost section
-      if (rowType === 'forum') {
+      if (rowType === "forum") {
         // Check if the author is ignored
         if (isUserIgnored(authorName)) {
           // Author is ghosted, add ghosted-by-author class
@@ -848,12 +857,17 @@
             // Check if the lastPostCell contains the username of a ghosted user
             const lastpostCell = row.querySelector("dd.lastpost");
             if (lastpostCell) {
-              const authorLink = lastpostCell.querySelector("a.username, a.username-coloured");
+              const authorLink = lastpostCell.querySelector(
+                "a.username, a.username-coloured"
+              );
               if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
                 // If author is ghosted, ONLY add ghosted-by-author and stop processing
                 row.classList.add("ghosted-row", "ghosted-by-author");
                 return; // Stop here, don't check content
-              } else if (postContent && postContentContainsGhosted(postContent)) {
+              } else if (
+                postContent &&
+                postContentContainsGhosted(postContent)
+              ) {
                 // Only if author is not ghosted, check content
                 row.classList.add("ghosted-row", "ghosted-by-content");
               }
@@ -868,15 +882,15 @@
 
   // Legacy functions for backward compatibility
   function processTopiclistForumsRow() {
-    processTopicListRow('forum');
+    processTopicListRow("forum");
   }
 
   function processRecentTopicsRows() {
-    processTopicListRow('recent');
+    processTopicListRow("recent");
   }
 
   function processTopiclistTopicsRows() {
-    processTopicListRow('topic');
+    processTopicListRow("topic");
   }
 
   // Legacy function for backward compatibility - hide entire row except for forum rows
@@ -906,7 +920,9 @@
           lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
         } else {
           // Check post content
-          const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
+          const postLink = lastpostCell.querySelector(
+            "a[href*='viewtopic.php']"
+          );
           if (postLink) {
             const postId = postLink.href.match(/p=(\d+)/)?.[1];
             if (postId && postCache[postId]) {
@@ -934,10 +950,10 @@
         link.addEventListener("mouseleave", hidePostPreview);
       }
     });
-    
+
     const row = element.closest("li.row");
     const isForumList = row && row.closest(".topiclist.forums");
-    
+
     // Check if the lastpost author is ignored
     const authorLink = element.querySelector("a.username, a.username-coloured");
     if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
@@ -951,24 +967,24 @@
       element.classList.add("content-processed");
       return;
     }
-    
+
     const spanEl = element.querySelector("span");
     if (!spanEl) {
       element.classList.add("content-processed");
       return;
     }
-    
+
     const byTextNode = Array.from(spanEl.childNodes).find(
       (node) =>
         node.nodeType === Node.TEXT_NODE &&
         node.textContent.trim().toLowerCase() === "by"
     );
-    
+
     if (!byTextNode) {
       element.classList.add("content-processed");
       return;
     }
-    
+
     const nextEl = byTextNode.nextElementSibling;
     if (
       nextEl &&
@@ -981,11 +997,11 @@
         nextEl.classList.contains("username-coloured")
           ? nextEl
           : nextEl.querySelector(".username, .username-coloured");
-      
+
       const link = element.querySelector(
         'a[href*="viewtopic.php"][href*="#p"]'
       );
-      
+
       if (link) {
         const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
         if (pid) {
@@ -1022,7 +1038,7 @@
         }
       }
     }
-    
+
     element.classList.add("content-processed");
   }
 
@@ -1808,12 +1824,12 @@
 
     ghostedPosts.forEach((p) => p.classList.toggle("show", showGhostedPosts));
     ghostedQuotes.forEach((q) => q.classList.toggle("show", showGhostedPosts));
-    
+
     // For ghosted rows (which are now only lastpost cells), toggle visibility
     ghostedRows.forEach((r) => {
       r.classList.toggle("show", showGhostedPosts);
     });
-    
+
     document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
 
     showToggleNotification();
@@ -2333,11 +2349,13 @@
   // Function to clean up any elements that have both ghosted-by-author and ghosted-by-content classes
   function cleanupGhostedClasses() {
     // Find all elements with both classes
-    const elementsWithBothClasses = document.querySelectorAll('.ghosted-by-author.ghosted-by-content');
-    
+    const elementsWithBothClasses = document.querySelectorAll(
+      ".ghosted-by-author.ghosted-by-content"
+    );
+
     // Remove ghosted-by-content from these elements
-    elementsWithBothClasses.forEach(element => {
-      element.classList.remove('ghosted-by-content');
+    elementsWithBothClasses.forEach((element) => {
+      element.classList.remove("ghosted-by-content");
     });
   }
 
@@ -2358,7 +2376,7 @@
 
     // Process topiclist topics elements first
     document.querySelectorAll(".topiclist.topics").forEach((topiclist) => {
-      processTopicListRow('topic');
+      processTopicListRow("topic");
     });
 
     // Process cplist notifications
@@ -2404,39 +2422,47 @@
     document
       .querySelectorAll(".topiclist.topics, #recent-topics, .topiclist.forums")
       .forEach((container) => {
-        if (container.classList.contains("topiclist") && container.classList.contains("topics")) {
-          processTopicListRow('topic');
+        if (
+          container.classList.contains("topiclist") &&
+          container.classList.contains("topics")
+        ) {
+          processTopicListRow("topic");
           container.classList.add("content-processed");
         } else if (container.id === "recent-topics") {
-          processTopicListRow('recent');
+          processTopicListRow("recent");
           container.classList.add("content-processed");
-        } else if (container.classList.contains("topiclist") && container.classList.contains("forums")) {
-          processTopicListRow('forum');
+        } else if (
+          container.classList.contains("topiclist") &&
+          container.classList.contains("forums")
+        ) {
+          processTopicListRow("forum");
           container.classList.add("content-processed");
         } else {
           container.classList.add("content-processed");
         }
       });
-      
+
     // Clean up any elements that have both ghosted-by-author and ghosted-by-content classes
     cleanupGhostedClasses();
-    
+
     // Set up a MutationObserver to clean up any elements that get both classes in the future
     const ghostedClassesObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && 
-            mutation.attributeName === 'class' && 
-            mutation.target.classList.contains('ghosted-by-author') && 
-            mutation.target.classList.contains('ghosted-by-content')) {
-          mutation.target.classList.remove('ghosted-by-content');
+        if (
+          mutation.type === "attributes" &&
+          mutation.attributeName === "class" &&
+          mutation.target.classList.contains("ghosted-by-author") &&
+          mutation.target.classList.contains("ghosted-by-content")
+        ) {
+          mutation.target.classList.remove("ghosted-by-content");
         }
       });
     });
-    
+
     ghostedClassesObserver.observe(document.body, {
       subtree: true,
       attributes: true,
-      attributeFilter: ['class']
+      attributeFilter: ["class"],
     });
   });
 
