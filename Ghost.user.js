@@ -879,7 +879,7 @@
     // Check if user exists in ignoredUsers
     if (!ignoredUsers[userId]) {
       // Return default settings if user not found
-      return { hide: true, highlight: false };
+      return { hide: true, highlight: false, hideMode: "entire_row" };
     }
 
     // If user has specific settings
@@ -888,21 +888,35 @@
       ignoredUsers[userId].settings[contentType]
     ) {
       return {
-        hide: ignoredUsers[userId].settings[contentType] === "hide",
+        hide:
+          ignoredUsers[userId].settings[contentType] === "hide" ||
+          ignoredUsers[userId].settings[contentType] === "hide_entire_row" ||
+          ignoredUsers[userId].settings[contentType] === "hide_last_post",
         highlight: ignoredUsers[userId].settings[contentType] === "highlight",
+        hideMode:
+          ignoredUsers[userId].settings[contentType] === "hide_last_post"
+            ? "last_post"
+            : "entire_row",
       };
     }
 
     // Check for global settings for this user
     if (ignoredUsers[userId].settings && ignoredUsers[userId].settings.global) {
       return {
-        hide: ignoredUsers[userId].settings.global === "hide",
+        hide:
+          ignoredUsers[userId].settings.global === "hide" ||
+          ignoredUsers[userId].settings.global === "hide_entire_row" ||
+          ignoredUsers[userId].settings.global === "hide_last_post",
         highlight: ignoredUsers[userId].settings.global === "highlight",
+        hideMode:
+          ignoredUsers[userId].settings.global === "hide_last_post"
+            ? "last_post"
+            : "entire_row",
       };
     }
 
-    // Default to hiding if no specific settings found
-    return { hide: true, highlight: false };
+    // Default to hiding entire row if no specific settings found
+    return { hide: true, highlight: false, hideMode: "entire_row" };
   }
 
   function getUserHighlightColor(userId) {
@@ -1111,12 +1125,39 @@
         const settings = getUserVisibilitySetting(ghostedAuthorId, "lastPost");
         const highlightColor = getUserHighlightColor(ghostedAuthorId);
 
+        // Determine if this is a forums list or topics/recent topics list
+        const isForumsList = rowItem && rowItem.closest(".topiclist.forums");
+
+        // Always add ghosted-by-author to the row for identification
+        if (rowItem) {
+          rowItem.classList.add("ghosted-by-author");
+        }
+
         if (settings.hide) {
-          // Hide row based on user preference
-          if (rowItem) {
-            rowItem.classList.add("ghosted-row", "ghosted-by-author");
+          if (isForumsList) {
+            // For forums list, only hide the lastpost cell
+            const lastpostCell = rowItem.querySelector("dd.lastpost");
+            if (lastpostCell) {
+              lastpostCell.classList.add("ghosted-row");
+            }
           } else {
-            element.classList.add("ghosted-row", "ghosted-by-author");
+            // For topics/recent topics, check the hide mode
+            if (settings.hideMode === "last_post") {
+              // Only hide the lastpost cell
+              const lastpostCell = rowItem
+                ? rowItem.querySelector("dd.lastpost")
+                : null;
+              if (lastpostCell) {
+                lastpostCell.classList.add("ghosted-row");
+              }
+            } else {
+              // Hide entire row
+              if (rowItem) {
+                rowItem.classList.add("ghosted-row");
+              } else {
+                element.classList.add("ghosted-row");
+              }
+            }
           }
         } else if (settings.highlight) {
           // Highlight row based on user preference
@@ -1133,152 +1174,31 @@
               highlightColor
             );
           }
-        } else {
-          // Fallback to default behavior
-          if (rowItem) {
-            rowItem.classList.add("ghosted-row", "ghosted-by-author");
-          } else {
-            element.classList.add("ghosted-row", "ghosted-by-author");
-          }
         }
       } else {
-        // Fallback for when we can't determine the specific user
+        // If we can't get the ghosted author ID, use default behavior
+        const isForumsList = rowItem && rowItem.closest(".topiclist.forums");
+
+        // Always add ghosted-by-author to the row for identification
         if (rowItem) {
-          rowItem.classList.add("ghosted-row", "ghosted-by-author");
-        } else {
-          element.classList.add("ghosted-row", "ghosted-by-author");
+          rowItem.classList.add("ghosted-by-author");
         }
-      }
-      return;
-    }
 
-    // Check if the row contains content from ghosted users
-    const topicTitle = rowItem?.querySelector(".topictitle")?.textContent || "";
-    const forumLinks =
-      rowItem?.querySelectorAll(".forum-links a, .responsive-hide a") || [];
-    const allText =
-      topicTitle +
-      " " +
-      Array.from(forumLinks)
-        .map((link) => link.textContent.trim())
-        .join(" ");
-
-    const ghostedResult = postContentContainsGhosted(allText);
-
-    if (ghostedResult && ghostedResult.containsGhosted) {
-      // Get mentioned users
-      const mentionedUsers = ghostedResult.mentionedUsers;
-
-      if (mentionedUsers.length === 1) {
-        // If exactly one ghosted user is mentioned
-        const userId = mentionedUsers[0].userId;
-        const settings = getUserVisibilitySetting(userId, "mentions");
-        const mentionedColor = getUserMentionedColor(userId);
-
-        if (settings.hide) {
-          rowItem.classList.add("ghosted-row", "ghosted-by-content");
-        } else if (settings.highlight) {
-          rowItem.classList.add("ghosted-content-highlight");
-          rowItem.style.setProperty("--ghost-highlight-color", mentionedColor);
-        } else {
-          rowItem.classList.add("ghosted-row", "ghosted-by-content");
-        }
-        return;
-      } else if (mentionedUsers.length > 1) {
-        // Multiple ghosted users mentioned
-        // Check if any prefer to hide
-        let shouldHide = false;
-        let mentionHighlightColor = null;
-
-        for (const mentionedUser of mentionedUsers) {
-          const settings = getUserVisibilitySetting(
-            mentionedUser.userId,
-            "mentions"
-          );
-          if (settings.hide) {
-            shouldHide = true;
-            break;
-          } else if (settings.highlight && !mentionHighlightColor) {
-            // Use the first user's mentioned color for highlighting
-            mentionHighlightColor = getUserMentionedColor(mentionedUser.userId);
+        if (isForumsList) {
+          // For forums list, only hide the lastpost cell
+          const lastpostCell = rowItem
+            ? rowItem.querySelector("dd.lastpost")
+            : null;
+          if (lastpostCell) {
+            lastpostCell.classList.add("ghosted-row");
           }
-        }
-
-        if (shouldHide) {
-          rowItem.classList.add("ghosted-row", "ghosted-by-content");
-        } else if (mentionHighlightColor) {
-          rowItem.classList.add("ghosted-content-highlight");
-          rowItem.style.setProperty(
-            "--ghost-highlight-color",
-            mentionHighlightColor
-          );
         } else {
-          // Fallback in case no highlight preferences were found
-          rowItem.classList.add("ghosted-content-highlight");
-          rowItem.style.setProperty("--ghost-highlight-color", "#FF9955");
-        }
-        return;
-      }
-    }
-
-    const recentTopicLi = element.closest("#recent-topics li");
-    if (recentTopicLi) {
-      recentTopicLi.classList.add("ghosted-row", "ghosted-by-author");
-      return;
-    }
-
-    if (rowItem) {
-      const forumLinks = rowItem.querySelectorAll(
-        ".forum-links a, .responsive-hide a"
-      );
-      const forumNames = Array.from(forumLinks).map((link) =>
-        link.textContent.trim()
-      );
-      if (
-        forumNames.includes("Moderation Station") ||
-        forumNames.includes("Chat With Staff")
-      )
-        return;
-
-      const isForumList = rowItem.closest(".topiclist.forums");
-      const isViewForum = window.location.href.includes("/viewforum.php");
-      const isSearch = window.location.href.includes("/search.php");
-
-      if (isViewForum || isSearch) {
-        const lastpostCell = rowItem.querySelector("dd.lastpost");
-        if (lastpostCell) {
-          const authorLink = lastpostCell.querySelector(
-            "a.username, a.username-coloured"
-          );
-          if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
-            // Author is ghosted, only add ghosted-by-author
-            if (isViewForum)
-              lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
-            rowItem.classList.add("ghosted-row", "ghosted-by-author");
-            return;
+          // For topics/recent topics, hide entire row by default
+          if (rowItem) {
+            rowItem.classList.add("ghosted-row");
           } else {
-            const allLinks = rowItem.querySelectorAll(
-              "a.username, a.username-coloured"
-            );
-            const nonAuthorLinks = Array.from(allLinks).filter(
-              (link) => !link.closest(".responsive-hide.left-box")
-            );
-            const hasGhostedUser = nonAuthorLinks.some((link) =>
-              isUserIgnored(link.textContent.trim())
-            );
-            if (hasGhostedUser) {
-              // Has ghosted user in content, add ghosted-by-author
-              if (isViewForum)
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
-              rowItem.classList.add("ghosted-row", "ghosted-by-author");
-            } else {
-              // No ghosted author, but content might contain ghosted references
-              if (isViewForum)
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
-              rowItem.classList.add("ghosted-row", "ghosted-by-content");
-            }
+            element.classList.add("ghosted-row");
           }
-          return;
         }
       }
     }
@@ -2058,7 +1978,7 @@
         const highlightColor = getUserHighlightColor(effectiveUserId);
 
         if (settings.hide) {
-          // In forums list, add ghosted-by-author class to lastpost
+          // For forum lists, ALWAYS hide just the lastpost cell, not the entire row
           lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
         } else if (settings.highlight) {
           // Highlight lastpost based on user preference
@@ -2115,7 +2035,7 @@
               );
 
               if (settings.hide) {
-                // In forums list, add ghosted-by-content class to lastpost
+                // For forum lists, ALWAYS hide just the lastpost cell with ghosted-by-content
                 lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
               } else if (settings.highlight) {
                 // Highlight lastpost based on user preference
@@ -2144,9 +2064,80 @@
       return;
     }
 
-    // We don't add ghosted-by-* classes to lastpost cells in topics list
-    // Just mark as processed and let the row-level processing handle it
-    lastpostCell.classList.add("ghosted-row", "content-processed");
+    // Get the author link in the lastpost cell
+    const authorLink = lastpostCell.querySelector(
+      "a.username, a.username-coloured"
+    );
+    if (!authorLink) {
+      lastpostCell.classList.add("content-processed");
+      return;
+    }
+
+    const authorName = authorLink.textContent.trim();
+    let authorId = null;
+
+    if (authorLink.href) {
+      authorId = authorLink.href.match(/u=(\d+)/)?.[1];
+    }
+
+    // Check if the author is ignored
+    if ((authorId && isUserIgnored(authorId)) || isUserIgnored(authorName)) {
+      // Get the effective user ID
+      const effectiveUserId =
+        authorId ||
+        Object.keys(ignoredUsers).find(
+          (id) =>
+            ignoredUsers[id].username &&
+            ignoredUsers[id].username.toLowerCase() === authorName.toLowerCase()
+        );
+
+      if (effectiveUserId) {
+        // Get user-specific settings for lastposts
+        const settings = getUserVisibilitySetting(effectiveUserId, "lastposts");
+
+        // Get the parent row
+        const rowItem = lastpostCell.closest("li.row");
+
+        // Always add ghosted-by-author to the entire row for author identification
+        if (rowItem) {
+          rowItem.classList.add("ghosted-by-author");
+        }
+
+        if (settings.hide) {
+          if (settings.hideMode === "last_post") {
+            // Only add ghosted-row to the lastpost cell
+            lastpostCell.classList.add("ghosted-row");
+          } else {
+            // Add ghosted-row to the entire row
+            if (rowItem) {
+              rowItem.classList.add("ghosted-row");
+            }
+          }
+        } else if (settings.highlight) {
+          // Apply highlighting
+          const highlightColor = getUserHighlightColor(effectiveUserId);
+          lastpostCell.classList.add("ghosted-highlight");
+          lastpostCell.style.setProperty(
+            "--ghost-highlight-color",
+            highlightColor
+          );
+        }
+      } else {
+        // Fallback behavior - use default hide behavior
+        const rowItem = lastpostCell.closest("li.row");
+
+        // Always add ghosted-by-author to the entire row
+        if (rowItem) {
+          rowItem.classList.add("ghosted-by-author");
+          rowItem.classList.add("ghosted-row");
+        } else {
+          lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+        }
+      }
+    }
+
+    // Mark as processed
+    lastpostCell.classList.add("content-processed");
   }
 
   async function processLastPostInRecentTopics(lastpostCell) {
@@ -2155,9 +2146,80 @@
       return;
     }
 
-    // We don't add ghosted-by-* classes to lastpost cells in recent topics
-    // Just mark as processed and let the row-level processing handle it
-    lastpostCell.classList.add("ghosted-row", "content-processed");
+    // Get the author link in the lastpost cell
+    const authorLink = lastpostCell.querySelector(
+      "a.username, a.username-coloured"
+    );
+    if (!authorLink) {
+      lastpostCell.classList.add("content-processed");
+      return;
+    }
+
+    const authorName = authorLink.textContent.trim();
+    let authorId = null;
+
+    if (authorLink.href) {
+      authorId = authorLink.href.match(/u=(\d+)/)?.[1];
+    }
+
+    // Check if the author is ignored
+    if ((authorId && isUserIgnored(authorId)) || isUserIgnored(authorName)) {
+      // Get the effective user ID
+      const effectiveUserId =
+        authorId ||
+        Object.keys(ignoredUsers).find(
+          (id) =>
+            ignoredUsers[id].username &&
+            ignoredUsers[id].username.toLowerCase() === authorName.toLowerCase()
+        );
+
+      if (effectiveUserId) {
+        // Get user-specific settings for lastposts
+        const settings = getUserVisibilitySetting(effectiveUserId, "lastposts");
+
+        // Get the parent row
+        const rowItem = lastpostCell.closest("li.row");
+
+        // Always add ghosted-by-author to the entire row for author identification
+        if (rowItem) {
+          rowItem.classList.add("ghosted-by-author");
+        }
+
+        if (settings.hide) {
+          if (settings.hideMode === "last_post") {
+            // Only add ghosted-row to the lastpost cell
+            lastpostCell.classList.add("ghosted-row");
+          } else {
+            // Add ghosted-row to the entire row
+            if (rowItem) {
+              rowItem.classList.add("ghosted-row");
+            }
+          }
+        } else if (settings.highlight) {
+          // Apply highlighting
+          const highlightColor = getUserHighlightColor(effectiveUserId);
+          lastpostCell.classList.add("ghosted-highlight");
+          lastpostCell.style.setProperty(
+            "--ghost-highlight-color",
+            highlightColor
+          );
+        }
+      } else {
+        // Fallback behavior - use default hide behavior
+        const rowItem = lastpostCell.closest("li.row");
+
+        // Always add ghosted-by-author to the entire row
+        if (rowItem) {
+          rowItem.classList.add("ghosted-by-author");
+          rowItem.classList.add("ghosted-row");
+        } else {
+          lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+        }
+      }
+    }
+
+    // Mark as processed
+    lastpostCell.classList.add("content-processed");
   }
 
   async function processForumsListRows() {
@@ -2196,54 +2258,9 @@
         const lastpostCell = row.querySelector(
           "dd.lastpost:not(.content-processed)"
         );
-        if (!lastpostCell) continue;
-
-        // Get the author link in the lastpost cell
-        const authorLink = lastpostCell.querySelector(
-          "a.username, a.username-coloured"
-        );
-        if (!authorLink) continue;
-
-        const authorName = authorLink.textContent.trim();
-
-        // Check if the author is ignored
-        if (isUserIgnored(authorName)) {
-          // Author is ghosted, add ghosted-by-author class to the entire row
-          row.classList.add("ghosted-row", "ghosted-by-author");
-          lastpostCell.classList.add("content-processed");
-          row.classList.add("content-processed");
-          continue;
+        if (lastpostCell) {
+          await processLastPostInTopics(lastpostCell);
         }
-
-        // Check for post content with ghosted mentions
-        const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
-        if (postLink) {
-          const postId = postLink.href.match(/p=(\d+)/)?.[1];
-          if (postId) {
-            // If post isn't already cached, try to fetch it
-            if (!postCache[postId]) {
-              try {
-                await fetchAndCachePost(postId);
-              } catch (error) {
-                console.error("Error fetching post for topicslist row:", error);
-              }
-            }
-
-            // Check if we have the post content
-            if (postCache[postId] && postCache[postId].content) {
-              const postContent = postCache[postId].content;
-              const ghostedResult = postContentContainsGhosted(postContent);
-
-              if (ghostedResult && ghostedResult.containsGhosted) {
-                // Post content contains ghosted username, add ghosted-by-content class
-                row.classList.add("ghosted-row", "ghosted-by-content");
-              }
-            }
-          }
-        }
-
-        // Mark the lastpost cell as processed
-        lastpostCell.classList.add("content-processed");
 
         // Mark the row as processed
         row.classList.add("content-processed");
@@ -2252,77 +2269,35 @@
   }
 
   async function processRecentTopicsRows() {
-    const recentTopicsList = document.querySelector("#recent-topics");
-    if (!recentTopicsList) return;
-
-    const rows = recentTopicsList.querySelectorAll(
-      "li.row:not(.content-processed)"
-    );
-
-    for (const row of rows) {
-      // Get the lastpost cell
-      const lastpostCell = row.querySelector(
-        "dd.lastpost:not(.content-processed)"
+    // Process rows in #recent-topics
+    const recentTopics = document.querySelector("#recent-topics");
+    if (recentTopics) {
+      const rows = recentTopics.querySelectorAll(
+        "li.row:not(.content-processed)"
       );
-      if (!lastpostCell) continue;
 
-      // Get the author link in the lastpost cell
-      const authorLink = lastpostCell.querySelector(
-        "a.username, a.username-coloured"
-      );
-      if (!authorLink) continue;
-
-      const authorName = authorLink.textContent.trim();
-
-      // Check if the author is ignored
-      if (isUserIgnored(authorName)) {
-        // Author is ghosted, add ghosted-by-author class to the entire row only
-        row.classList.add("ghosted-row", "ghosted-by-author");
-        lastpostCell.classList.add("content-processed");
-        row.classList.add("content-processed");
-        continue;
-      }
-
-      // Check for post content with ghosted mentions
-      const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
-      if (postLink) {
-        const postId = postLink.href.match(/p=(\d+)/)?.[1];
-        if (postId) {
-          // If post isn't already cached, try to fetch it
-          if (!postCache[postId]) {
-            try {
-              await fetchAndCachePost(postId);
-            } catch (error) {
-              console.error(
-                "Error fetching post for recent topics row:",
-                error
-              );
-            }
-          }
-
-          // Check if we have the post content
-          if (postCache[postId] && postCache[postId].content) {
-            const postContent = postCache[postId].content;
-            const ghostedResult = postContentContainsGhosted(postContent);
-
-            if (ghostedResult && ghostedResult.containsGhosted) {
-              // Post content contains ghosted username, add ghosted-by-content class to row only
-              row.classList.add("ghosted-row", "ghosted-by-content");
-            }
-          }
+      for (const row of rows) {
+        // Get the lastpost cell
+        const lastpostCell = row.querySelector(
+          "dd.lastpost:not(.content-processed)"
+        );
+        if (lastpostCell) {
+          await processLastPostInRecentTopics(lastpostCell);
         }
+
+        // Mark the row as processed
+        row.classList.add("content-processed");
       }
-
-      // Mark the lastpost cell as processed
-      lastpostCell.classList.add("content-processed");
-
-      // Mark the row as processed
-      row.classList.add("content-processed");
     }
   }
 
   // Replace the old processLastPost function with specialized functions
   async function processLastPost(lastpostCell) {
+    // Skip if already processed
+    if (lastpostCell.classList.contains("content-processed")) {
+      return;
+    }
+
     // Detect which context we're in and call the appropriate function
     if (lastpostCell.closest(".topiclist.forums")) {
       return processLastPostInForums(lastpostCell);
@@ -2360,6 +2335,7 @@
     }
   }
 
+  // Function to process all ignored content once
   async function processIgnoredContentOnce() {
     await Promise.all(
       Array.from(
@@ -2378,10 +2354,10 @@
 
     await cacheAllPosts();
 
-    // Process the different types of topiclist rows
-    processTopiclistForumsRow();
-    processRecentTopicsRows();
-    processTopiclistTopicsRows();
+    // Process the different types of topiclist rows using our specialized functions
+    await processForumsListRows(); // Process forums list (categories)
+    await processTopicsListRows(); // Process topics list (threads)
+    await processRecentTopicsRows(); // Process recent topics
 
     document.querySelectorAll("fieldset.polls").forEach(processPoll);
 
@@ -2428,12 +2404,7 @@
       .querySelectorAll("strong.badge:not(.content-processed)")
       .forEach((badge) => badge.classList.add("content-processed"));
 
-    const lastPosts = document.querySelectorAll(
-      "dd.lastpost:not(.content-processed), #recent-topics li dd.lastpost:not(.content-processed)"
-    );
-
-    await Promise.all(Array.from(lastPosts).map(processLastPost));
-
+    // Make sure any remaining rows are marked as processed
     document
       .querySelectorAll("li.row:not(.content-processed)")
       .forEach((row) => {
@@ -2441,6 +2412,25 @@
         if (lp && !lp.classList.contains("content-processed")) return;
         row.classList.add("content-processed");
       });
+  }
+
+  // These are shortcuts for specific list types
+  function processTopiclistForumsRow() {
+    return processForumsListRows();
+  }
+
+  function processTopiclistTopicsRows() {
+    return processTopicsListRows();
+  }
+
+  function processTopicListRow(rowType) {
+    if (rowType === "forums") {
+      return processForumsListRows();
+    } else if (rowType === "topics") {
+      return processTopicsListRows();
+    } else if (rowType === "recent-topics") {
+      return processRecentTopicsRows();
+    }
   }
 
   // ---------------------------------------------------------------------
@@ -3538,9 +3528,14 @@
           <div class="ghost-settings-group">
             <label>Global Visibility:</label>
             <select class="ghost-visibility-select" data-content-type="global">
-              <option value="hide" ${
-                globalSetting === "hide" ? "selected" : ""
-              }>Hide Content</option>
+              <option value="hide_entire_row" ${
+                globalSetting === "hide" || globalSetting === "hide_entire_row"
+                  ? "selected"
+                  : ""
+              }>Hide Entire Row</option>
+              <option value="hide_last_post" ${
+                globalSetting === "hide_last_post" ? "selected" : ""
+              }>Hide Last Post Only</option>
               <option value="highlight" ${
                 globalSetting === "highlight" ? "selected" : ""
               }>Highlight Content</option>
@@ -3619,9 +3614,17 @@
                 <label>Last Posts:</label>
                 <select class="ghost-visibility-select" data-content-type="lastPost">
                   <option value="default">Use Global Setting</option>
-                  <option value="hide" ${
-                    userData.settings?.lastPost === "hide" ? "selected" : ""
-                  }>Hide</option>
+                  <option value="hide_entire_row" ${
+                    userData.settings?.lastPost === "hide" ||
+                    userData.settings?.lastPost === "hide_entire_row"
+                      ? "selected"
+                      : ""
+                  }>Hide Entire Row</option>
+                  <option value="hide_last_post" ${
+                    userData.settings?.lastPost === "hide_last_post"
+                      ? "selected"
+                      : ""
+                  }>Hide Last Post</option>
                   <option value="highlight" ${
                     userData.settings?.lastPost === "highlight"
                       ? "selected"
