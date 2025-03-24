@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.8.1
-// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users
+// @version      5.9.1
+// @description  Hides content from ghosted users, with enhanced user management (search, avatar replacement), quote→blockquote formatting, hides posts with @mentions of ghosted users
 // @author       You
 // @match        https://rpghq.org/*/*
 // @run-at       document-start
@@ -1695,69 +1695,456 @@
   }
 
   function showReplaceAvatarPopup(userId) {
+    // Create overlay
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 10000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(3px);
+    `;
+
+    // Create popup
     const popup = document.createElement("div");
     popup.style.cssText = `
-      position: fixed; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: #2a2a2a; color: #e0e0e0; padding: 20px;
-      border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 9999;
-      width: 300px;
+      background-color: #2a2e36;
+      color: #e0e0e0;
+      padding: 25px;
+      border-radius: 6px;
+      box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+      width: 380px;
+      max-width: 90%;
+      animation: fadeInUp 0.3s ease-out;
     `;
+
+    // Create style element for animations
+    const style = document.createElement("style");
+    style.textContent = `
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Title with username
     const title = document.createElement("h3");
     title.textContent = "Replace Avatar";
-    title.style.marginTop = "0";
-    title.style.marginBottom = "15px";
-    popup.appendChild(title);
+    title.style.cssText = `
+      margin: 0 0 5px 0;
+      font-size: 1.4em;
+      font-weight: 600;
+      color: #fff;
+    `;
+
+    // Attempt to get username from global state
+    let username = "Unknown User";
+    if (ignoredUsers[userId]) {
+      username = ignoredUsers[userId];
+    }
+
+    const subtitle = document.createElement("div");
+    subtitle.textContent = `Customizing avatar for ${username}`;
+    subtitle.style.cssText = `
+      color: #8a9db5;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+    `;
+
+    // Current avatar preview
+    const avatarPreview = document.createElement("div");
+    avatarPreview.style.cssText = `
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #232830;
+      padding: 15px;
+      border-radius: 4px;
+    `;
+
+    const avatarTitle = document.createElement("div");
+    avatarTitle.textContent = "Current Avatar";
+    avatarTitle.style.cssText = `
+      font-size: 0.9em;
+      color: #8a9db5;
+      margin-bottom: 10px;
+    `;
+
+    const avatarImage = document.createElement("div");
+    avatarImage.style.cssText = `
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      overflow: hidden;
+      background-color: #1a1e25;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+
+    const defaultAvatar =
+      "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
+    const img = document.createElement("img");
+    img.src =
+      replacedAvatars[userId] ||
+      `https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg`;
+    img.style.cssText = "width: 100%; height: 100%; object-fit: cover;";
+    img.onerror = function () {
+      if (this.src.endsWith(".jpg") && !this.src.includes("f.rpghq.org")) {
+        this.src = `https://rpghq.org/forums/download/file.php?avatar=${userId}.png`;
+      } else if (
+        this.src.endsWith(".png") &&
+        !this.src.includes("f.rpghq.org")
+      ) {
+        this.src = `https://rpghq.org/forums/download/file.php?avatar=${userId}.gif`;
+      } else if (!this.src.includes("f.rpghq.org")) {
+        this.src = defaultAvatar;
+      }
+    };
+    avatarImage.appendChild(img);
+
+    const customStatus = document.createElement("div");
+    customStatus.style.cssText = `
+      font-size: 0.8em;
+      margin-top: 8px;
+      color: #8a9db5;
+      font-style: italic;
+    `;
+    customStatus.textContent = replacedAvatars[userId]
+      ? "Custom avatar set"
+      : "Using default forum avatar";
+
+    avatarPreview.appendChild(avatarTitle);
+    avatarPreview.appendChild(avatarImage);
+    avatarPreview.appendChild(customStatus);
+
+    // Input area with label and description
+    const inputArea = document.createElement("div");
+    inputArea.style.cssText = `
+      margin-bottom: 20px;
+    `;
+
+    const inputLabel = document.createElement("label");
+    inputLabel.textContent = "New Avatar URL";
+    inputLabel.style.cssText = `
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    `;
+
+    const inputDescription = document.createElement("div");
+    inputDescription.innerHTML = `
+      <i class="icon fa-info-circle fa-fw" aria-hidden="true"></i>
+      Provide a direct image URL (128×128px or smaller)
+    `;
+    inputDescription.style.cssText = `
+      margin-bottom: 8px;
+      font-size: 0.85em;
+      color: #8a9db5;
+    `;
+
     const input = document.createElement("input");
     input.type = "text";
-    input.placeholder = "Enter image URL (128x128 or smaller)";
+    input.placeholder = "https://example.com/image.png";
     input.style.cssText = `
-      width: 100%; padding: 5px; margin-bottom: 15px; background: #3a3a3a;
-      border: 1px solid #4a4a4a; color: #e0e0e0; border-radius: 3px;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 5px;
+      background: #1e232b;
+      border: 1px solid #3a3f4b;
+      color: #e0e0e0;
+      border-radius: 4px;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
     `;
-    popup.appendChild(input);
+    input.onfocus = () => {
+      input.style.borderColor = "#4a90e2";
+    };
+    input.onblur = () => {
+      input.style.borderColor = "#3a3f4b";
+    };
+
+    // URL validation helper text
+    const validationTip = document.createElement("div");
+    validationTip.style.cssText = `
+      font-size: 0.8em;
+      color: #8a9db5;
+    `;
+    validationTip.textContent = "Enter a direct image URL (.jpg, .png, .gif)";
+
+    inputArea.appendChild(inputLabel);
+    inputArea.appendChild(inputDescription);
+    inputArea.appendChild(input);
+    inputArea.appendChild(validationTip);
+
+    // URL validation
+    input.addEventListener("input", function () {
+      const url = this.value.trim();
+      if (!url) {
+        validationTip.textContent =
+          "Enter a direct image URL (.jpg, .png, .gif)";
+        validationTip.style.color = "#8a9db5";
+        return;
+      }
+
+      try {
+        new URL(url);
+
+        // Check if it likely points to an image
+        if (url.match(/\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i)) {
+          validationTip.textContent = "URL format appears valid";
+          validationTip.style.color = "#4CAF50";
+        } else {
+          validationTip.textContent = "URL doesn't appear to be an image";
+          validationTip.style.color = "#FFC107";
+        }
+      } catch (e) {
+        validationTip.textContent = "Invalid URL format";
+        validationTip.style.color = "#F44336";
+      }
+    });
+
+    // Success message area (initially hidden)
+    const messageArea = document.createElement("div");
+    messageArea.style.cssText = `
+      margin-bottom: 20px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+      text-align: center;
+    `;
+
+    // Button container with flex layout
     const btnContainer = document.createElement("div");
-    btnContainer.style.display = "flex";
-    btnContainer.style.justifyContent = "space-between";
-    popup.appendChild(btnContainer);
-    function makeBtn(label) {
+    btnContainer.style.cssText = `
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+    `;
+
+    // Function to create styled buttons
+    function makeBtn(label, isPrimary = false, isDanger = false) {
       const b = document.createElement("button");
       b.textContent = label;
+
+      let bgColor = "#3a3f4b"; // Default
+      let hoverBgColor = "#4a5464"; // Default hover
+      let textColor = "#e0e0e0"; // Default text
+
+      if (isPrimary) {
+        bgColor = "#4a90e2";
+        hoverBgColor = "#5aa0f2";
+        textColor = "white";
+      } else if (isDanger) {
+        bgColor = "#e74c3c";
+        hoverBgColor = "#f55c4c";
+        textColor = "white";
+      }
+
       b.style.cssText = `
-        background-color: #3a3a3a; color: #e0e0e0; border: none;
-        padding: 5px 10px; border-radius: 3px; cursor: pointer;
+        background-color: ${bgColor};
+        color: ${textColor};
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: ${isPrimary ? "600" : "normal"};
+        transition: background-color 0.2s;
+        flex: 1;
       `;
-      b.addEventListener(
-        "mouseover",
-        () => (b.style.backgroundColor = "#4a4a4a")
-      );
-      b.addEventListener(
-        "mouseout",
-        () => (b.style.backgroundColor = "#3a3a3a")
-      );
+
+      b.addEventListener("mouseover", () => {
+        b.style.backgroundColor = hoverBgColor;
+      });
+      b.addEventListener("mouseout", () => {
+        b.style.backgroundColor = bgColor;
+      });
+
       return b;
     }
-    const replaceB = makeBtn("Replace");
+
+    // Button actions
+    const replaceB = makeBtn("Replace Avatar", true);
     replaceB.addEventListener("click", () => {
-      validateAndReplaceAvatar(userId, input.value);
-      document.body.removeChild(popup);
+      const url = input.value.trim();
+      if (!url) {
+        validationTip.textContent = "Please enter a URL";
+        validationTip.style.color = "#F44336";
+        input.focus();
+        return;
+      }
+
+      // Show loading state
+      replaceB.disabled = true;
+      replaceB.textContent = "Validating...";
+      replaceB.style.opacity = "0.7";
+
+      validateAndReplaceAvatar(userId, url, (success, message) => {
+        if (success) {
+          // Update preview
+          img.src = url;
+          customStatus.textContent = "Custom avatar set";
+
+          // Show success message
+          messageArea.style.display = "block";
+          messageArea.style.backgroundColor = "rgba(76, 175, 80, 0.2)";
+          messageArea.innerHTML = `
+            <i class="icon fa-check-circle fa-fw" aria-hidden="true"></i>
+            Avatar successfully updated
+          `;
+          messageArea.style.color = "#4CAF50";
+
+          // Clear input
+          input.value = "";
+          validationTip.textContent =
+            "Enter a direct image URL (.jpg, .png, .gif)";
+          validationTip.style.color = "#8a9db5";
+
+          // Reset button
+          replaceB.disabled = false;
+          replaceB.textContent = "Replace Avatar";
+          replaceB.style.opacity = "1";
+
+          // Auto close after delay
+          setTimeout(() => {
+            document.body.removeChild(overlay);
+          }, 2000);
+        } else {
+          // Show error message
+          messageArea.style.display = "block";
+          messageArea.style.backgroundColor = "rgba(244, 67, 54, 0.2)";
+          messageArea.innerHTML = `
+            <i class="icon fa-exclamation-circle fa-fw" aria-hidden="true"></i>
+            ${message || "Failed to set avatar"}
+          `;
+          messageArea.style.color = "#F44336";
+
+          // Reset button
+          replaceB.disabled = false;
+          replaceB.textContent = "Replace Avatar";
+          replaceB.style.opacity = "1";
+        }
+      });
     });
-    const resetB = makeBtn("Reset to Default");
+
+    const resetB = makeBtn("Reset to Default", false, true);
     resetB.addEventListener("click", () => {
-      delete replacedAvatars[userId];
-      GM_setValue("replacedAvatars", replacedAvatars);
-      alert("Avatar reset to default.");
-      replaceUserAvatars();
-      document.body.removeChild(popup);
+      if (replacedAvatars[userId]) {
+        if (confirm(`Reset avatar for ${username} to forum default?`)) {
+          delete replacedAvatars[userId];
+          GM_setValue("replacedAvatars", replacedAvatars);
+
+          // Update preview
+          img.src = `https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg`;
+          customStatus.textContent = "Using default forum avatar";
+
+          // Show success message
+          messageArea.style.display = "block";
+          messageArea.style.backgroundColor = "rgba(76, 175, 80, 0.2)";
+          messageArea.innerHTML = `
+            <i class="icon fa-check-circle fa-fw" aria-hidden="true"></i>
+            Avatar reset to default
+          `;
+          messageArea.style.color = "#4CAF50";
+
+          replaceUserAvatars();
+
+          // Auto close after delay
+          setTimeout(() => {
+            document.body.removeChild(overlay);
+          }, 2000);
+        }
+      } else {
+        // Show info message
+        messageArea.style.display = "block";
+        messageArea.style.backgroundColor = "rgba(33, 150, 243, 0.2)";
+        messageArea.innerHTML = `
+          <i class="icon fa-info-circle fa-fw" aria-hidden="true"></i>
+          This user already has the default avatar
+        `;
+        messageArea.style.color = "#2196F3";
+      }
     });
+
     const cancelB = makeBtn("Cancel");
     cancelB.addEventListener("click", () => {
-      document.body.removeChild(popup);
+      document.body.removeChild(overlay);
     });
-    btnContainer.appendChild(replaceB);
-    btnContainer.appendChild(resetB);
+
+    // Add buttons
     btnContainer.appendChild(cancelB);
-    document.body.appendChild(popup);
+    btnContainer.appendChild(resetB);
+    btnContainer.appendChild(replaceB);
+
+    // Assemble popup
+    popup.appendChild(title);
+    popup.appendChild(subtitle);
+    popup.appendChild(avatarPreview);
+    popup.appendChild(messageArea);
+    popup.appendChild(inputArea);
+    popup.appendChild(btnContainer);
+
+    // Add popup to overlay
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+
+    // Focus input field
+    setTimeout(() => {
+      input.focus();
+    }, 100);
+
+    // Close on escape key
+    document.addEventListener("keydown", function escapeHandler(e) {
+      if (e.key === "Escape") {
+        document.body.removeChild(overlay);
+        document.removeEventListener("keydown", escapeHandler);
+      }
+    });
+
+    // Close when clicking outside
+    overlay.addEventListener("click", function (e) {
+      if (e.target === overlay) {
+        document.body.removeChild(overlay);
+      }
+    });
+  }
+
+  // Modified to support callbacks for better error handling
+  function validateAndReplaceAvatar(userId, url, callback) {
+    const testImg = new Image();
+    testImg.onload = function () {
+      if (this.width <= 128 && this.height <= 128) {
+        replacedAvatars[userId] = url;
+        GM_setValue("replacedAvatars", replacedAvatars);
+        replaceUserAvatars();
+        if (callback) callback(true);
+      } else {
+        if (callback)
+          callback(
+            false,
+            `Image must be 128×128 or smaller (found: ${this.width}×${this.height})`
+          );
+      }
+    };
+    testImg.onerror = function () {
+      if (callback)
+        callback(false, "Could not load image from the provided URL");
+    };
+    testImg.src = url;
   }
 
   // ---------------------------------------------------------------------
@@ -1934,6 +2321,48 @@
   // 10) IGNORED USERS MANAGEMENT
   // ---------------------------------------------------------------------
 
+  // User feedback notification function - globally available
+  function showNotification(message, type = "info") {
+    const notification = document.createElement("div");
+    notification.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 4px;
+      color: white;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 10000;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    `;
+
+    if (type === "success") {
+      notification.style.backgroundColor = "#4CAF50";
+    } else if (type === "error") {
+      notification.style.backgroundColor = "#F44336";
+    } else {
+      notification.style.backgroundColor = "#2196F3";
+    }
+
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    // Fade in
+    setTimeout(() => {
+      notification.style.opacity = "1";
+    }, 10);
+
+    // Fade out and remove
+    setTimeout(() => {
+      notification.style.opacity = "0";
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 300);
+    }, 3000);
+  }
+
   function showIgnoredUsersPopup() {
     // Create popup container
     const popup = document.createElement("div");
@@ -1947,19 +2376,20 @@
       border: 1px solid #3a3f4b;
       border-radius: 5px;
       width: 80%;
-      max-width: 600px;
+      max-width: 650px;
       height: 80%;
       max-height: 600px;
       display: flex;
       flex-direction: column;
       z-index: 9999;
       font-family: 'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
     `;
 
     // Header with title and close button
     const header = document.createElement("div");
     header.style.cssText = `
-      padding: 10px;
+      padding: 15px;
       background-color: #2a2e36;
       border-bottom: 1px solid #3a3f4b;
       display: flex;
@@ -1968,24 +2398,194 @@
     `;
     const title = document.createElement("h2");
     title.textContent = "Ghosted Users";
-    title.style.cssText = "margin: 0; color: #c5d0db; font-size: 1.2em;";
+    title.style.cssText =
+      "margin: 0; color: #c5d0db; font-size: 1.3em; font-weight: 600;";
     const closeButton = document.createElement("button");
     closeButton.textContent = "×";
     closeButton.style.cssText = `
       background-color: transparent;
       color: #c5d0db;
       border: none;
-      font-size: 1.5em;
+      font-size: 1.8em;
       cursor: pointer;
+      line-height: 0.8;
+      padding: 8px;
+      border-radius: 3px;
+      transition: background-color 0.2s;
     `;
+    closeButton.onmouseover = () => {
+      closeButton.style.backgroundColor = "#3a3f4b";
+    };
+    closeButton.onmouseout = () => {
+      closeButton.style.backgroundColor = "transparent";
+    };
     closeButton.onclick = () => document.body.removeChild(popup);
     header.appendChild(title);
     header.appendChild(closeButton);
 
+    // Stats section
+    const statsSection = document.createElement("div");
+    statsSection.style.cssText = `
+      padding: 10px 15px;
+      background-color: #232830;
+      border-bottom: 1px solid #3a3f4b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9em;
+      color: #aab2bd;
+    `;
+
+    const totalGhosted = Object.keys(ignoredUsers).length;
+    statsSection.innerHTML = `
+      <div>Total Ghosted Users: <strong>${totalGhosted}</strong></div>
+      <div id="ghost-search-stats"></div>
+    `;
+
+    // Add search area
+    const searchArea = document.createElement("div");
+    searchArea.style.cssText = `
+      padding: 15px;
+      background-color: #2a2e36;
+      border-bottom: 1px solid #3a3f4b;
+    `;
+
+    // Search input with icon
+    const searchContainer = document.createElement("div");
+    searchContainer.style.cssText = `
+      position: relative;
+      display: flex;
+      align-items: center;
+    `;
+
+    const searchIcon = document.createElement("div");
+    searchIcon.innerHTML =
+      '<i class="icon fa-search fa-fw" aria-hidden="true"></i>';
+    searchIcon.style.cssText = `
+      position: absolute;
+      left: 12px;
+      color: #6c7a91;
+      pointer-events: none;
+    `;
+
+    const searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.placeholder = "Search for ghosted users...";
+    searchInput.style.cssText = `
+      width: 100%;
+      padding: 10px 10px 10px 35px;
+      border: 1px solid #3a3f4b;
+      border-radius: 4px;
+      background-color: #171b24;
+      color: #fff;
+      font-size: 14px;
+      box-sizing: border-box;
+      transition: border-color 0.3s;
+    `;
+    searchInput.onfocus = () => {
+      searchInput.style.borderColor = "#4a90e2";
+    };
+    searchInput.onblur = () => {
+      searchInput.style.borderColor = "#3a3f4b";
+    };
+
+    searchContainer.appendChild(searchIcon);
+    searchContainer.appendChild(searchInput);
+    searchArea.appendChild(searchContainer);
+
+    // Add search for new users to ghost
+    const newUsersSearch = document.createElement("div");
+    newUsersSearch.style.cssText = `
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #3a3f4b;
+      border-radius: 4px;
+      background-color: #1e232b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: background-color 0.2s;
+    `;
+    newUsersSearch.innerHTML =
+      '<i class="icon fa-user-plus fa-fw" aria-hidden="true" style="margin-right: 8px;"></i> Find users to ghost';
+    newUsersSearch.onmouseover = () => {
+      newUsersSearch.style.backgroundColor = "#252a33";
+    };
+    newUsersSearch.onmouseout = () => {
+      newUsersSearch.style.backgroundColor = "#1e232b";
+    };
+
+    newUsersSearch.addEventListener("click", function () {
+      const findUserPopup = createMemberSearchPopup((userId, username) => {
+        // When a user is selected from the search
+        if (!ignoredUsers[userId]) {
+          toggleUserGhost(userId, username);
+          renderUserList();
+
+          // Update stats
+          const totalGhosted = Object.keys(ignoredUsers).length;
+          const statsElement = statsSection.querySelector("div:first-child");
+          if (statsElement) {
+            statsElement.innerHTML = `Total Ghosted Users: <strong>${totalGhosted}</strong>`;
+          }
+
+          // Show success notification
+          showNotification(`User "${username}" has been ghosted.`, "success");
+        } else {
+          showNotification(`User "${username}" is already ghosted.`, "info");
+        }
+      });
+
+      findUserPopup.classList.add("active");
+    });
+    searchArea.appendChild(newUsersSearch);
+
+    // User feedback notification function - REMOVE THIS since we now have it globally
+    // function showNotification(message, type = "info") {
+    //   const notification = document.createElement("div");
+    //   notification.style.cssText = `
+    //     position: fixed;
+    //     bottom: 20px;
+    //     right: 20px;
+    //     padding: 12px 20px;
+    //     border-radius: 4px;
+    //     color: white;
+    //     font-size: 14px;
+    //     opacity: 0;
+    //     transition: opacity 0.3s;
+    //     z-index: 10000;
+    //     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    //   `;
+    //
+    //   if (type === "success") {
+    //     notification.style.backgroundColor = "#4CAF50";
+    //   } else if (type === "error") {
+    //     notification.style.backgroundColor = "#F44336";
+    //   } else {
+    //     notification.style.backgroundColor = "#2196F3";
+    //   }
+    //
+    //   notification.textContent = message;
+    //   document.body.appendChild(notification);
+    //
+    //   // Fade in
+    //   setTimeout(() => {
+    //     notification.style.opacity = "1";
+    //   }, 10);
+    //
+    //   // Fade out and remove
+    //   setTimeout(() => {
+    //     notification.style.opacity = "0";
+    //     setTimeout(() => {
+    //       document.body.removeChild(notification);
+    //     }, 300);
+    //   }, 3000);
+    // }
+
     // Content area for the user list
     const content = document.createElement("div");
     content.style.cssText = `
-      padding: 10px;
+      padding: 15px;
       overflow-y: auto;
       flex-grow: 1;
       background-color: #2a2e36;
@@ -1997,108 +2597,770 @@
       margin: 0;
     `;
 
-    // Render user list
-    const userEntries = Object.entries(ignoredUsers).map(
-      ([userId, username]) => ({
-        userId,
-        username: typeof username === "string" ? username : "Unknown User",
-      })
-    );
+    // Loading indicator
+    const loadingIndicator = document.createElement("div");
+    loadingIndicator.style.cssText = `
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: #aab2bd;
+    `;
+    loadingIndicator.innerHTML =
+      '<i class="icon fa-circle-o-notch fa-spin fa-fw"></i> Loading...';
+    content.appendChild(loadingIndicator);
 
-    userEntries.sort((a, b) => a.username.localeCompare(b.username));
+    // Function to render the user list (can be called again when filtering)
+    function renderUserList(filter = "") {
+      // Show loading indicator
+      loadingIndicator.style.display = "block";
+      userList.style.display = "none";
 
-    userEntries.forEach(({ userId, username }) => {
-      const listItem = document.createElement("li");
-      listItem.style.cssText = `
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        padding: 5px;
-        border-bottom: 1px solid #3a3f4b;
-      `;
+      // Use setTimeout to allow the UI to update before processing
+      setTimeout(() => {
+        userList.innerHTML = "";
+        const userEntries = Object.entries(ignoredUsers).map(
+          ([userId, username]) => ({
+            userId,
+            username: typeof username === "string" ? username : "Unknown User",
+          })
+        );
 
-      const unghostedButton = document.createElement("button");
-      unghostedButton.textContent = "Unghost";
-      unghostedButton.style.cssText = `
-        background-color: #4a5464;
-        color: #c5d0db;
-        border: none;
-        padding: 2px 5px;
-        border-radius: 3px;
-        cursor: pointer;
-        margin-right: 10px;
-        font-size: 0.8em;
-      `;
-      unghostedButton.onclick = () => {
-        toggleUserGhost(userId, username);
-        listItem.remove();
-        if (userList.children.length === 0) {
-          userList.innerHTML =
-            '<p style="color: #c5d0db;">No ghosted users.</p>';
+        userEntries.sort((a, b) => a.username.localeCompare(b.username));
+
+        // Filter users if a search term is provided
+        const filteredUsers = filter
+          ? userEntries.filter((user) =>
+              user.username.toLowerCase().includes(filter.toLowerCase())
+            )
+          : userEntries;
+
+        // Update search stats
+        const searchStats = document.getElementById("ghost-search-stats");
+        if (searchStats) {
+          if (filter) {
+            searchStats.textContent = `Found: ${filteredUsers.length} / ${userEntries.length}`;
+          } else {
+            searchStats.textContent = "";
+          }
         }
-      };
 
-      const userLink = document.createElement("a");
-      userLink.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
-      userLink.textContent = username;
-      userLink.style.cssText =
-        "color: #4a90e2; text-decoration: none; flex-grow: 1;";
+        if (filteredUsers.length === 0) {
+          const noResultsMessage = document.createElement("div");
+          noResultsMessage.style.cssText = `
+            text-align: center;
+            padding: 30px;
+            color: #c5d0db;
+            background-color: #232830;
+            border-radius: 4px;
+            margin-top: 15px;
+          `;
 
-      listItem.appendChild(unghostedButton);
-      listItem.appendChild(userLink);
-      userList.appendChild(listItem);
-    });
+          if (filter) {
+            noResultsMessage.innerHTML = `
+              <i class="icon fa-search fa-fw" style="font-size: 2em; margin-bottom: 10px; opacity: 0.5;"></i>
+              <p>No ghosted users match your search.</p>
+              <p style="font-size: 0.9em; opacity: 0.7;">Try a different search term</p>
+            `;
+          } else {
+            noResultsMessage.innerHTML = `
+              <i class="icon fa-user-times fa-fw" style="font-size: 2em; margin-bottom: 10px; opacity: 0.5;"></i>
+              <p>No ghosted users found.</p>
+              <p style="font-size: 0.9em; opacity: 0.7;">Click "Find users to ghost" to add some.</p>
+            `;
+          }
 
-    if (Object.keys(ignoredUsers).length === 0) {
-      userList.innerHTML = '<p style="color: #c5d0db;">No ghosted users.</p>';
+          userList.appendChild(noResultsMessage);
+        } else {
+          filteredUsers.forEach(({ userId, username }) => {
+            const listItem = document.createElement("li");
+            listItem.style.cssText = `
+              margin-bottom: 8px;
+              display: flex;
+              align-items: center;
+              padding: 10px;
+              border-radius: 4px;
+              background-color: #323842;
+              transition: background-color 0.2s;
+            `;
+
+            listItem.addEventListener("mouseover", () => {
+              listItem.style.backgroundColor = "#3a4049";
+            });
+
+            listItem.addEventListener("mouseout", () => {
+              listItem.style.backgroundColor = "#323842";
+            });
+
+            // Create user avatar
+            const avatarContainer = document.createElement("div");
+            avatarContainer.style.cssText = `
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              overflow: hidden;
+              margin-right: 10px;
+              flex-shrink: 0;
+            `;
+
+            const defaultAvatar =
+              "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
+
+            const avatar = document.createElement("img");
+            avatar.src = `https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg`;
+            avatar.alt = `${username}'s avatar`;
+            avatar.style.cssText =
+              "width: 100%; height: 100%; object-fit: cover;";
+            avatar.onerror = function () {
+              if (this.src.endsWith(".jpg")) {
+                this.src = `https://rpghq.org/forums/download/file.php?avatar=${userId}.png`;
+              } else if (this.src.endsWith(".png")) {
+                this.src = `https://rpghq.org/forums/download/file.php?avatar=${userId}.gif`;
+              } else {
+                this.src = defaultAvatar;
+              }
+            };
+
+            avatarContainer.appendChild(avatar);
+
+            // Create user info
+            const userInfo = document.createElement("div");
+            userInfo.style.cssText = "flex-grow: 1;";
+
+            const userLink = document.createElement("a");
+            userLink.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
+            userLink.textContent = username;
+            userLink.style.cssText =
+              "color: #4a90e2; text-decoration: none; font-weight: 600; display: block;";
+            userLink.target = "_blank";
+
+            const userIdText = document.createElement("div");
+            userIdText.textContent = `ID: ${userId}`;
+            userIdText.style.cssText =
+              "font-size: 0.8em; color: #8a9db5; margin-top: 2px;";
+
+            userInfo.appendChild(userLink);
+            userInfo.appendChild(userIdText);
+
+            // Create action buttons container
+            const buttonsContainer = document.createElement("div");
+            buttonsContainer.style.cssText = "display: flex; gap: 8px;";
+
+            // Unghost button
+            const unghostedButton = document.createElement("button");
+            unghostedButton.innerHTML =
+              '<i class="icon fa-user-times fa-fw" aria-hidden="true"></i>';
+            unghostedButton.title = "Unghost user";
+            unghostedButton.style.cssText = `
+              background-color: #4a5464;
+              color: #c5d0db;
+              border: none;
+              padding: 6px 10px;
+              border-radius: 3px;
+              cursor: pointer;
+              font-size: 0.85em;
+              transition: background-color 0.2s;
+            `;
+
+            unghostedButton.onmouseover = () => {
+              unghostedButton.style.backgroundColor = "#5a6474";
+            };
+            unghostedButton.onmouseout = () => {
+              unghostedButton.style.backgroundColor = "#4a5464";
+            };
+
+            unghostedButton.onclick = () => {
+              if (confirm(`Are you sure you want to unghost ${username}?`)) {
+                toggleUserGhost(userId, username);
+                listItem.style.height = listItem.offsetHeight + "px";
+                listItem.style.opacity = "1";
+
+                // Animate removal
+                setTimeout(() => {
+                  listItem.style.transition = "all 0.3s";
+                  listItem.style.opacity = "0";
+                  listItem.style.height = "0px";
+                  listItem.style.padding = "0px 10px";
+                  listItem.style.margin = "0";
+                  listItem.style.overflow = "hidden";
+
+                  setTimeout(() => {
+                    listItem.remove();
+
+                    // Update the list if empty
+                    if (userList.children.length === 0) {
+                      renderUserList(filter);
+                    }
+
+                    // Update stats
+                    const totalGhosted = Object.keys(ignoredUsers).length;
+                    const statsElement =
+                      statsSection.querySelector("div:first-child");
+                    if (statsElement) {
+                      statsElement.innerHTML = `Total Ghosted Users: <strong>${totalGhosted}</strong>`;
+                    }
+
+                    showNotification(
+                      `User "${username}" has been unghosted.`,
+                      "success"
+                    );
+                  }, 300);
+                }, 10);
+              }
+            };
+
+            // Avatar change button
+            const avatarButton = document.createElement("button");
+            avatarButton.innerHTML =
+              '<i class="icon fa-image fa-fw" aria-hidden="true"></i>';
+            avatarButton.title = "Change avatar";
+            avatarButton.style.cssText = `
+              background-color: #4a5464;
+              color: #c5d0db;
+              border: none;
+              padding: 6px 10px;
+              border-radius: 3px;
+              cursor: pointer;
+              font-size: 0.85em;
+              transition: background-color 0.2s;
+            `;
+
+            avatarButton.onmouseover = () => {
+              avatarButton.style.backgroundColor = "#5a6474";
+            };
+            avatarButton.onmouseout = () => {
+              avatarButton.style.backgroundColor = "#4a5464";
+            };
+
+            avatarButton.onclick = (e) => {
+              e.preventDefault();
+              showReplaceAvatarPopup(userId);
+            };
+
+            buttonsContainer.appendChild(unghostedButton);
+            buttonsContainer.appendChild(avatarButton);
+
+            // Add elements to the list item
+            listItem.appendChild(avatarContainer);
+            listItem.appendChild(userInfo);
+            listItem.appendChild(buttonsContainer);
+            userList.appendChild(listItem);
+          });
+        }
+
+        // Hide loading indicator and show the list
+        loadingIndicator.style.display = "none";
+        userList.style.display = "block";
+      }, 10); // Short timeout to allow UI update
     }
 
+    // Add search functionality
+    let searchTimeout;
+    searchInput.addEventListener("input", function () {
+      clearTimeout(searchTimeout);
+
+      // Set loading indicator while typing
+      if (this.value.trim() !== "" && userList.children.length > 10) {
+        loadingIndicator.style.display = "block";
+        userList.style.display = "none";
+      }
+
+      searchTimeout = setTimeout(() => {
+        renderUserList(this.value.trim());
+      }, 300);
+    });
+
+    // Add keyboard shortcut for search focus
+    document.addEventListener("keydown", function (e) {
+      if (
+        e.key === "/" &&
+        popup.contains(e.target) &&
+        e.target !== searchInput
+      ) {
+        e.preventDefault();
+        searchInput.focus();
+      }
+    });
+
+    // Initial render of the user list
     content.appendChild(userList);
+    renderUserList();
 
     // Bottom controls with buttons
     const bottomControls = document.createElement("div");
     bottomControls.style.cssText = `
-      padding: 10px;
-      background-color: #2a2e36;
+      padding: 15px;
+      background-color: #232830;
       border-top: 1px solid #3a3f4b;
-      text-align: center;
       display: flex;
-      justify-content: center;
-      gap: 10px;
+      justify-content: space-between;
+      align-items: center;
       flex-wrap: wrap;
+      gap: 10px;
     `;
+
+    // Keyboard shortcuts help
+    const shortcutsHelp = document.createElement("div");
+    shortcutsHelp.style.cssText = `
+      font-size: 0.85em;
+      color: #8a9db5;
+    `;
+    shortcutsHelp.innerHTML =
+      'Press <kbd style="background: #3a3f4b; padding: 2px 5px; border-radius: 3px;">/</kbd> to focus search';
 
     // Mass Unghost button
     const massUnghostButton = document.createElement("button");
     massUnghostButton.innerHTML =
-      '<i class="icon fa-trash fa-fw" aria-hidden="true"></i> Unghost All';
+      '<i class="icon fa-trash fa-fw" aria-hidden="true" style="margin-right: 6px;"></i> Unghost All';
     massUnghostButton.style.cssText = `
-      background-color: #4a5464;
-      color: #c5d0db;
+      background-color: #e74c3c;
+      color: white;
       border: none;
-      padding: 5px 10px;
+      padding: 8px 15px;
       border-radius: 3px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 5px;
+      font-weight: 600;
+      transition: background-color 0.2s;
     `;
+
+    massUnghostButton.onmouseover = () => {
+      massUnghostButton.style.backgroundColor = "#f55c4c";
+    };
+    massUnghostButton.onmouseout = () => {
+      massUnghostButton.style.backgroundColor = "#e74c3c";
+    };
+
     massUnghostButton.onclick = () => {
-      if (confirm("Are you sure you want to unghost all users?")) {
+      const totalUsers = Object.keys(ignoredUsers).length;
+
+      if (totalUsers === 0) {
+        showNotification("There are no ghosted users to remove.", "info");
+        return;
+      }
+
+      if (
+        confirm(`Are you sure you want to unghost all ${totalUsers} users?`)
+      ) {
         GM_setValue("ignoredUsers", {});
         ignoredUsers = {};
-        userList.innerHTML = '<p style="color: #c5d0db;">No ghosted users.</p>';
-        alert("All users have been unghosted.");
+        renderUserList();
+
+        // Update stats
+        const statsElement = statsSection.querySelector("div:first-child");
+        if (statsElement) {
+          statsElement.innerHTML = `Total Ghosted Users: <strong>0</strong>`;
+        }
+
+        showNotification(
+          `All ${totalUsers} users have been unghosted.`,
+          "success"
+        );
       }
     };
 
+    bottomControls.appendChild(shortcutsHelp);
     bottomControls.appendChild(massUnghostButton);
 
     // Assemble the popup
     popup.appendChild(header);
+    popup.appendChild(statsSection);
+    popup.appendChild(searchArea);
     popup.appendChild(content);
     popup.appendChild(bottomControls);
     document.body.appendChild(popup);
+
+    // Focus search input after popup is visible
+    setTimeout(() => {
+      searchInput.focus();
+    }, 100);
+
+    // Add escape key handler to close the popup
+    popup.tabIndex = -1;
+    popup.focus();
+    popup.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        document.body.removeChild(popup);
+      }
+    });
+  }
+
+  // Create member search popup for finding new users to ghost
+  function createMemberSearchPopup(onUserSelected) {
+    const modal = document.createElement("div");
+    modal.className = "member-search-modal";
+    modal.style.cssText = `
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1010;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(3px);
+    `;
+
+    modal.innerHTML = `
+      <div class="member-search-container" style="
+        background-color: #1e232b;
+        border: 1px solid #292e37;
+        border-radius: 6px;
+        width: 400px;
+        max-width: 85%;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        padding: 20px;
+        position: relative;
+        z-index: 1011;
+        margin: 0 auto;
+        box-sizing: border-box;
+        animation: fadeInDown 0.3s ease-out;
+      ">
+        <div class="member-search-close" style="
+          position: absolute;
+          top: 15px;
+          right: 15px;
+          font-size: 22px;
+          color: #888;
+          cursor: pointer;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          transition: all 0.2s;
+        ">&times;</div>
+        <div class="member-search-title" style="
+          font-size: 18px;
+          margin-bottom: 20px;
+          color: #fff;
+          text-align: center;
+          font-weight: 600;
+        ">Find User to Ghost</div>
+        
+        <div style="position: relative; margin-bottom: 15px;">
+          <div style="
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c7a91;
+            pointer-events: none;
+          ">
+            <i class="icon fa-search fa-fw" aria-hidden="true"></i>
+          </div>
+          <input type="text" class="member-search-input" placeholder="Search for a member..." style="
+            width: 100%;
+            padding: 10px 10px 10px 35px;
+            border: 1px solid #292e37;
+            border-radius: 4px;
+            background-color: #171b24;
+            color: #fff;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+          ">
+        </div>
+        
+        <div class="member-search-results" style="
+          max-height: 300px;
+          overflow-y: auto;
+          border-radius: 4px;
+          border: 1px solid #292e37;
+          background-color: #171b24;
+        "></div>
+        
+        <div style="
+          margin-top: 15px;
+          text-align: center;
+          font-size: 0.85em;
+          color: #8a9db5;
+        ">
+          Type at least 2 characters to begin search
+        </div>
+      </div>
+    `;
+
+    // Create and inject stylesheet
+    const style = document.createElement("style");
+    style.textContent = `
+      @keyframes fadeInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      .member-search-modal.active {
+        display: flex;
+      }
+      
+      .member-search-results::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      .member-search-results::-webkit-scrollbar-track {
+        background: #171b24;
+        border-radius: 4px;
+      }
+      
+      .member-search-results::-webkit-scrollbar-thumb {
+        background: #3a3f4b;
+        border-radius: 4px;
+      }
+      
+      .member-search-results::-webkit-scrollbar-thumb:hover {
+        background: #4a5464;
+      }
+    `;
+    document.head.appendChild(style);
+
+    document.body.appendChild(modal);
+
+    // Close modal when clicking the close button
+    const closeButton = modal.querySelector(".member-search-close");
+    closeButton.addEventListener("mouseover", function () {
+      this.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
+    });
+    closeButton.addEventListener("mouseout", function () {
+      this.style.backgroundColor = "transparent";
+    });
+    closeButton.addEventListener("click", function () {
+      modal.classList.remove("active");
+    });
+
+    // Setup search functionality
+    const searchInput = modal.querySelector(".member-search-input");
+    const searchResults = modal.querySelector(".member-search-results");
+
+    // Handle input changes for search
+    let debounceTimer;
+    searchInput.addEventListener("input", function () {
+      clearTimeout(debounceTimer);
+
+      const query = this.value.trim();
+
+      if (query.length < 2) {
+        searchResults.innerHTML = "";
+        return;
+      }
+
+      searchResults.innerHTML = `
+        <div style="
+          text-align: center;
+          padding: 15px;
+          color: #8a9db5;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        ">
+          <i class="icon fa-circle-o-notch fa-spin fa-fw"></i>
+          <span>Searching...</span>
+        </div>
+      `;
+
+      debounceTimer = setTimeout(() => {
+        searchMembers(query, searchResults, onUserSelected);
+      }, 300);
+    });
+
+    // Focus input when modal is opened and handle keyboard events
+    modal.addEventListener("transitionend", function () {
+      if (modal.classList.contains("active")) {
+        searchInput.focus();
+      }
+    });
+
+    searchInput.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") {
+        modal.classList.remove("active");
+      }
+    });
+
+    modal.addEventListener("click", function (e) {
+      if (e.target === modal) {
+        modal.classList.remove("active");
+      }
+    });
+
+    // Show the modal immediately
+    setTimeout(() => {
+      if (modal.classList.contains("active")) {
+        searchInput.focus();
+      }
+    }, 100);
+
+    return modal;
+  }
+
+  // Function to search for members using the API
+  function searchMembers(query, resultsContainer, onUserSelected) {
+    fetch(
+      `https://rpghq.org/forums/mentionloc?q=${encodeURIComponent(query)}`,
+      {
+        method: "GET",
+        headers: {
+          accept: "application/json, text/javascript, */*; q=0.01",
+          "x-requested-with": "XMLHttpRequest",
+        },
+        credentials: "include",
+      }
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        displaySearchResults(data, resultsContainer, onUserSelected);
+      })
+      .catch((error) => {
+        console.error("Error searching for members:", error);
+        resultsContainer.innerHTML = `
+        <div style="
+          text-align: center;
+          padding: 20px;
+          color: #e74c3c;
+          background-color: rgba(231, 76, 60, 0.1);
+          border-radius: 4px;
+          margin: 10px;
+        ">
+          <i class="icon fa-exclamation-triangle fa-fw" style="margin-right: 5px;"></i>
+          Error searching for members
+        </div>
+      `;
+      });
+  }
+
+  // Function to display search results
+  function displaySearchResults(data, resultsContainer, onUserSelected) {
+    resultsContainer.innerHTML = "";
+
+    // Filter to only include users, exclude groups
+    const filteredData = data.filter((item) => item.type === "user");
+
+    if (!filteredData || filteredData.length === 0) {
+      resultsContainer.innerHTML = `
+        <div style="
+          text-align: center;
+          padding: 30px 20px;
+          color: #8a9db5;
+        ">
+          <i class="icon fa-user-times fa-fw" style="font-size: 1.5em; margin-bottom: 10px; display: block;"></i>
+          <div>No members found</div>
+          <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.7;">Try a different search term</div>
+        </div>
+      `;
+      return;
+    }
+
+    // Add a header with the count
+    resultsContainer.innerHTML = `
+      <div style="
+        padding: 8px 10px;
+        background-color: #232830;
+        color: #c5d0db;
+        font-size: 0.85em;
+        border-bottom: 1px solid #292e37;
+      ">
+        Found ${filteredData.length} user${filteredData.length !== 1 ? "s" : ""}
+      </div>
+    `;
+
+    const resultsWrapper = document.createElement("div");
+    resultsWrapper.style.maxHeight = "300px";
+    resultsWrapper.style.overflowY = "auto";
+
+    filteredData.forEach((item, index) => {
+      const resultItem = document.createElement("div");
+      resultItem.style.cssText = `
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        cursor: pointer;
+        border-radius: 0;
+        transition: background-color 0.2s;
+        border-bottom: ${
+          index < filteredData.length - 1 ? "1px solid #1a1e25" : "none"
+        };
+      `;
+
+      resultItem.addEventListener("mouseover", () => {
+        resultItem.style.backgroundColor = "#232830";
+      });
+
+      resultItem.addEventListener("mouseout", () => {
+        resultItem.style.backgroundColor = "transparent";
+      });
+
+      // User entry
+      resultItem.setAttribute("data-user-id", item.user_id);
+
+      // Create avatar URL with proper format
+      const userId = item.user_id;
+      const username = item.value || item.key || "Unknown User";
+
+      // Default fallback avatar
+      const defaultAvatar =
+        "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
+
+      // Create the result item with image that tries multiple extensions
+      resultItem.innerHTML = `
+        <div style="
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          overflow: hidden;
+          margin-right: 10px;
+          flex-shrink: 0;
+          background-color: #151920;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <img 
+            src="https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg" 
+            alt="${username}'s avatar" 
+            style="width: 100%; height: 100%; object-fit: cover;"
+            onerror="if(this.src.endsWith('.jpg')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.png';}else if(this.src.endsWith('.png')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.gif';}else{this.src='${defaultAvatar}';}"
+          >
+        </div>
+        <div>
+          <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;">${username}</div>
+          <div style="font-size: 0.8em; color: #8a9db5;">User ID: ${userId}</div>
+        </div>
+      `;
+
+      resultItem.addEventListener("click", function () {
+        const userId = this.getAttribute("data-user-id");
+        const username = this.querySelector("div > div").textContent;
+
+        // Check if this user is already ghosted
+        if (ignoredUsers[userId]) {
+          // Use the global showNotification function instead of creating a notification here
+          showNotification(`${username} is already ghosted.`, "info");
+          return;
+        }
+
+        if (onUserSelected) {
+          onUserSelected(userId, username);
+        }
+
+        // Close the modal
+        const modal = this.closest(".member-search-modal");
+        if (modal) {
+          modal.classList.remove("active");
+        }
+      });
+
+      resultsWrapper.appendChild(resultItem);
+    });
+
+    resultsContainer.appendChild(resultsWrapper);
   }
 
   function addShowIgnoredUsersButton() {
