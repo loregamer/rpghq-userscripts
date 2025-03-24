@@ -105,7 +105,7 @@
     .ghosted-row {
       display: none !important;
     }
-    .ghosted-post, .ghosted-by-author, .ghosted-by-content {
+    .ghosted-post {
       display: none !important;
     }
     .ghosted-quote {
@@ -115,6 +115,11 @@
       display: none !important;
     }
     
+    /* Remove the rules that hide ghosted-by-author and ghosted-by-content by themselves */
+    /* .ghosted-by-author, .ghosted-by-content {
+      display: none !important;
+    } */
+
     /* Highlight styles for ghosted content */
     .ghosted-highlight {
       display: block !important;
@@ -122,7 +127,7 @@
       padding: 5px !important;
       position: relative !important;
     }
-    
+
     .ghosted-highlight::before {
       content: "Ghosted User";
       display: inline-block;
@@ -135,7 +140,7 @@
       padding: 2px 5px;
       border-radius: 3px;
     }
-    
+
     /* Row highlighting for ghosted rows */
     .ghosted-row-highlight {
       display: block !important;
@@ -145,7 +150,7 @@
       opacity: 1 !important;
       visibility: visible !important;
     }
-    
+
     .ghosted-row-highlight::before {
       content: "Ghosted Topic";
       display: inline-block;
@@ -158,24 +163,24 @@
       padding: 2px 5px;
       border-radius: 3px;
     }
-    
+
     li.row.ghosted-highlight {
       padding: 10px 5px !important;
       margin-bottom: 5px !important;
     }
-    
+
     .ghosted-quote-highlight {
       border: 1px solid var(--ghost-highlight-color, #FF5555) !important;
       padding: 5px !important;
       position: relative !important;
     }
-    
+
     .ghosted-quote-highlight cite {
       background-color: var(--ghost-highlight-color, #FF5555) !important;
       color: #FFF !important;
       padding: 2px 5px !important;
     }
-    
+
     .ghosted-mention {
       color: var(--ghost-highlight-color, #FF5555) !important;
       font-weight: bold !important;
@@ -183,7 +188,7 @@
       padding: 0 3px !important;
       border-radius: 3px !important;
     }
-    
+
     /* Post preview tooltip */
     .post-preview-tooltip {
       position: absolute;
@@ -197,23 +202,23 @@
       font-size: 13px;
       display: none;
     }
-    
+
     .post-preview-tooltip.show {
       display: block;
     }
-    
+
     .post-preview-header {
       margin-bottom: 5px;
       padding-bottom: 5px;
       border-bottom: 1px solid #444;
       font-weight: bold;
     }
-    
+
     .post-preview-content {
       max-height: 200px;
       overflow-y: auto;
     }
-    
+
     /* Ghost popup styles */
     .ghost-popup {
       position: fixed;
@@ -227,7 +232,7 @@
       justify-content: center;
       align-items: center;
     }
-    
+
     .ghost-popup-content {
       background-color: #2a2e36;
       border-radius: 8px;
@@ -239,7 +244,7 @@
       flex-direction: column;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
     }
-    
+
     .ghost-popup-header {
       padding: 15px;
       background-color: #232830;
@@ -248,13 +253,13 @@
       align-items: center;
       border-bottom: 1px solid #3a3f4b;
     }
-    
+
     .ghost-popup-header h3 {
       margin: 0;
       color: #e6e6e6;
       font-size: 18px;
     }
-    
+
     .ghost-popup-close {
       background: none;
       border: none;
@@ -263,7 +268,7 @@
       cursor: pointer;
       padding: 0 5px;
     }
-    
+
     .ghost-popup-body {
       padding: 15px;
       overflow-y: auto;
@@ -273,7 +278,7 @@
       gap: 15px;
       max-height: calc(85vh - 60px);
     }
-    
+
     .ghost-popup-info {
       color: #aab2bd;
       background-color: #232830;
@@ -281,14 +286,14 @@
       border-radius: 5px;
       font-size: 14px;
     }
-    
+
     .ghost-user-list {
       display: flex;
       flex-direction: column;
       gap: 10px;
       overflow-y: auto;
     }
-    
+
     .ghost-no-users {
       text-align: center;
       color: #aab2bd;
@@ -296,7 +301,7 @@
       background-color: #232830;
       border-radius: 5px;
     }
-    
+
     .ghost-user-entry {
       background-color: #232830;
       border-radius: 5px;
@@ -305,19 +310,19 @@
       flex-direction: column;
       gap: 10px;
     }
-    
+
     .ghost-user-info {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    
+
     .ghost-username {
       font-weight: bold;
       color: #e6e6e6;
       flex-grow: 1;
     }
-    
+
     .ghost-settings-toggle {
       background: none;
       border: none;
@@ -325,13 +330,13 @@
       font-size: 16px;
       padding: 5px;
     }
-    
+
     .ghost-user-actions {
       display: flex;
       justify-content: flex-end;
       gap: 5px;
     }
-    
+
     .ghost-delete-btn {
       background-color: #e74c3c;
       color: white;
@@ -340,7 +345,7 @@
       border-radius: 4px;
       cursor: pointer;
     }
-    
+
     .ghost-settings-panel {
       background-color: #1e232b;
       padding: 15px;
@@ -350,18 +355,18 @@
       flex-direction: column;
       gap: 15px;
     }
-    
+
     .ghost-settings-group {
       display: flex;
       align-items: center;
       gap: 10px;
     }
-    
+
     .ghost-settings-group label {
       color: #aab2bd;
       min-width: 120px;
     }
-    
+
     .ghost-settings-section {
       background-color: #232830;
       padding: 10px;
@@ -370,26 +375,26 @@
       flex-direction: column;
       gap: 10px;
     }
-    
+
     .ghost-settings-section h4 {
       margin: 0;
       color: #e6e6e6;
       font-size: 15px;
     }
-    
+
     .ghost-settings-info {
       color: #8a9db5;
       font-size: 13px;
       margin: 0;
     }
-    
+
     /* Tabs for settings panel */
     .ghost-settings-tabs {
       display: flex;
       border-bottom: 1px solid #3a3f4b;
       margin-bottom: 10px;
     }
-    
+
     .ghost-tab-button {
       background-color: transparent;
       border: none;
@@ -400,23 +405,23 @@
       border-bottom: 2px solid transparent;
       transition: all 0.2s ease;
     }
-    
+
     .ghost-tab-button:hover {
       color: #e6e6e6;
     }
-    
+
     .ghost-tab-button.active {
       color: #4a90e2;
       border-bottom: 2px solid #4a90e2;
     }
-    
+
     .ghost-tab-content {
       padding: 10px 0;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
-    
+
     .ghost-color-picker {
       width: 40px;
       height: 25px;
@@ -424,7 +429,7 @@
       border: none;
       cursor: pointer;
     }
-    
+
     .ghost-visibility-select {
       background-color: #1e232b;
       color: #e6e6e6;
@@ -433,7 +438,7 @@
       padding: 5px;
       width: 100%;
     }
-    
+
     .ghost-save-settings {
       background-color: #4a90e2;
       color: white;
@@ -444,13 +449,13 @@
       align-self: flex-end;
       margin-top: 10px;
     }
-    
+
     .ghost-popup-add {
       display: flex;
       gap: 10px;
       margin-top: 10px;
     }
-    
+
     #ghost-add-input {
       flex-grow: 1;
       padding: 8px;
@@ -459,7 +464,7 @@
       background-color: #1e232b;
       color: #e6e6e6;
     }
-    
+
     #ghost-add-button {
       background-color: #4a90e2;
       color: white;
@@ -472,8 +477,6 @@
     /* Show ghosted content when toggle is active */
     body.show-ghosted-content .ghosted-row,
     body.show-ghosted-content .ghosted-post,
-    body.show-ghosted-content .ghosted-by-author,
-    body.show-ghosted-content .ghosted-by-content,
     body.show-ghosted-content .ghosted-quote,
     body.show-ghosted-content .ghosted-reaction {
       display: block !important;
@@ -482,11 +485,9 @@
       padding-left: 10px !important;
       background-color: rgba(255, 85, 85, 0.05) !important;
     }
-    
+
     body.show-ghosted-content .ghosted-row::before,
     body.show-ghosted-content .ghosted-post::before,
-    body.show-ghosted-content .ghosted-by-author::before,
-    body.show-ghosted-content .ghosted-by-content::before,
     body.show-ghosted-content .ghosted-quote::before,
     body.show-ghosted-content .ghosted-reaction::before {
       content: "Hidden Content";
@@ -498,15 +499,13 @@
       color: white;
       font-size: 10px;
       padding: 2px 5px;
-      border-radius: 3px;
-      z-index: 100;
     }
 
     /* Last post in forum list */
     .lastpost.ghosted-row.ghosted-by-author .profile {
       opacity: 0.2;
     }
-    
+
     /* Ghost toggle button */
     .ghost-toggle-button {
       position: fixed;
@@ -524,17 +523,17 @@
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
       transition: all 0.2s ease;
     }
-    
+
     .ghost-toggle-button:hover {
       transform: scale(1.1);
       background-color: #3a3f4b;
     }
-    
+
     .ghost-toggle-icon {
       color: #e6e6e6;
       font-size: 20px;
     }
-    
+
     .ghost-toggle-count {
       position: absolute;
       top: -5px;
@@ -550,15 +549,15 @@
       font-size: 12px;
       font-weight: bold;
     }
-    
+
     body.show-ghosted-content .ghost-toggle-button {
       background-color: #FF5555;
     }
-    
+
     body.show-ghosted-content .ghost-toggle-icon {
       color: white;
     }
-    
+
     body.show-ghosted-content .ghost-toggle-count {
       background-color: #2a2e36;
     }
@@ -572,7 +571,7 @@
       opacity: 1 !important;
       visibility: visible !important;
     }
-    
+
     .ghosted-content-highlight::before {
       content: "Mentions Ghosted User";
       display: inline-block;
@@ -587,7 +586,7 @@
       text-transform: uppercase;
       border-radius: 3px;
     }
-    
+
     /* Specific style for username mentions */
     .ghosted-mention {
       display: inline-block !important;
@@ -1128,7 +1127,7 @@
         // Determine if this is a forums list or topics/recent topics list
         const isForumsList = rowItem && rowItem.closest(".topiclist.forums");
 
-        // Always add ghosted-by-author to the row for identification
+        // Always add ghosted-by-author to the row for identification, not for hiding
         if (rowItem) {
           rowItem.classList.add("ghosted-by-author");
         }
@@ -1143,7 +1142,7 @@
           } else {
             // For topics/recent topics, check the hide mode
             if (settings.hideMode === "last_post") {
-              // Only hide the lastpost cell
+              // Only hide the lastpost cell, not the row
               const lastpostCell = rowItem
                 ? rowItem.querySelector("dd.lastpost")
                 : null;
@@ -1151,7 +1150,7 @@
                 lastpostCell.classList.add("ghosted-row");
               }
             } else {
-              // Hide entire row
+              // Hide entire row by adding ghosted-row
               if (rowItem) {
                 rowItem.classList.add("ghosted-row");
               } else {
@@ -1179,7 +1178,7 @@
         // If we can't get the ghosted author ID, use default behavior
         const isForumsList = rowItem && rowItem.closest(".topiclist.forums");
 
-        // Always add ghosted-by-author to the row for identification
+        // Always add ghosted-by-author to the row for identification, not for hiding
         if (rowItem) {
           rowItem.classList.add("ghosted-by-author");
         }
@@ -1193,7 +1192,7 @@
             lastpostCell.classList.add("ghosted-row");
           }
         } else {
-          // For topics/recent topics, hide entire row by default
+          // For topics/recent topics, hide entire row by adding ghosted-row
           if (rowItem) {
             rowItem.classList.add("ghosted-row");
           } else {
@@ -2105,7 +2104,7 @@
 
         if (settings.hide) {
           if (settings.hideMode === "last_post") {
-            // Only add ghosted-row to the lastpost cell
+            // Only add ghosted-row to the lastpost cell, not the row
             lastpostCell.classList.add("ghosted-row");
           } else {
             // Add ghosted-row to the entire row
@@ -2129,6 +2128,7 @@
         // Always add ghosted-by-author to the entire row
         if (rowItem) {
           rowItem.classList.add("ghosted-by-author");
+          // Add ghosted-row only if we want to hide the entire row
           rowItem.classList.add("ghosted-row");
         } else {
           lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
@@ -2187,7 +2187,7 @@
 
         if (settings.hide) {
           if (settings.hideMode === "last_post") {
-            // Only add ghosted-row to the lastpost cell
+            // Only add ghosted-row to the lastpost cell, not the row
             lastpostCell.classList.add("ghosted-row");
           } else {
             // Add ghosted-row to the entire row
@@ -2211,6 +2211,7 @@
         // Always add ghosted-by-author to the entire row
         if (rowItem) {
           rowItem.classList.add("ghosted-by-author");
+          // Add ghosted-row only if we want to hide the entire row
           rowItem.classList.add("ghosted-row");
         } else {
           lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
@@ -3518,13 +3519,13 @@
             <label>Author Highlight Color:</label>
             <input type="color" class="ghost-color-picker" value="${highlightColor}">
           </div>
-          
+
           <div class="ghost-settings-group">
             <label>Mentioned Highlight Color:</label>
             <input type="color" class="ghost-mentioned-color-picker" value="${mentionedColor}">
             <p class="ghost-settings-info">Used when user is mentioned in content</p>
           </div>
-          
+
           <div class="ghost-settings-group">
             <label>Global Visibility:</label>
             <select class="ghost-visibility-select" data-content-type="global">
@@ -3541,16 +3542,16 @@
               }>Highlight Content</option>
             </select>
           </div>
-          
+
           <div class="ghost-settings-section">
             <h4>Advanced Settings</h4>
             <p class="ghost-settings-info">Set specific visibility for different content types</p>
-            
+
             <div class="ghost-settings-tabs">
               <button class="ghost-tab-button active" data-tab="forum-view">Threads</button>
               <button class="ghost-tab-button" data-tab="topics">Forum Last Posts</button>
             </div>
-            
+
             <div class="ghost-tab-content" id="forum-view-tab">
               <div class="ghost-settings-group">
                 <label>Posts:</label>
@@ -3564,7 +3565,7 @@
                   }>Highlight</option>
                 </select>
               </div>
-              
+
               <div class="ghost-settings-group">
                 <label>Quotes:</label>
                 <select class="ghost-visibility-select" data-content-type="quotes">
@@ -3577,7 +3578,7 @@
                   }>Highlight</option>
                 </select>
               </div>
-              
+
               <div class="ghost-settings-group">
                 <label>Mentions:</label>
                 <select class="ghost-visibility-select" data-content-type="mentions">
@@ -3592,7 +3593,7 @@
                   }>Highlight</option>
                 </select>
               </div>
-              
+
               <div class="ghost-settings-group">
                 <label>Reactions:</label>
                 <select class="ghost-visibility-select" data-content-type="reactions">
@@ -3608,7 +3609,7 @@
                 </select>
               </div>
             </div>
-            
+
             <div class="ghost-tab-content" id="topics-tab" style="display: none;">
               <div class="ghost-settings-group">
                 <label>Last Posts:</label>
@@ -3634,7 +3635,7 @@
               </div>
             </div>
           </div>
-          
+
           <button class="ghost-save-settings">Save Settings</button>
         `;
 
