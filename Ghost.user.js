@@ -136,6 +136,29 @@
       border-radius: 3px;
     }
     
+    /* Row highlighting for ghosted rows */
+    .ghosted-row-highlight {
+      display: block !important;
+      border: 2px solid var(--ghost-highlight-color, #FF5555) !important;
+      padding: 5px !important;
+      position: relative !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    
+    .ghosted-row-highlight::before {
+      content: "Ghosted Topic";
+      display: inline-block;
+      position: absolute;
+      top: -10px;
+      left: 10px;
+      background-color: var(--ghost-highlight-color, #FF5555);
+      color: #FFF;
+      font-size: 10px;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+    
     li.row.ghosted-highlight {
       padding: 10px 5px !important;
       margin-bottom: 5px !important;
@@ -504,6 +527,29 @@
     
     body.show-ghosted-content .ghost-toggle-count {
       background-color: #2a2e36;
+    }
+
+    /* Content highlighting for posts mentioning ghosted users */
+    .ghosted-content-highlight {
+      display: block !important;
+      border: 2px dashed var(--ghost-highlight-color, #FF5555) !important;
+      padding: 5px !important;
+      position: relative !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+    
+    .ghosted-content-highlight::before {
+      content: "Mentions Ghosted User";
+      display: inline-block;
+      position: absolute;
+      top: -10px;
+      left: 10px;
+      background-color: var(--ghost-highlight-color, #FF5555);
+      color: #FFF;
+      font-size: 10px;
+      padding: 2px 5px;
+      border-radius: 3px;
     }
   `;
   document.head.appendChild(mainStyle);
@@ -902,6 +948,8 @@
     if (!content) return false;
 
     // Check content for mentions of ghosted users
+    let mentionedUsers = [];
+
     for (const userId in ignoredUsers) {
       const userData = ignoredUsers[userId];
       // Get the username safely from the new data structure
@@ -909,11 +957,21 @@
         userData.username || (typeof userData === "string" ? userData : null);
 
       // Only check if username is a valid string
-      if (username && typeof username === "string") {
+      if (username && typeof username === "string" && username.length > 3) {
         if (content.toLowerCase().includes(username.toLowerCase())) {
-          return true;
+          mentionedUsers.push({
+            userId,
+            username,
+          });
         }
       }
+    }
+
+    if (mentionedUsers.length > 0) {
+      return {
+        containsGhosted: true,
+        mentionedUsers,
+      };
     }
 
     return false;
@@ -959,14 +1017,126 @@
           isUserIgnored(cls.replace("author-name-", ""))
       );
 
+    // Get the ghosted author ID if available
+    let ghostedAuthorId = null;
+    if (hasGhostedClass && rowItem) {
+      const authorClass = Array.from(rowItem.classList).find(
+        (cls) =>
+          cls.startsWith("author-name-") &&
+          isUserIgnored(cls.replace("author-name-", ""))
+      );
+
+      if (authorClass) {
+        ghostedAuthorId = authorClass.replace("author-name-", "");
+      }
+    }
+
     if (hasGhostedClass) {
-      // If it's authored by a ghosted user, only add ghosted-by-author
-      if (rowItem) {
-        rowItem.classList.add("ghosted-row", "ghosted-by-author");
+      // If the row is authored by a ghosted user
+      if (ghostedAuthorId) {
+        const settings = getUserVisibilitySetting(ghostedAuthorId, "topics");
+        const highlightColor = getUserHighlightColor(ghostedAuthorId);
+
+        if (settings.hide) {
+          // Hide row based on user preference
+          if (rowItem) {
+            rowItem.classList.add("ghosted-row", "ghosted-by-author");
+          } else {
+            element.classList.add("ghosted-row", "ghosted-by-author");
+          }
+        } else if (settings.highlight) {
+          // Highlight row based on user preference
+          if (rowItem) {
+            rowItem.classList.add("ghosted-row-highlight");
+            rowItem.style.setProperty(
+              "--ghost-highlight-color",
+              highlightColor
+            );
+          } else {
+            element.classList.add("ghosted-row-highlight");
+            element.style.setProperty(
+              "--ghost-highlight-color",
+              highlightColor
+            );
+          }
+        } else {
+          // Fallback to default behavior
+          if (rowItem) {
+            rowItem.classList.add("ghosted-row", "ghosted-by-author");
+          } else {
+            element.classList.add("ghosted-row", "ghosted-by-author");
+          }
+        }
       } else {
-        element.classList.add("ghosted-row", "ghosted-by-author");
+        // Fallback for when we can't determine the specific user
+        if (rowItem) {
+          rowItem.classList.add("ghosted-row", "ghosted-by-author");
+        } else {
+          element.classList.add("ghosted-row", "ghosted-by-author");
+        }
       }
       return;
+    }
+
+    // Check if the row contains content from ghosted users
+    const topicTitle = rowItem?.querySelector(".topictitle")?.textContent || "";
+    const forumLinks =
+      rowItem?.querySelectorAll(".forum-links a, .responsive-hide a") || [];
+    const allText =
+      topicTitle +
+      " " +
+      Array.from(forumLinks)
+        .map((link) => link.textContent.trim())
+        .join(" ");
+
+    const ghostedResult = postContentContainsGhosted(allText);
+
+    if (ghostedResult && ghostedResult.containsGhosted) {
+      // Get mentioned users
+      const mentionedUsers = ghostedResult.mentionedUsers;
+
+      if (mentionedUsers.length === 1) {
+        // If exactly one ghosted user is mentioned
+        const userId = mentionedUsers[0].userId;
+        const settings = getUserVisibilitySetting(userId, "mentions");
+        const highlightColor = getUserHighlightColor(userId);
+
+        if (settings.hide) {
+          rowItem.classList.add("ghosted-row", "ghosted-by-content");
+        } else if (settings.highlight) {
+          rowItem.classList.add("ghosted-content-highlight");
+          rowItem.style.setProperty("--ghost-highlight-color", highlightColor);
+        } else {
+          rowItem.classList.add("ghosted-row", "ghosted-by-content");
+        }
+        return;
+      } else if (mentionedUsers.length > 1) {
+        // Multiple ghosted users mentioned
+        // Check if any prefer to hide
+        let shouldHide = false;
+
+        for (const mentionedUser of mentionedUsers) {
+          const settings = getUserVisibilitySetting(
+            mentionedUser.userId,
+            "mentions"
+          );
+          if (settings.hide) {
+            shouldHide = true;
+            break;
+          }
+        }
+
+        if (shouldHide) {
+          rowItem.classList.add("ghosted-row", "ghosted-by-content");
+        } else {
+          rowItem.classList.add("ghosted-content-highlight");
+          rowItem.style.setProperty(
+            "--ghost-highlight-color",
+            "linear-gradient(90deg, #FF5555, #FF9955)"
+          );
+        }
+        return;
+      }
     }
 
     const recentTopicLi = element.closest("#recent-topics li");
@@ -1029,44 +1199,29 @@
           return;
         }
       }
-
-      // Check for ghosted authors in the row
-      const authorLinks = rowItem.querySelectorAll(
-        "a.username, a.username-coloured"
-      );
-      const authorNames = Array.from(authorLinks).map((link) =>
-        link.textContent.trim()
-      );
-      const hasGhostedAuthor = authorNames.some((name) => isUserIgnored(name));
-
-      if (hasGhostedAuthor) {
-        rowItem.classList.add("ghosted-row", "ghosted-by-author");
-        return;
-      }
-
-      const innerDiv = rowItem.querySelector(".list-inner");
-      if (innerDiv) {
-        const byText = innerDiv.textContent.toLowerCase();
-        const hasGhostedInBy = Object.values(ignoredUsers).some((username) =>
-          byText.includes(`by ${username.toLowerCase()}`)
-        );
-        if (hasGhostedInBy) {
-          rowItem.classList.add("ghosted-row", "ghosted-by-author");
-          return;
-        }
-      }
-
-      // If we get here, it's content-based ghosting
-      rowItem.classList.add("ghosted-row", "ghosted-by-content");
-    } else {
-      element.classList.add("ghosted-row", "ghosted-by-author");
     }
   }
 
-  /**
-   * Process topiclist rows - hide entire row except for forum rows where we only hide lastpost
-   * @param {string} rowType - The type of row to process ('forum' or 'topic')
-   */
+  function processReactionImages() {
+    // Find all reaction images with reaction-username attribute
+    const reactionImages = document.querySelectorAll("img[reaction-username]");
+
+    reactionImages.forEach((img) => {
+      const username = img.getAttribute("reaction-username");
+      if (username) {
+        // Convert username to lowercase for comparison
+        const lowercaseUsername = username.toLowerCase();
+
+        // Check if this user is ignored
+        if (isUserIgnored(lowercaseUsername)) {
+          // Remove the image
+          img.remove();
+        }
+      }
+    });
+  }
+
+  // Process topiclist rows - hide entire row except for forum rows where we only hide lastpost
   function processTopicListRow(rowType) {
     // Determine selector based on rowType
     let selector;
@@ -1098,6 +1253,7 @@
       const forumNames = Array.from(forumLinks).map((link) =>
         link.textContent.trim()
       );
+
       if (
         forumNames.includes("Moderation Station") ||
         forumNames.includes("Chat With Staff")
@@ -1132,9 +1288,12 @@
           const postId = postLink.href.match(/p=(\d+)/)?.[1];
           if (postId && postCache[postId]) {
             const postContent = postCache[postId].content;
-            if (postContent && postContentContainsGhosted(postContent)) {
-              // Post content contains ghosted username, add ghosted-by-content class
-              lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+            if (postContent) {
+              const ghostedResult = postContentContainsGhosted(postContent);
+              if (ghostedResult && ghostedResult.containsGhosted) {
+                // Post content contains ghosted username, add ghosted-by-content class
+                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+              }
             }
           }
         }
@@ -1163,15 +1322,18 @@
                 // If author is ghosted, ONLY add ghosted-by-author and stop processing
                 row.classList.add("ghosted-row", "ghosted-by-author");
                 return; // Stop here, don't check content
-              } else if (
-                postContent &&
-                postContentContainsGhosted(postContent)
-              ) {
-                // Only if author is not ghosted, check content
+              } else if (postContent) {
+                const ghostedResult = postContentContainsGhosted(postContent);
+                if (ghostedResult && ghostedResult.containsGhosted) {
+                  // Only if author is not ghosted, check content
+                  row.classList.add("ghosted-row", "ghosted-by-content");
+                }
+              }
+            } else if (postContent) {
+              const ghostedResult = postContentContainsGhosted(postContent);
+              if (ghostedResult && ghostedResult.containsGhosted) {
                 row.classList.add("ghosted-row", "ghosted-by-content");
               }
-            } else if (postContent && postContentContainsGhosted(postContent)) {
-              row.classList.add("ghosted-row", "ghosted-by-content");
             }
           }
         }
@@ -1190,816 +1352,6 @@
 
   function processTopiclistTopicsRows() {
     processTopicListRow("topic");
-  }
-
-  // Legacy function for backward compatibility - hide entire row except for forum rows
-  function hideTopicRow(element) {
-    const recentTopicLi = element.closest("#recent-topics li");
-    if (recentTopicLi) {
-      recentTopicLi.classList.add("ghosted-row", "ghosted-by-author");
-      return;
-    }
-
-    const rowItem = element.closest("li.row");
-    if (!rowItem) {
-      element.classList.add("ghosted-row", "ghosted-by-author");
-      return;
-    }
-
-    const isForumList = rowItem.closest(".topiclist.forums");
-    if (isForumList) {
-      // For forum rows, only hide the lastpost
-      const lastpostCell = rowItem.querySelector("dd.lastpost");
-      if (lastpostCell) {
-        // Get the author link in the lastpost cell
-        const authorLink = lastpostCell.querySelector(
-          "a.username, a.username-coloured"
-        );
-        if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
-          lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
-        } else {
-          // Check post content
-          const postLink = lastpostCell.querySelector(
-            "a[href*='viewtopic.php']"
-          );
-          if (postLink) {
-            const postId = postLink.href.match(/p=(\d+)/)?.[1];
-            if (postId && postCache[postId]) {
-              const postContent = postCache[postId].content;
-              if (postContent && postContentContainsGhosted(postContent)) {
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
-              }
-            }
-          }
-        }
-      }
-      return;
-    }
-
-    // For all other row types, hide the entire row
-    rowItem.classList.add("ghosted-row", "ghosted-by-content");
-  }
-
-  async function processLastPost(element) {
-    const linksWithIcons = element.querySelectorAll("a:has(i.icon)");
-    linksWithIcons.forEach((link) => {
-      const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
-      if (pid) {
-        link.addEventListener("mouseenter", (e) => showPostPreview(e, pid));
-        link.addEventListener("mouseleave", hidePostPreview);
-      }
-    });
-
-    const row = element.closest("li.row");
-    const isForumList = row && row.closest(".topiclist.forums");
-
-    // Check if the lastpost author is ignored
-    const authorLink = element.querySelector("a.username, a.username-coloured");
-    if (authorLink) {
-      const authorName = authorLink.textContent.trim();
-      let userId = null;
-
-      if (authorLink.href) {
-        userId = authorLink.href.match(/u=(\d+)/)?.[1];
-      }
-
-      if ((userId && isUserIgnored(userId)) || isUserIgnored(authorName)) {
-        // Get the userID if we have it, or try to find it by username
-        const effectiveUserId =
-          userId ||
-          Object.keys(ignoredUsers).find(
-            (id) =>
-              ignoredUsers[id].username &&
-              ignoredUsers[id].username.toLowerCase() ===
-                authorName.toLowerCase()
-          );
-
-        if (effectiveUserId) {
-          // Get user-specific settings for lastPost content
-          const settings = getUserVisibilitySetting(
-            effectiveUserId,
-            "lastPost"
-          );
-          const highlightColor = getUserHighlightColor(effectiveUserId);
-
-          if (settings.hide) {
-            // Apply hiding based on preferences and row type
-            if (isForumList) {
-              // For forum rows, only hide the lastpost
-              element.classList.add("ghosted-row", "ghosted-by-author");
-            } else if (row) {
-              // For other rows, hide the entire row
-              hideTopicRow(row);
-            }
-          } else if (settings.highlight) {
-            // Apply highlighting based on preferences
-            if (isForumList) {
-              element.classList.add("ghosted-highlight");
-              element.style.setProperty(
-                "--ghost-highlight-color",
-                highlightColor
-              );
-            } else if (row) {
-              row.classList.add("ghosted-highlight");
-              row.style.setProperty("--ghost-highlight-color", highlightColor);
-            }
-          }
-        } else {
-          // Fallback if no user ID found - apply default hiding
-          if (isForumList) {
-            element.classList.add("ghosted-row", "ghosted-by-author");
-          } else if (row) {
-            hideTopicRow(row);
-          }
-        }
-
-        element.classList.add("content-processed");
-        return;
-      }
-    }
-
-    const spanEl = element.querySelector("span");
-    if (!spanEl) {
-      element.classList.add("content-processed");
-      return;
-    }
-
-    const byTextNode = Array.from(spanEl.childNodes).find(
-      (node) =>
-        node.nodeType === Node.TEXT_NODE &&
-        node.textContent.trim().toLowerCase() === "by"
-    );
-
-    if (!byTextNode) {
-      element.classList.add("content-processed");
-      return;
-    }
-
-    const nextEl = byTextNode.nextElementSibling;
-    if (
-      nextEl &&
-      (nextEl.classList.contains("mas-wrap") ||
-        nextEl.classList.contains("username") ||
-        nextEl.classList.contains("username-coloured"))
-    ) {
-      const userEl =
-        nextEl.classList.contains("username") ||
-        nextEl.classList.contains("username-coloured")
-          ? nextEl
-          : nextEl.querySelector(".username, .username-coloured");
-
-      const link = element.querySelector(
-        'a[href*="viewtopic.php"][href*="#p"]'
-      );
-
-      if (link) {
-        const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
-        if (pid) {
-          if (userEl) {
-            const userName = userEl.textContent.trim();
-            let userId = null;
-
-            if (userEl.href) {
-              userId = userEl.href.match(/u=(\d+)/)?.[1];
-            }
-
-            if ((userId && isUserIgnored(userId)) || isUserIgnored(userName)) {
-              // Get the userID if we have it, or try to find it by username
-              const effectiveUserId =
-                userId ||
-                Object.keys(ignoredUsers).find(
-                  (id) =>
-                    ignoredUsers[id].username &&
-                    ignoredUsers[id].username.toLowerCase() ===
-                      userName.toLowerCase()
-                );
-
-              if (effectiveUserId) {
-                // Get user-specific settings for lastPost content
-                const settings = getUserVisibilitySetting(
-                  effectiveUserId,
-                  "lastPost"
-                );
-                const highlightColor = getUserHighlightColor(effectiveUserId);
-
-                if (settings.hide) {
-                  // Apply hiding based on preferences and row type
-                  if (isForumList) {
-                    // For forum rows, only hide the lastpost
-                    element.classList.add("ghosted-row", "ghosted-by-author");
-                  } else if (row) {
-                    // For other rows, hide the entire row
-                    hideTopicRow(row);
-                  }
-                } else if (settings.highlight) {
-                  // Apply highlighting based on preferences
-                  if (isForumList) {
-                    element.classList.add("ghosted-highlight");
-                    element.style.setProperty(
-                      "--ghost-highlight-color",
-                      highlightColor
-                    );
-                  } else if (row) {
-                    row.classList.add("ghosted-highlight");
-                    row.style.setProperty(
-                      "--ghost-highlight-color",
-                      highlightColor
-                    );
-                  }
-                }
-              } else {
-                // Fallback if no user ID found - apply default hiding
-                if (isForumList) {
-                  element.classList.add("ghosted-row", "ghosted-by-author");
-                } else if (row) {
-                  hideTopicRow(row);
-                }
-              }
-            } else {
-              try {
-                const content = await fetchAndCachePost(pid);
-                if (!content || postContentContainsGhosted(content)) {
-                  if (isForumList) {
-                    // For forum rows, only hide the lastpost
-                    element.classList.add("ghosted-row", "ghosted-by-content");
-                  } else if (row) {
-                    // For other rows, hide the entire row
-                    hideTopicRow(row);
-                  }
-                }
-              } catch (err) {
-                if (isForumList) {
-                  // For forum rows, only hide the lastpost
-                  element.classList.add("ghosted-row", "ghosted-by-content");
-                } else if (row) {
-                  // For other rows, hide the entire row
-                  hideTopicRow(row);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    element.classList.add("content-processed");
-  }
-
-  function processReactionList(list) {
-    const reactionGroups = list.querySelectorAll(".reaction-group");
-    reactionGroups.forEach((group) => {
-      const popup = group.querySelector(".reaction-users-popup");
-      if (!popup) return;
-      const userLinks = popup.querySelectorAll(
-        "a.username, a.username-coloured"
-      );
-      const countSpan = group.querySelector("span");
-      if (!countSpan) return;
-      let currentCount = parseInt(countSpan.textContent || "0", 10);
-      let removedCount = 0;
-      userLinks.forEach((link) => {
-        const uid = link.href.match(/u=(\d+)/)?.[1];
-        if (uid && isUserIgnored(uid)) {
-          // Start from the link and traverse upward to find the complete user entry container
-          // Look for a more specific parent that contains the entire user entry with avatar
-          let userRow = link;
-          let parent = link.parentElement;
-
-          // Go up several levels to ensure we get the complete structure
-          // This traverses up to find the outermost flex container that has the avatar and username
-          while (parent && parent !== popup) {
-            userRow = parent;
-            if (
-              parent.style &&
-              parent.style.display === "flex" &&
-              parent.querySelector("img[alt]") &&
-              parent.textContent.trim().includes(link.textContent.trim())
-            ) {
-              break; // Found the complete container with both avatar and username
-            }
-            parent = parent.parentElement;
-          }
-
-          if (userRow) {
-            userRow.remove();
-            removedCount++;
-          }
-        }
-      });
-      if (removedCount > 0) {
-        const newCount = currentCount - removedCount;
-        if (newCount <= 0) {
-          group.remove();
-        } else {
-          countSpan.textContent = String(newCount);
-        }
-      }
-    });
-  }
-
-  async function processCPListNotification(item) {
-    const titleEl = item.querySelector(".notifications_title");
-    if (!titleEl) {
-      item.classList.add("content-processed");
-      return;
-    }
-
-    const usernameEls = titleEl.querySelectorAll(
-      ".username, .username-coloured"
-    );
-    const usernames = Array.from(usernameEls).map((el) =>
-      el.textContent.trim()
-    );
-
-    if (usernames.length === 0) {
-      item.classList.add("content-processed");
-      return;
-    }
-
-    // For notifications that start with "Quoted by" or "You were mentioned by", the first username is the key user
-    const titleText = titleEl.textContent.trim();
-    const isQuoteOrMention =
-      titleText.startsWith("Quoted") || titleText.includes("mentioned by");
-    const firstUsername = usernames[0];
-
-    if (isQuoteOrMention && isUserIgnored(firstUsername)) {
-      const row = item.closest("li.row");
-      if (row) {
-        row.classList.add("ghosted-row", "ghosted-by-author");
-        await markNotificationAsRead(item);
-      }
-      item.classList.add("content-processed");
-      return;
-    }
-
-    const nonIgnored = usernames.filter((u) => !isUserIgnored(u));
-    const ghosted = usernames.filter((u) => isUserIgnored(u));
-    const hasIgnored = ghosted.length > 0;
-
-    if (!hasIgnored) {
-      item.classList.add("content-processed");
-      return;
-    }
-
-    if (nonIgnored.length === 0) {
-      const row = item.closest("li.row");
-      if (row) {
-        row.classList.add("ghosted-row", "ghosted-by-author");
-        await markNotificationAsRead(item);
-      }
-      item.classList.add("content-processed");
-      return;
-    }
-
-    // Create the non-ghosted notification first
-    // Find the last username element to get text after it
-    const lastIgnoredEl = usernameEls[usernameEls.length - 1];
-    const nodesAfter = [];
-    let nxt = lastIgnoredEl?.nextSibling;
-    while (nxt) {
-      nodesAfter.push(nxt.cloneNode(true));
-      nxt = nxt.nextSibling;
-    }
-
-    // Clear the title element
-    titleEl.textContent = "";
-
-    // Add non-ignored usernames with appropriate separators
-    nonIgnored.forEach((username, i) => {
-      const matchEl = Array.from(usernameEls).find(
-        (el) => el.textContent.trim().toLowerCase() === username.toLowerCase()
-      );
-      if (matchEl) {
-        titleEl.appendChild(matchEl.cloneNode(true));
-      } else {
-        titleEl.appendChild(document.createTextNode(username));
-      }
-
-      if (i < nonIgnored.length - 2) {
-        titleEl.appendChild(document.createTextNode(", "));
-      } else if (i === nonIgnored.length - 2) {
-        titleEl.appendChild(document.createTextNode(" and "));
-      }
-    });
-
-    // Add "have reacted" or other trailing text
-    nodesAfter.forEach((node) => titleEl.appendChild(node));
-
-    // Now create ghosted notifications for each ghosted user
-    const row = item.closest("li.row");
-    if (row) {
-      ghosted.forEach((ghostedUsername) => {
-        const ghostedRow = row.cloneNode(true);
-        ghostedRow.classList.add("ghosted-row", "ghosted-by-author");
-
-        // Update the notification text for this ghosted user
-        const ghostedTitleEl = ghostedRow.querySelector(".notifications_title");
-        if (ghostedTitleEl) {
-          ghostedTitleEl.textContent = "";
-          const matchEl = Array.from(usernameEls).find(
-            (el) =>
-              el.textContent.trim().toLowerCase() ===
-              ghostedUsername.toLowerCase()
-          );
-          if (matchEl) {
-            ghostedTitleEl.appendChild(matchEl.cloneNode(true));
-          } else {
-            ghostedTitleEl.appendChild(
-              document.createTextNode(ghostedUsername)
-            );
-          }
-
-          // Add the trailing text
-          nodesAfter.forEach((node) =>
-            ghostedTitleEl.appendChild(node.cloneNode(true))
-          );
-        }
-
-        // Insert the ghosted row after the original
-        row.parentNode.insertBefore(ghostedRow, row.nextSibling);
-      });
-    }
-
-    item.classList.add("content-processed");
-  }
-
-  async function processNotification(item) {
-    const usernameEls = item.querySelectorAll(".username, .username-coloured");
-    const usernames = Array.from(usernameEls).map((el) =>
-      el.textContent.trim()
-    );
-    if (usernames.length === 0) {
-      item.classList.add("content-processed");
-      return;
-    }
-    const firstUsername = usernames[0];
-    if (isUserIgnored(firstUsername)) {
-      const li = item.closest("li");
-      if (li) {
-        await markNotificationAsRead(item);
-        li.style.display = "none";
-      }
-      item.classList.add("content-processed");
-      return;
-    }
-    const nonIgnored = usernames.filter((u) => !isUserIgnored(u));
-    const hasIgnored = nonIgnored.length < usernames.length;
-    if (!hasIgnored) {
-      item.classList.add("content-processed");
-      return;
-    }
-    const titleEl = item.querySelector(".notification-title");
-    if (!titleEl) {
-      item.classList.add("content-processed");
-      return;
-    }
-    if (nonIgnored.length === 0) {
-      const li = item.closest("li");
-      if (li) {
-        await markNotificationAsRead(item);
-        li.style.display = "none";
-      }
-      item.classList.add("content-processed");
-      return;
-    }
-    const lastIgnoredEl = usernameEls[usernameEls.length - 1];
-    const nodesAfter = [];
-    let nxt = lastIgnoredEl?.nextSibling;
-    while (nxt) {
-      nodesAfter.push(nxt.cloneNode(true));
-      nxt = nxt.nextSibling;
-    }
-    titleEl.textContent = "";
-    nonIgnored.forEach((usr, i) => {
-      const matchEl = Array.from(usernameEls).find(
-        (el) => el.textContent.trim().toLowerCase() === usr.toLowerCase()
-      );
-      if (matchEl) {
-        titleEl.appendChild(matchEl.cloneNode(true));
-      } else {
-        titleEl.appendChild(document.createTextNode(usr));
-      }
-      if (i < nonIgnored.length - 2) {
-        titleEl.appendChild(document.createTextNode(", "));
-      } else if (i === nonIgnored.length - 2) {
-        titleEl.appendChild(document.createTextNode(" and "));
-      }
-    });
-    nodesAfter.forEach((node) => titleEl.appendChild(node));
-    item.classList.add("content-processed");
-  }
-
-  function processBlockquotesInPost(post) {
-    const blockquotes = post.querySelectorAll("blockquote");
-
-    blockquotes.forEach((blockquote) => {
-      // Check for blockquote attribution
-      const cite = blockquote.querySelector("cite");
-      if (!cite) return;
-
-      // Look for username in the citation
-      const userLink = cite.querySelector("a");
-      if (!userLink) {
-        // Try to extract username from text
-        const citeText = cite.textContent.trim();
-        const userMatch =
-          citeText.match(/^(.*?)\s+wrote:/i) ||
-          citeText.match(/^(.*?)\s+said:/i);
-
-        if (userMatch && userMatch[1]) {
-          const userName = userMatch[1].trim();
-
-          if (isUserIgnored(userName)) {
-            // Find specific user ID by username
-            const effectiveUserId = Object.keys(ignoredUsers).find(
-              (id) =>
-                ignoredUsers[id].username &&
-                ignoredUsers[id].username.toLowerCase() ===
-                  userName.toLowerCase()
-            );
-
-            if (effectiveUserId) {
-              // Get user-specific settings for quotes
-              const settings = getUserVisibilitySetting(
-                effectiveUserId,
-                "quotes"
-              );
-              const highlightColor = getUserHighlightColor(effectiveUserId);
-
-              if (settings.hide) {
-                // Hide quote based on user preference
-                blockquote.classList.add("ghosted-quote");
-              } else if (settings.highlight) {
-                // Highlight quote based on user preference
-                blockquote.classList.add("ghosted-quote-highlight");
-                blockquote.style.setProperty(
-                  "--ghost-highlight-color",
-                  highlightColor
-                );
-              }
-            } else {
-              // Fallback behavior
-              blockquote.classList.add("ghosted-quote");
-            }
-          }
-        }
-      } else {
-        // Extract user ID and name from link
-        const userName = userLink.textContent.trim();
-        let userId = null;
-
-        if (userLink.href) {
-          userId = userLink.href.match(/u=(\d+)/)?.[1];
-        }
-
-        if ((userId && isUserIgnored(userId)) || isUserIgnored(userName)) {
-          // Get the userID if we have it, or try to find it by username
-          const effectiveUserId =
-            userId ||
-            Object.keys(ignoredUsers).find(
-              (id) =>
-                ignoredUsers[id].username &&
-                ignoredUsers[id].username.toLowerCase() ===
-                  userName.toLowerCase()
-            );
-
-          if (effectiveUserId) {
-            // Get user-specific settings for quotes
-            const settings = getUserVisibilitySetting(
-              effectiveUserId,
-              "quotes"
-            );
-            const highlightColor = getUserHighlightColor(effectiveUserId);
-
-            if (settings.hide) {
-              // Hide quote based on user preference
-              blockquote.classList.add("ghosted-quote");
-            } else if (settings.highlight) {
-              // Highlight quote based on user preference
-              blockquote.classList.add("ghosted-quote-highlight");
-              blockquote.style.setProperty(
-                "--ghost-highlight-color",
-                highlightColor
-              );
-            }
-          } else {
-            // Fallback behavior
-            blockquote.classList.add("ghosted-quote");
-          }
-        }
-      }
-    });
-  }
-
-  function processPost(post) {
-    if (post.classList.contains("content-processed")) {
-      return;
-    }
-
-    // Get post-info and author
-    const postInfo = post.querySelector(".post-info, .mas-post-info");
-    if (!postInfo) {
-      post.classList.add("content-processed");
-      return;
-    }
-
-    const authorElement = postInfo.querySelector(
-      ".user-link, a.username, a.username-coloured"
-    );
-    if (!authorElement) {
-      post.classList.add("content-processed");
-      return;
-    }
-
-    // Extract author info
-    const authorName = authorElement.textContent.trim();
-    let authorId = null;
-
-    if (authorElement.href) {
-      authorId = authorElement.href.match(/u=(\d+)/)?.[1];
-    }
-
-    // Check if post author is ignored
-    if ((authorId && isUserIgnored(authorId)) || isUserIgnored(authorName)) {
-      // Get the userID if we have it, or try to find it by username
-      const effectiveUserId =
-        authorId ||
-        Object.keys(ignoredUsers).find(
-          (id) =>
-            ignoredUsers[id].username &&
-            ignoredUsers[id].username.toLowerCase() === authorName.toLowerCase()
-        );
-
-      if (effectiveUserId) {
-        // Get user-specific settings for posts
-        const settings = getUserVisibilitySetting(effectiveUserId, "posts");
-        const highlightColor = getUserHighlightColor(effectiveUserId);
-
-        if (settings.hide) {
-          // Hide post based on user preference
-          post.classList.add("ghosted");
-        } else if (settings.highlight) {
-          // Highlight post based on user preference
-          post.classList.add("ghosted-highlight");
-          post.style.setProperty("--ghost-highlight-color", highlightColor);
-        }
-      } else {
-        // Fallback to default behavior
-        post.classList.add("ghosted");
-      }
-
-      post.classList.add("content-processed");
-      return;
-    }
-
-    // Process blockquotes for ghosted users
-    processBlockquotesInPost(post);
-
-    // Process any mentions of ghosted users in the post content
-    const postContent = post.querySelector(".content");
-    if (postContent) {
-      const anchorTags = postContent.querySelectorAll(
-        "a.username, a.username-coloured"
-      );
-      anchorTags.forEach((anchor) => {
-        const mentionedName = anchor.textContent.trim();
-        let mentionedId = null;
-
-        if (anchor.href) {
-          mentionedId = anchor.href.match(/u=(\d+)/)?.[1];
-        }
-
-        if (
-          (mentionedId && isUserIgnored(mentionedId)) ||
-          isUserIgnored(mentionedName)
-        ) {
-          // Find specific user ID
-          const effectiveUserId =
-            mentionedId ||
-            Object.keys(ignoredUsers).find(
-              (id) =>
-                ignoredUsers[id].username &&
-                ignoredUsers[id].username.toLowerCase() ===
-                  mentionedName.toLowerCase()
-            );
-
-          if (effectiveUserId) {
-            // Apply highlighting to mention based on user preferences
-            const highlightColor = getUserHighlightColor(effectiveUserId);
-            anchor.classList.add("ghosted-mention");
-            anchor.style.setProperty("--ghost-highlight-color", highlightColor);
-          }
-        }
-      });
-    }
-
-    // Process reaction list if present
-    const reactionList = post.querySelector(".mas-reactions");
-    if (reactionList) {
-      const reactionItems = reactionList.querySelectorAll("li");
-      reactionItems.forEach((item) => {
-        const userLinks = item.querySelectorAll(
-          "a.username, a.username-coloured"
-        );
-        userLinks.forEach((link) => {
-          const reactorName = link.textContent.trim();
-          let reactorId = null;
-
-          if (link.href) {
-            reactorId = link.href.match(/u=(\d+)/)?.[1];
-          }
-
-          if (
-            (reactorId && isUserIgnored(reactorId)) ||
-            isUserIgnored(reactorName)
-          ) {
-            // Find specific user ID
-            const effectiveUserId =
-              reactorId ||
-              Object.keys(ignoredUsers).find(
-                (id) =>
-                  ignoredUsers[id].username &&
-                  ignoredUsers[id].username.toLowerCase() ===
-                    reactorName.toLowerCase()
-              );
-
-            if (effectiveUserId) {
-              // Get user-specific settings
-              const settings = getUserVisibilitySetting(
-                effectiveUserId,
-                "reactions"
-              );
-
-              if (settings.hide) {
-                // Hide reaction based on user preference
-                item.classList.add("ghosted-reaction");
-              }
-            } else {
-              // Fallback behavior
-              item.classList.add("ghosted-reaction");
-            }
-          }
-        });
-      });
-    }
-
-    post.classList.add("content-processed");
-  }
-
-  function processTopicPoster(poster) {
-    const usernameEl = poster.querySelector(".username, .username-coloured");
-    if (!usernameEl) return;
-
-    const username = usernameEl.textContent.trim();
-    const userId = usernameEl.href.match(/u=(\d+)/)?.[1];
-
-    let hideIt = false;
-    let highlightIt = false;
-    let highlightColor = null;
-
-    if (userId && isUserIgnored(userId)) {
-      const settings = getUserVisibilitySetting(userId, "topics");
-      hideIt = settings.hide;
-      highlightIt = settings.highlight;
-      highlightColor = getUserHighlightColor(userId);
-    } else if (isUserIgnored(username)) {
-      const foundUserId = Object.keys(ignoredUsers).find(
-        (id) =>
-          ignoredUsers[id].username &&
-          ignoredUsers[id].username.toLowerCase() === username.toLowerCase()
-      );
-
-      if (foundUserId) {
-        const settings = getUserVisibilitySetting(foundUserId, "topics");
-        hideIt = settings.hide;
-        highlightIt = settings.highlight;
-        highlightColor = getUserHighlightColor(foundUserId);
-      } else {
-        // Fallback
-        hideIt = true;
-      }
-    }
-
-    if (hideIt) {
-      const masWrap = poster.querySelector(".mas-wrap");
-      if (masWrap) {
-        masWrap.innerHTML = `
-          <div class="mas-avatar" style="width: 20px; height: 20px;">
-            <img class="avatar" src="./download/file.php?avatar=58.png" width="102" height="111" alt="User avatar">
-          </div>
-          <div class="mas-username">
-            <a href="https://rpghq.org/forums/memberlist.php?mode=viewprofile&amp;u=58-rusty-shackleford" style="color: #ff6e6e;" class="username-coloured">rusty_shackleford</a>
-          </div>
-        `;
-      }
-    } else if (highlightIt) {
-      poster.classList.add("ghosted-highlight");
-      if (highlightColor) {
-        poster.style.setProperty("--ghost-highlight-color", highlightColor);
-      }
-    }
-
-    poster.classList.add("content-processed");
   }
 
   function processPoll(poll) {
@@ -2125,7 +1477,6 @@
               pollSection.style.visibility = "hidden";
             }
             window.location.reload();
-            return;
           }
         }
         mutation.addedNodes.forEach((node) => {
@@ -2150,23 +1501,548 @@
     });
   }
 
-  function processReactionImages() {
-    // Find all reaction images with reaction-username attribute
-    const reactionImages = document.querySelectorAll("img[reaction-username]");
+  function processTopicPoster(poster) {
+    const usernameEl = poster.querySelector(".username, .username-coloured");
+    if (!usernameEl) return;
 
-    reactionImages.forEach((img) => {
-      const username = img.getAttribute("reaction-username");
-      if (username) {
-        // Convert username to lowercase for comparison
-        const lowercaseUsername = username.toLowerCase();
+    const username = usernameEl.textContent.trim();
+    const userId = usernameEl.href.match(/u=(\d+)/)?.[1];
 
-        // Check if this user is ignored
-        if (isUserIgnored(lowercaseUsername)) {
-          // Remove the image
-          img.remove();
+    let hideIt = false;
+    let highlightIt = false;
+    let highlightColor = null;
+
+    if (userId && isUserIgnored(userId)) {
+      const settings = getUserVisibilitySetting(userId, "topics");
+      hideIt = settings.hide;
+      highlightIt = settings.highlight;
+      highlightColor = getUserHighlightColor(userId);
+    } else if (isUserIgnored(username)) {
+      const foundUserId = Object.keys(ignoredUsers).find(
+        (id) =>
+          ignoredUsers[id].username &&
+          ignoredUsers[id].username.toLowerCase() === username.toLowerCase()
+      );
+
+      if (foundUserId) {
+        const settings = getUserVisibilitySetting(foundUserId, "topics");
+        hideIt = settings.hide;
+        highlightIt = settings.highlight;
+        highlightColor = getUserHighlightColor(foundUserId);
+      } else {
+        // Fallback
+        hideIt = true;
+      }
+    }
+
+    if (hideIt) {
+      const masWrap = poster.querySelector(".mas-wrap");
+      if (masWrap) {
+        masWrap.innerHTML = `
+          <div class="mas-avatar" style="width: 20px; height: 20px;">
+            <img class="avatar" src="./download/file.php?avatar=58.png" width="102" height="111" alt="User avatar">
+          </div>
+          <div class="mas-username">
+            <a href="https://rpghq.org/forums/memberlist.php?mode=viewprofile&amp;u=58-rusty-shackleford" style="color: #ff6e6e;" class="username-coloured">rusty_shackleford</a>
+          </div>
+        `;
+      }
+    } else if (highlightIt) {
+      poster.classList.add("ghosted-highlight");
+      if (highlightColor) {
+        poster.style.setProperty("--ghost-highlight-color", highlightColor);
+      }
+    }
+
+    poster.classList.add("content-processed");
+  }
+
+  function processBlockquotesInPost(post) {
+    const topLevelBlockquotes = post.querySelectorAll(".content > blockquote");
+
+    // Check for single quote from ghosted user
+    if (topLevelBlockquotes.length === 1) {
+      const anchor = topLevelBlockquotes[0].querySelector("cite a");
+      if (anchor) {
+        const quotedName = anchor.textContent.trim();
+        let quotedId = null;
+
+        if (anchor.href) {
+          quotedId = anchor.href.match(/u=(\d+)/)?.[1];
+        }
+
+        // Check if quoted user is ignored
+        if (
+          (quotedId && isUserIgnored(quotedId)) ||
+          isUserIgnored(quotedName)
+        ) {
+          post.dataset.hideForSingleIgnoredQuote = "true";
+          return;
+        }
+      }
+    }
+
+    // Process all blockquotes
+    const allBlockquotes = post.querySelectorAll(".content blockquote");
+    allBlockquotes.forEach((bq) => {
+      const anchor = bq.querySelector("cite a");
+      if (!anchor) return;
+
+      const quotedName = anchor.textContent.trim();
+      let quotedId = null;
+
+      if (anchor.href) {
+        quotedId = anchor.href.match(/u=(\d+)/)?.[1];
+      }
+
+      // Check if quoted user is ignored
+      if ((quotedId && isUserIgnored(quotedId)) || isUserIgnored(quotedName)) {
+        // Find the effective user ID
+        const effectiveUserId =
+          quotedId ||
+          Object.keys(ignoredUsers).find(
+            (id) =>
+              ignoredUsers[id].username &&
+              ignoredUsers[id].username.toLowerCase() ===
+                quotedName.toLowerCase()
+          );
+
+        if (effectiveUserId) {
+          // Get user-specific settings for quotes
+          const settings = getUserVisibilitySetting(effectiveUserId, "quotes");
+
+          if (settings.hide) {
+            // Hide quote based on user preference
+            bq.classList.add("ghosted-quote");
+          }
+        } else {
+          // Fallback behavior
+          bq.classList.add("ghosted-quote");
         }
       }
     });
+  }
+
+  function processPost(post) {
+    if (post.classList.contains("content-processed")) {
+      return;
+    }
+
+    // Get post-info and author
+    const postInfo = post.querySelector(".post-info, .mas-post-info");
+    if (!postInfo) {
+      post.classList.add("content-processed");
+      return;
+    }
+
+    const authorElement = postInfo.querySelector(
+      ".user-link, a.username, a.username-coloured"
+    );
+    if (!authorElement) {
+      post.classList.add("content-processed");
+      return;
+    }
+
+    // Extract author info
+    const authorName = authorElement.textContent.trim();
+    let authorId = null;
+
+    if (authorElement.href) {
+      authorId = authorElement.href.match(/u=(\d+)/)?.[1];
+    }
+
+    // Check if post author is ignored
+    if ((authorId && isUserIgnored(authorId)) || isUserIgnored(authorName)) {
+      // Get the userID if we have it, or try to find it by username
+      const effectiveUserId =
+        authorId ||
+        Object.keys(ignoredUsers).find(
+          (id) =>
+            ignoredUsers[id].username &&
+            ignoredUsers[id].username.toLowerCase() === authorName.toLowerCase()
+        );
+
+      if (effectiveUserId) {
+        // Get user-specific settings for posts
+        const settings = getUserVisibilitySetting(effectiveUserId, "posts");
+        const highlightColor = getUserHighlightColor(effectiveUserId);
+
+        if (settings.hide) {
+          // Hide post based on user preference
+          post.classList.add("ghosted");
+        } else if (settings.highlight) {
+          // Highlight post based on user preference
+          post.classList.add("ghosted-highlight");
+          post.style.setProperty("--ghost-highlight-color", highlightColor);
+        }
+      } else {
+        // Fallback to default behavior
+        post.classList.add("ghosted");
+      }
+
+      post.classList.add("content-processed");
+      return;
+    }
+
+    // Process blockquotes for ghosted users
+    processBlockquotesInPost(post);
+
+    // Process any mentions of ghosted users in the post content
+    const postContent = post.querySelector(".content");
+    if (postContent) {
+      // First check for explicit @username mentions via links
+      const anchorTags = postContent.querySelectorAll(
+        "a.username, a.username-coloured"
+      );
+
+      let hasMentionedGhostedUser = false;
+      let mentionedUserIds = new Set();
+
+      anchorTags.forEach((anchor) => {
+        const mentionedName = anchor.textContent.trim();
+        let mentionedId = null;
+
+        if (anchor.href) {
+          mentionedId = anchor.href.match(/u=(\d+)/)?.[1];
+        }
+
+        if (
+          (mentionedId && isUserIgnored(mentionedId)) ||
+          isUserIgnored(mentionedName)
+        ) {
+          // Find specific user ID
+          const effectiveUserId =
+            mentionedId ||
+            Object.keys(ignoredUsers).find(
+              (id) =>
+                ignoredUsers[id].username &&
+                ignoredUsers[id].username.toLowerCase() ===
+                  mentionedName.toLowerCase()
+            );
+
+          if (effectiveUserId) {
+            mentionedUserIds.add(effectiveUserId);
+            hasMentionedGhostedUser = true;
+
+            // Apply highlighting to mention based on user preferences
+            const highlightColor = getUserHighlightColor(effectiveUserId);
+            anchor.classList.add("ghosted-mention");
+            anchor.style.setProperty("--ghost-highlight-color", highlightColor);
+          }
+        }
+      });
+
+      // Then check for text content mentions of ghosted users
+      const postText = postContent.textContent;
+
+      if (postText) {
+        const ghostedResult = postContentContainsGhosted(postText);
+
+        if (ghostedResult && ghostedResult.containsGhosted) {
+          hasMentionedGhostedUser = true;
+
+          // Add all mentioned user IDs to our set
+          ghostedResult.mentionedUsers.forEach((user) => {
+            mentionedUserIds.add(user.userId);
+          });
+        }
+      }
+
+      // Apply content-based styling if any ghosted users are mentioned
+      if (hasMentionedGhostedUser) {
+        // If we have exactly one mentioned user, use their preferences
+        if (mentionedUserIds.size === 1) {
+          const userId = Array.from(mentionedUserIds)[0];
+          const settings = getUserVisibilitySetting(userId, "mentions");
+          const highlightColor = getUserHighlightColor(userId);
+
+          if (settings.hide) {
+            // Hide based on user preference
+            post.classList.add("ghosted-by-content");
+          } else if (settings.highlight) {
+            // Highlight based on user preference
+            post.classList.add("ghosted-content-highlight");
+            post.style.setProperty("--ghost-highlight-color", highlightColor);
+          }
+        }
+        // If multiple users are mentioned, use a mixed approach
+        else if (mentionedUserIds.size > 1) {
+          // Check if any users prefer hiding
+          let shouldHide = false;
+
+          // For multiple mentioned users, if any has hide preference, hide the post
+          for (const userId of mentionedUserIds) {
+            const settings = getUserVisibilitySetting(userId, "mentions");
+            if (settings.hide) {
+              shouldHide = true;
+              break;
+            }
+          }
+
+          if (shouldHide) {
+            post.classList.add("ghosted-by-content");
+          } else {
+            // Otherwise use a rainbow highlight to indicate multiple ghosted users
+            post.classList.add("ghosted-content-highlight");
+            post.style.setProperty(
+              "--ghost-highlight-color",
+              "linear-gradient(90deg, #FF5555, #FF9955)"
+            );
+          }
+        }
+      }
+    }
+
+    // Process reaction list if present
+    const reactionList = post.querySelector(".mas-reactions");
+    if (reactionList) {
+      const reactionItems = reactionList.querySelectorAll("li");
+      reactionItems.forEach((item) => {
+        const userLinks = item.querySelectorAll(
+          "a.username, a.username-coloured"
+        );
+        userLinks.forEach((link) => {
+          const reactorName = link.textContent.trim();
+          let reactorId = null;
+
+          if (link.href) {
+            reactorId = link.href.match(/u=(\d+)/)?.[1];
+          }
+
+          if (
+            (reactorId && isUserIgnored(reactorId)) ||
+            isUserIgnored(reactorName)
+          ) {
+            // Find specific user ID
+            const effectiveUserId =
+              reactorId ||
+              Object.keys(ignoredUsers).find(
+                (id) =>
+                  ignoredUsers[id].username &&
+                  ignoredUsers[id].username.toLowerCase() ===
+                    reactorName.toLowerCase()
+              );
+
+            if (effectiveUserId) {
+              // Get user-specific settings
+              const settings = getUserVisibilitySetting(
+                effectiveUserId,
+                "reactions"
+              );
+
+              if (settings.hide) {
+                // Hide reaction based on user preference
+                item.classList.add("ghosted-reaction");
+              }
+            } else {
+              // Fallback behavior
+              item.classList.add("ghosted-reaction");
+            }
+          }
+        });
+      });
+    }
+
+    post.classList.add("content-processed");
+  }
+
+  function processReactionList(reactionList) {
+    // Skip if already processed
+    if (reactionList.classList.contains("content-processed")) {
+      return;
+    }
+
+    // Add prevention of default action for links
+    const links = reactionList.querySelectorAll("a");
+    links.forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+      });
+    });
+
+    // Process the list label and reaction scores
+    const listLabel = reactionList.querySelector(".list-label a");
+    if (!listLabel) {
+      reactionList.classList.add("content-processed");
+      return;
+    }
+
+    const originalText = listLabel.textContent.trim();
+    let usernames = [];
+
+    // Extract usernames from the label text
+    if (originalText.includes(" and ")) {
+      // Format: "user1 and user2" or "user1, user2 and X others"
+      const parts = originalText.split(" and ");
+      if (parts[0].includes(", ")) {
+        // Multiple users
+        usernames = parts[0].split(", ");
+        // Handle "and X others" case
+        if (parts[1].includes(" other")) {
+          // We can't process this accurately without fetching the full list
+        } else {
+          usernames.push(parts[1]);
+        }
+      } else {
+        // Just two users
+        usernames = [parts[0], parts[1]];
+      }
+    } else {
+      // Single user
+      usernames = [originalText];
+    }
+
+    // Filter out ignored users
+    const visibleUsers = usernames.filter(
+      (username) => !isUserIgnored(username)
+    );
+
+    // Handle the list scores (reaction counts)
+    const listScores = reactionList.querySelector(".list-scores");
+    if (listScores) {
+      // We don't have enough information to accurately adjust counts
+      // without making API calls. Just mark as processed for now.
+    }
+
+    // Update display based on visible users
+    if (visibleUsers.length === 0) {
+      // If all users are ignored, hide the reaction list
+      reactionList.style.display = "none";
+    } else if (visibleUsers.length !== usernames.length) {
+      // If some users are ignored, update the label text
+      if (visibleUsers.length === 1) {
+        listLabel.textContent = visibleUsers[0];
+      } else if (visibleUsers.length === 2) {
+        listLabel.textContent = `${visibleUsers[0]} and ${visibleUsers[1]}`;
+      } else {
+        const firstTwo = visibleUsers.slice(0, 2);
+        listLabel.textContent = `${firstTwo.join(", ")} and ${
+          visibleUsers.length - 2
+        } other${visibleUsers.length - 2 > 1 ? "s" : ""}`;
+      }
+    }
+
+    // Mark as processed
+    reactionList.classList.add("content-processed");
+  }
+
+  async function processLastPost(lastpostCell) {
+    // Skip if already processed
+    if (lastpostCell.classList.contains("content-processed")) {
+      return;
+    }
+
+    // Get the author link in the lastpost cell
+    const authorLink = lastpostCell.querySelector(
+      "a.username, a.username-coloured"
+    );
+    if (!authorLink) {
+      lastpostCell.classList.add("content-processed");
+      return;
+    }
+
+    const authorName = authorLink.textContent.trim();
+    let authorId = null;
+
+    if (authorLink.href) {
+      authorId = authorLink.href.match(/u=(\d+)/)?.[1];
+    }
+
+    // Check if the author is ignored
+    if ((authorId && isUserIgnored(authorId)) || isUserIgnored(authorName)) {
+      // Get the effective user ID
+      const effectiveUserId =
+        authorId ||
+        Object.keys(ignoredUsers).find(
+          (id) =>
+            ignoredUsers[id].username &&
+            ignoredUsers[id].username.toLowerCase() === authorName.toLowerCase()
+        );
+
+      if (effectiveUserId) {
+        // Get user-specific settings for lastposts
+        const settings = getUserVisibilitySetting(effectiveUserId, "lastposts");
+        const highlightColor = getUserHighlightColor(effectiveUserId);
+
+        if (settings.hide) {
+          // Hide lastpost based on user preference
+          lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+        } else if (settings.highlight) {
+          // Highlight lastpost based on user preference
+          lastpostCell.classList.add("ghosted-highlight");
+          lastpostCell.style.setProperty(
+            "--ghost-highlight-color",
+            highlightColor
+          );
+        }
+      } else {
+        // Fallback behavior
+        lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+      }
+
+      lastpostCell.classList.add("content-processed");
+      return;
+    }
+
+    // If author isn't ignored, check the post content
+    const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
+    if (postLink) {
+      const postId = postLink.href.match(/p=(\d+)/)?.[1];
+      if (postId && postCache[postId]) {
+        const postContent = postCache[postId].content;
+        if (postContent) {
+          const ghostedResult = postContentContainsGhosted(postContent);
+          if (ghostedResult && ghostedResult.containsGhosted) {
+            // For content mentions, get the first mentioned user's settings
+            if (
+              ghostedResult.mentionedUsers &&
+              ghostedResult.mentionedUsers.length > 0
+            ) {
+              const firstMentionedUser = ghostedResult.mentionedUsers[0];
+              const settings = getUserVisibilitySetting(
+                firstMentionedUser.userId,
+                "mentions"
+              );
+              const highlightColor = getUserHighlightColor(
+                firstMentionedUser.userId
+              );
+
+              if (settings.hide) {
+                // Hide lastpost based on user preference
+                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+              } else if (settings.highlight) {
+                // Highlight lastpost based on user preference
+                lastpostCell.classList.add("ghosted-content-highlight");
+                lastpostCell.style.setProperty(
+                  "--ghost-highlight-color",
+                  highlightColor
+                );
+              }
+            } else {
+              // Fallback behavior
+              lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+            }
+          }
+        }
+      }
+    }
+
+    // Mark as processed
+    lastpostCell.classList.add("content-processed");
+
+    // Also check if this is within a row and mark the row as processed conditionally
+    const parentRow = lastpostCell.closest("li.row");
+    if (parentRow && !parentRow.classList.contains("content-processed")) {
+      // Only mark row as processed if we're in a forum row
+      const isForumRow =
+        parentRow.parentElement &&
+        parentRow.parentElement.classList.contains("forums");
+      if (isForumRow) {
+        parentRow.classList.add("content-processed");
+      }
+    }
+
+    return lastpostCell;
   }
 
   async function processIgnoredContentOnce() {
@@ -3264,6 +3140,19 @@
             </div>
             
             <div class="ghost-settings-group">
+              <label>Mentions:</label>
+              <select class="ghost-visibility-select" data-content-type="mentions">
+                <option value="default">Use Global Setting</option>
+                <option value="hide" ${
+                  userData.settings?.mentions === "hide" ? "selected" : ""
+                }>Hide</option>
+                <option value="highlight" ${
+                  userData.settings?.mentions === "highlight" ? "selected" : ""
+                }>Highlight</option>
+              </select>
+            </div>
+            
+            <div class="ghost-settings-group">
               <label>Topics:</label>
               <select class="ghost-visibility-select" data-content-type="topics">
                 <option value="default">Use Global Setting</option>
@@ -3274,7 +3163,7 @@
                   userData.settings?.topics === "highlight" ? "selected" : ""
                 }>Highlight</option>
               </select>
-          </div>
+            </div>
             
             <div class="ghost-settings-group">
               <label>Last Posts:</label>
@@ -3287,8 +3176,8 @@
                   userData.settings?.lastPost === "highlight" ? "selected" : ""
                 }>Highlight</option>
               </select>
-        </div>
-        
+            </div>
+            
             <div class="ghost-settings-group">
               <label>Reactions:</label>
               <select class="ghost-visibility-select" data-content-type="reactions">
@@ -3300,8 +3189,8 @@
                   userData.settings?.reactions === "highlight" ? "selected" : ""
                 }>Highlight</option>
               </select>
-        </div>
-      </div>
+            </div>
+          </div>
           
           <button class="ghost-save-settings">Save Settings</button>
         `;
@@ -3803,6 +3692,211 @@
       console.error("Failed to mark notification as read:", err);
       return false;
     }
+  }
+
+  async function processCPListNotification(item) {
+    const titleEl = item.querySelector(".notifications_title");
+    if (!titleEl) {
+      item.classList.add("content-processed");
+      return;
+    }
+
+    const usernameEls = titleEl.querySelectorAll(
+      ".username, .username-coloured"
+    );
+    const usernames = Array.from(usernameEls).map((el) =>
+      el.textContent.trim()
+    );
+
+    if (usernames.length === 0) {
+      item.classList.add("content-processed");
+      return;
+    }
+
+    // For notifications that start with "Quoted by" or "You were mentioned by", the first username is the key user
+    const titleText = titleEl.textContent.trim();
+    const isQuoteOrMention =
+      titleText.startsWith("Quoted") || titleText.includes("mentioned by");
+    const firstUsername = usernames[0];
+
+    if (isQuoteOrMention && isUserIgnored(firstUsername)) {
+      const row = item.closest("li.row");
+      if (row) {
+        row.classList.add("ghosted-row", "ghosted-by-author");
+        await markNotificationAsRead(item);
+      }
+      item.classList.add("content-processed");
+      return;
+    }
+
+    const nonIgnored = usernames.filter((u) => !isUserIgnored(u));
+    const ghosted = usernames.filter((u) => isUserIgnored(u));
+    const hasIgnored = ghosted.length > 0;
+
+    if (!hasIgnored) {
+      item.classList.add("content-processed");
+      return;
+    }
+
+    if (nonIgnored.length === 0) {
+      const row = item.closest("li.row");
+      if (row) {
+        row.classList.add("ghosted-row", "ghosted-by-author");
+        await markNotificationAsRead(item);
+      }
+      item.classList.add("content-processed");
+      return;
+    }
+
+    // Create the non-ghosted notification first
+    // Find the last username element to get text after it
+    const lastIgnoredEl = usernameEls[usernameEls.length - 1];
+    const nodesAfter = [];
+    let nxt = lastIgnoredEl?.nextSibling;
+    while (nxt) {
+      nodesAfter.push(nxt.cloneNode(true));
+      nxt = nxt.nextSibling;
+    }
+
+    // Clear the title element
+    titleEl.textContent = "";
+
+    // Add non-ignored usernames with appropriate separators
+    nonIgnored.forEach((username, i) => {
+      const matchEl = Array.from(usernameEls).find(
+        (el) => el.textContent.trim().toLowerCase() === username.toLowerCase()
+      );
+      if (matchEl) {
+        titleEl.appendChild(matchEl.cloneNode(true));
+      } else {
+        titleEl.appendChild(document.createTextNode(username));
+      }
+
+      if (i < nonIgnored.length - 2) {
+        titleEl.appendChild(document.createTextNode(", "));
+      } else if (i === nonIgnored.length - 2) {
+        titleEl.appendChild(document.createTextNode(" and "));
+      }
+    });
+
+    // Add "have reacted" or other trailing text
+    nodesAfter.forEach((node) => titleEl.appendChild(node));
+
+    // Now create ghosted notifications for each ghosted user
+    const row = item.closest("li.row");
+    if (row) {
+      ghosted.forEach((ghostedUsername) => {
+        const ghostedRow = row.cloneNode(true);
+        ghostedRow.classList.add("ghosted-row", "ghosted-by-author");
+
+        // Update the notification text for this ghosted user
+        const ghostedTitleEl = ghostedRow.querySelector(".notifications_title");
+        if (ghostedTitleEl) {
+          ghostedTitleEl.textContent = "";
+          const matchEl = Array.from(usernameEls).find(
+            (el) =>
+              el.textContent.trim().toLowerCase() ===
+              ghostedUsername.toLowerCase()
+          );
+          if (matchEl) {
+            ghostedTitleEl.appendChild(matchEl.cloneNode(true));
+          } else {
+            ghostedTitleEl.appendChild(
+              document.createTextNode(ghostedUsername)
+            );
+          }
+
+          // Add the trailing text
+          nodesAfter.forEach((node) =>
+            ghostedTitleEl.appendChild(node.cloneNode(true))
+          );
+        }
+
+        // Insert the ghosted row after the original
+        row.parentNode.insertBefore(ghostedRow, row.nextSibling);
+      });
+    }
+
+    item.classList.add("content-processed");
+  }
+
+  async function processNotification(item) {
+    const usernameEls = item.querySelectorAll(".username, .username-coloured");
+    const usernames = Array.from(usernameEls).map((el) =>
+      el.textContent.trim()
+    );
+
+    if (usernames.length === 0) {
+      item.classList.add("content-processed");
+      return;
+    }
+
+    const firstUsername = usernames[0];
+    if (isUserIgnored(firstUsername)) {
+      const li = item.closest("li");
+      if (li) {
+        await markNotificationAsRead(item);
+        li.classList.add("ghosted-row", "ghosted-by-author");
+      }
+      item.classList.add("content-processed");
+      return;
+    }
+
+    const nonIgnored = usernames.filter((u) => !isUserIgnored(u));
+    const hasIgnored = nonIgnored.length < usernames.length;
+
+    if (!hasIgnored) {
+      item.classList.add("content-processed");
+      return;
+    }
+
+    const titleEl = item.querySelector(".notification-title");
+    if (!titleEl) {
+      item.classList.add("content-processed");
+      return;
+    }
+
+    if (nonIgnored.length === 0) {
+      const li = item.closest("li");
+      if (li) {
+        await markNotificationAsRead(item);
+        li.classList.add("ghosted-row", "ghosted-by-author");
+      }
+      item.classList.add("content-processed");
+      return;
+    }
+
+    const lastIgnoredEl = usernameEls[usernameEls.length - 1];
+    const nodesAfter = [];
+    let nxt = lastIgnoredEl?.nextSibling;
+
+    while (nxt) {
+      nodesAfter.push(nxt.cloneNode(true));
+      nxt = nxt.nextSibling;
+    }
+
+    titleEl.textContent = "";
+
+    nonIgnored.forEach((usr, i) => {
+      const matchEl = Array.from(usernameEls).find(
+        (el) => el.textContent.trim().toLowerCase() === usr.toLowerCase()
+      );
+
+      if (matchEl) {
+        titleEl.appendChild(matchEl.cloneNode(true));
+      } else {
+        titleEl.appendChild(document.createTextNode(usr));
+      }
+
+      if (i < nonIgnored.length - 2) {
+        titleEl.appendChild(document.createTextNode(", "));
+      } else if (i === nonIgnored.length - 2) {
+        titleEl.appendChild(document.createTextNode(" and "));
+      }
+    });
+
+    nodesAfter.forEach((node) => titleEl.appendChild(node));
+    item.classList.add("content-processed");
   }
 
   /**
