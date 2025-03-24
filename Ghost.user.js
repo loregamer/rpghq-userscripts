@@ -1108,7 +1108,7 @@
     if (hasGhostedClass) {
       // If the row is authored by a ghosted user
       if (ghostedAuthorId) {
-        const settings = getUserVisibilitySetting(ghostedAuthorId, "topics");
+        const settings = getUserVisibilitySetting(ghostedAuthorId, "lastPost");
         const highlightColor = getUserHighlightColor(ghostedAuthorId);
 
         if (settings.hide) {
@@ -1595,7 +1595,7 @@
     let highlightColor = null;
 
     if (userId && isUserIgnored(userId)) {
-      const settings = getUserVisibilitySetting(userId, "topics");
+      const settings = getUserVisibilitySetting(userId, "lastPost");
       hideIt = settings.hide;
       highlightIt = settings.highlight;
       highlightColor = getUserHighlightColor(userId);
@@ -1607,7 +1607,7 @@
       );
 
       if (foundUserId) {
-        const settings = getUserVisibilitySetting(foundUserId, "topics");
+        const settings = getUserVisibilitySetting(foundUserId, "lastPost");
         hideIt = settings.hide;
         highlightIt = settings.highlight;
         highlightColor = getUserHighlightColor(foundUserId);
@@ -3553,7 +3553,7 @@
             
             <div class="ghost-settings-tabs">
               <button class="ghost-tab-button active" data-tab="forum-view">Threads</button>
-              <button class="ghost-tab-button" data-tab="topics">Forum Listings</button>
+              <button class="ghost-tab-button" data-tab="topics">Forum Last Posts</button>
             </div>
             
             <div class="ghost-tab-content" id="forum-view-tab">
@@ -3626,19 +3626,6 @@
                     userData.settings?.lastPost === "highlight"
                       ? "selected"
                       : ""
-                  }>Highlight</option>
-                </select>
-              </div>
-              
-              <div class="ghost-settings-group">
-                <label>Topics:</label>
-                <select class="ghost-visibility-select" data-content-type="topics">
-                  <option value="default">Use Global Setting</option>
-                  <option value="hide" ${
-                    userData.settings?.topics === "hide" ? "selected" : ""
-                  }>Hide</option>
-                  <option value="highlight" ${
-                    userData.settings?.topics === "highlight" ? "selected" : ""
                   }>Highlight</option>
                 </select>
               </div>
