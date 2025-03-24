@@ -383,6 +383,40 @@
       margin: 0;
     }
     
+    /* Tabs for settings panel */
+    .ghost-settings-tabs {
+      display: flex;
+      border-bottom: 1px solid #3a3f4b;
+      margin-bottom: 10px;
+    }
+    
+    .ghost-tab-button {
+      background-color: transparent;
+      border: none;
+      color: #aab2bd;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+    
+    .ghost-tab-button:hover {
+      color: #e6e6e6;
+    }
+    
+    .ghost-tab-button.active {
+      color: #4a90e2;
+      border-bottom: 2px solid #4a90e2;
+    }
+    
+    .ghost-tab-content {
+      padding: 10px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
     .ghost-color-picker {
       width: 40px;
       height: 25px;
@@ -3488,7 +3522,7 @@
         const mentionedColor = getUserMentionedColor(userId);
         const globalSetting = userData.settings?.global || "hide";
 
-        // Create settings content
+        // Create settings content with tabbed interface
         settingsPanel.innerHTML = `
           <div class="ghost-settings-group">
             <label>Author Highlight Color:</label>
@@ -3517,82 +3551,97 @@
             <h4>Advanced Settings</h4>
             <p class="ghost-settings-info">Set specific visibility for different content types</p>
             
-            <div class="ghost-settings-group">
-              <label>Posts:</label>
-              <select class="ghost-visibility-select" data-content-type="posts">
-                <option value="default">Use Global Setting</option>
-                <option value="hide" ${
-                  userData.settings?.posts === "hide" ? "selected" : ""
-                }>Hide</option>
-                <option value="highlight" ${
-                  userData.settings?.posts === "highlight" ? "selected" : ""
-                }>Highlight</option>
-              </select>
+            <div class="ghost-settings-tabs">
+              <button class="ghost-tab-button active" data-tab="forum-view">Threads</button>
+              <button class="ghost-tab-button" data-tab="topics">Forum Listings</button>
             </div>
             
-            <div class="ghost-settings-group">
-              <label>Quotes:</label>
-              <select class="ghost-visibility-select" data-content-type="quotes">
-                <option value="default">Use Global Setting</option>
-                <option value="hide" ${
-                  userData.settings?.quotes === "hide" ? "selected" : ""
-                }>Hide</option>
-                <option value="highlight" ${
-                  userData.settings?.quotes === "highlight" ? "selected" : ""
-                }>Highlight</option>
-              </select>
+            <div class="ghost-tab-content" id="forum-view-tab">
+              <div class="ghost-settings-group">
+                <label>Posts:</label>
+                <select class="ghost-visibility-select" data-content-type="posts">
+                  <option value="default">Use Global Setting</option>
+                  <option value="hide" ${
+                    userData.settings?.posts === "hide" ? "selected" : ""
+                  }>Hide</option>
+                  <option value="highlight" ${
+                    userData.settings?.posts === "highlight" ? "selected" : ""
+                  }>Highlight</option>
+                </select>
+              </div>
+              
+              <div class="ghost-settings-group">
+                <label>Quotes:</label>
+                <select class="ghost-visibility-select" data-content-type="quotes">
+                  <option value="default">Use Global Setting</option>
+                  <option value="hide" ${
+                    userData.settings?.quotes === "hide" ? "selected" : ""
+                  }>Hide</option>
+                  <option value="highlight" ${
+                    userData.settings?.quotes === "highlight" ? "selected" : ""
+                  }>Highlight</option>
+                </select>
+              </div>
+              
+              <div class="ghost-settings-group">
+                <label>Mentions:</label>
+                <select class="ghost-visibility-select" data-content-type="mentions">
+                  <option value="default">Use Global Setting</option>
+                  <option value="hide" ${
+                    userData.settings?.mentions === "hide" ? "selected" : ""
+                  }>Hide</option>
+                  <option value="highlight" ${
+                    userData.settings?.mentions === "highlight"
+                      ? "selected"
+                      : ""
+                  }>Highlight</option>
+                </select>
+              </div>
+              
+              <div class="ghost-settings-group">
+                <label>Reactions:</label>
+                <select class="ghost-visibility-select" data-content-type="reactions">
+                  <option value="default">Use Global Setting</option>
+                  <option value="hide" ${
+                    userData.settings?.reactions === "hide" ? "selected" : ""
+                  }>Hide</option>
+                  <option value="highlight" ${
+                    userData.settings?.reactions === "highlight"
+                      ? "selected"
+                      : ""
+                  }>Highlight</option>
+                </select>
+              </div>
             </div>
             
-            <div class="ghost-settings-group">
-              <label>Mentions:</label>
-              <select class="ghost-visibility-select" data-content-type="mentions">
-                <option value="default">Use Global Setting</option>
-                <option value="hide" ${
-                  userData.settings?.mentions === "hide" ? "selected" : ""
-                }>Hide</option>
-                <option value="highlight" ${
-                  userData.settings?.mentions === "highlight" ? "selected" : ""
-                }>Highlight</option>
-              </select>
-            </div>
-            
-            <div class="ghost-settings-group">
-              <label>Topics:</label>
-              <select class="ghost-visibility-select" data-content-type="topics">
-                <option value="default">Use Global Setting</option>
-                <option value="hide" ${
-                  userData.settings?.topics === "hide" ? "selected" : ""
-                }>Hide</option>
-                <option value="highlight" ${
-                  userData.settings?.topics === "highlight" ? "selected" : ""
-                }>Highlight</option>
-              </select>
-            </div>
-            
-            <div class="ghost-settings-group">
-              <label>Last Posts:</label>
-              <select class="ghost-visibility-select" data-content-type="lastPost">
-                <option value="default">Use Global Setting</option>
-                <option value="hide" ${
-                  userData.settings?.lastPost === "hide" ? "selected" : ""
-                }>Hide</option>
-                <option value="highlight" ${
-                  userData.settings?.lastPost === "highlight" ? "selected" : ""
-                }>Highlight</option>
-              </select>
-            </div>
-            
-            <div class="ghost-settings-group">
-              <label>Reactions:</label>
-              <select class="ghost-visibility-select" data-content-type="reactions">
-                <option value="default">Use Global Setting</option>
-                <option value="hide" ${
-                  userData.settings?.reactions === "hide" ? "selected" : ""
-                }>Hide</option>
-                <option value="highlight" ${
-                  userData.settings?.reactions === "highlight" ? "selected" : ""
-                }>Highlight</option>
-              </select>
+            <div class="ghost-tab-content" id="topics-tab" style="display: none;">
+              <div class="ghost-settings-group">
+                <label>Last Posts:</label>
+                <select class="ghost-visibility-select" data-content-type="lastPost">
+                  <option value="default">Use Global Setting</option>
+                  <option value="hide" ${
+                    userData.settings?.lastPost === "hide" ? "selected" : ""
+                  }>Hide</option>
+                  <option value="highlight" ${
+                    userData.settings?.lastPost === "highlight"
+                      ? "selected"
+                      : ""
+                  }>Highlight</option>
+                </select>
+              </div>
+              
+              <div class="ghost-settings-group">
+                <label>Topics:</label>
+                <select class="ghost-visibility-select" data-content-type="topics">
+                  <option value="default">Use Global Setting</option>
+                  <option value="hide" ${
+                    userData.settings?.topics === "hide" ? "selected" : ""
+                  }>Hide</option>
+                  <option value="highlight" ${
+                    userData.settings?.topics === "highlight" ? "selected" : ""
+                  }>Highlight</option>
+                </select>
+              </div>
             </div>
           </div>
           
@@ -3607,6 +3656,26 @@
           } else {
             settingsPanel.style.display = "none";
           }
+        });
+
+        // Add event listeners for tab buttons
+        const tabButtons = settingsPanel.querySelectorAll(".ghost-tab-button");
+        tabButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            // Remove active class from all buttons
+            tabButtons.forEach((btn) => btn.classList.remove("active"));
+            // Add active class to clicked button
+            button.classList.add("active");
+
+            // Hide all tab content
+            const tabContents =
+              settingsPanel.querySelectorAll(".ghost-tab-content");
+            tabContents.forEach((content) => (content.style.display = "none"));
+
+            // Show relevant tab content
+            const tabId = button.getAttribute("data-tab") + "-tab";
+            settingsPanel.querySelector(`#${tabId}`).style.display = "block";
+          });
         });
 
         // Add event listener for saving settings
