@@ -546,11 +546,28 @@
       top: -10px;
       left: 10px;
       background-color: var(--ghost-highlight-color, #FF5555);
-      color: #FFF;
+      color: white;
+      padding: 0 5px;
       font-size: 10px;
-      padding: 2px 5px;
+      font-weight: bold;
+      text-transform: uppercase;
       border-radius: 3px;
     }
+    
+    /* Specific style for username mentions */
+    .ghosted-mention {
+      display: inline-block !important;
+      padding: 0 3px !important;
+      background-color: var(--ghost-highlight-color, #FF9955) !important;
+      color: white !important;
+      font-weight: bold !important;
+      border-radius: 3px !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      text-decoration: none !important;
+    }
+
+    /* Basic ghost styles for hidden elements */
   `;
   document.head.appendChild(mainStyle);
 
@@ -851,6 +868,16 @@
     return "#FF5555";
   }
 
+  function getUserMentionedColor(userId) {
+    // Return user-specific mentioned color if set
+    if (ignoredUsers[userId] && ignoredUsers[userId].mentionedColor) {
+      return ignoredUsers[userId].mentionedColor;
+    }
+
+    // Return default mentioned color (slightly different from highlight)
+    return "#FF9955";
+  }
+
   // ---------------------------------------------------------------------
   // 4) POST FETCH, CACHING & CLEANUP
   // ---------------------------------------------------------------------
@@ -1099,13 +1126,13 @@
         // If exactly one ghosted user is mentioned
         const userId = mentionedUsers[0].userId;
         const settings = getUserVisibilitySetting(userId, "mentions");
-        const highlightColor = getUserHighlightColor(userId);
+        const mentionedColor = getUserMentionedColor(userId);
 
         if (settings.hide) {
           rowItem.classList.add("ghosted-row", "ghosted-by-content");
         } else if (settings.highlight) {
           rowItem.classList.add("ghosted-content-highlight");
-          rowItem.style.setProperty("--ghost-highlight-color", highlightColor);
+          rowItem.style.setProperty("--ghost-highlight-color", mentionedColor);
         } else {
           rowItem.classList.add("ghosted-row", "ghosted-by-content");
         }
@@ -1114,6 +1141,7 @@
         // Multiple ghosted users mentioned
         // Check if any prefer to hide
         let shouldHide = false;
+        let mentionHighlightColor = null;
 
         for (const mentionedUser of mentionedUsers) {
           const settings = getUserVisibilitySetting(
@@ -1123,17 +1151,24 @@
           if (settings.hide) {
             shouldHide = true;
             break;
+          } else if (settings.highlight && !mentionHighlightColor) {
+            // Use the first user's mentioned color for highlighting
+            mentionHighlightColor = getUserMentionedColor(mentionedUser.userId);
           }
         }
 
         if (shouldHide) {
           rowItem.classList.add("ghosted-row", "ghosted-by-content");
-        } else {
+        } else if (mentionHighlightColor) {
           rowItem.classList.add("ghosted-content-highlight");
           rowItem.style.setProperty(
             "--ghost-highlight-color",
-            "linear-gradient(90deg, #FF5555, #FF9955)"
+            mentionHighlightColor
           );
+        } else {
+          // Fallback in case no highlight preferences were found
+          rowItem.classList.add("ghosted-content-highlight");
+          rowItem.style.setProperty("--ghost-highlight-color", "#FF9955");
         }
         return;
       }
@@ -1725,9 +1760,9 @@
             hasMentionedGhostedUser = true;
 
             // Apply highlighting to mention based on user preferences
-            const highlightColor = getUserHighlightColor(effectiveUserId);
+            const mentionedColor = getUserMentionedColor(effectiveUserId);
             anchor.classList.add("ghosted-mention");
-            anchor.style.setProperty("--ghost-highlight-color", highlightColor);
+            anchor.style.setProperty("--ghost-highlight-color", mentionedColor);
           }
         }
       });
@@ -1754,7 +1789,7 @@
         if (mentionedUserIds.size === 1) {
           const userId = Array.from(mentionedUserIds)[0];
           const settings = getUserVisibilitySetting(userId, "mentions");
-          const highlightColor = getUserHighlightColor(userId);
+          const mentionedColor = getUserMentionedColor(userId);
 
           if (settings.hide) {
             // Hide based on user preference
@@ -1762,13 +1797,18 @@
           } else if (settings.highlight) {
             // Highlight based on user preference
             post.classList.add("ghosted-content-highlight");
-            post.style.setProperty("--ghost-highlight-color", highlightColor);
+            post.style.setProperty("--ghost-highlight-color", mentionedColor);
+          } else {
+            // Fallback in case no highlight preferences were found
+            post.classList.add("ghosted-content-highlight");
+            post.style.setProperty("--ghost-highlight-color", "#FF9955");
           }
         }
         // If multiple users are mentioned, use a mixed approach
         else if (mentionedUserIds.size > 1) {
           // Check if any users prefer hiding
           let shouldHide = false;
+          let mentionHighlightColor = null;
 
           // For multiple mentioned users, if any has hide preference, hide the post
           for (const userId of mentionedUserIds) {
@@ -1776,18 +1816,24 @@
             if (settings.hide) {
               shouldHide = true;
               break;
+            } else if (settings.highlight && !mentionHighlightColor) {
+              // Use the first user's mentioned color for highlighting
+              mentionHighlightColor = getUserMentionedColor(userId);
             }
           }
 
           if (shouldHide) {
             post.classList.add("ghosted-by-content");
-          } else {
-            // Otherwise use a rainbow highlight to indicate multiple ghosted users
+          } else if (mentionHighlightColor) {
             post.classList.add("ghosted-content-highlight");
             post.style.setProperty(
               "--ghost-highlight-color",
-              "linear-gradient(90deg, #FF5555, #FF9955)"
+              mentionHighlightColor
             );
+          } else {
+            // Fallback in case no highlight preferences were found
+            post.classList.add("ghosted-content-highlight");
+            post.style.setProperty("--ghost-highlight-color", "#FF9955");
           }
         }
       }
@@ -1988,10 +2034,21 @@
     const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
     if (postLink) {
       const postId = postLink.href.match(/p=(\d+)/)?.[1];
-      if (postId && postCache[postId]) {
-        const postContent = postCache[postId].content;
-        if (postContent) {
+      if (postId) {
+        // If post isn't already cached, try to fetch it
+        if (!postCache[postId]) {
+          try {
+            await fetchAndCachePost(postId);
+          } catch (error) {
+            console.error("Error fetching post for lastpost cell:", error);
+          }
+        }
+
+        // Check if we have the post content
+        if (postCache[postId] && postCache[postId].content) {
+          const postContent = postCache[postId].content;
           const ghostedResult = postContentContainsGhosted(postContent);
+
           if (ghostedResult && ghostedResult.containsGhosted) {
             // For content mentions, get the first mentioned user's settings
             if (
@@ -2006,21 +2063,46 @@
               const highlightColor = getUserHighlightColor(
                 firstMentionedUser.userId
               );
+              const mentionedColor = getUserMentionedColor(
+                firstMentionedUser.userId
+              );
 
               if (settings.hide) {
                 // Hide lastpost based on user preference
                 lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+
+                // Make sure the parent row is marked appropriately
+                const parentRow = lastpostCell.closest("li.row, tr.row");
+                if (parentRow) {
+                  parentRow.classList.add("ghosted-row", "ghosted-by-content");
+                }
               } else if (settings.highlight) {
                 // Highlight lastpost based on user preference
                 lastpostCell.classList.add("ghosted-content-highlight");
                 lastpostCell.style.setProperty(
                   "--ghost-highlight-color",
-                  highlightColor
+                  mentionedColor
                 );
+
+                // Also highlight the parent row
+                const parentRow = lastpostCell.closest("li.row, tr.row");
+                if (parentRow) {
+                  parentRow.classList.add("ghosted-content-highlight");
+                  parentRow.style.setProperty(
+                    "--ghost-highlight-color",
+                    mentionedColor
+                  );
+                }
               }
             } else {
               // Fallback behavior
               lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+
+              // Make sure the parent row is marked appropriately
+              const parentRow = lastpostCell.closest("li.row, tr.row");
+              if (parentRow) {
+                parentRow.classList.add("ghosted-row", "ghosted-by-content");
+              }
             }
           }
         }
@@ -2031,12 +2113,13 @@
     lastpostCell.classList.add("content-processed");
 
     // Also check if this is within a row and mark the row as processed conditionally
-    const parentRow = lastpostCell.closest("li.row");
+    const parentRow = lastpostCell.closest("li.row, tr.row");
     if (parentRow && !parentRow.classList.contains("content-processed")) {
       // Only mark row as processed if we're in a forum row
       const isForumRow =
         parentRow.parentElement &&
-        parentRow.parentElement.classList.contains("forums");
+        (parentRow.parentElement.classList.contains("forums") ||
+          parentRow.parentElement.tagName === "TBODY");
       if (isForumRow) {
         parentRow.classList.add("content-processed");
       }
@@ -2418,10 +2501,108 @@
     `;
     validationTip.textContent = "Enter a direct image URL (.jpg, .png, .gif)";
 
+    // Color settings section
+    const colorSettingsSection = document.createElement("div");
+    colorSettingsSection.style.cssText = `
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #232830;
+      border-radius: 4px;
+    `;
+
+    const colorSettingsTitle = document.createElement("div");
+    colorSettingsTitle.textContent = "User Color Settings";
+    colorSettingsTitle.style.cssText = `
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #e0e0e0;
+    `;
+
+    // Highlight color picker area
+    const highlightColorArea = document.createElement("div");
+    highlightColorArea.style.cssText = `
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    `;
+
+    const highlightColorLabel = document.createElement("label");
+    highlightColorLabel.textContent = "Author Highlight Color";
+    highlightColorLabel.style.cssText = `
+      font-size: 0.9em;
+      color: #c0c0c0;
+    `;
+
+    const highlightColorPicker = document.createElement("input");
+    highlightColorPicker.type = "color";
+    highlightColorPicker.value =
+      ignoredUsers[userId]?.highlightColor || "#FF5555";
+    highlightColorPicker.className = "ghost-highlight-color-picker";
+    highlightColorPicker.style.cssText = `
+      border: none;
+      height: 30px;
+      width: 80px;
+      cursor: pointer;
+      border-radius: 4px;
+    `;
+
+    // Mentioned color picker area
+    const mentionedColorArea = document.createElement("div");
+    mentionedColorArea.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    `;
+
+    const mentionedColorLabel = document.createElement("label");
+    mentionedColorLabel.textContent = "Mentioned Highlight Color";
+    mentionedColorLabel.style.cssText = `
+      font-size: 0.9em;
+      color: #c0c0c0;
+    `;
+
+    const mentionedColorPicker = document.createElement("input");
+    mentionedColorPicker.type = "color";
+    mentionedColorPicker.value =
+      ignoredUsers[userId]?.mentionedColor || "#FF9955";
+    mentionedColorPicker.className = "ghost-mentioned-color-picker";
+    mentionedColorPicker.style.cssText = `
+      border: none;
+      height: 30px;
+      width: 80px;
+      cursor: pointer;
+      border-radius: 4px;
+    `;
+
+    // Description for color settings
+    const colorSettingsDescription = document.createElement("div");
+    colorSettingsDescription.innerHTML = `
+      <i class="icon fa-info-circle fa-fw" aria-hidden="true"></i>
+      Different colors for when user authors content vs. when they're mentioned
+    `;
+    colorSettingsDescription.style.cssText = `
+      margin-top: 10px;
+      font-size: 0.85em;
+      color: #8a9db5;
+    `;
+
+    // Assemble color settings section
+    highlightColorArea.appendChild(highlightColorLabel);
+    highlightColorArea.appendChild(highlightColorPicker);
+    mentionedColorArea.appendChild(mentionedColorLabel);
+    mentionedColorArea.appendChild(mentionedColorPicker);
+
+    colorSettingsSection.appendChild(colorSettingsTitle);
+    colorSettingsSection.appendChild(highlightColorArea);
+    colorSettingsSection.appendChild(mentionedColorArea);
+    colorSettingsSection.appendChild(colorSettingsDescription);
+
     inputArea.appendChild(inputLabel);
     inputArea.appendChild(inputDescription);
     inputArea.appendChild(input);
     inputArea.appendChild(validationTip);
+    inputArea.appendChild(colorSettingsSection);
 
     // URL validation
     input.addEventListener("input", function () {
@@ -2519,6 +2700,19 @@
         input.focus();
         return;
       }
+
+      // Save color settings regardless of avatar URL
+      // Get color picker values
+      const highlightColor = highlightColorPicker.value;
+      const mentionedColor = mentionedColorPicker.value;
+
+      // Save color settings
+      if (!ignoredUsers[userId]) {
+        ignoredUsers[userId] = {};
+      }
+      ignoredUsers[userId].highlightColor = highlightColor;
+      ignoredUsers[userId].mentionedColor = mentionedColor;
+      GM_setValue("userPreferences", ignoredUsers);
 
       // Show loading state
       replaceB.disabled = true;
@@ -3088,13 +3282,20 @@
 
         // Get current user settings
         const highlightColor = getUserHighlightColor(userId);
+        const mentionedColor = getUserMentionedColor(userId);
         const globalSetting = userData.settings?.global || "hide";
 
         // Create settings content
         settingsPanel.innerHTML = `
           <div class="ghost-settings-group">
-            <label>Highlight Color:</label>
+            <label>Author Highlight Color:</label>
             <input type="color" class="ghost-color-picker" value="${highlightColor}">
+          </div>
+          
+          <div class="ghost-settings-group">
+            <label>Mentioned Highlight Color:</label>
+            <input type="color" class="ghost-mentioned-color-picker" value="${mentionedColor}">
+            <p class="ghost-settings-info">Used when user is mentioned in content</p>
           </div>
           
           <div class="ghost-settings-group">
@@ -3209,19 +3410,24 @@
         settingsPanel
           .querySelector(".ghost-save-settings")
           .addEventListener("click", () => {
-            // Get color picker value
+            // Get color picker values
             const colorPicker = settingsPanel.querySelector(
               ".ghost-color-picker"
             );
+            const mentionedColorPicker = settingsPanel.querySelector(
+              ".ghost-mentioned-color-picker"
+            );
             const newColor = colorPicker.value;
+            const newMentionedColor = mentionedColorPicker.value;
 
             // Initialize settings if they don't exist
             if (!ignoredUsers[userId].settings) {
               ignoredUsers[userId].settings = {};
             }
 
-            // Save highlight color
+            // Save both colors
             ignoredUsers[userId].highlightColor = newColor;
+            ignoredUsers[userId].mentionedColor = newMentionedColor;
 
             // Get and save visibility settings
             const visibilitySelects = settingsPanel.querySelectorAll(
