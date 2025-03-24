@@ -1985,7 +1985,7 @@
     reactionList.classList.add("content-processed");
   }
 
-  async function processLastPost(lastpostCell) {
+  async function processLastPostInForums(lastpostCell) {
     // Skip if already processed
     if (lastpostCell.classList.contains("content-processed")) {
       return;
@@ -2024,7 +2024,7 @@
         const highlightColor = getUserHighlightColor(effectiveUserId);
 
         if (settings.hide) {
-          // Hide lastpost based on user preference
+          // In forums list, add ghosted-by-author class to lastpost
           lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
         } else if (settings.highlight) {
           // Highlight lastpost based on user preference
@@ -2081,14 +2081,8 @@
               );
 
               if (settings.hide) {
-                // Hide lastpost based on user preference
+                // In forums list, add ghosted-by-content class to lastpost
                 lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
-
-                // Make sure the parent row is marked appropriately
-                const parentRow = lastpostCell.closest("li.row, tr.row");
-                if (parentRow) {
-                  parentRow.classList.add("ghosted-row", "ghosted-by-content");
-                }
               } else if (settings.highlight) {
                 // Highlight lastpost based on user preference
                 lastpostCell.classList.add("ghosted-content-highlight");
@@ -2096,26 +2090,10 @@
                   "--ghost-highlight-color",
                   mentionedColor
                 );
-
-                // Also highlight the parent row
-                const parentRow = lastpostCell.closest("li.row, tr.row");
-                if (parentRow) {
-                  parentRow.classList.add("ghosted-content-highlight");
-                  parentRow.style.setProperty(
-                    "--ghost-highlight-color",
-                    mentionedColor
-                  );
-                }
               }
             } else {
               // Fallback behavior
               lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
-
-              // Make sure the parent row is marked appropriately
-              const parentRow = lastpostCell.closest("li.row, tr.row");
-              if (parentRow) {
-                parentRow.classList.add("ghosted-row", "ghosted-by-content");
-              }
             }
           }
         }
@@ -2124,21 +2102,228 @@
 
     // Mark as processed
     lastpostCell.classList.add("content-processed");
+  }
 
-    // Also check if this is within a row and mark the row as processed conditionally
-    const parentRow = lastpostCell.closest("li.row, tr.row");
-    if (parentRow && !parentRow.classList.contains("content-processed")) {
-      // Only mark row as processed if we're in a forum row
-      const isForumRow =
-        parentRow.parentElement &&
-        (parentRow.parentElement.classList.contains("forums") ||
-          parentRow.parentElement.tagName === "TBODY");
-      if (isForumRow) {
-        parentRow.classList.add("content-processed");
-      }
+  async function processLastPostInTopics(lastpostCell) {
+    // Skip if already processed
+    if (lastpostCell.classList.contains("content-processed")) {
+      return;
     }
 
-    return lastpostCell;
+    // We don't add ghosted-by-* classes to lastpost cells in topics list
+    // Just mark as processed and let the row-level processing handle it
+    lastpostCell.classList.add("ghosted-row", "content-processed");
+  }
+
+  async function processLastPostInRecentTopics(lastpostCell) {
+    // Skip if already processed
+    if (lastpostCell.classList.contains("content-processed")) {
+      return;
+    }
+
+    // We don't add ghosted-by-* classes to lastpost cells in recent topics
+    // Just mark as processed and let the row-level processing handle it
+    lastpostCell.classList.add("ghosted-row", "content-processed");
+  }
+
+  async function processForumsListRows() {
+    const forumsLists = document.querySelectorAll(".topiclist.forums");
+
+    for (const forumsList of forumsLists) {
+      const rows = forumsList.querySelectorAll(
+        "li.row:not(.content-processed)"
+      );
+
+      for (const row of rows) {
+        // Get the lastpost cell
+        const lastpostCell = row.querySelector(
+          "dd.lastpost:not(.content-processed)"
+        );
+        if (lastpostCell) {
+          await processLastPostInForums(lastpostCell);
+        }
+
+        // Mark the row as processed
+        row.classList.add("content-processed");
+      }
+    }
+  }
+
+  async function processTopicsListRows() {
+    const topicsLists = document.querySelectorAll(".topiclist.topics");
+
+    for (const topicsList of topicsLists) {
+      const rows = topicsList.querySelectorAll(
+        "li.row:not(.content-processed)"
+      );
+
+      for (const row of rows) {
+        // Get the lastpost cell
+        const lastpostCell = row.querySelector(
+          "dd.lastpost:not(.content-processed)"
+        );
+        if (!lastpostCell) continue;
+
+        // Get the author link in the lastpost cell
+        const authorLink = lastpostCell.querySelector(
+          "a.username, a.username-coloured"
+        );
+        if (!authorLink) continue;
+
+        const authorName = authorLink.textContent.trim();
+
+        // Check if the author is ignored
+        if (isUserIgnored(authorName)) {
+          // Author is ghosted, add ghosted-by-author class to the entire row
+          row.classList.add("ghosted-row", "ghosted-by-author");
+          lastpostCell.classList.add("content-processed");
+          row.classList.add("content-processed");
+          continue;
+        }
+
+        // Check for post content with ghosted mentions
+        const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
+        if (postLink) {
+          const postId = postLink.href.match(/p=(\d+)/)?.[1];
+          if (postId) {
+            // If post isn't already cached, try to fetch it
+            if (!postCache[postId]) {
+              try {
+                await fetchAndCachePost(postId);
+              } catch (error) {
+                console.error("Error fetching post for topicslist row:", error);
+              }
+            }
+
+            // Check if we have the post content
+            if (postCache[postId] && postCache[postId].content) {
+              const postContent = postCache[postId].content;
+              const ghostedResult = postContentContainsGhosted(postContent);
+
+              if (ghostedResult && ghostedResult.containsGhosted) {
+                // Post content contains ghosted username, add ghosted-by-content class
+                row.classList.add("ghosted-row", "ghosted-by-content");
+              }
+            }
+          }
+        }
+
+        // Mark the lastpost cell as processed
+        lastpostCell.classList.add("content-processed");
+
+        // Mark the row as processed
+        row.classList.add("content-processed");
+      }
+    }
+  }
+
+  async function processRecentTopicsRows() {
+    const recentTopicsList = document.querySelector("#recent-topics");
+    if (!recentTopicsList) return;
+
+    const rows = recentTopicsList.querySelectorAll(
+      "li.row:not(.content-processed)"
+    );
+
+    for (const row of rows) {
+      // Get the lastpost cell
+      const lastpostCell = row.querySelector(
+        "dd.lastpost:not(.content-processed)"
+      );
+      if (!lastpostCell) continue;
+
+      // Get the author link in the lastpost cell
+      const authorLink = lastpostCell.querySelector(
+        "a.username, a.username-coloured"
+      );
+      if (!authorLink) continue;
+
+      const authorName = authorLink.textContent.trim();
+
+      // Check if the author is ignored
+      if (isUserIgnored(authorName)) {
+        // Author is ghosted, add ghosted-by-author class to the entire row only
+        row.classList.add("ghosted-row", "ghosted-by-author");
+        lastpostCell.classList.add("content-processed");
+        row.classList.add("content-processed");
+        continue;
+      }
+
+      // Check for post content with ghosted mentions
+      const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
+      if (postLink) {
+        const postId = postLink.href.match(/p=(\d+)/)?.[1];
+        if (postId) {
+          // If post isn't already cached, try to fetch it
+          if (!postCache[postId]) {
+            try {
+              await fetchAndCachePost(postId);
+            } catch (error) {
+              console.error(
+                "Error fetching post for recent topics row:",
+                error
+              );
+            }
+          }
+
+          // Check if we have the post content
+          if (postCache[postId] && postCache[postId].content) {
+            const postContent = postCache[postId].content;
+            const ghostedResult = postContentContainsGhosted(postContent);
+
+            if (ghostedResult && ghostedResult.containsGhosted) {
+              // Post content contains ghosted username, add ghosted-by-content class to row only
+              row.classList.add("ghosted-row", "ghosted-by-content");
+            }
+          }
+        }
+      }
+
+      // Mark the lastpost cell as processed
+      lastpostCell.classList.add("content-processed");
+
+      // Mark the row as processed
+      row.classList.add("content-processed");
+    }
+  }
+
+  // Replace the old processLastPost function with specialized functions
+  async function processLastPost(lastpostCell) {
+    // Detect which context we're in and call the appropriate function
+    if (lastpostCell.closest(".topiclist.forums")) {
+      return processLastPostInForums(lastpostCell);
+    } else if (lastpostCell.closest("#recent-topics")) {
+      return processLastPostInRecentTopics(lastpostCell);
+    } else if (lastpostCell.closest(".topiclist.topics")) {
+      return processLastPostInTopics(lastpostCell);
+    } else {
+      // For any other context, just mark as processed
+      lastpostCell.classList.add("content-processed");
+    }
+  }
+
+  // Update the process functions for backward compatibility
+  function processTopiclistForumsRow() {
+    return processForumsListRows();
+  }
+
+  function processTopiclistTopicsRows() {
+    return processTopicsListRows();
+  }
+
+  function processTopicListRow(rowType) {
+    if (rowType === "forum") {
+      return processForumsListRows();
+    } else if (rowType === "topic") {
+      return processTopicsListRows();
+    } else if (rowType === "recent") {
+      return processRecentTopicsRows();
+    } else {
+      console.error(
+        "Invalid rowType provided to processTopicListRow:",
+        rowType
+      );
+    }
   }
 
   async function processIgnoredContentOnce() {
