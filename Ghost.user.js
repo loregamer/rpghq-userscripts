@@ -43,7 +43,41 @@
   // 1) DATA LOAD + INITIAL STYLES
   // ---------------------------------------------------------------------
 
-  const ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => lowercased username
+  // Legacy format: userId => lowercased username
+  const legacyIgnoredUsers = GM_getValue("ignoredUsers", {});
+
+  // New format: userId => { username, options }
+  // options: {
+  //   color: string (hex color for highlighting),
+  //   hideOptions: {
+  //     posts: { hide: boolean, highlight: boolean },
+  //     topics: { hide: boolean, highlight: boolean },
+  //     lastPost: { hide: boolean, highlight: boolean }
+  //   }
+  // }
+  let ignoredUsers = GM_getValue("userPreferences", {});
+
+  // Migrate legacy format to new format if needed
+  if (
+    Object.keys(ignoredUsers).length === 0 &&
+    Object.keys(legacyIgnoredUsers).length > 0
+  ) {
+    Object.entries(legacyIgnoredUsers).forEach(([userId, username]) => {
+      ignoredUsers[userId] = {
+        username: typeof username === "string" ? username : "Unknown User",
+        options: {
+          color: "#FF5555", // Default red highlight
+          hideOptions: {
+            posts: { hide: true, highlight: false },
+            topics: { hide: true, highlight: false },
+            lastPost: { hide: true, highlight: false },
+          },
+        },
+      };
+    });
+    GM_setValue("userPreferences", ignoredUsers);
+  }
+
   const replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   const postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
   const userColors = GM_getValue("userColors", {}); // username => color
@@ -64,229 +98,415 @@
     .forEach((key) => delete postCache[key]);
   GM_setValue("postCache", postCache);
 
-  // Inject style at document-start
+  // Create styles for the script
   const mainStyle = document.createElement("style");
   mainStyle.textContent = `
-    /* -----------------------------------------------------------------
-       1) Spinner styling for containers that are not yet processed
-       ----------------------------------------------------------------- */
-    #recent-topics:not(.content-processed),
-    .topiclist.forums:not(.content-processed),
-    fieldset.polls:not(.content-processed),
-    .topiclist.topics:not(.content-processed) {
-      position: relative;
-      min-height: 64px;
-    }
-    #recent-topics:not(.content-processed)::after,
-    .topiclist.forums:not(.content-processed)::after,
-    fieldset.polls:not(.content-processed)::after,
-    .topiclist.topics:not(.content-processed)::after {
-      content: "";
-      position: absolute;
-      top: 16px;
-      left: 50%;
-      margin-top: 0;
-      margin-left: -12px;
-      width: 24px;
-      height: 24px;
-      border: 3px solid #999;
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      pointer-events: none;
-      z-index: 9999;
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    /* -----------------------------------------------------------------
-       2) Hide unprocessed content
-       ----------------------------------------------------------------- */
-    /* Hide child elements in these containers until processed */
-    #recent-topics:not(.content-processed) > *:not(style),
-    .topiclist.forums:not(.content-processed) > *:not(style),
-    .topiclist.topics:not(.content-processed) > *:not(style),
-    fieldset.polls:not(.content-processed) > *:not(style) {
-      visibility: hidden;
-    }
-    /* Hide badges until processed */
-    strong.badge:not(.content-processed) {
-      display: none !important;
-    }
-    /* Hide main post containers until processed */
-    .post.bg1:not(.content-processed),
-    .post.bg2:not(.content-processed),
-    dd.lastpost:not(.content-processed),
-    .reaction-score-list:not(.content-processed),
-    .pagination:not(.content-processed) {
-      visibility: hidden !important;
-    }
-    /* Hide list rows until they are processed */
-    li.row:not(.content-processed) {
-      display: none !important;
-    }
-    .loading_indicator:not(.content-processed) {
-      display: none !important;
-    }
-
-    /* -----------------------------------------------------------------
-       3) Reveal content once processing is complete
-       ----------------------------------------------------------------- */
-    #recent-topics.content-processed > *,
-    .topiclist.forums.content-processed > *,
-    fieldset.polls.content-processed > *,
-    strong.badge.content-processed,
-    .reaction-score-list.content-processed,
-    li.row.content-processed,
-    .notification-block,
-    .pagination.content-processed,
-    .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote) {
-      visibility: visible !important;
-    }
-
-    /* -----------------------------------------------------------------
-       4) Ghosted element styling
-       ----------------------------------------------------------------- */
+    /* Common ghost styles */
     .ghosted-row {
       display: none !important;
     }
-    .ghosted-row.show {
-      display: block !important;
-    }
-    .ghosted-row.show.ghosted-by-author {
-      background-color: rgba(255, 0, 0, 0.1) !important;
-    }
-    .ghosted-row.show.ghosted-by-content {
-      background-color: rgba(255, 128, 0, 0.1) !important;
-    }
-    .topiclist.forums .ghosted-row:not(.show) dd.lastpost,
-    body[class*="viewforum-"] .ghosted-row:not(.show) dd.lastpost {
+    .ghosted-post, .ghosted-by-author, .ghosted-by-content {
       display: none !important;
     }
-    .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-author,
-    body[class*="viewforum-"] .ghosted-row.show dd.lastpost.ghosted-by-author {
-      display: block !important;
-      background-color: rgba(255, 0, 0, 0.1) !important;
-    }
-    .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-content,
-    body[class*="viewforum-"] .ghosted-row.show dd.lastpost.ghosted-by-content {
-      display: block !important;
-      background-color: rgba(255, 255, 0, 0.1) !important;
-    }
-    .ghosted-post,
     .ghosted-quote {
       display: none !important;
     }
-    .ghosted-post.show,
-    .ghosted-quote.show {
-      display: block !important;
-      border: 3px solid;
-      border-image: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet) 1;
-      border-image-slice: 1;
-      border-radius: 4px;
-      padding: 6px;
+    .ghosted-reaction {
+      display: none !important;
     }
-
-    /* -----------------------------------------------------------------
-       5) Post preview tooltip & custom quote styling
-       ----------------------------------------------------------------- */
+    
+    /* Highlight styles for ghosted content */
+    .ghosted-highlight {
+      display: block !important;
+      border: 2px solid var(--ghost-highlight-color, #FF5555) !important;
+      padding: 5px !important;
+      position: relative !important;
+    }
+    
+    .ghosted-highlight::before {
+      content: "Ghosted User";
+      display: inline-block;
+      position: absolute;
+      top: -10px;
+      left: 10px;
+      background-color: var(--ghost-highlight-color, #FF5555);
+      color: #FFF;
+      font-size: 10px;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+    
+    li.row.ghosted-highlight {
+      padding: 10px 5px !important;
+      margin-bottom: 5px !important;
+    }
+    
+    .ghosted-quote-highlight {
+      border: 1px solid var(--ghost-highlight-color, #FF5555) !important;
+      padding: 5px !important;
+      position: relative !important;
+    }
+    
+    .ghosted-quote-highlight cite {
+      background-color: var(--ghost-highlight-color, #FF5555) !important;
+      color: #FFF !important;
+      padding: 2px 5px !important;
+    }
+    
+    .ghosted-mention {
+      color: var(--ghost-highlight-color, #FF5555) !important;
+      font-weight: bold !important;
+      background-color: rgba(255, 85, 85, 0.1) !important;
+      padding: 0 3px !important;
+      border-radius: 3px !important;
+    }
+    
+    /* Post preview tooltip */
     .post-preview-tooltip {
       position: absolute;
-      background: #171b24;
-      padding: 15px;
-      border-radius: 5px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       z-index: 9999;
-      max-width: 600px;
-      min-width: 400px;
-      font-size: 12px;
-      line-height: 1.4;
-      word-break: break-word;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-    .post-preview-tooltip.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .post-preview-tooltip .post-content {
-      max-height: 500px;
-      overflow-y: auto;
-      padding-right: 10px;
-    }
-    .post-preview-tooltip pre.code {
-      background: #1a1a1a;
-      padding: 8px;
-      border-radius: 3px;
-      font-family: monospace;
-      font-size: 11px;
-      overflow-x: auto;
-    }
-    .post-preview-tooltip ul,
-    .post-preview-tooltip ol {
-      padding-left: 20px;
-      margin: 5px 0;
-    }
-    .post-preview-tooltip li {
-      margin: 2px 0;
-    }
-    .post-preview-tooltip details {
-      margin: 5px 0;
-      padding: 5px;
-      background: #253450;
-      border: 1px solid #959595;
-      border-radius: 3px;
-    }
-    .post-preview-tooltip summary {
-      cursor: pointer;
-      user-select: none;
-    }
-    .post-preview-tooltip table {
-      border-collapse: collapse;
-      margin: 5px 0;
-    }
-    .post-preview-tooltip td {
-      border: 1px solid #4a4a4a;
-      padding: 3px 6px;
-    }
-    .custom-quote {
-      background-color: #242a36;
-      border-left: 3px solid #4a90e2;
+      background-color: #232323;
+      border: 1px solid #444;
+      border-radius: 4px;
       padding: 10px;
-      margin: 10px 0;
-      font-size: 0.9em;
-      line-height: 1.4;
+      max-width: 400px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+      font-size: 13px;
+      display: none;
     }
-    .custom-quote-header {
+    
+    .post-preview-tooltip.show {
+      display: block;
+    }
+    
+    .post-preview-header {
+      margin-bottom: 5px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #444;
+      font-weight: bold;
+    }
+    
+    .post-preview-content {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    /* Ghost popup styles */
+    .ghost-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .ghost-popup-content {
+      background-color: #2a2e36;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 700px;
+      max-height: 85vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    }
+    
+    .ghost-popup-header {
+      padding: 15px;
+      background-color: #232830;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #3a3f4b;
+    }
+    
+    .ghost-popup-header h3 {
+      margin: 0;
+      color: #e6e6e6;
+      font-size: 18px;
+    }
+    
+    .ghost-popup-close {
+      background: none;
+      border: none;
+      color: #aab2bd;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0 5px;
+    }
+    
+    .ghost-popup-body {
+      padding: 15px;
+      overflow-y: auto;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-height: calc(85vh - 60px);
+    }
+    
+    .ghost-popup-info {
+      color: #aab2bd;
+      background-color: #232830;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    
+    .ghost-user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+    
+    .ghost-no-users {
+      text-align: center;
+      color: #aab2bd;
+      padding: 20px;
+      background-color: #232830;
+      border-radius: 5px;
+    }
+    
+    .ghost-user-entry {
+      background-color: #232830;
+      border-radius: 5px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .ghost-user-info {
       display: flex;
       align-items: center;
-      gap: 4px;
-      margin-bottom: 8px;
+      justify-content: space-between;
     }
-    .custom-quote-header a {
-      color: #89a6cf;
-      text-decoration: none;
-      font-weight: 700;
+    
+    .ghost-username {
+      font-weight: bold;
+      color: #e6e6e6;
+      flex-grow: 1;
     }
-    .custom-quote .custom-quote {
-      border-left-color: #ff9e4a;
-      margin: 10px 0;
+    
+    .ghost-settings-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 5px;
     }
-    .custom-quote .custom-quote .custom-quote-header a {
-      color: #ff9e4a;
+    
+    .ghost-user-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 5px;
     }
-    .custom-quote .custom-quote .custom-quote-header a:hover {
-      color: #ffa85e;
+    
+    .ghost-delete-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
     }
-    @media (max-width: 700px) {
-      .show-ghosted-posts span:not(.icon) {
-        display: none;
-      }
+    
+    .ghost-settings-panel {
+      background-color: #1e232b;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .ghost-settings-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .ghost-settings-group label {
+      color: #aab2bd;
+      min-width: 120px;
+    }
+    
+    .ghost-settings-section {
+      background-color: #232830;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .ghost-settings-section h4 {
+      margin: 0;
+      color: #e6e6e6;
+      font-size: 15px;
+    }
+    
+    .ghost-settings-info {
+      color: #8a9db5;
+      font-size: 13px;
+      margin: 0;
+    }
+    
+    .ghost-color-picker {
+      width: 40px;
+      height: 25px;
+      padding: 0;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .ghost-visibility-select {
+      background-color: #1e232b;
+      color: #e6e6e6;
+      border: 1px solid #3a3f4b;
+      border-radius: 4px;
+      padding: 5px;
+      width: 100%;
+    }
+    
+    .ghost-save-settings {
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      align-self: flex-end;
+      margin-top: 10px;
+    }
+    
+    .ghost-popup-add {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    #ghost-add-input {
+      flex-grow: 1;
+      padding: 8px;
+      border: 1px solid #3a3f4b;
+      border-radius: 4px;
+      background-color: #1e232b;
+      color: #e6e6e6;
+    }
+    
+    #ghost-add-button {
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* Show ghosted content when toggle is active */
+    body.show-ghosted-content .ghosted-row,
+    body.show-ghosted-content .ghosted-post,
+    body.show-ghosted-content .ghosted-by-author,
+    body.show-ghosted-content .ghosted-by-content,
+    body.show-ghosted-content .ghosted-quote,
+    body.show-ghosted-content .ghosted-reaction {
+      display: block !important;
+      position: relative;
+      border-left: 3px solid #FF5555 !important;
+      padding-left: 10px !important;
+      background-color: rgba(255, 85, 85, 0.05) !important;
+    }
+    
+    body.show-ghosted-content .ghosted-row::before,
+    body.show-ghosted-content .ghosted-post::before,
+    body.show-ghosted-content .ghosted-by-author::before,
+    body.show-ghosted-content .ghosted-by-content::before,
+    body.show-ghosted-content .ghosted-quote::before,
+    body.show-ghosted-content .ghosted-reaction::before {
+      content: "Hidden Content";
+      display: inline-block;
+      position: absolute;
+      top: 0;
+      right: 5px;
+      background-color: #FF5555;
+      color: white;
+      font-size: 10px;
+      padding: 2px 5px;
+      border-radius: 3px;
+      z-index: 100;
+    }
+
+    /* Last post in forum list */
+    .lastpost.ghosted-row.ghosted-by-author .profile {
+      opacity: 0.2;
+    }
+    
+    /* Ghost toggle button */
+    .ghost-toggle-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background-color: #2a2e36;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s ease;
+    }
+    
+    .ghost-toggle-button:hover {
+      transform: scale(1.1);
+      background-color: #3a3f4b;
+    }
+    
+    .ghost-toggle-icon {
+      color: #e6e6e6;
+      font-size: 20px;
+    }
+    
+    .ghost-toggle-count {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background-color: #FF5555;
+      color: white;
+      border-radius: 50%;
+      min-width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    body.show-ghosted-content .ghost-toggle-button {
+      background-color: #FF5555;
+    }
+    
+    body.show-ghosted-content .ghost-toggle-icon {
+      color: white;
+    }
+    
+    body.show-ghosted-content .ghost-toggle-count {
+      background-color: #2a2e36;
     }
   `;
-  document.documentElement.appendChild(mainStyle);
+  document.head.appendChild(mainStyle);
 
   // ---------------------------------------------------------------------
   // 2) TOOLTIP, MOBILE DETECTION & BBCode/Quote PARSING
@@ -486,10 +706,17 @@
   }
 
   function isUserIgnored(usernameOrId) {
+    // Check if it's a user ID
     if (ignoredUsers.hasOwnProperty(usernameOrId)) return true;
+
+    // Check if it's a username
     const cleanedUsername = cleanUsername(usernameOrId);
     const lower = cleanedUsername.toLowerCase();
-    return Object.values(ignoredUsers).includes(lower);
+
+    // Check if the username exists in any of the user entries
+    return Object.values(ignoredUsers).some(
+      (user) => user.username && user.username.toLowerCase() === lower
+    );
   }
 
   function getUserIdFromUrl() {
@@ -502,9 +729,80 @@
     if (ignoredUsers.hasOwnProperty(userId)) {
       delete ignoredUsers[userId];
     } else {
-      ignoredUsers[userId] = cleanedUsername.toLowerCase();
+      ignoredUsers[userId] = {
+        username: cleanedUsername.toLowerCase(),
+        options: {
+          color: "#FF5555", // Default red highlight
+          hideOptions: {
+            posts: { hide: true, highlight: false },
+            topics: { hide: true, highlight: false },
+            lastPost: { hide: true, highlight: false },
+          },
+        },
+      };
     }
-    GM_setValue("ignoredUsers", ignoredUsers);
+    GM_setValue("userPreferences", ignoredUsers);
+
+    // For backward compatibility
+    const legacyData = {};
+    Object.entries(ignoredUsers).forEach(([userId, userData]) => {
+      legacyData[userId] = userData.username;
+    });
+    GM_setValue("ignoredUsers", legacyData);
+  }
+
+  // Update user preferences
+  function updateUserPreferences(userId, options) {
+    if (!ignoredUsers.hasOwnProperty(userId)) return false;
+
+    ignoredUsers[userId].options = {
+      ...ignoredUsers[userId].options,
+      ...options,
+    };
+
+    GM_setValue("userPreferences", ignoredUsers);
+    return true;
+  }
+
+  // Get specific hide/highlight setting for a user and content type
+  function getUserVisibilitySetting(userId, contentType) {
+    // Check if user exists in ignoredUsers
+    if (!ignoredUsers[userId]) {
+      // Return default settings if user not found
+      return { hide: true, highlight: false };
+    }
+
+    // If user has specific settings
+    if (
+      ignoredUsers[userId].settings &&
+      ignoredUsers[userId].settings[contentType]
+    ) {
+      return {
+        hide: ignoredUsers[userId].settings[contentType] === "hide",
+        highlight: ignoredUsers[userId].settings[contentType] === "highlight",
+      };
+    }
+
+    // Check for global settings for this user
+    if (ignoredUsers[userId].settings && ignoredUsers[userId].settings.global) {
+      return {
+        hide: ignoredUsers[userId].settings.global === "hide",
+        highlight: ignoredUsers[userId].settings.global === "highlight",
+      };
+    }
+
+    // Default to hiding if no specific settings found
+    return { hide: true, highlight: false };
+  }
+
+  function getUserHighlightColor(userId) {
+    // Return user-specific highlight color if set
+    if (ignoredUsers[userId] && ignoredUsers[userId].highlightColor) {
+      return ignoredUsers[userId].highlightColor;
+    }
+
+    // Return default highlight color
+    return "#FF5555";
   }
 
   // ---------------------------------------------------------------------
@@ -602,20 +900,19 @@
 
   function postContentContainsGhosted(content) {
     if (!content) return false;
-    // const quoteMatches = content.match(/\[quote=([^\]]+)/g);
-    // if (quoteMatches) {
-    //   for (const q of quoteMatches) {
-    //     const userIdMatch = q.match(/user_id=(\d+)/);
-    //     if (userIdMatch && isUserIgnored(userIdMatch[1])) return true;
-    //     const quotedName = q.replace("[quote=", "").split(" ")[0];
-    //     if (isUserIgnored(quotedName)) return true;
-    //   }
-    // }
 
+    // Check content for mentions of ghosted users
     for (const userId in ignoredUsers) {
-      const username = ignoredUsers[userId];
-      if (content.toLowerCase().includes(username.toLowerCase())) {
-        return true;
+      const userData = ignoredUsers[userId];
+      // Get the username safely from the new data structure
+      const username =
+        userData.username || (typeof userData === "string" ? userData : null);
+
+      // Only check if username is a valid string
+      if (username && typeof username === "string") {
+        if (content.toLowerCase().includes(username.toLowerCase())) {
+          return true;
+        }
       }
     }
 
@@ -634,14 +931,16 @@
 
     // Check for @username mentions of ghosted users
     for (const userId in ignoredUsers) {
-      const username = ignoredUsers[userId];
-      // Look for @username pattern with word boundary
-      // const mentionRegex = new RegExp(`@${username}\\b`, "i");
-      // if (mentionRegex.test(postText)) {
-      //   return true;
-      // }
-      if (postText.toLowerCase().includes(username.toLowerCase())) {
-        return true;
+      const userData = ignoredUsers[userId];
+      // Get the username safely from the new data structure
+      const username =
+        userData.username || (typeof userData === "string" ? userData : null);
+
+      // Only check if username is a valid string
+      if (username && typeof username === "string") {
+        if (postText.toLowerCase().includes(username.toLowerCase())) {
+          return true;
+        }
       }
     }
 
@@ -956,16 +1255,67 @@
 
     // Check if the lastpost author is ignored
     const authorLink = element.querySelector("a.username, a.username-coloured");
-    if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
-      if (isForumList) {
-        // For forum rows, only hide the lastpost
-        element.classList.add("ghosted-row", "ghosted-by-author");
-      } else if (row) {
-        // For other rows, hide the entire row
-        hideTopicRow(row);
+    if (authorLink) {
+      const authorName = authorLink.textContent.trim();
+      let userId = null;
+
+      if (authorLink.href) {
+        userId = authorLink.href.match(/u=(\d+)/)?.[1];
       }
-      element.classList.add("content-processed");
-      return;
+
+      if ((userId && isUserIgnored(userId)) || isUserIgnored(authorName)) {
+        // Get the userID if we have it, or try to find it by username
+        const effectiveUserId =
+          userId ||
+          Object.keys(ignoredUsers).find(
+            (id) =>
+              ignoredUsers[id].username &&
+              ignoredUsers[id].username.toLowerCase() ===
+                authorName.toLowerCase()
+          );
+
+        if (effectiveUserId) {
+          // Get user-specific settings for lastPost content
+          const settings = getUserVisibilitySetting(
+            effectiveUserId,
+            "lastPost"
+          );
+          const highlightColor = getUserHighlightColor(effectiveUserId);
+
+          if (settings.hide) {
+            // Apply hiding based on preferences and row type
+            if (isForumList) {
+              // For forum rows, only hide the lastpost
+              element.classList.add("ghosted-row", "ghosted-by-author");
+            } else if (row) {
+              // For other rows, hide the entire row
+              hideTopicRow(row);
+            }
+          } else if (settings.highlight) {
+            // Apply highlighting based on preferences
+            if (isForumList) {
+              element.classList.add("ghosted-highlight");
+              element.style.setProperty(
+                "--ghost-highlight-color",
+                highlightColor
+              );
+            } else if (row) {
+              row.classList.add("ghosted-highlight");
+              row.style.setProperty("--ghost-highlight-color", highlightColor);
+            }
+          }
+        } else {
+          // Fallback if no user ID found - apply default hiding
+          if (isForumList) {
+            element.classList.add("ghosted-row", "ghosted-by-author");
+          } else if (row) {
+            hideTopicRow(row);
+          }
+        }
+
+        element.classList.add("content-processed");
+        return;
+      }
     }
 
     const spanEl = element.querySelector("span");
@@ -1005,18 +1355,79 @@
       if (link) {
         const pid = link.href.match(/[#&]p=?(\d+)/)?.[1];
         if (pid) {
-          if (userEl && isUserIgnored(userEl.textContent.trim())) {
-            if (isForumList) {
-              // For forum rows, only hide the lastpost
-              element.classList.add("ghosted-row", "ghosted-by-author");
-            } else if (row) {
-              // For other rows, hide the entire row
-              hideTopicRow(row);
+          if (userEl) {
+            const userName = userEl.textContent.trim();
+            let userId = null;
+
+            if (userEl.href) {
+              userId = userEl.href.match(/u=(\d+)/)?.[1];
             }
-          } else {
-            try {
-              const content = await fetchAndCachePost(pid);
-              if (!content || postContentContainsGhosted(content)) {
+
+            if ((userId && isUserIgnored(userId)) || isUserIgnored(userName)) {
+              // Get the userID if we have it, or try to find it by username
+              const effectiveUserId =
+                userId ||
+                Object.keys(ignoredUsers).find(
+                  (id) =>
+                    ignoredUsers[id].username &&
+                    ignoredUsers[id].username.toLowerCase() ===
+                      userName.toLowerCase()
+                );
+
+              if (effectiveUserId) {
+                // Get user-specific settings for lastPost content
+                const settings = getUserVisibilitySetting(
+                  effectiveUserId,
+                  "lastPost"
+                );
+                const highlightColor = getUserHighlightColor(effectiveUserId);
+
+                if (settings.hide) {
+                  // Apply hiding based on preferences and row type
+                  if (isForumList) {
+                    // For forum rows, only hide the lastpost
+                    element.classList.add("ghosted-row", "ghosted-by-author");
+                  } else if (row) {
+                    // For other rows, hide the entire row
+                    hideTopicRow(row);
+                  }
+                } else if (settings.highlight) {
+                  // Apply highlighting based on preferences
+                  if (isForumList) {
+                    element.classList.add("ghosted-highlight");
+                    element.style.setProperty(
+                      "--ghost-highlight-color",
+                      highlightColor
+                    );
+                  } else if (row) {
+                    row.classList.add("ghosted-highlight");
+                    row.style.setProperty(
+                      "--ghost-highlight-color",
+                      highlightColor
+                    );
+                  }
+                }
+              } else {
+                // Fallback if no user ID found - apply default hiding
+                if (isForumList) {
+                  element.classList.add("ghosted-row", "ghosted-by-author");
+                } else if (row) {
+                  hideTopicRow(row);
+                }
+              }
+            } else {
+              try {
+                const content = await fetchAndCachePost(pid);
+                if (!content || postContentContainsGhosted(content)) {
+                  if (isForumList) {
+                    // For forum rows, only hide the lastpost
+                    element.classList.add("ghosted-row", "ghosted-by-content");
+                  } else if (row) {
+                    // For other rows, hide the entire row
+                    hideTopicRow(row);
+                  }
+                }
+              } catch (err) {
                 if (isForumList) {
                   // For forum rows, only hide the lastpost
                   element.classList.add("ghosted-row", "ghosted-by-content");
@@ -1024,14 +1435,6 @@
                   // For other rows, hide the entire row
                   hideTopicRow(row);
                 }
-              }
-            } catch (err) {
-              if (isForumList) {
-                // For forum rows, only hide the lastpost
-                element.classList.add("ghosted-row", "ghosted-by-content");
-              } else if (row) {
-                // For other rows, hide the entire row
-                hideTopicRow(row);
               }
             }
           }
@@ -1287,51 +1690,297 @@
   }
 
   function processBlockquotesInPost(post) {
-    const topLevelBlockquotes = post.querySelectorAll(".content > blockquote");
-    if (topLevelBlockquotes.length === 1) {
-      const anchor = topLevelBlockquotes[0].querySelector("cite a");
-      if (anchor && isUserIgnored(anchor.textContent.trim())) {
-        post.dataset.hideForSingleIgnoredQuote = "true";
-        return;
-      }
-    }
-    const allBlockquotes = post.querySelectorAll(".content blockquote");
-    allBlockquotes.forEach((bq) => {
-      const anchor = bq.querySelector("cite a");
-      if (!anchor) return;
-      if (isUserIgnored(anchor.textContent.trim())) {
-        bq.classList.add("ghosted-quote");
+    const blockquotes = post.querySelectorAll("blockquote");
+
+    blockquotes.forEach((blockquote) => {
+      // Check for blockquote attribution
+      const cite = blockquote.querySelector("cite");
+      if (!cite) return;
+
+      // Look for username in the citation
+      const userLink = cite.querySelector("a");
+      if (!userLink) {
+        // Try to extract username from text
+        const citeText = cite.textContent.trim();
+        const userMatch =
+          citeText.match(/^(.*?)\s+wrote:/i) ||
+          citeText.match(/^(.*?)\s+said:/i);
+
+        if (userMatch && userMatch[1]) {
+          const userName = userMatch[1].trim();
+
+          if (isUserIgnored(userName)) {
+            // Find specific user ID by username
+            const effectiveUserId = Object.keys(ignoredUsers).find(
+              (id) =>
+                ignoredUsers[id].username &&
+                ignoredUsers[id].username.toLowerCase() ===
+                  userName.toLowerCase()
+            );
+
+            if (effectiveUserId) {
+              // Get user-specific settings for quotes
+              const settings = getUserVisibilitySetting(
+                effectiveUserId,
+                "quotes"
+              );
+              const highlightColor = getUserHighlightColor(effectiveUserId);
+
+              if (settings.hide) {
+                // Hide quote based on user preference
+                blockquote.classList.add("ghosted-quote");
+              } else if (settings.highlight) {
+                // Highlight quote based on user preference
+                blockquote.classList.add("ghosted-quote-highlight");
+                blockquote.style.setProperty(
+                  "--ghost-highlight-color",
+                  highlightColor
+                );
+              }
+            } else {
+              // Fallback behavior
+              blockquote.classList.add("ghosted-quote");
+            }
+          }
+        }
+      } else {
+        // Extract user ID and name from link
+        const userName = userLink.textContent.trim();
+        let userId = null;
+
+        if (userLink.href) {
+          userId = userLink.href.match(/u=(\d+)/)?.[1];
+        }
+
+        if ((userId && isUserIgnored(userId)) || isUserIgnored(userName)) {
+          // Get the userID if we have it, or try to find it by username
+          const effectiveUserId =
+            userId ||
+            Object.keys(ignoredUsers).find(
+              (id) =>
+                ignoredUsers[id].username &&
+                ignoredUsers[id].username.toLowerCase() ===
+                  userName.toLowerCase()
+            );
+
+          if (effectiveUserId) {
+            // Get user-specific settings for quotes
+            const settings = getUserVisibilitySetting(
+              effectiveUserId,
+              "quotes"
+            );
+            const highlightColor = getUserHighlightColor(effectiveUserId);
+
+            if (settings.hide) {
+              // Hide quote based on user preference
+              blockquote.classList.add("ghosted-quote");
+            } else if (settings.highlight) {
+              // Highlight quote based on user preference
+              blockquote.classList.add("ghosted-quote-highlight");
+              blockquote.style.setProperty(
+                "--ghost-highlight-color",
+                highlightColor
+              );
+            }
+          } else {
+            // Fallback behavior
+            blockquote.classList.add("ghosted-quote");
+          }
+        }
       }
     });
   }
 
   function processPost(post) {
+    if (post.classList.contains("content-processed")) {
+      return;
+    }
+
+    // Get post-info and author
+    const postInfo = post.querySelector(".post-info, .mas-post-info");
+    if (!postInfo) {
+      post.classList.add("content-processed");
+      return;
+    }
+
+    const authorElement = postInfo.querySelector(
+      ".user-link, a.username, a.username-coloured"
+    );
+    if (!authorElement) {
+      post.classList.add("content-processed");
+      return;
+    }
+
+    // Extract author info
+    const authorName = authorElement.textContent.trim();
+    let authorId = null;
+
+    if (authorElement.href) {
+      authorId = authorElement.href.match(/u=(\d+)/)?.[1];
+    }
+
+    // Check if post author is ignored
+    if ((authorId && isUserIgnored(authorId)) || isUserIgnored(authorName)) {
+      // Get the userID if we have it, or try to find it by username
+      const effectiveUserId =
+        authorId ||
+        Object.keys(ignoredUsers).find(
+          (id) =>
+            ignoredUsers[id].username &&
+            ignoredUsers[id].username.toLowerCase() === authorName.toLowerCase()
+        );
+
+      if (effectiveUserId) {
+        // Get user-specific settings for posts
+        const settings = getUserVisibilitySetting(effectiveUserId, "posts");
+        const highlightColor = getUserHighlightColor(effectiveUserId);
+
+        if (settings.hide) {
+          // Hide post based on user preference
+          post.classList.add("ghosted");
+        } else if (settings.highlight) {
+          // Highlight post based on user preference
+          post.classList.add("ghosted-highlight");
+          post.style.setProperty("--ghost-highlight-color", highlightColor);
+        }
+      } else {
+        // Fallback to default behavior
+        post.classList.add("ghosted");
+      }
+
+      post.classList.add("content-processed");
+      return;
+    }
+
+    // Process blockquotes for ghosted users
     processBlockquotesInPost(post);
-    const usernameEl = post.querySelector(".username, .username-coloured");
-    let hideIt = false;
-    if (post.dataset.hideForSingleIgnoredQuote === "true") {
-      hideIt = true;
-      delete post.dataset.hideForSingleIgnoredQuote;
+
+    // Process any mentions of ghosted users in the post content
+    const postContent = post.querySelector(".content");
+    if (postContent) {
+      const anchorTags = postContent.querySelectorAll(
+        "a.username, a.username-coloured"
+      );
+      anchorTags.forEach((anchor) => {
+        const mentionedName = anchor.textContent.trim();
+        let mentionedId = null;
+
+        if (anchor.href) {
+          mentionedId = anchor.href.match(/u=(\d+)/)?.[1];
+        }
+
+        if (
+          (mentionedId && isUserIgnored(mentionedId)) ||
+          isUserIgnored(mentionedName)
+        ) {
+          // Find specific user ID
+          const effectiveUserId =
+            mentionedId ||
+            Object.keys(ignoredUsers).find(
+              (id) =>
+                ignoredUsers[id].username &&
+                ignoredUsers[id].username.toLowerCase() ===
+                  mentionedName.toLowerCase()
+            );
+
+          if (effectiveUserId) {
+            // Apply highlighting to mention based on user preferences
+            const highlightColor = getUserHighlightColor(effectiveUserId);
+            anchor.classList.add("ghosted-mention");
+            anchor.style.setProperty("--ghost-highlight-color", highlightColor);
+          }
+        }
+      });
     }
-    if (usernameEl && isUserIgnored(usernameEl.textContent.trim())) {
-      hideIt = true;
+
+    // Process reaction list if present
+    const reactionList = post.querySelector(".mas-reactions");
+    if (reactionList) {
+      const reactionItems = reactionList.querySelectorAll("li");
+      reactionItems.forEach((item) => {
+        const userLinks = item.querySelectorAll(
+          "a.username, a.username-coloured"
+        );
+        userLinks.forEach((link) => {
+          const reactorName = link.textContent.trim();
+          let reactorId = null;
+
+          if (link.href) {
+            reactorId = link.href.match(/u=(\d+)/)?.[1];
+          }
+
+          if (
+            (reactorId && isUserIgnored(reactorId)) ||
+            isUserIgnored(reactorName)
+          ) {
+            // Find specific user ID
+            const effectiveUserId =
+              reactorId ||
+              Object.keys(ignoredUsers).find(
+                (id) =>
+                  ignoredUsers[id].username &&
+                  ignoredUsers[id].username.toLowerCase() ===
+                    reactorName.toLowerCase()
+              );
+
+            if (effectiveUserId) {
+              // Get user-specific settings
+              const settings = getUserVisibilitySetting(
+                effectiveUserId,
+                "reactions"
+              );
+
+              if (settings.hide) {
+                // Hide reaction based on user preference
+                item.classList.add("ghosted-reaction");
+              }
+            } else {
+              // Fallback behavior
+              item.classList.add("ghosted-reaction");
+            }
+          }
+        });
+      });
     }
-    // Check for @mentions of ghosted users
-    if (!hideIt && postContentContainsMentionedGhosted(post)) {
-      hideIt = true;
-      // Use the existing ghosted-by-content class
-      post.classList.add("ghosted-by-content");
-    }
-    if (hideIt) {
-      post.classList.add("ghosted-post");
-    }
+
     post.classList.add("content-processed");
   }
 
   function processTopicPoster(poster) {
     const usernameEl = poster.querySelector(".username, .username-coloured");
     if (!usernameEl) return;
-    if (isUserIgnored(usernameEl.textContent.trim())) {
+
+    const username = usernameEl.textContent.trim();
+    const userId = usernameEl.href.match(/u=(\d+)/)?.[1];
+
+    let hideIt = false;
+    let highlightIt = false;
+    let highlightColor = null;
+
+    if (userId && isUserIgnored(userId)) {
+      const settings = getUserVisibilitySetting(userId, "topics");
+      hideIt = settings.hide;
+      highlightIt = settings.highlight;
+      highlightColor = getUserHighlightColor(userId);
+    } else if (isUserIgnored(username)) {
+      const foundUserId = Object.keys(ignoredUsers).find(
+        (id) =>
+          ignoredUsers[id].username &&
+          ignoredUsers[id].username.toLowerCase() === username.toLowerCase()
+      );
+
+      if (foundUserId) {
+        const settings = getUserVisibilitySetting(foundUserId, "topics");
+        hideIt = settings.hide;
+        highlightIt = settings.highlight;
+        highlightColor = getUserHighlightColor(foundUserId);
+      } else {
+        // Fallback
+        hideIt = true;
+      }
+    }
+
+    if (hideIt) {
       const masWrap = poster.querySelector(".mas-wrap");
       if (masWrap) {
         masWrap.innerHTML = `
@@ -1343,7 +1992,14 @@
           </div>
         `;
       }
+    } else if (highlightIt) {
+      poster.classList.add("ghosted-highlight");
+      if (highlightColor) {
+        poster.style.setProperty("--ghost-highlight-color", highlightColor);
+      }
     }
+
+    poster.classList.add("content-processed");
   }
 
   function processPoll(poll) {
@@ -2174,78 +2830,155 @@
     }, 1500);
   }
 
+  // Create a toggle button for showing/hiding ghosted content
+  function createGhostedContentToggle() {
+    // Create the toggle button
+    const toggleButton = document.createElement("div");
+    toggleButton.classList.add("ghost-toggle-button");
+    toggleButton.title = "Toggle ghosted content (Shortcut: \\)";
+    toggleButton.innerHTML = `
+      <div class="ghost-toggle-icon">
+        <i class="fa fa-eye${
+          showGhostedPosts ? "" : "-slash"
+        }" aria-hidden="true"></i>
+      </div>
+      <div class="ghost-toggle-count" style="display: none;">0</div>
+    `;
+
+    // Add click event
+    toggleButton.addEventListener("click", toggleGhostedPosts);
+
+    // Add to document body
+    document.body.appendChild(toggleButton);
+
+    // Update the ghosted content count
+    updateGhostedContentCount();
+
+    return toggleButton;
+  }
+
+  // Update the count of ghosted content
+  function updateGhostedContentCount() {
+    const toggleButton = document.querySelector(".ghost-toggle-button");
+    if (!toggleButton) return;
+
+    // Find all types of ghosted content
+    const ghostedPosts = document.querySelectorAll(".ghosted").length;
+    const ghostedTopicRows = document.querySelectorAll(".ghosted-row").length;
+    const ghostedQuotes = document.querySelectorAll(".ghosted-quote").length;
+    const ghostedByAuthor =
+      document.querySelectorAll(".ghosted-by-author").length;
+    const ghostedByContent = document.querySelectorAll(
+      ".ghosted-by-content"
+    ).length;
+    const ghostedReactions =
+      document.querySelectorAll(".ghosted-reaction").length;
+
+    // Calculate total unique items (avoid double counting)
+    let total =
+      ghostedPosts + ghostedTopicRows + ghostedQuotes + ghostedReactions;
+
+    // Update the count element
+    const countElement = toggleButton.querySelector(".ghost-toggle-count");
+    if (countElement) {
+      countElement.textContent = total;
+      countElement.style.display = total > 0 ? "block" : "none";
+    }
+
+    // Update the eye icon
+    const iconElement = toggleButton.querySelector(".ghost-toggle-icon i");
+    if (iconElement) {
+      iconElement.className = showGhostedPosts
+        ? "fa fa-eye"
+        : "fa fa-eye-slash";
+    }
+
+    // Update button visibility
+    toggleButton.style.display = total > 0 ? "flex" : "none";
+  }
+
+  // Set up a periodic update of the ghosted content count
+  function startPeriodicGhostedContentCountUpdate() {
+    // Initial update
+    updateGhostedContentCount();
+
+    // Update every 2 seconds
+    setInterval(updateGhostedContentCount, 2000);
+  }
+
   function toggleGhostedPosts() {
-    const ghostedPosts = document.querySelectorAll(".post.ghosted-post");
+    // Toggle global show state
+    showGhostedPosts = !showGhostedPosts;
+
+    // Apply the show-ghosted-content class to the body
+    document.body.classList.toggle("show-ghosted-content", showGhostedPosts);
+
+    // Find all types of ghosted content
+    const ghostedPosts = document.querySelectorAll(".ghosted");
+    const ghostedTopicRows = document.querySelectorAll(".ghosted-row");
     const ghostedQuotes = document.querySelectorAll(".ghosted-quote");
-    const ghostedRows = document.querySelectorAll(".ghosted-row");
+    const ghostedByAuthor = document.querySelectorAll(".ghosted-by-author");
+    const ghostedByContent = document.querySelectorAll(".ghosted-by-content");
+    const ghostedReactions = document.querySelectorAll(".ghosted-reaction");
 
     const hasGhostedContent =
       ghostedPosts.length > 0 ||
+      ghostedTopicRows.length > 0 ||
       ghostedQuotes.length > 0 ||
-      ghostedRows.length > 0;
+      ghostedByAuthor.length > 0 ||
+      ghostedByContent.length > 0 ||
+      ghostedReactions.length > 0;
 
     if (!hasGhostedContent) {
-      console.log("No ghosted content found on this page");
-      const notification = document.createElement("div");
-      notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background-color: rgba(0, 0, 0, 0.8);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
-        z-index: 9999;
-        transition: opacity 0.3s;
-      `;
-      notification.textContent = "No ghosted content found on this page";
-      document.body.appendChild(notification);
-      setTimeout(() => {
-        notification.style.opacity = "0";
-        setTimeout(() => notification.remove(), 300);
-      }, 1500);
+      showNotification("No ghosted content found on this page", "info");
       return;
     }
 
-    showGhostedPosts = !showGhostedPosts;
+    // Update the UI toggle button
+    updateGhostedContentCount();
 
-    ghostedPosts.forEach((p) => p.classList.toggle("show", showGhostedPosts));
-    ghostedQuotes.forEach((q) => q.classList.toggle("show", showGhostedPosts));
-
-    // For ghosted rows (which are now only lastpost cells), toggle visibility
-    ghostedRows.forEach((r) => {
-      r.classList.toggle("show", showGhostedPosts);
-    });
-
-    document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
-
-    showToggleNotification();
-    updatePaginationPostCount();
-
-    // If we're showing ghosted content, scroll to the first shown element
+    // Show a notification about the state change
     if (showGhostedPosts) {
-      const firstShownElement =
-        document.querySelector(".post.ghosted-post.show") ||
-        document.querySelector(".ghosted-quote.show") ||
-        document.querySelector(".ghosted-row.show");
+      showNotification(
+        "Showing all ghosted content (press \\ to hide)",
+        "success"
+      );
 
-      if (firstShownElement) {
-        firstShownElement.scrollIntoView({
+      // Find the first ghosted element to scroll to
+      const firstGhostedElement =
+        document.querySelector(".ghosted") ||
+        document.querySelector(".ghosted-row") ||
+        document.querySelector(".ghosted-quote") ||
+        document.querySelector(".ghosted-by-author") ||
+        document.querySelector(".ghosted-by-content");
+
+      // Scroll to the first ghosted element if found
+      if (firstGhostedElement) {
+        firstGhostedElement.scrollIntoView({
           behavior: "smooth",
           block: "center",
         });
       }
+    } else {
+      showNotification("Hiding ghosted content (press \\ to show)", "info");
     }
+
+    // Update pagination counts to reflect the visibility change
+    updatePaginationPostCount();
   }
 
   // Add keyboard shortcut listener
   document.addEventListener("keydown", (e) => {
-    // Check if we're in a text input
-    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+    // Skip if we're in a text input
+    if (
+      e.target.tagName === "INPUT" ||
+      e.target.tagName === "TEXTAREA" ||
+      e.target.isContentEditable
+    ) {
       return;
     }
 
-    // Check for backslash key
+    // Toggle on backslash key
     if (e.key === "\\") {
       e.preventDefault();
       toggleGhostedPosts();
@@ -2363,1004 +3096,284 @@
     }, 3000);
   }
 
-  function showIgnoredUsersPopup() {
-    // Create popup container
+  async function showIgnoredUsersPopup() {
+    // Create the popup container
     const popup = document.createElement("div");
-    popup.id = "ignored-users-popup";
-    popup.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: #2a2e36;
-      border: 1px solid #3a3f4b;
-      border-radius: 5px;
-      width: 80%;
-      max-width: 650px;
-      height: 80%;
-      max-height: 600px;
-      display: flex;
-      flex-direction: column;
-      z-index: 9999;
-      font-family: 'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif;
-      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    popup.classList.add("ghost-popup");
+    popup.innerHTML = `
+      <div class="ghost-popup-content">
+        <div class="ghost-popup-header">
+          <h3>Ghosted Users</h3>
+          <button class="ghost-popup-close">×</button>
+        </div>
+        <div class="ghost-popup-body">
+          <div class="ghost-popup-info">
+            Manage your ghosted users here. Click on a username to customize options or unignore.
+          </div>
+          <div class="ghost-user-list"></div>
+          <div class="ghost-popup-add">
+            <input type="text" id="ghost-add-input" placeholder="Add user to ghost list...">
+            <button id="ghost-add-button">Add</button>
+          </div>
+        </div>
+      </div>
     `;
 
-    // Header with title and close button
-    const header = document.createElement("div");
-    header.style.cssText = `
-      padding: 15px;
-      background-color: #2a2e36;
-      border-bottom: 1px solid #3a3f4b;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    `;
-    const title = document.createElement("h2");
-    title.textContent = "Ghosted Users";
-    title.style.cssText =
-      "margin: 0; color: #c5d0db; font-size: 1.3em; font-weight: 600;";
-    const closeButton = document.createElement("button");
-    closeButton.textContent = "×";
-    closeButton.style.cssText = `
-      background-color: transparent;
-      color: #c5d0db;
-      border: none;
-      font-size: 1.8em;
-      cursor: pointer;
-      line-height: 0.8;
-      padding: 8px;
-      border-radius: 3px;
-      transition: background-color 0.2s;
-    `;
-    closeButton.onmouseover = () => {
-      closeButton.style.backgroundColor = "#3a3f4b";
-    };
-    closeButton.onmouseout = () => {
-      closeButton.style.backgroundColor = "transparent";
-    };
-    closeButton.onclick = () => document.body.removeChild(popup);
-    header.appendChild(title);
-    header.appendChild(closeButton);
+    // Add close button functionality
+    popup.querySelector(".ghost-popup-close").addEventListener("click", () => {
+      document.body.removeChild(popup);
+    });
 
-    // Stats section
-    const statsSection = document.createElement("div");
-    statsSection.style.cssText = `
-      padding: 10px 15px;
-      background-color: #232830;
-      border-bottom: 1px solid #3a3f4b;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.9em;
-      color: #aab2bd;
-    `;
+    // Function to add a new user
+    const addUserInput = popup.querySelector("#ghost-add-input");
+    const addUserButton = popup.querySelector("#ghost-add-button");
 
-    const totalGhosted = Object.keys(ignoredUsers).length;
-    statsSection.innerHTML = `
-      <div>Total Ghosted Users: <strong>${totalGhosted}</strong></div>
-      <div id="ghost-search-stats"></div>
-    `;
-
-    // Add search area
-    const searchArea = document.createElement("div");
-    searchArea.style.cssText = `
-      padding: 15px;
-      background-color: #2a2e36;
-      border-bottom: 1px solid #3a3f4b;
-    `;
-
-    // Search input with icon
-    const searchContainer = document.createElement("div");
-    searchContainer.style.cssText = `
-      position: relative;
-      display: flex;
-      align-items: center;
-    `;
-
-    const searchIcon = document.createElement("div");
-    searchIcon.innerHTML =
-      '<i class="icon fa-search fa-fw" aria-hidden="true"></i>';
-    searchIcon.style.cssText = `
-      position: absolute;
-      left: 12px;
-      color: #6c7a91;
-      pointer-events: none;
-    `;
-
-    const searchInput = document.createElement("input");
-    searchInput.type = "text";
-    searchInput.placeholder = "Search for ghosted users...";
-    searchInput.style.cssText = `
-      width: 100%;
-      padding: 10px 10px 10px 35px;
-      border: 1px solid #3a3f4b;
-      border-radius: 4px;
-      background-color: #171b24;
-      color: #fff;
-      font-size: 14px;
-      box-sizing: border-box;
-      transition: border-color 0.3s;
-    `;
-    searchInput.onfocus = () => {
-      searchInput.style.borderColor = "#4a90e2";
-    };
-    searchInput.onblur = () => {
-      searchInput.style.borderColor = "#3a3f4b";
-    };
-
-    searchContainer.appendChild(searchIcon);
-    searchContainer.appendChild(searchInput);
-    searchArea.appendChild(searchContainer);
-
-    // Add search for new users to ghost
-    const newUsersSearch = document.createElement("div");
-    newUsersSearch.style.cssText = `
-      margin-top: 10px;
-      padding: 10px;
-      border: 1px solid #3a3f4b;
-      border-radius: 4px;
-      background-color: #1e232b;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      transition: background-color 0.2s;
-    `;
-    newUsersSearch.innerHTML =
-      '<i class="icon fa-user-plus fa-fw" aria-hidden="true" style="margin-right: 8px;"></i> Find users to ghost';
-    newUsersSearch.onmouseover = () => {
-      newUsersSearch.style.backgroundColor = "#252a33";
-    };
-    newUsersSearch.onmouseout = () => {
-      newUsersSearch.style.backgroundColor = "#1e232b";
-    };
-
-    newUsersSearch.addEventListener("click", function () {
-      const findUserPopup = createMemberSearchPopup((userId, username) => {
-        // When a user is selected from the search
-        if (!ignoredUsers[userId]) {
-          toggleUserGhost(userId, username);
+    // Function to add user when button is clicked
+    const addUser = async () => {
+      const username = addUserInput.value.trim();
+      if (username) {
+        const added = await toggleUserGhost(username);
+        if (added) {
+          addUserInput.value = "";
           renderUserList();
-
-          // Update stats
-          const totalGhosted = Object.keys(ignoredUsers).length;
-          const statsElement = statsSection.querySelector("div:first-child");
-          if (statsElement) {
-            statsElement.innerHTML = `Total Ghosted Users: <strong>${totalGhosted}</strong>`;
-          }
-
-          // Show success notification
-          showNotification(`User "${username}" has been ghosted.`, "success");
         } else {
-          showNotification(`User "${username}" is already ghosted.`, "info");
+          alert(`Could not find user: ${username}`);
         }
-      });
+      }
+    };
 
-      findUserPopup.classList.add("active");
+    // Add event listeners
+    addUserButton.addEventListener("click", addUser);
+    addUserInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        addUser();
+      }
     });
-    searchArea.appendChild(newUsersSearch);
 
-    // User feedback notification function - REMOVE THIS since we now have it globally
-    // function showNotification(message, type = "info") {
-    //   const notification = document.createElement("div");
-    //   notification.style.cssText = `
-    //     position: fixed;
-    //     bottom: 20px;
-    //     right: 20px;
-    //     padding: 12px 20px;
-    //     border-radius: 4px;
-    //     color: white;
-    //     font-size: 14px;
-    //     opacity: 0;
-    //     transition: opacity 0.3s;
-    //     z-index: 10000;
-    //     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    //   `;
-    //
-    //   if (type === "success") {
-    //     notification.style.backgroundColor = "#4CAF50";
-    //   } else if (type === "error") {
-    //     notification.style.backgroundColor = "#F44336";
-    //   } else {
-    //     notification.style.backgroundColor = "#2196F3";
-    //   }
-    //
-    //   notification.textContent = message;
-    //   document.body.appendChild(notification);
-    //
-    //   // Fade in
-    //   setTimeout(() => {
-    //     notification.style.opacity = "1";
-    //   }, 10);
-    //
-    //   // Fade out and remove
-    //   setTimeout(() => {
-    //     notification.style.opacity = "0";
-    //     setTimeout(() => {
-    //       document.body.removeChild(notification);
-    //     }, 300);
-    //   }, 3000);
-    // }
+    // Function to render the user list
+    const renderUserList = () => {
+      const userListEl = popup.querySelector(".ghost-user-list");
+      userListEl.innerHTML = "";
 
-    // Content area for the user list
-    const content = document.createElement("div");
-    content.style.cssText = `
-      padding: 15px;
-      overflow-y: auto;
-      flex-grow: 1;
-      background-color: #2a2e36;
-    `;
-    const userList = document.createElement("ul");
-    userList.style.cssText = `
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
-    `;
+      if (Object.keys(ignoredUsers).length === 0) {
+        userListEl.innerHTML = `<div class="ghost-no-users">You haven't ghosted any users yet.</div>`;
+        return;
+      }
 
-    // Loading indicator
-    const loadingIndicator = document.createElement("div");
-    loadingIndicator.style.cssText = `
-      display: none;
-      text-align: center;
-      padding: 20px;
-      color: #aab2bd;
-    `;
-    loadingIndicator.innerHTML =
-      '<i class="icon fa-circle-o-notch fa-spin fa-fw"></i> Loading...';
-    content.appendChild(loadingIndicator);
+      // Create a list element for each ignored user
+      Object.entries(ignoredUsers).forEach(([userId, userData]) => {
+        const username = userData.username || `User ID: ${userId}`;
 
-    // Function to render the user list (can be called again when filtering)
-    function renderUserList(filter = "") {
-      // Show loading indicator
-      loadingIndicator.style.display = "block";
-      userList.style.display = "none";
+        // Create the main user entry
+        const userEntry = document.createElement("div");
+        userEntry.classList.add("ghost-user-entry");
+        userEntry.setAttribute("data-user-id", userId);
 
-      // Use setTimeout to allow the UI to update before processing
-      setTimeout(() => {
-        userList.innerHTML = "";
-        const userEntries = Object.entries(ignoredUsers).map(
-          ([userId, username]) => ({
-            userId,
-            username: typeof username === "string" ? username : "Unknown User",
-          })
-        );
+        // Create the user info section (left side)
+        const userInfo = document.createElement("div");
+        userInfo.classList.add("ghost-user-info");
 
-        userEntries.sort((a, b) => a.username.localeCompare(b.username));
+        // Username with optional customization toggle
+        const usernameEl = document.createElement("span");
+        usernameEl.classList.add("ghost-username");
+        usernameEl.textContent = username;
+        userInfo.appendChild(usernameEl);
 
-        // Filter users if a search term is provided
-        const filteredUsers = filter
-          ? userEntries.filter((user) =>
-              user.username.toLowerCase().includes(filter.toLowerCase())
-            )
-          : userEntries;
+        // Settings toggle button
+        const settingsToggle = document.createElement("button");
+        settingsToggle.classList.add("ghost-settings-toggle");
+        settingsToggle.textContent = "⚙️";
+        settingsToggle.title = "Customize settings";
+        userInfo.appendChild(settingsToggle);
 
-        // Update search stats
-        const searchStats = document.getElementById("ghost-search-stats");
-        if (searchStats) {
-          if (filter) {
-            searchStats.textContent = `Found: ${filteredUsers.length} / ${userEntries.length}`;
+        // User actions section (right side)
+        const userActions = document.createElement("div");
+        userActions.classList.add("ghost-user-actions");
+
+        // Delete button to remove from ghost list
+        const deleteBtn = document.createElement("button");
+        deleteBtn.classList.add("ghost-delete-btn");
+        deleteBtn.textContent = "Unignore";
+        deleteBtn.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          await toggleUserGhost(username);
+          renderUserList();
+        });
+        userActions.appendChild(deleteBtn);
+
+        // Append sections to user entry
+        userEntry.appendChild(userInfo);
+        userEntry.appendChild(userActions);
+
+        // Create expandable settings panel
+        const settingsPanel = document.createElement("div");
+        settingsPanel.classList.add("ghost-settings-panel");
+        settingsPanel.style.display = "none";
+
+        // Get current user settings
+        const highlightColor = getUserHighlightColor(userId);
+        const globalSetting = userData.settings?.global || "hide";
+
+        // Create settings content
+        settingsPanel.innerHTML = `
+          <div class="ghost-settings-group">
+            <label>Highlight Color:</label>
+            <input type="color" class="ghost-color-picker" value="${highlightColor}">
+          </div>
+          
+          <div class="ghost-settings-group">
+            <label>Global Visibility:</label>
+            <select class="ghost-visibility-select" data-content-type="global">
+              <option value="hide" ${
+                globalSetting === "hide" ? "selected" : ""
+              }>Hide Content</option>
+              <option value="highlight" ${
+                globalSetting === "highlight" ? "selected" : ""
+              }>Highlight Content</option>
+            </select>
+          </div>
+          
+          <div class="ghost-settings-section">
+            <h4>Advanced Settings</h4>
+            <p class="ghost-settings-info">Set specific visibility for different content types</p>
+            
+            <div class="ghost-settings-group">
+              <label>Posts:</label>
+              <select class="ghost-visibility-select" data-content-type="posts">
+                <option value="default">Use Global Setting</option>
+                <option value="hide" ${
+                  userData.settings?.posts === "hide" ? "selected" : ""
+                }>Hide</option>
+                <option value="highlight" ${
+                  userData.settings?.posts === "highlight" ? "selected" : ""
+                }>Highlight</option>
+              </select>
+            </div>
+            
+            <div class="ghost-settings-group">
+              <label>Quotes:</label>
+              <select class="ghost-visibility-select" data-content-type="quotes">
+                <option value="default">Use Global Setting</option>
+                <option value="hide" ${
+                  userData.settings?.quotes === "hide" ? "selected" : ""
+                }>Hide</option>
+                <option value="highlight" ${
+                  userData.settings?.quotes === "highlight" ? "selected" : ""
+                }>Highlight</option>
+              </select>
+            </div>
+            
+            <div class="ghost-settings-group">
+              <label>Topics:</label>
+              <select class="ghost-visibility-select" data-content-type="topics">
+                <option value="default">Use Global Setting</option>
+                <option value="hide" ${
+                  userData.settings?.topics === "hide" ? "selected" : ""
+                }>Hide</option>
+                <option value="highlight" ${
+                  userData.settings?.topics === "highlight" ? "selected" : ""
+                }>Highlight</option>
+              </select>
+          </div>
+            
+            <div class="ghost-settings-group">
+              <label>Last Posts:</label>
+              <select class="ghost-visibility-select" data-content-type="lastPost">
+                <option value="default">Use Global Setting</option>
+                <option value="hide" ${
+                  userData.settings?.lastPost === "hide" ? "selected" : ""
+                }>Hide</option>
+                <option value="highlight" ${
+                  userData.settings?.lastPost === "highlight" ? "selected" : ""
+                }>Highlight</option>
+              </select>
+        </div>
+        
+            <div class="ghost-settings-group">
+              <label>Reactions:</label>
+              <select class="ghost-visibility-select" data-content-type="reactions">
+                <option value="default">Use Global Setting</option>
+                <option value="hide" ${
+                  userData.settings?.reactions === "hide" ? "selected" : ""
+                }>Hide</option>
+                <option value="highlight" ${
+                  userData.settings?.reactions === "highlight" ? "selected" : ""
+                }>Highlight</option>
+              </select>
+        </div>
+      </div>
+          
+          <button class="ghost-save-settings">Save Settings</button>
+        `;
+
+        // Add event listener for settings toggle
+        settingsToggle.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (settingsPanel.style.display === "none") {
+            settingsPanel.style.display = "block";
           } else {
-            searchStats.textContent = "";
+            settingsPanel.style.display = "none";
           }
-        }
+        });
 
-        if (filteredUsers.length === 0) {
-          const noResultsMessage = document.createElement("div");
-          noResultsMessage.style.cssText = `
-            text-align: center;
-            padding: 30px;
-            color: #c5d0db;
-            background-color: #232830;
-            border-radius: 4px;
-            margin-top: 15px;
-          `;
+        // Add event listener for saving settings
+        settingsPanel
+          .querySelector(".ghost-save-settings")
+          .addEventListener("click", () => {
+            // Get color picker value
+            const colorPicker = settingsPanel.querySelector(
+              ".ghost-color-picker"
+            );
+            const newColor = colorPicker.value;
 
-          if (filter) {
-            noResultsMessage.innerHTML = `
-              <i class="icon fa-search fa-fw" style="font-size: 2em; margin-bottom: 10px; opacity: 0.5;"></i>
-              <p>No ghosted users match your search.</p>
-              <p style="font-size: 0.9em; opacity: 0.7;">Try a different search term</p>
-            `;
-          } else {
-            noResultsMessage.innerHTML = `
-              <i class="icon fa-user-times fa-fw" style="font-size: 2em; margin-bottom: 10px; opacity: 0.5;"></i>
-              <p>No ghosted users found.</p>
-              <p style="font-size: 0.9em; opacity: 0.7;">Click "Find users to ghost" to add some.</p>
-            `;
-          }
+            // Initialize settings if they don't exist
+            if (!ignoredUsers[userId].settings) {
+              ignoredUsers[userId].settings = {};
+            }
 
-          userList.appendChild(noResultsMessage);
-        } else {
-          filteredUsers.forEach(({ userId, username }) => {
-            const listItem = document.createElement("li");
-            listItem.style.cssText = `
-              margin-bottom: 8px;
-              display: flex;
-              align-items: center;
-              padding: 10px;
-              border-radius: 4px;
-              background-color: #323842;
-              transition: background-color 0.2s;
-            `;
+            // Save highlight color
+            ignoredUsers[userId].highlightColor = newColor;
 
-            listItem.addEventListener("mouseover", () => {
-              listItem.style.backgroundColor = "#3a4049";
+            // Get and save visibility settings
+            const visibilitySelects = settingsPanel.querySelectorAll(
+              ".ghost-visibility-select"
+            );
+            visibilitySelects.forEach((select) => {
+              const contentType = select.getAttribute("data-content-type");
+              const value = select.value;
+
+              if (contentType === "global" || value !== "default") {
+                ignoredUsers[userId].settings[contentType] = value;
+              } else if (
+                value === "default" &&
+                ignoredUsers[userId].settings[contentType]
+              ) {
+                // Remove the content-specific setting to use global
+                delete ignoredUsers[userId].settings[contentType];
+              }
             });
 
-            listItem.addEventListener("mouseout", () => {
-              listItem.style.backgroundColor = "#323842";
-            });
+            // Save to localStorage
+            saveIgnoredUsers();
 
-            // Create user avatar
-            const avatarContainer = document.createElement("div");
-            avatarContainer.style.cssText = `
-              width: 36px;
-              height: 36px;
-              border-radius: 50%;
-              overflow: hidden;
-              margin-right: 10px;
-              flex-shrink: 0;
-            `;
-
-            const defaultAvatar =
-              "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
-
-            const avatar = document.createElement("img");
-            avatar.src = `https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg`;
-            avatar.alt = `${username}'s avatar`;
-            avatar.style.cssText =
-              "width: 100%; height: 100%; object-fit: cover;";
-            avatar.onerror = function () {
-              if (this.src.endsWith(".jpg")) {
-                this.src = `https://rpghq.org/forums/download/file.php?avatar=${userId}.png`;
-              } else if (this.src.endsWith(".png")) {
-                this.src = `https://rpghq.org/forums/download/file.php?avatar=${userId}.gif`;
-              } else {
-                this.src = defaultAvatar;
-              }
-            };
-
-            avatarContainer.appendChild(avatar);
-
-            // Create user info
-            const userInfo = document.createElement("div");
-            userInfo.style.cssText = "flex-grow: 1;";
-
-            const userLink = document.createElement("a");
-            userLink.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
-            userLink.textContent = username;
-            userLink.style.cssText =
-              "color: #4a90e2; text-decoration: none; font-weight: 600; display: block;";
-            userLink.target = "_blank";
-
-            const userIdText = document.createElement("div");
-            userIdText.textContent = `ID: ${userId}`;
-            userIdText.style.cssText =
-              "font-size: 0.8em; color: #8a9db5; margin-top: 2px;";
-
-            userInfo.appendChild(userLink);
-            userInfo.appendChild(userIdText);
-
-            // Create action buttons container
-            const buttonsContainer = document.createElement("div");
-            buttonsContainer.style.cssText = "display: flex; gap: 8px;";
-
-            // Unghost button
-            const unghostedButton = document.createElement("button");
-            unghostedButton.innerHTML =
-              '<i class="icon fa-user-times fa-fw" aria-hidden="true"></i>';
-            unghostedButton.title = "Unghost user";
-            unghostedButton.style.cssText = `
-              background-color: #4a5464;
-              color: #c5d0db;
-              border: none;
-              padding: 6px 10px;
-              border-radius: 3px;
-              cursor: pointer;
-              font-size: 0.85em;
-              transition: background-color 0.2s;
-            `;
-
-            unghostedButton.onmouseover = () => {
-              unghostedButton.style.backgroundColor = "#5a6474";
-            };
-            unghostedButton.onmouseout = () => {
-              unghostedButton.style.backgroundColor = "#4a5464";
-            };
-
-            unghostedButton.onclick = () => {
-              if (confirm(`Are you sure you want to unghost ${username}?`)) {
-                toggleUserGhost(userId, username);
-                listItem.style.height = listItem.offsetHeight + "px";
-                listItem.style.opacity = "1";
-
-                // Animate removal
-                setTimeout(() => {
-                  listItem.style.transition = "all 0.3s";
-                  listItem.style.opacity = "0";
-                  listItem.style.height = "0px";
-                  listItem.style.padding = "0px 10px";
-                  listItem.style.margin = "0";
-                  listItem.style.overflow = "hidden";
-
-                  setTimeout(() => {
-                    listItem.remove();
-
-                    // Update the list if empty
-                    if (userList.children.length === 0) {
-                      renderUserList(filter);
-                    }
-
-                    // Update stats
-                    const totalGhosted = Object.keys(ignoredUsers).length;
-                    const statsElement =
-                      statsSection.querySelector("div:first-child");
-                    if (statsElement) {
-                      statsElement.innerHTML = `Total Ghosted Users: <strong>${totalGhosted}</strong>`;
-                    }
-
-                    showNotification(
-                      `User "${username}" has been unghosted.`,
-                      "success"
-                    );
-                  }, 300);
-                }, 10);
-              }
-            };
-
-            // Avatar change button
-            const avatarButton = document.createElement("button");
-            avatarButton.innerHTML =
-              '<i class="icon fa-image fa-fw" aria-hidden="true"></i>';
-            avatarButton.title = "Change avatar";
-            avatarButton.style.cssText = `
-              background-color: #4a5464;
-              color: #c5d0db;
-              border: none;
-              padding: 6px 10px;
-              border-radius: 3px;
-              cursor: pointer;
-              font-size: 0.85em;
-              transition: background-color 0.2s;
-            `;
-
-            avatarButton.onmouseover = () => {
-              avatarButton.style.backgroundColor = "#5a6474";
-            };
-            avatarButton.onmouseout = () => {
-              avatarButton.style.backgroundColor = "#4a5464";
-            };
-
-            avatarButton.onclick = (e) => {
-              e.preventDefault();
-              showReplaceAvatarPopup(userId);
-            };
-
-            buttonsContainer.appendChild(unghostedButton);
-            buttonsContainer.appendChild(avatarButton);
-
-            // Add elements to the list item
-            listItem.appendChild(avatarContainer);
-            listItem.appendChild(userInfo);
-            listItem.appendChild(buttonsContainer);
-            userList.appendChild(listItem);
+            // Show feedback and close panel
+            alert("Settings saved!");
+            settingsPanel.style.display = "none";
           });
-        }
 
-        // Hide loading indicator and show the list
-        loadingIndicator.style.display = "none";
-        userList.style.display = "block";
-      }, 10); // Short timeout to allow UI update
-    }
+        // Append settings panel to user entry
+        userEntry.appendChild(settingsPanel);
 
-    // Add search functionality
-    let searchTimeout;
-    searchInput.addEventListener("input", function () {
-      clearTimeout(searchTimeout);
+        // Add to the user list
+        userListEl.appendChild(userEntry);
+      });
+    };
 
-      // Set loading indicator while typing
-      if (this.value.trim() !== "" && userList.children.length > 10) {
-        loadingIndicator.style.display = "block";
-        userList.style.display = "none";
-      }
-
-      searchTimeout = setTimeout(() => {
-        renderUserList(this.value.trim());
-      }, 300);
-    });
-
-    // Add keyboard shortcut for search focus
-    document.addEventListener("keydown", function (e) {
-      if (
-        e.key === "/" &&
-        popup.contains(e.target) &&
-        e.target !== searchInput
-      ) {
-        e.preventDefault();
-        searchInput.focus();
-      }
-    });
-
-    // Initial render of the user list
-    content.appendChild(userList);
+    // Render the initial user list
     renderUserList();
 
-    // Bottom controls with buttons
-    const bottomControls = document.createElement("div");
-    bottomControls.style.cssText = `
-      padding: 15px;
-      background-color: #232830;
-      border-top: 1px solid #3a3f4b;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-    `;
-
-    // Keyboard shortcuts help
-    const shortcutsHelp = document.createElement("div");
-    shortcutsHelp.style.cssText = `
-      font-size: 0.85em;
-      color: #8a9db5;
-    `;
-    shortcutsHelp.innerHTML =
-      'Press <kbd style="background: #3a3f4b; padding: 2px 5px; border-radius: 3px;">/</kbd> to focus search';
-
-    // Mass Unghost button
-    const massUnghostButton = document.createElement("button");
-    massUnghostButton.innerHTML =
-      '<i class="icon fa-trash fa-fw" aria-hidden="true" style="margin-right: 6px;"></i> Unghost All';
-    massUnghostButton.style.cssText = `
-      background-color: #e74c3c;
-      color: white;
-      border: none;
-      padding: 8px 15px;
-      border-radius: 3px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      font-weight: 600;
-      transition: background-color 0.2s;
-    `;
-
-    massUnghostButton.onmouseover = () => {
-      massUnghostButton.style.backgroundColor = "#f55c4c";
-    };
-    massUnghostButton.onmouseout = () => {
-      massUnghostButton.style.backgroundColor = "#e74c3c";
-    };
-
-    massUnghostButton.onclick = () => {
-      const totalUsers = Object.keys(ignoredUsers).length;
-
-      if (totalUsers === 0) {
-        showNotification("There are no ghosted users to remove.", "info");
-        return;
-      }
-
-      if (
-        confirm(`Are you sure you want to unghost all ${totalUsers} users?`)
-      ) {
-        GM_setValue("ignoredUsers", {});
-        ignoredUsers = {};
-        renderUserList();
-
-        // Update stats
-        const statsElement = statsSection.querySelector("div:first-child");
-        if (statsElement) {
-          statsElement.innerHTML = `Total Ghosted Users: <strong>0</strong>`;
-        }
-
-        showNotification(
-          `All ${totalUsers} users have been unghosted.`,
-          "success"
-        );
-      }
-    };
-
-    bottomControls.appendChild(shortcutsHelp);
-    bottomControls.appendChild(massUnghostButton);
-
-    // Assemble the popup
-    popup.appendChild(header);
-    popup.appendChild(statsSection);
-    popup.appendChild(searchArea);
-    popup.appendChild(content);
-    popup.appendChild(bottomControls);
+    // Add the popup to the document
     document.body.appendChild(popup);
-
-    // Focus search input after popup is visible
-    setTimeout(() => {
-      searchInput.focus();
-    }, 100);
-
-    // Add escape key handler to close the popup
-    popup.tabIndex = -1;
-    popup.focus();
-    popup.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") {
-        document.body.removeChild(popup);
-      }
-    });
-  }
-
-  // Create member search popup for finding new users to ghost
-  function createMemberSearchPopup(onUserSelected) {
-    const modal = document.createElement("div");
-    modal.className = "member-search-modal";
-    modal.style.cssText = `
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      z-index: 1010;
-      justify-content: center;
-      align-items: center;
-      backdrop-filter: blur(3px);
-    `;
-
-    modal.innerHTML = `
-      <div class="member-search-container" style="
-        background-color: #1e232b;
-        border: 1px solid #292e37;
-        border-radius: 6px;
-        width: 400px;
-        max-width: 85%;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-        padding: 20px;
-        position: relative;
-        z-index: 1011;
-        margin: 0 auto;
-        box-sizing: border-box;
-        animation: fadeInDown 0.3s ease-out;
-      ">
-        <div class="member-search-close" style="
-          position: absolute;
-          top: 15px;
-          right: 15px;
-          font-size: 22px;
-          color: #888;
-          cursor: pointer;
-          width: 30px;
-          height: 30px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 50%;
-          transition: all 0.2s;
-        ">&times;</div>
-        <div class="member-search-title" style="
-          font-size: 18px;
-          margin-bottom: 20px;
-          color: #fff;
-          text-align: center;
-          font-weight: 600;
-        ">Find User to Ghost</div>
-        
-        <div style="position: relative; margin-bottom: 15px;">
-          <div style="
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c7a91;
-            pointer-events: none;
-          ">
-            <i class="icon fa-search fa-fw" aria-hidden="true"></i>
-          </div>
-          <input type="text" class="member-search-input" placeholder="Search for a member..." style="
-            width: 100%;
-            padding: 10px 10px 10px 35px;
-            border: 1px solid #292e37;
-            border-radius: 4px;
-            background-color: #171b24;
-            color: #fff;
-            font-size: 14px;
-            box-sizing: border-box;
-            transition: border-color 0.3s;
-          ">
-        </div>
-        
-        <div class="member-search-results" style="
-          max-height: 300px;
-          overflow-y: auto;
-          border-radius: 4px;
-          border: 1px solid #292e37;
-          background-color: #171b24;
-        "></div>
-        
-        <div style="
-          margin-top: 15px;
-          text-align: center;
-          font-size: 0.85em;
-          color: #8a9db5;
-        ">
-          Type at least 2 characters to begin search
-        </div>
-      </div>
-    `;
-
-    // Create and inject stylesheet
-    const style = document.createElement("style");
-    style.textContent = `
-      @keyframes fadeInDown {
-        from {
-          opacity: 0;
-          transform: translateY(-20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-      
-      .member-search-modal.active {
-        display: flex;
-      }
-      
-      .member-search-results::-webkit-scrollbar {
-        width: 8px;
-      }
-      
-      .member-search-results::-webkit-scrollbar-track {
-        background: #171b24;
-        border-radius: 4px;
-      }
-      
-      .member-search-results::-webkit-scrollbar-thumb {
-        background: #3a3f4b;
-        border-radius: 4px;
-      }
-      
-      .member-search-results::-webkit-scrollbar-thumb:hover {
-        background: #4a5464;
-      }
-    `;
-    document.head.appendChild(style);
-
-    document.body.appendChild(modal);
-
-    // Close modal when clicking the close button
-    const closeButton = modal.querySelector(".member-search-close");
-    closeButton.addEventListener("mouseover", function () {
-      this.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
-    });
-    closeButton.addEventListener("mouseout", function () {
-      this.style.backgroundColor = "transparent";
-    });
-    closeButton.addEventListener("click", function () {
-      modal.classList.remove("active");
-    });
-
-    // Setup search functionality
-    const searchInput = modal.querySelector(".member-search-input");
-    const searchResults = modal.querySelector(".member-search-results");
-
-    // Handle input changes for search
-    let debounceTimer;
-    searchInput.addEventListener("input", function () {
-      clearTimeout(debounceTimer);
-
-      const query = this.value.trim();
-
-      if (query.length < 2) {
-        searchResults.innerHTML = "";
-        return;
-      }
-
-      searchResults.innerHTML = `
-        <div style="
-          text-align: center;
-          padding: 15px;
-          color: #8a9db5;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-        ">
-          <i class="icon fa-circle-o-notch fa-spin fa-fw"></i>
-          <span>Searching...</span>
-        </div>
-      `;
-
-      debounceTimer = setTimeout(() => {
-        searchMembers(query, searchResults, onUserSelected);
-      }, 300);
-    });
-
-    // Focus input when modal is opened and handle keyboard events
-    modal.addEventListener("transitionend", function () {
-      if (modal.classList.contains("active")) {
-        searchInput.focus();
-      }
-    });
-
-    searchInput.addEventListener("keydown", function (e) {
-      if (e.key === "Escape") {
-        modal.classList.remove("active");
-      }
-    });
-
-    modal.addEventListener("click", function (e) {
-      if (e.target === modal) {
-        modal.classList.remove("active");
-      }
-    });
-
-    // Show the modal immediately
-    setTimeout(() => {
-      if (modal.classList.contains("active")) {
-        searchInput.focus();
-      }
-    }, 100);
-
-    return modal;
-  }
-
-  // Function to search for members using the API
-  function searchMembers(query, resultsContainer, onUserSelected) {
-    fetch(
-      `https://rpghq.org/forums/mentionloc?q=${encodeURIComponent(query)}`,
-      {
-        method: "GET",
-        headers: {
-          accept: "application/json, text/javascript, */*; q=0.01",
-          "x-requested-with": "XMLHttpRequest",
-        },
-        credentials: "include",
-      }
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        displaySearchResults(data, resultsContainer, onUserSelected);
-      })
-      .catch((error) => {
-        console.error("Error searching for members:", error);
-        resultsContainer.innerHTML = `
-        <div style="
-          text-align: center;
-          padding: 20px;
-          color: #e74c3c;
-          background-color: rgba(231, 76, 60, 0.1);
-          border-radius: 4px;
-          margin: 10px;
-        ">
-          <i class="icon fa-exclamation-triangle fa-fw" style="margin-right: 5px;"></i>
-          Error searching for members
-        </div>
-      `;
-      });
-  }
-
-  // Function to display search results
-  function displaySearchResults(data, resultsContainer, onUserSelected) {
-    resultsContainer.innerHTML = "";
-
-    // Filter to only include users, exclude groups
-    const filteredData = data.filter((item) => item.type === "user");
-
-    if (!filteredData || filteredData.length === 0) {
-      resultsContainer.innerHTML = `
-        <div style="
-          text-align: center;
-          padding: 30px 20px;
-          color: #8a9db5;
-        ">
-          <i class="icon fa-user-times fa-fw" style="font-size: 1.5em; margin-bottom: 10px; display: block;"></i>
-          <div>No members found</div>
-          <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.7;">Try a different search term</div>
-        </div>
-      `;
-      return;
-    }
-
-    // Add a header with the count
-    resultsContainer.innerHTML = `
-      <div style="
-        padding: 8px 10px;
-        background-color: #232830;
-        color: #c5d0db;
-        font-size: 0.85em;
-        border-bottom: 1px solid #292e37;
-      ">
-        Found ${filteredData.length} user${filteredData.length !== 1 ? "s" : ""}
-      </div>
-    `;
-
-    const resultsWrapper = document.createElement("div");
-    resultsWrapper.style.maxHeight = "300px";
-    resultsWrapper.style.overflowY = "auto";
-
-    filteredData.forEach((item, index) => {
-      const resultItem = document.createElement("div");
-      resultItem.style.cssText = `
-        display: flex;
-        align-items: center;
-        padding: 10px;
-        cursor: pointer;
-        border-radius: 0;
-        transition: background-color 0.2s;
-        border-bottom: ${
-          index < filteredData.length - 1 ? "1px solid #1a1e25" : "none"
-        };
-      `;
-
-      resultItem.addEventListener("mouseover", () => {
-        resultItem.style.backgroundColor = "#232830";
-      });
-
-      resultItem.addEventListener("mouseout", () => {
-        resultItem.style.backgroundColor = "transparent";
-      });
-
-      // User entry
-      resultItem.setAttribute("data-user-id", item.user_id);
-
-      // Create avatar URL with proper format
-      const userId = item.user_id;
-      const username = item.value || item.key || "Unknown User";
-
-      // Default fallback avatar
-      const defaultAvatar =
-        "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
-
-      // Create the result item with image that tries multiple extensions
-      resultItem.innerHTML = `
-        <div style="
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          overflow: hidden;
-          margin-right: 10px;
-          flex-shrink: 0;
-          background-color: #151920;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        ">
-          <img 
-            src="https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg" 
-            alt="${username}'s avatar" 
-            style="width: 100%; height: 100%; object-fit: cover;"
-            onerror="if(this.src.endsWith('.jpg')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.png';}else if(this.src.endsWith('.png')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.gif';}else{this.src='${defaultAvatar}';}"
-          >
-        </div>
-        <div>
-          <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;">${username}</div>
-          <div style="font-size: 0.8em; color: #8a9db5;">User ID: ${userId}</div>
-        </div>
-      `;
-
-      resultItem.addEventListener("click", function () {
-        const userId = this.getAttribute("data-user-id");
-        const username = this.querySelector("div > div").textContent;
-
-        // Check if this user is already ghosted
-        if (ignoredUsers[userId]) {
-          // Use the global showNotification function instead of creating a notification here
-          showNotification(`${username} is already ghosted.`, "info");
-          return;
-        }
-
-        if (onUserSelected) {
-          onUserSelected(userId, username);
-        }
-
-        // Close the modal
-        const modal = this.closest(".member-search-modal");
-        if (modal) {
-          modal.classList.remove("active");
-        }
-      });
-
-      resultsWrapper.appendChild(resultItem);
-    });
-
-    resultsContainer.appendChild(resultsWrapper);
   }
 
   function addShowIgnoredUsersButton() {
@@ -3636,12 +3649,14 @@
     await injectRTContent();
     const needsFetching = await cacheAllPosts();
 
+    // Create the ghosted content toggle button
+    createGhostedContentToggle();
+    startPeriodicGhostedContentCountUpdate();
+
     // Process topiclist topics elements first
     document.querySelectorAll(".topiclist.topics").forEach((topiclist) => {
       processTopicListRow("topic");
     });
-
-    // Process cplist notifications
 
     // Then process the containers, but only if all their li elements are processed
     if (!needsFetching) {
