@@ -788,30 +788,38 @@
   }
 
   function toggleUserGhost(userId, username) {
-    const cleanedUsername = cleanUsername(username);
+    // If already ignored, remove
     if (ignoredUsers.hasOwnProperty(userId)) {
       delete ignoredUsers[userId];
-    } else {
-      ignoredUsers[userId] = {
-        username: cleanedUsername.toLowerCase(),
-        options: {
-          color: "#FF5555", // Default red highlight
-          hideOptions: {
-            posts: { hide: true, highlight: false },
-            topics: { hide: true, highlight: false },
-            lastPost: { hide: true, highlight: false },
-          },
-        },
-      };
-    }
-    GM_setValue("userPreferences", ignoredUsers);
+      showToggleNotification(`User ${username} is no longer ghosted.`);
 
-    // For backward compatibility
-    const legacyData = {};
-    Object.entries(ignoredUsers).forEach(([userId, userData]) => {
-      legacyData[userId] = userData.username;
-    });
-    GM_setValue("ignoredUsers", legacyData);
+      // Save to storage
+      saveIgnoredUsers();
+
+      // Update all UI elements
+      processIgnoredContentOnce();
+      return false;
+    }
+    // Otherwise add to ignored list
+    else {
+      ignoredUsers[userId] = {
+        username: username,
+        settings: {
+          global: "hide", // Default to hide
+        },
+        highlightColor: "#FF5555", // Default red
+        mentionedColor: "#FF9955", // Default orange
+      };
+
+      showToggleNotification(`User ${username} is now ghosted.`);
+
+      // Save to storage
+      saveIgnoredUsers();
+
+      // Update all UI elements
+      processIgnoredContentOnce();
+      return true;
+    }
   }
 
   // Update user preferences
@@ -823,8 +831,13 @@
       ...options,
     };
 
-    GM_setValue("userPreferences", ignoredUsers);
+    saveIgnoredUsers();
     return true;
+  }
+
+  // Save ignored users to storage
+  function saveIgnoredUsers() {
+    GM_setValue("userPreferences", ignoredUsers);
   }
 
   // Get specific hide/highlight setting for a user and content type
@@ -2712,7 +2725,7 @@
       }
       ignoredUsers[userId].highlightColor = highlightColor;
       ignoredUsers[userId].mentionedColor = mentionedColor;
-      GM_setValue("userPreferences", ignoredUsers);
+      saveIgnoredUsers();
 
       // Show loading state
       replaceB.disabled = true;
@@ -3167,6 +3180,11 @@
   }
 
   async function showIgnoredUsersPopup() {
+    // Local function to fix the reference error
+    function saveIgnoredUsers() {
+      GM_setValue("userPreferences", ignoredUsers);
+    }
+
     // Create the popup container
     const popup = document.createElement("div");
     popup.classList.add("ghost-popup");
