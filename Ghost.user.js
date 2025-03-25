@@ -719,41 +719,6 @@
     return match ? match[1] : null;
   }
 
-  function toggleUserGhost(userId, username) {
-    // If already ignored, remove
-    if (ignoredUsers.hasOwnProperty(userId)) {
-      delete ignoredUsers[userId];
-      showToggleNotification(`User ${username} is no longer ghosted.`);
-
-      // Save to storage
-      saveIgnoredUsers();
-
-      // Update all UI elements
-      processIgnoredContentOnce();
-      return false;
-    }
-    // Otherwise add to ignored list
-    else {
-      ignoredUsers[userId] = {
-        username: username,
-        settings: {
-          global: "hide", // Default to hide
-        },
-        highlightColor: "#FF5555", // Default red
-        mentionedColor: "#FF9955", // Default orange
-      };
-
-      showToggleNotification(`User ${username} is now ghosted.`);
-
-      // Save to storage
-      saveIgnoredUsers();
-
-      // Update all UI elements
-      processIgnoredContentOnce();
-      return true;
-    }
-  }
-
   // Save ignored users to storage
   function saveIgnoredUsers() {
     GM_setValue("userPreferences", ignoredUsers);
@@ -2985,9 +2950,6 @@
       </div>
       <div class="ghost-toggle-count" style="display: none;">0</div>
     `;
-
-    // Add click event
-    toggleButton.addEventListener("click", toggleGhostedPosts);
 
     // Add to document body
     document.body.appendChild(toggleButton);
