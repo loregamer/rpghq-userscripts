@@ -66,7 +66,8 @@
       ignoredUsers[userId] = {
         username: typeof username === "string" ? username : "Unknown User",
         options: {
-          color: "#FF5555", // Default red highlight
+          highlightColor: "#ff5555",
+          mentionedColor: "#ff9955",
           hideOptions: {
             posts: { hide: true, highlight: false },
             topics: { hide: true, highlight: false },
@@ -1039,6 +1040,24 @@
               if (ghostedResult && ghostedResult.containsGhosted) {
                 // Post content contains ghosted username, add ghosted-by-content class
                 lastpostCell.classList.add("ghosted-row");
+
+                // Add data attribute for identification
+                lastpostCell.dataset.ghostedByContent = "true";
+
+                // Apply mentioned color if available
+                if (
+                  ghostedResult.mentionedUsers &&
+                  ghostedResult.mentionedUsers.length > 0
+                ) {
+                  const userId = ghostedResult.mentionedUsers[0].userId;
+                  const mentionedColor = getUserMentionedColor(userId);
+                  if (mentionedColor) {
+                    lastpostCell.style.backgroundColor = mentionedColor;
+                  }
+                } else {
+                  // Apply default color
+                  lastpostCell.style.backgroundColor = "#FF9955";
+                }
               }
             }
           }
@@ -1049,6 +1068,22 @@
         if (isUserIgnored(authorName)) {
           // Author is ghosted, add ghosted-by-author class to the entire row
           row.classList.add("ghosted-row");
+
+          // Add the user's highlight color directly to the row's background
+          const userId = Object.keys(ignoredUsers).find(
+            (id) =>
+              ignoredUsers[id].username &&
+              ignoredUsers[id].username.toLowerCase() ===
+                authorName.toLowerCase()
+          );
+
+          if (userId) {
+            const highlightColor = getUserHighlightColor(userId);
+            if (highlightColor) {
+              row.style.backgroundColor = highlightColor;
+            }
+          }
+
           return;
         }
 
@@ -1066,12 +1101,42 @@
               );
               if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
                 row.classList.add("ghosted-row");
+
+                // Add background color based on the user's highlight color
+                const username = authorLink.textContent.trim();
+                const userId = Object.keys(ignoredUsers).find(
+                  (id) =>
+                    ignoredUsers[id].username &&
+                    ignoredUsers[id].username.toLowerCase() ===
+                      username.toLowerCase()
+                );
+
+                if (userId) {
+                  const highlightColor = getUserHighlightColor(userId);
+                  if (highlightColor) {
+                    row.style.backgroundColor = highlightColor;
+                  }
+                }
+
                 return;
               } else if (postContent) {
                 const ghostedResult = postContentContainsGhosted(postContent);
                 if (ghostedResult && ghostedResult.containsGhosted) {
                   // Only if author is not ghosted, check content
                   row.classList.add("ghosted-row");
+
+                  // Add data attribute for identification
+                  row.dataset.ghostedByContent = "true";
+
+                  // Add background color using mentioned color for content mentions
+                  const ghostedUsers = ghostedResult.mentionedUsers || [];
+                  if (ghostedUsers.length > 0) {
+                    const userId = ghostedUsers[0].userId;
+                    const mentionedColor = getUserMentionedColor(userId);
+                    if (mentionedColor) {
+                      row.style.backgroundColor = mentionedColor;
+                    }
+                  }
                 }
               }
             } else if (postContent) {
@@ -1714,6 +1779,11 @@
         if (settings.hide) {
           // For forum lists, ALWAYS hide just the lastpost cell, not the entire row
           lastpostCell.classList.add("ghosted-row");
+
+          // Apply the highlight color directly to the background
+          if (highlightColor) {
+            lastpostCell.style.backgroundColor = highlightColor;
+          }
         } else if (settings.highlight) {
           // Highlight lastpost based on user preference
           lastpostCell.classList.add("ghosted-highlight");
@@ -1771,6 +1841,11 @@
               if (settings.hide) {
                 // For forum lists, ALWAYS hide just the lastpost cell with ghosted-by-content
                 lastpostCell.classList.add("ghosted-row");
+
+                // Apply mentioned color directly to the background
+                if (mentionedColor) {
+                  lastpostCell.style.backgroundColor = mentionedColor;
+                }
               } else if (settings.highlight) {
                 // Highlight lastpost based on user preference
                 lastpostCell.classList.add("ghosted-content-highlight");
@@ -1782,6 +1857,10 @@
             } else {
               // Fallback behavior
               lastpostCell.classList.add("ghosted-row");
+
+              // Use default highlight color
+              const defaultHighlightColor = "#FF5555";
+              lastpostCell.style.backgroundColor = defaultHighlightColor;
             }
           }
         }
@@ -1832,19 +1911,38 @@
         // Get the parent row
         const rowItem = lastpostCell.closest("li.row");
 
-        // Always add ghosted-by-author to the entire row for author identification
+        // Always tag the row for identification (instead of adding ghosted-by-author class)
         if (rowItem) {
-          rowItem.classList.add("ghosted-by-author");
+          // Set data attribute for identification
+          rowItem.dataset.ghostedByAuthor = effectiveUserId;
+
+          // Apply highlight color directly if we want to display it
+          const highlightColor = getUserHighlightColor(effectiveUserId);
+          if (highlightColor && settings.highlight) {
+            rowItem.style.backgroundColor = highlightColor;
+          }
         }
 
         if (settings.hide) {
           if (settings.hideMode === "last_post") {
             // Only add ghosted-row to the lastpost cell, not the row
             lastpostCell.classList.add("ghosted-row");
+
+            // Apply highlight color directly to the background
+            const highlightColor = getUserHighlightColor(effectiveUserId);
+            if (highlightColor) {
+              lastpostCell.style.backgroundColor = highlightColor;
+            }
           } else {
             // Add ghosted-row to the entire row
             if (rowItem) {
               rowItem.classList.add("ghosted-row");
+
+              // Apply highlight color directly to the row background
+              const highlightColor = getUserHighlightColor(effectiveUserId);
+              if (highlightColor) {
+                rowItem.style.backgroundColor = highlightColor;
+              }
             }
           }
         } else if (settings.highlight) {
@@ -1860,13 +1958,23 @@
         // Fallback behavior - use default hide behavior
         const rowItem = lastpostCell.closest("li.row");
 
-        // Always add ghosted-by-author to the entire row
+        // Always tag for identification (instead of adding ghosted-by-author class)
         if (rowItem) {
-          rowItem.classList.add("ghosted-by-author");
+          // Set data attribute for identification
+          rowItem.dataset.ghostedByAuthor = "unknown";
+
           // Add ghosted-row only if we want to hide the entire row
           rowItem.classList.add("ghosted-row");
+
+          // Apply default highlight color
+          const defaultHighlightColor = "#FF5555";
+          rowItem.style.backgroundColor = defaultHighlightColor;
         } else {
           lastpostCell.classList.add("ghosted-row");
+
+          // Apply default highlight color
+          const defaultHighlightColor = "#FF5555";
+          lastpostCell.style.backgroundColor = defaultHighlightColor;
         }
       }
     }
@@ -1915,19 +2023,38 @@
         // Get the parent row
         const rowItem = lastpostCell.closest("li.row");
 
-        // Always add ghosted-by-author to the entire row for author identification
+        // Always tag the row for identification (instead of adding ghosted-by-author class)
         if (rowItem) {
-          rowItem.classList.add("ghosted-by-author");
+          // Set data attribute for identification
+          rowItem.dataset.ghostedByAuthor = effectiveUserId;
+
+          // Apply highlight color directly if we want to display it
+          const highlightColor = getUserHighlightColor(effectiveUserId);
+          if (highlightColor && settings.highlight) {
+            rowItem.style.backgroundColor = highlightColor;
+          }
         }
 
         if (settings.hide) {
           if (settings.hideMode === "last_post") {
             // Only add ghosted-row to the lastpost cell, not the row
             lastpostCell.classList.add("ghosted-row");
+
+            // Apply highlight color directly to the background
+            const highlightColor = getUserHighlightColor(effectiveUserId);
+            if (highlightColor) {
+              lastpostCell.style.backgroundColor = highlightColor;
+            }
           } else {
             // Add ghosted-row to the entire row
             if (rowItem) {
               rowItem.classList.add("ghosted-row");
+
+              // Apply highlight color directly to the row background
+              const highlightColor = getUserHighlightColor(effectiveUserId);
+              if (highlightColor) {
+                rowItem.style.backgroundColor = highlightColor;
+              }
             }
           }
         } else if (settings.highlight) {
@@ -1943,13 +2070,23 @@
         // Fallback behavior - use default hide behavior
         const rowItem = lastpostCell.closest("li.row");
 
-        // Always add ghosted-by-author to the entire row
+        // Always tag for identification (instead of adding ghosted-by-author class)
         if (rowItem) {
-          rowItem.classList.add("ghosted-by-author");
+          // Set data attribute for identification
+          rowItem.dataset.ghostedByAuthor = "unknown";
+
           // Add ghosted-row only if we want to hide the entire row
           rowItem.classList.add("ghosted-row");
+
+          // Apply default highlight color
+          const defaultHighlightColor = "#FF5555";
+          rowItem.style.backgroundColor = defaultHighlightColor;
         } else {
           lastpostCell.classList.add("ghosted-row");
+
+          // Apply default highlight color
+          const defaultHighlightColor = "#FF5555";
+          lastpostCell.style.backgroundColor = defaultHighlightColor;
         }
       }
     }
@@ -2873,20 +3010,23 @@
     if (!toggleButton) return;
 
     // Find all types of ghosted content
-    const ghostedPosts = document.querySelectorAll(".ghosted").length;
-    const ghostedTopicRows = document.querySelectorAll(".ghosted-row").length;
-    const ghostedQuotes = document.querySelectorAll(".ghosted-quote").length;
-    const ghostedByAuthor =
-      document.querySelectorAll(".ghosted-by-author").length;
+    const ghostedPosts = document.querySelectorAll(".ghosted");
+    const ghostedTopicRows = document.querySelectorAll(".ghosted-row");
+    const ghostedQuotes = document.querySelectorAll(".ghosted-quote");
+    const ghostedByAuthor = document.querySelectorAll(
+      "[data-ghosted-by-author]"
+    );
     const ghostedByContent = document.querySelectorAll(
-      ".ghosted-by-content"
-    ).length;
-    const ghostedReactions =
-      document.querySelectorAll(".ghosted-reaction").length;
+      "[data-ghosted-by-content]"
+    );
+    const ghostedReactions = document.querySelectorAll(".ghosted-reaction");
 
     // Calculate total unique items (avoid double counting)
     let total =
-      ghostedPosts + ghostedTopicRows + ghostedQuotes + ghostedReactions;
+      ghostedPosts.length +
+      ghostedTopicRows.length +
+      ghostedQuotes.length +
+      ghostedReactions.length;
 
     // Update the count element
     const countElement = toggleButton.querySelector(".ghost-toggle-count");
@@ -2959,8 +3099,8 @@
         document.querySelector(".ghosted") ||
         document.querySelector(".ghosted-row") ||
         document.querySelector(".ghosted-quote") ||
-        document.querySelector(".ghosted-by-author") ||
-        document.querySelector(".ghosted-by-content");
+        document.querySelector("[data-ghosted-by-author]") ||
+        document.querySelector("[data-ghosted-by-content]");
 
       // Scroll to the first ghosted element if found
       if (firstGhostedElement) {
