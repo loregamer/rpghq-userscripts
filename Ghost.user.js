@@ -763,23 +763,71 @@
   }
 
   function getUserHighlightColor(userId) {
+    // Get base color
+    let baseColor;
+
     // Return user-specific highlight color if set
     if (ignoredUsers[userId] && ignoredUsers[userId].highlightColor) {
-      return ignoredUsers[userId].highlightColor;
+      baseColor = ignoredUsers[userId].highlightColor;
+    } else {
+      // Return default highlight color
+      baseColor = "#FF5555";
     }
 
-    // Return default highlight color
-    return "#FF5555";
+    // Convert hex to rgba with very low opacity
+    if (baseColor.startsWith("#")) {
+      // Convert hex to RGB
+      const r = parseInt(baseColor.slice(1, 3), 16);
+      const g = parseInt(baseColor.slice(3, 5), 16);
+      const b = parseInt(baseColor.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, 0.15)`; // Very transparent
+    } else if (baseColor.startsWith("rgb(")) {
+      // Convert rgb to rgba
+      return baseColor.replace("rgb(", "rgba(").replace(")", ", 0.15)");
+    } else if (baseColor.startsWith("rgba(")) {
+      // Already rgba, just modify the opacity
+      return baseColor.replace(
+        /rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d\.]+\)/,
+        "rgba($1, $2, $3, 0.15)"
+      );
+    }
+
+    // Fallback to original color with very low opacity overlay
+    return baseColor;
   }
 
   function getUserMentionedColor(userId) {
+    // Get base color
+    let baseColor;
+
     // Return user-specific mentioned color if set
     if (ignoredUsers[userId] && ignoredUsers[userId].mentionedColor) {
-      return ignoredUsers[userId].mentionedColor;
+      baseColor = ignoredUsers[userId].mentionedColor;
+    } else {
+      // Return default mentioned color (slightly different from highlight)
+      baseColor = "#FF9955";
     }
 
-    // Return default mentioned color (slightly different from highlight)
-    return "#FF9955";
+    // Convert hex to rgba with very low opacity
+    if (baseColor.startsWith("#")) {
+      // Convert hex to RGB
+      const r = parseInt(baseColor.slice(1, 3), 16);
+      const g = parseInt(baseColor.slice(3, 5), 16);
+      const b = parseInt(baseColor.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, 0.15)`; // Very transparent
+    } else if (baseColor.startsWith("rgb(")) {
+      // Convert rgb to rgba
+      return baseColor.replace("rgb(", "rgba(").replace(")", ", 0.15)");
+    } else if (baseColor.startsWith("rgba(")) {
+      // Already rgba, just modify the opacity
+      return baseColor.replace(
+        /rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d\.]+\)/,
+        "rgba($1, $2, $3, 0.15)"
+      );
+    }
+
+    // Fallback to original color with very low opacity overlay
+    return baseColor;
   }
 
   // ---------------------------------------------------------------------
@@ -1946,15 +1994,24 @@
         // Get the parent row
         const rowItem = lastpostCell.closest("li.row");
 
-        // Always tag the row for identification (instead of adding ghosted-by-author class)
+        // Always tag the row for identification and apply highlight color
         if (rowItem) {
           // Set data attribute for identification
           rowItem.dataset.ghostedByAuthor = effectiveUserId;
 
-          // Apply highlight color directly if we want to display it
+          // Always apply highlight color - this is the key fix
           const highlightColor = getUserHighlightColor(effectiveUserId);
-          if (highlightColor && settings.highlight) {
-            rowItem.style.backgroundColor = highlightColor;
+          if (highlightColor) {
+            // Convert RGB to RGBA with low opacity
+            const transparentColor = highlightColor.replace(
+              /rgb\((\d+),\s*(\d+),\s*(\d+)\)/,
+              "rgba($1, $2, $3, 0.3)"
+            );
+            rowItem.style.setProperty(
+              "background-color",
+              transparentColor,
+              "important"
+            );
           }
         }
 
@@ -1966,17 +2023,35 @@
             // Apply highlight color directly to the background
             const highlightColor = getUserHighlightColor(effectiveUserId);
             if (highlightColor) {
-              lastpostCell.style.backgroundColor = highlightColor;
+              // Convert RGB to RGBA with low opacity
+              const transparentColor = highlightColor.replace(
+                /rgb\((\d+),\s*(\d+),\s*(\d+)\)/,
+                "rgba($1, $2, $3, 0.3)"
+              );
+              lastpostCell.style.setProperty(
+                "background-color",
+                transparentColor,
+                "important"
+              );
             }
           } else {
             // Add ghosted-row to the entire row
             if (rowItem) {
               rowItem.classList.add("ghosted-row");
 
-              // Apply highlight color directly to the row background
+              // Apply highlight color directly to the row background again to be sure
               const highlightColor = getUserHighlightColor(effectiveUserId);
               if (highlightColor) {
-                rowItem.style.backgroundColor = highlightColor;
+                // Convert RGB to RGBA with low opacity
+                const transparentColor = highlightColor.replace(
+                  /rgb\((\d+),\s*(\d+),\s*(\d+)\)/,
+                  "rgba($1, $2, $3, 0.3)"
+                );
+                rowItem.style.setProperty(
+                  "background-color",
+                  transparentColor,
+                  "important"
+                );
               }
             }
           }
@@ -2177,16 +2252,6 @@
         if (lp && !lp.classList.contains("content-processed")) return;
         row.classList.add("content-processed");
       });
-  }
-
-  function processTopicListRow(rowType) {
-    if (rowType === "forums") {
-      return processForumsListRows();
-    } else if (rowType === "topics") {
-      return processTopicsListRows();
-    } else if (rowType === "recent-topics") {
-      return processRecentTopicsRows();
-    }
   }
 
   // ---------------------------------------------------------------------
