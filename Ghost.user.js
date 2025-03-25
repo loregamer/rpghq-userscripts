@@ -1013,9 +1013,6 @@
                   if (mentionedColor) {
                     lastpostCell.style.backgroundColor = mentionedColor;
                   }
-                } else {
-                  // Apply default color
-                  lastpostCell.style.backgroundColor = "#FF9955";
                 }
               }
             }
@@ -1435,9 +1432,6 @@
           post.classList.add("ghosted-highlight");
           post.style.setProperty("--ghost-highlight-color", highlightColor);
         }
-      } else {
-        // Fallback to default behavior
-        post.classList.add("ghosted");
       }
 
       post.classList.add("content-processed");
@@ -1813,13 +1807,6 @@
                   mentionedColor
                 );
               }
-            } else {
-              // Fallback behavior
-              lastpostCell.classList.add("ghosted-row");
-
-              // Use default highlight color
-              const defaultHighlightColor = "#FF5555";
-              lastpostCell.style.backgroundColor = defaultHighlightColor;
             }
           }
         }
@@ -1913,28 +1900,6 @@
             highlightColor
           );
         }
-      } else {
-        // Fallback behavior - use default hide behavior
-        const rowItem = lastpostCell.closest("li.row");
-
-        // Always tag for identification (instead of adding ghosted-by-author class)
-        if (rowItem) {
-          // Set data attribute for identification
-          rowItem.dataset.ghostedByAuthor = "unknown";
-
-          // Add ghosted-row only if we want to hide the entire row
-          rowItem.classList.add("ghosted-row");
-
-          // Apply default highlight color
-          const defaultHighlightColor = "#FF5555";
-          rowItem.style.backgroundColor = defaultHighlightColor;
-        } else {
-          lastpostCell.classList.add("ghosted-row");
-
-          // Apply default highlight color
-          const defaultHighlightColor = "#FF5555";
-          lastpostCell.style.backgroundColor = defaultHighlightColor;
-        }
       }
     }
 
@@ -2024,28 +1989,6 @@
             "--ghost-highlight-color",
             highlightColor
           );
-        }
-      } else {
-        // Fallback behavior - use default hide behavior
-        const rowItem = lastpostCell.closest("li.row");
-
-        // Always tag for identification (instead of adding ghosted-by-author class)
-        if (rowItem) {
-          // Set data attribute for identification
-          rowItem.dataset.ghostedByAuthor = "unknown";
-
-          // Add ghosted-row only if we want to hide the entire row
-          rowItem.classList.add("ghosted-row");
-
-          // Apply default highlight color
-          const defaultHighlightColor = "#FF5555";
-          rowItem.style.backgroundColor = defaultHighlightColor;
-        } else {
-          lastpostCell.classList.add("ghosted-row");
-
-          // Apply default highlight color
-          const defaultHighlightColor = "#FF5555";
-          lastpostCell.style.backgroundColor = defaultHighlightColor;
         }
       }
     }
