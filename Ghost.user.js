@@ -186,6 +186,8 @@
       border-image-slice: 1;
       border-radius: 4px;
       padding: 6px;
+      margin: 8px 0;
+      box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
     }
 
     /* -----------------------------------------------------------------
@@ -1324,6 +1326,10 @@
     }
     if (hideIt) {
       post.classList.add("ghosted-post");
+      // If we're currently showing ghosted posts, also add show class
+      if (showGhostedPosts) {
+        post.classList.add("show");
+      }
     }
     post.classList.add("content-processed");
   }
@@ -1822,12 +1828,21 @@
 
     showGhostedPosts = !showGhostedPosts;
 
-    ghostedPosts.forEach((p) => p.classList.toggle("show", showGhostedPosts));
-    ghostedQuotes.forEach((q) => q.classList.toggle("show", showGhostedPosts));
+    // Ensure all classes are properly set
+    ghostedPosts.forEach((p) => {
+      p.classList.toggle("show", showGhostedPosts);
+      p.style.display = showGhostedPosts ? "block" : "none";
+    });
+
+    ghostedQuotes.forEach((q) => {
+      q.classList.toggle("show", showGhostedPosts);
+      q.style.display = showGhostedPosts ? "block" : "none";
+    });
 
     // For ghosted rows (which are now only lastpost cells), toggle visibility
     ghostedRows.forEach((r) => {
       r.classList.toggle("show", showGhostedPosts);
+      r.style.display = showGhostedPosts ? "block" : "none";
     });
 
     document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
