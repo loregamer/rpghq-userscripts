@@ -114,11 +114,6 @@
     .ghosted-reaction {
       display: none !important;
     }
-    
-    /* Remove the rules that hide ghosted-by-author and ghosted-by-content by themselves */
-    /* .ghosted-by-author, .ghosted-by-content {
-      display: none !important;
-    } */
 
     /* Highlight styles for ghosted content */
     .ghosted-highlight {
@@ -144,7 +139,6 @@
     /* Row highlighting for ghosted rows */
     .ghosted-row-highlight {
       display: block !important;
-      border: 2px solid var(--ghost-highlight-color, #FF5555) !important;
       padding: 5px !important;
       position: relative !important;
       opacity: 1 !important;
@@ -157,8 +151,6 @@
       position: absolute;
       top: -10px;
       left: 10px;
-      background-color: var(--ghost-highlight-color, #FF5555);
-      color: #FFF;
       font-size: 10px;
       padding: 2px 5px;
       border-radius: 3px;
@@ -501,11 +493,6 @@
       padding: 2px 5px;
     }
 
-    /* Last post in forum list */
-    .lastpost.ghosted-row.ghosted-by-author .profile {
-      opacity: 0.2;
-    }
-
     /* Ghost toggle button */
     .ghost-toggle-button {
       position: fixed;
@@ -741,35 +728,6 @@
     document.body.appendChild(tooltip);
   }
 
-  async function showPostPreview(event, postId) {
-    if (isMobileDevice) return;
-    if (!tooltip) return;
-    if (currentHoverTimeout) clearTimeout(currentHoverTimeout);
-    currentHoverTimeout = setTimeout(async () => {
-      let content = await fetchAndCachePost(postId);
-      if (!content) return;
-      content = parseQuotes(content);
-      content = parseBBCode(content);
-      Object.entries(userColors).forEach(([username, color]) => {
-        const usernameRegex = new RegExp(`<a[^>]*>${username}</a>`, "g");
-        content = content.replace(
-          usernameRegex,
-          `<a href="#" style="color: ${color};">${username}</a>`
-        );
-      });
-      tooltip.innerHTML = `<div class="post-content">${content}</div>`;
-      const tooltipX = Math.max(10, event.pageX - tooltip.offsetWidth - 100);
-      const tooltipY = Math.max(10, event.pageY - tooltip.offsetHeight / 2);
-      tooltip.style.left = `${tooltipX}px`;
-      tooltip.style.top = `${tooltipY}px`;
-      tooltip.classList.add("visible");
-      tooltip.addEventListener("mouseenter", () => {
-        if (currentHoverTimeout) clearTimeout(currentHoverTimeout);
-      });
-      tooltip.addEventListener("mouseleave", hidePostPreview);
-    }, 200);
-  }
-
   function hidePostPreview() {
     if (!tooltip) return;
     if (currentHoverTimeout) {
@@ -853,19 +811,6 @@
       processIgnoredContentOnce();
       return true;
     }
-  }
-
-  // Update user preferences
-  function updateUserPreferences(userId, options) {
-    if (!ignoredUsers.hasOwnProperty(userId)) return false;
-
-    ignoredUsers[userId].options = {
-      ...ignoredUsers[userId].options,
-      ...options,
-    };
-
-    saveIgnoredUsers();
-    return true;
   }
 
   // Save ignored users to storage
@@ -1064,145 +1009,6 @@
     return false;
   }
 
-  // Check if post content contains @mentions of ghosted users
-  function postContentContainsMentionedGhosted(post) {
-    // Get the post content div
-    const contentDiv = post.querySelector(".content");
-    if (!contentDiv) return false;
-
-    // Get the text content of the post
-    const postText = contentDiv.textContent;
-    if (!postText) return false;
-
-    // Check for @username mentions of ghosted users
-    for (const userId in ignoredUsers) {
-      const userData = ignoredUsers[userId];
-      // Get the username safely from the new data structure
-      const username =
-        userData.username || (typeof userData === "string" ? userData : null);
-
-      // Only check if username is a valid string
-      if (username && typeof username === "string") {
-        if (postText.toLowerCase().includes(username.toLowerCase())) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  function hideTopicRow(element) {
-    // First, check if the element or its parent row has author-name-* class
-    // which indicates it's authored by a ghosted user
-    const rowItem = element.closest("li.row");
-    const hasGhostedClass =
-      rowItem &&
-      Array.from(rowItem.classList).some(
-        (cls) =>
-          cls.startsWith("author-name-") &&
-          isUserIgnored(cls.replace("author-name-", ""))
-      );
-
-    // Get the ghosted author ID if available
-    let ghostedAuthorId = null;
-    if (hasGhostedClass && rowItem) {
-      const authorClass = Array.from(rowItem.classList).find(
-        (cls) =>
-          cls.startsWith("author-name-") &&
-          isUserIgnored(cls.replace("author-name-", ""))
-      );
-
-      if (authorClass) {
-        ghostedAuthorId = authorClass.replace("author-name-", "");
-      }
-    }
-
-    if (hasGhostedClass) {
-      // If the row is authored by a ghosted user
-      if (ghostedAuthorId) {
-        const settings = getUserVisibilitySetting(ghostedAuthorId, "lastPost");
-        const highlightColor = getUserHighlightColor(ghostedAuthorId);
-
-        // Determine if this is a forums list or topics/recent topics list
-        const isForumsList = rowItem && rowItem.closest(".topiclist.forums");
-
-        // Always add ghosted-by-author to the row for identification, not for hiding
-        if (rowItem) {
-          rowItem.classList.add("ghosted-by-author");
-        }
-
-        if (settings.hide) {
-          if (isForumsList) {
-            // For forums list, only hide the lastpost cell
-            const lastpostCell = rowItem.querySelector("dd.lastpost");
-            if (lastpostCell) {
-              lastpostCell.classList.add("ghosted-row");
-            }
-          } else {
-            // For topics/recent topics, check the hide mode
-            if (settings.hideMode === "last_post") {
-              // Only hide the lastpost cell, not the row
-              const lastpostCell = rowItem
-                ? rowItem.querySelector("dd.lastpost")
-                : null;
-              if (lastpostCell) {
-                lastpostCell.classList.add("ghosted-row");
-              }
-            } else {
-              // Hide entire row by adding ghosted-row
-              if (rowItem) {
-                rowItem.classList.add("ghosted-row");
-              } else {
-                element.classList.add("ghosted-row");
-              }
-            }
-          }
-        } else if (settings.highlight) {
-          // Highlight row based on user preference
-          if (rowItem) {
-            rowItem.classList.add("ghosted-row-highlight");
-            rowItem.style.setProperty(
-              "--ghost-highlight-color",
-              highlightColor
-            );
-          } else {
-            element.classList.add("ghosted-row-highlight");
-            element.style.setProperty(
-              "--ghost-highlight-color",
-              highlightColor
-            );
-          }
-        }
-      } else {
-        // If we can't get the ghosted author ID, use default behavior
-        const isForumsList = rowItem && rowItem.closest(".topiclist.forums");
-
-        // Always add ghosted-by-author to the row for identification, not for hiding
-        if (rowItem) {
-          rowItem.classList.add("ghosted-by-author");
-        }
-
-        if (isForumsList) {
-          // For forums list, only hide the lastpost cell
-          const lastpostCell = rowItem
-            ? rowItem.querySelector("dd.lastpost")
-            : null;
-          if (lastpostCell) {
-            lastpostCell.classList.add("ghosted-row");
-          }
-        } else {
-          // For topics/recent topics, hide entire row by adding ghosted-row
-          if (rowItem) {
-            rowItem.classList.add("ghosted-row");
-          } else {
-            element.classList.add("ghosted-row");
-          }
-        }
-      }
-    }
-  }
-
   function processReactionImages() {
     // Find all reaction images with reaction-username attribute
     const reactionImages = document.querySelectorAll("img[reaction-username]");
@@ -1279,7 +1085,7 @@
         // Check if the author is ignored
         if (isUserIgnored(authorName)) {
           // Author is ghosted, add ghosted-by-author class
-          lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+          lastpostCell.classList.add("ghosted-row");
           return;
         }
 
@@ -1293,7 +1099,7 @@
               const ghostedResult = postContentContainsGhosted(postContent);
               if (ghostedResult && ghostedResult.containsGhosted) {
                 // Post content contains ghosted username, add ghosted-by-content class
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+                lastpostCell.classList.add("ghosted-row");
               }
             }
           }
@@ -1303,7 +1109,7 @@
         // Check if the author is ignored
         if (isUserIgnored(authorName)) {
           // Author is ghosted, add ghosted-by-author class to the entire row
-          row.classList.add("ghosted-row", "ghosted-by-author");
+          row.classList.add("ghosted-row");
           return;
         }
 
@@ -1320,20 +1126,19 @@
                 "a.username, a.username-coloured"
               );
               if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
-                // If author is ghosted, ONLY add ghosted-by-author and stop processing
-                row.classList.add("ghosted-row", "ghosted-by-author");
-                return; // Stop here, don't check content
+                row.classList.add("ghosted-row");
+                return;
               } else if (postContent) {
                 const ghostedResult = postContentContainsGhosted(postContent);
                 if (ghostedResult && ghostedResult.containsGhosted) {
                   // Only if author is not ghosted, check content
-                  row.classList.add("ghosted-row", "ghosted-by-content");
+                  row.classList.add("ghosted-row");
                 }
               }
             } else if (postContent) {
               const ghostedResult = postContentContainsGhosted(postContent);
               if (ghostedResult && ghostedResult.containsGhosted) {
-                row.classList.add("ghosted-row", "ghosted-by-content");
+                row.classList.add("ghosted-row");
               }
             }
           }
@@ -1342,17 +1147,8 @@
     });
   }
 
-  // Legacy functions for backward compatibility
-  function processTopiclistForumsRow() {
-    processTopicListRow("forum");
-  }
-
   function processRecentTopicsRows() {
     processTopicListRow("recent");
-  }
-
-  function processTopiclistTopicsRows() {
-    processTopicListRow("topic");
   }
 
   function processPoll(poll) {
@@ -1759,7 +1555,7 @@
 
           if (settings.hide) {
             // Hide based on user preference
-            post.classList.add("ghosted-by-content");
+            post.classList.add("ghosted-row");
           } else if (settings.highlight) {
             // Highlight based on user preference
             post.classList.add("ghosted-content-highlight");
@@ -1789,7 +1585,7 @@
           }
 
           if (shouldHide) {
-            post.classList.add("ghosted-by-content");
+            post.classList.add("ghosted-row");
           } else if (mentionHighlightColor) {
             post.classList.add("ghosted-content-highlight");
             post.style.setProperty(
@@ -1978,7 +1774,7 @@
 
         if (settings.hide) {
           // For forum lists, ALWAYS hide just the lastpost cell, not the entire row
-          lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+          lastpostCell.classList.add("ghosted-row");
         } else if (settings.highlight) {
           // Highlight lastpost based on user preference
           lastpostCell.classList.add("ghosted-highlight");
@@ -1989,7 +1785,7 @@
         }
       } else {
         // Fallback behavior
-        lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+        lastpostCell.classList.add("ghosted-row");
       }
 
       lastpostCell.classList.add("content-processed");
@@ -2035,7 +1831,7 @@
 
               if (settings.hide) {
                 // For forum lists, ALWAYS hide just the lastpost cell with ghosted-by-content
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+                lastpostCell.classList.add("ghosted-row");
               } else if (settings.highlight) {
                 // Highlight lastpost based on user preference
                 lastpostCell.classList.add("ghosted-content-highlight");
@@ -2046,7 +1842,7 @@
               }
             } else {
               // Fallback behavior
-              lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+              lastpostCell.classList.add("ghosted-row");
             }
           }
         }
@@ -2131,7 +1927,7 @@
           // Add ghosted-row only if we want to hide the entire row
           rowItem.classList.add("ghosted-row");
         } else {
-          lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+          lastpostCell.classList.add("ghosted-row");
         }
       }
     }
@@ -2214,7 +2010,7 @@
           // Add ghosted-row only if we want to hide the entire row
           rowItem.classList.add("ghosted-row");
         } else {
-          lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+          lastpostCell.classList.add("ghosted-row");
         }
       }
     }
@@ -2312,15 +2108,6 @@
     }
   }
 
-  // Update the process functions for backward compatibility
-  function processTopiclistForumsRow() {
-    return processForumsListRows();
-  }
-
-  function processTopiclistTopicsRows() {
-    return processTopicsListRows();
-  }
-
   function processTopicListRow(rowType) {
     if (rowType === "forum") {
       return processForumsListRows();
@@ -2413,15 +2200,6 @@
         if (lp && !lp.classList.contains("content-processed")) return;
         row.classList.add("content-processed");
       });
-  }
-
-  // These are shortcuts for specific list types
-  function processTopiclistForumsRow() {
-    return processForumsListRows();
-  }
-
-  function processTopiclistTopicsRows() {
-    return processTopicsListRows();
   }
 
   function processTopicListRow(rowType) {
@@ -3945,53 +3723,6 @@
     setInterval(processReactionImages, 2000);
   }
 
-  // Function to change Oyster Sauce's username color to #00AA00
-  function changeOysterSauceColor() {
-    document.querySelectorAll("a.username-coloured").forEach((link) => {
-      if (link.textContent.trim() === "Oyster Sauce") {
-        link.style.color = "#00AA00";
-      }
-    });
-
-    // Set up a MutationObserver to handle dynamically loaded content
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.addedNodes && mutation.addedNodes.length > 0) {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === 1) {
-              // Element node
-              const usernameLinks = node.querySelectorAll
-                ? node.querySelectorAll("a.username-coloured")
-                : [];
-
-              usernameLinks.forEach((link) => {
-                if (link.textContent.trim() === "Oyster Sauce") {
-                  link.style.color = "#00AA00";
-                }
-              });
-            }
-          });
-        }
-      });
-    });
-
-    // Start observing the document with the configured parameters
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
-
-  // Function to clean up any elements that have both ghosted-by-author and ghosted-by-content classes
-  function cleanupGhostedClasses() {
-    // Find all elements with both classes
-    const elementsWithBothClasses = document.querySelectorAll(
-      ".ghosted-by-author.ghosted-by-content"
-    );
-
-    // Remove ghosted-by-content from these elements
-    elementsWithBothClasses.forEach((element) => {
-      element.classList.remove("ghosted-by-content");
-    });
-  }
-
   document.addEventListener("DOMContentLoaded", async () => {
     await Promise.all(
       Array.from(
@@ -4051,7 +3782,6 @@
     moveExternalLinkIcon();
     cleanGhostedQuotesInTextarea();
     updatePaginationPostCount();
-    changeOysterSauceColor();
 
     // Final pass to ensure all containers are marked as processed
     document
@@ -4191,7 +3921,7 @@
     if (isQuoteOrMention && isUserIgnored(firstUsername)) {
       const row = item.closest("li.row");
       if (row) {
-        row.classList.add("ghosted-row", "ghosted-by-author");
+        row.classList.add("ghosted-row");
         await markNotificationAsRead(item);
       }
       item.classList.add("content-processed");
@@ -4210,7 +3940,7 @@
     if (nonIgnored.length === 0) {
       const row = item.closest("li.row");
       if (row) {
-        row.classList.add("ghosted-row", "ghosted-by-author");
+        row.classList.add("ghosted-row");
         await markNotificationAsRead(item);
       }
       item.classList.add("content-processed");
@@ -4256,7 +3986,7 @@
     if (row) {
       ghosted.forEach((ghostedUsername) => {
         const ghostedRow = row.cloneNode(true);
-        ghostedRow.classList.add("ghosted-row", "ghosted-by-author");
+        ghostedRow.classList.add("ghosted-row");
 
         // Update the notification text for this ghosted user
         const ghostedTitleEl = ghostedRow.querySelector(".notifications_title");
@@ -4305,7 +4035,7 @@
       const li = item.closest("li");
       if (li) {
         await markNotificationAsRead(item);
-        li.classList.add("ghosted-row", "ghosted-by-author");
+        li.classList.add("ghosted-row");
       }
       item.classList.add("content-processed");
       return;
@@ -4329,7 +4059,7 @@
       const li = item.closest("li");
       if (li) {
         await markNotificationAsRead(item);
-        li.classList.add("ghosted-row", "ghosted-by-author");
+        li.classList.add("ghosted-row");
       }
       item.classList.add("content-processed");
       return;
