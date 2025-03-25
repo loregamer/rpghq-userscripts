@@ -115,47 +115,6 @@
       display: none !important;
     }
 
-    /* Highlight styles for ghosted content */
-    .ghosted-highlight {
-      display: block !important;
-      border: 2px solid var(--ghost-highlight-color, #FF5555) !important;
-      padding: 5px !important;
-      position: relative !important;
-    }
-
-    .ghosted-highlight::before {
-      content: "Ghosted User";
-      display: inline-block;
-      position: absolute;
-      top: -10px;
-      left: 10px;
-      background-color: var(--ghost-highlight-color, #FF5555);
-      color: #FFF;
-      font-size: 10px;
-      padding: 2px 5px;
-      border-radius: 3px;
-    }
-
-    /* Row highlighting for ghosted rows */
-    .ghosted-row-highlight {
-      display: block !important;
-      padding: 5px !important;
-      position: relative !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-    }
-
-    .ghosted-row-highlight::before {
-      content: "Ghosted Topic";
-      display: inline-block;
-      position: absolute;
-      top: -10px;
-      left: 10px;
-      font-size: 10px;
-      padding: 2px 5px;
-      border-radius: 3px;
-    }
-
     li.row.ghosted-highlight {
       padding: 10px 5px !important;
       margin-bottom: 5px !important;
@@ -472,25 +431,6 @@
     body.show-ghosted-content .ghosted-quote,
     body.show-ghosted-content .ghosted-reaction {
       display: block !important;
-      position: relative;
-      border-left: 3px solid #FF5555 !important;
-      padding-left: 10px !important;
-      background-color: rgba(255, 85, 85, 0.05) !important;
-    }
-
-    body.show-ghosted-content .ghosted-row::before,
-    body.show-ghosted-content .ghosted-post::before,
-    body.show-ghosted-content .ghosted-quote::before,
-    body.show-ghosted-content .ghosted-reaction::before {
-      content: "Hidden Content";
-      display: inline-block;
-      position: absolute;
-      top: 0;
-      right: 5px;
-      background-color: #FF5555;
-      color: white;
-      font-size: 10px;
-      padding: 2px 5px;
     }
 
     /* Ghost toggle button */
@@ -1084,7 +1024,6 @@
       if (rowType === "forum") {
         // Check if the author is ignored
         if (isUserIgnored(authorName)) {
-          // Author is ghosted, add ghosted-by-author class
           lastpostCell.classList.add("ghosted-row");
           return;
         }
