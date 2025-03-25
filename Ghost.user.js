@@ -761,12 +761,6 @@
 
   // Get specific hide/highlight setting for a user and content type
   function getUserVisibilitySetting(userId, contentType) {
-    // Check if user exists in ignoredUsers
-    if (!ignoredUsers[userId]) {
-      // Return default settings if user not found
-      return { hide: true, highlight: false, hideMode: "entire_row" };
-    }
-
     // If user has specific settings
     if (
       ignoredUsers[userId].settings &&
@@ -3885,9 +3879,6 @@
           container.classList.add("content-processed");
         }
       });
-
-    // Clean up any elements that have both ghosted-by-author and ghosted-by-content classes
-    cleanupGhostedClasses();
 
     // Set up a MutationObserver to clean up any elements that get both classes in the future
     const ghostedClassesObserver = new MutationObserver((mutations) => {
