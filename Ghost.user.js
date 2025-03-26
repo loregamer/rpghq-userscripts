@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.9.0
+// @version      5.10
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -78,13 +78,6 @@
     /* -----------------------------------------------------------------
        1) Spinner styling for containers that are not yet processed
        ----------------------------------------------------------------- */
-    #recent-topics:not(.content-processed),
-    .topiclist.forums:not(.content-processed),
-    fieldset.polls:not(.content-processed),
-    .topiclist.topics:not(.content-processed) {
-      position: relative;
-      min-height: 64px;
-    }
     #recent-topics:not(.content-processed)::after,
     .topiclist.forums:not(.content-processed)::after,
     fieldset.polls:not(.content-processed)::after,
@@ -154,18 +147,37 @@
     }
 
     /* -----------------------------------------------------------------
-       4) Ghosted element styling
-       ----------------------------------------------------------------- */
+      4) Ghosted element styling - with increased specificity
+      ----------------------------------------------------------------- */
+    /* Hiding functionality - only linked to ghosted-row class */
+    html body .ghosted-row,
+    #page-body .ghosted-row,
+    ul.topiclist li.ghosted-row,
     .ghosted-row {
       display: none !important;
     }
+
+    html body .ghosted-row.show,
+    #page-body .ghosted-row.show,
+    ul.topiclist li.ghosted-row.show,
     .ghosted-row.show {
       display: block !important;
     }
-    .ghosted-row.show.ghosted-by-author {
+
+    /* Highlighting colors - independent class purely for colorizing */
+    html body .ghosted-by-author,
+    #page-body .ghosted-by-author,
+    ul.topiclist li.ghosted-by-author,
+    dd.lastpost.ghosted-by-author,
+    .ghosted-by-author {
       background-color: var(--ghost-author-highlight, rgba(255, 0, 0, 0.1)) !important;
     }
-    .ghosted-row.show.ghosted-by-content {
+
+    html body .ghosted-by-content,
+    #page-body .ghosted-by-content,
+    ul.topiclist li.ghosted-by-content,
+    dd.lastpost.ghosted-by-content,
+    .ghosted-by-content {
       background-color: var(--ghost-content-highlight, rgba(255, 128, 0, 0.1)) !important;
     }
     .topiclist.forums .ghosted-row:not(.show) dd.lastpost,
@@ -174,38 +186,16 @@
     #recent-topics .ghosted-row:not(.show) dd.lastpost {
       display: none !important;
     }
-    /* Always highlight the entire row, even if only hiding lastpost */
-    .ghosted-row {
-      position: relative;
-    }
-    .ghosted-row::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      pointer-events: none;
-      z-index: 1;
-      display: none;
-    }
-    .ghosted-row.show.ghosted-by-author::before {
+    .ghosted-row.show::before {
       display: block;
-      background-color: var(--ghost-author-highlight, rgba(255, 0, 0, 0.1));
     }
-    .ghosted-row.show.ghosted-by-content::before {
-      display: block;
-      background-color: var(--ghost-content-highlight, rgba(255, 128, 0, 0.1));
-    }
-    .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-author,
-    body[class*="viewforum-"] .ghosted-row.show dd.lastpost.ghosted-by-author {
+    .topiclist.forums .ghosted-row.show dd.lastpost,
+    body[class*="viewforum-"] .ghosted-row.show dd.lastpost {
       display: block !important;
-      background-color: var(--ghost-author-highlight, rgba(255, 0, 0, 0.1)) !important;
     }
-    .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-content,
-    body[class*="viewforum-"] .ghosted-row.show dd.lastpost.ghosted-by-content {
+    .topiclist.forums .ghosted-row.show dd.lastpost,
+    body[class*="viewforum-"] .ghosted-row.show dd.lastpost {
       display: block !important;
-      background-color: var(--ghost-content-highlight, rgba(255, 128, 0, 0.1)) !important;
     }
     .ghosted-post,
     .ghosted-quote {
@@ -1255,8 +1245,10 @@
       if (rowType === "forum") {
         // Check if the author is ignored
         if (isUserIgnored(authorName)) {
-          // Author is ghosted, add ghosted-by-author class
+          // Author is ghosted, add ghosted-row class to lastpost
           lastpostCell.classList.add("ghosted-row");
+          // Add highlighting class to the row
+          row.classList.add("ghosted-by-author");
           return;
         }
 
@@ -1267,8 +1259,10 @@
           if (postId && postCache[postId]) {
             const postContent = postCache[postId].content;
             if (postContent && postContentContainsGhosted(postContent)) {
-              // Post content contains ghosted username, add ghosted-by-content class
-              lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+              // Post content contains ghosted username, add ghosted-row class to lastpost
+              lastpostCell.classList.add("ghosted-row");
+              // Add highlighting class to the row
+              row.classList.add("ghosted-by-content");
             }
           }
         }
@@ -1277,12 +1271,15 @@
         // Check if the author is ignored
         if (isUserIgnored(authorName)) {
           if (config.hideEntireRow) {
-            // Hide entire row - Author is ghosted, add ghosted-by-author class to the entire row
-            row.classList.add("ghosted-row", "ghosted-by-author");
+            // Hide entire row - Author is ghosted
+            row.classList.add("ghosted-row");
+            // Add highlighting class to the row
+            row.classList.add("ghosted-by-author");
           } else {
-            // Only hide lastpost but highlight entire row
-            row.classList.add("ghosted-row", "ghosted-by-author");
+            // Only hide lastpost
             lastpostCell.classList.add("ghosted-row");
+            // Add highlighting class to the row
+            row.classList.add("ghosted-by-author");
           }
           return;
         }
@@ -1297,22 +1294,28 @@
             if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
               if (config.hideEntireRow) {
                 // Hide entire row
-                row.classList.add("ghosted-row", "ghosted-by-author");
+                row.classList.add("ghosted-row");
+                // Add highlighting class to the row
+                row.classList.add("ghosted-by-author");
               } else {
-                // Only hide lastpost but highlight entire row
-                row.classList.add("ghosted-row", "ghosted-by-author");
+                // Only hide lastpost
                 lastpostCell.classList.add("ghosted-row");
+                // Add highlighting class to the row
+                row.classList.add("ghosted-by-author");
               }
               return; // Stop here, don't check content
             } else if (postContent && postContentContainsGhosted(postContent)) {
               // Content contains ghosted references
               if (config.hideEntireRow) {
                 // Hide entire row
-                row.classList.add("ghosted-row", "ghosted-by-content");
+                row.classList.add("ghosted-row");
+                // Add highlighting class to the row
+                row.classList.add("ghosted-by-content");
               } else {
-                // Only hide lastpost but highlight entire row
-                row.classList.add("ghosted-row", "ghosted-by-content");
+                // Only hide lastpost
                 lastpostCell.classList.add("ghosted-row");
+                // Add highlighting class to the row
+                row.classList.add("ghosted-by-content");
               }
             }
           }
@@ -1352,10 +1355,20 @@
     if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
       if (isForumList) {
         // For forum rows, only hide the lastpost
-        element.classList.add("ghosted-row", "ghosted-by-author");
+        element.classList.add("ghosted-row");
+        // Add highlight class to the row
+        if (row) row.classList.add("ghosted-by-author");
       } else if (row) {
-        // For other rows, hide the entire row
-        hideTopicRow(row);
+        // For other rows, apply to the row or lastpost based on config
+        if (config.hideEntireRow) {
+          // Hide entire row
+          row.classList.add("ghosted-row", "ghosted-by-author");
+        } else {
+          // Only hide lastpost
+          element.classList.add("ghosted-row");
+          // Add highlight class to the row
+          row.classList.add("ghosted-by-author");
+        }
       }
       element.classList.add("content-processed");
       return;
@@ -1401,10 +1414,20 @@
           if (userEl && isUserIgnored(userEl.textContent.trim())) {
             if (isForumList) {
               // For forum rows, only hide the lastpost
-              element.classList.add("ghosted-row", "ghosted-by-author");
+              element.classList.add("ghosted-row");
+              // Add highlight class to the row
+              if (row) row.classList.add("ghosted-by-author");
             } else if (row) {
-              // For other rows, hide the entire row
-              hideTopicRow(row);
+              // For other rows, apply based on config
+              if (config.hideEntireRow) {
+                // Hide entire row
+                row.classList.add("ghosted-row", "ghosted-by-author");
+              } else {
+                // Only hide lastpost
+                element.classList.add("ghosted-row");
+                // Add highlight class to the row
+                row.classList.add("ghosted-by-author");
+              }
             }
           } else {
             try {
@@ -1412,19 +1435,39 @@
               if (!content || postContentContainsGhosted(content)) {
                 if (isForumList) {
                   // For forum rows, only hide the lastpost
-                  element.classList.add("ghosted-row", "ghosted-by-content");
+                  element.classList.add("ghosted-row");
+                  // Add highlight class to the row
+                  if (row) row.classList.add("ghosted-by-content");
                 } else if (row) {
-                  // For other rows, hide the entire row
-                  hideTopicRow(row);
+                  // For other rows, apply based on config
+                  if (config.hideEntireRow) {
+                    // Hide entire row
+                    row.classList.add("ghosted-row", "ghosted-by-content");
+                  } else {
+                    // Only hide lastpost
+                    element.classList.add("ghosted-row");
+                    // Add highlight class to the row
+                    row.classList.add("ghosted-by-content");
+                  }
                 }
               }
             } catch (err) {
               if (isForumList) {
                 // For forum rows, only hide the lastpost
-                element.classList.add("ghosted-row", "ghosted-by-content");
+                element.classList.add("ghosted-row");
+                // Add highlight class to the row
+                if (row) row.classList.add("ghosted-by-content");
               } else if (row) {
-                // For other rows, hide the entire row
-                hideTopicRow(row);
+                // For other rows, hide based on config
+                if (config.hideEntireRow) {
+                  // Hide entire row
+                  row.classList.add("ghosted-row", "ghosted-by-content");
+                } else {
+                  // Only hide lastpost
+                  element.classList.add("ghosted-row");
+                  // Add highlight class to the row
+                  row.classList.add("ghosted-by-content");
+                }
               }
             }
           }
