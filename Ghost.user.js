@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.8.1
-// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users
+// @version      5.9.0
+// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
 // @run-at       document-start
@@ -10,6 +10,7 @@
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_addStyle
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/ghosted-users/Ghost.user.js
 // @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/ghosted-users/Ghost.user.js
 // @license      MIT
@@ -40,13 +41,20 @@
   overrideScript.remove();
 
   // ---------------------------------------------------------------------
-  // 1) DATA LOAD + INITIAL STYLES
+  // 1) DATA LOAD + INITIAL STYLES + CONFIG
   // ---------------------------------------------------------------------
 
   const ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => lowercased username
   const replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   const postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
   const userColors = GM_getValue("userColors", {}); // username => color
+
+  // Custom configuration values with defaults
+  const config = GM_getValue("ghostConfig", {
+    authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for ghosted-by-author
+    contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for ghosted-by-content
+    hideEntireRow: false, // Default: only hide lastpost, not entire row
+  });
 
   // Set Oyster Sauce's username color
   userColors["Oyster Sauce"] = "#00AA00";
@@ -155,24 +163,49 @@
       display: block !important;
     }
     .ghosted-row.show.ghosted-by-author {
-      background-color: rgba(255, 0, 0, 0.1) !important;
+      background-color: var(--ghost-author-highlight, rgba(255, 0, 0, 0.1)) !important;
     }
     .ghosted-row.show.ghosted-by-content {
-      background-color: rgba(255, 128, 0, 0.1) !important;
+      background-color: var(--ghost-content-highlight, rgba(255, 128, 0, 0.1)) !important;
     }
     .topiclist.forums .ghosted-row:not(.show) dd.lastpost,
-    body[class*="viewforum-"] .ghosted-row:not(.show) dd.lastpost {
+    body[class*="viewforum-"] .ghosted-row:not(.show) dd.lastpost,
+    .topiclist.topics .ghosted-row:not(.show) dd.lastpost,
+    #recent-topics .ghosted-row:not(.show) dd.lastpost {
       display: none !important;
+    }
+    /* Always highlight the entire row, even if only hiding lastpost */
+    .ghosted-row {
+      position: relative;
+    }
+    .ghosted-row::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 1;
+      display: none;
+    }
+    .ghosted-row.show.ghosted-by-author::before {
+      display: block;
+      background-color: var(--ghost-author-highlight, rgba(255, 0, 0, 0.1));
+    }
+    .ghosted-row.show.ghosted-by-content::before {
+      display: block;
+      background-color: var(--ghost-content-highlight, rgba(255, 128, 0, 0.1));
     }
     .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-author,
     body[class*="viewforum-"] .ghosted-row.show dd.lastpost.ghosted-by-author {
       display: block !important;
-      background-color: rgba(255, 0, 0, 0.1) !important;
+      background-color: var(--ghost-author-highlight, rgba(255, 0, 0, 0.1)) !important;
     }
     .topiclist.forums .ghosted-row.show dd.lastpost.ghosted-by-content,
     body[class*="viewforum-"] .ghosted-row.show dd.lastpost.ghosted-by-content {
       display: block !important;
-      background-color: rgba(255, 255, 0, 0.1) !important;
+      background-color: var(--ghost-content-highlight, rgba(255, 128, 0, 0.1)) !important;
     }
     .ghosted-post,
     .ghosted-quote {
@@ -284,6 +317,409 @@
       .show-ghosted-posts span:not(.icon) {
         display: none;
       }
+    }
+
+    /* -----------------------------------------------------------------
+       6) NEW: Tile view styling for Ghosted Users popup
+       ----------------------------------------------------------------- */
+    #ignored-users-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #2a2e36;
+      border: 1px solid #3a3f4b;
+      border-radius: 5px;
+      width: 80%;
+      max-width: 700px;
+      height: 80%;
+      max-height: 600px;
+      display: flex;
+      flex-direction: column;
+      z-index: 9999;
+      font-family: 'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif;
+    }
+
+    .ghost-popup-header {
+      padding: 15px;
+      background-color: #2a2e36;
+      border-bottom: 1px solid #3a3f4b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ghost-popup-title {
+      margin: 0;
+      color: #c5d0db;
+      font-size: 1.2em;
+    }
+
+    .ghost-popup-close {
+      background-color: transparent;
+      color: #c5d0db;
+      border: none;
+      font-size: 1.5em;
+      cursor: pointer;
+    }
+
+    .ghost-popup-controls {
+      padding: 10px 15px;
+      background-color: #242830;
+      border-bottom: 1px solid #3a3f4b;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .ghost-popup-search {
+      flex: 1;
+      background-color: #171b24;
+      border: 1px solid #3a3f4b;
+      border-radius: 4px;
+      padding: 8px 12px;
+      color: #c5d0db;
+      font-size: 14px;
+    }
+
+    .ghost-popup-search:focus {
+      outline: none;
+      border-color: #4a90e2;
+    }
+
+    .ghost-popup-add-btn {
+      background-color: #4a5464;
+      color: #c5d0db;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .ghost-popup-add-btn:hover {
+      background-color: #5a6474;
+    }
+
+    .ghost-popup-content {
+      padding: 15px;
+      overflow-y: auto;
+      flex-grow: 1;
+      background-color: #2a2e36;
+    }
+
+    .ghost-users-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+    }
+
+    .ghost-user-tile {
+      background-color: #242830;
+      border-radius: 5px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .ghost-user-tile:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .ghost-user-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      margin-bottom: 10px;
+      object-fit: cover;
+      border: 2px solid #3a3f4b;
+    }
+
+    .ghost-user-name {
+      color: #c5d0db;
+      font-size: 14px;
+      text-align: center;
+      word-break: break-word;
+      margin-bottom: 8px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ghost-user-actions {
+      display: flex;
+      gap: 5px;
+      margin-top: auto;
+    }
+
+    .ghost-user-unghost {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .ghost-user-unghost:hover {
+      background-color: #c0392b;
+    }
+
+    .ghost-user-visit {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .ghost-user-visit:hover {
+      background-color: #2980b9;
+    }
+
+    .ghost-empty-state {
+      text-align: center;
+      color: #8a8a8a;
+      padding: 30px;
+      font-size: 16px;
+    }
+
+    .ghost-popup-footer {
+      padding: 10px 15px;
+      background-color: #242830;
+      border-top: 1px solid #3a3f4b;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .ghost-popup-footer button {
+      background-color: #4a5464;
+      color: #c5d0db;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .ghost-popup-footer button:hover {
+      background-color: #5a6474;
+    }
+
+    /* Settings Panel Styles */
+    .ghost-settings-panel {
+      background-color: #242830;
+      border: 1px solid #3a3f4b;
+      border-radius: 5px;
+      padding: 15px;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .ghost-settings-panel.visible {
+      display: block;
+    }
+
+    .ghost-settings-title {
+      color: #c5d0db;
+      font-size: 16px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .ghost-settings-row {
+      display: flex;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+
+    .ghost-settings-label {
+      flex: 1;
+      color: #c5d0db;
+      font-size: 14px;
+    }
+
+    .ghost-settings-input {
+      flex: 1;
+      background-color: #1e232b;
+      border: 1px solid #3a3f4b;
+      border-radius: 4px;
+      padding: 6px 10px;
+      color: #c5d0db;
+    }
+
+    .ghost-settings-checkbox {
+      margin-right: 10px;
+    }
+
+    .ghost-settings-color {
+      width: 100px;
+      height: 30px;
+      padding: 0 5px;
+      background-color: #1e232b;
+      border: 1px solid #3a3f4b;
+      border-radius: 4px;
+    }
+
+    .ghost-settings-preview {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      margin-left: 10px;
+      border: 1px solid #3a3f4b;
+    }
+
+    .ghost-settings-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .ghost-settings-save,
+    .ghost-settings-reset {
+      background-color: #4a5464;
+      color: #c5d0db;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+
+    .ghost-settings-save:hover,
+    .ghost-settings-reset:hover {
+      background-color: #5a6474;
+    }
+
+    /* Member search modal styling */
+    .member-search-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1001;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .member-search-modal.active {
+      display: flex;
+    }
+
+    .member-search-container {
+      background-color: #1e232b;
+      border: 1px solid #292e37;
+      border-radius: 4px;
+      width: 350px;
+      max-width: 80%;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      position: relative;
+      z-index: 1002;
+      margin: 0 auto;
+    }
+
+    .member-search-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+      color: #888;
+      cursor: pointer;
+    }
+
+    .member-search-close:hover {
+      color: #fff;
+    }
+
+    .member-search-title {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #fff;
+      text-align: center;
+    }
+
+    .member-search-input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #292e37;
+      border-radius: 4px;
+      background-color: #171b24;
+      color: #fff;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .member-search-input:focus {
+      outline: none;
+      border-color: #8698b3;
+    }
+
+    .member-search-results {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .member-search-result {
+      display: flex;
+      align-items: center;
+      padding: 8px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .member-search-result:hover {
+      background-color: #292e37;
+    }
+
+    .member-search-result img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+
+    .member-search-result span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .member-search-no-results {
+      padding: 10px;
+      color: #8a8a8a;
+      text-align: center;
+    }
+
+    .member-search-loading {
+      text-align: center;
+      padding: 10px;
+      color: #8a8a8a;
+    }
+
+    .ghost-action-buttons {
+      display: flex;
+      gap: 5px;
+      margin-top: 10px;
     }
   `;
   document.documentElement.appendChild(mainStyle);
@@ -840,11 +1276,17 @@
           }
         }
       } else {
-        // For topic and recent rows, we hide the entire row
+        // For topic and recent rows, check config to see if we should hide entire row or just lastpost
         // Check if the author is ignored
         if (isUserIgnored(authorName)) {
-          // Author is ghosted, add ghosted-by-author class to the entire row
-          row.classList.add("ghosted-row", "ghosted-by-author");
+          if (config.hideEntireRow) {
+            // Hide entire row - Author is ghosted, add ghosted-by-author class to the entire row
+            row.classList.add("ghosted-row", "ghosted-by-author");
+          } else {
+            // Only hide lastpost but highlight entire row
+            row.classList.add("ghosted-row", "ghosted-by-author");
+            lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+          }
           return;
         }
 
@@ -855,24 +1297,26 @@
           if (postId && postCache[postId]) {
             const postContent = postCache[postId].content;
             // Check if the lastPostCell contains the username of a ghosted user
-            const lastpostCell = row.querySelector("dd.lastpost");
-            if (lastpostCell) {
-              const authorLink = lastpostCell.querySelector(
-                "a.username, a.username-coloured"
-              );
-              if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
-                // If author is ghosted, ONLY add ghosted-by-author and stop processing
+            if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
+              if (config.hideEntireRow) {
+                // Hide entire row
                 row.classList.add("ghosted-row", "ghosted-by-author");
-                return; // Stop here, don't check content
-              } else if (
-                postContent &&
-                postContentContainsGhosted(postContent)
-              ) {
-                // Only if author is not ghosted, check content
-                row.classList.add("ghosted-row", "ghosted-by-content");
+              } else {
+                // Only hide lastpost but highlight entire row
+                row.classList.add("ghosted-row", "ghosted-by-author");
+                lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
               }
+              return; // Stop here, don't check content
             } else if (postContent && postContentContainsGhosted(postContent)) {
-              row.classList.add("ghosted-row", "ghosted-by-content");
+              // Content contains ghosted references
+              if (config.hideEntireRow) {
+                // Hide entire row
+                row.classList.add("ghosted-row", "ghosted-by-content");
+              } else {
+                // Only hide lastpost but highlight entire row
+                row.classList.add("ghosted-row", "ghosted-by-content");
+                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+              }
             }
           }
         }
@@ -891,54 +1335,6 @@
 
   function processTopiclistTopicsRows() {
     processTopicListRow("topic");
-  }
-
-  // Legacy function for backward compatibility - hide entire row except for forum rows
-  function hideTopicRow(element) {
-    const recentTopicLi = element.closest("#recent-topics li");
-    if (recentTopicLi) {
-      recentTopicLi.classList.add("ghosted-row", "ghosted-by-author");
-      return;
-    }
-
-    const rowItem = element.closest("li.row");
-    if (!rowItem) {
-      element.classList.add("ghosted-row", "ghosted-by-author");
-      return;
-    }
-
-    const isForumList = rowItem.closest(".topiclist.forums");
-    if (isForumList) {
-      // For forum rows, only hide the lastpost
-      const lastpostCell = rowItem.querySelector("dd.lastpost");
-      if (lastpostCell) {
-        // Get the author link in the lastpost cell
-        const authorLink = lastpostCell.querySelector(
-          "a.username, a.username-coloured"
-        );
-        if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
-          lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
-        } else {
-          // Check post content
-          const postLink = lastpostCell.querySelector(
-            "a[href*='viewtopic.php']"
-          );
-          if (postLink) {
-            const postId = postLink.href.match(/p=(\d+)/)?.[1];
-            if (postId && postCache[postId]) {
-              const postContent = postCache[postId].content;
-              if (postContent && postContentContainsGhosted(postContent)) {
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
-              }
-            }
-          }
-        }
-      }
-      return;
-    }
-
-    // For all other row types, hide the entire row
-    rowItem.classList.add("ghosted-row", "ghosted-by-content");
   }
 
   async function processLastPost(element) {
@@ -1931,73 +2327,189 @@
   }
 
   // ---------------------------------------------------------------------
-  // 10) IGNORED USERS MANAGEMENT
+  // 10) NEW: IMPROVED IGNORED USERS MANAGEMENT WITH TILE VIEW
   // ---------------------------------------------------------------------
 
-  function showIgnoredUsersPopup() {
-    // Create popup container
-    const popup = document.createElement("div");
-    popup.id = "ignored-users-popup";
-    popup.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: #2a2e36;
-      border: 1px solid #3a3f4b;
-      border-radius: 5px;
-      width: 80%;
-      max-width: 600px;
-      height: 80%;
-      max-height: 600px;
-      display: flex;
-      flex-direction: column;
-      z-index: 9999;
-      font-family: 'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif;
+  function createMemberSearchModal() {
+    const modal = document.createElement("div");
+    modal.className = "member-search-modal";
+    modal.innerHTML = `
+      <div class="member-search-container">
+        <div class="member-search-close">&times;</div>
+        <div class="member-search-title">Search for Member</div>
+        <input type="text" class="member-search-input" placeholder="Type username to search...">
+        <div class="member-search-results"></div>
+      </div>
     `;
 
-    // Header with title and close button
-    const header = document.createElement("div");
-    header.style.cssText = `
-      padding: 10px;
-      background-color: #2a2e36;
-      border-bottom: 1px solid #3a3f4b;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    `;
-    const title = document.createElement("h2");
-    title.textContent = "Ghosted Users";
-    title.style.cssText = "margin: 0; color: #c5d0db; font-size: 1.2em;";
-    const closeButton = document.createElement("button");
-    closeButton.textContent = "×";
-    closeButton.style.cssText = `
-      background-color: transparent;
-      color: #c5d0db;
-      border: none;
-      font-size: 1.5em;
-      cursor: pointer;
-    `;
-    closeButton.onclick = () => document.body.removeChild(popup);
-    header.appendChild(title);
-    header.appendChild(closeButton);
+    document.body.appendChild(modal);
 
-    // Content area for the user list
-    const content = document.createElement("div");
-    content.style.cssText = `
-      padding: 10px;
-      overflow-y: auto;
-      flex-grow: 1;
-      background-color: #2a2e36;
-    `;
-    const userList = document.createElement("ul");
-    userList.style.cssText = `
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
-    `;
+    // Close modal when clicking the close button
+    const closeButton = modal.querySelector(".member-search-close");
+    closeButton.addEventListener("click", function () {
+      modal.classList.remove("active");
+    });
 
-    // Render user list
+    // Setup search functionality
+    setupSearchFunctionality(modal);
+
+    return modal;
+  }
+
+  function setupSearchFunctionality(modal) {
+    const searchInput = modal.querySelector(".member-search-input");
+    const searchResults = modal.querySelector(".member-search-results");
+
+    // Handle input changes for search
+    let debounceTimer;
+    searchInput.addEventListener("input", function () {
+      clearTimeout(debounceTimer);
+
+      const query = this.value.trim();
+
+      if (query.length < 2) {
+        searchResults.innerHTML = "";
+        return;
+      }
+
+      searchResults.innerHTML =
+        '<div class="member-search-loading">Searching...</div>';
+
+      debounceTimer = setTimeout(() => {
+        searchMembers(query, searchResults);
+      }, 300);
+    });
+
+    // Focus input when modal is opened
+    modal.addEventListener("transitionend", function () {
+      if (modal.classList.contains("active")) {
+        searchInput.focus();
+      }
+    });
+
+    // Also try to focus right away when modal is shown
+    const activeObserver = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        if (
+          mutation.attributeName === "class" &&
+          modal.classList.contains("active")
+        ) {
+          searchInput.focus();
+        }
+      });
+    });
+
+    activeObserver.observe(modal, { attributes: true });
+  }
+
+  function searchMembers(query, resultsContainer) {
+    fetch(
+      `https://rpghq.org/forums/mentionloc?q=${encodeURIComponent(query)}`,
+      {
+        method: "GET",
+        headers: {
+          accept: "application/json, text/javascript, */*; q=0.01",
+          "x-requested-with": "XMLHttpRequest",
+        },
+        credentials: "include",
+      }
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        displaySearchResults(data, resultsContainer);
+      })
+      .catch((error) => {
+        console.error("Error searching for members:", error);
+        resultsContainer.innerHTML =
+          '<div class="member-search-no-results">Error searching for members</div>';
+      });
+  }
+
+  function displaySearchResults(data, resultsContainer) {
+    resultsContainer.innerHTML = "";
+
+    // Filter to only include users, exclude groups
+    const filteredData = data.filter((item) => item.type === "user");
+
+    if (!filteredData || filteredData.length === 0) {
+      resultsContainer.innerHTML =
+        '<div class="member-search-no-results">No members found</div>';
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    filteredData.forEach((item) => {
+      const resultItem = document.createElement("div");
+      resultItem.className = "member-search-result";
+
+      // User entry
+      resultItem.setAttribute("data-user-id", item.user_id);
+      resultItem.setAttribute(
+        "data-username",
+        item.value || item.key || "Unknown User"
+      );
+
+      // Default fallback avatar
+      const defaultAvatar =
+        "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
+
+      // Create the result item with image that tries multiple extensions
+      const userId = item.user_id;
+      const username = item.value || item.key || "Unknown User";
+
+      resultItem.innerHTML = `
+        <img
+          src="https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg"
+          alt="${username}'s avatar"
+          onerror="if(this.src.endsWith('.jpg')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.png';}else if(this.src.endsWith('.png')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.gif';}else{this.src='${defaultAvatar}';}"
+        >
+        <span>${username}</span>
+      `;
+
+      resultItem.addEventListener("click", function () {
+        const userId = this.getAttribute("data-user-id");
+        const username = this.getAttribute("data-username");
+
+        // Check if the user is already ghosted
+        if (isUserIgnored(userId)) {
+          alert(`${username} is already ghosted!`);
+        } else {
+          // Add the user to ignored users
+          toggleUserGhost(userId, username);
+          alert(`${username} has been ghosted.`);
+
+          // Refresh the ghosted users popup if it's open
+          refreshGhostedUsersPopup();
+        }
+
+        // Close the search modal
+        document
+          .querySelector(".member-search-modal")
+          .classList.remove("active");
+      });
+
+      fragment.appendChild(resultItem);
+    });
+
+    resultsContainer.appendChild(fragment);
+  }
+
+  function refreshGhostedUsersPopup() {
+    const popup = document.getElementById("ignored-users-popup");
+    if (popup) {
+      const content = popup.querySelector(".ghost-popup-content");
+      if (content) {
+        populateGhostedUsersGrid(content);
+      }
+    }
+  }
+
+  function populateGhostedUsersGrid(container) {
+    // Clear existing content
+    container.innerHTML = "";
+
+    // Get all ghosted users
     const userEntries = Object.entries(ignoredUsers).map(
       ([userId, username]) => ({
         userId,
@@ -2005,100 +2517,342 @@
       })
     );
 
+    // Sort by username alphabetically
     userEntries.sort((a, b) => a.username.localeCompare(b.username));
 
-    userEntries.forEach(({ userId, username }) => {
-      const listItem = document.createElement("li");
-      listItem.style.cssText = `
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        padding: 5px;
-        border-bottom: 1px solid #3a3f4b;
+    if (userEntries.length === 0) {
+      container.innerHTML = `
+        <div class="ghost-empty-state">
+          <p>No ghosted users yet.</p>
+          <p>Click "Add User" to ghost someone.</p>
+        </div>
       `;
-
-      const unghostedButton = document.createElement("button");
-      unghostedButton.textContent = "Unghost";
-      unghostedButton.style.cssText = `
-        background-color: #4a5464;
-        color: #c5d0db;
-        border: none;
-        padding: 2px 5px;
-        border-radius: 3px;
-        cursor: pointer;
-        margin-right: 10px;
-        font-size: 0.8em;
-      `;
-      unghostedButton.onclick = () => {
-        toggleUserGhost(userId, username);
-        listItem.remove();
-        if (userList.children.length === 0) {
-          userList.innerHTML =
-            '<p style="color: #c5d0db;">No ghosted users.</p>';
-        }
-      };
-
-      const userLink = document.createElement("a");
-      userLink.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
-      userLink.textContent = username;
-      userLink.style.cssText =
-        "color: #4a90e2; text-decoration: none; flex-grow: 1;";
-
-      listItem.appendChild(unghostedButton);
-      listItem.appendChild(userLink);
-      userList.appendChild(listItem);
-    });
-
-    if (Object.keys(ignoredUsers).length === 0) {
-      userList.innerHTML = '<p style="color: #c5d0db;">No ghosted users.</p>';
+      return;
     }
 
-    content.appendChild(userList);
+    // Create the grid container
+    const grid = document.createElement("div");
+    grid.className = "ghost-users-grid";
 
-    // Bottom controls with buttons
-    const bottomControls = document.createElement("div");
-    bottomControls.style.cssText = `
-      padding: 10px;
-      background-color: #2a2e36;
-      border-top: 1px solid #3a3f4b;
-      text-align: center;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
+    // Create a tile for each user
+    userEntries.forEach(({ userId, username }) => {
+      const tile = document.createElement("div");
+      tile.className = "ghost-user-tile";
+
+      // Default avatar fallback
+      const defaultAvatar =
+        "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
+
+      tile.innerHTML = `
+        <img
+          class="ghost-user-avatar"
+          src="https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg"
+          alt="${username}'s avatar"
+          onerror="if(this.src.endsWith('.jpg')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.png';}else if(this.src.endsWith('.png')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.gif';}else{this.src='${defaultAvatar}';}"
+        >
+        <div class="ghost-user-name" title="${username}">${username}</div>
+        <div class="ghost-user-actions">
+          <button class="ghost-user-unghost" title="Unghost User">Unghost</button>
+          <button class="ghost-user-visit" title="Visit Profile">Profile</button>
+        </div>
+      `;
+
+      // Add event listeners for the buttons
+      const unghostBtn = tile.querySelector(".ghost-user-unghost");
+      unghostBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (confirm(`Are you sure you want to unghost ${username}?`)) {
+          toggleUserGhost(userId, username);
+          tile.remove();
+
+          // Check if grid is now empty
+          if (grid.children.length === 0) {
+            container.innerHTML = `
+              <div class="ghost-empty-state">
+                <p>No ghosted users yet.</p>
+                <p>Click "Add User" to ghost someone.</p>
+              </div>
+            `;
+          }
+        }
+      });
+
+      const visitBtn = tile.querySelector(".ghost-user-visit");
+      visitBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.location.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
+      });
+
+      grid.appendChild(tile);
+    });
+
+    container.appendChild(grid);
+  }
+
+  function createNewGhostedUsersPopup() {
+    // Remove any existing popup
+    const existingPopup = document.getElementById("ignored-users-popup");
+    if (existingPopup) existingPopup.remove();
+
+    // Create the member search modal first (if it doesn't exist)
+    if (!document.querySelector(".member-search-modal")) {
+      createMemberSearchModal();
+    }
+
+    // Create the main popup
+    const popup = document.createElement("div");
+    popup.id = "ignored-users-popup";
+
+    // Create the header
+    const header = document.createElement("div");
+    header.className = "ghost-popup-header";
+    header.innerHTML = `
+      <h2 class="ghost-popup-title">Ghosted Users</h2>
+      <button class="ghost-popup-close">&times;</button>
     `;
 
-    // Mass Unghost button
-    const massUnghostButton = document.createElement("button");
-    massUnghostButton.innerHTML =
-      '<i class="icon fa-trash fa-fw" aria-hidden="true"></i> Unghost All';
-    massUnghostButton.style.cssText = `
-      background-color: #4a5464;
-      color: #c5d0db;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 3px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
+    // Create the controls section
+    const controls = document.createElement("div");
+    controls.className = "ghost-popup-controls";
+    controls.innerHTML = `
+      <input type="text" class="ghost-popup-search" placeholder="Filter ghosted users...">
+      <button class="ghost-popup-add-btn">
+        <i class="fa fa-user-plus" aria-hidden="true"></i> Add User
+      </button>
     `;
-    massUnghostButton.onclick = () => {
-      if (confirm("Are you sure you want to unghost all users?")) {
-        GM_setValue("ignoredUsers", {});
-        ignoredUsers = {};
-        userList.innerHTML = '<p style="color: #c5d0db;">No ghosted users.</p>';
-        alert("All users have been unghosted.");
-      }
-    };
 
-    bottomControls.appendChild(massUnghostButton);
+    // Create the content area
+    const content = document.createElement("div");
+    content.className = "ghost-popup-content";
+
+    // Create the footer
+    const footer = document.createElement("div");
+    footer.className = "ghost-popup-footer";
+    footer.innerHTML = `
+      <button class="ghost-unghost-all">
+        <i class="fa fa-trash" aria-hidden="true"></i> Unghost All
+      </button>
+      <button class="ghost-settings-btn">
+        <i class="fa fa-cog" aria-hidden="true"></i> Settings
+      </button>
+    `;
+
+    // Create settings panel (hidden by default)
+    const settingsPanel = document.createElement("div");
+    settingsPanel.className = "ghost-settings-panel";
+    settingsPanel.innerHTML = `
+      <div class="ghost-settings-title">Ghost Settings</div>
+
+      <div class="ghost-settings-row">
+        <label class="ghost-settings-label">Author Highlight Color:</label>
+        <input type="text" class="ghost-settings-input ghost-author-color"
+               value="${config.authorHighlightColor}">
+        <div class="ghost-settings-preview author-preview"
+             style="background-color: ${config.authorHighlightColor};"></div>
+      </div>
+
+      <div class="ghost-settings-row">
+        <label class="ghost-settings-label">Content Highlight Color:</label>
+        <input type="text" class="ghost-settings-input ghost-content-color"
+               value="${config.contentHighlightColor}">
+        <div class="ghost-settings-preview content-preview"
+             style="background-color: ${config.contentHighlightColor};"></div>
+      </div>
+
+      <div class="ghost-settings-row">
+        <input type="checkbox" class="ghost-settings-checkbox ghost-hide-entire-row"
+               id="ghost-hide-entire-row" ${
+                 config.hideEntireRow ? "checked" : ""
+               }>
+        <label class="ghost-settings-label" for="ghost-hide-entire-row">
+          Hide entire row (not just lastpost) for topics and recent posts
+        </label>
+      </div>
+
+      <div class="ghost-settings-buttons">
+        <button class="ghost-settings-save">Save Changes</button>
+        <button class="ghost-settings-reset">Reset to Defaults</button>
+      </div>
+    `;
 
     // Assemble the popup
     popup.appendChild(header);
+    popup.appendChild(controls);
     popup.appendChild(content);
-    popup.appendChild(bottomControls);
+    popup.appendChild(settingsPanel);
+    popup.appendChild(footer);
+
+    // Add the popup to the page
     document.body.appendChild(popup);
+
+    // Populate the grid with ghosted users
+    populateGhostedUsersGrid(content);
+
+    // Add event listeners
+    const closeBtn = popup.querySelector(".ghost-popup-close");
+    closeBtn.addEventListener("click", () => {
+      popup.remove();
+    });
+
+    const addBtn = popup.querySelector(".ghost-popup-add-btn");
+    addBtn.addEventListener("click", () => {
+      const searchModal = document.querySelector(".member-search-modal");
+      searchModal.classList.add("active");
+      const searchInput = searchModal.querySelector(".member-search-input");
+      searchInput.value = "";
+      searchInput.focus();
+      searchModal.querySelector(".member-search-results").innerHTML = "";
+    });
+
+    const unghostAllBtn = popup.querySelector(".ghost-unghost-all");
+    unghostAllBtn.addEventListener("click", () => {
+      if (Object.keys(ignoredUsers).length === 0) {
+        alert("There are no ghosted users.");
+        return;
+      }
+
+      if (confirm("Are you sure you want to unghost ALL users?")) {
+        GM_setValue("ignoredUsers", {});
+        Object.keys(ignoredUsers).forEach((key) => delete ignoredUsers[key]);
+        populateGhostedUsersGrid(content);
+        alert("All users have been unghosted.");
+      }
+    });
+
+    // Settings panel toggle
+    const settingsBtn = popup.querySelector(".ghost-settings-btn");
+    settingsBtn.addEventListener("click", () => {
+      settingsPanel.classList.toggle("visible");
+
+      // Update scroll position to show settings if they're visible
+      if (settingsPanel.classList.contains("visible")) {
+        setTimeout(() => {
+          settingsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+      }
+    });
+
+    // Color input previews
+    const authorColorInput = popup.querySelector(".ghost-author-color");
+    const authorPreview = popup.querySelector(".author-preview");
+    authorColorInput.addEventListener("input", () => {
+      authorPreview.style.backgroundColor = authorColorInput.value;
+    });
+
+    const contentColorInput = popup.querySelector(".ghost-content-color");
+    const contentPreview = popup.querySelector(".content-preview");
+    contentColorInput.addEventListener("input", () => {
+      contentPreview.style.backgroundColor = contentColorInput.value;
+    });
+
+    // Save settings
+    const saveSettingsBtn = popup.querySelector(".ghost-settings-save");
+    saveSettingsBtn.addEventListener("click", () => {
+      const newConfig = {
+        authorHighlightColor: authorColorInput.value,
+        contentHighlightColor: contentColorInput.value,
+        hideEntireRow: popup.querySelector(".ghost-hide-entire-row").checked,
+      };
+
+      // Save to GM storage
+      GM_setValue("ghostConfig", newConfig);
+
+      // Update current config
+      Object.assign(config, newConfig);
+
+      // Apply changes
+      applyCustomColors();
+
+      alert("Settings saved! Refresh the page to see all changes take effect.");
+    });
+
+    // Reset settings
+    const resetSettingsBtn = popup.querySelector(".ghost-settings-reset");
+    resetSettingsBtn.addEventListener("click", () => {
+      if (confirm("Reset all settings to default values?")) {
+        const defaultConfig = {
+          authorHighlightColor: "rgba(255, 0, 0, 0.1)",
+          contentHighlightColor: "rgba(255, 128, 0, 0.1)",
+          hideEntireRow: false,
+        };
+
+        // Update inputs
+        authorColorInput.value = defaultConfig.authorHighlightColor;
+        contentColorInput.value = defaultConfig.contentHighlightColor;
+        popup.querySelector(".ghost-hide-entire-row").checked =
+          defaultConfig.hideEntireRow;
+
+        // Update previews
+        authorPreview.style.backgroundColor =
+          defaultConfig.authorHighlightColor;
+        contentPreview.style.backgroundColor =
+          defaultConfig.contentHighlightColor;
+
+        // Save to GM storage
+        GM_setValue("ghostConfig", defaultConfig);
+
+        // Update current config
+        Object.assign(config, defaultConfig);
+
+        // Apply changes
+        applyCustomColors();
+
+        alert(
+          "Settings reset to defaults! Refresh the page to see all changes take effect."
+        );
+      }
+    });
+
+    // Add filter functionality
+    const filterInput = popup.querySelector(".ghost-popup-search");
+    filterInput.addEventListener("input", () => {
+      const filterText = filterInput.value.toLowerCase().trim();
+
+      // If filter is empty, repopulate the grid
+      if (!filterText) {
+        populateGhostedUsersGrid(content);
+        return;
+      }
+
+      // Otherwise, filter the tiles
+      const tiles = content.querySelectorAll(".ghost-user-tile");
+      let anyVisible = false;
+
+      tiles.forEach((tile) => {
+        const username = tile
+          .querySelector(".ghost-user-name")
+          .textContent.toLowerCase();
+        if (username.includes(filterText)) {
+          tile.style.display = "";
+          anyVisible = true;
+        } else {
+          tile.style.display = "none";
+        }
+      });
+
+      // Show a message if no tiles match the filter
+      const noResults = content.querySelector(".no-filter-results");
+      if (!anyVisible && !noResults) {
+        const grid = content.querySelector(".ghost-users-grid");
+        if (grid) {
+          const msg = document.createElement("div");
+          msg.className = "no-filter-results";
+          msg.style.cssText =
+            "color: #8a8a8a; text-align: center; margin-top: 20px;";
+          msg.textContent = "No users match your filter.";
+          content.appendChild(msg);
+        }
+      } else if (anyVisible && noResults) {
+        noResults.remove();
+      }
+    });
+
+    return popup;
+  }
+
+  function showIgnoredUsersPopup() {
+    const popup = createNewGhostedUsersPopup();
+    // The popup is already added to the document
   }
 
   function addShowIgnoredUsersButton() {
@@ -2359,7 +3113,21 @@
     });
   }
 
+  // Apply CSS variables for custom colors
+  function applyCustomColors() {
+    document.documentElement.style.setProperty(
+      "--ghost-author-highlight",
+      config.authorHighlightColor
+    );
+    document.documentElement.style.setProperty(
+      "--ghost-content-highlight",
+      config.contentHighlightColor
+    );
+  }
+
   document.addEventListener("DOMContentLoaded", async () => {
+    // Apply custom colors from config
+    applyCustomColors();
     await Promise.all(
       Array.from(
         document.querySelectorAll(
