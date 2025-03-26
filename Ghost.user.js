@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.10
+// @version      5.10.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -53,7 +53,7 @@
   const config = GM_getValue("ghostConfig", {
     authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for ghosted-by-author
     contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for ghosted-by-content
-    hideEntireRow: false, // Default: only hide lastpost, not entire row
+    hideEntireRow: true, // Default: only hide lastpost, not entire row
   });
 
   // Set Oyster Sauce's username color
