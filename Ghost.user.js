@@ -1137,8 +1137,7 @@
           );
           if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
             // Author is ghosted, only add ghosted-by-author
-            if (isViewForum)
-              lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+            if (isViewForum) lastpostCell.classList.add("ghosted-row");
             rowItem.classList.add("ghosted-row", "ghosted-by-author");
             return;
           } else {
@@ -1153,13 +1152,11 @@
             );
             if (hasGhostedUser) {
               // Has ghosted user in content, add ghosted-by-author
-              if (isViewForum)
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+              if (isViewForum) lastpostCell.classList.add("ghosted-row");
               rowItem.classList.add("ghosted-row", "ghosted-by-author");
             } else {
               // No ghosted author, but content might contain ghosted references
-              if (isViewForum)
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+              if (isViewForum) lastpostCell.classList.add("ghosted-row");
               rowItem.classList.add("ghosted-row", "ghosted-by-content");
             }
           }
@@ -1259,7 +1256,7 @@
         // Check if the author is ignored
         if (isUserIgnored(authorName)) {
           // Author is ghosted, add ghosted-by-author class
-          lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+          lastpostCell.classList.add("ghosted-row");
           return;
         }
 
@@ -1285,7 +1282,7 @@
           } else {
             // Only hide lastpost but highlight entire row
             row.classList.add("ghosted-row", "ghosted-by-author");
-            lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+            lastpostCell.classList.add("ghosted-row");
           }
           return;
         }
@@ -1304,7 +1301,7 @@
               } else {
                 // Only hide lastpost but highlight entire row
                 row.classList.add("ghosted-row", "ghosted-by-author");
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-author");
+                lastpostCell.classList.add("ghosted-row");
               }
               return; // Stop here, don't check content
             } else if (postContent && postContentContainsGhosted(postContent)) {
@@ -1315,7 +1312,7 @@
               } else {
                 // Only hide lastpost but highlight entire row
                 row.classList.add("ghosted-row", "ghosted-by-content");
-                lastpostCell.classList.add("ghosted-row", "ghosted-by-content");
+                lastpostCell.classList.add("ghosted-row");
               }
             }
           }
