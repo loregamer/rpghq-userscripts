@@ -13,6 +13,7 @@
     ]
   },
   "helpers": [
+    "Shared/logger.js",
     "Shared/compareVersions.js",
     "Shared/getPhaseDisplayName.js",
     "Shared/renderSettingControl.js",
