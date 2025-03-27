@@ -54,6 +54,20 @@ function cleanNodeJSExports(content) {
     .replace(/module\.exports\s*=.*$/gm, '');
 }
 
+// Process a file for inclusion in the final script
+function processFile(filePath, indent = '  ') {
+  const fileContent = readFile(filePath);
+  // Remove JSDoc blocks and tidy function declarations
+  let processed = fileContent
+    .replace(/\/\*\*[\s\S]*?\*\//gm, '')
+    .replace(/^function /m, `${indent}function `);
+  
+  // Clean Node.js export statements
+  processed = cleanNodeJSExports(processed);
+  
+  return processed;
+}
+
 // Combine all files according to the order specified in order.json
 function buildUserscript() {
   let content = createHeader();
@@ -80,11 +94,7 @@ function buildUserscript() {
   for (const helperFile of orderConfig.helpers) {
     console.log(`  - ${helperFile}`);
     content += `  // Helper function from ${helperFile}\n`;
-    const fileContent = readFile(path.join('./helpers', helperFile));
-    content += fileContent
-      .replace(/^function /m, '  function ')
-      .replace(/\/\*\*[\s\S]*?\*\//m, '');
-    content = cleanNodeJSExports(content);
+    content += processFile(path.join('./helpers', helperFile));
     content += '\n\n';
   }
   
@@ -93,12 +103,35 @@ function buildUserscript() {
   for (const modalFile of orderConfig.ui.modals) {
     console.log(`  - ${modalFile}`);
     content += `  // UI function from ${modalFile}\n`;
-    const fileContent = readFile(path.join('./ui/modals', modalFile));
-    content += fileContent
-      .replace(/^function /m, '  function ')
-      .replace(/\/\*\*[\s\S]*?\*\//m, '');
-    content = cleanNodeJSExports(content);
+    content += processFile(path.join('./ui/modals', modalFile));
     content += '\n\n';
+  }
+  
+  // Add scripts by execution phase
+  console.log('Adding scripts...');
+  // Loop through each phase
+  for (const phase in orderConfig.scripts) {
+    if (orderConfig.scripts[phase].length > 0) {
+      console.log(`  Adding ${phase} scripts...`);
+      
+      // Loop through each script in the phase
+      for (const scriptFile of orderConfig.scripts[phase]) {
+        console.log(`    - ${scriptFile}`);
+        
+        // Process the script file
+        content += `  // Script function from ${phase}/${scriptFile}\n`;
+        const scriptFilePath = path.join('./scripts', phase, scriptFile);
+        
+        // Check if the file exists
+        if (fs.existsSync(scriptFilePath)) {
+          content += processFile(scriptFilePath);
+        } else {
+          console.log(`      WARNING: Script file not found: ${scriptFilePath}`);
+        }
+        
+        content += '\n\n';
+      }
+    }
   }
   
   // Add initialization functions
@@ -106,13 +139,22 @@ function buildUserscript() {
   for (const initFile of orderConfig.initialization) {
     console.log(`  - ${initFile}`);
     content += `  // Initialization from ${initFile}\n`;
-    const fileContent = readFile(path.join('./initialization', initFile));
-    content += fileContent
-      .replace(/^function /m, '  function ')
-      .replace(/\/\*\*[\s\S]*?\*\//m, '');
-    content = cleanNodeJSExports(content);
+    content += processFile(path.join('./initialization', initFile));
     content += '\n\n';
   }
+  
+  // Add script execution code
+  content += `  // Execute scripts by phase\n`;
+  content += `  document.addEventListener("DOMContentLoaded", function() {\n`;
+  content += `    // Execute document-ready scripts\n`;
+  
+  // Add document-ready script execution
+  for (const scriptFile of orderConfig.scripts["document-ready"]) {
+    const scriptName = path.basename(scriptFile, '.js');
+    content += `    try { ${scriptName}(); } catch(e) { console.error("Error executing ${scriptName}:", e); }\n`;
+  }
+  
+  content += `  });\n\n`;
   
   // Add call to init function
   content += `  // Run initialization\n`;
