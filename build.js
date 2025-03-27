@@ -44,6 +44,16 @@ function createHeader() {
   return headerText;
 }
 
+// Function to clean the module.exports and Node.js related code
+function cleanNodeJSExports(content) {
+  return content
+    .replace(/\/\/\s*Export.*$/gm, '')
+    .replace(/\/\/\s*Export the .*$/gm, '')
+    .replace(/if\s*\(typeof\s*module.*\n.*\n.*\}/gm, '')
+    .replace(/if\s*\(typeof\s*module.*\n.*\}/gm, '')
+    .replace(/module\.exports\s*=.*$/gm, '');
+}
+
 // Combine all files according to the order specified in order.json
 function buildUserscript() {
   let content = createHeader();
@@ -57,7 +67,11 @@ function buildUserscript() {
   for (const dataFile of orderConfig.data) {
     console.log(`  - ${dataFile}`);
     content += `  // Data from ${dataFile}\n`;
-    content += readFile(path.join('./data', dataFile)).replace(/^const /m, '  const ').replace(/^if.*module.*\n/m, '');
+    const fileContent = readFile(path.join('./data', dataFile));
+    content += fileContent
+      .replace(/^const /m, '  const ')
+      .replace(/\/\*\*[\s\S]*?\*\//m, '');
+    content = cleanNodeJSExports(content);
     content += '\n\n';
   }
   
@@ -66,7 +80,11 @@ function buildUserscript() {
   for (const helperFile of orderConfig.helpers) {
     console.log(`  - ${helperFile}`);
     content += `  // Helper function from ${helperFile}\n`;
-    content += readFile(path.join('./helpers', helperFile)).replace(/^function /m, '  function ').replace(/^\/\*\*[\s\S]*?\*\//m, '').replace(/^if.*module.*\n/m, '');
+    const fileContent = readFile(path.join('./helpers', helperFile));
+    content += fileContent
+      .replace(/^function /m, '  function ')
+      .replace(/\/\*\*[\s\S]*?\*\//m, '');
+    content = cleanNodeJSExports(content);
     content += '\n\n';
   }
   
@@ -75,7 +93,11 @@ function buildUserscript() {
   for (const modalFile of orderConfig.ui.modals) {
     console.log(`  - ${modalFile}`);
     content += `  // UI function from ${modalFile}\n`;
-    content += readFile(path.join('./ui/modals', modalFile)).replace(/^function /m, '  function ').replace(/^\/\*\*[\s\S]*?\*\//m, '').replace(/^if.*module.*\n/m, '');
+    const fileContent = readFile(path.join('./ui/modals', modalFile));
+    content += fileContent
+      .replace(/^function /m, '  function ')
+      .replace(/\/\*\*[\s\S]*?\*\//m, '');
+    content = cleanNodeJSExports(content);
     content += '\n\n';
   }
   
@@ -84,7 +106,11 @@ function buildUserscript() {
   for (const initFile of orderConfig.initialization) {
     console.log(`  - ${initFile}`);
     content += `  // Initialization from ${initFile}\n`;
-    content += readFile(path.join('./initialization', initFile)).replace(/^function /m, '  function ').replace(/^\/\*\*[\s\S]*?\*\//m, '').replace(/^if.*module.*\n/m, '');
+    const fileContent = readFile(path.join('./initialization', initFile));
+    content += fileContent
+      .replace(/^function /m, '  function ')
+      .replace(/\/\*\*[\s\S]*?\*\//m, '');
+    content = cleanNodeJSExports(content);
     content += '\n\n';
   }
   
