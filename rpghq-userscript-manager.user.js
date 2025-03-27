@@ -240,7 +240,7 @@
   function addStyles() {
     GM_addStyle(`
       /* Import Font Awesome */
-      @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+      @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css');
 
       :root {
           --primary-color: #2196F3;
@@ -273,16 +273,15 @@
       .mod-manager-modal-content {
           background-color: var(--bg-dark);
           margin: 2% auto;
-          padding: 20px;
+          padding: 10px;
           border: 1px solid var(--border-color);
           width: 90%;
           max-width: 1200px;
           max-height: 90vh;
-          border-radius: 8px;
+          border-radius: 4px;
           color: var(--text-primary);
           display: flex;
           flex-direction: column;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
       }
       
       /* Header and close button */
@@ -290,21 +289,20 @@
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 20px;
+          margin-bottom: 10px;
           border-bottom: 1px solid var(--border-color);
-          padding-bottom: 15px;
+          padding-bottom: 10px;
       }
       
       .mod-manager-title {
           margin: 0;
           font-size: 1.8em;
-          color: var(--primary-color);
+          color: var(--text-primary);
       }
       
       .mod-manager-close {
           font-size: 1.8em;
           cursor: pointer;
-          transition: color 0.2s ease;
       }
       
       .mod-manager-close:hover {
@@ -314,17 +312,16 @@
       /* Tab system */
       .mod-manager-tabs {
           display: flex;
-          margin-bottom: 20px;
+          margin-bottom: 10px;
           border-bottom: 1px solid var(--border-color);
       }
       
       .mod-manager-tab {
-          padding: 10px 20px;
+          padding: 8px 16px;
           cursor: pointer;
-          font-size: 1.1em;
+          font-size: 1em;
           color: var(--text-secondary);
           position: relative;
-          transition: all 0.2s ease;
       }
       
       .mod-manager-tab:hover {
@@ -334,16 +331,34 @@
       .mod-manager-tab.active {
           color: var(--primary-color);
           font-weight: bold;
+          border-bottom: 2px solid var(--primary-color);
       }
       
-      .mod-manager-tab.active::after {
-          content: '';
-          position: absolute;
-          bottom: -1px;
-          left: 0;
-          right: 0;
-          height: 3px;
-          background-color: var(--primary-color);
+      /* Sub-tabs system */
+      .sub-tabs {
+          display: flex;
+          margin-bottom: 10px;
+          border-bottom: 1px solid var(--border-color);
+          background-color: var(--bg-card);
+          border-radius: 4px 4px 0 0;
+      }
+      
+      .sub-tab {
+          padding: 8px 16px;
+          cursor: pointer;
+          font-size: 1em;
+          color: var(--text-secondary);
+          position: relative;
+      }
+      
+      .sub-tab:hover {
+          background-color: rgba(255, 255, 255, 0.05);
+      }
+      
+      .sub-tab.active {
+          color: var(--primary-color);
+          font-weight: bold;
+          border-bottom: 2px solid var(--primary-color);
       }
       
       /* Content area */
@@ -356,20 +371,21 @@
       /* Filter panel */
       .filter-panel {
           background-color: var(--bg-card);
-          border-radius: 8px;
-          padding: 15px;
-          margin-bottom: 20px;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          padding: 10px;
+          margin-bottom: 15px;
       }
       
       .filter-panel-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 15px;
+          margin-bottom: 10px;
       }
       
       .filter-panel-title {
-          font-size: 1.2em;
+          font-size: 1.1em;
           font-weight: bold;
           margin: 0;
       }
@@ -379,14 +395,13 @@
           border: none;
           color: var(--text-primary);
           cursor: pointer;
-          font-size: 1.2em;
+          font-size: 1.1em;
       }
       
       .filter-panel-body {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 15px;
-          animation: fadeIn 0.3s ease;
+          gap: 10px;
       }
       
       .filter-panel-body.collapsed {
@@ -406,50 +421,37 @@
       
       .filter-group select,
       .filter-group input {
-          padding: 8px;
+          padding: 5px;
           border: 1px solid var(--border-color);
-          border-radius: 4px;
+          border-radius: 3px;
           background-color: var(--bg-dark);
           color: var(--text-primary);
-      }
-      
-      .filter-group select:focus,
-      .filter-group input:focus {
-          border-color: var(--primary-color);
-          outline: none;
       }
       
       .filter-actions {
           display: flex;
           justify-content: flex-end;
-          margin-top: 15px;
+          margin-top: 10px;
           grid-column: 1 / -1;
       }
       
-      /* Card views */
+      /* Script grid */
       .script-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 20px;
-          animation: fadeIn 0.3s ease;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 10px;
       }
       
       .script-card {
           background-color: var(--bg-card);
-          border-radius: 8px;
-          overflow: hidden;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
           border: 1px solid var(--border-color);
-      }
-      
-      .script-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+          border-radius: 4px;
+          overflow: hidden;
       }
       
       .script-card-image {
           position: relative;
-          height: 160px;
+          height: 130px;
           overflow: hidden;
       }
       
@@ -457,37 +459,32 @@
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: transform 0.3s ease;
-      }
-      
-      .script-card:hover .script-card-image img {
-          transform: scale(1.05);
       }
       
       .script-card-category {
           position: absolute;
-          top: 10px;
-          right: 10px;
+          top: 5px;
+          right: 5px;
           background-color: rgba(0, 0, 0, 0.7);
           color: var(--text-primary);
-          padding: 5px 10px;
-          border-radius: 20px;
+          padding: 3px 8px;
+          border-radius: 3px;
           font-size: 0.8em;
       }
       
       .script-card-content {
-          padding: 15px;
+          padding: 10px;
       }
       
       .script-card-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
       }
       
       .script-card-title {
-          font-size: 1.2em;
+          font-size: 1.1em;
           font-weight: bold;
           margin: 0;
       }
@@ -495,21 +492,18 @@
       .script-card-version {
           background-color: var(--primary-color);
           color: white;
-          padding: 3px 8px;
-          border-radius: 20px;
+          padding: 2px 6px;
+          border-radius: 3px;
           font-size: 0.8em;
       }
       
       .script-card-description {
-          margin: 0 0 15px 0;
+          margin: 0 0 10px 0;
           color: var(--text-secondary);
           font-size: 0.9em;
-          line-height: 1.4;
-          height: 3.8em;
+          line-height: 1.3;
+          height: 3.6em;
           overflow: hidden;
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
       }
       
       .script-card-footer {
@@ -517,7 +511,7 @@
           justify-content: space-between;
           align-items: center;
           border-top: 1px solid var(--border-color);
-          padding-top: 15px;
+          padding-top: 8px;
       }
       
       .script-card-phase {
@@ -525,40 +519,36 @@
           color: var(--text-secondary);
       }
       
-      .script-card-actions {
-          display: flex;
-          gap: 10px;
-      }
-      
       /* Forum preferences */
       .preferences-section {
           background-color: var(--bg-card);
-          border-radius: 8px;
-          margin-bottom: 20px;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          margin-bottom: 15px;
           overflow: hidden;
       }
       
       .preferences-section-header {
           background-color: rgba(33, 150, 243, 0.1);
-          padding: 15px;
+          padding: 10px;
           border-bottom: 1px solid var(--border-color);
       }
       
       .preferences-section-title {
           margin: 0;
-          font-size: 1.2em;
-          color: var(--primary-color);
+          font-size: 1.1em;
+          color: var(--text-primary);
       }
       
       .preferences-section-body {
-          padding: 15px;
+          padding: 10px;
       }
       
       .preference-item {
           display: flex;
           flex-direction: column;
-          margin-bottom: 15px;
-          padding-bottom: 15px;
+          margin-bottom: 10px;
+          padding-bottom: 10px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       }
       
@@ -572,7 +562,7 @@
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 10px;
+          margin-bottom: 5px;
       }
       
       .preference-name {
@@ -605,13 +595,12 @@
       .settings-modal-content {
           background-color: var(--bg-dark);
           margin: 5% auto;
-          padding: 25px;
+          padding: 15px;
           border: 1px solid var(--border-color);
           width: 60%;
           max-width: 800px;
           max-height: 85vh;
-          border-radius: 8px;
-          box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+          border-radius: 4px;
           overflow-y: auto;
       }
       
@@ -619,22 +608,20 @@
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 20px;
-          padding-bottom: 15px;
+          margin-bottom: 15px;
+          padding-bottom: 10px;
           border-bottom: 1px solid var(--border-color);
       }
       
       .settings-modal-title {
-          font-size: 1.6em;
+          font-size: 1.4em;
           margin: 0;
-          color: var(--primary-color);
       }
       
       .settings-modal-close {
-          font-size: 1.5em;
+          font-size: 1.4em;
           cursor: pointer;
           color: var(--text-secondary);
-          transition: color 0.2s ease;
       }
       
       .settings-modal-close:hover {
@@ -642,32 +629,31 @@
       }
       
       .setting-group {
-          margin-bottom: 25px;
+          margin-bottom: 15px;
       }
       
       .setting-group-title {
-          font-size: 1.2em;
-          margin: 0 0 15px 0;
-          padding-bottom: 10px;
+          font-size: 1.1em;
+          margin: 0 0 10px 0;
+          padding-bottom: 8px;
           border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          color: var(--accent-color);
       }
       
       .setting-item {
-          margin-bottom: 20px;
+          margin-bottom: 12px;
       }
       
       .setting-label {
           display: block;
           font-weight: bold;
-          margin-bottom: 8px;
+          margin-bottom: 5px;
       }
       
       .setting-description {
           display: block;
           color: var(--text-secondary);
           font-size: 0.9em;
-          margin-bottom: 8px;
+          margin-bottom: 5px;
       }
       
       .setting-control {
@@ -676,19 +662,18 @@
       
       /* Buttons */
       .btn {
-          padding: 8px 16px;
-          border-radius: 4px;
+          padding: 5px 10px;
+          border-radius: 3px;
           border: none;
           cursor: pointer;
           font-size: 0.9em;
-          transition: all 0.2s ease;
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          gap: 5px;
       }
       
       .btn-icon {
-          font-size: 1.1em;
+          font-size: 1em;
       }
       
       .btn-primary {
@@ -701,25 +686,16 @@
       }
       
       .btn-secondary {
-          background-color: rgba(255, 255, 255, 0.1);
+          background-color: #555;
           color: var(--text-primary);
       }
       
       .btn-secondary:hover {
-          background-color: rgba(255, 255, 255, 0.2);
-      }
-      
-      .btn-accent {
-          background-color: var(--accent-color);
-          color: white;
-      }
-      
-      .btn-accent:hover {
-          background-color: #F57C00;
+          background-color: #666;
       }
       
       .btn-small {
-          padding: 4px 10px;
+          padding: 3px 8px;
           font-size: 0.8em;
       }
       
@@ -727,8 +703,8 @@
       .toggle-switch {
           position: relative;
           display: inline-block;
-          width: 50px;
-          height: 24px;
+          width: 46px;
+          height: 22px;
       }
       
       .toggle-switch input {
@@ -745,8 +721,7 @@
           right: 0;
           bottom: 0;
           background-color: #444;
-          transition: .4s;
-          border-radius: 24px;
+          border-radius: 3px;
       }
       
       .toggle-slider:before {
@@ -754,11 +729,10 @@
           content: "";
           height: 16px;
           width: 16px;
-          left: 4px;
-          bottom: 4px;
+          left: 3px;
+          bottom: 3px;
           background-color: white;
-          transition: .4s;
-          border-radius: 50%;
+          border-radius: 2px;
       }
       
       input:checked + .toggle-slider {
@@ -766,19 +740,19 @@
       }
       
       input:checked + .toggle-slider:before {
-          transform: translateX(26px);
+          transform: translateX(24px);
       }
       
       /* Tables */
       .data-table {
           width: 100%;
           border-collapse: collapse;
-          margin-bottom: 20px;
+          margin-bottom: 15px;
       }
       
       .data-table th,
       .data-table td {
-          padding: 12px 15px;
+          padding: 8px 10px;
           text-align: left;
           border-bottom: 1px solid var(--border-color);
       }
@@ -786,7 +760,6 @@
       .data-table th {
           background-color: rgba(255, 255, 255, 0.05);
           font-weight: bold;
-          color: var(--primary-color);
       }
       
       .data-table tr:hover {
@@ -796,26 +769,26 @@
       /* Empty state */
       .empty-state {
           text-align: center;
-          padding: 40px 20px;
+          padding: 30px 20px;
           color: var(--text-secondary);
       }
       
       .empty-state-icon {
-          font-size: 3em;
-          margin-bottom: 20px;
+          font-size: 2.5em;
+          margin-bottom: 15px;
           opacity: 0.5;
       }
       
       .empty-state-message {
-          font-size: 1.2em;
-          margin-bottom: 15px;
+          font-size: 1.1em;
+          margin-bottom: 10px;
       }
       
       /* Badges */
       .badge {
           display: inline-block;
-          padding: 3px 8px;
-          border-radius: 12px;
+          padding: 2px 6px;
+          border-radius: 3px;
           font-size: 0.8em;
           font-weight: bold;
       }
@@ -825,24 +798,24 @@
           color: white;
       }
       
-      .badge-accent {
-          background-color: var(--accent-color);
-          color: white;
-      }
-      
-      /* Animations */
-      @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-      }
-      
       /* Info note */
       .info-note {
           background-color: rgba(33, 150, 243, 0.1);
           border-left: 4px solid var(--primary-color);
-          padding: 15px;
-          margin-bottom: 20px;
+          padding: 10px;
+          margin-bottom: 15px;
           border-radius: 0 4px 4px 0;
+      }
+      
+      /* WIP Banner */
+      .wip-banner {
+          background-color: var(--warning-color);
+          color: #000;
+          padding: 10px;
+          margin-bottom: 15px;
+          border-radius: 4px;
+          text-align: center;
+          font-weight: bold;
       }
       
       /* Responsive adjustments */
@@ -877,13 +850,13 @@
           </div>
           <div class="mod-manager-tabs">
             <div class="mod-manager-tab active" data-tab="installed">
-              <i class="fas fa-puzzle-piece"></i> Installed Scripts
+              <i class="fa fa-puzzle-piece"></i> Installed Scripts
             </div>
             <div class="mod-manager-tab" data-tab="forum">
-              <i class="fas fa-sliders-h"></i> Forum Preferences
+              <i class="fa fa-sliders-h"></i> Forum Preferences
             </div>
             <div class="mod-manager-tab" data-tab="settings">
-              <i class="fas fa-cog"></i> Settings
+              <i class="fa fa-cog"></i> Settings
             </div>
           </div>
           <div class="mod-manager-content" id="mod-manager-content">
@@ -974,7 +947,7 @@
       <div class="filter-panel-header">
         <h3 class="filter-panel-title">Filter Scripts</h3>
         <button class="filter-panel-toggle" id="toggle-filters">
-          <i class="fas fa-chevron-up"></i>
+          <i class="fa fa-chevron-up"></i>
         </button>
       </div>
       <div class="filter-panel-body" id="filter-panel-body">
@@ -1016,10 +989,10 @@
         </div>
         <div class="filter-actions">
           <button id="reset-filters" class="btn btn-secondary">
-            <i class="fas fa-undo btn-icon"></i> Reset
+            <i class="fa fa-undo btn-icon"></i> Reset
           </button>
           <button id="apply-filters" class="btn btn-primary" style="margin-left: 10px;">
-            <i class="fas fa-filter btn-icon"></i> Apply Filters
+            <i class="fa fa-filter btn-icon"></i> Apply Filters
           </button>
         </div>
       </div>
@@ -1031,14 +1004,14 @@
     viewOptions.className = "view-options";
     viewOptions.style.display = "flex";
     viewOptions.style.justifyContent = "flex-end";
-    viewOptions.style.marginBottom = "15px";
+    viewOptions.style.marginBottom = "10px";
     viewOptions.innerHTML = `
       <div class="btn-group" style="display: flex;">
-        <button id="grid-view-btn" class="btn btn-primary" style="border-radius: 4px 0 0 4px; margin: 0;">
-          <i class="fas fa-th-large"></i>
+        <button id="grid-view-btn" class="btn btn-primary" style="border-radius: 3px 0 0 3px; margin: 0;">
+          <i class="fa fa-th-large"></i>
         </button>
-        <button id="list-view-btn" class="btn btn-secondary" style="border-radius: 0 4px 4px 0; margin: 0;">
-          <i class="fas fa-list"></i>
+        <button id="list-view-btn" class="btn btn-secondary" style="border-radius: 0 3px 3px 0; margin: 0;">
+          <i class="fa fa-list"></i>
         </button>
       </div>
     `;
@@ -1059,9 +1032,9 @@
       
       const icon = document.getElementById("toggle-filters").querySelector("i");
       if (panel.classList.contains("collapsed")) {
-        icon.className = "fas fa-chevron-down";
+        icon.className = "fa fa-chevron-down";
       } else {
-        icon.className = "fas fa-chevron-up";
+        icon.className = "fa fa-chevron-up";
       }
     });
     
@@ -1112,39 +1085,139 @@
   function renderForumPreferencesTab(container) {
     container.innerHTML += `<h2>Forum Preferences</h2>`;
     
-    FORUM_PREFERENCES.sections.forEach(section => {
-      const sectionEl = document.createElement("div");
-      sectionEl.className = "preferences-section";
+    // Add sub-tabs for Threads and Users
+    const subTabsContainer = document.createElement("div");
+    subTabsContainer.className = "sub-tabs";
+    subTabsContainer.innerHTML = `
+      <div class="sub-tab active" data-subtab="threads">
+        <i class="fa fa-comments"></i> Threads
+      </div>
+      <div class="sub-tab" data-subtab="users">
+        <i class="fa fa-users"></i> Users
+      </div>
+    `;
+    container.appendChild(subTabsContainer);
+    
+    // Add container for sub-tab content
+    const subTabContent = document.createElement("div");
+    subTabContent.id = "forum-subtab-content";
+    container.appendChild(subTabContent);
+    
+    // Load initial sub-tab (Threads)
+    renderThreadsSubtab(subTabContent);
+    
+    // Add event listeners for sub-tabs
+    subTabsContainer.querySelectorAll(".sub-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        // Update active state
+        subTabsContainer.querySelectorAll(".sub-tab").forEach(t => {
+          t.classList.remove("active");
+        });
+        tab.classList.add("active");
+        
+        // Load content
+        if (tab.dataset.subtab === "threads") {
+          renderThreadsSubtab(subTabContent);
+        } else if (tab.dataset.subtab === "users") {
+          renderUsersSubtab(subTabContent);
+        }
+      });
+    });
+  }
+  
+  // Render the Threads sub-tab content
+  function renderThreadsSubtab(container) {
+    container.innerHTML = `
+      <div class="wip-banner">
+        <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress
+      </div>
       
-      sectionEl.innerHTML = `
+      <div class="preferences-section">
         <div class="preferences-section-header">
-          <h3 class="preferences-section-title">${section.name}</h3>
+          <h3 class="preferences-section-title">Thread Display</h3>
         </div>
         <div class="preferences-section-body">
-          ${section.preferences.map(pref => `
-            <div class="preference-item">
-              <div class="preference-header">
-                <h4 class="preference-name">${pref.name}</h4>
-                <div class="preference-control">
-                  ${renderPreferenceControl(pref)}
-                </div>
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Thread Layout</h4>
+              <div class="preference-control">
+                <select>
+                  <option selected>Compact</option>
+                  <option>Standard</option>
+                  <option>Expanded</option>
+                </select>
               </div>
-              <p class="preference-description">${pref.description}</p>
             </div>
-          `).join('')}
+            <p class="preference-description">Choose how thread listings are displayed</p>
+          </div>
+          
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Threads Per Page</h4>
+              <div class="preference-control">
+                <select>
+                  <option>10</option>
+                  <option selected>20</option>
+                  <option>30</option>
+                  <option>50</option>
+                </select>
+              </div>
+            </div>
+            <p class="preference-description">Number of threads to display per page</p>
+          </div>
         </div>
-      `;
+      </div>
       
-      container.appendChild(sectionEl);
-    });
-    
-    // Add a note at the bottom
-    const note = document.createElement("div");
-    note.className = "info-note";
-    note.innerHTML = `
-      <strong>Note:</strong> These are view-only representations of forum preferences. Changes made here will not be saved.
+      <div class="info-note">
+        <strong>Note:</strong> This is a view-only display. Additional Thread preferences will be added in future updates.
+      </div>
     `;
-    container.appendChild(note);
+  }
+  
+  // Render the Users sub-tab content
+  function renderUsersSubtab(container) {
+    container.innerHTML = `
+      <div class="wip-banner">
+        <i class="fa fa-wrench"></i> User Preferences - Work In Progress
+      </div>
+      
+      <div class="preferences-section">
+        <div class="preferences-section-header">
+          <h3 class="preferences-section-title">User Display</h3>
+        </div>
+        <div class="preferences-section-body">
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Show User Signatures</h4>
+              <div class="preference-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            <p class="preference-description">Display user signatures in posts</p>
+          </div>
+          
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Show User Avatars</h4>
+              <div class="preference-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            <p class="preference-description">Display user avatars in posts and listings</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="info-note">
+        <strong>Note:</strong> This is a view-only display. Additional User preferences will be added in future updates.
+      </div>
+    `;
   }
   
   // Render the "Settings" tab content
@@ -1285,7 +1358,7 @@
           : `
             <div class="empty-state">
               <div class="empty-state-icon">
-                <i class="fas fa-cog"></i>
+                <i class="fa fa-cog"></i>
               </div>
               <h3 class="empty-state-message">No Settings Available</h3>
               <p>This script doesn't have any configurable settings.</p>
@@ -1293,7 +1366,7 @@
           `
         }
         
-        <div class="script-info" style="margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+        <div class="script-info" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
           <h3>Script Information</h3>
           <table class="data-table">
             <tr>
@@ -1319,7 +1392,7 @@
           </table>
         </div>
         
-        <div class="info-note" style="margin-top: 20px;">
+        <div class="info-note" style="margin-top: 15px;">
           <strong>Note:</strong> This is a view-only display of script settings. No changes will be saved.
         </div>
       </div>
@@ -1421,7 +1494,7 @@
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">
-            <i class="fas fa-search"></i>
+            <i class="fa fa-search"></i>
           </div>
           <h3 class="empty-state-message">No scripts found</h3>
           <p>Try adjusting your filters to see more results.</p>
@@ -1440,7 +1513,7 @@
       
       card.innerHTML = `
         <div class="script-card-image">
-          <img src="${script.image || "https://via.placeholder.com/280x160?text=No+Image"}" alt="${script.name}">
+          <img src="${script.image || "https://via.placeholder.com/240x130?text=No+Image"}" alt="${script.name}">
           <div class="script-card-category">${script.category || "Uncategorized"}</div>
         </div>
         <div class="script-card-content">
@@ -1451,11 +1524,11 @@
           <p class="script-card-description">${script.description || "No description available."}</p>
           <div class="script-card-footer">
             <div class="script-card-phase">
-              <i class="fas fa-bolt"></i> ${getPhaseDisplayName(script.executionPhase)}
+              <i class="fa fa-bolt"></i> ${getPhaseDisplayName(script.executionPhase)}
             </div>
             <div class="script-card-actions">
               <button class="btn btn-primary btn-small view-settings" data-script-id="${script.id}">
-                <i class="fas fa-cog"></i> Settings
+                <i class="fa fa-cog"></i> Settings
               </button>
             </div>
           </div>
@@ -1486,7 +1559,7 @@
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-state-icon">
-            <i class="fas fa-search"></i>
+            <i class="fa fa-search"></i>
           </div>
           <h3 class="empty-state-message">No scripts found</h3>
           <p>Try adjusting your filters to see more results.</p>
@@ -1521,7 +1594,7 @@
             <td>${script.settings && script.settings.length > 0 ? `<span class="badge badge-primary">${script.settings.length}</span>` : "-"}</td>
             <td>
               <button class="btn btn-primary btn-small view-settings" data-script-id="${script.id}">
-                <i class="fas fa-cog"></i> Settings
+                <i class="fa fa-cog"></i> Settings
               </button>
             </td>
           </tr>
