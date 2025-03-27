@@ -1,3 +1,4 @@
 .aider*
 _SourceCode
 .cursor/mcp.json
+/node_modules
