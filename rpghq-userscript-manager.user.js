@@ -157,46 +157,31 @@
 
 
   // Helper function from Shared/logger.js
-
   function logInfo(message) {
   console.log(
     "%c[RPGHQ USERSCRIPTS]%c " + message,
     "color: #2196F3; font-weight: bold;",
     "color: inherit;"
   );
-}
-
-function logSuccess(message) {
+}  function logSuccess(message) {
   console.log(
     "%c[RPGHQ USERSCRIPTS]%c " + message,
     "color: #4CAF50; font-weight: bold;",
     "color: inherit;"
   );
-}
-
-function logWarning(message) {
+}  function logWarning(message) {
   console.warn(
     "%c[RPGHQ USERSCRIPTS]%c " + message,
     "color: #FFC107; font-weight: bold;",
     "color: inherit;"
   );
-}
-
-function logError(message) {
+}  function logError(message) {
   console.error(
     "%c[RPGHQ USERSCRIPTS]%c " + message,
     "color: #F44336; font-weight: bold;",
     "color: inherit;"
   );
 }
-
-
-
-  logInfo,
-  logSuccess,
-  logWarning,
-  logError,
-};
 
 
   // Helper function from Shared/compareVersions.js
@@ -1152,7 +1137,6 @@ function logError(message) {
 
 
   // UI function from showModal.js
-
   function showModal() {  let modal = document.getElementById("mod-manager-modal");  if (!modal) {
     modal = document.createElement("div");
     modal.id = "mod-manager-modal";
@@ -1214,11 +1198,7 @@ function logError(message) {
 }
 
 
-
-
-
   // UI function from hideModal.js
-
   function hideModal() {  const modal = document.getElementById("mod-manager-modal");  if (modal) {
     modal.style.display = "none";
     document.body.style.overflow = "";
@@ -1230,11 +1210,7 @@ function logError(message) {
 }
 
 
-
-
-
   // UI function from loadTabContent.js
-
   function loadTabContent(tabName) {  const content = document.getElementById("mod-manager-content");
 
   // Clear previous content (except the info note)  const infoNote = content.querySelector(".info-note");
@@ -1256,12 +1232,7 @@ function logError(message) {
 }
 
 
-
-
-
-
   // UI function from renderInstalledScriptsTab.js
-
   function renderInstalledScriptsTab(container) {
   // Create the filter panel
   const filterPanel = document.createElement("div");
@@ -1415,11 +1386,7 @@ function logError(message) {
 }
 
 
-
-
-
   // UI function from renderForumPreferencesTab.js
-
   function renderForumPreferencesTab(container) {
   container.innerHTML += `<h2>Forum Preferences</h2>`;
 
@@ -1461,11 +1428,7 @@ function logError(message) {
 }
 
 
-
-
-
   // UI function from renderSettingsTab.js
-
   function renderSettingsTab(container) {
   container.innerHTML += `
     <h2>Global Settings</h2>
@@ -1579,11 +1542,7 @@ function logError(message) {
 }
 
 
-
-
-
   // UI function from renderThreadsSubtab.js
-
   function renderThreadsSubtab(container) {
   container.innerHTML = `
     <div class="wip-banner">
@@ -1633,11 +1592,7 @@ function logError(message) {
 }
 
 
-
-
-
   // UI function from renderUsersSubtab.js
-
   function renderUsersSubtab(container) {
   container.innerHTML = `
     <div class="wip-banner">
@@ -1684,11 +1639,7 @@ function logError(message) {
 }
 
 
-
-
-
   // UI function from showScriptSettings.js
-
   function showScriptSettings(script) {
   // Create modal if it doesn't exist  let modal = document.getElementById("script-settings-modal");  if (!modal) {
     modal = document.createElement("div");
@@ -1768,11 +1719,7 @@ function logError(message) {
 }
 
 
-
-
-
   // UI function from renderScriptSettingsContent.js
-
   function renderScriptSettingsContent(script) {  if (!script.settings || script.settings.length === 0) {
     return "";
   }
@@ -1797,11 +1744,7 @@ function logError(message) {
 }
 
 
-
-
-
   // UI function from renderScriptsGridView.js
-
   function renderScriptsGridView(container, scripts) {
   if (scripts.length === 0) {
     container.innerHTML = `
@@ -1817,62 +1760,76 @@ function logError(message) {
   }
   const grid = document.createElement("div");
   grid.className = "script-grid";
-  
-  scripts.forEach(script => {
+
+  scripts.forEach((script) => {
   const card = document.createElement("div");
     card.className = "script-card";
     card.dataset.scriptId = script.id;
-    
+
     card.innerHTML = `
       <div class="script-card-image">
-        <img src="${script.image || "https://via.placeholder.com/240x130?text=No+Image"}" alt="${script.name}">
-        <div class="script-card-category">${script.category || "Uncategorized"}</div>
+        <img src="${
+          script.image || "https://via.placeholder.com/240x130?text=No+Image"
+        }" alt="${script.name}">
+        <div class="script-card-category">${
+          script.category || "Uncategorized"
+        }</div>
       </div>
       <div class="script-card-content">
         <div class="script-card-header">
           <h3 class="script-card-title">${script.name}</h3>
           <span class="script-card-version">v${script.version}</span>
         </div>
-        <p class="script-card-description">${script.description || "No description available."}</p>
+        <p class="script-card-description">${
+          script.description || "No description available."
+        }</p>
         <div class="script-card-footer">
           <div class="script-card-phase">
-            <i class="fa fa-bolt"></i> ${getPhaseDisplayName(script.executionPhase)}
+            <i class="fa fa-bolt"></i> ${getPhaseDisplayName(
+              script.executionPhase
+            )}
           </div>
           <div class="script-card-actions">
-            <button class="btn ${isScriptEnabled(script.id) ? 'btn-danger' : 'btn-success'} btn-small toggle-script" data-script-id="${script.id}">
-              <i class="fa ${isScriptEnabled(script.id) ? 'fa-ban' : 'fa-check'}"></i> ${isScriptEnabled(script.id) ? 'Disable' : 'Enable'}
+            <button class="btn ${
+              isScriptEnabled(script.id) ? "btn-danger" : "btn-success"
+            } btn-small toggle-script" data-script-id="${script.id}">
+              <i class="fa ${
+                isScriptEnabled(script.id) ? "fa-ban" : "fa-check"
+              }"></i> ${isScriptEnabled(script.id) ? "Disable" : "Enable"}
             </button>
-            <button class="btn btn-primary btn-small view-settings" data-script-id="${script.id}">
+            <button class="btn btn-primary btn-small view-settings" data-script-id="${
+              script.id
+            }">
               <i class="fa fa-cog"></i> Settings
             </button>
           </div>
         </div>
       </div>
     `;
-    
+
     grid.appendChild(card);
   });
-  
+
   container.innerHTML = "";
   container.appendChild(grid);
-  
+
   // Add event listeners for settings buttons
-  document.querySelectorAll(".view-settings").forEach(btn => {
+  document.querySelectorAll(".view-settings").forEach((btn) => {
     btn.addEventListener("click", () => {
   const scriptId = btn.dataset.scriptId;
-  const script = scripts.find(s => s.id === scriptId);
+  const script = scripts.find((s) => s.id === scriptId);
   if (script) {
         showScriptSettings(script);
       }
     });
   });
-  
+
   // Add event listeners for toggle script buttons
-  document.querySelectorAll(".toggle-script").forEach(btn => {
+  document.querySelectorAll(".toggle-script").forEach((btn) => {
     btn.addEventListener("click", () => {
   const scriptId = btn.dataset.scriptId;
   const newState = toggleScriptEnabled(scriptId);
-      
+
       // Update button state
   if (newState) {
         // Script is now enabled
@@ -1889,8 +1846,8 @@ function logError(message) {
   });
 }
 
-  // UI function from renderScriptsListView.js
 
+  // UI function from renderScriptsListView.js
   function renderScriptsListView(container, scripts) {
   if (scripts.length === 0) {
     container.innerHTML = `
@@ -1906,7 +1863,7 @@ function logError(message) {
   }
   const table = document.createElement("table");
   table.className = "data-table";
-  
+
   table.innerHTML = `
     <thead>
       <tr>
@@ -1921,11 +1878,23 @@ function logError(message) {
       </tr>
     </thead>
     <tbody>
-      ${scripts.map(script => `
+      ${scripts
+        .map(
+          (script) => `
         <tr>
           <td>
-            <button class="btn btn-icon toggle-script" data-script-id="${script.id}" title="${isScriptEnabled(script.id) ? 'Enabled (click to disable)' : 'Disabled (click to enable)'}">
-              <i class="fa ${isScriptEnabled(script.id) ? 'fa-toggle-on text-success' : 'fa-toggle-off text-muted'}" style="font-size: 1.5em;"></i>
+            <button class="btn btn-icon toggle-script" data-script-id="${
+              script.id
+            }" title="${
+            isScriptEnabled(script.id)
+              ? "Enabled (click to disable)"
+              : "Disabled (click to enable)"
+          }">
+              <i class="fa ${
+                isScriptEnabled(script.id)
+                  ? "fa-toggle-on text-success"
+                  : "fa-toggle-off text-muted"
+              }" style="font-size: 1.5em;"></i>
             </button>
           </td>
           <td><strong>${script.name}</strong></td>
@@ -1933,37 +1902,45 @@ function logError(message) {
           <td>${script.category || "Uncategorized"}</td>
           <td>${script.description || "No description available."}</td>
           <td>${getPhaseDisplayName(script.executionPhase)}</td>
-          <td>${script.settings && script.settings.length > 0 ? `<span class="badge badge-primary">${script.settings.length}</span>` : "-"}</td>
+          <td>${
+            script.settings && script.settings.length > 0
+              ? `<span class="badge badge-primary">${script.settings.length}</span>`
+              : "-"
+          }</td>
           <td>
-            <button class="btn btn-primary btn-small view-settings" data-script-id="${script.id}">
+            <button class="btn btn-primary btn-small view-settings" data-script-id="${
+              script.id
+            }">
               <i class="fa fa-cog"></i> Settings
             </button>
           </td>
         </tr>
-      `).join('')}
+      `
+        )
+        .join("")}
     </tbody>
   `;
-  
+
   container.innerHTML = "";
   container.appendChild(table);
-  
+
   // Add event listeners for settings buttons
-  document.querySelectorAll(".view-settings").forEach(btn => {
+  document.querySelectorAll(".view-settings").forEach((btn) => {
     btn.addEventListener("click", () => {
   const scriptId = btn.dataset.scriptId;
-  const script = scripts.find(s => s.id === scriptId);
+  const script = scripts.find((s) => s.id === scriptId);
   if (script) {
         showScriptSettings(script);
       }
     });
   });
-  
+
   // Add event listeners for toggle script buttons
-  document.querySelectorAll(".toggle-script").forEach(btn => {
+  document.querySelectorAll(".toggle-script").forEach((btn) => {
     btn.addEventListener("click", () => {
   const scriptId = btn.dataset.scriptId;
   const newState = toggleScriptEnabled(scriptId);
-      
+
       // Update icon state
   const icon = btn.querySelector("i");
   if (newState) {
@@ -1985,8 +1962,8 @@ function logError(message) {
   });
 }
 
-  // UI function from getCategoryOptions.js
 
+  // UI function from getCategoryOptions.js
   function getCategoryOptions() {  const categories = new Set();
   MANIFEST.scripts.forEach((script) => {  if (script.category) {
       categories.add(script.category);
@@ -2000,19 +1977,12 @@ function logError(message) {
 }
 
 
-
-
-
   // UI function from getExecutionPhaseOptions.js
-
   function getExecutionPhaseOptions() {
   return MANIFEST.schema.executionPhases
     .map((phase) => `<option value="${phase.id}">${phase.name}</option>`)
     .join("");
 }
-
-
-
 
 
   // Script function from document-ready/number-commas/number-commas.js

@@ -1,7 +1,7 @@
 /**
  * Logger utility for RPGHQ Userscripts
  */
-function logInfo(message) {
+export function logInfo(message) {
   console.log(
     "%c[RPGHQ USERSCRIPTS]%c " + message,
     "color: #2196F3; font-weight: bold;",
@@ -9,7 +9,7 @@ function logInfo(message) {
   );
 }
 
-function logSuccess(message) {
+export function logSuccess(message) {
   console.log(
     "%c[RPGHQ USERSCRIPTS]%c " + message,
     "color: #4CAF50; font-weight: bold;",
@@ -17,7 +17,7 @@ function logSuccess(message) {
   );
 }
 
-function logWarning(message) {
+export function logWarning(message) {
   console.warn(
     "%c[RPGHQ USERSCRIPTS]%c " + message,
     "color: #FFC107; font-weight: bold;",
@@ -25,18 +25,10 @@ function logWarning(message) {
   );
 }
 
-function logError(message) {
+export function logError(message) {
   console.error(
     "%c[RPGHQ USERSCRIPTS]%c " + message,
     "color: #F44336; font-weight: bold;",
     "color: inherit;"
   );
 }
-
-// Export the functions
-module.exports = {
-  logInfo,
-  logSuccess,
-  logWarning,
-  logError,
-};
