@@ -21,11 +21,159 @@
   "use strict";
 
   // ===== Constants & URLs =====
-  const MANIFEST_URL =
-    "https://raw.githubusercontent.com/loregamer/rpghq-userscripts/userscript-manager/scripts/manifest.json";
+  // MANIFEST_URL is removed since we're hardcoding the manifest
   const SCRIPT_BASE_URL =
     "https://raw.githubusercontent.com/loregamer/rpghq-userscripts/userscript-manager/scripts/";
   const STORAGE_KEY = "rpghq_userscript_manager";
+
+  // Hard-coded manifest
+  const MANIFEST = {
+    scripts: [
+      {
+        id: "notifications",
+        name: "Notifications Improved",
+        version: "1.1.0",
+        description:
+          "Adds reaction smileys to notifications and makes them formatted better",
+        filename: "notifications.js",
+        matches: ["https://rpghq.org/forums/*"],
+        executionPhase: "document-ready",
+        category: "Aesthetic",
+        image: "https://f.rpghq.org/rso7uNB6S4H9.png",
+        settings: [],
+      },
+      {
+        id: "bbcode",
+        name: "BBCode Highlighter",
+        version: "1.1.0",
+        description:
+          "Adds reaction smileys to notifications and makes them formatted better",
+        filename: "bbcode.js",
+        matches: [
+          "https://rpghq.org/forums/posting.php?mode=post*",
+          "https://rpghq.org/forums/posting.php?mode=quote*",
+          "https://rpghq.org/forums/posting.php?mode=reply*",
+          "https://rpghq.org/forums/posting.php?mode=edit*",
+        ],
+        executionPhase: "document-ready",
+        category: "Aesthetic",
+        image: "https://f.rpghq.org/bEm69Td9mEGU.png?n=pasted-file.png",
+        settings: [],
+      },
+      {
+        id: "ignore-threads",
+        name: "Ignore Threads",
+        version: "1.0.0",
+        description: "Ignore threads",
+        filename: "ignore-threads.js",
+        matches: ["https://rpghq.org/forums/*"],
+        executionPhase: "document-start",
+        category: "Iggy Stuff",
+        image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+        settings: [],
+      },
+      {
+        id: "ignore-users",
+        name: "Ignore Users",
+        version: "1.0.0",
+        description: "(Actually) ignore users",
+        filename: "ignore-users.js",
+        matches: ["https://rpghq.org/forums/*"],
+        executionPhase: "document-start",
+        category: "Iggy Stuff",
+        image: "https://f.rpghq.org/v4iqrprFCWq0.png?n=pasted-file.png",
+        settings: [],
+      },
+      {
+        id: "number-commas",
+        name: "Commas on Numbers",
+        version: "2.1.2",
+        description: "Add commas to numbers",
+        filename: "number-commas.js",
+        matches: ["https://rpghq.org/forums/*"],
+        executionPhase: "document-ready",
+        category: "Aesthetic",
+        image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png",
+        settings: [
+          {
+            id: "formatFourDigits",
+            label: "Format 4-digit numbers",
+            description:
+              "Whether to add commas to 4-digit numbers (e.g., 1,000) or only 5+ digit numbers",
+            type: "boolean",
+            default: false,
+          },
+        ],
+      },
+      {
+        id: "pin-threads",
+        name: "Pin Threads",
+        version: "1.0.0",
+        description: "Adds a pin button to the forum",
+        filename: "pin-threads.js",
+        matches: ["https://rpghq.org/forums/index.php/*"],
+        executionPhase: "document-ready",
+        category: "Utility",
+        image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+        settings: [],
+      },
+      {
+        id: "member-search",
+        name: "Member Search Button",
+        version: "1.0.0",
+        description: "Adds a member search button to the forum",
+        filename: "member-search.js",
+        matches: ["https://rpghq.org/forums/*"],
+        executionPhase: "document-ready",
+        category: "Utility",
+        image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+        settings: [],
+      },
+      {
+        id: "random-topic",
+        name: "Random Topic Button",
+        version: "1.0.0",
+        description: "Adds a random topic button to the forum",
+        filename: "random-topic.js",
+        matches: ["https://rpghq.org/forums/*"],
+        executionPhase: "document-ready",
+        category: "Utility",
+        image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+        settings: [],
+      },
+    ],
+    schema: {
+      version: "1.0.0",
+      executionPhases: [
+        {
+          id: "document-start",
+          name: "Document Start",
+          description: "Executes before DOM parsing begins",
+        },
+        {
+          id: "document-ready",
+          name: "Document Ready",
+          description:
+            "Executes when basic DOM is available but before resources are loaded",
+        },
+        {
+          id: "document-loaded",
+          name: "Document Loaded",
+          description: "Executes after page is fully loaded",
+        },
+        {
+          id: "document-idle",
+          name: "Document Idle",
+          description: "Executes after a short delay when page is idle",
+        },
+        {
+          id: "custom-event",
+          name: "Custom Event",
+          description: "Executes when a specific custom event is triggered",
+        },
+      ],
+    },
+  };
 
   // ===== Execution Phases =====
   const ExecutionPhase = {
@@ -256,25 +404,13 @@
 
     fetchManifest: function () {
       return new Promise((resolve, reject) => {
-        GM_xmlhttpRequest({
-          method: "GET",
-          url: MANIFEST_URL,
-          onload: function (response) {
-            if (response.status === 200) {
-              try {
-                const manifest = JSON.parse(response.responseText);
-                resolve(manifest);
-              } catch (e) {
-                reject("Failed to parse manifest: " + e.message);
-              }
-            } else {
-              reject("Failed to fetch manifest: " + response.statusText);
-            }
-          },
-          onerror: function (error) {
-            reject("Error fetching manifest: " + error);
-          },
-        });
+        // Use the hard-coded manifest instead of fetching it
+        try {
+          this.manifest = MANIFEST;
+          resolve(MANIFEST);
+        } catch (e) {
+          reject("Failed to use hard-coded manifest: " + e.message);
+        }
       });
     },
 
@@ -747,15 +883,9 @@
     showGalleryView: function () {
       const content = document.getElementById("mod-manager-content");
       if (!ScriptManager.manifest) {
-        content.innerHTML = "<p>Loading mods...</p>";
-        ScriptManager.fetchManifest()
-          .then((manifest) => {
-            ScriptManager.manifest = manifest;
-            UI.renderGallery(manifest.scripts);
-          })
-          .catch((err) => {
-            content.innerHTML = `<p>Error loading mods: ${err}</p>`;
-          });
+        // Initialize the manifest directly if not already set
+        ScriptManager.manifest = MANIFEST;
+        UI.renderGallery(MANIFEST.scripts);
       } else {
         UI.renderGallery(ScriptManager.manifest.scripts);
       }
@@ -927,54 +1057,48 @@
 
     showInstalledView: function () {
       const content = document.getElementById("mod-manager-content");
-      content.innerHTML = "<p>Loading installed mods...</p>";
-      ScriptManager.fetchManifest()
-        .then((manifest) => {
-          ScriptManager.manifest = manifest;
-          const installedScripts = Storage.getInstalledScripts();
-          let html = `<ul class="mod-list">`;
-          const installedIds = Object.keys(installedScripts);
-          if (installedIds.length === 0) {
-            html += "<li>No installed mods.</li>";
-          } else {
-            installedIds.forEach((scriptId) => {
-              const installedData = installedScripts[scriptId];
-              const manifestScript = manifest.scripts.find(
-                (s) => s.id === scriptId
-              );
-              const needsUpdate = manifestScript
-                ? ScriptManager.needsUpdate(scriptId)
-                : false;
-              const displayName = installedData.name;
-              const displayVersion = installedData.version;
-              html += `<li class="mod-list-item" data-script-id="${scriptId}">
-                                        <div class="mod-list-item-info">
-                                            <p class="mod-list-item-title">
-                                                ${displayName} <span class="mod-list-item-version">v${displayVersion}</span>
-                                                ${
-                                                  needsUpdate && manifestScript
-                                                    ? `<span class="mod-list-item-version">(Update available: v${manifestScript.version})</span>`
-                                                    : ""
-                                                }
-                                            </p>
-                                        </div>
-                                        <div class="mod-list-item-actions">`;
-              if (manifestScript && needsUpdate) {
-                html += `<button class="btn-warning mod-update" data-script-id="${scriptId}"><i class="fa fa-refresh"></i> Update</button>`;
-              }
-              html += `<button class="btn-danger mod-uninstall" data-script-id="${scriptId}"><i class="fa fa-trash"></i> Uninstall</button>
-                                     <button class="btn-primary mod-settings" data-script-id="${scriptId}"><i class="fa fa-cog"></i> Settings</button>`;
-              html += `   </div>
-                                    </li>`;
-            });
+      // Use the hard-coded manifest directly
+      const manifest = ScriptManager.manifest || MANIFEST;
+      const installedScripts = Storage.getInstalledScripts();
+      let html = `<ul class="mod-list">`;
+      const installedIds = Object.keys(installedScripts);
+      if (installedIds.length === 0) {
+        html += "<li>No installed mods.</li>";
+      } else {
+        installedIds.forEach((scriptId) => {
+          const installedData = installedScripts[scriptId];
+          const manifestScript = manifest.scripts.find(
+            (s) => s.id === scriptId
+          );
+          const needsUpdate = manifestScript
+            ? ScriptManager.needsUpdate(scriptId)
+            : false;
+          const displayName = installedData.name;
+          const displayVersion = installedData.version;
+          html += `<li class="mod-list-item" data-script-id="${scriptId}">
+                                    <div class="mod-list-item-info">
+                                        <p class="mod-list-item-title">
+                                            ${displayName} <span class="mod-list-item-version">v${displayVersion}</span>
+                                            ${
+                                              needsUpdate && manifestScript
+                                                ? `<span class="mod-list-item-version">(Update available: v${manifestScript.version})</span>`
+                                                : ""
+                                            }
+                                        </p>
+                                    </div>
+                                    <div class="mod-list-item-actions">`;
+          if (manifestScript && needsUpdate) {
+            html += `<button class="btn-warning mod-update" data-script-id="${scriptId}"><i class="fa fa-refresh"></i> Update</button>`;
           }
-          html += `</ul>`;
-          content.innerHTML = html;
-          UI.addInstalledEventListeners();
-        })
-        .catch((error) => {
-          content.innerHTML = `<p>Error loading installed mods: ${error}</p>`;
+          html += `<button class="btn-danger mod-uninstall" data-script-id="${scriptId}"><i class="fa fa-trash"></i> Uninstall</button>
+                                 <button class="btn-primary mod-settings" data-script-id="${scriptId}"><i class="fa fa-cog"></i> Settings</button>`;
+          html += `   </div>
+                                </li>`;
         });
+      }
+      html += `</ul>`;
+      content.innerHTML = html;
+      UI.addInstalledEventListeners();
     },
 
     showGlobalSettingsView: function () {
@@ -1179,6 +1303,8 @@
   function init() {
     Storage.init();
     UI.addStyles();
+    // Initialize manifest right at startup
+    ScriptManager.manifest = MANIFEST;
     ExecutionFramework.init();
     ScriptManager.executeScripts();
     GM_registerMenuCommand("RPGHQ Userscript Manager", () => {
