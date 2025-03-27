@@ -11,32 +11,49 @@ function filterScripts(scripts, filters) {
     const phase = document.getElementById("phase-filter").value;
     const hasSettings = document.getElementById("has-settings-filter").value;
     const enabled = document.getElementById("enabled-filter").value;
-    const searchTerm = document.getElementById("search-filter").value.toLowerCase();
+    const searchTerm = document
+      .getElementById("search-filter")
+      .value.toLowerCase();
     const sortBy = document.getElementById("sort-filter").value;
-    
+
     filters = { category, phase, hasSettings, enabled, searchTerm, sortBy };
   }
-  
+
   // Filter scripts
-  let filtered = scripts.filter(script => {
-    const matchesCategory = filters.category === "all" || script.category === filters.category;
-    const matchesPhase = filters.phase === "all" || script.executionPhase === filters.phase;
-    const matchesSettings = filters.hasSettings === "all" || 
-                          (filters.hasSettings === "with" && script.settings && script.settings.length > 0) ||
-                          (filters.hasSettings === "without" && (!script.settings || script.settings.length === 0));
-    const matchesEnabled = filters.enabled === "all" || 
-                          (filters.enabled === "enabled" && isScriptEnabled(script.id)) ||
-                          (filters.enabled === "disabled" && !isScriptEnabled(script.id));
-    const matchesSearch = !filters.searchTerm || 
-                        script.name.toLowerCase().includes(filters.searchTerm) || 
-                        (script.description && script.description.toLowerCase().includes(filters.searchTerm));
-    
-    return matchesCategory && matchesPhase && matchesSettings && matchesEnabled && matchesSearch;
+  let filtered = scripts.filter((script) => {
+    const matchesCategory =
+      filters.category === "all" || script.category === filters.category;
+    const matchesPhase =
+      filters.phase === "all" || script.executionPhase === filters.phase;
+    const matchesSettings =
+      filters.hasSettings === "all" ||
+      (filters.hasSettings === "with" &&
+        script.settings &&
+        script.settings.length > 0) ||
+      (filters.hasSettings === "without" &&
+        (!script.settings || script.settings.length === 0));
+    const matchesEnabled =
+      filters.enabled === "all" ||
+      (filters.enabled === "enabled" && isScriptEnabled(script.id)) ||
+      (filters.enabled === "disabled" && !isScriptEnabled(script.id));
+    const matchesSearch =
+      !filters.searchTerm ||
+      script.name.toLowerCase().includes(filters.searchTerm) ||
+      (script.description &&
+        script.description.toLowerCase().includes(filters.searchTerm));
+
+    return (
+      matchesCategory &&
+      matchesPhase &&
+      matchesSettings &&
+      matchesEnabled &&
+      matchesSearch
+    );
   });
-  
+
   // Sort scripts
   filtered.sort((a, b) => {
-    switch(filters.sortBy) {
+    switch (filters.sortBy) {
       case "name-asc":
         return a.name.localeCompare(b.name);
       case "name-desc":
@@ -51,11 +68,9 @@ function filterScripts(scripts, filters) {
         return 0;
     }
   });
-  
+
   return filtered;
 }
 
 // Export the function
-if (typeof module !== 'undefined') {
-  module.exports = filterScripts;
-}
+module.exports = filterScripts;

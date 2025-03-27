@@ -12,7 +12,7 @@ const FORUM_PREFERENCES = {
           description: "Choose your preferred theme",
           type: "select",
           options: ["Default", "Dark", "Light", "High Contrast"],
-          default: "Default"
+          default: "Default",
         },
         {
           id: "font_size",
@@ -20,16 +20,16 @@ const FORUM_PREFERENCES = {
           description: "Base font size for forum text",
           type: "select",
           options: ["Small", "Medium", "Large", "Extra Large"],
-          default: "Medium"
+          default: "Medium",
         },
         {
           id: "show_avatars",
           name: "Show Avatars",
           description: "Display user avatars in posts",
           type: "toggle",
-          default: true
-        }
-      ]
+          default: true,
+        },
+      ],
     },
     {
       name: "Notification Settings",
@@ -39,7 +39,7 @@ const FORUM_PREFERENCES = {
           name: "Email Notifications",
           description: "Receive email notifications for important events",
           type: "toggle",
-          default: true
+          default: true,
         },
         {
           id: "notification_frequency",
@@ -47,9 +47,9 @@ const FORUM_PREFERENCES = {
           description: "How often to receive notifications",
           type: "select",
           options: ["Immediately", "Daily Digest", "Weekly Digest"],
-          default: "Immediately"
-        }
-      ]
+          default: "Immediately",
+        },
+      ],
     },
     {
       name: "Privacy Settings",
@@ -59,7 +59,7 @@ const FORUM_PREFERENCES = {
           name: "Online Status",
           description: "Show your online status to other users",
           type: "toggle",
-          default: true
+          default: true,
         },
         {
           id: "profile_visibility",
@@ -67,14 +67,12 @@ const FORUM_PREFERENCES = {
           description: "Who can see your profile details",
           type: "select",
           options: ["Everyone", "Members Only", "Friends Only", "Nobody"],
-          default: "Members Only"
-        }
-      ]
-    }
-  ]
+          default: "Members Only",
+        },
+      ],
+    },
+  ],
 };
 
 // Export the object if in Node.js environment
-if (typeof module !== 'undefined') {
-  module.exports = FORUM_PREFERENCES;
-}
+module.exports = FORUM_PREFERENCES;

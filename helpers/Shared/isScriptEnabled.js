@@ -5,7 +5,7 @@
  */
 function isScriptEnabled(scriptId) {
   // First try to check the enabled scripts array
-  const enabledScripts = localStorage.getItem('rpghq-enabled-scripts');
+  const enabledScripts = GM_getValue("rpghq-enabled-scripts", null);
   if (enabledScripts) {
     try {
       const enabledScriptsArray = JSON.parse(enabledScripts);
@@ -17,18 +17,22 @@ function isScriptEnabled(scriptId) {
       logWarning(`Error parsing enabled scripts: ${e.message}`);
     }
   }
-  
+
   // Fall back to checking the disabled scripts array
-  const disabledScripts = localStorage.getItem('rpghq-disabled-scripts');
+  const disabledScripts = GM_getValue("rpghq-disabled-scripts", null);
   if (!disabledScripts) {
     logInfo(`Script ${scriptId} is enabled (no disabled scripts found)`);
     return true; // By default, all scripts are enabled
   }
-  
+
   try {
     const disabledScriptsArray = JSON.parse(disabledScripts);
     const isEnabled = !disabledScriptsArray.includes(scriptId);
-    logInfo(`Script ${scriptId} is ${isEnabled ? 'enabled' : 'disabled'} (based on disabled scripts list)`);
+    logInfo(
+      `Script ${scriptId} is ${
+        isEnabled ? "enabled" : "disabled"
+      } (based on disabled scripts list)`
+    );
     return isEnabled;
   } catch (e) {
     logWarning(`Error parsing disabled scripts: ${e.message}`);
@@ -37,6 +41,6 @@ function isScriptEnabled(scriptId) {
 }
 
 // Export the function if in Node.js environment
-if (typeof module !== 'undefined') {
+if (typeof module !== "undefined") {
   module.exports = isScriptEnabled;
 }

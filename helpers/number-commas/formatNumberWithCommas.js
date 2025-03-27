@@ -8,6 +8,4 @@ function formatNumberWithCommas(number) {
 }
 
 // Export the function
-if (typeof module !== 'undefined') {
-  module.exports = formatNumberWithCommas;
-}
+module.exports = formatNumberWithCommas;

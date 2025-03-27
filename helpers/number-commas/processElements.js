@@ -4,7 +4,7 @@
  */
 function processElements(formatFourDigits) {
   const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
-  
+
   const elements = document.querySelectorAll(
     "dd.posts, dd.profile-posts, dd.views, span.responsive-show.left-box, .column2 .details dd"
   );
@@ -36,17 +36,15 @@ function processElements(formatFourDigits) {
     } else if (element.classList.contains("profile-posts")) {
       const anchor = element.querySelector("a");
       if (anchor && numberRegex.test(anchor.textContent)) {
-        anchor.textContent = anchor.textContent.replace(
-          numberRegex,
-          (match) => formatNumberWithCommas(match)
+        anchor.textContent = anchor.textContent.replace(numberRegex, (match) =>
+          formatNumberWithCommas(match)
         );
       }
     } else if (element.classList.contains("responsive-show")) {
       const strong = element.querySelector("strong");
       if (strong && numberRegex.test(strong.textContent)) {
-        strong.textContent = strong.textContent.replace(
-          numberRegex,
-          (match) => formatNumberWithCommas(match)
+        strong.textContent = strong.textContent.replace(numberRegex, (match) =>
+          formatNumberWithCommas(match)
         );
       }
     }
@@ -54,9 +52,8 @@ function processElements(formatFourDigits) {
     const strongElements = element.querySelectorAll("strong");
     strongElements.forEach((strong) => {
       if (numberRegex.test(strong.textContent)) {
-        strong.textContent = strong.textContent.replace(
-          numberRegex,
-          (match) => formatNumberWithCommas(match)
+        strong.textContent = strong.textContent.replace(numberRegex, (match) =>
+          formatNumberWithCommas(match)
         );
       }
     });
@@ -64,6 +61,4 @@ function processElements(formatFourDigits) {
 }
 
 // Export the function
-if (typeof module !== 'undefined') {
-  module.exports = processElements;
-}
+module.exports = processElements;

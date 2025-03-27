@@ -5,33 +5,41 @@
  */
 function renderSettingControl(setting) {
   switch (setting.type) {
-    case 'boolean':
+    case "boolean":
       return `
         <label class="toggle-switch">
-          <input type="checkbox" ${setting.default ? 'checked' : ''}>
+          <input type="checkbox" ${setting.default ? "checked" : ""}>
           <span class="toggle-slider"></span>
         </label>
       `;
-    case 'select':
+    case "select":
       return `
         <select class="setting-input">
-          ${setting.options.map(option => `
-            <option value="${option}" ${option === setting.default ? 'selected' : ''}>${option}</option>
-          `).join('')}
+          ${setting.options
+            .map(
+              (option) => `
+            <option value="${option}" ${
+                option === setting.default ? "selected" : ""
+              }>${option}</option>
+          `
+            )
+            .join("")}
         </select>
       `;
-    case 'number':
+    case "number":
       return `
-        <input type="number" class="setting-input" value="${setting.default || 0}">
+        <input type="number" class="setting-input" value="${
+          setting.default || 0
+        }">
       `;
     default:
       return `
-        <input type="text" class="setting-input" value="${setting.default || ''}">
+        <input type="text" class="setting-input" value="${
+          setting.default || ""
+        }">
       `;
   }
 }
 
 // Export the function
-if (typeof module !== 'undefined') {
-  module.exports = renderSettingControl;
-}
+module.exports = renderSettingControl;

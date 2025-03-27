@@ -71,6 +71,4 @@ function calculateForumStatistics() {
 }
 
 // Export the function
-if (typeof module !== 'undefined') {
-  module.exports = calculateForumStatistics;
-}
+module.exports = calculateForumStatistics;

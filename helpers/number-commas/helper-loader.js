@@ -9,11 +9,9 @@ function loadNumberCommasHelpers() {
     processElements,
     calculateForumStatistics,
     toggleFourDigitFormatting,
-    updateMenuLabel
+    updateMenuLabel,
   };
 }
 
 // Export the function
-if (typeof module !== 'undefined') {
-  module.exports = loadNumberCommasHelpers;
-}
+module.exports = loadNumberCommasHelpers;

@@ -21,9 +21,7 @@ function updateMenuLabel(formatFourDigits) {
 }
 
 // Export the functions
-if (typeof module !== 'undefined') {
-  module.exports = {
-    toggleFourDigitFormatting,
-    updateMenuLabel
-  };
-}
+module.exports = {
+  toggleFourDigitFormatting,
+  updateMenuLabel,
+};

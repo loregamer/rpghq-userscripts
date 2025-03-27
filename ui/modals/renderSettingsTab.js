@@ -2,7 +2,7 @@
  * Render the "Settings" tab content
  * @param {HTMLElement} container - The container to render into
  */
-function renderSettingsTab(container) {
+export function renderSettingsTab(container) {
   container.innerHTML += `
     <h2>Global Settings</h2>
     
@@ -112,9 +112,4 @@ function renderSettingsTab(container) {
       <strong>Note:</strong> These are view-only representations of settings. Changes made here will not be saved.
     </div>
   `;
-}
-
-// Export the function
-if (typeof module !== 'undefined') {
-  module.exports = renderSettingsTab;
 }

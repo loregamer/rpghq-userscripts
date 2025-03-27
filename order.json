@@ -9,7 +9,9 @@
     "run-at": "document-start",
     "grants": [
       "GM_addStyle",
-      "GM_registerMenuCommand"
+      "GM_registerMenuCommand",
+      "GM_getValue",
+      "GM_setValue"
     ]
   },
   "helpers": [
@@ -25,7 +27,7 @@
   ],
   "scripts": {
     "document-start": [],
-    "document-ready": [],
+    "document-ready": ["number-commas/number-commas.js"],
     "document-loaded": [],
     "document-idle": [],
     "custom-event": []
@@ -48,12 +50,6 @@
       "getExecutionPhaseOptions.js"
     ]
   },
-  "initialization": [
-    "init.js",
-    "addMenuButton.js"
-  ],
-  "data": [
-    "MANIFEST.js",
-    "FORUM_PREFERENCES.js"
-  ]
+  "initialization": ["init.js", "addMenuButton.js"],
+  "data": ["MANIFEST.js", "FORUM_PREFERENCES.js"]
 }
