@@ -37,6 +37,14 @@ function renderInstalledScriptsTab(container) {
         </select>
       </div>
       <div class="filter-group">
+        <label for="enabled-filter">Status</label>
+        <select id="enabled-filter">
+          <option value="all">All Scripts</option>
+          <option value="enabled">Enabled Only</option>
+          <option value="disabled">Disabled Only</option>
+        </select>
+      </div>
+      <div class="filter-group">
         <label for="search-filter">Search</label>
         <input type="text" id="search-filter" placeholder="Script name or description...">
       </div>
@@ -132,6 +140,7 @@ function renderInstalledScriptsTab(container) {
     document.getElementById("category-filter").value = "all";
     document.getElementById("phase-filter").value = "all";
     document.getElementById("has-settings-filter").value = "all";
+    document.getElementById("enabled-filter").value = "all";
     document.getElementById("search-filter").value = "";
     document.getElementById("sort-filter").value = "name-asc";
     

@@ -41,6 +41,9 @@ function renderScriptsGridView(container, scripts) {
             <i class="fa fa-bolt"></i> ${getPhaseDisplayName(script.executionPhase)}
           </div>
           <div class="script-card-actions">
+            <button class="btn ${isScriptEnabled(script.id) ? 'btn-danger' : 'btn-success'} btn-small toggle-script" data-script-id="${script.id}">
+              <i class="fa ${isScriptEnabled(script.id) ? 'fa-ban' : 'fa-check'}"></i> ${isScriptEnabled(script.id) ? 'Disable' : 'Enable'}
+            </button>
             <button class="btn btn-primary btn-small view-settings" data-script-id="${script.id}">
               <i class="fa fa-cog"></i> Settings
             </button>
@@ -65,9 +68,25 @@ function renderScriptsGridView(container, scripts) {
       }
     });
   });
-}
-
-// Export the function
-if (typeof module !== 'undefined') {
-  module.exports = renderScriptsGridView;
+  
+  // Add event listeners for toggle script buttons
+  document.querySelectorAll(".toggle-script").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const scriptId = btn.dataset.scriptId;
+      const newState = toggleScriptEnabled(scriptId);
+      
+      // Update button state
+      if (newState) {
+        // Script is now enabled
+        btn.classList.remove("btn-success");
+        btn.classList.add("btn-danger");
+        btn.innerHTML = '<i class="fa fa-ban"></i> Disable';
+      } else {
+        // Script is now disabled
+        btn.classList.remove("btn-danger");
+        btn.classList.add("btn-success");
+        btn.innerHTML = '<i class="fa fa-check"></i> Enable';
+      }
+    });
+  });
 }

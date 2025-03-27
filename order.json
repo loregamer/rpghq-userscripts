@@ -18,7 +18,9 @@
     "Shared/renderSettingControl.js",
     "Shared/renderPreferenceControl.js",
     "Shared/filterScripts.js",
-    "Shared/addStyles.js"
+    "Shared/addStyles.js",
+    "Shared/isScriptEnabled.js",
+    "Shared/toggleScriptEnabled.js"
   ],
   "scripts": {
     "document-start": [],

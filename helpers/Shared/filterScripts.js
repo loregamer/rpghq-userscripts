@@ -10,10 +10,11 @@ function filterScripts(scripts, filters) {
     const category = document.getElementById("category-filter").value;
     const phase = document.getElementById("phase-filter").value;
     const hasSettings = document.getElementById("has-settings-filter").value;
+    const enabled = document.getElementById("enabled-filter").value;
     const searchTerm = document.getElementById("search-filter").value.toLowerCase();
     const sortBy = document.getElementById("sort-filter").value;
     
-    filters = { category, phase, hasSettings, searchTerm, sortBy };
+    filters = { category, phase, hasSettings, enabled, searchTerm, sortBy };
   }
   
   // Filter scripts
@@ -23,11 +24,14 @@ function filterScripts(scripts, filters) {
     const matchesSettings = filters.hasSettings === "all" || 
                           (filters.hasSettings === "with" && script.settings && script.settings.length > 0) ||
                           (filters.hasSettings === "without" && (!script.settings || script.settings.length === 0));
+    const matchesEnabled = filters.enabled === "all" || 
+                          (filters.enabled === "enabled" && isScriptEnabled(script.id)) ||
+                          (filters.enabled === "disabled" && !isScriptEnabled(script.id));
     const matchesSearch = !filters.searchTerm || 
                         script.name.toLowerCase().includes(filters.searchTerm) || 
                         (script.description && script.description.toLowerCase().includes(filters.searchTerm));
     
-    return matchesCategory && matchesPhase && matchesSettings && matchesSearch;
+    return matchesCategory && matchesPhase && matchesSettings && matchesEnabled && matchesSearch;
   });
   
   // Sort scripts
