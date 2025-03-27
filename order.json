@@ -1,0 +1,56 @@
+{
+  "header": {
+    "name": "RPGHQ Userscript Manager (Popup Only)",
+    "namespace": "https://rpghq.org/",
+    "version": "3.0.2",
+    "description": "A simple popup that displays the MANIFEST of available scripts without any functional components",
+    "author": "loregamer",
+    "match": "https://rpghq.org/forums/*",
+    "run-at": "document-start",
+    "grants": [
+      "GM_addStyle",
+      "GM_registerMenuCommand"
+    ]
+  },
+  "helpers": [
+    "Shared/compareVersions.js",
+    "Shared/getPhaseDisplayName.js",
+    "Shared/renderSettingControl.js",
+    "Shared/renderPreferenceControl.js",
+    "Shared/filterScripts.js",
+    "Shared/addStyles.js"
+  ],
+  "scripts": {
+    "document-start": [],
+    "document-ready": [],
+    "document-loaded": [],
+    "document-idle": [],
+    "custom-event": []
+  },
+  "ui": {
+    "modals": [
+      "showModal.js",
+      "hideModal.js",
+      "loadTabContent.js",
+      "renderInstalledScriptsTab.js",
+      "renderForumPreferencesTab.js",
+      "renderSettingsTab.js",
+      "renderThreadsSubtab.js",
+      "renderUsersSubtab.js",
+      "showScriptSettings.js",
+      "renderScriptSettingsContent.js",
+      "renderScriptsGridView.js",
+      "renderScriptsListView.js",
+      "getCategoryOptions.js",
+      "getExecutionPhaseOptions.js"
+    ]
+  },
+  "initialization": [
+    "init.js",
+    "addMenuButton.js"
+  ],
+  "data": [
+    "MANIFEST.js",
+    "FORUM_PREFERENCES.js"
+  ]
+}
