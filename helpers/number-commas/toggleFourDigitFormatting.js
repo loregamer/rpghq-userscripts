@@ -1,7 +1,7 @@
 /**
  * Toggle the formatting of 4-digit numbers setting
  */
-function toggleFourDigitFormatting() {
+export function toggleFourDigitFormatting() {
   const newValue = !GM_getValue("formatFourDigits", false);
   GM_setValue("formatFourDigits", newValue);
   updateMenuLabel(newValue);
@@ -12,16 +12,10 @@ function toggleFourDigitFormatting() {
  * Update the menu command label based on the current setting
  * @param {boolean} formatFourDigits - Current setting for formatting 4-digit numbers
  */
-function updateMenuLabel(formatFourDigits) {
+export function updateMenuLabel(formatFourDigits) {
   const label = formatFourDigits
     ? "Disable 4-digit formatting"
     : "Enable 4-digit formatting";
   GM_unregisterMenuCommand("Toggle 4-digit formatting");
   GM_registerMenuCommand(label, toggleFourDigitFormatting);
 }
-
-// Export the functions
-module.exports = {
-  toggleFourDigitFormatting,
-  updateMenuLabel,
-};

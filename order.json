@@ -23,11 +23,18 @@
     "Shared/filterScripts.js",
     "Shared/addStyles.js",
     "Shared/isScriptEnabled.js",
-    "Shared/toggleScriptEnabled.js"
+    "Shared/toggleScriptEnabled.js",
+    "number-commas/calculateForumStatistics.js",
+    "number-commas/formatNumberWithCommas.js",
+    "number-commas/helper-loader.js",
+    "number-commas/processElements.js",
+    "number-commas/toggleFourDigitFormatting.js"
   ],
   "scripts": {
     "document-start": [],
-    "document-ready": ["number-commas/number-commas.js"],
+    "document-ready": [
+      "number-commas/number-commas.js"
+    ],
     "document-loaded": [],
     "document-idle": [],
     "custom-event": []
@@ -50,6 +57,12 @@
       "getExecutionPhaseOptions.js"
     ]
   },
-  "initialization": ["init.js", "addMenuButton.js"],
-  "data": ["MANIFEST.js", "FORUM_PREFERENCES.js"]
+  "initialization": [
+    "init.js",
+    "addMenuButton.js"
+  ],
+  "data": [
+    "MANIFEST.js",
+    "FORUM_PREFERENCES.js"
+  ]
 }

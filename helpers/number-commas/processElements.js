@@ -2,7 +2,7 @@
  * Process DOM elements and format numbers with commas
  * @param {boolean} formatFourDigits - Whether to format 4-digit numbers
  */
-function processElements(formatFourDigits) {
+export function processElements(formatFourDigits) {
   const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
 
   const elements = document.querySelectorAll(
@@ -59,6 +59,3 @@ function processElements(formatFourDigits) {
     });
   });
 }
-
-// Export the function
-module.exports = processElements;

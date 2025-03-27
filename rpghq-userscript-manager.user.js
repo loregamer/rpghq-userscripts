@@ -17,7 +17,7 @@
 
   // Data from MANIFEST.js
 
-  const MANIFEST = {
+const MANIFEST = {
   scripts: [
     {
       id: "number-commas",
@@ -75,11 +75,9 @@
 };
 
 
-
-
   // Data from FORUM_PREFERENCES.js
 
-  const FORUM_PREFERENCES = {
+const FORUM_PREFERENCES = {
   sections: [
     {
       name: "Display Settings",
@@ -153,9 +151,6 @@
 };
 
 
-
-
-
   // Helper function from Shared/logger.js
   function logInfo(message) {
   console.log(
@@ -185,7 +180,6 @@
 
 
   // Helper function from Shared/compareVersions.js
-
   function compareVersions(a, b) {  const partsA = a.split(".").map(Number);  const partsB = b.split(".").map(Number);
 
   for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {  const numA = partsA[i] || 0;  const numB = partsB[i] || 0;  if (numA !== numB) {
@@ -197,11 +191,7 @@
 }
 
 
-
-
-
   // Helper function from Shared/getPhaseDisplayName.js
-
   function getPhaseDisplayName(phase) {  if (!phase) return "Not specified";  const phaseMap = {
     "document-start": "Document Start",
     "document-ready": "Document Ready",
@@ -214,12 +204,7 @@
 }
 
 
-
-
-
-
   // Helper function from Shared/renderSettingControl.js
-
   function renderSettingControl(setting) {
   switch (setting.type) {
     case "boolean":
@@ -259,11 +244,7 @@
 }
 
 
-
-
-
   // Helper function from Shared/renderPreferenceControl.js
-
   function renderPreferenceControl(preference) {
   switch (preference.type) {
     case "toggle":
@@ -295,11 +276,7 @@
 }
 
 
-
-
-
   // Helper function from Shared/filterScripts.js
-
   function filterScripts(scripts, filters) {
   if (!filters) {
     // If no filters provided, get them from the DOM
@@ -369,11 +346,7 @@
 }
 
 
-
-
-
   // Helper function from Shared/addStyles.js
-
   function addStyles() {
   GM_addStyle(`
     /* Import Font Awesome */
@@ -1027,11 +1000,7 @@
 }
 
 
-
-
-
   // Helper function from Shared/isScriptEnabled.js
-
   function isScriptEnabled(scriptId) {
   // First try to check the enabled scripts array
   const enabledScripts = GM_getValue("rpghq-enabled-scripts", null);
@@ -1070,11 +1039,7 @@
 }
 
 
-  
-
-
   // Helper function from Shared/toggleScriptEnabled.js
-
   function toggleScriptEnabled(scriptId) {
   // For backwards compatibility, read from disabled scripts
   const disabledScripts = GM_getValue("rpghq-disabled-scripts", null);
@@ -1133,7 +1098,167 @@
 }
 
 
-  
+  // Helper function from number-commas/calculateForumStatistics.js
+  function calculateForumStatistics() {
+  // Only run on index.php
+  if (!window.location.pathname.endsWith("index.php")) {
+    return;
+  }
+  let totalTopics = 0;
+  let totalPosts = 0;
+
+  // Get all posts and topics elements
+  const postsElements = document.querySelectorAll("dd.posts");
+  const topicsElements = document.querySelectorAll("dd.topics");
+
+  // Sum up posts
+  postsElements.forEach((element) => {
+  const postsText = element.childNodes[0].textContent
+      .trim()
+      .replace(/,/g, "");
+  const posts = parseInt(postsText);
+  if (!isNaN(posts)) {
+      totalPosts += posts;
+    }
+  });
+
+  // Sum up topics
+  topicsElements.forEach((element) => {
+  const topicsText = element.childNodes[0].textContent
+      .trim()
+      .replace(/,/g, "");
+  const topics = parseInt(topicsText);
+  if (!isNaN(topics)) {
+      totalTopics += topics;
+    }
+  });
+
+  // Function to format numbers, only adding commas for 5+ digits
+  function formatStatNumber(num) {
+    return num.toString().length >= 5
+      ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+      : num.toString();
+  }
+
+  // Find and update the statistics block
+  const statsBlock = document.querySelector(".stat-block.statistics");
+  if (statsBlock) {
+  const statsText = statsBlock.querySelector("p");
+  if (statsText) {
+  const existingText = statsText.innerHTML;
+      // Keep the members count and newest member info, but update topics and posts
+  const membersMatch = existingText.match(
+        /Total members <strong>(\d+)<\/strong>/
+      );
+  const newestMemberMatch = existingText.match(
+        /(Our newest member <strong>.*?<\/strong>)/
+      );
+  if (membersMatch && newestMemberMatch) {
+        statsText.innerHTML = `Total posts <strong>${formatStatNumber(
+          totalPosts
+        )}</strong> • Total topics <strong>${formatStatNumber(
+          totalTopics
+        )}</strong> • Total members <strong>${membersMatch[1]}</strong> • ${
+          newestMemberMatch[1]
+        }`;
+      }
+    }
+  }
+}
+
+
+  // Helper function from number-commas/formatNumberWithCommas.js
+  function formatNumberWithCommas(number) {
+  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+
+  // Helper function from number-commas/helper-loader.js
+  function loadNumberCommasHelper() {
+  // These functions are already available in the final script through the build process
+  // This is just for reference/documentation of what's needed
+  return {
+    formatNumberWithCommas,
+    processElements,
+    calculateForumStatistics,
+    toggleFourDigitFormatting,
+    updateMenuLabel,
+  };
+}
+
+
+  // Helper function from number-commas/processElements.js
+  function processElements(formatFourDigits) {
+  const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
+  const elements = document.querySelectorAll(
+    "dd.posts, dd.profile-posts, dd.views, span.responsive-show.left-box, .column2 .details dd"
+  );
+
+  elements.forEach((element) => {
+  if (
+      element.classList.contains("posts") ||
+      element.classList.contains("views") ||
+      (element.parentElement &&
+        element.parentElement.classList.contains("details"))
+    ) {
+  if (
+        element.previousElementSibling &&
+        element.previousElementSibling.textContent.trim() === "Joined:"
+      ) {
+        return;
+      }
+
+      element.childNodes.forEach((node) => {
+  if (
+          node.nodeType === Node.TEXT_NODE &&
+          numberRegex.test(node.nodeValue)
+        ) {
+          node.nodeValue = node.nodeValue.replace(numberRegex, (match) =>
+            formatNumberWithCommas(match)
+          );
+        }
+      });
+    } else if (element.classList.contains("profile-posts")) {
+  const anchor = element.querySelector("a");
+  if (anchor && numberRegex.test(anchor.textContent)) {
+        anchor.textContent = anchor.textContent.replace(numberRegex, (match) =>
+          formatNumberWithCommas(match)
+        );
+      }
+    } else if (element.classList.contains("responsive-show")) {
+  const strong = element.querySelector("strong");
+  if (strong && numberRegex.test(strong.textContent)) {
+        strong.textContent = strong.textContent.replace(numberRegex, (match) =>
+          formatNumberWithCommas(match)
+        );
+      }
+    }
+  const strongElements = element.querySelectorAll("strong");
+    strongElements.forEach((strong) => {
+  if (numberRegex.test(strong.textContent)) {
+        strong.textContent = strong.textContent.replace(numberRegex, (match) =>
+          formatNumberWithCommas(match)
+        );
+      }
+    });
+  });
+}
+
+
+  // Helper function from number-commas/toggleFourDigitFormatting.js
+  function toggleFourDigitFormatting() {
+  const newValue = !GM_getValue("formatFourDigits", false);
+  GM_setValue("formatFourDigits", newValue);
+  updateMenuLabel(newValue);
+  location.reload();
+}
+  function updateMenuLabel(formatFourDigits) {
+  const label = formatFourDigits
+    ? "Disable 4-digit formatting"
+    : "Enable 4-digit formatting";
+  GM_unregisterMenuCommand("Toggle 4-digit formatting");
+  GM_registerMenuCommand(label, toggleFourDigitFormatting);
+}
 
 
   // UI function from showModal.js
@@ -1986,13 +2111,9 @@
 
 
   // Script function from document-ready/number-commas/number-commas.js
-
-  function numberCommasScript() {
+  function number_commas() {
   // Get the setting for formatting 4-digit numbers
   const formatFourDigits = GM_getValue("formatFourDigits", false);
-
-  // Set up the menu command
-  updateMenuLabel(formatFourDigits);
 
   // Run initial processing
   processElements(formatFourDigits);
@@ -2008,11 +2129,7 @@
 }
 
 
-
-
-
   // Initialization from init.js
-
   function init() {
   addStyles();
   GM_registerMenuCommand("RPGHQ Userscript Manager", showModal);
@@ -2025,11 +2142,7 @@
 }
 
 
-
-
-
   // Initialization from addMenuButton.js
-
   function addMenuButton() {  const profileDropdown = document.querySelector(
     '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
   );  if (!profileDropdown) return;  const logoutButton = Array.from(profileDropdown.querySelectorAll("li")).find(
@@ -2054,14 +2167,10 @@
 }
 
 
-
-
-
-
   // Execute scripts by phase
   document.addEventListener("DOMContentLoaded", function() {
     // Execute document-ready scripts
-    if (isScriptEnabled("number-commas")) { try { number-commas(); } catch(e) { console.error("Error executing number-commas:", e); } }
+    if (isScriptEnabled("number-commas")) { try { number_commas(); } catch(e) { console.error("Error executing number-commas:", e); } }
   });
 
   // Execute document-start scripts

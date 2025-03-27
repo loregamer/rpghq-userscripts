@@ -4,7 +4,7 @@
  * @param {Object} filters - The filter criteria
  * @returns {Array} - Filtered scripts
  */
-function filterScripts(scripts, filters) {
+export function filterScripts(scripts, filters) {
   if (!filters) {
     // If no filters provided, get them from the DOM
     const category = document.getElementById("category-filter").value;
@@ -71,6 +71,3 @@ function filterScripts(scripts, filters) {
 
   return filtered;
 }
-
-// Export the function
-module.exports = filterScripts;

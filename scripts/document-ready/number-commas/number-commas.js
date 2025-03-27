@@ -1,12 +1,9 @@
 /**
  * Number Commas Script - Adds commas to numbers for easier reading
  */
-function numberCommasScript() {
+export function number_commas() {
   // Get the setting for formatting 4-digit numbers
   const formatFourDigits = GM_getValue("formatFourDigits", false);
-
-  // Set up the menu command
-  updateMenuLabel(formatFourDigits);
 
   // Run initial processing
   processElements(formatFourDigits);
@@ -20,6 +17,3 @@ function numberCommasScript() {
   // Start observing the document
   observer.observe(document.body, { childList: true, subtree: true });
 }
-
-// Export the function
-module.exports = numberCommasScript;

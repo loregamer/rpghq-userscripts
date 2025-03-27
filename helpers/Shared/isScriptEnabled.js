@@ -3,7 +3,7 @@
  * @param {string} scriptId - The ID of the script
  * @returns {boolean} - Whether the script is enabled
  */
-function isScriptEnabled(scriptId) {
+export function isScriptEnabled(scriptId) {
   // First try to check the enabled scripts array
   const enabledScripts = GM_getValue("rpghq-enabled-scripts", null);
   if (enabledScripts) {
@@ -38,9 +38,4 @@ function isScriptEnabled(scriptId) {
     logWarning(`Error parsing disabled scripts: ${e.message}`);
     return true; // If there's an error parsing, default to enabled
   }
-}
-
-// Export the function if in Node.js environment
-if (typeof module !== "undefined") {
-  module.exports = isScriptEnabled;
 }

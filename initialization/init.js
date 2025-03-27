@@ -1,7 +1,7 @@
 /**
  * Initialize the userscript
  */
-function init() {
+export function init() {
   addStyles();
   GM_registerMenuCommand("RPGHQ Userscript Manager", showModal);
 
@@ -12,6 +12,3 @@ function init() {
     addMenuButton();
   }
 }
-
-// Export the function if in Node.js environment
-module.exports = init;

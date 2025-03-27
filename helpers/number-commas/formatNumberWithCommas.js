@@ -3,9 +3,6 @@
  * @param {number|string} number - The number to format
  * @returns {string} - The formatted number with commas
  */
-function formatNumberWithCommas(number) {
+export function formatNumberWithCommas(number) {
   return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
-
-// Export the function
-module.exports = formatNumberWithCommas;

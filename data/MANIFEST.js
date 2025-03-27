@@ -1,7 +1,7 @@
 /**
  * Hard-coded manifest - just for display purposes
  */
-const MANIFEST = {
+export const MANIFEST = {
   scripts: [
     {
       id: "number-commas",
@@ -57,8 +57,3 @@ const MANIFEST = {
     ],
   },
 };
-
-// Export the object if in Node.js environment
-if (typeof module !== "undefined") {
-  module.exports = MANIFEST;
-}

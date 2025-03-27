@@ -3,7 +3,7 @@
  * @param {string} scriptId - The ID of the script
  * @returns {boolean} - The new state (true = enabled, false = disabled)
  */
-function toggleScriptEnabled(scriptId) {
+export function toggleScriptEnabled(scriptId) {
   // For backwards compatibility, read from disabled scripts
   const disabledScripts = GM_getValue("rpghq-disabled-scripts", null);
   let disabledScriptsArray = [];
@@ -61,9 +61,4 @@ function toggleScriptEnabled(scriptId) {
   logInfo(`Enabled scripts: ${JSON.stringify(enabledScriptsArray)}`);
 
   return !isCurrentlyEnabled;
-}
-
-// Export the function if in Node.js environment
-if (typeof module !== "undefined") {
-  module.exports = toggleScriptEnabled;
 }

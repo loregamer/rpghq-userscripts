@@ -3,7 +3,7 @@
  * @param {Object} preference - The preference object
  * @returns {string} - HTML for the preference control
  */
-function renderPreferenceControl(preference) {
+export function renderPreferenceControl(preference) {
   switch (preference.type) {
     case "toggle":
       return `
@@ -32,6 +32,3 @@ function renderPreferenceControl(preference) {
       `;
   }
 }
-
-// Export the function
-module.exports = renderPreferenceControl;

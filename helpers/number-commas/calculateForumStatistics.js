@@ -1,7 +1,7 @@
 /**
  * Calculate and update forum statistics
  */
-function calculateForumStatistics() {
+export function calculateForumStatistics() {
   // Only run on index.php
   if (!window.location.pathname.endsWith("index.php")) {
     return;
@@ -69,6 +69,3 @@ function calculateForumStatistics() {
     }
   }
 }
-
-// Export the function
-module.exports = calculateForumStatistics;

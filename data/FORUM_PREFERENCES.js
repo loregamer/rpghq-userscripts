@@ -1,7 +1,7 @@
 /**
  * Forum preferences (mock data for display)
  */
-const FORUM_PREFERENCES = {
+export const FORUM_PREFERENCES = {
   sections: [
     {
       name: "Display Settings",
@@ -73,6 +73,3 @@ const FORUM_PREFERENCES = {
     },
   ],
 };
-
-// Export the object if in Node.js environment
-module.exports = FORUM_PREFERENCES;

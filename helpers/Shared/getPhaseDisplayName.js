@@ -3,7 +3,7 @@
  * @param {string} phase - The execution phase ID
  * @returns {string} - User-friendly name for the phase
  */
-function getPhaseDisplayName(phase) {
+export function getPhaseDisplayName(phase) {
   if (!phase) return "Not specified";
 
   const phaseMap = {
@@ -16,7 +16,3 @@ function getPhaseDisplayName(phase) {
 
   return phaseMap[phase] || phase;
 }
-
-// Export the function
-
-module.exports = getPhaseDisplayName;

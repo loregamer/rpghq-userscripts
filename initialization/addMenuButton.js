@@ -1,7 +1,7 @@
 /**
  * Add menu button to the page
  */
-function addMenuButton() {
+export function addMenuButton() {
   const profileDropdown = document.querySelector(
     '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
   );
@@ -31,7 +31,3 @@ function addMenuButton() {
     showModal();
   });
 }
-
-// Export the function if in Node.js environment
-
-module.exports = addMenuButton;
