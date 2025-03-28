@@ -1,0 +1,18 @@
+{
+  "id": "notifications-customization",
+  "name": "RPGHQ Notifications Customization",
+  "version": "4.5.0",
+  "description": "Customize RPGHQ notifications display with enhanced reactions, better formatting, and automatic marking",
+  "category": "UI Enhancement",
+  "executionPhase": "document-ready",
+  "matches": ["https://rpghq.org/*/*"],
+  "settings": [
+    {
+      "id": "enableNotificationStyles",
+      "label": "Enable Notification Styling",
+      "description": "Apply custom styles to notifications",
+      "type": "boolean",
+      "default": true
+    }
+  ]
+}

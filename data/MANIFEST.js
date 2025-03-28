@@ -24,6 +24,25 @@ export const MANIFEST = {
         },
       ],
     },
+    {
+      id: "notifications-customization",
+      name: "RPGHQ Notifications Customization",
+      version: "4.5.0",
+      description: "Customize RPGHQ notifications display with enhanced reactions, better formatting, and automatic marking",
+      filename: "notifications-customization.js",
+      matches: ["https://rpghq.org/*/*"],
+      executionPhase: "document-ready",
+      category: "UI Enhancement",
+      settings: [
+        {
+          id: "enableNotificationStyles",
+          label: "Enable Notification Styling",
+          description: "Apply custom styles to notifications",
+          type: "boolean",
+          default: true
+        }
+      ],
+    },
   ],
   schema: {
     version: "1.0.0",

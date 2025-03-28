@@ -28,12 +28,14 @@
     "number-commas/formatNumberWithCommas.js",
     "number-commas/helper-loader.js",
     "number-commas/processElements.js",
-    "number-commas/toggleFourDigitFormatting.js"
+    "number-commas/toggleFourDigitFormatting.js",
+    "notifications-customization/constants.js"
   ],
   "scripts": {
     "document-start": [],
     "document-ready": [
-      "number-commas/number-commas.js"
+      "number-commas/number-commas.js",
+      "notifications-customization/notifications-customization.js"
     ],
     "document-loaded": [],
     "document-idle": [],

@@ -17,205 +17,230 @@
 
   // Data from MANIFEST.js
 
-const MANIFEST = {
-  scripts: [
-    {
-      id: "number-commas",
-      name: "Commas on Numbers",
-      version: "2.1.2",
-      description: "Add commas to numbers",
-      filename: "number-commas.js",
-      matches: ["https://rpghq.org/forums/*"],
-      executionPhase: "document-ready",
-      category: "Aesthetic",
-      image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png",
-      settings: [
+  const MANIFEST = {
+    scripts: [
+      {
+        id: "number-commas",
+        name: "Commas on Numbers",
+        version: "2.1.2",
+        description: "Add commas to numbers",
+        filename: "number-commas.js",
+        matches: ["https://rpghq.org/forums/*"],
+        executionPhase: "document-ready",
+        category: "Aesthetic",
+        image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png",
+        settings: [
+          {
+            id: "formatFourDigits",
+            label: "Format 4-digit numbers",
+            description:
+              "Whether to add commas to 4-digit numbers (e.g., 1,000) or only 5+ digit numbers",
+            type: "boolean",
+            default: false,
+          },
+        ],
+      },
+      {
+        id: "notifications-customization",
+        name: "RPGHQ Notifications Customization",
+        version: "4.5.0",
+        description:
+          "Customize RPGHQ notifications display with enhanced reactions, better formatting, and automatic marking",
+        filename: "notifications-customization.js",
+        matches: ["https://rpghq.org/*/*"],
+        executionPhase: "document-ready",
+        category: "UI Enhancement",
+        settings: [
+          {
+            id: "enableNotificationStyles",
+            label: "Enable Notification Styling",
+            description: "Apply custom styles to notifications",
+            type: "boolean",
+            default: true,
+          },
+        ],
+      },
+    ],
+    schema: {
+      version: "1.0.0",
+      executionPhases: [
         {
-          id: "formatFourDigits",
-          label: "Format 4-digit numbers",
+          id: "document-start",
+          name: "Document Start",
+          description: "Executes before DOM parsing begins",
+        },
+        {
+          id: "document-ready",
+          name: "Document Ready",
           description:
-            "Whether to add commas to 4-digit numbers (e.g., 1,000) or only 5+ digit numbers",
-          type: "boolean",
-          default: false,
+            "Executes when basic DOM is available but before resources are loaded",
+        },
+        {
+          id: "document-loaded",
+          name: "Document Loaded",
+          description: "Executes after page is fully loaded",
+        },
+        {
+          id: "document-idle",
+          name: "Document Idle",
+          description: "Executes after a short delay when page is idle",
+        },
+        {
+          id: "custom-event",
+          name: "Custom Event",
+          description: "Executes when a specific custom event is triggered",
         },
       ],
     },
-  ],
-  schema: {
-    version: "1.0.0",
-    executionPhases: [
-      {
-        id: "document-start",
-        name: "Document Start",
-        description: "Executes before DOM parsing begins",
-      },
-      {
-        id: "document-ready",
-        name: "Document Ready",
-        description:
-          "Executes when basic DOM is available but before resources are loaded",
-      },
-      {
-        id: "document-loaded",
-        name: "Document Loaded",
-        description: "Executes after page is fully loaded",
-      },
-      {
-        id: "document-idle",
-        name: "Document Idle",
-        description: "Executes after a short delay when page is idle",
-      },
-      {
-        id: "custom-event",
-        name: "Custom Event",
-        description: "Executes when a specific custom event is triggered",
-      },
-    ],
-  },
-};
-
+  };
 
   // Data from FORUM_PREFERENCES.js
 
-const FORUM_PREFERENCES = {
-  sections: [
-    {
-      name: "Display Settings",
-      preferences: [
-        {
-          id: "theme",
-          name: "Theme",
-          description: "Choose your preferred theme",
-          type: "select",
-          options: ["Default", "Dark", "Light", "High Contrast"],
-          default: "Default",
-        },
-        {
-          id: "font_size",
-          name: "Font Size",
-          description: "Base font size for forum text",
-          type: "select",
-          options: ["Small", "Medium", "Large", "Extra Large"],
-          default: "Medium",
-        },
-        {
-          id: "show_avatars",
-          name: "Show Avatars",
-          description: "Display user avatars in posts",
-          type: "toggle",
-          default: true,
-        },
-      ],
-    },
-    {
-      name: "Notification Settings",
-      preferences: [
-        {
-          id: "email_notifications",
-          name: "Email Notifications",
-          description: "Receive email notifications for important events",
-          type: "toggle",
-          default: true,
-        },
-        {
-          id: "notification_frequency",
-          name: "Notification Frequency",
-          description: "How often to receive notifications",
-          type: "select",
-          options: ["Immediately", "Daily Digest", "Weekly Digest"],
-          default: "Immediately",
-        },
-      ],
-    },
-    {
-      name: "Privacy Settings",
-      preferences: [
-        {
-          id: "online_status",
-          name: "Online Status",
-          description: "Show your online status to other users",
-          type: "toggle",
-          default: true,
-        },
-        {
-          id: "profile_visibility",
-          name: "Profile Visibility",
-          description: "Who can see your profile details",
-          type: "select",
-          options: ["Everyone", "Members Only", "Friends Only", "Nobody"],
-          default: "Members Only",
-        },
-      ],
-    },
-  ],
-};
-
+  const FORUM_PREFERENCES = {
+    sections: [
+      {
+        name: "Display Settings",
+        preferences: [
+          {
+            id: "theme",
+            name: "Theme",
+            description: "Choose your preferred theme",
+            type: "select",
+            options: ["Default", "Dark", "Light", "High Contrast"],
+            default: "Default",
+          },
+          {
+            id: "font_size",
+            name: "Font Size",
+            description: "Base font size for forum text",
+            type: "select",
+            options: ["Small", "Medium", "Large", "Extra Large"],
+            default: "Medium",
+          },
+          {
+            id: "show_avatars",
+            name: "Show Avatars",
+            description: "Display user avatars in posts",
+            type: "toggle",
+            default: true,
+          },
+        ],
+      },
+      {
+        name: "Notification Settings",
+        preferences: [
+          {
+            id: "email_notifications",
+            name: "Email Notifications",
+            description: "Receive email notifications for important events",
+            type: "toggle",
+            default: true,
+          },
+          {
+            id: "notification_frequency",
+            name: "Notification Frequency",
+            description: "How often to receive notifications",
+            type: "select",
+            options: ["Immediately", "Daily Digest", "Weekly Digest"],
+            default: "Immediately",
+          },
+        ],
+      },
+      {
+        name: "Privacy Settings",
+        preferences: [
+          {
+            id: "online_status",
+            name: "Online Status",
+            description: "Show your online status to other users",
+            type: "toggle",
+            default: true,
+          },
+          {
+            id: "profile_visibility",
+            name: "Profile Visibility",
+            description: "Who can see your profile details",
+            type: "select",
+            options: ["Everyone", "Members Only", "Friends Only", "Nobody"],
+            default: "Members Only",
+          },
+        ],
+      },
+    ],
+  };
 
   // Helper function from Shared/logger.js
   function logInfo(message) {
-  console.log(
-    "%c[RPGHQ USERSCRIPTS]%c " + message,
-    "color: #2196F3; font-weight: bold;",
-    "color: inherit;"
-  );
-}  function logSuccess(message) {
-  console.log(
-    "%c[RPGHQ USERSCRIPTS]%c " + message,
-    "color: #4CAF50; font-weight: bold;",
-    "color: inherit;"
-  );
-}  function logWarning(message) {
-  console.warn(
-    "%c[RPGHQ USERSCRIPTS]%c " + message,
-    "color: #FFC107; font-weight: bold;",
-    "color: inherit;"
-  );
-}  function logError(message) {
-  console.error(
-    "%c[RPGHQ USERSCRIPTS]%c " + message,
-    "color: #F44336; font-weight: bold;",
-    "color: inherit;"
-  );
-}
-
-
-  // Helper function from Shared/compareVersions.js
-  function compareVersions(a, b) {  const partsA = a.split(".").map(Number);  const partsB = b.split(".").map(Number);
-
-  for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {  const numA = partsA[i] || 0;  const numB = partsB[i] || 0;  if (numA !== numB) {
-      return numA - numB;
-    }
+    console.log(
+      "%c[RPGHQ USERSCRIPTS]%c " + message,
+      "color: #2196F3; font-weight: bold;",
+      "color: inherit;"
+    );
+  }
+  function logSuccess(message) {
+    console.log(
+      "%c[RPGHQ USERSCRIPTS]%c " + message,
+      "color: #4CAF50; font-weight: bold;",
+      "color: inherit;"
+    );
+  }
+  function logWarning(message) {
+    console.warn(
+      "%c[RPGHQ USERSCRIPTS]%c " + message,
+      "color: #FFC107; font-weight: bold;",
+      "color: inherit;"
+    );
+  }
+  function logError(message) {
+    console.error(
+      "%c[RPGHQ USERSCRIPTS]%c " + message,
+      "color: #F44336; font-weight: bold;",
+      "color: inherit;"
+    );
   }
 
-  return 0;
-}
+  // Helper function from Shared/compareVersions.js
+  function compareVersions(a, b) {
+    const partsA = a.split(".").map(Number);
+    const partsB = b.split(".").map(Number);
 
+    for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+      const numA = partsA[i] || 0;
+      const numB = partsB[i] || 0;
+      if (numA !== numB) {
+        return numA - numB;
+      }
+    }
+
+    return 0;
+  }
 
   // Helper function from Shared/getPhaseDisplayName.js
-  function getPhaseDisplayName(phase) {  if (!phase) return "Not specified";  const phaseMap = {
-    "document-start": "Document Start",
-    "document-ready": "Document Ready",
-    "document-loaded": "Document Loaded",
-    "document-idle": "Document Idle",
-    "custom-event": "Custom Event",
-  };
+  function getPhaseDisplayName(phase) {
+    if (!phase) return "Not specified";
+    const phaseMap = {
+      "document-start": "Document Start",
+      "document-ready": "Document Ready",
+      "document-loaded": "Document Loaded",
+      "document-idle": "Document Idle",
+      "custom-event": "Custom Event",
+    };
 
-  return phaseMap[phase] || phase;
-}
-
+    return phaseMap[phase] || phase;
+  }
 
   // Helper function from Shared/renderSettingControl.js
   function renderSettingControl(setting) {
-  switch (setting.type) {
-    case "boolean":
-      return `
+    switch (setting.type) {
+      case "boolean":
+        return `
         <label class="toggle-switch">
           <input type="checkbox" ${setting.default ? "checked" : ""}>
           <span class="toggle-slider"></span>
         </label>
       `;
-    case "select":
-      return `
+      case "select":
+        return `
         <select class="setting-input">
           ${setting.options
             .map(
@@ -228,34 +253,33 @@ const FORUM_PREFERENCES = {
             .join("")}
         </select>
       `;
-    case "number":
-      return `
+      case "number":
+        return `
         <input type="number" class="setting-input" value="${
           setting.default || 0
         }">
       `;
-    default:
-      return `
+      default:
+        return `
         <input type="text" class="setting-input" value="${
           setting.default || ""
         }">
       `;
+    }
   }
-}
-
 
   // Helper function from Shared/renderPreferenceControl.js
   function renderPreferenceControl(preference) {
-  switch (preference.type) {
-    case "toggle":
-      return `
+    switch (preference.type) {
+      case "toggle":
+        return `
         <label class="toggle-switch">
           <input type="checkbox" ${preference.default ? "checked" : ""}>
           <span class="toggle-slider"></span>
         </label>
       `;
-    case "select":
-      return `
+      case "select":
+        return `
         <select>
           ${preference.options
             .map(
@@ -268,87 +292,85 @@ const FORUM_PREFERENCES = {
             .join("")}
         </select>
       `;
-    default:
-      return `
+      default:
+        return `
         <input type="text" value="${preference.default || ""}">
       `;
+    }
   }
-}
-
 
   // Helper function from Shared/filterScripts.js
   function filterScripts(scripts, filters) {
-  if (!filters) {
-    // If no filters provided, get them from the DOM
-  const category = document.getElementById("category-filter").value;
-  const phase = document.getElementById("phase-filter").value;
-  const hasSettings = document.getElementById("has-settings-filter").value;
-  const enabled = document.getElementById("enabled-filter").value;
-  const searchTerm = document
-      .getElementById("search-filter")
-      .value.toLowerCase();
-  const sortBy = document.getElementById("sort-filter").value;
+    if (!filters) {
+      // If no filters provided, get them from the DOM
+      const category = document.getElementById("category-filter").value;
+      const phase = document.getElementById("phase-filter").value;
+      const hasSettings = document.getElementById("has-settings-filter").value;
+      const enabled = document.getElementById("enabled-filter").value;
+      const searchTerm = document
+        .getElementById("search-filter")
+        .value.toLowerCase();
+      const sortBy = document.getElementById("sort-filter").value;
 
-    filters = { category, phase, hasSettings, enabled, searchTerm, sortBy };
-  }
-
-  // Filter scripts
-  let filtered = scripts.filter((script) => {
-  const matchesCategory =
-      filters.category === "all" || script.category === filters.category;
-  const matchesPhase =
-      filters.phase === "all" || script.executionPhase === filters.phase;
-  const matchesSettings =
-      filters.hasSettings === "all" ||
-      (filters.hasSettings === "with" &&
-        script.settings &&
-        script.settings.length > 0) ||
-      (filters.hasSettings === "without" &&
-        (!script.settings || script.settings.length === 0));
-  const matchesEnabled =
-      filters.enabled === "all" ||
-      (filters.enabled === "enabled" && isScriptEnabled(script.id)) ||
-      (filters.enabled === "disabled" && !isScriptEnabled(script.id));
-  const matchesSearch =
-      !filters.searchTerm ||
-      script.name.toLowerCase().includes(filters.searchTerm) ||
-      (script.description &&
-        script.description.toLowerCase().includes(filters.searchTerm));
-
-    return (
-      matchesCategory &&
-      matchesPhase &&
-      matchesSettings &&
-      matchesEnabled &&
-      matchesSearch
-    );
-  });
-
-  // Sort scripts
-  filtered.sort((a, b) => {
-    switch (filters.sortBy) {
-      case "name-asc":
-        return a.name.localeCompare(b.name);
-      case "name-desc":
-        return b.name.localeCompare(a.name);
-      case "version-asc":
-        return compareVersions(a.version, b.version);
-      case "version-desc":
-        return compareVersions(b.version, a.version);
-      case "category":
-        return (a.category || "").localeCompare(b.category || "");
-      default:
-        return 0;
+      filters = { category, phase, hasSettings, enabled, searchTerm, sortBy };
     }
-  });
 
-  return filtered;
-}
+    // Filter scripts
+    let filtered = scripts.filter((script) => {
+      const matchesCategory =
+        filters.category === "all" || script.category === filters.category;
+      const matchesPhase =
+        filters.phase === "all" || script.executionPhase === filters.phase;
+      const matchesSettings =
+        filters.hasSettings === "all" ||
+        (filters.hasSettings === "with" &&
+          script.settings &&
+          script.settings.length > 0) ||
+        (filters.hasSettings === "without" &&
+          (!script.settings || script.settings.length === 0));
+      const matchesEnabled =
+        filters.enabled === "all" ||
+        (filters.enabled === "enabled" && isScriptEnabled(script.id)) ||
+        (filters.enabled === "disabled" && !isScriptEnabled(script.id));
+      const matchesSearch =
+        !filters.searchTerm ||
+        script.name.toLowerCase().includes(filters.searchTerm) ||
+        (script.description &&
+          script.description.toLowerCase().includes(filters.searchTerm));
 
+      return (
+        matchesCategory &&
+        matchesPhase &&
+        matchesSettings &&
+        matchesEnabled &&
+        matchesSearch
+      );
+    });
+
+    // Sort scripts
+    filtered.sort((a, b) => {
+      switch (filters.sortBy) {
+        case "name-asc":
+          return a.name.localeCompare(b.name);
+        case "name-desc":
+          return b.name.localeCompare(a.name);
+        case "version-asc":
+          return compareVersions(a.version, b.version);
+        case "version-desc":
+          return compareVersions(b.version, a.version);
+        case "category":
+          return (a.category || "").localeCompare(b.category || "");
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }
 
   // Helper function from Shared/addStyles.js
   function addStyles() {
-  GM_addStyle(`
+    GM_addStyle(`
     /* Import Font Awesome */
     @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css');
 
@@ -997,276 +1019,313 @@ const FORUM_PREFERENCES = {
       }
     });
   `);
-}
-
+  }
 
   // Helper function from Shared/isScriptEnabled.js
   function isScriptEnabled(scriptId) {
-  // First try to check the enabled scripts array
-  const enabledScripts = GM_getValue("rpghq-enabled-scripts", null);
-  if (enabledScripts) {
-    try {
-  const enabledScriptsArray = JSON.parse(enabledScripts);
-  if (enabledScriptsArray.includes(scriptId)) {
-        logInfo(`Script ${scriptId} is enabled (found in enabled scripts)`);
-        return true;
+    // First try to check the enabled scripts array
+    const enabledScripts = GM_getValue("rpghq-enabled-scripts", null);
+    if (enabledScripts) {
+      try {
+        const enabledScriptsArray = JSON.parse(enabledScripts);
+        if (enabledScriptsArray.includes(scriptId)) {
+          logInfo(`Script ${scriptId} is enabled (found in enabled scripts)`);
+          return true;
+        }
+      } catch (e) {
+        logWarning(`Error parsing enabled scripts: ${e.message}`);
       }
+    }
+
+    // Fall back to checking the disabled scripts array
+    const disabledScripts = GM_getValue("rpghq-disabled-scripts", null);
+    if (!disabledScripts) {
+      logInfo(`Script ${scriptId} is enabled (no disabled scripts found)`);
+      return true; // By default, all scripts are enabled
+    }
+
+    try {
+      const disabledScriptsArray = JSON.parse(disabledScripts);
+      const isEnabled = !disabledScriptsArray.includes(scriptId);
+      logInfo(
+        `Script ${scriptId} is ${
+          isEnabled ? "enabled" : "disabled"
+        } (based on disabled scripts list)`
+      );
+      return isEnabled;
     } catch (e) {
-      logWarning(`Error parsing enabled scripts: ${e.message}`);
+      logWarning(`Error parsing disabled scripts: ${e.message}`);
+      return true; // If there's an error parsing, default to enabled
     }
   }
-
-  // Fall back to checking the disabled scripts array
-  const disabledScripts = GM_getValue("rpghq-disabled-scripts", null);
-  if (!disabledScripts) {
-    logInfo(`Script ${scriptId} is enabled (no disabled scripts found)`);
-    return true; // By default, all scripts are enabled
-  }
-
-  try {
-  const disabledScriptsArray = JSON.parse(disabledScripts);
-  const isEnabled = !disabledScriptsArray.includes(scriptId);
-    logInfo(
-      `Script ${scriptId} is ${
-        isEnabled ? "enabled" : "disabled"
-      } (based on disabled scripts list)`
-    );
-    return isEnabled;
-  } catch (e) {
-    logWarning(`Error parsing disabled scripts: ${e.message}`);
-    return true; // If there's an error parsing, default to enabled
-  }
-}
-
 
   // Helper function from Shared/toggleScriptEnabled.js
   function toggleScriptEnabled(scriptId) {
-  // For backwards compatibility, read from disabled scripts
-  const disabledScripts = GM_getValue("rpghq-disabled-scripts", null);
-  let disabledScriptsArray = [];
-  if (disabledScripts) {
-    try {
-      disabledScriptsArray = JSON.parse(disabledScripts);
-    } catch (e) {
-      disabledScriptsArray = [];
-      logWarning(`Error parsing disabled scripts: ${e.message}`);
+    // For backwards compatibility, read from disabled scripts
+    const disabledScripts = GM_getValue("rpghq-disabled-scripts", null);
+    let disabledScriptsArray = [];
+    if (disabledScripts) {
+      try {
+        disabledScriptsArray = JSON.parse(disabledScripts);
+      } catch (e) {
+        disabledScriptsArray = [];
+        logWarning(`Error parsing disabled scripts: ${e.message}`);
+      }
     }
-  }
 
-  // Get the enabled scripts array
-  const enabledScripts = GM_getValue("rpghq-enabled-scripts", null);
-  let enabledScriptsArray = [];
-  if (enabledScripts) {
-    try {
-      enabledScriptsArray = JSON.parse(enabledScripts);
-    } catch (e) {
-      enabledScriptsArray = [];
-      logWarning(`Error parsing enabled scripts: ${e.message}`);
+    // Get the enabled scripts array
+    const enabledScripts = GM_getValue("rpghq-enabled-scripts", null);
+    let enabledScriptsArray = [];
+    if (enabledScripts) {
+      try {
+        enabledScriptsArray = JSON.parse(enabledScripts);
+      } catch (e) {
+        enabledScriptsArray = [];
+        logWarning(`Error parsing enabled scripts: ${e.message}`);
+      }
     }
-  }
 
-  // If a script isn't in either array, consider it enabled by default
-  const isCurrentlyEnabled = !disabledScriptsArray.includes(scriptId);
-  if (isCurrentlyEnabled) {
-    // Disable the script
-    disabledScriptsArray.push(scriptId);
-    // Remove from enabled scripts if it exists
-    enabledScriptsArray = enabledScriptsArray.filter((id) => id !== scriptId);
-    logInfo(`Disabled script: ${scriptId}`);
-  } else {
-    // Enable the script
-    disabledScriptsArray = disabledScriptsArray.filter((id) => id !== scriptId);
-    // Add to enabled scripts if it doesn't exist
-  if (!enabledScriptsArray.includes(scriptId)) {
-      enabledScriptsArray.push(scriptId);
+    // If a script isn't in either array, consider it enabled by default
+    const isCurrentlyEnabled = !disabledScriptsArray.includes(scriptId);
+    if (isCurrentlyEnabled) {
+      // Disable the script
+      disabledScriptsArray.push(scriptId);
+      // Remove from enabled scripts if it exists
+      enabledScriptsArray = enabledScriptsArray.filter((id) => id !== scriptId);
+      logInfo(`Disabled script: ${scriptId}`);
+    } else {
+      // Enable the script
+      disabledScriptsArray = disabledScriptsArray.filter(
+        (id) => id !== scriptId
+      );
+      // Add to enabled scripts if it doesn't exist
+      if (!enabledScriptsArray.includes(scriptId)) {
+        enabledScriptsArray.push(scriptId);
+      }
+      logInfo(`Enabled script: ${scriptId}`);
     }
-    logInfo(`Enabled script: ${scriptId}`);
+
+    // Update both storage items
+    GM_setValue("rpghq-disabled-scripts", JSON.stringify(disabledScriptsArray));
+    GM_setValue("rpghq-enabled-scripts", JSON.stringify(enabledScriptsArray));
+
+    logInfo(
+      `Script state toggled: ${scriptId} is now ${
+        !isCurrentlyEnabled ? "enabled" : "disabled"
+      }`
+    );
+    logInfo(`Enabled scripts: ${JSON.stringify(enabledScriptsArray)}`);
+
+    return !isCurrentlyEnabled;
   }
-
-  // Update both storage items
-  GM_setValue("rpghq-disabled-scripts", JSON.stringify(disabledScriptsArray));
-  GM_setValue("rpghq-enabled-scripts", JSON.stringify(enabledScriptsArray));
-
-  logInfo(
-    `Script state toggled: ${scriptId} is now ${
-      !isCurrentlyEnabled ? "enabled" : "disabled"
-    }`
-  );
-  logInfo(`Enabled scripts: ${JSON.stringify(enabledScriptsArray)}`);
-
-  return !isCurrentlyEnabled;
-}
-
 
   // Helper function from number-commas/calculateForumStatistics.js
   function calculateForumStatistics() {
-  // Only run on index.php
-  if (!window.location.pathname.endsWith("index.php")) {
-    return;
-  }
-  let totalTopics = 0;
-  let totalPosts = 0;
-
-  // Get all posts and topics elements
-  const postsElements = document.querySelectorAll("dd.posts");
-  const topicsElements = document.querySelectorAll("dd.topics");
-
-  // Sum up posts
-  postsElements.forEach((element) => {
-  const postsText = element.childNodes[0].textContent
-      .trim()
-      .replace(/,/g, "");
-  const posts = parseInt(postsText);
-  if (!isNaN(posts)) {
-      totalPosts += posts;
+    // Only run on index.php
+    if (!window.location.pathname.endsWith("index.php")) {
+      return;
     }
-  });
+    let totalTopics = 0;
+    let totalPosts = 0;
 
-  // Sum up topics
-  topicsElements.forEach((element) => {
-  const topicsText = element.childNodes[0].textContent
-      .trim()
-      .replace(/,/g, "");
-  const topics = parseInt(topicsText);
-  if (!isNaN(topics)) {
-      totalTopics += topics;
+    // Get all posts and topics elements
+    const postsElements = document.querySelectorAll("dd.posts");
+    const topicsElements = document.querySelectorAll("dd.topics");
+
+    // Sum up posts
+    postsElements.forEach((element) => {
+      const postsText = element.childNodes[0].textContent
+        .trim()
+        .replace(/,/g, "");
+      const posts = parseInt(postsText);
+      if (!isNaN(posts)) {
+        totalPosts += posts;
+      }
+    });
+
+    // Sum up topics
+    topicsElements.forEach((element) => {
+      const topicsText = element.childNodes[0].textContent
+        .trim()
+        .replace(/,/g, "");
+      const topics = parseInt(topicsText);
+      if (!isNaN(topics)) {
+        totalTopics += topics;
+      }
+    });
+
+    // Function to format numbers, only adding commas for 5+ digits
+    function formatStatNumber(num) {
+      return num.toString().length >= 5
+        ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        : num.toString();
     }
-  });
 
-  // Function to format numbers, only adding commas for 5+ digits
-  function formatStatNumber(num) {
-    return num.toString().length >= 5
-      ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-      : num.toString();
-  }
-
-  // Find and update the statistics block
-  const statsBlock = document.querySelector(".stat-block.statistics");
-  if (statsBlock) {
-  const statsText = statsBlock.querySelector("p");
-  if (statsText) {
-  const existingText = statsText.innerHTML;
-      // Keep the members count and newest member info, but update topics and posts
-  const membersMatch = existingText.match(
-        /Total members <strong>(\d+)<\/strong>/
-      );
-  const newestMemberMatch = existingText.match(
-        /(Our newest member <strong>.*?<\/strong>)/
-      );
-  if (membersMatch && newestMemberMatch) {
-        statsText.innerHTML = `Total posts <strong>${formatStatNumber(
-          totalPosts
-        )}</strong> • Total topics <strong>${formatStatNumber(
-          totalTopics
-        )}</strong> • Total members <strong>${membersMatch[1]}</strong> • ${
-          newestMemberMatch[1]
-        }`;
+    // Find and update the statistics block
+    const statsBlock = document.querySelector(".stat-block.statistics");
+    if (statsBlock) {
+      const statsText = statsBlock.querySelector("p");
+      if (statsText) {
+        const existingText = statsText.innerHTML;
+        // Keep the members count and newest member info, but update topics and posts
+        const membersMatch = existingText.match(
+          /Total members <strong>(\d+)<\/strong>/
+        );
+        const newestMemberMatch = existingText.match(
+          /(Our newest member <strong>.*?<\/strong>)/
+        );
+        if (membersMatch && newestMemberMatch) {
+          statsText.innerHTML = `Total posts <strong>${formatStatNumber(
+            totalPosts
+          )}</strong> • Total topics <strong>${formatStatNumber(
+            totalTopics
+          )}</strong> • Total members <strong>${membersMatch[1]}</strong> • ${
+            newestMemberMatch[1]
+          }`;
+        }
       }
     }
   }
-}
-
 
   // Helper function from number-commas/formatNumberWithCommas.js
   function formatNumberWithCommas(number) {
-  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
 
   // Helper function from number-commas/helper-loader.js
   function loadNumberCommasHelper() {
-  // These functions are already available in the final script through the build process
-  // This is just for reference/documentation of what's needed
-  return {
-    formatNumberWithCommas,
-    processElements,
-    calculateForumStatistics,
-    toggleFourDigitFormatting,
-    updateMenuLabel,
-  };
-}
-
+    // These functions are already available in the final script through the build process
+    // This is just for reference/documentation of what's needed
+    return {
+      formatNumberWithCommas,
+      processElements,
+      calculateForumStatistics,
+      toggleFourDigitFormatting,
+      updateMenuLabel,
+    };
+  }
 
   // Helper function from number-commas/processElements.js
   function processElements(formatFourDigits) {
-  const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
-  const elements = document.querySelectorAll(
-    "dd.posts, dd.profile-posts, dd.views, span.responsive-show.left-box, .column2 .details dd"
-  );
+    const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
+    const elements = document.querySelectorAll(
+      "dd.posts, dd.profile-posts, dd.views, span.responsive-show.left-box, .column2 .details dd"
+    );
 
-  elements.forEach((element) => {
-  if (
-      element.classList.contains("posts") ||
-      element.classList.contains("views") ||
-      (element.parentElement &&
-        element.parentElement.classList.contains("details"))
-    ) {
-  if (
-        element.previousElementSibling &&
-        element.previousElementSibling.textContent.trim() === "Joined:"
+    elements.forEach((element) => {
+      if (
+        element.classList.contains("posts") ||
+        element.classList.contains("views") ||
+        (element.parentElement &&
+          element.parentElement.classList.contains("details"))
       ) {
-        return;
-      }
-
-      element.childNodes.forEach((node) => {
-  if (
-          node.nodeType === Node.TEXT_NODE &&
-          numberRegex.test(node.nodeValue)
+        if (
+          element.previousElementSibling &&
+          element.previousElementSibling.textContent.trim() === "Joined:"
         ) {
-          node.nodeValue = node.nodeValue.replace(numberRegex, (match) =>
-            formatNumberWithCommas(match)
+          return;
+        }
+
+        element.childNodes.forEach((node) => {
+          if (
+            node.nodeType === Node.TEXT_NODE &&
+            numberRegex.test(node.nodeValue)
+          ) {
+            node.nodeValue = node.nodeValue.replace(numberRegex, (match) =>
+              formatNumberWithCommas(match)
+            );
+          }
+        });
+      } else if (element.classList.contains("profile-posts")) {
+        const anchor = element.querySelector("a");
+        if (anchor && numberRegex.test(anchor.textContent)) {
+          anchor.textContent = anchor.textContent.replace(
+            numberRegex,
+            (match) => formatNumberWithCommas(match)
+          );
+        }
+      } else if (element.classList.contains("responsive-show")) {
+        const strong = element.querySelector("strong");
+        if (strong && numberRegex.test(strong.textContent)) {
+          strong.textContent = strong.textContent.replace(
+            numberRegex,
+            (match) => formatNumberWithCommas(match)
+          );
+        }
+      }
+      const strongElements = element.querySelectorAll("strong");
+      strongElements.forEach((strong) => {
+        if (numberRegex.test(strong.textContent)) {
+          strong.textContent = strong.textContent.replace(
+            numberRegex,
+            (match) => formatNumberWithCommas(match)
           );
         }
       });
-    } else if (element.classList.contains("profile-posts")) {
-  const anchor = element.querySelector("a");
-  if (anchor && numberRegex.test(anchor.textContent)) {
-        anchor.textContent = anchor.textContent.replace(numberRegex, (match) =>
-          formatNumberWithCommas(match)
-        );
-      }
-    } else if (element.classList.contains("responsive-show")) {
-  const strong = element.querySelector("strong");
-  if (strong && numberRegex.test(strong.textContent)) {
-        strong.textContent = strong.textContent.replace(numberRegex, (match) =>
-          formatNumberWithCommas(match)
-        );
-      }
-    }
-  const strongElements = element.querySelectorAll("strong");
-    strongElements.forEach((strong) => {
-  if (numberRegex.test(strong.textContent)) {
-        strong.textContent = strong.textContent.replace(numberRegex, (match) =>
-          formatNumberWithCommas(match)
-        );
-      }
     });
-  });
-}
-
+  }
 
   // Helper function from number-commas/toggleFourDigitFormatting.js
   function toggleFourDigitFormatting() {
-  const newValue = !GM_getValue("formatFourDigits", false);
-  GM_setValue("formatFourDigits", newValue);
-  updateMenuLabel(newValue);
-  location.reload();
-}
+    const newValue = !GM_getValue("formatFourDigits", false);
+    GM_setValue("formatFourDigits", newValue);
+    updateMenuLabel(newValue);
+    location.reload();
+  }
   function updateMenuLabel(formatFourDigits) {
-  const label = formatFourDigits
-    ? "Disable 4-digit formatting"
-    : "Enable 4-digit formatting";
-  GM_unregisterMenuCommand("Toggle 4-digit formatting");
-  GM_registerMenuCommand(label, toggleFourDigitFormatting);
-}
+    const label = formatFourDigits
+      ? "Disable 4-digit formatting"
+      : "Enable 4-digit formatting";
+    GM_unregisterMenuCommand("Toggle 4-digit formatting");
+    GM_registerMenuCommand(label, toggleFourDigitFormatting);
+  }
 
+  // Helper function from notifications-customization/constants.js
+
+  // Time constants
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+  const FETCH_DELAY = 500; // Delay between fetches in milliseconds
+
+  // Style constants
+  const REFERENCE_STYLE = {
+    display: "inline-block",
+    background: "rgba(23, 27, 36, 0.5)",
+    color: "#ffffff",
+    padding: "2px 4px",
+    borderRadius: "2px",
+    zIndex: "-1",
+    maxWidth: "98%",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  };
+  const NOTIFICATION_BLOCK_STYLE = {
+    position: "relative",
+    paddingBottom: "20px", // Make room for the timestamp
+  };
+  const NOTIFICATION_TIME_STYLE = {
+    position: "absolute",
+    bottom: "2px",
+    right: "2px",
+    fontSize: "0.85em",
+    color: "#888",
+  };
+  const NOTIFICATIONS_TIME_STYLE = {
+    position: "absolute",
+    bottom: "2px",
+    left: "2px",
+    fontSize: "0.85em",
+    color: "#888",
+  };
 
   // UI function from showModal.js
-  function showModal() {  let modal = document.getElementById("mod-manager-modal");  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "mod-manager-modal";
-    modal.className = "mod-manager-modal";
-    modal.innerHTML = `
+  function showModal() {
+    let modal = document.getElementById("mod-manager-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "mod-manager-modal";
+      modal.className = "mod-manager-modal";
+      modal.innerHTML = `
       <div class="mod-manager-modal-content">
         <div class="mod-manager-header">
           <h2 class="mod-manager-title">RPGHQ Userscript Manager</h2>
@@ -1291,78 +1350,85 @@ const FORUM_PREFERENCES = {
         </div>
       </div>
     `;
-    document.body.appendChild(modal);
+      document.body.appendChild(modal);
 
-    // Add event listeners
-    modal.querySelector(".mod-manager-close").addEventListener("click", () => {
-      hideModal();
-    });
-
-    modal.addEventListener("click", (e) => {  if (e.target === modal) {
-        hideModal();
-      }
-    });
-
-    // Tab switching
-    modal.querySelectorAll(".mod-manager-tab").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        document.querySelectorAll(".mod-manager-tab").forEach((t) => {
-          t.classList.remove("active");
+      // Add event listeners
+      modal
+        .querySelector(".mod-manager-close")
+        .addEventListener("click", () => {
+          hideModal();
         });
-        tab.classList.add("active");
-        loadTabContent(tab.dataset.tab);
+
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          hideModal();
+        }
       });
-    });
+
+      // Tab switching
+      modal.querySelectorAll(".mod-manager-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".mod-manager-tab").forEach((t) => {
+            t.classList.remove("active");
+          });
+          tab.classList.add("active");
+          loadTabContent(tab.dataset.tab);
+        });
+      });
+    }
+
+    modal.style.display = "block";
+    document.body.style.overflow = "hidden";
+
+    // Initial view - load the first tab (Installed Scripts)
+    loadTabContent("installed");
   }
-
-  modal.style.display = "block";
-  document.body.style.overflow = "hidden";
-
-  // Initial view - load the first tab (Installed Scripts)
-  loadTabContent("installed");
-}
-
 
   // UI function from hideModal.js
-  function hideModal() {  const modal = document.getElementById("mod-manager-modal");  if (modal) {
-    modal.style.display = "none";
-    document.body.style.overflow = "";
-  }
+  function hideModal() {
+    const modal = document.getElementById("mod-manager-modal");
+    if (modal) {
+      modal.style.display = "none";
+      document.body.style.overflow = "";
+    }
 
-  // Hide any open settings modal  const settingsModal = document.getElementById("script-settings-modal");  if (settingsModal) {
-    settingsModal.style.display = "none";
+    // Hide any open settings modal
+    const settingsModal = document.getElementById("script-settings-modal");
+    if (settingsModal) {
+      settingsModal.style.display = "none";
+    }
   }
-}
-
 
   // UI function from loadTabContent.js
-  function loadTabContent(tabName) {  const content = document.getElementById("mod-manager-content");
+  function loadTabContent(tabName) {
+    const content = document.getElementById("mod-manager-content");
 
-  // Clear previous content (except the info note)  const infoNote = content.querySelector(".info-note");
-  content.innerHTML = "";  if (infoNote) {
-    content.appendChild(infoNote);
+    // Clear previous content (except the info note)
+    const infoNote = content.querySelector(".info-note");
+    content.innerHTML = "";
+    if (infoNote) {
+      content.appendChild(infoNote);
+    }
+
+    switch (tabName) {
+      case "installed":
+        renderInstalledScriptsTab(content);
+        break;
+      case "forum":
+        renderForumPreferencesTab(content);
+        break;
+      case "settings":
+        renderSettingsTab(content);
+        break;
+    }
   }
-
-  switch (tabName) {
-    case "installed":
-      renderInstalledScriptsTab(content);
-      break;
-    case "forum":
-      renderForumPreferencesTab(content);
-      break;
-    case "settings":
-      renderSettingsTab(content);
-      break;
-  }
-}
-
 
   // UI function from renderInstalledScriptsTab.js
   function renderInstalledScriptsTab(container) {
-  // Create the filter panel
-  const filterPanel = document.createElement("div");
-  filterPanel.className = "filter-panel";
-  filterPanel.innerHTML = `
+    // Create the filter panel
+    const filterPanel = document.createElement("div");
+    filterPanel.className = "filter-panel";
+    filterPanel.innerHTML = `
     <div class="filter-panel-header">
       <h3 class="filter-panel-title">Filter Scripts</h3>
       <button class="filter-panel-toggle" id="toggle-filters">
@@ -1424,15 +1490,15 @@ const FORUM_PREFERENCES = {
       </div>
     </div>
   `;
-  container.appendChild(filterPanel);
+    container.appendChild(filterPanel);
 
-  // Create the view options
-  const viewOptions = document.createElement("div");
-  viewOptions.className = "view-options";
-  viewOptions.style.display = "flex";
-  viewOptions.style.justifyContent = "flex-end";
-  viewOptions.style.marginBottom = "10px";
-  viewOptions.innerHTML = `
+    // Create the view options
+    const viewOptions = document.createElement("div");
+    viewOptions.className = "view-options";
+    viewOptions.style.display = "flex";
+    viewOptions.style.justifyContent = "flex-end";
+    viewOptions.style.marginBottom = "10px";
+    viewOptions.innerHTML = `
     <div class="btn-group" style="display: flex;">
       <button id="grid-view-btn" class="btn btn-primary" style="border-radius: 3px 0 0 3px; margin: 0;">
         <i class="fa fa-th-large"></i>
@@ -1442,82 +1508,86 @@ const FORUM_PREFERENCES = {
       </button>
     </div>
   `;
-  container.appendChild(viewOptions);
+    container.appendChild(viewOptions);
 
-  // Create the scripts container
-  const scriptsContainer = document.createElement("div");
-  scriptsContainer.id = "scripts-container";
-  container.appendChild(scriptsContainer);
+    // Create the scripts container
+    const scriptsContainer = document.createElement("div");
+    scriptsContainer.id = "scripts-container";
+    container.appendChild(scriptsContainer);
 
-  // Render scripts in grid view initially
-  renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
+    // Render scripts in grid view initially
+    renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
 
-  // Add event listeners
-  document.getElementById("toggle-filters").addEventListener("click", () => {
-  const panel = document.getElementById("filter-panel-body");
-    panel.classList.toggle("collapsed");
-  const icon = document.getElementById("toggle-filters").querySelector("i");
-  if (panel.classList.contains("collapsed")) {
-      icon.className = "fa fa-chevron-down";
-    } else {
-      icon.className = "fa fa-chevron-up";
-    }
-  });
+    // Add event listeners
+    document.getElementById("toggle-filters").addEventListener("click", () => {
+      const panel = document.getElementById("filter-panel-body");
+      panel.classList.toggle("collapsed");
+      const icon = document.getElementById("toggle-filters").querySelector("i");
+      if (panel.classList.contains("collapsed")) {
+        icon.className = "fa fa-chevron-down";
+      } else {
+        icon.className = "fa fa-chevron-up";
+      }
+    });
 
-  document.getElementById("grid-view-btn").addEventListener("click", () => {
-    document.getElementById("grid-view-btn").className = "btn btn-primary";
-    document.getElementById("list-view-btn").className = "btn btn-secondary";
-  const filteredScripts = filterScripts(MANIFEST.scripts);
-    renderScriptsGridView(scriptsContainer, filteredScripts);
-  });
-
-  document.getElementById("list-view-btn").addEventListener("click", () => {
-    document.getElementById("grid-view-btn").className = "btn btn-secondary";
-    document.getElementById("list-view-btn").className = "btn btn-primary";
-  const filteredScripts = filterScripts(MANIFEST.scripts);
-    renderScriptsListView(scriptsContainer, filteredScripts);
-  });
-
-  document.getElementById("apply-filters").addEventListener("click", () => {
-  const filteredScripts = filterScripts(MANIFEST.scripts);
-
-    // Use the active view to render
-  if (
-      document.getElementById("grid-view-btn").classList.contains("btn-primary")
-    ) {
+    document.getElementById("grid-view-btn").addEventListener("click", () => {
+      document.getElementById("grid-view-btn").className = "btn btn-primary";
+      document.getElementById("list-view-btn").className = "btn btn-secondary";
+      const filteredScripts = filterScripts(MANIFEST.scripts);
       renderScriptsGridView(scriptsContainer, filteredScripts);
-    } else {
+    });
+
+    document.getElementById("list-view-btn").addEventListener("click", () => {
+      document.getElementById("grid-view-btn").className = "btn btn-secondary";
+      document.getElementById("list-view-btn").className = "btn btn-primary";
+      const filteredScripts = filterScripts(MANIFEST.scripts);
       renderScriptsListView(scriptsContainer, filteredScripts);
-    }
-  });
+    });
 
-  document.getElementById("reset-filters").addEventListener("click", () => {
-    document.getElementById("category-filter").value = "all";
-    document.getElementById("phase-filter").value = "all";
-    document.getElementById("has-settings-filter").value = "all";
-    document.getElementById("enabled-filter").value = "all";
-    document.getElementById("search-filter").value = "";
-    document.getElementById("sort-filter").value = "name-asc";
+    document.getElementById("apply-filters").addEventListener("click", () => {
+      const filteredScripts = filterScripts(MANIFEST.scripts);
 
-    // Use the active view to render
-  if (
-      document.getElementById("grid-view-btn").classList.contains("btn-primary")
-    ) {
-      renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
-    } else {
-      renderScriptsListView(scriptsContainer, MANIFEST.scripts);
-    }
-  });
-}
+      // Use the active view to render
+      if (
+        document
+          .getElementById("grid-view-btn")
+          .classList.contains("btn-primary")
+      ) {
+        renderScriptsGridView(scriptsContainer, filteredScripts);
+      } else {
+        renderScriptsListView(scriptsContainer, filteredScripts);
+      }
+    });
 
+    document.getElementById("reset-filters").addEventListener("click", () => {
+      document.getElementById("category-filter").value = "all";
+      document.getElementById("phase-filter").value = "all";
+      document.getElementById("has-settings-filter").value = "all";
+      document.getElementById("enabled-filter").value = "all";
+      document.getElementById("search-filter").value = "";
+      document.getElementById("sort-filter").value = "name-asc";
+
+      // Use the active view to render
+      if (
+        document
+          .getElementById("grid-view-btn")
+          .classList.contains("btn-primary")
+      ) {
+        renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
+      } else {
+        renderScriptsListView(scriptsContainer, MANIFEST.scripts);
+      }
+    });
+  }
 
   // UI function from renderForumPreferencesTab.js
   function renderForumPreferencesTab(container) {
-  container.innerHTML += `<h2>Forum Preferences</h2>`;
+    container.innerHTML += `<h2>Forum Preferences</h2>`;
 
-  // Add sub-tabs for Threads and Users  const subTabsContainer = document.createElement("div");
-  subTabsContainer.className = "sub-tabs";
-  subTabsContainer.innerHTML = `
+    // Add sub-tabs for Threads and Users
+    const subTabsContainer = document.createElement("div");
+    subTabsContainer.className = "sub-tabs";
+    subTabsContainer.innerHTML = `
     <div class="sub-tab active" data-subtab="threads">
       <i class="fa fa-comments"></i> Threads
     </div>
@@ -1525,37 +1595,38 @@ const FORUM_PREFERENCES = {
       <i class="fa fa-users"></i> Users
     </div>
   `;
-  container.appendChild(subTabsContainer);
+    container.appendChild(subTabsContainer);
 
-  // Add container for sub-tab content  const subTabContent = document.createElement("div");
-  subTabContent.id = "forum-subtab-content";
-  container.appendChild(subTabContent);
+    // Add container for sub-tab content
+    const subTabContent = document.createElement("div");
+    subTabContent.id = "forum-subtab-content";
+    container.appendChild(subTabContent);
 
-  // Load initial sub-tab (Threads)
-  renderThreadsSubtab(subTabContent);
+    // Load initial sub-tab (Threads)
+    renderThreadsSubtab(subTabContent);
 
-  // Add event listeners for sub-tabs
-  subTabsContainer.querySelectorAll(".sub-tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      // Update active state
-      subTabsContainer.querySelectorAll(".sub-tab").forEach((t) => {
-        t.classList.remove("active");
+    // Add event listeners for sub-tabs
+    subTabsContainer.querySelectorAll(".sub-tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        // Update active state
+        subTabsContainer.querySelectorAll(".sub-tab").forEach((t) => {
+          t.classList.remove("active");
+        });
+        tab.classList.add("active");
+
+        // Load content
+        if (tab.dataset.subtab === "threads") {
+          renderThreadsSubtab(subTabContent);
+        } else if (tab.dataset.subtab === "users") {
+          renderUsersSubtab(subTabContent);
+        }
       });
-      tab.classList.add("active");
-
-      // Load content  if (tab.dataset.subtab === "threads") {
-        renderThreadsSubtab(subTabContent);
-      } else if (tab.dataset.subtab === "users") {
-        renderUsersSubtab(subTabContent);
-      }
     });
-  });
-}
-
+  }
 
   // UI function from renderSettingsTab.js
   function renderSettingsTab(container) {
-  container.innerHTML += `
+    container.innerHTML += `
     <h2>Global Settings</h2>
     
     <div class="preferences-section">
@@ -1664,12 +1735,11 @@ const FORUM_PREFERENCES = {
       <strong>Note:</strong> These are view-only representations of settings. Changes made here will not be saved.
     </div>
   `;
-}
-
+  }
 
   // UI function from renderThreadsSubtab.js
   function renderThreadsSubtab(container) {
-  container.innerHTML = `
+    container.innerHTML = `
     <div class="wip-banner">
       <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress
     </div>
@@ -1714,12 +1784,11 @@ const FORUM_PREFERENCES = {
       <strong>Note:</strong> This is a view-only display. Additional Thread preferences will be added in future updates.
     </div>
   `;
-}
-
+  }
 
   // UI function from renderUsersSubtab.js
   function renderUsersSubtab(container) {
-  container.innerHTML = `
+    container.innerHTML = `
     <div class="wip-banner">
       <i class="fa fa-wrench"></i> User Preferences - Work In Progress
     </div>
@@ -1761,20 +1830,21 @@ const FORUM_PREFERENCES = {
       <strong>Note:</strong> This is a view-only display. Additional User preferences will be added in future updates.
     </div>
   `;
-}
-
+  }
 
   // UI function from showScriptSettings.js
   function showScriptSettings(script) {
-  // Create modal if it doesn't exist  let modal = document.getElementById("script-settings-modal");  if (!modal) {
-    modal = document.createElement("div");
-    modal.id = "script-settings-modal";
-    modal.className = "settings-modal";
-    document.body.appendChild(modal);
-  }
+    // Create modal if it doesn't exist
+    let modal = document.getElementById("script-settings-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "script-settings-modal";
+      modal.className = "settings-modal";
+      document.body.appendChild(modal);
+    }
 
-  // Populate modal with script settings
-  modal.innerHTML = `
+    // Populate modal with script settings
+    modal.innerHTML = `
     <div class="settings-modal-content">
       <div class="settings-modal-header">
         <h2 class="settings-modal-title">${script.name} Settings</h2>
@@ -1829,27 +1899,30 @@ const FORUM_PREFERENCES = {
     </div>
   `;
 
-  // Show the modal
-  modal.style.display = "block";
+    // Show the modal
+    modal.style.display = "block";
 
-  // Add event listeners
-  modal.querySelector(".settings-modal-close").addEventListener("click", () => {
-    modal.style.display = "none";
-  });
+    // Add event listeners
+    modal
+      .querySelector(".settings-modal-close")
+      .addEventListener("click", () => {
+        modal.style.display = "none";
+      });
 
-  modal.addEventListener("click", (e) => {  if (e.target === modal) {
-      modal.style.display = "none";
-    }
-  });
-}
-
-
-  // UI function from renderScriptSettingsContent.js
-  function renderScriptSettingsContent(script) {  if (!script.settings || script.settings.length === 0) {
-    return "";
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.style.display = "none";
+      }
+    });
   }
 
-  return `
+  // UI function from renderScriptSettingsContent.js
+  function renderScriptSettingsContent(script) {
+    if (!script.settings || script.settings.length === 0) {
+      return "";
+    }
+
+    return `
     <div class="setting-group">
       ${script.settings
         .map(
@@ -1866,13 +1939,12 @@ const FORUM_PREFERENCES = {
         .join("")}
     </div>
   `;
-}
-
+  }
 
   // UI function from renderScriptsGridView.js
   function renderScriptsGridView(container, scripts) {
-  if (scripts.length === 0) {
-    container.innerHTML = `
+    if (scripts.length === 0) {
+      container.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">
           <i class="fa fa-search"></i>
@@ -1881,17 +1953,17 @@ const FORUM_PREFERENCES = {
         <p>Try adjusting your filters to see more results.</p>
       </div>
     `;
-    return;
-  }
-  const grid = document.createElement("div");
-  grid.className = "script-grid";
+      return;
+    }
+    const grid = document.createElement("div");
+    grid.className = "script-grid";
 
-  scripts.forEach((script) => {
-  const card = document.createElement("div");
-    card.className = "script-card";
-    card.dataset.scriptId = script.id;
+    scripts.forEach((script) => {
+      const card = document.createElement("div");
+      card.className = "script-card";
+      card.dataset.scriptId = script.id;
 
-    card.innerHTML = `
+      card.innerHTML = `
       <div class="script-card-image">
         <img src="${
           script.image || "https://via.placeholder.com/240x130?text=No+Image"
@@ -1932,50 +2004,49 @@ const FORUM_PREFERENCES = {
       </div>
     `;
 
-    grid.appendChild(card);
-  });
-
-  container.innerHTML = "";
-  container.appendChild(grid);
-
-  // Add event listeners for settings buttons
-  document.querySelectorAll(".view-settings").forEach((btn) => {
-    btn.addEventListener("click", () => {
-  const scriptId = btn.dataset.scriptId;
-  const script = scripts.find((s) => s.id === scriptId);
-  if (script) {
-        showScriptSettings(script);
-      }
+      grid.appendChild(card);
     });
-  });
 
-  // Add event listeners for toggle script buttons
-  document.querySelectorAll(".toggle-script").forEach((btn) => {
-    btn.addEventListener("click", () => {
-  const scriptId = btn.dataset.scriptId;
-  const newState = toggleScriptEnabled(scriptId);
+    container.innerHTML = "";
+    container.appendChild(grid);
 
-      // Update button state
-  if (newState) {
-        // Script is now enabled
-        btn.classList.remove("btn-success");
-        btn.classList.add("btn-danger");
-        btn.innerHTML = '<i class="fa fa-ban"></i> Disable';
-      } else {
-        // Script is now disabled
-        btn.classList.remove("btn-danger");
-        btn.classList.add("btn-success");
-        btn.innerHTML = '<i class="fa fa-check"></i> Enable';
-      }
+    // Add event listeners for settings buttons
+    document.querySelectorAll(".view-settings").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const scriptId = btn.dataset.scriptId;
+        const script = scripts.find((s) => s.id === scriptId);
+        if (script) {
+          showScriptSettings(script);
+        }
+      });
     });
-  });
-}
 
+    // Add event listeners for toggle script buttons
+    document.querySelectorAll(".toggle-script").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const scriptId = btn.dataset.scriptId;
+        const newState = toggleScriptEnabled(scriptId);
+
+        // Update button state
+        if (newState) {
+          // Script is now enabled
+          btn.classList.remove("btn-success");
+          btn.classList.add("btn-danger");
+          btn.innerHTML = '<i class="fa fa-ban"></i> Disable';
+        } else {
+          // Script is now disabled
+          btn.classList.remove("btn-danger");
+          btn.classList.add("btn-success");
+          btn.innerHTML = '<i class="fa fa-check"></i> Enable';
+        }
+      });
+    });
+  }
 
   // UI function from renderScriptsListView.js
   function renderScriptsListView(container, scripts) {
-  if (scripts.length === 0) {
-    container.innerHTML = `
+    if (scripts.length === 0) {
+      container.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">
           <i class="fa fa-search"></i>
@@ -1984,12 +2055,12 @@ const FORUM_PREFERENCES = {
         <p>Try adjusting your filters to see more results.</p>
       </div>
     `;
-    return;
-  }
-  const table = document.createElement("table");
-  table.className = "data-table";
+      return;
+    }
+    const table = document.createElement("table");
+    table.className = "data-table";
 
-  table.innerHTML = `
+    table.innerHTML = `
     <thead>
       <tr>
         <th>Status</th>
@@ -2046,143 +2117,227 @@ const FORUM_PREFERENCES = {
     </tbody>
   `;
 
-  container.innerHTML = "";
-  container.appendChild(table);
+    container.innerHTML = "";
+    container.appendChild(table);
 
-  // Add event listeners for settings buttons
-  document.querySelectorAll(".view-settings").forEach((btn) => {
-    btn.addEventListener("click", () => {
-  const scriptId = btn.dataset.scriptId;
-  const script = scripts.find((s) => s.id === scriptId);
-  if (script) {
-        showScriptSettings(script);
-      }
+    // Add event listeners for settings buttons
+    document.querySelectorAll(".view-settings").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const scriptId = btn.dataset.scriptId;
+        const script = scripts.find((s) => s.id === scriptId);
+        if (script) {
+          showScriptSettings(script);
+        }
+      });
     });
-  });
 
-  // Add event listeners for toggle script buttons
-  document.querySelectorAll(".toggle-script").forEach((btn) => {
-    btn.addEventListener("click", () => {
-  const scriptId = btn.dataset.scriptId;
-  const newState = toggleScriptEnabled(scriptId);
+    // Add event listeners for toggle script buttons
+    document.querySelectorAll(".toggle-script").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const scriptId = btn.dataset.scriptId;
+        const newState = toggleScriptEnabled(scriptId);
 
-      // Update icon state
-  const icon = btn.querySelector("i");
-  if (newState) {
-        // Script is now enabled
-        icon.classList.remove("fa-toggle-off");
-        icon.classList.remove("text-muted");
-        icon.classList.add("fa-toggle-on");
-        icon.classList.add("text-success");
-        btn.setAttribute("title", "Enabled (click to disable)");
-      } else {
-        // Script is now disabled
-        icon.classList.remove("fa-toggle-on");
-        icon.classList.remove("text-success");
-        icon.classList.add("fa-toggle-off");
-        icon.classList.add("text-muted");
-        btn.setAttribute("title", "Disabled (click to enable)");
-      }
+        // Update icon state
+        const icon = btn.querySelector("i");
+        if (newState) {
+          // Script is now enabled
+          icon.classList.remove("fa-toggle-off");
+          icon.classList.remove("text-muted");
+          icon.classList.add("fa-toggle-on");
+          icon.classList.add("text-success");
+          btn.setAttribute("title", "Enabled (click to disable)");
+        } else {
+          // Script is now disabled
+          icon.classList.remove("fa-toggle-on");
+          icon.classList.remove("text-success");
+          icon.classList.add("fa-toggle-off");
+          icon.classList.add("text-muted");
+          btn.setAttribute("title", "Disabled (click to enable)");
+        }
+      });
     });
-  });
-}
-
+  }
 
   // UI function from getCategoryOptions.js
-  function getCategoryOptions() {  const categories = new Set();
-  MANIFEST.scripts.forEach((script) => {  if (script.category) {
-      categories.add(script.category);
-    }
-  });
+  function getCategoryOptions() {
+    const categories = new Set();
+    MANIFEST.scripts.forEach((script) => {
+      if (script.category) {
+        categories.add(script.category);
+      }
+    });
 
-  return Array.from(categories)
-    .sort()
-    .map((category) => `<option value="${category}">${category}</option>`)
-    .join("");
-}
-
+    return Array.from(categories)
+      .sort()
+      .map((category) => `<option value="${category}">${category}</option>`)
+      .join("");
+  }
 
   // UI function from getExecutionPhaseOptions.js
   function getExecutionPhaseOptions() {
-  return MANIFEST.schema.executionPhases
-    .map((phase) => `<option value="${phase.id}">${phase.name}</option>`)
-    .join("");
-}
-
+    return MANIFEST.schema.executionPhases
+      .map((phase) => `<option value="${phase.id}">${phase.name}</option>`)
+      .join("");
+  }
 
   // Script function from document-ready/number-commas/number-commas.js
   function number_commas() {
-  // Get the setting for formatting 4-digit numbers
-  const formatFourDigits = GM_getValue("formatFourDigits", false);
+    // Get the setting for formatting 4-digit numbers
+    const formatFourDigits = GM_getValue("formatFourDigits", false);
 
-  // Run initial processing
-  processElements(formatFourDigits);
-  calculateForumStatistics();
-
-  // Set up observer for dynamic content
-  const observer = new MutationObserver(() => {
+    // Run initial processing
     processElements(formatFourDigits);
-  });
+    calculateForumStatistics();
 
-  // Start observing the document
-  observer.observe(document.body, { childList: true, subtree: true });
-}
+    // Set up observer for dynamic content
+    const observer = new MutationObserver(() => {
+      processElements(formatFourDigits);
+    });
 
+    // Start observing the document
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // Script function from document-ready/notifications-customization/notifications-customization.js
+  function notifications_customization() {
+    // Check if notifications customization is enabled
+    const enableNotificationStyles = GM_getValue(
+      "enableNotificationStyles",
+      true
+    );
+    if (!enableNotificationStyles) return;
+
+    // Add CSS override to set max-width to 50px for .row .list-inner img
+    const styleElement = document.createElement("style");
+    styleElement.textContent = `
+    .row .list-inner img {
+      max-width: 50px !important;
+    }
+  `;
+    document.head.appendChild(styleElement);
+
+    // Initialize notifications customization
+    customizeNotificationPanel();
+    checkAndMarkNotifications();
+
+    // Special handling for notification page
+    if (window.location.href.includes("ucp.php?i=ucp_notifications")) {
+      customizeNotificationPage();
+    }
+
+    // Add debouncing to prevent rapid re-processing
+    let debounceTimer;
+    const debouncedCustomize = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        customizeNotificationPanel();
+      }, 100);
+    };
+
+    // Observe DOM changes to apply customizations dynamically
+    const observer = new MutationObserver((mutations) => {
+      let shouldProcess = false;
+
+      for (const mutation of mutations) {
+        // Only process if new notification blocks are added
+        if (mutation.type === "childList") {
+          const hasNewNotifications = Array.from(mutation.addedNodes).some(
+            (node) => {
+              return (
+                node.nodeType === Node.ELEMENT_NODE &&
+                (node.classList?.contains("notification-block") ||
+                  node.querySelector?.(".notification-block"))
+              );
+            }
+          );
+          if (hasNewNotifications) {
+            shouldProcess = true;
+            break;
+          }
+        }
+      }
+      if (shouldProcess) {
+        debouncedCustomize();
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Run storage cleanup
+    cleanupStorage();
+  }
 
   // Initialization from init.js
   function init() {
-  addStyles();
-  GM_registerMenuCommand("RPGHQ Userscript Manager", showModal);
+    addStyles();
+    GM_registerMenuCommand("RPGHQ Userscript Manager", showModal);
 
-  // Add menu button to the page when DOM is ready  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", addMenuButton);
-  } else {
-    addMenuButton();
+    // Add menu button to the page when DOM is ready
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", addMenuButton);
+    } else {
+      addMenuButton();
+    }
   }
-}
-
 
   // Initialization from addMenuButton.js
-  function addMenuButton() {  const profileDropdown = document.querySelector(
-    '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
-  );  if (!profileDropdown) return;  const logoutButton = Array.from(profileDropdown.querySelectorAll("li")).find(
-    (li) => {
+  function addMenuButton() {
+    const profileDropdown = document.querySelector(
+      '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
+    );
+    if (!profileDropdown) return;
+    const logoutButton = Array.from(
+      profileDropdown.querySelectorAll("li")
+    ).find((li) => {
       return (
         li.textContent.trim().includes("Logout") ||
         li.querySelector('a[title="Logout"]')
       );
-    }
-  );  if (!logoutButton) return;  const userscriptsButton = document.createElement("li");
-  userscriptsButton.innerHTML = `
+    });
+    if (!logoutButton) return;
+    const userscriptsButton = document.createElement("li");
+    userscriptsButton.innerHTML = `
     <a href="#" title="View Userscripts" role="menuitem" style="font-size:0.9em;">
       <i class="fa fa-puzzle-piece fa-fw"></i><span> View Userscripts</span>
     </a>
   `;
 
-  logoutButton.parentNode.insertBefore(userscriptsButton, logoutButton);
-  userscriptsButton.querySelector("a").addEventListener("click", (e) => {
-    e.preventDefault();
-    showModal();
-  });
-}
-
+    logoutButton.parentNode.insertBefore(userscriptsButton, logoutButton);
+    userscriptsButton.querySelector("a").addEventListener("click", (e) => {
+      e.preventDefault();
+      showModal();
+    });
+  }
 
   // Execute scripts by phase
-  document.addEventListener("DOMContentLoaded", function() {
+  document.addEventListener("DOMContentLoaded", function () {
     // Execute document-ready scripts
-    if (isScriptEnabled("number-commas")) { try { number_commas(); } catch(e) { console.error("Error executing number-commas:", e); } }
+    if (isScriptEnabled("number-commas")) {
+      try {
+        number_commas();
+      } catch (e) {
+        console.error("Error executing number-commas:", e);
+      }
+    }
+    if (isScriptEnabled("notifications-customization")) {
+      try {
+        notifications_customization();
+      } catch (e) {
+        console.error("Error executing notifications-customization:", e);
+      }
+    }
   });
 
   // Execute document-start scripts
 
   // Add handlers for other phases
-  window.addEventListener("load", function() {
+  window.addEventListener("load", function () {
     // Execute document-loaded scripts
   });
 
   // Execute document-idle scripts after a short delay
-  window.addEventListener("load", function() {
-    setTimeout(function() {
+  window.addEventListener("load", function () {
+    setTimeout(function () {
       // Execute document-idle scripts
     }, 500);
   });
