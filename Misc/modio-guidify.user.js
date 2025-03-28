@@ -33,14 +33,26 @@
       return;
     }
 
+    // Remove discussion section if it exists
+    const discussionSection = document.querySelector('div[id="discussion"]');
+    if (discussionSection) {
+      const discussionContainer =
+        discussionSection.closest("[data-v-6576c276]");
+      if (discussionContainer) {
+        discussionContainer.remove();
+      }
+    }
+
     // Create a new container for the guide content
     const newContainer = document.createElement("div");
     newContainer.style.padding = "20px";
     newContainer.style.maxWidth = "800px";
     newContainer.style.margin = "0 auto";
-    newContainer.style.background = "#fff";
-    newContainer.style.color = "#000";
-    newContainer.style.fontFamily = "Arial, sans-serif";
+
+    // Instead of forcing specific colors, use CSS variables to maintain the site's theme
+    newContainer.style.backgroundColor = "var(--light-1, #fff)";
+    newContainer.style.color = "var(--light-text, #000)";
+    newContainer.style.fontFamily = "inherit";
 
     // Clone the guide content
     newContainer.appendChild(guideContent.cloneNode(true));
@@ -48,6 +60,11 @@
     // Clear the page and add only our container
     document.body.innerHTML = "";
     document.body.appendChild(newContainer);
+
+    // Set the body background to match the theme
+    document.body.style.backgroundColor = "var(--light-1, #fff)";
+    document.body.style.color = "var(--light-text, #000)";
+    document.body.style.minHeight = "100vh";
   }
 
   // Function to add the Guidify button
@@ -107,8 +124,8 @@
     floatingButton.style.right = "10px";
     floatingButton.style.zIndex = "9999";
     floatingButton.style.padding = "8px 16px";
-    floatingButton.style.backgroundColor = "#c19976";
-    floatingButton.style.color = "#0E101A";
+    floatingButton.style.backgroundColor = "var(--primary, #c19976)";
+    floatingButton.style.color = "var(--primary-text, #0E101A)";
     floatingButton.style.border = "none";
     floatingButton.style.borderRadius = "4px";
     floatingButton.style.cursor = "pointer";
