@@ -3,9 +3,10 @@
 // @namespace    http://tampermonkey.net/
 // @version      0.1
 // @description  Adds a Guidify button to clean up mod.io guide pages
-// @author       You
+// @author       loregamer
 // @match        https://mod.io/g/baldursgate3/*
 // @grant        none
+// @icon         https://mod.io/favicon.ico
 // @run-at       document-end
 // ==/UserScript==
 
@@ -43,28 +44,226 @@
       }
     }
 
+    // Extract the original page theme colors
+    const originalThemeColors = {
+      primary:
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--primary"
+        ) || "#c19976",
+      lightBg:
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--light-1"
+        ) || "#f8f8f8",
+      darkBg:
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--dark-1"
+        ) || "#1e1e24",
+      lightText:
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--light-text"
+        ) || "#32383c",
+      darkText:
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--dark-text"
+        ) || "#e9e9f0",
+      accentColor:
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--accent"
+        ) || "#2568ef",
+    };
+
+    // Add custom styling to the page
+    const styleTag = document.createElement("style");
+    styleTag.textContent = `
+      body {
+        background-color: #121212;
+        color: #e0e0e0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        line-height: 1.5;
+      }
+      
+      .guide-container {
+        background-color: #1e1e1e;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        padding: 30px;
+        max-width: 900px;
+        margin: 40px auto;
+      }
+      
+      .guide-header {
+        margin-bottom: 24px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 16px;
+      }
+      
+      .guide-title {
+        color: ${originalThemeColors.primary};
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      
+      .guide-content {
+        font-size: 16px;
+      }
+      
+      .guide-content h1, .guide-content h2, .guide-content h3 {
+        color: #f0f0f0;
+        margin-top: 28px;
+        margin-bottom: 16px;
+      }
+      
+      .guide-content h2 {
+        font-size: 24px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 8px;
+      }
+      
+      .guide-content h3 {
+        font-size: 20px;
+      }
+      
+      .guide-content p {
+        margin-bottom: 16px;
+        line-height: 1.6;
+        color: #cccccc;
+      }
+      
+      .guide-content a {
+        color: #70a9ff;
+        text-decoration: none;
+      }
+      
+      .guide-content a:hover {
+        text-decoration: underline;
+        color: #90c2ff;
+      }
+      
+      .guide-content img {
+        max-width: 100%;
+        border-radius: 4px;
+        margin: 16px 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      }
+      
+      .guide-content pre, .guide-content code {
+        background-color: #252525;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-family: monospace;
+        color: #d7ba7d;
+      }
+      
+      .guide-content pre {
+        padding: 16px;
+        overflow-x: auto;
+        border: 1px solid #333;
+      }
+      
+      .guide-content blockquote {
+        border-left: 4px solid ${originalThemeColors.primary};
+        padding-left: 16px;
+        margin-left: 0;
+        color: #b0b0b0;
+        background-color: rgba(255, 255, 255, 0.05);
+        padding: 10px 16px;
+        border-radius: 0 4px 4px 0;
+      }
+      
+      .guide-content ul, .guide-content ol {
+        padding-left: 24px;
+        margin-bottom: 16px;
+        color: #cccccc;
+      }
+      
+      .guide-content li {
+        margin-bottom: 8px;
+      }
+      
+      .guide-footer {
+        margin-top: 40px;
+        text-align: center;
+        color: #888;
+        font-size: 14px;
+        padding-top: 20px;
+        border-top: 1px solid #333;
+      }
+      
+      .guide-footer a {
+        color: #70a9ff;
+      }
+      
+      /* Dark mode scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: #1e1e1e;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: #444;
+        border-radius: 5px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+      
+      /* Selection color */
+      ::selection {
+        background-color: rgba(100, 150, 255, 0.3);
+        color: #fff;
+      }
+    `;
+    document.head.appendChild(styleTag);
+
+    // Get the page title
+    const pageTitle = document.title || "Guide";
+
     // Create a new container for the guide content
     const newContainer = document.createElement("div");
-    newContainer.style.padding = "20px";
-    newContainer.style.maxWidth = "800px";
-    newContainer.style.margin = "0 auto";
+    newContainer.className = "guide-container";
 
-    // Instead of forcing specific colors, use CSS variables to maintain the site's theme
-    newContainer.style.backgroundColor = "var(--light-1, #fff)";
-    newContainer.style.color = "var(--light-text, #000)";
-    newContainer.style.fontFamily = "inherit";
+    // Create header section
+    const headerSection = document.createElement("div");
+    headerSection.className = "guide-header";
+
+    const guideTitle = document.createElement("h1");
+    guideTitle.className = "guide-title";
+    guideTitle.textContent = pageTitle.replace(" | mod.io", "");
+
+    headerSection.appendChild(guideTitle);
+    newContainer.appendChild(headerSection);
+
+    // Create content section
+    const contentSection = document.createElement("div");
+    contentSection.className = "guide-content";
 
     // Clone the guide content
-    newContainer.appendChild(guideContent.cloneNode(true));
+    contentSection.appendChild(guideContent.cloneNode(true));
+    newContainer.appendChild(contentSection);
 
-    // Clear the page and add only our container
+    // Clear the page and add our container
     document.body.innerHTML = "";
     document.body.appendChild(newContainer);
 
-    // Set the body background to match the theme
-    document.body.style.backgroundColor = "var(--light-1, #fff)";
-    document.body.style.color = "var(--light-text, #000)";
-    document.body.style.minHeight = "100vh";
+    // Fix links so they open in new tabs
+    const allLinks = document.querySelectorAll("a");
+    allLinks.forEach((link) => {
+      if (
+        link.getAttribute("href") &&
+        !link.getAttribute("href").startsWith("#")
+      ) {
+        link.setAttribute("target", "_blank");
+        link.setAttribute("rel", "noopener noreferrer");
+      }
+    });
   }
 
   // Function to add the Guidify button
