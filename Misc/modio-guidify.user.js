@@ -253,6 +253,16 @@
     document.body.innerHTML = "";
     document.body.appendChild(newContainer);
 
+    // Fix HTML entities in headings and paragraphs
+    const textElements = document.querySelectorAll(
+      "h1, h2, h3, h4, h5, h6, p, li, a"
+    );
+    textElements.forEach((element) => {
+      if (element.innerHTML.includes("&amp;")) {
+        element.innerHTML = element.innerHTML.replace(/&amp;/g, "&");
+      }
+    });
+
     // Fix links so they open in new tabs
     const allLinks = document.querySelectorAll("a");
     allLinks.forEach((link) => {
