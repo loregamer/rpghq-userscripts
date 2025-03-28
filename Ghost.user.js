@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.10.1
+// @version      5.11
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1074,6 +1074,17 @@
     return false;
   }
 
+  /**
+   * Helper function to check if we're on a UCP page that's not notifications
+   * @returns {boolean} True if on a UCP page that's not notifications
+   */
+  function isNonNotificationUCP() {
+    return (
+      window.location.href.includes("ucp") &&
+      !window.location.href.includes("notifications")
+    );
+  }
+
   function hideTopicRow(element) {
     // First, check if the element or its parent row has author-name-* class
     // which indicates it's authored by a ghosted user
@@ -1083,7 +1094,8 @@
       Array.from(rowItem.classList).some(
         (cls) =>
           cls.startsWith("author-name-") &&
-          isUserIgnored(cls.replace("author-name-", ""))
+          isUserIgnored(cls.replace("author-name-", "")) &&
+          !isNonNotificationUCP()
       );
 
     if (hasGhostedClass) {
@@ -1125,7 +1137,11 @@
           const authorLink = lastpostCell.querySelector(
             "a.username, a.username-coloured"
           );
-          if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
+          if (
+            authorLink &&
+            isUserIgnored(authorLink.textContent.trim()) &&
+            !isNonNotificationUCP()
+          ) {
             // Author is ghosted, only add ghosted-by-author
             if (isViewForum) lastpostCell.classList.add("ghosted-row");
             rowItem.classList.add("ghosted-row", "ghosted-by-author");
@@ -1137,8 +1153,10 @@
             const nonAuthorLinks = Array.from(allLinks).filter(
               (link) => !link.closest(".responsive-hide.left-box")
             );
-            const hasGhostedUser = nonAuthorLinks.some((link) =>
-              isUserIgnored(link.textContent.trim())
+            const hasGhostedUser = nonAuthorLinks.some(
+              (link) =>
+                isUserIgnored(link.textContent.trim()) &&
+                !isNonNotificationUCP()
             );
             if (hasGhostedUser) {
               // Has ghosted user in content, add ghosted-by-author
@@ -1161,7 +1179,9 @@
       const authorNames = Array.from(authorLinks).map((link) =>
         link.textContent.trim()
       );
-      const hasGhostedAuthor = authorNames.some((name) => isUserIgnored(name));
+      const hasGhostedAuthor = authorNames.some(
+        (name) => isUserIgnored(name) && !isNonNotificationUCP()
+      );
 
       if (hasGhostedAuthor) {
         rowItem.classList.add("ghosted-row", "ghosted-by-author");
@@ -1171,8 +1191,10 @@
       const innerDiv = rowItem.querySelector(".list-inner");
       if (innerDiv) {
         const byText = innerDiv.textContent.toLowerCase();
-        const hasGhostedInBy = Object.values(ignoredUsers).some((username) =>
-          byText.includes(`by ${username.toLowerCase()}`)
+        const hasGhostedInBy = Object.values(ignoredUsers).some(
+          (username) =>
+            byText.includes(`by ${username.toLowerCase()}`) &&
+            !isNonNotificationUCP()
         );
         if (hasGhostedInBy) {
           rowItem.classList.add("ghosted-row", "ghosted-by-author");
@@ -1181,9 +1203,13 @@
       }
 
       // If we get here, it's content-based ghosting
-      rowItem.classList.add("ghosted-row", "ghosted-by-content");
+      if (!isNonNotificationUCP()) {
+        rowItem.classList.add("ghosted-row", "ghosted-by-content");
+      }
     } else {
-      element.classList.add("ghosted-row", "ghosted-by-author");
+      if (!isNonNotificationUCP()) {
+        element.classList.add("ghosted-row", "ghosted-by-author");
+      }
     }
   }
 
@@ -1244,7 +1270,7 @@
       // For forum rows, we only hide the lastpost section
       if (rowType === "forum") {
         // Check if the author is ignored
-        if (isUserIgnored(authorName)) {
+        if (isUserIgnored(authorName) && !isNonNotificationUCP()) {
           // Author is ghosted, add ghosted-row class to lastpost
           lastpostCell.classList.add("ghosted-row");
           // Add highlighting class to the row
@@ -1258,7 +1284,11 @@
           const postId = postLink.href.match(/p=(\d+)/)?.[1];
           if (postId && postCache[postId]) {
             const postContent = postCache[postId].content;
-            if (postContent && postContentContainsGhosted(postContent)) {
+            if (
+              postContent &&
+              postContentContainsGhosted(postContent) &&
+              !isNonNotificationUCP()
+            ) {
               // Post content contains ghosted username, add ghosted-row class to lastpost
               lastpostCell.classList.add("ghosted-row");
               // Add highlighting class to the row
@@ -1269,7 +1299,7 @@
       } else {
         // For topic and recent rows, check config to see if we should hide entire row or just lastpost
         // Check if the author is ignored
-        if (isUserIgnored(authorName)) {
+        if (isUserIgnored(authorName) && !isNonNotificationUCP()) {
           if (config.hideEntireRow) {
             // Hide entire row - Author is ghosted
             row.classList.add("ghosted-row");
@@ -1291,7 +1321,11 @@
           if (postId && postCache[postId]) {
             const postContent = postCache[postId].content;
             // Check if the lastPostCell contains the username of a ghosted user
-            if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
+            if (
+              authorLink &&
+              isUserIgnored(authorLink.textContent.trim()) &&
+              !isNonNotificationUCP()
+            ) {
               if (config.hideEntireRow) {
                 // Hide entire row
                 row.classList.add("ghosted-row");
@@ -1304,7 +1338,11 @@
                 row.classList.add("ghosted-by-author");
               }
               return; // Stop here, don't check content
-            } else if (postContent && postContentContainsGhosted(postContent)) {
+            } else if (
+              postContent &&
+              postContentContainsGhosted(postContent) &&
+              !isNonNotificationUCP()
+            ) {
               // Content contains ghosted references
               if (config.hideEntireRow) {
                 // Hide entire row
@@ -1352,7 +1390,11 @@
 
     // Check if the lastpost author is ignored
     const authorLink = element.querySelector("a.username, a.username-coloured");
-    if (authorLink && isUserIgnored(authorLink.textContent.trim())) {
+    if (
+      authorLink &&
+      isUserIgnored(authorLink.textContent.trim()) &&
+      !isNonNotificationUCP()
+    ) {
       if (isForumList) {
         // For forum rows, only hide the lastpost
         element.classList.add("ghosted-row");
@@ -1726,16 +1768,21 @@
     const topLevelBlockquotes = post.querySelectorAll(".content > blockquote");
     if (topLevelBlockquotes.length === 1) {
       const anchor = topLevelBlockquotes[0].querySelector("cite a");
-      if (anchor && isUserIgnored(anchor.textContent.trim())) {
+      if (
+        anchor &&
+        isUserIgnored(anchor.textContent.trim()) &&
+        !isNonNotificationUCP()
+      ) {
         post.dataset.hideForSingleIgnoredQuote = "true";
         return;
       }
     }
+
     const allBlockquotes = post.querySelectorAll(".content blockquote");
     allBlockquotes.forEach((bq) => {
       const anchor = bq.querySelector("cite a");
       if (!anchor) return;
-      if (isUserIgnored(anchor.textContent.trim())) {
+      if (isUserIgnored(anchor.textContent.trim()) && !isNonNotificationUCP()) {
         bq.classList.add("ghosted-quote");
       }
     });
@@ -1745,29 +1792,48 @@
     processBlockquotesInPost(post);
     const usernameEl = post.querySelector(".username, .username-coloured");
     let hideIt = false;
+
     if (post.dataset.hideForSingleIgnoredQuote === "true") {
-      hideIt = true;
+      // Only hide if not in UCP or in notifications
+      if (!isNonNotificationUCP()) {
+        hideIt = true;
+      }
       delete post.dataset.hideForSingleIgnoredQuote;
     }
-    if (usernameEl && isUserIgnored(usernameEl.textContent.trim())) {
+
+    if (
+      usernameEl &&
+      isUserIgnored(usernameEl.textContent.trim()) &&
+      !isNonNotificationUCP()
+    ) {
       hideIt = true;
     }
+
     // Check for @mentions of ghosted users
-    if (!hideIt && postContentContainsMentionedGhosted(post)) {
+    if (
+      !hideIt &&
+      postContentContainsMentionedGhosted(post) &&
+      !isNonNotificationUCP()
+    ) {
       hideIt = true;
       // Use the existing ghosted-by-content class
       post.classList.add("ghosted-by-content");
     }
+
     if (hideIt) {
       post.classList.add("ghosted-post");
     }
+
     post.classList.add("content-processed");
   }
 
   function processTopicPoster(poster) {
     const usernameEl = poster.querySelector(".username, .username-coloured");
     if (!usernameEl) return;
-    if (isUserIgnored(usernameEl.textContent.trim())) {
+    if (
+      isUserIgnored(usernameEl.textContent.trim()) &&
+      !isNonNotificationUCP()
+    ) {
       const masWrap = poster.querySelector(".mas-wrap");
       if (masWrap) {
         masWrap.innerHTML = `
