@@ -3231,6 +3231,50 @@
     );
   }
 
+  /**
+   * Process mas-wrap elements that may contain ghosted users
+   * Hides the entire element if it contains a user who is ghosted
+   */
+  function processMasWrapElements() {
+    // First, find all responsive-hide containers that contain mas-wrap elements
+    const responsiveHideElements =
+      document.querySelectorAll(".responsive-hide");
+
+    responsiveHideElements.forEach((container) => {
+      const masWrapElement = container.querySelector(".mas-wrap");
+      if (!masWrapElement) return;
+
+      const usernameElement = masWrapElement.querySelector(".mas-username");
+      if (!usernameElement) return;
+
+      const usernameLink = usernameElement.querySelector("a");
+      if (!usernameLink) return;
+
+      const username = cleanUsername(usernameLink.textContent.trim());
+      if (isUserIgnored(username)) {
+        // Hide the entire responsive-hide container
+        container.style.display = "none";
+      }
+    });
+
+    // Process other mas-wrap elements normally
+    const otherMasWrapElements = document.querySelectorAll(
+      ".mas-wrap:not(.responsive-hide .mas-wrap)"
+    );
+    otherMasWrapElements.forEach((element) => {
+      const usernameElement = element.querySelector(".mas-username");
+      if (!usernameElement) return;
+
+      const usernameLink = usernameElement.querySelector("a");
+      if (!usernameLink) return;
+
+      const username = cleanUsername(usernameLink.textContent.trim());
+      if (isUserIgnored(username)) {
+        element.style.display = "none";
+      }
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", async () => {
     // Apply custom colors from config
     applyCustomColors();
@@ -3291,6 +3335,9 @@
     cleanGhostedQuotesInTextarea();
     updatePaginationPostCount();
     changeOysterSauceColor();
+
+    // Process mas-wrap elements
+    processMasWrapElements();
 
     // Final pass to ensure all containers are marked as processed
     document
