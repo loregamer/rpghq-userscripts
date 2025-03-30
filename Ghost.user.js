@@ -3252,25 +3252,8 @@
 
       const username = cleanUsername(usernameLink.textContent.trim());
       if (isUserIgnored(username)) {
-        // Hide the entire responsive-hide container
-        container.style.display = "none";
-      }
-    });
-
-    // Process other mas-wrap elements normally
-    const otherMasWrapElements = document.querySelectorAll(
-      ".mas-wrap:not(.responsive-hide .mas-wrap)"
-    );
-    otherMasWrapElements.forEach((element) => {
-      const usernameElement = element.querySelector(".mas-username");
-      if (!usernameElement) return;
-
-      const usernameLink = usernameElement.querySelector("a");
-      if (!usernameLink) return;
-
-      const username = cleanUsername(usernameLink.textContent.trim());
-      if (isUserIgnored(username)) {
-        element.style.display = "none";
+        // Remove the entire mas-wrap element (contains both username and avatar)
+        masWrapElement.remove();
       }
     });
   }
