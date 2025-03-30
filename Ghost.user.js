@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.12
+// @version      5.13
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -3272,6 +3272,13 @@
   document.addEventListener("DOMContentLoaded", async () => {
     // Apply custom colors from config
     applyCustomColors();
+    // Remove zero badges
+    removeZeroBadges();
+    // Set up interval to periodically check for and remove zero badges
+    setInterval(removeZeroBadges, 1000);
+    // Set up more frequent title cleaning
+    setInterval(cleanTitleNotifications, 250);
+
     await Promise.all(
       Array.from(
         document.querySelectorAll(
@@ -3478,4 +3485,49 @@
       notificationBlock.classList.add("content-processed");
     }
   }
+
+  /**
+   * Remove badges that show "0" and prevent tab title from showing notification numbers
+   */
+  function removeZeroBadges() {
+    const zeroBadges = document.querySelectorAll(
+      "strong.badge.hidden.content-processed"
+    );
+
+    zeroBadges.forEach((badge) => {
+      if (badge.textContent.trim() === "0") {
+        badge.remove();
+      }
+    });
+
+    // Store the original title if not already stored
+    if (!window.originalTitle) {
+      window.originalTitle = document.title.replace(/^\(\d+\)\s+/, "");
+    }
+  }
+
+  /**
+   * Clean notification numbers from the tab title
+   */
+  function cleanTitleNotifications() {
+    // If title has notification count, reset it
+    if (/^\(\d+\)\s+/.test(document.title)) {
+      document.title =
+        window.originalTitle || document.title.replace(/^\(\d+\)\s+/, "");
+    }
+  }
+
+  // Main initialization
+  document.addEventListener("DOMContentLoaded", async function () {
+    setupPollRefreshDetection();
+
+    // Remove zero badges on page load
+    removeZeroBadges();
+    cleanTitleNotifications;
+
+    // Also check periodically for any dynamically added zero badges
+    setInterval(removeZeroBadges, 150);
+
+    setInterval(cleanTitleNotifications, 150);
+  });
 })();
