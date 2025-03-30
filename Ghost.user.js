@@ -3252,6 +3252,17 @@
 
       const username = cleanUsername(usernameLink.textContent.trim());
       if (isUserIgnored(username)) {
+        // Clean up the text nodes before and after mas-wrap
+        const containerContent = container.childNodes;
+        containerContent.forEach((node) => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            // Replace "by" and "»" with a space
+            node.textContent = node.textContent
+              .replace(/by\s*$/, " ")
+              .replace(/^\s*»/, " ");
+          }
+        });
+
         // Remove the entire mas-wrap element (contains both username and avatar)
         masWrapElement.remove();
       }
