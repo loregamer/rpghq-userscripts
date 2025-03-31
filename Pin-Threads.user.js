@@ -258,15 +258,93 @@ SOFTWARE.
       const existingRow = findExistingForumRow(forumId);
 
       if (existingRow) {
-        // If found, clone and modify the row
-        const clonedRow = existingRow.cloneNode(true);
-        clonedRow.id = `pinned-forum-${forumId}`;
+        if (existingRow.dataset && existingRow.dataset.isSubforum) {
+          // This is a synthetic row from a subforum link
+          const isUnread = existingRow.dataset.isUnread === "true";
+          forumInfo.isUnread = isUnread;
+          const html = createForumListItemHTML(forumId, forumInfo);
+          pinnedList.insertAdjacentHTML("beforeend", html);
+        } else {
+          // This is a regular forum row
+          const clonedRow = existingRow.cloneNode(true);
+          clonedRow.id = `pinned-forum-${forumId}`;
 
-        // Remove any unwanted elements or classes
-        clonedRow.querySelectorAll(".pagination").forEach((el) => el.remove());
-        clonedRow.classList.add("content-processed");
+          // Check if this forum is unread
+          const dlElement = clonedRow.querySelector("dl");
+          if (
+            dlElement &&
+            (dlElement.classList.contains("forum_unread") ||
+              dlElement.classList.contains("forum_unread_subforum") ||
+              dlElement.classList.contains("forum_unread_locked"))
+          ) {
+            // Keep the unread classes
+          } else {
+            // Make sure we use the read class
+            if (dlElement) {
+              dlElement.className = dlElement.className.replace(
+                /forum_\w+/g,
+                "forum_read"
+              );
+            }
+          }
 
-        pinnedList.appendChild(clonedRow);
+          // Remove subforum sections and clean up commas
+          const subforumSections = clonedRow.querySelectorAll("strong");
+          subforumSections.forEach((section) => {
+            if (section.textContent.includes("Subforums:")) {
+              // Remove the "Subforums:" text
+              section.remove();
+
+              // Find and remove all subforum links that follow
+              const listInner = clonedRow.querySelector(".list-inner");
+              if (listInner) {
+                listInner.querySelectorAll("a.subforum").forEach((link) => {
+                  link.remove();
+                });
+              }
+            }
+          });
+
+          // Remove any text nodes that might contain "Subforums:" text or stray commas
+          const listInner = clonedRow.querySelector(".list-inner");
+          if (listInner) {
+            const walker = document.createTreeWalker(
+              listInner,
+              NodeFilter.SHOW_TEXT
+            );
+            const textNodesToProcess = [];
+
+            while (walker.nextNode()) {
+              const textNode = walker.currentNode;
+              if (
+                textNode.textContent.includes("Subforums:") ||
+                /^\s*,\s*$/.test(textNode.textContent)
+              ) {
+                textNodesToProcess.push(textNode);
+              }
+            }
+
+            textNodesToProcess.forEach((node) => {
+              // If it's just commas and whitespace, remove it entirely
+              if (/^\s*[,\s]*\s*$/.test(node.textContent)) {
+                node.remove();
+              } else {
+                // Otherwise, clean up any trailing commas
+                node.textContent = node.textContent
+                  .replace(/\s*,\s*,\s*/g, "")
+                  .trim();
+              }
+            });
+          }
+
+          // Remove any unwanted elements or classes
+          clonedRow
+            .querySelectorAll(".pagination")
+            .forEach((el) => el.remove());
+          clonedRow.classList.add("content-processed");
+
+          pinnedList.appendChild(clonedRow);
+        }
       } else {
         // If not found, create a new row
         pinnedList.insertAdjacentHTML(
@@ -288,13 +366,33 @@ SOFTWARE.
       }
     }
 
+    // If not found in main forums, look for it in subforums
+    const subforums = document.querySelectorAll("a.subforum");
+    for (const subforum of subforums) {
+      if (subforum.href.includes(`f=${forumId}`)) {
+        // Create a synthetic row based on the subforum link
+        const isUnread = subforum.classList.contains("unread");
+        const forumName = subforum.textContent.trim();
+        const row = document.createElement("div");
+        row.dataset.isSubforum = "true";
+        row.dataset.isUnread = isUnread;
+        row.dataset.forumName = forumName;
+        row.dataset.forumUrl = subforum.href;
+        return row;
+      }
+    }
+
     return null;
   }
 
   function createForumListItemHTML(forumId, forumInfo) {
+    const isUnread = forumInfo.isUnread || false;
+    const forumClass = isUnread ? "forum_unread_subforum" : "forum_read";
+    const iconClass = isUnread ? "icon-red" : "";
+
     return `
       <li class="row content-processed" id="pinned-forum-${forumId}">
-        <dl class="row-item forum_read">
+        <dl class="row-item ${forumClass}">
           <dt title="${forumInfo.name}">
             <div class="list-inner">
               <a href="${forumInfo.url}" class="forumtitle">${forumInfo.name}</a>
