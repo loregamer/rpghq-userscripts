@@ -1101,7 +1101,7 @@
     if (hasGhostedClass) {
       // If it's authored by a ghosted user, only add ghosted-by-author
       if (rowItem) {
-        rowItem.classList.add("ghosted-row", "ghosted-by-author");
+        lastpostCell.classList.add("ghosted-by-author");
       } else {
         element.classList.add("ghosted-row", "ghosted-by-author");
       }
@@ -1144,7 +1144,7 @@
           ) {
             // Author is ghosted, only add ghosted-by-author
             if (isViewForum) lastpostCell.classList.add("ghosted-row");
-            rowItem.classList.add("ghosted-row", "ghosted-by-author");
+            lastpostCell.classList.add("ghosted-by-author");
             return;
           } else {
             const allLinks = rowItem.querySelectorAll(
@@ -1165,7 +1165,7 @@
             } else {
               // No ghosted author, but content might contain ghosted references
               if (isViewForum) lastpostCell.classList.add("ghosted-row");
-              rowItem.classList.add("ghosted-row", "ghosted-by-content");
+              lastpostCell.classList.add("ghosted-by-content");
             }
           }
           return;
