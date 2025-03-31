@@ -1,45 +1,61 @@
 const fs = require("fs");
 const path = require("path");
 
-// Read the order config
-const orderConfig = JSON.parse(fs.readFileSync("./order.json", "utf8"));
-
 // Function to read a file
 function readFile(filePath) {
   return fs.readFileSync(filePath, "utf8");
 }
 
-// Create userscript header
+// Function to get all JavaScript files in a directory and its subdirectories
+function getJsFilesInDir(dirPath) {
+  if (!fs.existsSync(dirPath)) {
+    console.warn(`Directory not found: ${dirPath}`);
+    return [];
+  }
+  
+  const results = [];
+  
+  // Get all items in the directory
+  const items = fs.readdirSync(dirPath);
+  
+  // Process each item
+  for (const item of items) {
+    const itemPath = path.join(dirPath, item);
+    const stat = fs.statSync(itemPath);
+    
+    if (stat.isDirectory()) {
+      // If it's a directory, recursively get files from it
+      const subFiles = getJsFilesInDir(itemPath);
+      // Add the subdirectory path to each file
+      for (const subFile of subFiles) {
+        results.push(path.join(item, subFile));
+      }
+    } else if (stat.isFile() && item.endsWith('.js')) {
+      // If it's a JavaScript file, add it to results
+      results.push(item);
+    }
+  }
+  
+  return results;
+}
+
+// Create userscript header with hardcoded values from the old order.json
 function createHeader() {
-  const header = orderConfig.header;
   let headerText = `// ==UserScript==\n`;
 
   // Add standard properties
-  headerText += `// @name         ${header.name}\n`;
-  headerText += `// @namespace    ${header.namespace}\n`;
-  headerText += `// @version      ${header.version}\n`;
-  headerText += `// @description  ${header.description}\n`;
-  headerText += `// @author       ${header.author}\n`;
-
-  // Add match pattern(s)
-  if (Array.isArray(header.match)) {
-    header.match.forEach((match) => {
-      headerText += `// @match        ${match}\n`;
-    });
-  } else {
-    headerText += `// @match        ${header.match}\n`;
-  }
-
-  // Add run-at
-  headerText += `// @run-at       ${header["run-at"]}\n`;
-
+  headerText += `// @name         RPGHQ Userscript Manager (Popup Only)\n`;
+  headerText += `// @namespace    https://rpghq.org/\n`;
+  headerText += `// @version      3.0.2\n`;
+  headerText += `// @description  A simple popup that displays the MANIFEST of available scripts without any functional components\n`;
+  headerText += `// @author       loregamer\n`;
+  headerText += `// @match        https://rpghq.org/forums/*\n`;
+  headerText += `// @run-at       document-start\n`;
+  
   // Add grants
-  if (Array.isArray(header.grants)) {
-    header.grants.forEach((grant) => {
-      headerText += `// @grant        ${grant}\n`;
-    });
-  }
-
+  headerText += `// @grant        GM_addStyle\n`;
+  headerText += `// @grant        GM_registerMenuCommand\n`;
+  
   headerText += `// ==/UserScript==\n\n`;
   return headerText;
 }
@@ -54,7 +70,7 @@ function cleanNodeJSExports(content) {
     .replace(/module\.exports\s*=.*$/gm, "");
 }
 
-// Combine all files according to the order specified in order.json
+// New build function that scans directories and includes all files
 function buildUserscript() {
   let content = createHeader();
 
@@ -62,57 +78,43 @@ function buildUserscript() {
   content += `(function () {\n`;
   content += `  "use strict";\n\n`;
 
-  // Add data files
-  console.log("Adding data files...");
-  for (const dataFile of orderConfig.data) {
-    console.log(`  - ${dataFile}`);
-    content += `  // Data from ${dataFile}\n`;
-    const fileContent = readFile(path.join("./data", dataFile));
-    content += fileContent
-      .replace(/^const /m, "  const ")
-      .replace(/\/\*\*[\s\S]*?\*\//m, "");
-    content = cleanNodeJSExports(content);
-    content += "\n\n";
-  }
+  // Define directories to scan
+  const directories = [
+    { path: "./data", comment: "Data from" },
+    { path: "./helpers", comment: "Helper function from" },
+    { path: "./ui/modals", comment: "UI function from" },
+    { path: "./initialization", comment: "Initialization from" }
+  ];
 
-  // Add helper files
-  console.log("Adding helper files...");
-  for (const helperFile of orderConfig.helpers) {
-    console.log(`  - ${helperFile}`);
-    content += `  // Helper function from ${helperFile}\n`;
-    const fileContent = readFile(path.join("./helpers", helperFile));
-    content += fileContent
-      .replace(/^function /m, "  function ")
-      .replace(/\/\*\*[\s\S]*?\*\//m, "");
-    content = cleanNodeJSExports(content);
-    content += "\n\n";
-  }
-
-  // Add UI modal functions
-  console.log("Adding UI modal functions...");
-  for (const modalFile of orderConfig.ui.modals) {
-    console.log(`  - ${modalFile}`);
-    content += `  // UI function from ${modalFile}\n`;
-    const fileContent = readFile(path.join("./ui/modals", modalFile));
-    content += fileContent
-      .replace(/^function /m, "  function ")
-      .replace(/\/\*\*[\s\S]*?\*\//m, "");
-    content = cleanNodeJSExports(content);
-    content += "\n\n";
-  }
-
-  // Add initialization functions
-  console.log("Adding initialization functions...");
-  for (const initFile of orderConfig.initialization) {
-    console.log(`  - ${initFile}`);
-    content += `  // Initialization from ${initFile}\n`;
-    const fileContent = readFile(path.join("./initialization", initFile));
-    content += fileContent
-      .replace(/^function /m, "  function ")
-      .replace(/\/\*\*[\s\S]*?\*\//m, "");
-    content = cleanNodeJSExports(content);
-    content += "\n\n";
-  }
+  // Process each directory
+  directories.forEach(dir => {
+    console.log(`Adding files from ${dir.path}...`);
+    
+    // Get all JS files in the directory and its subdirectories
+    const files = getJsFilesInDir(dir.path);
+    
+    // Process each file
+    files.forEach(file => {
+      console.log(`  - ${file}`);
+      content += `  // ${dir.comment} ${file}\n`;
+      
+      const fileContent = readFile(path.join(dir.path, file));
+      
+      // Process content based on the type of file
+      if (dir.path === "./data") {
+        content += fileContent
+          .replace(/^const /m, "  const ")
+          .replace(/\/\*\*[\s\S]*?\*\//m, "");
+      } else {
+        content += fileContent
+          .replace(/^function /m, "  function ")
+          .replace(/\/\*\*[\s\S]*?\*\//m, "");
+      }
+      
+      content = cleanNodeJSExports(content);
+      content += "\n\n";
+    });
+  });
 
   // Add call to init function
   content += `  // Run initialization\n`;
