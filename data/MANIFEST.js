@@ -49,5 +49,3 @@ const MANIFEST = {
     ],
   },
 };
-
-module.exports = MANIFEST;
