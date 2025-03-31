@@ -15,7 +15,7 @@
 
   // Data from FORUM_PREFERENCES.js
 
-  const FORUM_PREFERENCES = {
+    const FORUM_PREFERENCES = {
     sections: [
       {
         name: "Display Settings",
@@ -88,12 +88,10 @@
     ],
   };
 
-  if (typeof module !== "undefined") {
-  }
 
   // Data from MANIFEST.js
 
-  const MANIFEST = {
+    const MANIFEST = {
     scripts: [
       {
         id: "notifications",
@@ -142,612 +140,613 @@
     },
   };
 
+
+
+
   // Helper function from Shared\addStyles.js
 
-  function addStyles() {
+    function addStyles() {
     GM_addStyle(`
-    /* Import Font Awesome */
-    @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css');
+      /* Import Font Awesome */
+      @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css');
 
-    :root {
-        --primary-color: #2196F3;
-        --primary-dark: #1976D2;
-        --accent-color: #FF9800;
-        --success-color: #4CAF50;
-        --warning-color: #FFC107;
-        --danger-color: #F44336;
-        --text-primary: #FFFFFF;
-        --text-secondary: #B0BEC5;
-        --bg-dark: #1E1E1E;
-        --bg-card: #2D2D2D;
-        --border-color: #444444;
-    }
-    
-    /* Modal container */
-    .mod-manager-modal {
-        display: none;
-        position: fixed;
-        z-index: 10000;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-        overflow: hidden;
-    }
-    
-    /* Modal content box */
-    .mod-manager-modal-content {
-        background-color: var(--bg-dark);
-        margin: 2% auto;
-        padding: 10px;
-        border: 1px solid var(--border-color);
-        width: 90%;
-        max-width: 1200px;
-        max-height: 90vh;
-        border-radius: 4px;
-        color: var(--text-primary);
-        display: flex;
-        flex-direction: column;
-    }
-    
-    /* Header and close button */
-    .mod-manager-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 10px;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 10px;
-    }
-    
-    .mod-manager-title {
-        margin: 0;
-        font-size: 1.8em;
-        color: var(--text-primary);
-    }
-    
-    .mod-manager-close {
-        font-size: 1.8em;
-        cursor: pointer;
-    }
-    
-    .mod-manager-close:hover {
-        color: var(--danger-color);
-    }
-    
-    /* Tab system */
-    .mod-manager-tabs {
-        display: flex;
-        margin-bottom: 10px;
-        border-bottom: 1px solid var(--border-color);
-    }
-    
-    .mod-manager-tab {
-        padding: 8px 16px;
-        cursor: pointer;
-        font-size: 1em;
-        color: var(--text-secondary);
-        position: relative;
-    }
-    
-    .mod-manager-tab:hover {
-        background-color: rgba(255, 255, 255, 0.05);
-    }
-    
-    .mod-manager-tab.active {
-        color: var(--primary-color);
-        font-weight: bold;
-        border-bottom: 2px solid var(--primary-color);
-    }
-    
-    /* Sub-tabs system */
-    .sub-tabs {
-        display: flex;
-        margin-bottom: 10px;
-        border-bottom: 1px solid var(--border-color);
-        background-color: var(--bg-card);
-        border-radius: 4px 4px 0 0;
-    }
-    
-    .sub-tab {
-        padding: 8px 16px;
-        cursor: pointer;
-        font-size: 1em;
-        color: var(--text-secondary);
-        position: relative;
-    }
-    
-    .sub-tab:hover {
-        background-color: rgba(255, 255, 255, 0.05);
-    }
-    
-    .sub-tab.active {
-        color: var(--primary-color);
-        font-weight: bold;
-        border-bottom: 2px solid var(--primary-color);
-    }
-    
-    /* Content area */
-    .mod-manager-content {
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px;
-    }
-    
-    /* Filter panel */
-    .filter-panel {
-        background-color: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        padding: 10px;
-        margin-bottom: 15px;
-    }
-    
-    .filter-panel-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    
-    .filter-panel-title {
-        font-size: 1.1em;
-        font-weight: bold;
-        margin: 0;
-    }
-    
-    .filter-panel-toggle {
-        background: none;
-        border: none;
-        color: var(--text-primary);
-        cursor: pointer;
-        font-size: 1.1em;
-    }
-    
-    .filter-panel-body {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        gap: 10px;
-    }
-    
-    .filter-panel-body.collapsed {
-        display: none;
-    }
-    
-    .filter-group {
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .filter-group label {
-        margin-bottom: 5px;
-        font-weight: bold;
-        font-size: 0.9em;
-    }
-    
-    .filter-group select,
-    .filter-group input {
-        padding: 5px;
-        border: 1px solid var(--border-color);
-        border-radius: 3px;
-        background-color: var(--bg-dark);
-        color: var(--text-primary);
-    }
-    
-    .filter-actions {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 10px;
-        grid-column: 1 / -1;
-    }
-    
-    /* Script grid */
-    .script-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 10px;
-    }
-    
-    .script-card {
-        background-color: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        overflow: hidden;
-    }
-    
-    .script-card-image {
-        position: relative;
-        height: 130px;
-        overflow: hidden;
-    }
-    
-    .script-card-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .script-card-category {
-        position: absolute;
-        top: 5px;
-        right: 5px;
-        background-color: rgba(0, 0, 0, 0.7);
-        color: var(--text-primary);
-        padding: 3px 8px;
-        border-radius: 3px;
-        font-size: 0.8em;
-    }
-    
-    .script-card-content {
-        padding: 10px;
-    }
-    
-    .script-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 8px;
-    }
-    
-    .script-card-title {
-        font-size: 1.1em;
-        font-weight: bold;
-        margin: 0;
-    }
-    
-    .script-card-version {
-        background-color: var(--primary-color);
-        color: white;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-size: 0.8em;
-    }
-    
-    .script-card-description {
-        margin: 0 0 10px 0;
-        color: var(--text-secondary);
-        font-size: 0.9em;
-        line-height: 1.3;
-        height: 3.6em;
-        overflow: hidden;
-    }
-    
-    .script-card-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-top: 1px solid var(--border-color);
-        padding-top: 8px;
-    }
-    
-    .script-card-phase {
-        font-size: 0.85em;
-        color: var(--text-secondary);
-    }
-    
-    /* Forum preferences */
-    .preferences-section {
-        background-color: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        margin-bottom: 15px;
-        overflow: hidden;
-    }
-    
-    .preferences-section-header {
-        background-color: rgba(33, 150, 243, 0.1);
-        padding: 10px;
-        border-bottom: 1px solid var(--border-color);
-    }
-    
-    .preferences-section-title {
-        margin: 0;
-        font-size: 1.1em;
-        color: var(--text-primary);
-    }
-    
-    .preferences-section-body {
-        padding: 10px;
-    }
-    
-    .preference-item {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 10px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .preference-item:last-child {
-        margin-bottom: 0;
-        padding-bottom: 0;
-        border-bottom: none;
-    }
-    
-    .preference-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 5px;
-    }
-    
-    .preference-name {
-        font-weight: bold;
-        margin: 0;
-    }
-    
-    .preference-control {
-        min-width: 150px;
-    }
-    
-    .preference-description {
-        color: var(--text-secondary);
-        font-size: 0.9em;
-        margin: 0;
-    }
-    
-    /* Settings modal */
-    .settings-modal {
-        display: none;
-        position: fixed;
-        z-index: 10001;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.8);
-    }
-    
-    .settings-modal-content {
-        background-color: var(--bg-dark);
-        margin: 5% auto;
-        padding: 15px;
-        border: 1px solid var(--border-color);
-        width: 60%;
-        max-width: 800px;
-        max-height: 85vh;
-        border-radius: 4px;
-        overflow-y: auto;
-    }
-    
-    .settings-modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid var(--border-color);
-    }
-    
-    .settings-modal-title {
-        font-size: 1.4em;
-        margin: 0;
-    }
-    
-    .settings-modal-close {
-        font-size: 1.4em;
-        cursor: pointer;
-        color: var(--text-secondary);
-    }
-    
-    .settings-modal-close:hover {
-        color: var(--danger-color);
-    }
-    
-    .setting-group {
-        margin-bottom: 15px;
-    }
-    
-    .setting-group-title {
-        font-size: 1.1em;
-        margin: 0 0 10px 0;
-        padding-bottom: 8px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .setting-item {
-        margin-bottom: 12px;
-    }
-    
-    .setting-label {
-        display: block;
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-    
-    .setting-description {
-        display: block;
-        color: var(--text-secondary);
-        font-size: 0.9em;
-        margin-bottom: 5px;
-    }
-    
-    .setting-control {
-        margin-top: 5px;
-    }
-    
-    /* Buttons */
-    .btn {
-        padding: 5px 10px;
-        border-radius: 3px;
-        border: none;
-        cursor: pointer;
-        font-size: 0.9em;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    .btn-icon {
-        font-size: 1em;
-    }
-    
-    .btn-primary {
-        background-color: var(--primary-color);
-        color: white;
-    }
-    
-    .btn-primary:hover {
-        background-color: var(--primary-dark);
-    }
-    
-    .btn-secondary {
-        background-color: #555;
-        color: var(--text-primary);
-    }
-    
-    .btn-secondary:hover {
-        background-color: #666;
-    }
-    
-    .btn-small {
-        padding: 3px 8px;
-        font-size: 0.8em;
-    }
-    
-    /* Toggle switch */
-    .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 46px;
-        height: 22px;
-    }
-    
-    .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-    
-    .toggle-slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #444;
-        border-radius: 3px;
-    }
-    
-    .toggle-slider:before {
-        position: absolute;
-        content: "";
-        height: 16px;
-        width: 16px;
-        left: 3px;
-        bottom: 3px;
-        background-color: white;
-        border-radius: 2px;
-    }
-    
-    input:checked + .toggle-slider {
-        background-color: var(--primary-color);
-    }
-    
-    input:checked + .toggle-slider:before {
-        transform: translateX(24px);
-    }
-    
-    /* Tables */
-    .data-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 15px;
-    }
-    
-    .data-table th,
-    .data-table td {
-        padding: 8px 10px;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-    }
-    
-    .data-table th {
-        background-color: rgba(255, 255, 255, 0.05);
-        font-weight: bold;
-    }
-    
-    .data-table tr:hover {
-        background-color: rgba(255, 255, 255, 0.03);
-    }
-    
-    /* Empty state */
-    .empty-state {
-        text-align: center;
-        padding: 30px 20px;
-        color: var(--text-secondary);
-    }
-    
-    .empty-state-icon {
-        font-size: 2.5em;
-        margin-bottom: 15px;
-        opacity: 0.5;
-    }
-    
-    .empty-state-message {
-        font-size: 1.1em;
-        margin-bottom: 10px;
-    }
-    
-    /* Badges */
-    .badge {
-        display: inline-block;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-size: 0.8em;
-        font-weight: bold;
-    }
-    
-    .badge-primary {
-        background-color: var(--primary-color);
-        color: white;
-    }
-    
-    /* Info note */
-    .info-note {
-        background-color: rgba(33, 150, 243, 0.1);
-        border-left: 4px solid var(--primary-color);
-        padding: 10px;
-        margin-bottom: 15px;
-        border-radius: 0 4px 4px 0;
-    }
-    
-    /* WIP Banner */
-    .wip-banner {
-        background-color: var(--warning-color);
-        color: #000;
-        padding: 10px;
-        margin-bottom: 15px;
-        border-radius: 4px;
-        text-align: center;
-        font-weight: bold;
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .script-grid {
-            grid-template-columns: 1fr;
-        }
+      :root {
+          --primary-color: #2196F3;
+          --primary-dark: #1976D2;
+          --accent-color: #FF9800;
+          --success-color: #4CAF50;
+          --warning-color: #FFC107;
+          --danger-color: #F44336;
+          --text-primary: #FFFFFF;
+          --text-secondary: #B0BEC5;
+          --bg-dark: #1E1E1E;
+          --bg-card: #2D2D2D;
+          --border-color: #444444;
+      }
+    
+      /* Modal container */
+      .mod-manager-modal {
+          display: none;
+          position: fixed;
+          z-index: 10000;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.8);
+          overflow: hidden;
+      }
+    
+      /* Modal content box */
+      .mod-manager-modal-content {
+          background-color: var(--bg-dark);
+          margin: 2% auto;
+          padding: 10px;
+          border: 1px solid var(--border-color);
+          width: 90%;
+          max-width: 1200px;
+          max-height: 90vh;
+          border-radius: 4px;
+          color: var(--text-primary);
+          display: flex;
+          flex-direction: column;
+      }
+    
+      /* Header and close button */
+      .mod-manager-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 10px;
+          border-bottom: 1px solid var(--border-color);
+          padding-bottom: 10px;
+      }
+    
+      .mod-manager-title {
+          margin: 0;
+          font-size: 1.8em;
+          color: var(--text-primary);
+      }
+    
+      .mod-manager-close {
+          font-size: 1.8em;
+          cursor: pointer;
+      }
+    
+      .mod-manager-close:hover {
+          color: var(--danger-color);
+      }
+    
+      /* Tab system */
+      .mod-manager-tabs {
+          display: flex;
+          margin-bottom: 10px;
+          border-bottom: 1px solid var(--border-color);
+      }
+    
+      .mod-manager-tab {
+          padding: 8px 16px;
+          cursor: pointer;
+          font-size: 1em;
+          color: var(--text-secondary);
+          position: relative;
+      }
+    
+      .mod-manager-tab:hover {
+          background-color: rgba(255, 255, 255, 0.05);
+      }
+    
+      .mod-manager-tab.active {
+          color: var(--primary-color);
+          font-weight: bold;
+          border-bottom: 2px solid var(--primary-color);
+      }
+    
+      /* Sub-tabs system */
+      .sub-tabs {
+          display: flex;
+          margin-bottom: 10px;
+          border-bottom: 1px solid var(--border-color);
+          background-color: var(--bg-card);
+          border-radius: 4px 4px 0 0;
+      }
+    
+      .sub-tab {
+          padding: 8px 16px;
+          cursor: pointer;
+          font-size: 1em;
+          color: var(--text-secondary);
+          position: relative;
+      }
+    
+      .sub-tab:hover {
+          background-color: rgba(255, 255, 255, 0.05);
+      }
+    
+      .sub-tab.active {
+          color: var(--primary-color);
+          font-weight: bold;
+          border-bottom: 2px solid var(--primary-color);
+      }
+    
+      /* Content area */
+      .mod-manager-content {
+          flex: 1;
+          overflow-y: auto;
+          padding: 10px;
+      }
+    
+      /* Filter panel */
+      .filter-panel {
+          background-color: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          padding: 10px;
+          margin-bottom: 15px;
+      }
+    
+      .filter-panel-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+      }
+    
+      .filter-panel-title {
+          font-size: 1.1em;
+          font-weight: bold;
+          margin: 0;
+      }
+    
+      .filter-panel-toggle {
+          background: none;
+          border: none;
+          color: var(--text-primary);
+          cursor: pointer;
+          font-size: 1.1em;
+      }
+    
+      .filter-panel-body {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 10px;
+      }
+    
+      .filter-panel-body.collapsed {
+          display: none;
+      }
+    
+      .filter-group {
+          display: flex;
+          flex-direction: column;
+      }
+    
+      .filter-group label {
+          margin-bottom: 5px;
+          font-weight: bold;
+          font-size: 0.9em;
+      }
+    
+      .filter-group select,
+      .filter-group input {
+          padding: 5px;
+          border: 1px solid var(--border-color);
+          border-radius: 3px;
+          background-color: var(--bg-dark);
+          color: var(--text-primary);
+      }
+    
+      .filter-actions {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 10px;
+          grid-column: 1 / -1;
+      }
+    
+      /* Script grid */
+      .script-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 10px;
+      }
+    
+      .script-card {
+          background-color: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          overflow: hidden;
+      }
+    
+      .script-card-image {
+          position: relative;
+          height: 130px;
+          overflow: hidden;
+      }
+    
+      .script-card-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+      }
+    
+      .script-card-category {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          background-color: rgba(0, 0, 0, 0.7);
+          color: var(--text-primary);
+          padding: 3px 8px;
+          border-radius: 3px;
+          font-size: 0.8em;
+      }
+    
+      .script-card-content {
+          padding: 10px;
+      }
+    
+      .script-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 8px;
+      }
+    
+      .script-card-title {
+          font-size: 1.1em;
+          font-weight: bold;
+          margin: 0;
+      }
+    
+      .script-card-version {
+          background-color: var(--primary-color);
+          color: white;
+          padding: 2px 6px;
+          border-radius: 3px;
+          font-size: 0.8em;
+      }
+    
+      .script-card-description {
+          margin: 0 0 10px 0;
+          color: var(--text-secondary);
+          font-size: 0.9em;
+          line-height: 1.3;
+          height: 3.6em;
+          overflow: hidden;
+      }
+    
+      .script-card-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-top: 1px solid var(--border-color);
+          padding-top: 8px;
+      }
+    
+      .script-card-phase {
+          font-size: 0.85em;
+          color: var(--text-secondary);
+      }
+    
+      /* Forum preferences */
+      .preferences-section {
+          background-color: var(--bg-card);
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          margin-bottom: 15px;
+          overflow: hidden;
+      }
+    
+      .preferences-section-header {
+          background-color: rgba(33, 150, 243, 0.1);
+          padding: 10px;
+          border-bottom: 1px solid var(--border-color);
+      }
+    
+      .preferences-section-title {
+          margin: 0;
+          font-size: 1.1em;
+          color: var(--text-primary);
+      }
+    
+      .preferences-section-body {
+          padding: 10px;
+      }
+    
+      .preference-item {
+          display: flex;
+          flex-direction: column;
+          margin-bottom: 10px;
+          padding-bottom: 10px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    
+      .preference-item:last-child {
+          margin-bottom: 0;
+          padding-bottom: 0;
+          border-bottom: none;
+      }
+    
+      .preference-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 5px;
+      }
+    
+      .preference-name {
+          font-weight: bold;
+          margin: 0;
+      }
+    
+      .preference-control {
+          min-width: 150px;
+      }
+    
+      .preference-description {
+          color: var(--text-secondary);
+          font-size: 0.9em;
+          margin: 0;
+      }
+    
+      /* Settings modal */
+      .settings-modal {
+          display: none;
+          position: fixed;
+          z-index: 10001;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.8);
+      }
+    
+      .settings-modal-content {
+          background-color: var(--bg-dark);
+          margin: 5% auto;
+          padding: 15px;
+          border: 1px solid var(--border-color);
+          width: 60%;
+          max-width: 800px;
+          max-height: 85vh;
+          border-radius: 4px;
+          overflow-y: auto;
+      }
+    
+      .settings-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 15px;
+          padding-bottom: 10px;
+          border-bottom: 1px solid var(--border-color);
+      }
+    
+      .settings-modal-title {
+          font-size: 1.4em;
+          margin: 0;
+      }
+    
+      .settings-modal-close {
+          font-size: 1.4em;
+          cursor: pointer;
+          color: var(--text-secondary);
+      }
+    
+      .settings-modal-close:hover {
+          color: var(--danger-color);
+      }
+    
+      .setting-group {
+          margin-bottom: 15px;
+      }
+    
+      .setting-group-title {
+          font-size: 1.1em;
+          margin: 0 0 10px 0;
+          padding-bottom: 8px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+    
+      .setting-item {
+          margin-bottom: 12px;
+      }
+    
+      .setting-label {
+          display: block;
+          font-weight: bold;
+          margin-bottom: 5px;
+      }
+    
+      .setting-description {
+          display: block;
+          color: var(--text-secondary);
+          font-size: 0.9em;
+          margin-bottom: 5px;
+      }
+    
+      .setting-control {
+          margin-top: 5px;
+      }
+    
+      /* Buttons */
+      .btn {
+          padding: 5px 10px;
+          border-radius: 3px;
+          border: none;
+          cursor: pointer;
+          font-size: 0.9em;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+      }
+    
+      .btn-icon {
+          font-size: 1em;
+      }
+    
+      .btn-primary {
+          background-color: var(--primary-color);
+          color: white;
+      }
+    
+      .btn-primary:hover {
+          background-color: var(--primary-dark);
+      }
+    
+      .btn-secondary {
+          background-color: #555;
+          color: var(--text-primary);
+      }
+    
+      .btn-secondary:hover {
+          background-color: #666;
+      }
+    
+      .btn-small {
+          padding: 3px 8px;
+          font-size: 0.8em;
+      }
+    
+      /* Toggle switch */
+      .toggle-switch {
+          position: relative;
+          display: inline-block;
+          width: 46px;
+          height: 22px;
+      }
+    
+      .toggle-switch input {
+          opacity: 0;
+          width: 0;
+          height: 0;
+      }
+    
+      .toggle-slider {
+          position: absolute;
+          cursor: pointer;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: #444;
+          border-radius: 3px;
+      }
+    
+      .toggle-slider:before {
+          position: absolute;
+          content: "";
+          height: 16px;
+          width: 16px;
+          left: 3px;
+          bottom: 3px;
+          background-color: white;
+          border-radius: 2px;
+      }
+    
+      input:checked + .toggle-slider {
+          background-color: var(--primary-color);
+      }
+    
+      input:checked + .toggle-slider:before {
+          transform: translateX(24px);
+      }
+    
+      /* Tables */
+      .data-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 15px;
+      }
+    
+      .data-table th,
+      .data-table td {
+          padding: 8px 10px;
+          text-align: left;
+          border-bottom: 1px solid var(--border-color);
+      }
+    
+      .data-table th {
+          background-color: rgba(255, 255, 255, 0.05);
+          font-weight: bold;
+      }
+    
+      .data-table tr:hover {
+          background-color: rgba(255, 255, 255, 0.03);
+      }
+    
+      /* Empty state */
+      .empty-state {
+          text-align: center;
+          padding: 30px 20px;
+          color: var(--text-secondary);
+      }
+    
+      .empty-state-icon {
+          font-size: 2.5em;
+          margin-bottom: 15px;
+          opacity: 0.5;
+      }
+    
+      .empty-state-message {
+          font-size: 1.1em;
+          margin-bottom: 10px;
+      }
+    
+      /* Badges */
+      .badge {
+          display: inline-block;
+          padding: 2px 6px;
+          border-radius: 3px;
+          font-size: 0.8em;
+          font-weight: bold;
+      }
+    
+      .badge-primary {
+          background-color: var(--primary-color);
+          color: white;
+      }
+    
+      /* Info note */
+      .info-note {
+          background-color: rgba(33, 150, 243, 0.1);
+          border-left: 4px solid var(--primary-color);
+          padding: 10px;
+          margin-bottom: 15px;
+          border-radius: 0 4px 4px 0;
+      }
+    
+      /* WIP Banner */
+      .wip-banner {
+          background-color: var(--warning-color);
+          color: #000;
+          padding: 10px;
+          margin-bottom: 15px;
+          border-radius: 4px;
+          text-align: center;
+          font-weight: bold;
+      }
+    
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+          .script-grid {
+              grid-template-columns: 1fr;
+          }
         
-        .filter-panel-body {
-            grid-template-columns: 1fr;
-        }
+          .filter-panel-body {
+              grid-template-columns: 1fr;
+          }
         
-        .settings-modal-content {
-            width: 90%;
-        }
-    }
-  `);
+          .settings-modal-content {
+              width: 90%;
+          }
+      }
+    `);
   }
 
-  if (typeof module !== "undefined") {
-  }
 
   // Helper function from Shared\compareVersions.js
 
-  function compareVersions(a, b) {
+    function compareVersions(a, b) {
     const partsA = a.split(".").map(Number);
     const partsB = b.split(".").map(Number);
 
@@ -763,9 +762,10 @@
     return 0;
   }
 
+
   // Helper function from Shared\filterScripts.js
 
-  function filterScripts(scripts, filters) {
+    function filterScripts(scripts, filters) {
     if (!filters) {
       // If no filters provided, get them from the DOM
       const category = document.getElementById("category-filter").value;
@@ -798,9 +798,7 @@
         (script.description &&
           script.description.toLowerCase().includes(filters.searchTerm));
 
-      return (
-        matchesCategory && matchesPhase && matchesSettings && matchesSearch
-      );
+      return matchesCategory && matchesPhase && matchesSettings && matchesSearch;
     });
 
     // Sort scripts
@@ -824,9 +822,10 @@
     return filtered;
   }
 
+
   // Helper function from Shared\getPhaseDisplayName.js
 
-  function getPhaseDisplayName(phase) {
+    function getPhaseDisplayName(phase) {
     if (!phase) return "Not specified";
 
     const phaseMap = {
@@ -840,81 +839,107 @@
     return phaseMap[phase] || phase;
   }
 
+
   // Helper function from Shared\renderPreferenceControl.js
 
-  function renderPreferenceControl(preference) {
+    function renderPreferenceControl(preference) {
     switch (preference.type) {
       case "toggle":
         return `
-        <label class="toggle-switch">
-          <input type="checkbox" ${preference.default ? "checked" : ""}>
-          <span class="toggle-slider"></span>
-        </label>
-      `;
+          <label class="toggle-switch">
+            <input type="checkbox" ${preference.default ? "checked" : ""}>
+            <span class="toggle-slider"></span>
+          </label>
+        `;
       case "select":
         return `
-        <select>
-          ${preference.options
-            .map(
-              (option) => `
-            <option ${
-              option === preference.default ? "selected" : ""
-            }>${option}</option>
-          `
-            )
-            .join("")}
-        </select>
-      `;
+          <select>
+            ${preference.options
+              .map(
+                (option) => `
+              <option ${
+                option === preference.default ? "selected" : ""
+              }>${option}</option>
+            `
+              )
+              .join("")}
+          </select>
+        `;
       default:
         return `
-        <input type="text" value="${preference.default || ""}">
-      `;
+          <input type="text" value="${preference.default || ""}">
+        `;
     }
   }
+
 
   // Helper function from Shared\renderSettingControl.js
 
-  function renderSettingControl(setting) {
+    function renderSettingControl(setting) {
     switch (setting.type) {
       case "boolean":
         return `
-        <label class="toggle-switch">
-          <input type="checkbox" ${setting.default ? "checked" : ""}>
-          <span class="toggle-slider"></span>
-        </label>
-      `;
+          <label class="toggle-switch">
+            <input type="checkbox" ${setting.default ? "checked" : ""}>
+            <span class="toggle-slider"></span>
+          </label>
+        `;
       case "select":
         return `
-        <select class="setting-input">
-          ${setting.options
-            .map(
-              (option) => `
-            <option value="${option}" ${
-                option === setting.default ? "selected" : ""
-              }>${option}</option>
-          `
-            )
-            .join("")}
-        </select>
-      `;
+          <select class="setting-input">
+            ${setting.options
+              .map(
+                (option) => `
+              <option value="${option}" ${
+                  option === setting.default ? "selected" : ""
+                }>${option}</option>
+            `
+              )
+              .join("")}
+          </select>
+        `;
       case "number":
         return `
-        <input type="number" class="setting-input" value="${
-          setting.default || 0
-        }">
-      `;
+          <input type="number" class="setting-input" value="${
+            setting.default || 0
+          }">
+        `;
       default:
         return `
-        <input type="text" class="setting-input" value="${
-          setting.default || ""
-        }">
-      `;
+          <input type="text" class="setting-input" value="${
+            setting.default || ""
+          }">
+        `;
     }
   }
 
-  // UI function from getCategoryOptions.js
 
-  function getCategoryOptions() {
+  // Helper function from Shared\toggleModalWithInsertKey.js
+
+    function toggleModalWithInsertKey(e) {
+    // Check if the key pressed is Insert (key code 45)
+    if (e.keyCode === 45) {
+      // Prevent default behavior
+      e.preventDefault();
+    
+      // Check if the modal is currently visible
+      const modal = document.getElementById("mod-manager-modal");
+      if (modal && modal.style.display === "block") {
+        // If visible, hide it
+        hideModal();
+      } else {
+        // If not visible, show it
+        showModal();
+      }
+    }
+  }
+
+
+
+
+  // UI function from modals\getCategoryOptions.js
+
+    function getCategoryOptions() {
     const categories = new Set();
     MANIFEST.scripts.forEach((script) => {
       if (script.category) {
@@ -928,17 +953,19 @@
       .join("");
   }
 
-  // UI function from getExecutionPhaseOptions.js
 
-  function getExecutionPhaseOptions() {
+  // UI function from modals\getExecutionPhaseOptions.js
+
+    function getExecutionPhaseOptions() {
     return MANIFEST.schema.executionPhases
       .map((phase) => `<option value="${phase.id}">${phase.name}</option>`)
       .join("");
   }
 
-  // UI function from hideModal.js
 
-  function hideModal() {
+  // UI function from modals\hideModal.js
+
+    function hideModal() {
     const modal = document.getElementById("mod-manager-modal");
     if (modal) {
       modal.style.display = "none";
@@ -952,9 +979,10 @@
     }
   }
 
-  // UI function from loadTabContent.js
 
-  function loadTabContent(tabName) {
+  // UI function from modals\loadTabContent.js
+
+    function loadTabContent(tabName) {
     const content = document.getElementById("mod-manager-content");
 
     // Clear previous content (except the info note)
@@ -977,22 +1005,23 @@
     }
   }
 
-  // UI function from renderForumPreferencesTab.js
 
-  function renderForumPreferencesTab(container) {
+  // UI function from modals\renderForumPreferencesTab.js
+
+    function renderForumPreferencesTab(container) {
     container.innerHTML += `<h2>Forum Preferences</h2>`;
 
     // Add sub-tabs for Threads and Users
     const subTabsContainer = document.createElement("div");
     subTabsContainer.className = "sub-tabs";
     subTabsContainer.innerHTML = `
-    <div class="sub-tab active" data-subtab="threads">
-      <i class="fa fa-comments"></i> Threads
-    </div>
-    <div class="sub-tab" data-subtab="users">
-      <i class="fa fa-users"></i> Users
-    </div>
-  `;
+      <div class="sub-tab active" data-subtab="threads">
+        <i class="fa fa-comments"></i> Threads
+      </div>
+      <div class="sub-tab" data-subtab="users">
+        <i class="fa fa-users"></i> Users
+      </div>
+    `;
     container.appendChild(subTabsContainer);
 
     // Add container for sub-tab content
@@ -1022,66 +1051,67 @@
     });
   }
 
-  // UI function from renderInstalledScriptsTab.js
 
-  function renderInstalledScriptsTab(container) {
+  // UI function from modals\renderInstalledScriptsTab.js
+
+    function renderInstalledScriptsTab(container) {
     // Create the filter panel
     const filterPanel = document.createElement("div");
     filterPanel.className = "filter-panel";
     filterPanel.innerHTML = `
-    <div class="filter-panel-header">
-      <h3 class="filter-panel-title">Filter Scripts</h3>
-      <button class="filter-panel-toggle" id="toggle-filters">
-        <i class="fa fa-chevron-up"></i>
-      </button>
-    </div>
-    <div class="filter-panel-body" id="filter-panel-body">
-      <div class="filter-group">
-        <label for="category-filter">Category</label>
-        <select id="category-filter">
-          <option value="all">All Categories</option>
-          ${getCategoryOptions()}
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="phase-filter">Execution Phase</label>
-        <select id="phase-filter">
-          <option value="all">All Phases</option>
-          ${getExecutionPhaseOptions()}
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="has-settings-filter">Settings</label>
-        <select id="has-settings-filter">
-          <option value="all">All Scripts</option>
-          <option value="with">With Settings</option>
-          <option value="without">Without Settings</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="search-filter">Search</label>
-        <input type="text" id="search-filter" placeholder="Script name or description...">
-      </div>
-      <div class="filter-group">
-        <label for="sort-filter">Sort By</label>
-        <select id="sort-filter">
-          <option value="name-asc">Name (A-Z)</option>
-          <option value="name-desc">Name (Z-A)</option>
-          <option value="version-asc">Version (Low to High)</option>
-          <option value="version-desc">Version (High to Low)</option>
-          <option value="category">Category</option>
-        </select>
-      </div>
-      <div class="filter-actions">
-        <button id="reset-filters" class="btn btn-secondary">
-          <i class="fa fa-undo btn-icon"></i> Reset
-        </button>
-        <button id="apply-filters" class="btn btn-primary" style="margin-left: 10px;">
-          <i class="fa fa-filter btn-icon"></i> Apply Filters
+      <div class="filter-panel-header">
+        <h3 class="filter-panel-title">Filter Scripts</h3>
+        <button class="filter-panel-toggle" id="toggle-filters">
+          <i class="fa fa-chevron-up"></i>
         </button>
       </div>
-    </div>
-  `;
+      <div class="filter-panel-body" id="filter-panel-body">
+        <div class="filter-group">
+          <label for="category-filter">Category</label>
+          <select id="category-filter">
+            <option value="all">All Categories</option>
+            ${getCategoryOptions()}
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="phase-filter">Execution Phase</label>
+          <select id="phase-filter">
+            <option value="all">All Phases</option>
+            ${getExecutionPhaseOptions()}
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="has-settings-filter">Settings</label>
+          <select id="has-settings-filter">
+            <option value="all">All Scripts</option>
+            <option value="with">With Settings</option>
+            <option value="without">Without Settings</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="search-filter">Search</label>
+          <input type="text" id="search-filter" placeholder="Script name or description...">
+        </div>
+        <div class="filter-group">
+          <label for="sort-filter">Sort By</label>
+          <select id="sort-filter">
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="version-asc">Version (Low to High)</option>
+            <option value="version-desc">Version (High to Low)</option>
+            <option value="category">Category</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button id="reset-filters" class="btn btn-secondary">
+            <i class="fa fa-undo btn-icon"></i> Reset
+          </button>
+          <button id="apply-filters" class="btn btn-primary" style="margin-left: 10px;">
+            <i class="fa fa-filter btn-icon"></i> Apply Filters
+          </button>
+        </div>
+      </div>
+    `;
     container.appendChild(filterPanel);
 
     // Create the view options
@@ -1091,15 +1121,15 @@
     viewOptions.style.justifyContent = "flex-end";
     viewOptions.style.marginBottom = "10px";
     viewOptions.innerHTML = `
-    <div class="btn-group" style="display: flex;">
-      <button id="grid-view-btn" class="btn btn-primary" style="border-radius: 3px 0 0 3px; margin: 0;">
-        <i class="fa fa-th-large"></i>
-      </button>
-      <button id="list-view-btn" class="btn btn-secondary" style="border-radius: 0 3px 3px 0; margin: 0;">
-        <i class="fa fa-list"></i>
-      </button>
-    </div>
-  `;
+      <div class="btn-group" style="display: flex;">
+        <button id="grid-view-btn" class="btn btn-primary" style="border-radius: 3px 0 0 3px; margin: 0;">
+          <i class="fa fa-th-large"></i>
+        </button>
+        <button id="list-view-btn" class="btn btn-secondary" style="border-radius: 0 3px 3px 0; margin: 0;">
+          <i class="fa fa-list"></i>
+        </button>
+      </div>
+    `;
     container.appendChild(viewOptions);
 
     // Create the scripts container
@@ -1144,9 +1174,7 @@
 
       // Use the active view to render
       if (
-        document
-          .getElementById("grid-view-btn")
-          .classList.contains("btn-primary")
+        document.getElementById("grid-view-btn").classList.contains("btn-primary")
       ) {
         renderScriptsGridView(scriptsContainer, filteredScripts);
       } else {
@@ -1163,9 +1191,7 @@
 
       // Use the active view to render
       if (
-        document
-          .getElementById("grid-view-btn")
-          .classList.contains("btn-primary")
+        document.getElementById("grid-view-btn").classList.contains("btn-primary")
       ) {
         renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
       } else {
@@ -1174,45 +1200,47 @@
     });
   }
 
-  // UI function from renderScriptSettingsContent.js
 
-  function renderScriptSettingsContent(script) {
+  // UI function from modals\renderScriptSettingsContent.js
+
+    function renderScriptSettingsContent(script) {
     if (!script.settings || script.settings.length === 0) {
       return "";
     }
 
     return `
-    <div class="setting-group">
-      ${script.settings
-        .map(
-          (setting) => `
-        <div class="setting-item">
-          <label class="setting-label">${setting.label}</label>
-          <span class="setting-description">${setting.description}</span>
-          <div class="setting-control">
-            ${renderSettingControl(setting)}
+      <div class="setting-group">
+        ${script.settings
+          .map(
+            (setting) => `
+          <div class="setting-item">
+            <label class="setting-label">${setting.label}</label>
+            <span class="setting-description">${setting.description}</span>
+            <div class="setting-control">
+              ${renderSettingControl(setting)}
+            </div>
           </div>
-        </div>
-      `
-        )
-        .join("")}
-    </div>
-  `;
-  }
-
-  // UI function from renderScriptsGridView.js
-
-  function renderScriptsGridView(container, scripts) {
-    if (scripts.length === 0) {
-      container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">
-          <i class="fa fa-search"></i>
-        </div>
-        <h3 class="empty-state-message">No scripts found</h3>
-        <p>Try adjusting your filters to see more results.</p>
+        `
+          )
+          .join("")}
       </div>
     `;
+  }
+
+
+  // UI function from modals\renderScriptsGridView.js
+
+    function renderScriptsGridView(container, scripts) {
+    if (scripts.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="fa fa-search"></i>
+          </div>
+          <h3 class="empty-state-message">No scripts found</h3>
+          <p>Try adjusting your filters to see more results.</p>
+        </div>
+      `;
       return;
     }
 
@@ -1225,38 +1253,38 @@
       card.dataset.scriptId = script.id;
 
       card.innerHTML = `
-      <div class="script-card-image">
-        <img src="${
-          script.image || "https://via.placeholder.com/240x130?text=No+Image"
-        }" alt="${script.name}">
-        <div class="script-card-category">${
-          script.category || "Uncategorized"
-        }</div>
-      </div>
-      <div class="script-card-content">
-        <div class="script-card-header">
-          <h3 class="script-card-title">${script.name}</h3>
-          <span class="script-card-version">v${script.version}</span>
+        <div class="script-card-image">
+          <img src="${
+            script.image || "https://via.placeholder.com/240x130?text=No+Image"
+          }" alt="${script.name}">
+          <div class="script-card-category">${
+            script.category || "Uncategorized"
+          }</div>
         </div>
-        <p class="script-card-description">${
-          script.description || "No description available."
-        }</p>
-        <div class="script-card-footer">
-          <div class="script-card-phase">
-            <i class="fa fa-bolt"></i> ${getPhaseDisplayName(
-              script.executionPhase
-            )}
+        <div class="script-card-content">
+          <div class="script-card-header">
+            <h3 class="script-card-title">${script.name}</h3>
+            <span class="script-card-version">v${script.version}</span>
           </div>
-          <div class="script-card-actions">
-            <button class="btn btn-primary btn-small view-settings" data-script-id="${
-              script.id
-            }">
-              <i class="fa fa-cog"></i> Settings
-            </button>
+          <p class="script-card-description">${
+            script.description || "No description available."
+          }</p>
+          <div class="script-card-footer">
+            <div class="script-card-phase">
+              <i class="fa fa-bolt"></i> ${getPhaseDisplayName(
+                script.executionPhase
+              )}
+            </div>
+            <div class="script-card-actions">
+              <button class="btn btn-primary btn-small view-settings" data-script-id="${
+                script.id
+              }">
+                <i class="fa fa-cog"></i> Settings
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    `;
+      `;
 
       grid.appendChild(card);
     });
@@ -1276,19 +1304,20 @@
     });
   }
 
-  // UI function from renderScriptsListView.js
 
-  function renderScriptsListView(container, scripts) {
+  // UI function from modals\renderScriptsListView.js
+
+    function renderScriptsListView(container, scripts) {
     if (scripts.length === 0) {
       container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">
-          <i class="fa fa-search"></i>
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="fa fa-search"></i>
+          </div>
+          <h3 class="empty-state-message">No scripts found</h3>
+          <p>Try adjusting your filters to see more results.</p>
         </div>
-        <h3 class="empty-state-message">No scripts found</h3>
-        <p>Try adjusting your filters to see more results.</p>
-      </div>
-    `;
+      `;
       return;
     }
 
@@ -1296,45 +1325,45 @@
     table.className = "data-table";
 
     table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Version</th>
-        <th>Category</th>
-        <th>Description</th>
-        <th>Execution Phase</th>
-        <th>Settings</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${scripts
-        .map(
-          (script) => `
+      <thead>
         <tr>
-          <td><strong>${script.name}</strong></td>
-          <td>v${script.version}</td>
-          <td>${script.category || "Uncategorized"}</td>
-          <td>${script.description || "No description available."}</td>
-          <td>${getPhaseDisplayName(script.executionPhase)}</td>
-          <td>${
-            script.settings && script.settings.length > 0
-              ? `<span class="badge badge-primary">${script.settings.length}</span>`
-              : "-"
-          }</td>
-          <td>
-            <button class="btn btn-primary btn-small view-settings" data-script-id="${
-              script.id
-            }">
-              <i class="fa fa-cog"></i> Settings
-            </button>
-          </td>
+          <th>Name</th>
+          <th>Version</th>
+          <th>Category</th>
+          <th>Description</th>
+          <th>Execution Phase</th>
+          <th>Settings</th>
+          <th>Actions</th>
         </tr>
-      `
-        )
-        .join("")}
-    </tbody>
-  `;
+      </thead>
+      <tbody>
+        ${scripts
+          .map(
+            (script) => `
+          <tr>
+            <td><strong>${script.name}</strong></td>
+            <td>v${script.version}</td>
+            <td>${script.category || "Uncategorized"}</td>
+            <td>${script.description || "No description available."}</td>
+            <td>${getPhaseDisplayName(script.executionPhase)}</td>
+            <td>${
+              script.settings && script.settings.length > 0
+                ? `<span class="badge badge-primary">${script.settings.length}</span>`
+                : "-"
+            }</td>
+            <td>
+              <button class="btn btn-primary btn-small view-settings" data-script-id="${
+                script.id
+              }">
+                <i class="fa fa-cog"></i> Settings
+              </button>
+            </td>
+          </tr>
+        `
+          )
+          .join("")}
+      </tbody>
+    `;
 
     container.innerHTML = "";
     container.appendChild(table);
@@ -1351,258 +1380,260 @@
     });
   }
 
-  // UI function from renderSettingsTab.js
 
-  function renderSettingsTab(container) {
+  // UI function from modals\renderSettingsTab.js
+
+    function renderSettingsTab(container) {
     container.innerHTML += `
-    <h2>Global Settings</h2>
+      <h2>Global Settings</h2>
     
-    <div class="preferences-section">
-      <div class="preferences-section-header">
-        <h3 class="preferences-section-title">Appearance</h3>
-      </div>
-      <div class="preferences-section-body">
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Theme</h4>
-            <div class="preference-control">
-              <select class="setting-input">
-                <option value="dark" selected>Dark</option>
-                <option value="light">Light</option>
-                <option value="system">System Default</option>
-              </select>
-            </div>
-          </div>
-          <p class="preference-description">Choose your preferred theme for the userscript manager</p>
+      <div class="preferences-section">
+        <div class="preferences-section-header">
+          <h3 class="preferences-section-title">Appearance</h3>
         </div>
+        <div class="preferences-section-body">
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Theme</h4>
+              <div class="preference-control">
+                <select class="setting-input">
+                  <option value="dark" selected>Dark</option>
+                  <option value="light">Light</option>
+                  <option value="system">System Default</option>
+                </select>
+              </div>
+            </div>
+            <p class="preference-description">Choose your preferred theme for the userscript manager</p>
+          </div>
         
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Script Card Size</h4>
-            <div class="preference-control">
-              <select class="setting-input">
-                <option value="small">Small</option>
-                <option value="medium" selected>Medium</option>
-                <option value="large">Large</option>
-              </select>
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Script Card Size</h4>
+              <div class="preference-control">
+                <select class="setting-input">
+                  <option value="small">Small</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="large">Large</option>
+                </select>
+              </div>
             </div>
+            <p class="preference-description">Adjust the size of script cards in the gallery view</p>
           </div>
-          <p class="preference-description">Adjust the size of script cards in the gallery view</p>
         </div>
       </div>
-    </div>
     
-    <div class="preferences-section">
-      <div class="preferences-section-header">
-        <h3 class="preferences-section-title">Behavior</h3>
-      </div>
-      <div class="preferences-section-body">
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Default View</h4>
-            <div class="preference-control">
-              <select class="setting-input">
-                <option value="grid" selected>Grid</option>
-                <option value="list">List</option>
-              </select>
-            </div>
-          </div>
-          <p class="preference-description">Choose the default view for displaying scripts</p>
+      <div class="preferences-section">
+        <div class="preferences-section-header">
+          <h3 class="preferences-section-title">Behavior</h3>
         </div>
+        <div class="preferences-section-body">
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Default View</h4>
+              <div class="preference-control">
+                <select class="setting-input">
+                  <option value="grid" selected>Grid</option>
+                  <option value="list">List</option>
+                </select>
+              </div>
+            </div>
+            <p class="preference-description">Choose the default view for displaying scripts</p>
+          </div>
         
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Auto-check for Updates</h4>
-            <div class="preference-control">
-              <label class="toggle-switch">
-                <input type="checkbox" checked>
-                <span class="toggle-slider"></span>
-              </label>
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Auto-check for Updates</h4>
+              <div class="preference-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
             </div>
+            <p class="preference-description">Automatically check for script updates when the page loads</p>
           </div>
-          <p class="preference-description">Automatically check for script updates when the page loads</p>
         </div>
       </div>
-    </div>
     
-    <div class="preferences-section">
-      <div class="preferences-section-header">
-        <h3 class="preferences-section-title">Advanced</h3>
-      </div>
-      <div class="preferences-section-body">
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Update Check Interval</h4>
-            <div class="preference-control">
-              <select class="setting-input">
-                <option value="daily">Daily</option>
-                <option value="weekly" selected>Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-            </div>
-          </div>
-          <p class="preference-description">How often to check for script updates</p>
+      <div class="preferences-section">
+        <div class="preferences-section-header">
+          <h3 class="preferences-section-title">Advanced</h3>
         </div>
+        <div class="preferences-section-body">
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Update Check Interval</h4>
+              <div class="preference-control">
+                <select class="setting-input">
+                  <option value="daily">Daily</option>
+                  <option value="weekly" selected>Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+            </div>
+            <p class="preference-description">How often to check for script updates</p>
+          </div>
         
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Debug Mode</h4>
-            <div class="preference-control">
-              <label class="toggle-switch">
-                <input type="checkbox">
-                <span class="toggle-slider"></span>
-              </label>
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Debug Mode</h4>
+              <div class="preference-control">
+                <label class="toggle-switch">
+                  <input type="checkbox">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
             </div>
+            <p class="preference-description">Enable verbose console logging for troubleshooting</p>
           </div>
-          <p class="preference-description">Enable verbose console logging for troubleshooting</p>
         </div>
       </div>
-    </div>
     
-    <div class="info-note">
-      <strong>Note:</strong> These are view-only representations of settings. Changes made here will not be saved.
-    </div>
-  `;
+      <div class="info-note">
+        <strong>Note:</strong> These are view-only representations of settings. Changes made here will not be saved.
+      </div>
+    `;
   }
 
-  // UI function from renderThreadsSubtab.js
 
-  function renderThreadsSubtab(container) {
+  // UI function from modals\renderThreadsSubtab.js
+
+    function renderThreadsSubtab(container) {
     container.innerHTML = `
-    <div class="wip-banner">
-      <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress
-    </div>
-    
-    <div class="preferences-section">
-      <div class="preferences-section-header">
-        <h3 class="preferences-section-title">Thread Display</h3>
+      <div class="wip-banner">
+        <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress
       </div>
-      <div class="preferences-section-body">
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Thread Layout</h4>
-            <div class="preference-control">
-              <select>
-                <option selected>Compact</option>
-                <option>Standard</option>
-                <option>Expanded</option>
-              </select>
-            </div>
-          </div>
-          <p class="preference-description">Choose how thread listings are displayed</p>
+    
+      <div class="preferences-section">
+        <div class="preferences-section-header">
+          <h3 class="preferences-section-title">Thread Display</h3>
         </div>
+        <div class="preferences-section-body">
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Thread Layout</h4>
+              <div class="preference-control">
+                <select>
+                  <option selected>Compact</option>
+                  <option>Standard</option>
+                  <option>Expanded</option>
+                </select>
+              </div>
+            </div>
+            <p class="preference-description">Choose how thread listings are displayed</p>
+          </div>
         
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Threads Per Page</h4>
-            <div class="preference-control">
-              <select>
-                <option>10</option>
-                <option selected>20</option>
-                <option>30</option>
-                <option>50</option>
-              </select>
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Threads Per Page</h4>
+              <div class="preference-control">
+                <select>
+                  <option>10</option>
+                  <option selected>20</option>
+                  <option>30</option>
+                  <option>50</option>
+                </select>
+              </div>
             </div>
+            <p class="preference-description">Number of threads to display per page</p>
           </div>
-          <p class="preference-description">Number of threads to display per page</p>
         </div>
       </div>
-    </div>
     
-    <div class="info-note">
-      <strong>Note:</strong> This is a view-only display. Additional Thread preferences will be added in future updates.
-    </div>
-  `;
+      <div class="info-note">
+        <strong>Note:</strong> This is a view-only display. Additional Thread preferences will be added in future updates.
+      </div>
+    `;
   }
 
-  // UI function from renderUsersSubtab.js
 
-  function renderUsersSubtab(container) {
+  // UI function from modals\renderUsersSubtab.js
+
+    function renderUsersSubtab(container) {
     container.innerHTML = `
-    <div class="wip-banner">
-      <i class="fa fa-wrench"></i> User Preferences - Work In Progress
-    </div>
-    
-    <div class="preferences-section">
-      <div class="preferences-section-header">
-        <h3 class="preferences-section-title">User Display</h3>
+      <div class="wip-banner">
+        <i class="fa fa-wrench"></i> User Preferences - Work In Progress
       </div>
-      <div class="preferences-section-body">
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Show User Signatures</h4>
-            <div class="preference-control">
-              <label class="toggle-switch">
-                <input type="checkbox" checked>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-          <p class="preference-description">Display user signatures in posts</p>
+    
+      <div class="preferences-section">
+        <div class="preferences-section-header">
+          <h3 class="preferences-section-title">User Display</h3>
         </div>
+        <div class="preferences-section-body">
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Show User Signatures</h4>
+              <div class="preference-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            <p class="preference-description">Display user signatures in posts</p>
+          </div>
         
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Show User Avatars</h4>
-            <div class="preference-control">
-              <label class="toggle-switch">
-                <input type="checkbox" checked>
-                <span class="toggle-slider"></span>
-              </label>
+          <div class="preference-item">
+            <div class="preference-header">
+              <h4 class="preference-name">Show User Avatars</h4>
+              <div class="preference-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
             </div>
+            <p class="preference-description">Display user avatars in posts and listings</p>
           </div>
-          <p class="preference-description">Display user avatars in posts and listings</p>
         </div>
       </div>
-    </div>
     
-    <div class="info-note">
-      <strong>Note:</strong> This is a view-only display. Additional User preferences will be added in future updates.
-    </div>
-  `;
+      <div class="info-note">
+        <strong>Note:</strong> This is a view-only display. Additional User preferences will be added in future updates.
+      </div>
+    `;
   }
 
-  // UI function from showModal.js
 
-  function showModal() {
+  // UI function from modals\showModal.js
+
+    function showModal() {
     let modal = document.getElementById("mod-manager-modal");
     if (!modal) {
       modal = document.createElement("div");
       modal.id = "mod-manager-modal";
       modal.className = "mod-manager-modal";
       modal.innerHTML = `
-      <div class="mod-manager-modal-content">
-        <div class="mod-manager-header">
-          <h2 class="mod-manager-title">RPGHQ Userscript Manager</h2>
-          <span class="mod-manager-close">&times;</span>
+        <div class="mod-manager-modal-content">
+          <div class="mod-manager-header">
+            <h2 class="mod-manager-title">RPGHQ Userscript Manager</h2>
+            <span class="mod-manager-close">&times;</span>
+          </div>
+          <div class="mod-manager-tabs">
+            <div class="mod-manager-tab active" data-tab="installed">
+              <i class="fa fa-puzzle-piece"></i> Installed Scripts
+            </div>
+            <div class="mod-manager-tab" data-tab="forum">
+              <i class="fa fa-sliders-h"></i> Forum Preferences
+            </div>
+            <div class="mod-manager-tab" data-tab="settings">
+              <i class="fa fa-cog"></i> Settings
+            </div>
+          </div>
+          <div class="mod-manager-content" id="mod-manager-content">
+            <div class="info-note">
+              <strong>Note:</strong> This is a view-only display of available userscripts. No scripts will be installed or executed.
+            </div>
+            <!-- Content loaded dynamically -->
+          </div>
         </div>
-        <div class="mod-manager-tabs">
-          <div class="mod-manager-tab active" data-tab="installed">
-            <i class="fa fa-puzzle-piece"></i> Installed Scripts
-          </div>
-          <div class="mod-manager-tab" data-tab="forum">
-            <i class="fa fa-sliders-h"></i> Forum Preferences
-          </div>
-          <div class="mod-manager-tab" data-tab="settings">
-            <i class="fa fa-cog"></i> Settings
-          </div>
-        </div>
-        <div class="mod-manager-content" id="mod-manager-content">
-          <div class="info-note">
-            <strong>Note:</strong> This is a view-only display of available userscripts. No scripts will be installed or executed.
-          </div>
-          <!-- Content loaded dynamically -->
-        </div>
-      </div>
-    `;
+      `;
       document.body.appendChild(modal);
 
       // Add event listeners
-      modal
-        .querySelector(".mod-manager-close")
-        .addEventListener("click", () => {
-          hideModal();
-        });
+      modal.querySelector(".mod-manager-close").addEventListener("click", () => {
+        hideModal();
+      });
 
       modal.addEventListener("click", (e) => {
         if (e.target === modal) {
@@ -1629,9 +1660,10 @@
     loadTabContent("installed");
   }
 
-  // UI function from showScriptSettings.js
 
-  function showScriptSettings(script) {
+  // UI function from modals\showScriptSettings.js
+
+    function showScriptSettings(script) {
     // Create modal if it doesn't exist
     let modal = document.getElementById("script-settings-modal");
     if (!modal) {
@@ -1643,69 +1675,67 @@
 
     // Populate modal with script settings
     modal.innerHTML = `
-    <div class="settings-modal-content">
-      <div class="settings-modal-header">
-        <h2 class="settings-modal-title">${script.name} Settings</h2>
-        <span class="settings-modal-close">&times;</span>
-      </div>
+      <div class="settings-modal-content">
+        <div class="settings-modal-header">
+          <h2 class="settings-modal-title">${script.name} Settings</h2>
+          <span class="settings-modal-close">&times;</span>
+        </div>
       
-      ${
-        script.settings && script.settings.length > 0
-          ? renderScriptSettingsContent(script)
-          : `
-          <div class="empty-state">
-            <div class="empty-state-icon">
-              <i class="fa fa-cog"></i>
+        ${
+          script.settings && script.settings.length > 0
+            ? renderScriptSettingsContent(script)
+            : `
+            <div class="empty-state">
+              <div class="empty-state-icon">
+                <i class="fa fa-cog"></i>
+              </div>
+              <h3 class="empty-state-message">No Settings Available</h3>
+              <p>This script doesn't have any configurable settings.</p>
             </div>
-            <h3 class="empty-state-message">No Settings Available</h3>
-            <p>This script doesn't have any configurable settings.</p>
-          </div>
-        `
-      }
+          `
+        }
       
-      <div class="script-info" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-        <h3>Script Information</h3>
-        <table class="data-table">
-          <tr>
-            <th>ID</th>
-            <td>${script.id}</td>
-          </tr>
-          <tr>
-            <th>Version</th>
-            <td>${script.version}</td>
-          </tr>
-          <tr>
-            <th>Category</th>
-            <td>${script.category || "Uncategorized"}</td>
-          </tr>
-          <tr>
-            <th>Execution Phase</th>
-            <td>${script.executionPhase || "Not specified"}</td>
-          </tr>
-          <tr>
-            <th>Matches</th>
-            <td>${
-              script.matches ? script.matches.join("<br>") : "Not specified"
-            }</td>
-          </tr>
-        </table>
-      </div>
+        <div class="script-info" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+          <h3>Script Information</h3>
+          <table class="data-table">
+            <tr>
+              <th>ID</th>
+              <td>${script.id}</td>
+            </tr>
+            <tr>
+              <th>Version</th>
+              <td>${script.version}</td>
+            </tr>
+            <tr>
+              <th>Category</th>
+              <td>${script.category || "Uncategorized"}</td>
+            </tr>
+            <tr>
+              <th>Execution Phase</th>
+              <td>${script.executionPhase || "Not specified"}</td>
+            </tr>
+            <tr>
+              <th>Matches</th>
+              <td>${
+                script.matches ? script.matches.join("<br>") : "Not specified"
+              }</td>
+            </tr>
+          </table>
+        </div>
       
-      <div class="info-note" style="margin-top: 15px;">
-        <strong>Note:</strong> This is a view-only display of script settings. No changes will be saved.
+        <div class="info-note" style="margin-top: 15px;">
+          <strong>Note:</strong> This is a view-only display of script settings. No changes will be saved.
+        </div>
       </div>
-    </div>
-  `;
+    `;
 
     // Show the modal
     modal.style.display = "block";
 
     // Add event listeners
-    modal
-      .querySelector(".settings-modal-close")
-      .addEventListener("click", () => {
-        modal.style.display = "none";
-      });
+    modal.querySelector(".settings-modal-close").addEventListener("click", () => {
+      modal.style.display = "none";
+    });
 
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
@@ -1714,31 +1744,32 @@
     });
   }
 
+
   // Initialization from addMenuButton.js
 
-  function addMenuButton() {
+    function addMenuButton() {
     const profileDropdown = document.querySelector(
       '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
     );
     if (!profileDropdown) return;
 
-    const logoutButton = Array.from(
-      profileDropdown.querySelectorAll("li")
-    ).find((li) => {
-      return (
-        li.textContent.trim().includes("Logout") ||
-        li.querySelector('a[title="Logout"]')
-      );
-    });
+    const logoutButton = Array.from(profileDropdown.querySelectorAll("li")).find(
+      (li) => {
+        return (
+          li.textContent.trim().includes("Logout") ||
+          li.querySelector('a[title="Logout"]')
+        );
+      }
+    );
 
     if (!logoutButton) return;
 
     const userscriptsButton = document.createElement("li");
     userscriptsButton.innerHTML = `
-    <a href="#" title="View Userscripts" role="menuitem" style="font-size:0.9em;">
-      <i class="fa fa-puzzle-piece fa-fw"></i><span> View Userscripts</span>
-    </a>
-  `;
+      <a href="#" title="View Userscripts" role="menuitem" style="font-size:0.9em;">
+        <i class="fa fa-puzzle-piece fa-fw"></i><span> View Userscripts</span>
+      </a>
+    `;
 
     logoutButton.parentNode.insertBefore(userscriptsButton, logoutButton);
     userscriptsButton.querySelector("a").addEventListener("click", (e) => {
@@ -1747,11 +1778,15 @@
     });
   }
 
+
   // Initialization from init.js
 
-  function init() {
+    function init() {
     addStyles();
     GM_registerMenuCommand("RPGHQ Userscript Manager", showModal);
+  
+    // Add event listener for the Insert key to toggle the modal
+    document.addEventListener("keydown", toggleModalWithInsertKey);
 
     // Add menu button to the page when DOM is ready
     if (document.readyState === "loading") {
@@ -1760,6 +1795,7 @@
       addMenuButton();
     }
   }
+
 
   // Run initialization
   init();

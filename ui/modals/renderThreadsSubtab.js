@@ -49,8 +49,3 @@ function renderThreadsSubtab(container) {
     </div>
   `;
 }
-
-// Export the function
-if (typeof module !== 'undefined') {
-  module.exports = renderThreadsSubtab;
-}

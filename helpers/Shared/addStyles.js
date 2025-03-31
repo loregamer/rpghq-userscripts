@@ -598,8 +598,3 @@ function addStyles() {
     }
   `);
 }
-
-// Export the function
-if (typeof module !== 'undefined') {
-  module.exports = addStyles;
-}

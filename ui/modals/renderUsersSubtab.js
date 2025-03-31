@@ -46,8 +46,3 @@ function renderUsersSubtab(container) {
     </div>
   `;
 }
-
-// Export the function
-if (typeof module !== 'undefined') {
-  module.exports = renderUsersSubtab;
-}

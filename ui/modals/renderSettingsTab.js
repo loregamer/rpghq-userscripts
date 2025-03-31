@@ -113,8 +113,3 @@ function renderSettingsTab(container) {
     </div>
   `;
 }
-
-// Export the function
-if (typeof module !== 'undefined') {
-  module.exports = renderSettingsTab;
-}

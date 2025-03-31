@@ -33,22 +33,22 @@ function showModal() {
       </div>
     `;
     document.body.appendChild(modal);
-    
+
     // Add event listeners
     modal.querySelector(".mod-manager-close").addEventListener("click", () => {
       hideModal();
     });
-    
+
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
         hideModal();
       }
     });
-    
+
     // Tab switching
-    modal.querySelectorAll(".mod-manager-tab").forEach(tab => {
+    modal.querySelectorAll(".mod-manager-tab").forEach((tab) => {
       tab.addEventListener("click", () => {
-        document.querySelectorAll(".mod-manager-tab").forEach(t => {
+        document.querySelectorAll(".mod-manager-tab").forEach((t) => {
           t.classList.remove("active");
         });
         tab.classList.add("active");
@@ -56,15 +56,10 @@ function showModal() {
       });
     });
   }
-  
+
   modal.style.display = "block";
   document.body.style.overflow = "hidden";
-  
+
   // Initial view - load the first tab (Installed Scripts)
   loadTabContent("installed");
-}
-
-// Export the function
-if (typeof module !== 'undefined') {
-  module.exports = showModal;
 }

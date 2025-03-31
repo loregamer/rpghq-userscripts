@@ -11,7 +11,7 @@ function showScriptSettings(script) {
     modal.className = "settings-modal";
     document.body.appendChild(modal);
   }
-  
+
   // Populate modal with script settings
   modal.innerHTML = `
     <div class="settings-modal-content">
@@ -21,9 +21,9 @@ function showScriptSettings(script) {
       </div>
       
       ${
-        script.settings && script.settings.length > 0 
-        ? renderScriptSettingsContent(script) 
-        : `
+        script.settings && script.settings.length > 0
+          ? renderScriptSettingsContent(script)
+          : `
           <div class="empty-state">
             <div class="empty-state-icon">
               <i class="fa fa-cog"></i>
@@ -47,15 +47,17 @@ function showScriptSettings(script) {
           </tr>
           <tr>
             <th>Category</th>
-            <td>${script.category || 'Uncategorized'}</td>
+            <td>${script.category || "Uncategorized"}</td>
           </tr>
           <tr>
             <th>Execution Phase</th>
-            <td>${script.executionPhase || 'Not specified'}</td>
+            <td>${script.executionPhase || "Not specified"}</td>
           </tr>
           <tr>
             <th>Matches</th>
-            <td>${script.matches ? script.matches.join('<br>') : 'Not specified'}</td>
+            <td>${
+              script.matches ? script.matches.join("<br>") : "Not specified"
+            }</td>
           </tr>
         </table>
       </div>
@@ -65,23 +67,18 @@ function showScriptSettings(script) {
       </div>
     </div>
   `;
-  
+
   // Show the modal
   modal.style.display = "block";
-  
+
   // Add event listeners
   modal.querySelector(".settings-modal-close").addEventListener("click", () => {
     modal.style.display = "none";
   });
-  
+
   modal.addEventListener("click", (e) => {
     if (e.target === modal) {
       modal.style.display = "none";
     }
   });
-}
-
-// Export the function
-if (typeof module !== 'undefined') {
-  module.exports = showScriptSettings;
 }

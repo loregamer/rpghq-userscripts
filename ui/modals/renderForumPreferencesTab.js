@@ -4,7 +4,7 @@
  */
 function renderForumPreferencesTab(container) {
   container.innerHTML += `<h2>Forum Preferences</h2>`;
-  
+
   // Add sub-tabs for Threads and Users
   const subTabsContainer = document.createElement("div");
   subTabsContainer.className = "sub-tabs";
@@ -17,24 +17,24 @@ function renderForumPreferencesTab(container) {
     </div>
   `;
   container.appendChild(subTabsContainer);
-  
+
   // Add container for sub-tab content
   const subTabContent = document.createElement("div");
   subTabContent.id = "forum-subtab-content";
   container.appendChild(subTabContent);
-  
+
   // Load initial sub-tab (Threads)
   renderThreadsSubtab(subTabContent);
-  
+
   // Add event listeners for sub-tabs
-  subTabsContainer.querySelectorAll(".sub-tab").forEach(tab => {
+  subTabsContainer.querySelectorAll(".sub-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       // Update active state
-      subTabsContainer.querySelectorAll(".sub-tab").forEach(t => {
+      subTabsContainer.querySelectorAll(".sub-tab").forEach((t) => {
         t.classList.remove("active");
       });
       tab.classList.add("active");
-      
+
       // Load content
       if (tab.dataset.subtab === "threads") {
         renderThreadsSubtab(subTabContent);
@@ -43,9 +43,4 @@ function renderForumPreferencesTab(container) {
       }
     });
   });
-}
-
-// Export the function
-if (typeof module !== 'undefined') {
-  module.exports = renderForumPreferencesTab;
 }

@@ -4,18 +4,14 @@
  */
 function getCategoryOptions() {
   const categories = new Set();
-  MANIFEST.scripts.forEach(script => {
+  MANIFEST.scripts.forEach((script) => {
     if (script.category) {
       categories.add(script.category);
     }
   });
-  
-  return Array.from(categories).sort().map(category => 
-    `<option value="${category}">${category}</option>`
-  ).join('');
-}
 
-// Export the function
-if (typeof module !== 'undefined') {
-  module.exports = getCategoryOptions;
+  return Array.from(categories)
+    .sort()
+    .map((category) => `<option value="${category}">${category}</option>`)
+    .join("");
 }

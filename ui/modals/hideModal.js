@@ -7,15 +7,10 @@ function hideModal() {
     modal.style.display = "none";
     document.body.style.overflow = "";
   }
-  
+
   // Hide any open settings modal
   const settingsModal = document.getElementById("script-settings-modal");
   if (settingsModal) {
     settingsModal.style.display = "none";
   }
-}
-
-// Export the function
-if (typeof module !== 'undefined') {
-  module.exports = hideModal;
 }
