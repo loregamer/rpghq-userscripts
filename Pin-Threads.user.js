@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - Thread & Forum Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.6.0
+// @version      4.0
 // @description  Add pin/unpin buttons to threads and forums on rpghq.org and display them at the top of the board index
 // @match        https://rpghq.org/forums/index.php
 // @match        https://rpghq.org/forums/home
@@ -262,6 +262,10 @@ SOFTWARE.
           // This is a synthetic row from a subforum link
           const isUnread = existingRow.dataset.isUnread === "true";
           forumInfo.isUnread = isUnread;
+          // Add parent forum name to the forum info
+          if (existingRow.dataset.parentForumName) {
+            forumInfo.parentForumName = existingRow.dataset.parentForumName;
+          }
           const html = createForumListItemHTML(forumId, forumInfo);
           pinnedList.insertAdjacentHTML("beforeend", html);
         } else {
@@ -373,11 +377,22 @@ SOFTWARE.
         // Create a synthetic row based on the subforum link
         const isUnread = subforum.classList.contains("unread");
         const forumName = subforum.textContent.trim();
+
+        // Find the parent forum name
+        let parentForumName = "Unknown Forum";
+        const forumtitle = subforum
+          .closest(".row")
+          ?.querySelector("a.forumtitle");
+        if (forumtitle) {
+          parentForumName = forumtitle.textContent.trim();
+        }
+
         const row = document.createElement("div");
         row.dataset.isSubforum = "true";
         row.dataset.isUnread = isUnread;
         row.dataset.forumName = forumName;
         row.dataset.forumUrl = subforum.href;
+        row.dataset.parentForumName = parentForumName;
         return row;
       }
     }
@@ -390,13 +405,19 @@ SOFTWARE.
     const forumClass = isUnread ? "forum_unread_subforum" : "forum_read";
     const iconClass = isUnread ? "icon-red" : "";
 
+    // Create breadcrumbs text based on whether it's a subforum
+    let breadcrumbsText = forumInfo.breadcrumbs || "";
+    if (forumInfo.parentForumName) {
+      breadcrumbsText = `Subforum of ${forumInfo.parentForumName}`;
+    }
+
     return `
       <li class="row content-processed" id="pinned-forum-${forumId}">
         <dl class="row-item ${forumClass}">
           <dt title="${forumInfo.name}">
             <div class="list-inner">
               <a href="${forumInfo.url}" class="forumtitle">${forumInfo.name}</a>
-              <br><span class="forum-path responsive-hide">${forumInfo.breadcrumbs}</span>
+              <br><span class="forum-path responsive-hide">${breadcrumbsText}</span>
             </div>
           </dt>
           <dd class="posts">-</dd>
@@ -428,7 +449,7 @@ SOFTWARE.
         <ul class="topiclist content-processed">
           <li class="header">
             <dl class="row-item">
-              <dt><div class="list-inner">Pinned Topics</div></dt>
+              <dt><div class="list-inner"><i class="icon fa-thumb-tack fa-fw icon-sm" aria-hidden="true"></i> Pinned Topics</div></dt>
               <dd class="posts">Replies</dd>
               <dd class="views">Views</dd>
             </dl>
@@ -449,7 +470,7 @@ SOFTWARE.
         <ul class="topiclist content-processed">
           <li class="header">
             <dl class="row-item">
-              <dt><div class="list-inner">Pinned Forums</div></dt>
+              <dt><div class="list-inner"><i class="icon fa-thumb-tack fa-fw icon-sm" aria-hidden="true"></i> Pinned Forums</div></dt>
               <dd class="posts">Topics</dd>
               <dd class="views">Posts</dd>
             </dl>
