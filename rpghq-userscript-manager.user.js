@@ -16,399 +16,301 @@
   // Data from MANIFEST.js
 
   const MANIFEST = {
-    scripts: [
+  scripts: [
+    {
+      id: "notifications",
+      name: "Notifications Improved",
+      version: "1.1.0",
+      description:
+        "Adds reaction smileys to notifications and makes them formatted better",
+      filename: "notifications.js",
+      matches: ["https://rpghq.org/forums/*"],
+      executionPhase: "document-ready",
+      category: "Aesthetic",
+      image: "https://f.rpghq.org/rso7uNB6S4H9.png",
+      settings: [],
+    },
+  ],
+  schema: {
+    version: "1.0.0",
+    executionPhases: [
       {
-        id: "notifications",
-        name: "Notifications Improved",
-        version: "1.1.0",
+        id: "document-start",
+        name: "Document Start",
+        description: "Executes before DOM parsing begins",
+      },
+      {
+        id: "document-ready",
+        name: "Document Ready",
         description:
-          "Adds reaction smileys to notifications and makes them formatted better",
-        filename: "notifications.js",
-        matches: ["https://rpghq.org/forums/*"],
-        executionPhase: "document-ready",
-        category: "Aesthetic",
-        image: "https://f.rpghq.org/rso7uNB6S4H9.png",
-        settings: [],
+          "Executes when basic DOM is available but before resources are loaded",
       },
       {
-        id: "bbcode",
-        name: "BBCode Highlighter",
-        version: "1.1.0",
-        description:
-          "Adds reaction smileys to notifications and makes them formatted better",
-        filename: "bbcode.js",
-        matches: [
-          "https://rpghq.org/forums/posting.php?mode=post*",
-          "https://rpghq.org/forums/posting.php?mode=quote*",
-          "https://rpghq.org/forums/posting.php?mode=reply*",
-          "https://rpghq.org/forums/posting.php?mode=edit*",
-        ],
-        executionPhase: "document-ready",
-        category: "Aesthetic",
-        image: "https://f.rpghq.org/bEm69Td9mEGU.png?n=pasted-file.png",
-        settings: [],
+        id: "document-loaded",
+        name: "Document Loaded",
+        description: "Executes after page is fully loaded",
       },
       {
-        id: "ignore-threads",
-        name: "Ignore Threads",
-        version: "1.0.0",
-        description: "Ignore threads",
-        filename: "ignore-threads.js",
-        matches: ["https://rpghq.org/forums/*"],
-        executionPhase: "document-start",
-        category: "Iggy Stuff",
-        image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
-        settings: [],
+        id: "document-idle",
+        name: "Document Idle",
+        description: "Executes after a short delay when page is idle",
       },
       {
-        id: "ignore-users",
-        name: "Ignore Users",
-        version: "1.0.0",
-        description: "(Actually) ignore users",
-        filename: "ignore-users.js",
-        matches: ["https://rpghq.org/forums/*"],
-        executionPhase: "document-start",
-        category: "Iggy Stuff",
-        image: "https://f.rpghq.org/v4iqrprFCWq0.png?n=pasted-file.png",
-        settings: [],
-      },
-      {
-        id: "number-commas",
-        name: "Commas on Numbers",
-        version: "2.1.2",
-        description: "Add commas to numbers",
-        filename: "number-commas.js",
-        matches: ["https://rpghq.org/forums/*"],
-        executionPhase: "document-ready",
-        category: "Aesthetic",
-        image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png",
-        settings: [
-          {
-            id: "formatFourDigits",
-            label: "Format 4-digit numbers",
-            description:
-              "Whether to add commas to 4-digit numbers (e.g., 1,000) or only 5+ digit numbers",
-            type: "boolean",
-            default: false,
-          },
-        ],
-      },
-      {
-        id: "pin-threads",
-        name: "Pin Threads",
-        version: "1.0.0",
-        description: "Adds a pin button to the forum",
-        filename: "pin-threads.js",
-        matches: ["https://rpghq.org/forums/index.php/*"],
-        executionPhase: "document-ready",
-        category: "Utility",
-        image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
-        settings: [],
-      },
-      {
-        id: "member-search",
-        name: "Member Search Button",
-        version: "1.0.0",
-        description: "Adds a member search button to the forum",
-        filename: "member-search.js",
-        matches: ["https://rpghq.org/forums/*"],
-        executionPhase: "document-ready",
-        category: "Utility",
-        image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
-        settings: [],
-      },
-      {
-        id: "random-topic",
-        name: "Random Topic Button",
-        version: "1.0.0",
-        description: "Adds a random topic button to the forum",
-        filename: "random-topic.js",
-        matches: ["https://rpghq.org/forums/*"],
-        executionPhase: "document-ready",
-        category: "Utility",
-        image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
-        settings: [],
+        id: "custom-event",
+        name: "Custom Event",
+        description: "Executes when a specific custom event is triggered",
       },
     ],
-    schema: {
-      version: "1.0.0",
-      executionPhases: [
-        {
-          id: "document-start",
-          name: "Document Start",
-          description: "Executes before DOM parsing begins",
-        },
-        {
-          id: "document-ready",
-          name: "Document Ready",
-          description:
-            "Executes when basic DOM is available but before resources are loaded",
-        },
-        {
-          id: "document-loaded",
-          name: "Document Loaded",
-          description: "Executes after page is fully loaded",
-        },
-        {
-          id: "document-idle",
-          name: "Document Idle",
-          description: "Executes after a short delay when page is idle",
-        },
-        {
-          id: "custom-event",
-          name: "Custom Event",
-          description: "Executes when a specific custom event is triggered",
-        },
-      ],
-    },
-  };
+  },
+};
+
+
+
 
   // Data from FORUM_PREFERENCES.js
 
   const FORUM_PREFERENCES = {
-    sections: [
-      {
-        name: "Display Settings",
-        preferences: [
-          {
-            id: "theme",
-            name: "Theme",
-            description: "Choose your preferred theme",
-            type: "select",
-            options: ["Default", "Dark", "Light", "High Contrast"],
-            default: "Default",
-          },
-          {
-            id: "font_size",
-            name: "Font Size",
-            description: "Base font size for forum text",
-            type: "select",
-            options: ["Small", "Medium", "Large", "Extra Large"],
-            default: "Medium",
-          },
-          {
-            id: "show_avatars",
-            name: "Show Avatars",
-            description: "Display user avatars in posts",
-            type: "toggle",
-            default: true,
-          },
-        ],
-      },
-      {
-        name: "Notification Settings",
-        preferences: [
-          {
-            id: "email_notifications",
-            name: "Email Notifications",
-            description: "Receive email notifications for important events",
-            type: "toggle",
-            default: true,
-          },
-          {
-            id: "notification_frequency",
-            name: "Notification Frequency",
-            description: "How often to receive notifications",
-            type: "select",
-            options: ["Immediately", "Daily Digest", "Weekly Digest"],
-            default: "Immediately",
-          },
-        ],
-      },
-      {
-        name: "Privacy Settings",
-        preferences: [
-          {
-            id: "online_status",
-            name: "Online Status",
-            description: "Show your online status to other users",
-            type: "toggle",
-            default: true,
-          },
-          {
-            id: "profile_visibility",
-            name: "Profile Visibility",
-            description: "Who can see your profile details",
-            type: "select",
-            options: ["Everyone", "Members Only", "Friends Only", "Nobody"],
-            default: "Members Only",
-          },
-        ],
-      },
-    ],
-  };
+  sections: [
+    {
+      name: "Display Settings",
+      preferences: [
+        {
+          id: "theme",
+          name: "Theme",
+          description: "Choose your preferred theme",
+          type: "select",
+          options: ["Default", "Dark", "Light", "High Contrast"],
+          default: "Default"
+        },
+        {
+          id: "font_size",
+          name: "Font Size",
+          description: "Base font size for forum text",
+          type: "select",
+          options: ["Small", "Medium", "Large", "Extra Large"],
+          default: "Medium"
+        },
+        {
+          id: "show_avatars",
+          name: "Show Avatars",
+          description: "Display user avatars in posts",
+          type: "toggle",
+          default: true
+        }
+      ]
+    },
+    {
+      name: "Notification Settings",
+      preferences: [
+        {
+          id: "email_notifications",
+          name: "Email Notifications",
+          description: "Receive email notifications for important events",
+          type: "toggle",
+          default: true
+        },
+        {
+          id: "notification_frequency",
+          name: "Notification Frequency",
+          description: "How often to receive notifications",
+          type: "select",
+          options: ["Immediately", "Daily Digest", "Weekly Digest"],
+          default: "Immediately"
+        }
+      ]
+    },
+    {
+      name: "Privacy Settings",
+      preferences: [
+        {
+          id: "online_status",
+          name: "Online Status",
+          description: "Show your online status to other users",
+          type: "toggle",
+          default: true
+        },
+        {
+          id: "profile_visibility",
+          name: "Profile Visibility",
+          description: "Who can see your profile details",
+          type: "select",
+          options: ["Everyone", "Members Only", "Friends Only", "Nobody"],
+          default: "Members Only"
+        }
+      ]
+    }
+  ]
+};
+
+
+if (typeof module !== 'undefined') {
+  
+}
+
 
   // Helper function from Shared/compareVersions.js
 
   function compareVersions(a, b) {
-    const partsA = a.split(".").map(Number);
-    const partsB = b.split(".").map(Number);
-
-    for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
-      const numA = partsA[i] || 0;
-      const numB = partsB[i] || 0;
-
-      if (numA !== numB) {
-        return numA - numB;
-      }
+  const partsA = a.split('.').map(Number);
+  const partsB = b.split('.').map(Number);
+  
+  for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+    const numA = partsA[i] || 0;
+    const numB = partsB[i] || 0;
+    
+    if (numA !== numB) {
+      return numA - numB;
     }
-
-    return 0;
   }
+  
+  return 0;
+}
+
+
+
+
 
   // Helper function from Shared/getPhaseDisplayName.js
 
   function getPhaseDisplayName(phase) {
-    if (!phase) return "Not specified";
+  if (!phase) return "Not specified";
+  
+  const phaseMap = {
+    "document-start": "Document Start",
+    "document-ready": "Document Ready",
+    "document-loaded": "Document Loaded",
+    "document-idle": "Document Idle",
+    "custom-event": "Custom Event"
+  };
+  
+  return phaseMap[phase] || phase;
+}
 
-    const phaseMap = {
-      "document-start": "Document Start",
-      "document-ready": "Document Ready",
-      "document-loaded": "Document Loaded",
-      "document-idle": "Document Idle",
-      "custom-event": "Custom Event",
-    };
 
-    return phaseMap[phase] || phase;
-  }
+
+
 
   // Helper function from Shared/renderSettingControl.js
 
   function renderSettingControl(setting) {
-    switch (setting.type) {
-      case "boolean":
-        return `
+  switch (setting.type) {
+    case 'boolean':
+      return `
         <label class="toggle-switch">
-          <input type="checkbox" ${setting.default ? "checked" : ""}>
+          <input type="checkbox" ${setting.default ? 'checked' : ''}>
           <span class="toggle-slider"></span>
         </label>
       `;
-      case "select":
-        return `
+    case 'select':
+      return `
         <select class="setting-input">
-          ${setting.options
-            .map(
-              (option) => `
-            <option value="${option}" ${
-                option === setting.default ? "selected" : ""
-              }>${option}</option>
-          `
-            )
-            .join("")}
+          ${setting.options.map(option => `
+            <option value="${option}" ${option === setting.default ? 'selected' : ''}>${option}</option>
+          `).join('')}
         </select>
       `;
-      case "number":
-        return `
-        <input type="number" class="setting-input" value="${
-          setting.default || 0
-        }">
+    case 'number':
+      return `
+        <input type="number" class="setting-input" value="${setting.default || 0}">
       `;
-      default:
-        return `
-        <input type="text" class="setting-input" value="${
-          setting.default || ""
-        }">
+    default:
+      return `
+        <input type="text" class="setting-input" value="${setting.default || ''}">
       `;
-    }
   }
+}
+
+
+
+
 
   // Helper function from Shared/renderPreferenceControl.js
 
   function renderPreferenceControl(preference) {
-    switch (preference.type) {
-      case "toggle":
-        return `
+  switch (preference.type) {
+    case 'toggle':
+      return `
         <label class="toggle-switch">
-          <input type="checkbox" ${preference.default ? "checked" : ""}>
+          <input type="checkbox" ${preference.default ? 'checked' : ''}>
           <span class="toggle-slider"></span>
         </label>
       `;
-      case "select":
-        return `
+    case 'select':
+      return `
         <select>
-          ${preference.options
-            .map(
-              (option) => `
-            <option ${
-              option === preference.default ? "selected" : ""
-            }>${option}</option>
-          `
-            )
-            .join("")}
+          ${preference.options.map(option => `
+            <option ${option === preference.default ? 'selected' : ''}>${option}</option>
+          `).join('')}
         </select>
       `;
-      default:
-        return `
-        <input type="text" value="${preference.default || ""}">
+    default:
+      return `
+        <input type="text" value="${preference.default || ''}">
       `;
-    }
   }
+}
+
+
+
+
 
   // Helper function from Shared/filterScripts.js
 
   function filterScripts(scripts, filters) {
-    if (!filters) {
-      // If no filters provided, get them from the DOM
-      const category = document.getElementById("category-filter").value;
-      const phase = document.getElementById("phase-filter").value;
-      const hasSettings = document.getElementById("has-settings-filter").value;
-      const searchTerm = document
-        .getElementById("search-filter")
-        .value.toLowerCase();
-      const sortBy = document.getElementById("sort-filter").value;
-
-      filters = { category, phase, hasSettings, searchTerm, sortBy };
-    }
-
-    // Filter scripts
-    let filtered = scripts.filter((script) => {
-      const matchesCategory =
-        filters.category === "all" || script.category === filters.category;
-      const matchesPhase =
-        filters.phase === "all" || script.executionPhase === filters.phase;
-      const matchesSettings =
-        filters.hasSettings === "all" ||
-        (filters.hasSettings === "with" &&
-          script.settings &&
-          script.settings.length > 0) ||
-        (filters.hasSettings === "without" &&
-          (!script.settings || script.settings.length === 0));
-      const matchesSearch =
-        !filters.searchTerm ||
-        script.name.toLowerCase().includes(filters.searchTerm) ||
-        (script.description &&
-          script.description.toLowerCase().includes(filters.searchTerm));
-
-      return (
-        matchesCategory && matchesPhase && matchesSettings && matchesSearch
-      );
-    });
-
-    // Sort scripts
-    filtered.sort((a, b) => {
-      switch (filters.sortBy) {
-        case "name-asc":
-          return a.name.localeCompare(b.name);
-        case "name-desc":
-          return b.name.localeCompare(a.name);
-        case "version-asc":
-          return compareVersions(a.version, b.version);
-        case "version-desc":
-          return compareVersions(b.version, a.version);
-        case "category":
-          return (a.category || "").localeCompare(b.category || "");
-        default:
-          return 0;
-      }
-    });
-
-    return filtered;
+  if (!filters) {
+    // If no filters provided, get them from the DOM
+    const category = document.getElementById("category-filter").value;
+    const phase = document.getElementById("phase-filter").value;
+    const hasSettings = document.getElementById("has-settings-filter").value;
+    const searchTerm = document.getElementById("search-filter").value.toLowerCase();
+    const sortBy = document.getElementById("sort-filter").value;
+    
+    filters = { category, phase, hasSettings, searchTerm, sortBy };
   }
+  
+  // Filter scripts
+  let filtered = scripts.filter(script => {
+    const matchesCategory = filters.category === "all" || script.category === filters.category;
+    const matchesPhase = filters.phase === "all" || script.executionPhase === filters.phase;
+    const matchesSettings = filters.hasSettings === "all" || 
+                          (filters.hasSettings === "with" && script.settings && script.settings.length > 0) ||
+                          (filters.hasSettings === "without" && (!script.settings || script.settings.length === 0));
+    const matchesSearch = !filters.searchTerm || 
+                        script.name.toLowerCase().includes(filters.searchTerm) || 
+                        (script.description && script.description.toLowerCase().includes(filters.searchTerm));
+    
+    return matchesCategory && matchesPhase && matchesSettings && matchesSearch;
+  });
+  
+  // Sort scripts
+  filtered.sort((a, b) => {
+    switch(filters.sortBy) {
+      case "name-asc":
+        return a.name.localeCompare(b.name);
+      case "name-desc":
+        return b.name.localeCompare(a.name);
+      case "version-asc":
+        return compareVersions(a.version, b.version);
+      case "version-desc":
+        return compareVersions(b.version, a.version);
+      case "category":
+        return (a.category || "").localeCompare(b.category || "");
+      default:
+        return 0;
+    }
+  });
+  
+  return filtered;
+}
+
+
+
+
 
   // Helper function from Shared/addStyles.js
 
   function addStyles() {
-    GM_addStyle(`
+  GM_addStyle(`
     /* Import Font Awesome */
     @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css');
 
@@ -1003,17 +905,21 @@
         }
     }
   `);
-  }
+}
+
+
+
+
 
   // UI function from showModal.js
 
   function showModal() {
-    let modal = document.getElementById("mod-manager-modal");
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.id = "mod-manager-modal";
-      modal.className = "mod-manager-modal";
-      modal.innerHTML = `
+  let modal = document.getElementById("mod-manager-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "mod-manager-modal";
+    modal.className = "mod-manager-modal";
+    modal.innerHTML = `
       <div class="mod-manager-modal-content">
         <div class="mod-manager-header">
           <h2 class="mod-manager-title">RPGHQ Userscript Manager</h2>
@@ -1038,88 +944,98 @@
         </div>
       </div>
     `;
-      document.body.appendChild(modal);
-
-      // Add event listeners
-      modal
-        .querySelector(".mod-manager-close")
-        .addEventListener("click", () => {
-          hideModal();
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    modal.querySelector(".mod-manager-close").addEventListener("click", () => {
+      hideModal();
+    });
+    
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        hideModal();
+      }
+    });
+    
+    // Tab switching
+    modal.querySelectorAll(".mod-manager-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".mod-manager-tab").forEach(t => {
+          t.classList.remove("active");
         });
-
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-          hideModal();
-        }
+        tab.classList.add("active");
+        loadTabContent(tab.dataset.tab);
       });
-
-      // Tab switching
-      modal.querySelectorAll(".mod-manager-tab").forEach((tab) => {
-        tab.addEventListener("click", () => {
-          document.querySelectorAll(".mod-manager-tab").forEach((t) => {
-            t.classList.remove("active");
-          });
-          tab.classList.add("active");
-          loadTabContent(tab.dataset.tab);
-        });
-      });
-    }
-
-    modal.style.display = "block";
-    document.body.style.overflow = "hidden";
-
-    // Initial view - load the first tab (Installed Scripts)
-    loadTabContent("installed");
+    });
   }
+  
+  modal.style.display = "block";
+  document.body.style.overflow = "hidden";
+  
+  // Initial view - load the first tab (Installed Scripts)
+  loadTabContent("installed");
+}
+
+
+
+
 
   // UI function from hideModal.js
 
   function hideModal() {
-    const modal = document.getElementById("mod-manager-modal");
-    if (modal) {
-      modal.style.display = "none";
-      document.body.style.overflow = "";
-    }
-
-    // Hide any open settings modal
-    const settingsModal = document.getElementById("script-settings-modal");
-    if (settingsModal) {
-      settingsModal.style.display = "none";
-    }
+  const modal = document.getElementById("mod-manager-modal");
+  if (modal) {
+    modal.style.display = "none";
+    document.body.style.overflow = "";
   }
+  
+  // Hide any open settings modal
+  const settingsModal = document.getElementById("script-settings-modal");
+  if (settingsModal) {
+    settingsModal.style.display = "none";
+  }
+}
+
+
+
+
 
   // UI function from loadTabContent.js
 
   function loadTabContent(tabName) {
-    const content = document.getElementById("mod-manager-content");
-
-    // Clear previous content (except the info note)
-    const infoNote = content.querySelector(".info-note");
-    content.innerHTML = "";
-    if (infoNote) {
-      content.appendChild(infoNote);
-    }
-
-    switch (tabName) {
-      case "installed":
-        renderInstalledScriptsTab(content);
-        break;
-      case "forum":
-        renderForumPreferencesTab(content);
-        break;
-      case "settings":
-        renderSettingsTab(content);
-        break;
-    }
+  const content = document.getElementById("mod-manager-content");
+  
+  // Clear previous content (except the info note)
+  const infoNote = content.querySelector(".info-note");
+  content.innerHTML = "";
+  if (infoNote) {
+    content.appendChild(infoNote);
   }
+  
+  switch (tabName) {
+    case "installed":
+      renderInstalledScriptsTab(content);
+      break;
+    case "forum":
+      renderForumPreferencesTab(content);
+      break;
+    case "settings":
+      renderSettingsTab(content);
+      break;
+  }
+}
+
+
+
+
 
   // UI function from renderInstalledScriptsTab.js
 
   function renderInstalledScriptsTab(container) {
-    // Create the filter panel
-    const filterPanel = document.createElement("div");
-    filterPanel.className = "filter-panel";
-    filterPanel.innerHTML = `
+  // Create the filter panel
+  const filterPanel = document.createElement("div");
+  filterPanel.className = "filter-panel";
+  filterPanel.innerHTML = `
     <div class="filter-panel-header">
       <h3 class="filter-panel-title">Filter Scripts</h3>
       <button class="filter-panel-toggle" id="toggle-filters">
@@ -1173,15 +1089,15 @@
       </div>
     </div>
   `;
-    container.appendChild(filterPanel);
-
-    // Create the view options
-    const viewOptions = document.createElement("div");
-    viewOptions.className = "view-options";
-    viewOptions.style.display = "flex";
-    viewOptions.style.justifyContent = "flex-end";
-    viewOptions.style.marginBottom = "10px";
-    viewOptions.innerHTML = `
+  container.appendChild(filterPanel);
+  
+  // Create the view options
+  const viewOptions = document.createElement("div");
+  viewOptions.className = "view-options";
+  viewOptions.style.display = "flex";
+  viewOptions.style.justifyContent = "flex-end";
+  viewOptions.style.marginBottom = "10px";
+  viewOptions.innerHTML = `
     <div class="btn-group" style="display: flex;">
       <button id="grid-view-btn" class="btn btn-primary" style="border-radius: 3px 0 0 3px; margin: 0;">
         <i class="fa fa-th-large"></i>
@@ -1191,89 +1107,85 @@
       </button>
     </div>
   `;
-    container.appendChild(viewOptions);
-
-    // Create the scripts container
-    const scriptsContainer = document.createElement("div");
-    scriptsContainer.id = "scripts-container";
-    container.appendChild(scriptsContainer);
-
-    // Render scripts in grid view initially
-    renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
-
-    // Add event listeners
-    document.getElementById("toggle-filters").addEventListener("click", () => {
-      const panel = document.getElementById("filter-panel-body");
-      panel.classList.toggle("collapsed");
-
-      const icon = document.getElementById("toggle-filters").querySelector("i");
-      if (panel.classList.contains("collapsed")) {
-        icon.className = "fa fa-chevron-down";
-      } else {
-        icon.className = "fa fa-chevron-up";
-      }
-    });
-
-    document.getElementById("grid-view-btn").addEventListener("click", () => {
-      document.getElementById("grid-view-btn").className = "btn btn-primary";
-      document.getElementById("list-view-btn").className = "btn btn-secondary";
-
-      const filteredScripts = filterScripts(MANIFEST.scripts);
+  container.appendChild(viewOptions);
+  
+  // Create the scripts container
+  const scriptsContainer = document.createElement("div");
+  scriptsContainer.id = "scripts-container";
+  container.appendChild(scriptsContainer);
+  
+  // Render scripts in grid view initially
+  renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
+  
+  // Add event listeners
+  document.getElementById("toggle-filters").addEventListener("click", () => {
+    const panel = document.getElementById("filter-panel-body");
+    panel.classList.toggle("collapsed");
+    
+    const icon = document.getElementById("toggle-filters").querySelector("i");
+    if (panel.classList.contains("collapsed")) {
+      icon.className = "fa fa-chevron-down";
+    } else {
+      icon.className = "fa fa-chevron-up";
+    }
+  });
+  
+  document.getElementById("grid-view-btn").addEventListener("click", () => {
+    document.getElementById("grid-view-btn").className = "btn btn-primary";
+    document.getElementById("list-view-btn").className = "btn btn-secondary";
+    
+    const filteredScripts = filterScripts(MANIFEST.scripts);
+    renderScriptsGridView(scriptsContainer, filteredScripts);
+  });
+  
+  document.getElementById("list-view-btn").addEventListener("click", () => {
+    document.getElementById("grid-view-btn").className = "btn btn-secondary";
+    document.getElementById("list-view-btn").className = "btn btn-primary";
+    
+    const filteredScripts = filterScripts(MANIFEST.scripts);
+    renderScriptsListView(scriptsContainer, filteredScripts);
+  });
+  
+  document.getElementById("apply-filters").addEventListener("click", () => {
+    const filteredScripts = filterScripts(MANIFEST.scripts);
+    
+    // Use the active view to render
+    if (document.getElementById("grid-view-btn").classList.contains("btn-primary")) {
       renderScriptsGridView(scriptsContainer, filteredScripts);
-    });
-
-    document.getElementById("list-view-btn").addEventListener("click", () => {
-      document.getElementById("grid-view-btn").className = "btn btn-secondary";
-      document.getElementById("list-view-btn").className = "btn btn-primary";
-
-      const filteredScripts = filterScripts(MANIFEST.scripts);
+    } else {
       renderScriptsListView(scriptsContainer, filteredScripts);
-    });
+    }
+  });
+  
+  document.getElementById("reset-filters").addEventListener("click", () => {
+    document.getElementById("category-filter").value = "all";
+    document.getElementById("phase-filter").value = "all";
+    document.getElementById("has-settings-filter").value = "all";
+    document.getElementById("search-filter").value = "";
+    document.getElementById("sort-filter").value = "name-asc";
+    
+    // Use the active view to render
+    if (document.getElementById("grid-view-btn").classList.contains("btn-primary")) {
+      renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
+    } else {
+      renderScriptsListView(scriptsContainer, MANIFEST.scripts);
+    }
+  });
+}
 
-    document.getElementById("apply-filters").addEventListener("click", () => {
-      const filteredScripts = filterScripts(MANIFEST.scripts);
 
-      // Use the active view to render
-      if (
-        document
-          .getElementById("grid-view-btn")
-          .classList.contains("btn-primary")
-      ) {
-        renderScriptsGridView(scriptsContainer, filteredScripts);
-      } else {
-        renderScriptsListView(scriptsContainer, filteredScripts);
-      }
-    });
 
-    document.getElementById("reset-filters").addEventListener("click", () => {
-      document.getElementById("category-filter").value = "all";
-      document.getElementById("phase-filter").value = "all";
-      document.getElementById("has-settings-filter").value = "all";
-      document.getElementById("search-filter").value = "";
-      document.getElementById("sort-filter").value = "name-asc";
 
-      // Use the active view to render
-      if (
-        document
-          .getElementById("grid-view-btn")
-          .classList.contains("btn-primary")
-      ) {
-        renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
-      } else {
-        renderScriptsListView(scriptsContainer, MANIFEST.scripts);
-      }
-    });
-  }
 
   // UI function from renderForumPreferencesTab.js
 
   function renderForumPreferencesTab(container) {
-    container.innerHTML += `<h2>Forum Preferences</h2>`;
-
-    // Add sub-tabs for Threads and Users
-    const subTabsContainer = document.createElement("div");
-    subTabsContainer.className = "sub-tabs";
-    subTabsContainer.innerHTML = `
+  container.innerHTML += `<h2>Forum Preferences</h2>`;
+  
+  // Add sub-tabs for Threads and Users
+  const subTabsContainer = document.createElement("div");
+  subTabsContainer.className = "sub-tabs";
+  subTabsContainer.innerHTML = `
     <div class="sub-tab active" data-subtab="threads">
       <i class="fa fa-comments"></i> Threads
     </div>
@@ -1281,39 +1193,43 @@
       <i class="fa fa-users"></i> Users
     </div>
   `;
-    container.appendChild(subTabsContainer);
-
-    // Add container for sub-tab content
-    const subTabContent = document.createElement("div");
-    subTabContent.id = "forum-subtab-content";
-    container.appendChild(subTabContent);
-
-    // Load initial sub-tab (Threads)
-    renderThreadsSubtab(subTabContent);
-
-    // Add event listeners for sub-tabs
-    subTabsContainer.querySelectorAll(".sub-tab").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        // Update active state
-        subTabsContainer.querySelectorAll(".sub-tab").forEach((t) => {
-          t.classList.remove("active");
-        });
-        tab.classList.add("active");
-
-        // Load content
-        if (tab.dataset.subtab === "threads") {
-          renderThreadsSubtab(subTabContent);
-        } else if (tab.dataset.subtab === "users") {
-          renderUsersSubtab(subTabContent);
-        }
+  container.appendChild(subTabsContainer);
+  
+  // Add container for sub-tab content
+  const subTabContent = document.createElement("div");
+  subTabContent.id = "forum-subtab-content";
+  container.appendChild(subTabContent);
+  
+  // Load initial sub-tab (Threads)
+  renderThreadsSubtab(subTabContent);
+  
+  // Add event listeners for sub-tabs
+  subTabsContainer.querySelectorAll(".sub-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      // Update active state
+      subTabsContainer.querySelectorAll(".sub-tab").forEach(t => {
+        t.classList.remove("active");
       });
+      tab.classList.add("active");
+      
+      // Load content
+      if (tab.dataset.subtab === "threads") {
+        renderThreadsSubtab(subTabContent);
+      } else if (tab.dataset.subtab === "users") {
+        renderUsersSubtab(subTabContent);
+      }
     });
-  }
+  });
+}
+
+
+
+
 
   // UI function from renderSettingsTab.js
 
   function renderSettingsTab(container) {
-    container.innerHTML += `
+  container.innerHTML += `
     <h2>Global Settings</h2>
     
     <div class="preferences-section">
@@ -1422,12 +1338,16 @@
       <strong>Note:</strong> These are view-only representations of settings. Changes made here will not be saved.
     </div>
   `;
-  }
+}
+
+
+
+
 
   // UI function from renderThreadsSubtab.js
 
   function renderThreadsSubtab(container) {
-    container.innerHTML = `
+  container.innerHTML = `
     <div class="wip-banner">
       <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress
     </div>
@@ -1472,12 +1392,16 @@
       <strong>Note:</strong> This is a view-only display. Additional Thread preferences will be added in future updates.
     </div>
   `;
-  }
+}
+
+
+
+
 
   // UI function from renderUsersSubtab.js
 
   function renderUsersSubtab(container) {
-    container.innerHTML = `
+  container.innerHTML = `
     <div class="wip-banner">
       <i class="fa fa-wrench"></i> User Preferences - Work In Progress
     </div>
@@ -1519,22 +1443,26 @@
       <strong>Note:</strong> This is a view-only display. Additional User preferences will be added in future updates.
     </div>
   `;
-  }
+}
+
+
+
+
 
   // UI function from showScriptSettings.js
 
   function showScriptSettings(script) {
-    // Create modal if it doesn't exist
-    let modal = document.getElementById("script-settings-modal");
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.id = "script-settings-modal";
-      modal.className = "settings-modal";
-      document.body.appendChild(modal);
-    }
-
-    // Populate modal with script settings
-    modal.innerHTML = `
+  // Create modal if it doesn't exist
+  let modal = document.getElementById("script-settings-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "script-settings-modal";
+    modal.className = "settings-modal";
+    document.body.appendChild(modal);
+  }
+  
+  // Populate modal with script settings
+  modal.innerHTML = `
     <div class="settings-modal-content">
       <div class="settings-modal-header">
         <h2 class="settings-modal-title">${script.name} Settings</h2>
@@ -1542,9 +1470,9 @@
       </div>
       
       ${
-        script.settings && script.settings.length > 0
-          ? renderScriptSettingsContent(script)
-          : `
+        script.settings && script.settings.length > 0 
+        ? renderScriptSettingsContent(script) 
+        : `
           <div class="empty-state">
             <div class="empty-state-icon">
               <i class="fa fa-cog"></i>
@@ -1568,17 +1496,15 @@
           </tr>
           <tr>
             <th>Category</th>
-            <td>${script.category || "Uncategorized"}</td>
+            <td>${script.category || 'Uncategorized'}</td>
           </tr>
           <tr>
             <th>Execution Phase</th>
-            <td>${script.executionPhase || "Not specified"}</td>
+            <td>${script.executionPhase || 'Not specified'}</td>
           </tr>
           <tr>
             <th>Matches</th>
-            <td>${
-              script.matches ? script.matches.join("<br>") : "Not specified"
-            }</td>
+            <td>${script.matches ? script.matches.join('<br>') : 'Not specified'}</td>
           </tr>
         </table>
       </div>
@@ -1588,36 +1514,36 @@
       </div>
     </div>
   `;
+  
+  // Show the modal
+  modal.style.display = "block";
+  
+  // Add event listeners
+  modal.querySelector(".settings-modal-close").addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+  
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.style.display = "none";
+    }
+  });
+}
 
-    // Show the modal
-    modal.style.display = "block";
 
-    // Add event listeners
-    modal
-      .querySelector(".settings-modal-close")
-      .addEventListener("click", () => {
-        modal.style.display = "none";
-      });
 
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.style.display = "none";
-      }
-    });
-  }
+
 
   // UI function from renderScriptSettingsContent.js
 
   function renderScriptSettingsContent(script) {
-    if (!script.settings || script.settings.length === 0) {
-      return "";
-    }
-
-    return `
+  if (!script.settings || script.settings.length === 0) {
+    return '';
+  }
+  
+  return `
     <div class="setting-group">
-      ${script.settings
-        .map(
-          (setting) => `
+      ${script.settings.map(setting => `
         <div class="setting-item">
           <label class="setting-label">${setting.label}</label>
           <span class="setting-description">${setting.description}</span>
@@ -1625,18 +1551,20 @@
             ${renderSettingControl(setting)}
           </div>
         </div>
-      `
-        )
-        .join("")}
+      `).join('')}
     </div>
   `;
-  }
+}
+
+
+
+
 
   // UI function from renderScriptsGridView.js
 
   function renderScriptsGridView(container, scripts) {
-    if (scripts.length === 0) {
-      container.innerHTML = `
+  if (scripts.length === 0) {
+    container.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">
           <i class="fa fa-search"></i>
@@ -1645,74 +1573,68 @@
         <p>Try adjusting your filters to see more results.</p>
       </div>
     `;
-      return;
-    }
-
-    const grid = document.createElement("div");
-    grid.className = "script-grid";
-
-    scripts.forEach((script) => {
-      const card = document.createElement("div");
-      card.className = "script-card";
-      card.dataset.scriptId = script.id;
-
-      card.innerHTML = `
+    return;
+  }
+  
+  const grid = document.createElement("div");
+  grid.className = "script-grid";
+  
+  scripts.forEach(script => {
+    const card = document.createElement("div");
+    card.className = "script-card";
+    card.dataset.scriptId = script.id;
+    
+    card.innerHTML = `
       <div class="script-card-image">
-        <img src="${
-          script.image || "https://via.placeholder.com/240x130?text=No+Image"
-        }" alt="${script.name}">
-        <div class="script-card-category">${
-          script.category || "Uncategorized"
-        }</div>
+        <img src="${script.image || "https://via.placeholder.com/240x130?text=No+Image"}" alt="${script.name}">
+        <div class="script-card-category">${script.category || "Uncategorized"}</div>
       </div>
       <div class="script-card-content">
         <div class="script-card-header">
           <h3 class="script-card-title">${script.name}</h3>
           <span class="script-card-version">v${script.version}</span>
         </div>
-        <p class="script-card-description">${
-          script.description || "No description available."
-        }</p>
+        <p class="script-card-description">${script.description || "No description available."}</p>
         <div class="script-card-footer">
           <div class="script-card-phase">
-            <i class="fa fa-bolt"></i> ${getPhaseDisplayName(
-              script.executionPhase
-            )}
+            <i class="fa fa-bolt"></i> ${getPhaseDisplayName(script.executionPhase)}
           </div>
           <div class="script-card-actions">
-            <button class="btn btn-primary btn-small view-settings" data-script-id="${
-              script.id
-            }">
+            <button class="btn btn-primary btn-small view-settings" data-script-id="${script.id}">
               <i class="fa fa-cog"></i> Settings
             </button>
           </div>
         </div>
       </div>
     `;
-
-      grid.appendChild(card);
+    
+    grid.appendChild(card);
+  });
+  
+  container.innerHTML = "";
+  container.appendChild(grid);
+  
+  // Add event listeners for settings buttons
+  document.querySelectorAll(".view-settings").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const scriptId = btn.dataset.scriptId;
+      const script = scripts.find(s => s.id === scriptId);
+      if (script) {
+        showScriptSettings(script);
+      }
     });
+  });
+}
 
-    container.innerHTML = "";
-    container.appendChild(grid);
 
-    // Add event listeners for settings buttons
-    document.querySelectorAll(".view-settings").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const scriptId = btn.dataset.scriptId;
-        const script = scripts.find((s) => s.id === scriptId);
-        if (script) {
-          showScriptSettings(script);
-        }
-      });
-    });
-  }
+
+
 
   // UI function from renderScriptsListView.js
 
   function renderScriptsListView(container, scripts) {
-    if (scripts.length === 0) {
-      container.innerHTML = `
+  if (scripts.length === 0) {
+    container.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">
           <i class="fa fa-search"></i>
@@ -1721,13 +1643,13 @@
         <p>Try adjusting your filters to see more results.</p>
       </div>
     `;
-      return;
-    }
-
-    const table = document.createElement("table");
-    table.className = "data-table";
-
-    table.innerHTML = `
+    return;
+  }
+  
+  const table = document.createElement("table");
+  table.className = "data-table";
+  
+  table.innerHTML = `
     <thead>
       <tr>
         <th>Name</th>
@@ -1740,119 +1662,121 @@
       </tr>
     </thead>
     <tbody>
-      ${scripts
-        .map(
-          (script) => `
+      ${scripts.map(script => `
         <tr>
           <td><strong>${script.name}</strong></td>
           <td>v${script.version}</td>
           <td>${script.category || "Uncategorized"}</td>
           <td>${script.description || "No description available."}</td>
           <td>${getPhaseDisplayName(script.executionPhase)}</td>
-          <td>${
-            script.settings && script.settings.length > 0
-              ? `<span class="badge badge-primary">${script.settings.length}</span>`
-              : "-"
-          }</td>
+          <td>${script.settings && script.settings.length > 0 ? `<span class="badge badge-primary">${script.settings.length}</span>` : "-"}</td>
           <td>
-            <button class="btn btn-primary btn-small view-settings" data-script-id="${
-              script.id
-            }">
+            <button class="btn btn-primary btn-small view-settings" data-script-id="${script.id}">
               <i class="fa fa-cog"></i> Settings
             </button>
           </td>
         </tr>
-      `
-        )
-        .join("")}
+      `).join('')}
     </tbody>
   `;
-
-    container.innerHTML = "";
-    container.appendChild(table);
-
-    // Add event listeners for settings buttons
-    document.querySelectorAll(".view-settings").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const scriptId = btn.dataset.scriptId;
-        const script = scripts.find((s) => s.id === scriptId);
-        if (script) {
-          showScriptSettings(script);
-        }
-      });
+  
+  container.innerHTML = "";
+  container.appendChild(table);
+  
+  // Add event listeners for settings buttons
+  document.querySelectorAll(".view-settings").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const scriptId = btn.dataset.scriptId;
+      const script = scripts.find(s => s.id === scriptId);
+      if (script) {
+        showScriptSettings(script);
+      }
     });
-  }
+  });
+}
+
+
+
+
 
   // UI function from getCategoryOptions.js
 
   function getCategoryOptions() {
-    const categories = new Set();
-    MANIFEST.scripts.forEach((script) => {
-      if (script.category) {
-        categories.add(script.category);
-      }
-    });
+  const categories = new Set();
+  MANIFEST.scripts.forEach(script => {
+    if (script.category) {
+      categories.add(script.category);
+    }
+  });
+  
+  return Array.from(categories).sort().map(category => 
+    `<option value="${category}">${category}</option>`
+  ).join('');
+}
 
-    return Array.from(categories)
-      .sort()
-      .map((category) => `<option value="${category}">${category}</option>`)
-      .join("");
-  }
+
+
+
 
   // UI function from getExecutionPhaseOptions.js
 
   function getExecutionPhaseOptions() {
-    return MANIFEST.schema.executionPhases
-      .map((phase) => `<option value="${phase.id}">${phase.name}</option>`)
-      .join("");
-  }
+  return MANIFEST.schema.executionPhases.map(phase => 
+    `<option value="${phase.id}">${phase.name}</option>`
+  ).join('');
+}
+
+
+
+
 
   // Initialization from init.js
 
   function init() {
-    addStyles();
-    GM_registerMenuCommand("RPGHQ Userscript Manager", showModal);
-
-    // Add menu button to the page when DOM is ready
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", addMenuButton);
-    } else {
-      addMenuButton();
-    }
+  addStyles();
+  GM_registerMenuCommand("RPGHQ Userscript Manager", showModal);
+  
+  // Add menu button to the page when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", addMenuButton);
+  } else {
+    addMenuButton();
   }
+}
+
+
+
+
 
   // Initialization from addMenuButton.js
 
   function addMenuButton() {
-    const profileDropdown = document.querySelector(
-      '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
-    );
-    if (!profileDropdown) return;
-
-    const logoutButton = Array.from(
-      profileDropdown.querySelectorAll("li")
-    ).find((li) => {
-      return (
-        li.textContent.trim().includes("Logout") ||
-        li.querySelector('a[title="Logout"]')
-      );
-    });
-
-    if (!logoutButton) return;
-
-    const userscriptsButton = document.createElement("li");
-    userscriptsButton.innerHTML = `
+  const profileDropdown = document.querySelector('.header-profile.dropdown-container .dropdown-contents[role="menu"]');
+  if (!profileDropdown) return;
+  
+  const logoutButton = Array.from(profileDropdown.querySelectorAll("li")).find(li => {
+    return li.textContent.trim().includes("Logout") || li.querySelector('a[title="Logout"]');
+  });
+  
+  if (!logoutButton) return;
+  
+  const userscriptsButton = document.createElement("li");
+  userscriptsButton.innerHTML = `
     <a href="#" title="View Userscripts" role="menuitem" style="font-size:0.9em;">
       <i class="fa fa-puzzle-piece fa-fw"></i><span> View Userscripts</span>
     </a>
   `;
+  
+  logoutButton.parentNode.insertBefore(userscriptsButton, logoutButton);
+  userscriptsButton.querySelector("a").addEventListener("click", (e) => {
+    e.preventDefault();
+    showModal();
+  });
+}
 
-    logoutButton.parentNode.insertBefore(userscriptsButton, logoutButton);
-    userscriptsButton.querySelector("a").addEventListener("click", (e) => {
-      e.preventDefault();
-      showModal();
-    });
-  }
+
+
+
 
   // Run initialization
   init();
