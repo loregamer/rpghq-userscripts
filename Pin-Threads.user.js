@@ -1,10 +1,12 @@
 // ==UserScript==
-// @name         RPGHQ - Thread Pinner
+// @name         RPGHQ - Thread & Forum Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.5.2
-// @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
+// @version      3.6.0
+// @description  Add pin/unpin buttons to threads and forums on rpghq.org and display them at the top of the board index
 // @match        https://rpghq.org/forums/index.php
 // @match        https://rpghq.org/forums/home
+// @match        https://rpghq.org/forums/viewforum.php*
+// @match        https://rpghq.org/forums/viewtopic.php*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addStyle
@@ -48,6 +50,7 @@ SOFTWARE.
   "use strict";
 
   const PINNED_THREADS_KEY = "rpghq_pinned_threads";
+  const PINNED_FORUMS_KEY = "rpghq_pinned_forums";
   const SHOW_ON_NEW_POSTS_KEY = "rpghq_show_pinned_on_new_posts";
   const ZOMBOID_THREAD_ID = "2756";
 
@@ -57,6 +60,8 @@ SOFTWARE.
   const util = {
     getPinnedThreads: () => GM_getValue(PINNED_THREADS_KEY, {}),
     setPinnedThreads: (threads) => GM_setValue(PINNED_THREADS_KEY, threads),
+    getPinnedForums: () => GM_getValue(PINNED_FORUMS_KEY, {}),
+    setPinnedForums: (forums) => GM_setValue(PINNED_FORUMS_KEY, forums),
     getShowOnNewPosts: () => GM_getValue(SHOW_ON_NEW_POSTS_KEY, true),
     setShowOnNewPosts: (value) => GM_setValue(SHOW_ON_NEW_POSTS_KEY, value),
     getThreadId: () => {
@@ -70,6 +75,14 @@ SOFTWARE.
       }
 
       return null;
+    },
+    getForumId: () => {
+      const match = window.location.href.match(/[?&]f=(\d+)/);
+      return match ? match[1] : null;
+    },
+    getForumName: () => {
+      const forumTitleElement = document.querySelector("h2.forum-title");
+      return forumTitleElement ? forumTitleElement.textContent.trim() : null;
     },
     addStyle: (css) => GM_addStyle(css),
     fetchHtml: (url) => {
@@ -118,50 +131,13 @@ SOFTWARE.
 
   // Main functions
   function addPinButton() {
-    const actionBar = document.querySelector(".action-bar.bar-top");
-    const threadId = util.getThreadId();
-    if (
-      actionBar &&
-      threadId &&
-      !document.getElementById("pin-thread-button")
-    ) {
-      const dropdownContainer = createDropdownContainer();
-      const pinButton = createPinButton(threadId);
-      dropdownContainer.appendChild(pinButton);
-      actionBar.insertBefore(dropdownContainer, actionBar.firstChild);
-      addResponsiveStyle();
-    }
-  }
-
-  function createDropdownContainer() {
-    const container = document.createElement("div");
-    container.className =
-      "dropdown-container dropdown-button-control topic-tools";
-    return container;
+    // For backward compatibility, redirect to the new function
+    addThreadPinButton();
   }
 
   function createPinButton(threadId) {
-    const button = document.createElement("span");
-    button.id = "pin-thread-button";
-    button.className = "button button-secondary dropdown-trigger";
-
-    const pinnedThreads = util.getPinnedThreads();
-    const isPinned = pinnedThreads.hasOwnProperty(threadId);
-    updatePinButtonState(button, isPinned);
-
-    button.addEventListener("click", (e) => {
-      e.preventDefault();
-      togglePinThread(threadId, button);
-    });
-
-    return button;
-  }
-
-  function updatePinButtonState(button, isPinned) {
-    button.innerHTML = isPinned
-      ? '<i class="icon fa-thumb-tack fa-fw" aria-hidden="true"></i><span>Unpin</span>'
-      : '<i class="icon fa-thumb-tack fa-fw" aria-hidden="true"></i><span>Pin</span>';
-    button.title = isPinned ? "Unpin" : "Pin";
+    // For backward compatibility, redirect to the new function
+    return createThreadPinButton(threadId);
   }
 
   function togglePinThread(threadId, button) {
@@ -191,9 +167,14 @@ SOFTWARE.
     if (!pageBody) return;
 
     const pinnedThreads = util.getPinnedThreads();
-    if (Object.keys(pinnedThreads).length === 0) return;
+    const pinnedForums = util.getPinnedForums();
 
-    const pinnedSection = createPinnedSection();
+    // If there's nothing to display, exit early
+    if (
+      Object.keys(pinnedThreads).length === 0 &&
+      Object.keys(pinnedForums).length === 0
+    )
+      return;
 
     // Determine the correct insertion point based on the current page
     let insertionPoint;
@@ -206,74 +187,125 @@ SOFTWARE.
 
     if (!insertionPoint) return;
 
-    // Insert the pinned section
-    if (insertionPoint.classList.contains("index-left")) {
-      insertionPoint.insertAdjacentElement("afterbegin", pinnedSection);
-    } else {
-      insertionPoint.parentNode.insertBefore(pinnedSection, insertionPoint);
+    // Create and insert pinned sections if needed
+    if (Object.keys(pinnedForums).length > 0) {
+      const pinnedForumsSection = createPinnedForumsSectionElement();
+
+      // Insert the pinned forums section
+      if (insertionPoint.classList.contains("index-left")) {
+        insertionPoint.insertAdjacentElement("afterbegin", pinnedForumsSection);
+      } else {
+        insertionPoint.parentNode.insertBefore(
+          pinnedForumsSection,
+          insertionPoint
+        );
+      }
+
+      populatePinnedForumsSection(pinnedForumsSection);
     }
 
-    const pinnedList = pinnedSection.querySelector("#pinned-threads-list");
-    const threadIds = Object.keys(pinnedThreads);
+    if (Object.keys(pinnedThreads).length > 0) {
+      const pinnedThreadsSection = createPinnedThreadsSectionElement();
 
-    // Create loading placeholders
-    threadIds.forEach((threadId) => {
-      pinnedList.insertAdjacentHTML(
-        "beforeend",
-        createLoadingListItem(threadId)
-      );
-    });
+      // Insert the pinned threads section
+      if (insertionPoint.classList.contains("index-left")) {
+        insertionPoint.insertAdjacentElement(
+          "afterbegin",
+          pinnedThreadsSection
+        );
+      } else {
+        if (Object.keys(pinnedForums).length > 0) {
+          // If we already have pinned forums, insert after that section
+          const pinnedForumsSection = document.getElementById("pinned-forums");
+          if (pinnedForumsSection) {
+            pinnedForumsSection.insertAdjacentElement(
+              "afterend",
+              pinnedThreadsSection
+            );
+          } else {
+            insertionPoint.parentNode.insertBefore(
+              pinnedThreadsSection,
+              insertionPoint
+            );
+          }
+        } else {
+          insertionPoint.parentNode.insertBefore(
+            pinnedThreadsSection,
+            insertionPoint
+          );
+        }
+      }
 
-    // Set up Intersection Observer
-    let isVisible = false;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        isVisible = entries[0].isIntersecting;
-      },
-      { threshold: 0.1 }
-    );
-    observer.observe(pinnedSection);
+      await populatePinnedThreadsSection(pinnedThreadsSection);
+    }
+  }
 
-    // Store the initial height
-    const initialHeight = pinnedSection.offsetHeight;
+  function populatePinnedForumsSection(pinnedSection) {
+    const pinnedForums = util.getPinnedForums();
+    const pinnedList = pinnedSection.querySelector("#pinned-forums-list");
 
-    // Fetch and process thread data
-    const threadsData = await Promise.all(
-      threadIds.map((threadId) =>
-        fetchThreadData(threadId, pinnedThreads[threadId]).catch((error) => ({
-          threadId,
-          title: `Error loading thread ${threadId}`,
-          sortableTitle: `error loading thread ${threadId}`,
-          rowHTML: createErrorListItemHTML(threadId),
-        }))
-      )
-    );
-
-    // Sort threads
-    threadsData.sort((a, b) =>
-      a.title.localeCompare(b.title, undefined, {
+    // Sort forums by name
+    const sortedForums = Object.entries(pinnedForums).sort(([, a], [, b]) =>
+      a.name.localeCompare(b.name, undefined, {
         numeric: true,
         sensitivity: "base",
-        ignorePunctuation: false,
       })
     );
 
-    // Update the list with sorted threads
-    pinnedList.innerHTML = "";
-    threadsData.forEach((threadData) => {
-      pinnedList.insertAdjacentHTML("beforeend", threadData.rowHTML);
+    // Add each forum to the list
+    sortedForums.forEach(([forumId, forumInfo]) => {
+      // First try to find the forum row on the page
+      const existingRow = findExistingForumRow(forumId);
+
+      if (existingRow) {
+        // If found, clone and modify the row
+        const clonedRow = existingRow.cloneNode(true);
+        clonedRow.id = `pinned-forum-${forumId}`;
+
+        // Remove any unwanted elements or classes
+        clonedRow.querySelectorAll(".pagination").forEach((el) => el.remove());
+        clonedRow.classList.add("content-processed");
+
+        pinnedList.appendChild(clonedRow);
+      } else {
+        // If not found, create a new row
+        pinnedList.insertAdjacentHTML(
+          "beforeend",
+          createForumListItemHTML(forumId, forumInfo)
+        );
+      }
     });
+  }
 
-    // Adjust scroll position if necessary
-    const newHeight = pinnedSection.offsetHeight;
-    const heightDifference = newHeight - initialHeight;
+  function findExistingForumRow(forumId) {
+    // Look for forum rows on the current page
+    const forumRows = document.querySelectorAll(".topiclist.forums .row");
 
-    if (!isVisible && heightDifference > 0) {
-      window.scrollBy(0, heightDifference);
+    for (const row of forumRows) {
+      const forumLink = row.querySelector("a.forumtitle");
+      if (forumLink && forumLink.href.includes(`f=${forumId}`)) {
+        return row;
+      }
     }
 
-    // Clean up the observer
-    observer.disconnect();
+    return null;
+  }
+
+  function createForumListItemHTML(forumId, forumInfo) {
+    return `
+      <li class="row content-processed" id="pinned-forum-${forumId}">
+        <dl class="row-item forum_read">
+          <dt title="${forumInfo.name}">
+            <div class="list-inner">
+              <a href="${forumInfo.url}" class="forumtitle">${forumInfo.name}</a>
+              <br><span class="forum-path responsive-hide">${forumInfo.breadcrumbs}</span>
+            </div>
+          </dt>
+          <dd class="posts">-</dd>
+          <dd class="views">-</dd>
+        </dl>
+      </li>
+    `;
   }
 
   function findSearchPageInsertionPoint(pageBody) {
@@ -283,7 +315,13 @@ SOFTWARE.
       : pageBody.querySelector(".forumbg");
   }
 
-  function createPinnedSection() {
+  function createPinnedSectionsContainer() {
+    const sectionsContainer = document.createElement("div");
+    sectionsContainer.id = "pinned-sections-container";
+    return sectionsContainer;
+  }
+
+  function createPinnedThreadsSectionElement() {
     const section = document.createElement("div");
     section.id = "pinned-threads";
     section.className = "forabg";
@@ -299,6 +337,27 @@ SOFTWARE.
           </li>
         </ul>
         <ul class="topiclist topics content-processed" id="pinned-threads-list"></ul>
+      </div>
+    `;
+    return section;
+  }
+
+  function createPinnedForumsSectionElement() {
+    const section = document.createElement("div");
+    section.id = "pinned-forums";
+    section.className = "forabg";
+    section.innerHTML = `
+      <div class="inner">
+        <ul class="topiclist content-processed">
+          <li class="header">
+            <dl class="row-item">
+              <dt><div class="list-inner">Pinned Forums</div></dt>
+              <dd class="posts">Topics</dd>
+              <dd class="views">Posts</dd>
+            </dl>
+          </li>
+        </ul>
+        <ul class="topiclist forums content-processed" id="pinned-forums-list"></ul>
       </div>
     `;
     return section;
@@ -630,17 +689,17 @@ SOFTWARE.
 
   function addResponsiveStyle() {
     util.addStyle(`
-      #pinned-threads {
+      #pinned-threads, #pinned-forums {
         margin-bottom: 20px;
       }
-      #pinned-threads .topiclist.topics {
+      #pinned-threads .topiclist.topics, #pinned-forums .topiclist.forums {
         margin-top: 0;
       }
       .pin-button {
         margin-left: 10px;
         cursor: pointer;
       }
-      #pinned-threads .topic-poster .by {
+      #pinned-threads .topic-poster .by, #pinned-forums .forum-poster .by {
         display: none;
       }
       .zomboid-status {
@@ -657,14 +716,18 @@ SOFTWARE.
         font-size: 0.8em;
         font-style: italic;
       }
-      #pinned-threads .pagination {
+      #pinned-threads .pagination, #pinned-forums .pagination {
         display: none !important;
       }
+      .forum-path {
+        font-size: 0.9em;
+        color: #8c8c8c;
+      }
       @media (max-width: 700px) {
-        #pinned-threads .responsive-show {
+        #pinned-threads .responsive-show, #pinned-forums .responsive-show {
           display: none !important;
         }
-        #pinned-threads .responsive-hide {
+        #pinned-threads .responsive-hide, #pinned-forums .responsive-hide {
           display: none !important;
         }
       }
@@ -675,7 +738,9 @@ SOFTWARE.
 
   // Main execution
   if (window.location.href.includes("/viewtopic.php")) {
-    addPinButton();
+    addThreadPinButton();
+  } else if (window.location.href.includes("/viewforum.php")) {
+    addForumPinButton();
   } else if (
     window.location.href.includes("/index.php") ||
     window.location.href.endsWith("/forums/") ||
@@ -684,5 +749,257 @@ SOFTWARE.
       util.getShowOnNewPosts())
   ) {
     createPinnedThreadsSection();
+  }
+
+  async function populatePinnedThreadsSection(pinnedSection) {
+    const pinnedThreads = util.getPinnedThreads();
+    const pinnedList = pinnedSection.querySelector("#pinned-threads-list");
+    const threadIds = Object.keys(pinnedThreads);
+
+    // First, check if threads exist on the current page
+    const existingThreadRows = findExistingThreadRows(threadIds);
+
+    // For threads that don't exist on the page, we'll need to fetch them
+    const threadsToFetch = threadIds.filter(
+      (id) => !existingThreadRows.has(id)
+    );
+
+    // Create loading placeholders for threads we need to fetch
+    threadsToFetch.forEach((threadId) => {
+      pinnedList.insertAdjacentHTML(
+        "beforeend",
+        createLoadingListItem(threadId)
+      );
+    });
+
+    // Set up Intersection Observer
+    let isVisible = false;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        isVisible = entries[0].isIntersecting;
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(pinnedSection);
+
+    // Store the initial height
+    const initialHeight = pinnedSection.offsetHeight;
+
+    // Add existing thread rows first
+    for (const [threadId, row] of existingThreadRows.entries()) {
+      const clonedRow = row.cloneNode(true);
+      clonedRow.id = `pinned-thread-${threadId}`;
+
+      // Remove any unwanted elements or classes
+      clonedRow.querySelectorAll(".pagination").forEach((el) => el.remove());
+      clonedRow.classList.add("content-processed");
+
+      // Find the placeholder if it exists and replace it, or just append
+      const placeholder = pinnedList.querySelector(
+        `#pinned-thread-${threadId}`
+      );
+      if (placeholder) {
+        pinnedList.replaceChild(clonedRow, placeholder);
+      } else {
+        pinnedList.appendChild(clonedRow);
+      }
+    }
+
+    // Fetch and process threads that don't exist on the page
+    if (threadsToFetch.length > 0) {
+      const threadsData = await Promise.all(
+        threadsToFetch.map((threadId) =>
+          fetchThreadData(threadId, pinnedThreads[threadId]).catch((error) => ({
+            threadId,
+            title: `Error loading thread ${threadId}`,
+            sortableTitle: `error loading thread ${threadId}`,
+            rowHTML: createErrorListItemHTML(threadId),
+          }))
+        )
+      );
+
+      // Sort threads
+      threadsData.sort((a, b) =>
+        a.title.localeCompare(b.title, undefined, {
+          numeric: true,
+          sensitivity: "base",
+          ignorePunctuation: false,
+        })
+      );
+
+      // Update the list with sorted threads
+      threadsData.forEach((threadData) => {
+        const placeholder = pinnedList.querySelector(
+          `#pinned-thread-${threadData.threadId}`
+        );
+        if (placeholder) {
+          placeholder.outerHTML = threadData.rowHTML;
+        } else {
+          pinnedList.insertAdjacentHTML("beforeend", threadData.rowHTML);
+        }
+      });
+    }
+
+    // Sort all thread rows now that we have all of them
+    const allRows = Array.from(pinnedList.children);
+    allRows.sort((a, b) => {
+      const aTitle = a.querySelector(".topictitle")?.textContent || "";
+      const bTitle = b.querySelector(".topictitle")?.textContent || "";
+      return aTitle.localeCompare(bTitle, undefined, {
+        numeric: true,
+        sensitivity: "base",
+        ignorePunctuation: false,
+      });
+    });
+
+    // Re-append in sorted order
+    allRows.forEach((row) => pinnedList.appendChild(row));
+
+    // Adjust scroll position if necessary
+    const newHeight = pinnedSection.offsetHeight;
+    const heightDifference = newHeight - initialHeight;
+
+    if (!isVisible && heightDifference > 0) {
+      window.scrollBy(0, heightDifference);
+    }
+
+    // Clean up the observer
+    observer.disconnect();
+  }
+
+  function findExistingThreadRows(threadIds) {
+    const result = new Map();
+    const threadRowsOnPage = document.querySelectorAll(
+      ".topiclist.topics .row"
+    );
+
+    for (const row of threadRowsOnPage) {
+      const threadLink = row.querySelector("a.topictitle");
+      if (threadLink) {
+        for (const threadId of threadIds) {
+          if (threadLink.href.includes(`t=${threadId}`)) {
+            result.set(threadId, row);
+            break;
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+  // Thread pinning functions
+  function addThreadPinButton() {
+    const actionBar = document.querySelector(".action-bar.bar-top");
+    const threadId = util.getThreadId();
+    if (
+      actionBar &&
+      threadId &&
+      !document.getElementById("pin-thread-button")
+    ) {
+      const dropdownContainer = createDropdownContainer();
+      const pinButton = createThreadPinButton(threadId);
+      dropdownContainer.appendChild(pinButton);
+      actionBar.insertBefore(dropdownContainer, actionBar.firstChild);
+      addResponsiveStyle();
+    }
+  }
+
+  function createThreadPinButton(threadId) {
+    const button = document.createElement("span");
+    button.id = "pin-thread-button";
+    button.className = "button button-secondary dropdown-trigger";
+
+    const pinnedThreads = util.getPinnedThreads();
+    const isPinned = pinnedThreads.hasOwnProperty(threadId);
+    updatePinButtonState(button, isPinned);
+
+    button.addEventListener("click", (e) => {
+      e.preventDefault();
+      togglePinThread(threadId, button);
+    });
+
+    return button;
+  }
+
+  // Forum pinning functions
+  function addForumPinButton() {
+    const actionBar = document.querySelector(".action-bar.bar-top");
+    const forumId = util.getForumId();
+    const forumName = util.getForumName();
+
+    if (
+      actionBar &&
+      forumId &&
+      forumName &&
+      !document.getElementById("pin-forum-button")
+    ) {
+      const dropdownContainer = createDropdownContainer();
+      const pinButton = createForumPinButton(forumId);
+      dropdownContainer.appendChild(pinButton);
+      // Add the pin button at the start of the action bar
+      actionBar.insertBefore(dropdownContainer, actionBar.firstChild);
+      addResponsiveStyle();
+    }
+  }
+
+  function createForumPinButton(forumId) {
+    const button = document.createElement("span");
+    button.id = "pin-forum-button";
+    button.className = "button button-secondary dropdown-trigger";
+
+    const pinnedForums = util.getPinnedForums();
+    const isPinned = pinnedForums.hasOwnProperty(forumId);
+    updatePinButtonState(button, isPinned);
+
+    button.addEventListener("click", (e) => {
+      e.preventDefault();
+      togglePinForum(forumId, button);
+    });
+
+    return button;
+  }
+
+  function togglePinForum(forumId, button) {
+    const pinnedForums = util.getPinnedForums();
+    const forumInfo = getForumInfo();
+
+    if (pinnedForums.hasOwnProperty(forumId)) {
+      delete pinnedForums[forumId];
+    } else {
+      pinnedForums[forumId] = forumInfo;
+    }
+
+    util.setPinnedForums(pinnedForums);
+    updatePinButtonState(button, pinnedForums.hasOwnProperty(forumId));
+  }
+
+  function getForumInfo() {
+    const forumName = util.getForumName();
+    const breadcrumbs = document.querySelectorAll(".crumb");
+    const breadcrumbsPath = Array.from(breadcrumbs)
+      .filter((crumb) => crumb.querySelector("a"))
+      .map((crumb) => crumb.querySelector("a").textContent.trim())
+      .join(" » ");
+
+    return {
+      name: forumName,
+      breadcrumbs: breadcrumbsPath,
+      url: window.location.href.split("&start=")[0], // Remove pagination
+    };
+  }
+
+  function createDropdownContainer() {
+    const container = document.createElement("div");
+    container.className =
+      "dropdown-container dropdown-button-control topic-tools";
+    return container;
+  }
+
+  function updatePinButtonState(button, isPinned) {
+    button.innerHTML = isPinned
+      ? '<i class="icon fa-thumb-tack fa-fw" aria-hidden="true"></i><span>Unpin</span>'
+      : '<i class="icon fa-thumb-tack fa-fw" aria-hidden="true"></i><span>Pin</span>';
+    button.title = isPinned ? "Unpin" : "Pin";
   }
 })();
