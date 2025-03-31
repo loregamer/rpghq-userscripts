@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         RPGHQ - Thread Pinner
 // @namespace    http://tampermonkey.net/
-// @version      3.5.1
+// @version      3.5.2
 // @description  Add pin/unpin buttons to threads on rpghq.org and display pinned threads at the top of the board index
-// @match        https://rpghq.org/forums/*
+// @match        https://rpghq.org/forums/index.php
+// @match        https://rpghq.org/forums/home
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addStyle
