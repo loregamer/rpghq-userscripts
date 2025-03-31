@@ -15,7 +15,7 @@
 
   // Data from FORUM_PREFERENCES.js
 
-    const FORUM_PREFERENCES = {
+  const FORUM_PREFERENCES = {
     sections: [
       {
         name: "Display Settings",
@@ -88,10 +88,9 @@
     ],
   };
 
-
   // Data from MANIFEST.js
 
-    const MANIFEST = {
+  const MANIFEST = {
     scripts: [
       {
         id: "notifications",
@@ -140,12 +139,97 @@
     },
   };
 
+  // Helper function from Core\formatting\getPhaseDisplayName.js
 
+  function getPhaseDisplayName(phase) {
+    if (!phase) return "Not specified";
 
+    const phaseMap = {
+      "document-start": "Document Start",
+      "document-ready": "Document Ready",
+      "document-loaded": "Document Loaded",
+      "document-idle": "Document Idle",
+      "custom-event": "Custom Event",
+    };
 
-  // Helper function from Shared\addStyles.js
+    return phaseMap[phase] || phase;
+  }
 
-    function addStyles() {
+  // Helper function from Core\formatting\renderPreferenceControl.js
+
+  function renderPreferenceControl(preference) {
+    switch (preference.type) {
+      case "toggle":
+        return `
+          <label class="toggle-switch">
+            <input type="checkbox" ${preference.default ? "checked" : ""}>
+            <span class="toggle-slider"></span>
+          </label>
+        `;
+      case "select":
+        return `
+          <select>
+            ${preference.options
+              .map(
+                (option) => `
+              <option ${
+                option === preference.default ? "selected" : ""
+              }>${option}</option>
+            `
+              )
+              .join("")}
+          </select>
+        `;
+      default:
+        return `
+          <input type="text" value="${preference.default || ""}">
+        `;
+    }
+  }
+
+  // Helper function from Core\formatting\renderSettingControl.js
+
+  function renderSettingControl(setting) {
+    switch (setting.type) {
+      case "boolean":
+        return `
+          <label class="toggle-switch">
+            <input type="checkbox" ${setting.default ? "checked" : ""}>
+            <span class="toggle-slider"></span>
+          </label>
+        `;
+      case "select":
+        return `
+          <select class="setting-input">
+            ${setting.options
+              .map(
+                (option) => `
+              <option value="${option}" ${
+                  option === setting.default ? "selected" : ""
+                }>${option}</option>
+            `
+              )
+              .join("")}
+          </select>
+        `;
+      case "number":
+        return `
+          <input type="number" class="setting-input" value="${
+            setting.default || 0
+          }">
+        `;
+      default:
+        return `
+          <input type="text" class="setting-input" value="${
+            setting.default || ""
+          }">
+        `;
+    }
+  }
+
+  // Helper function from Core\ui\addStyles.js
+
+  function addStyles() {
     GM_addStyle(`
       /* Import Font Awesome */
       @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css');
@@ -743,10 +827,29 @@
     `);
   }
 
+  // Helper function from Core\ui\toggleModalWithInsertKey.js
 
-  // Helper function from Shared\compareVersions.js
+  function toggleModalWithInsertKey(e) {
+    // Check if the key pressed is Insert (key code 45)
+    if (e.keyCode === 45) {
+      // Prevent default behavior
+      e.preventDefault();
 
-    function compareVersions(a, b) {
+      // Check if the modal is currently visible
+      const modal = document.getElementById("mod-manager-modal");
+      if (modal && modal.style.display === "block") {
+        // If visible, hide it
+        hideModal();
+      } else {
+        // If not visible, show it
+        showModal();
+      }
+    }
+  }
+
+  // Helper function from Core\utilities\compareVersions.js
+
+  function compareVersions(a, b) {
     const partsA = a.split(".").map(Number);
     const partsB = b.split(".").map(Number);
 
@@ -762,10 +865,9 @@
     return 0;
   }
 
+  // Helper function from Core\utilities\filterScripts.js
 
-  // Helper function from Shared\filterScripts.js
-
-    function filterScripts(scripts, filters) {
+  function filterScripts(scripts, filters) {
     if (!filters) {
       // If no filters provided, get them from the DOM
       const category = document.getElementById("category-filter").value;
@@ -798,7 +900,9 @@
         (script.description &&
           script.description.toLowerCase().includes(filters.searchTerm));
 
-      return matchesCategory && matchesPhase && matchesSettings && matchesSearch;
+      return (
+        matchesCategory && matchesPhase && matchesSettings && matchesSearch
+      );
     });
 
     // Sort scripts
@@ -822,150 +926,160 @@
     return filtered;
   }
 
+  // UI function from components\renderScriptsGridView.js
 
-  // Helper function from Shared\getPhaseDisplayName.js
-
-    function getPhaseDisplayName(phase) {
-    if (!phase) return "Not specified";
-
-    const phaseMap = {
-      "document-start": "Document Start",
-      "document-ready": "Document Ready",
-      "document-loaded": "Document Loaded",
-      "document-idle": "Document Idle",
-      "custom-event": "Custom Event",
-    };
-
-    return phaseMap[phase] || phase;
-  }
-
-
-  // Helper function from Shared\renderPreferenceControl.js
-
-    function renderPreferenceControl(preference) {
-    switch (preference.type) {
-      case "toggle":
-        return `
-          <label class="toggle-switch">
-            <input type="checkbox" ${preference.default ? "checked" : ""}>
-            <span class="toggle-slider"></span>
-          </label>
-        `;
-      case "select":
-        return `
-          <select>
-            ${preference.options
-              .map(
-                (option) => `
-              <option ${
-                option === preference.default ? "selected" : ""
-              }>${option}</option>
-            `
-              )
-              .join("")}
-          </select>
-        `;
-      default:
-        return `
-          <input type="text" value="${preference.default || ""}">
-        `;
+  function renderScriptsGridView(container, scripts) {
+    if (scripts.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="fa fa-search"></i>
+          </div>
+          <h3 class="empty-state-message">No scripts found</h3>
+          <p>Try adjusting your filters to see more results.</p>
+        </div>
+      `;
+      return;
     }
-  }
 
+    const grid = document.createElement("div");
+    grid.className = "script-grid";
 
-  // Helper function from Shared\renderSettingControl.js
+    scripts.forEach((script) => {
+      const card = document.createElement("div");
+      card.className = "script-card";
+      card.dataset.scriptId = script.id;
 
-    function renderSettingControl(setting) {
-    switch (setting.type) {
-      case "boolean":
-        return `
-          <label class="toggle-switch">
-            <input type="checkbox" ${setting.default ? "checked" : ""}>
-            <span class="toggle-slider"></span>
-          </label>
-        `;
-      case "select":
-        return `
-          <select class="setting-input">
-            ${setting.options
-              .map(
-                (option) => `
-              <option value="${option}" ${
-                  option === setting.default ? "selected" : ""
-                }>${option}</option>
-            `
-              )
-              .join("")}
-          </select>
-        `;
-      case "number":
-        return `
-          <input type="number" class="setting-input" value="${
-            setting.default || 0
-          }">
-        `;
-      default:
-        return `
-          <input type="text" class="setting-input" value="${
-            setting.default || ""
-          }">
-        `;
-    }
-  }
+      card.innerHTML = `
+        <div class="script-card-image">
+          <img src="${
+            script.image || "https://via.placeholder.com/240x130?text=No+Image"
+          }" alt="${script.name}">
+          <div class="script-card-category">${
+            script.category || "Uncategorized"
+          }</div>
+        </div>
+        <div class="script-card-content">
+          <div class="script-card-header">
+            <h3 class="script-card-title">${script.name}</h3>
+            <span class="script-card-version">v${script.version}</span>
+          </div>
+          <p class="script-card-description">${
+            script.description || "No description available."
+          }</p>
+          <div class="script-card-footer">
+            <div class="script-card-phase">
+              <i class="fa fa-bolt"></i> ${getPhaseDisplayName(
+                script.executionPhase
+              )}
+            </div>
+            <div class="script-card-actions">
+              <button class="btn btn-primary btn-small view-settings" data-script-id="${
+                script.id
+              }">
+                <i class="fa fa-cog"></i> Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
 
-
-  // Helper function from Shared\toggleModalWithInsertKey.js
-
-    function toggleModalWithInsertKey(e) {
-    // Check if the key pressed is Insert (key code 45)
-    if (e.keyCode === 45) {
-      // Prevent default behavior
-      e.preventDefault();
-    
-      // Check if the modal is currently visible
-      const modal = document.getElementById("mod-manager-modal");
-      if (modal && modal.style.display === "block") {
-        // If visible, hide it
-        hideModal();
-      } else {
-        // If not visible, show it
-        showModal();
-      }
-    }
-  }
-
-
-
-
-  // UI function from modals\getCategoryOptions.js
-
-    function getCategoryOptions() {
-    const categories = new Set();
-    MANIFEST.scripts.forEach((script) => {
-      if (script.category) {
-        categories.add(script.category);
-      }
+      grid.appendChild(card);
     });
 
-    return Array.from(categories)
-      .sort()
-      .map((category) => `<option value="${category}">${category}</option>`)
-      .join("");
+    container.innerHTML = "";
+    container.appendChild(grid);
+
+    // Add event listeners for settings buttons
+    document.querySelectorAll(".view-settings").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const scriptId = btn.dataset.scriptId;
+        const script = scripts.find((s) => s.id === scriptId);
+        if (script) {
+          showScriptSettings(script);
+        }
+      });
+    });
   }
 
+  // UI function from components\renderScriptsListView.js
 
-  // UI function from modals\getExecutionPhaseOptions.js
+  function renderScriptsListView(container, scripts) {
+    if (scripts.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="fa fa-search"></i>
+          </div>
+          <h3 class="empty-state-message">No scripts found</h3>
+          <p>Try adjusting your filters to see more results.</p>
+        </div>
+      `;
+      return;
+    }
 
-    function getExecutionPhaseOptions() {
-    return MANIFEST.schema.executionPhases
-      .map((phase) => `<option value="${phase.id}">${phase.name}</option>`)
-      .join("");
+    const table = document.createElement("table");
+    table.className = "data-table";
+
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Version</th>
+          <th>Category</th>
+          <th>Description</th>
+          <th>Execution Phase</th>
+          <th>Settings</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${scripts
+          .map(
+            (script) => `
+          <tr>
+            <td><strong>${script.name}</strong></td>
+            <td>v${script.version}</td>
+            <td>${script.category || "Uncategorized"}</td>
+            <td>${script.description || "No description available."}</td>
+            <td>${getPhaseDisplayName(script.executionPhase)}</td>
+            <td>${
+              script.settings && script.settings.length > 0
+                ? `<span class="badge badge-primary">${script.settings.length}</span>`
+                : "-"
+            }</td>
+            <td>
+              <button class="btn btn-primary btn-small view-settings" data-script-id="${
+                script.id
+              }">
+                <i class="fa fa-cog"></i> Settings
+              </button>
+            </td>
+          </tr>
+        `
+          )
+          .join("")}
+      </tbody>
+    `;
+
+    container.innerHTML = "";
+    container.appendChild(table);
+
+    // Add event listeners for settings buttons
+    document.querySelectorAll(".view-settings").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const scriptId = btn.dataset.scriptId;
+        const script = scripts.find((s) => s.id === scriptId);
+        if (script) {
+          showScriptSettings(script);
+        }
+      });
+    });
   }
 
+  // UI function from modals\core\hideModal.js
 
-  // UI function from modals\hideModal.js
-
-    function hideModal() {
+  function hideModal() {
     const modal = document.getElementById("mod-manager-modal");
     if (modal) {
       modal.style.display = "none";
@@ -979,10 +1093,9 @@
     }
   }
 
+  // UI function from modals\core\loadTabContent.js
 
-  // UI function from modals\loadTabContent.js
-
-    function loadTabContent(tabName) {
+  function loadTabContent(tabName) {
     const content = document.getElementById("mod-manager-content");
 
     // Clear previous content (except the info note)
@@ -1005,10 +1118,211 @@
     }
   }
 
+  // UI function from modals\core\showModal.js
 
-  // UI function from modals\renderForumPreferencesTab.js
+  function showModal() {
+    let modal = document.getElementById("mod-manager-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "mod-manager-modal";
+      modal.className = "mod-manager-modal";
+      modal.innerHTML = `
+        <div class="mod-manager-modal-content">
+          <div class="mod-manager-header">
+            <h2 class="mod-manager-title">RPGHQ Userscript Manager</h2>
+            <span class="mod-manager-close">&times;</span>
+          </div>
+          <div class="mod-manager-tabs">
+            <div class="mod-manager-tab active" data-tab="installed">
+              <i class="fa fa-puzzle-piece"></i> Installed Scripts
+            </div>
+            <div class="mod-manager-tab" data-tab="forum">
+              <i class="fa fa-sliders-h"></i> Forum Preferences
+            </div>
+            <div class="mod-manager-tab" data-tab="settings">
+              <i class="fa fa-cog"></i> Settings
+            </div>
+          </div>
+          <div class="mod-manager-content" id="mod-manager-content">
+            <div class="info-note">
+              <strong>Note:</strong> This is a view-only display of available userscripts. No scripts will be installed or executed.
+            </div>
+            <!-- Content loaded dynamically -->
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
 
-    function renderForumPreferencesTab(container) {
+      // Add event listeners
+      modal
+        .querySelector(".mod-manager-close")
+        .addEventListener("click", () => {
+          hideModal();
+        });
+
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          hideModal();
+        }
+      });
+
+      // Tab switching
+      modal.querySelectorAll(".mod-manager-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".mod-manager-tab").forEach((t) => {
+            t.classList.remove("active");
+          });
+          tab.classList.add("active");
+          loadTabContent(tab.dataset.tab);
+        });
+      });
+    }
+
+    modal.style.display = "block";
+    document.body.style.overflow = "hidden";
+
+    // Initial view - load the first tab (Installed Scripts)
+    loadTabContent("installed");
+  }
+
+  // UI function from modals\helpers\getCategoryOptions.js
+
+  function getCategoryOptions() {
+    const categories = new Set();
+    MANIFEST.scripts.forEach((script) => {
+      if (script.category) {
+        categories.add(script.category);
+      }
+    });
+
+    return Array.from(categories)
+      .sort()
+      .map((category) => `<option value="${category}">${category}</option>`)
+      .join("");
+  }
+
+  // UI function from modals\helpers\getExecutionPhaseOptions.js
+
+  function getExecutionPhaseOptions() {
+    return MANIFEST.schema.executionPhases
+      .map((phase) => `<option value="${phase.id}">${phase.name}</option>`)
+      .join("");
+  }
+
+  // UI function from modals\settings\renderScriptSettingsContent.js
+
+  function renderScriptSettingsContent(script) {
+    if (!script.settings || script.settings.length === 0) {
+      return "";
+    }
+
+    return `
+      <div class="setting-group">
+        ${script.settings
+          .map(
+            (setting) => `
+          <div class="setting-item">
+            <label class="setting-label">${setting.label}</label>
+            <span class="setting-description">${setting.description}</span>
+            <div class="setting-control">
+              ${renderSettingControl(setting)}
+            </div>
+          </div>
+        `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  // UI function from modals\settings\showScriptSettings.js
+
+  function showScriptSettings(script) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById("script-settings-modal");
+    if (!modal) {
+      modal = document.createElement("div");
+      modal.id = "script-settings-modal";
+      modal.className = "settings-modal";
+      document.body.appendChild(modal);
+    }
+
+    // Populate modal with script settings
+    modal.innerHTML = `
+      <div class="settings-modal-content">
+        <div class="settings-modal-header">
+          <h2 class="settings-modal-title">${script.name} Settings</h2>
+          <span class="settings-modal-close">&times;</span>
+        </div>
+      
+        ${
+          script.settings && script.settings.length > 0
+            ? renderScriptSettingsContent(script)
+            : `
+            <div class="empty-state">
+              <div class="empty-state-icon">
+                <i class="fa fa-cog"></i>
+              </div>
+              <h3 class="empty-state-message">No Settings Available</h3>
+              <p>This script doesn't have any configurable settings.</p>
+            </div>
+          `
+        }
+      
+        <div class="script-info" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+          <h3>Script Information</h3>
+          <table class="data-table">
+            <tr>
+              <th>ID</th>
+              <td>${script.id}</td>
+            </tr>
+            <tr>
+              <th>Version</th>
+              <td>${script.version}</td>
+            </tr>
+            <tr>
+              <th>Category</th>
+              <td>${script.category || "Uncategorized"}</td>
+            </tr>
+            <tr>
+              <th>Execution Phase</th>
+              <td>${script.executionPhase || "Not specified"}</td>
+            </tr>
+            <tr>
+              <th>Matches</th>
+              <td>${
+                script.matches ? script.matches.join("<br>") : "Not specified"
+              }</td>
+            </tr>
+          </table>
+        </div>
+      
+        <div class="info-note" style="margin-top: 15px;">
+          <strong>Note:</strong> This is a view-only display of script settings. No changes will be saved.
+        </div>
+      </div>
+    `;
+
+    // Show the modal
+    modal.style.display = "block";
+
+    // Add event listeners
+    modal
+      .querySelector(".settings-modal-close")
+      .addEventListener("click", () => {
+        modal.style.display = "none";
+      });
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.style.display = "none";
+      }
+    });
+  }
+
+  // UI function from modals\tabs\renderForumPreferencesTab.js
+
+  function renderForumPreferencesTab(container) {
     container.innerHTML += `<h2>Forum Preferences</h2>`;
 
     // Add sub-tabs for Threads and Users
@@ -1051,10 +1365,9 @@
     });
   }
 
+  // UI function from modals\tabs\renderInstalledScriptsTab.js
 
-  // UI function from modals\renderInstalledScriptsTab.js
-
-    function renderInstalledScriptsTab(container) {
+  function renderInstalledScriptsTab(container) {
     // Create the filter panel
     const filterPanel = document.createElement("div");
     filterPanel.className = "filter-panel";
@@ -1174,7 +1487,9 @@
 
       // Use the active view to render
       if (
-        document.getElementById("grid-view-btn").classList.contains("btn-primary")
+        document
+          .getElementById("grid-view-btn")
+          .classList.contains("btn-primary")
       ) {
         renderScriptsGridView(scriptsContainer, filteredScripts);
       } else {
@@ -1191,7 +1506,9 @@
 
       // Use the active view to render
       if (
-        document.getElementById("grid-view-btn").classList.contains("btn-primary")
+        document
+          .getElementById("grid-view-btn")
+          .classList.contains("btn-primary")
       ) {
         renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
       } else {
@@ -1200,190 +1517,9 @@
     });
   }
 
+  // UI function from modals\tabs\renderSettingsTab.js
 
-  // UI function from modals\renderScriptSettingsContent.js
-
-    function renderScriptSettingsContent(script) {
-    if (!script.settings || script.settings.length === 0) {
-      return "";
-    }
-
-    return `
-      <div class="setting-group">
-        ${script.settings
-          .map(
-            (setting) => `
-          <div class="setting-item">
-            <label class="setting-label">${setting.label}</label>
-            <span class="setting-description">${setting.description}</span>
-            <div class="setting-control">
-              ${renderSettingControl(setting)}
-            </div>
-          </div>
-        `
-          )
-          .join("")}
-      </div>
-    `;
-  }
-
-
-  // UI function from modals\renderScriptsGridView.js
-
-    function renderScriptsGridView(container, scripts) {
-    if (scripts.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <i class="fa fa-search"></i>
-          </div>
-          <h3 class="empty-state-message">No scripts found</h3>
-          <p>Try adjusting your filters to see more results.</p>
-        </div>
-      `;
-      return;
-    }
-
-    const grid = document.createElement("div");
-    grid.className = "script-grid";
-
-    scripts.forEach((script) => {
-      const card = document.createElement("div");
-      card.className = "script-card";
-      card.dataset.scriptId = script.id;
-
-      card.innerHTML = `
-        <div class="script-card-image">
-          <img src="${
-            script.image || "https://via.placeholder.com/240x130?text=No+Image"
-          }" alt="${script.name}">
-          <div class="script-card-category">${
-            script.category || "Uncategorized"
-          }</div>
-        </div>
-        <div class="script-card-content">
-          <div class="script-card-header">
-            <h3 class="script-card-title">${script.name}</h3>
-            <span class="script-card-version">v${script.version}</span>
-          </div>
-          <p class="script-card-description">${
-            script.description || "No description available."
-          }</p>
-          <div class="script-card-footer">
-            <div class="script-card-phase">
-              <i class="fa fa-bolt"></i> ${getPhaseDisplayName(
-                script.executionPhase
-              )}
-            </div>
-            <div class="script-card-actions">
-              <button class="btn btn-primary btn-small view-settings" data-script-id="${
-                script.id
-              }">
-                <i class="fa fa-cog"></i> Settings
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      grid.appendChild(card);
-    });
-
-    container.innerHTML = "";
-    container.appendChild(grid);
-
-    // Add event listeners for settings buttons
-    document.querySelectorAll(".view-settings").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const scriptId = btn.dataset.scriptId;
-        const script = scripts.find((s) => s.id === scriptId);
-        if (script) {
-          showScriptSettings(script);
-        }
-      });
-    });
-  }
-
-
-  // UI function from modals\renderScriptsListView.js
-
-    function renderScriptsListView(container, scripts) {
-    if (scripts.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <i class="fa fa-search"></i>
-          </div>
-          <h3 class="empty-state-message">No scripts found</h3>
-          <p>Try adjusting your filters to see more results.</p>
-        </div>
-      `;
-      return;
-    }
-
-    const table = document.createElement("table");
-    table.className = "data-table";
-
-    table.innerHTML = `
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Version</th>
-          <th>Category</th>
-          <th>Description</th>
-          <th>Execution Phase</th>
-          <th>Settings</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${scripts
-          .map(
-            (script) => `
-          <tr>
-            <td><strong>${script.name}</strong></td>
-            <td>v${script.version}</td>
-            <td>${script.category || "Uncategorized"}</td>
-            <td>${script.description || "No description available."}</td>
-            <td>${getPhaseDisplayName(script.executionPhase)}</td>
-            <td>${
-              script.settings && script.settings.length > 0
-                ? `<span class="badge badge-primary">${script.settings.length}</span>`
-                : "-"
-            }</td>
-            <td>
-              <button class="btn btn-primary btn-small view-settings" data-script-id="${
-                script.id
-              }">
-                <i class="fa fa-cog"></i> Settings
-              </button>
-            </td>
-          </tr>
-        `
-          )
-          .join("")}
-      </tbody>
-    `;
-
-    container.innerHTML = "";
-    container.appendChild(table);
-
-    // Add event listeners for settings buttons
-    document.querySelectorAll(".view-settings").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const scriptId = btn.dataset.scriptId;
-        const script = scripts.find((s) => s.id === scriptId);
-        if (script) {
-          showScriptSettings(script);
-        }
-      });
-    });
-  }
-
-
-  // UI function from modals\renderSettingsTab.js
-
-    function renderSettingsTab(container) {
+  function renderSettingsTab(container) {
     container.innerHTML += `
       <h2>Global Settings</h2>
     
@@ -1495,10 +1631,9 @@
     `;
   }
 
+  // UI function from modals\tabs\renderThreadsSubtab.js
 
-  // UI function from modals\renderThreadsSubtab.js
-
-    function renderThreadsSubtab(container) {
+  function renderThreadsSubtab(container) {
     container.innerHTML = `
       <div class="wip-banner">
         <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress
@@ -1546,10 +1681,9 @@
     `;
   }
 
+  // UI function from modals\tabs\renderUsersSubtab.js
 
-  // UI function from modals\renderUsersSubtab.js
-
-    function renderUsersSubtab(container) {
+  function renderUsersSubtab(container) {
     container.innerHTML = `
       <div class="wip-banner">
         <i class="fa fa-wrench"></i> User Preferences - Work In Progress
@@ -1594,173 +1728,22 @@
     `;
   }
 
-
-  // UI function from modals\showModal.js
-
-    function showModal() {
-    let modal = document.getElementById("mod-manager-modal");
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.id = "mod-manager-modal";
-      modal.className = "mod-manager-modal";
-      modal.innerHTML = `
-        <div class="mod-manager-modal-content">
-          <div class="mod-manager-header">
-            <h2 class="mod-manager-title">RPGHQ Userscript Manager</h2>
-            <span class="mod-manager-close">&times;</span>
-          </div>
-          <div class="mod-manager-tabs">
-            <div class="mod-manager-tab active" data-tab="installed">
-              <i class="fa fa-puzzle-piece"></i> Installed Scripts
-            </div>
-            <div class="mod-manager-tab" data-tab="forum">
-              <i class="fa fa-sliders-h"></i> Forum Preferences
-            </div>
-            <div class="mod-manager-tab" data-tab="settings">
-              <i class="fa fa-cog"></i> Settings
-            </div>
-          </div>
-          <div class="mod-manager-content" id="mod-manager-content">
-            <div class="info-note">
-              <strong>Note:</strong> This is a view-only display of available userscripts. No scripts will be installed or executed.
-            </div>
-            <!-- Content loaded dynamically -->
-          </div>
-        </div>
-      `;
-      document.body.appendChild(modal);
-
-      // Add event listeners
-      modal.querySelector(".mod-manager-close").addEventListener("click", () => {
-        hideModal();
-      });
-
-      modal.addEventListener("click", (e) => {
-        if (e.target === modal) {
-          hideModal();
-        }
-      });
-
-      // Tab switching
-      modal.querySelectorAll(".mod-manager-tab").forEach((tab) => {
-        tab.addEventListener("click", () => {
-          document.querySelectorAll(".mod-manager-tab").forEach((t) => {
-            t.classList.remove("active");
-          });
-          tab.classList.add("active");
-          loadTabContent(tab.dataset.tab);
-        });
-      });
-    }
-
-    modal.style.display = "block";
-    document.body.style.overflow = "hidden";
-
-    // Initial view - load the first tab (Installed Scripts)
-    loadTabContent("installed");
-  }
-
-
-  // UI function from modals\showScriptSettings.js
-
-    function showScriptSettings(script) {
-    // Create modal if it doesn't exist
-    let modal = document.getElementById("script-settings-modal");
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.id = "script-settings-modal";
-      modal.className = "settings-modal";
-      document.body.appendChild(modal);
-    }
-
-    // Populate modal with script settings
-    modal.innerHTML = `
-      <div class="settings-modal-content">
-        <div class="settings-modal-header">
-          <h2 class="settings-modal-title">${script.name} Settings</h2>
-          <span class="settings-modal-close">&times;</span>
-        </div>
-      
-        ${
-          script.settings && script.settings.length > 0
-            ? renderScriptSettingsContent(script)
-            : `
-            <div class="empty-state">
-              <div class="empty-state-icon">
-                <i class="fa fa-cog"></i>
-              </div>
-              <h3 class="empty-state-message">No Settings Available</h3>
-              <p>This script doesn't have any configurable settings.</p>
-            </div>
-          `
-        }
-      
-        <div class="script-info" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-          <h3>Script Information</h3>
-          <table class="data-table">
-            <tr>
-              <th>ID</th>
-              <td>${script.id}</td>
-            </tr>
-            <tr>
-              <th>Version</th>
-              <td>${script.version}</td>
-            </tr>
-            <tr>
-              <th>Category</th>
-              <td>${script.category || "Uncategorized"}</td>
-            </tr>
-            <tr>
-              <th>Execution Phase</th>
-              <td>${script.executionPhase || "Not specified"}</td>
-            </tr>
-            <tr>
-              <th>Matches</th>
-              <td>${
-                script.matches ? script.matches.join("<br>") : "Not specified"
-              }</td>
-            </tr>
-          </table>
-        </div>
-      
-        <div class="info-note" style="margin-top: 15px;">
-          <strong>Note:</strong> This is a view-only display of script settings. No changes will be saved.
-        </div>
-      </div>
-    `;
-
-    // Show the modal
-    modal.style.display = "block";
-
-    // Add event listeners
-    modal.querySelector(".settings-modal-close").addEventListener("click", () => {
-      modal.style.display = "none";
-    });
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.style.display = "none";
-      }
-    });
-  }
-
-
   // Initialization from addMenuButton.js
 
-    function addMenuButton() {
+  function addMenuButton() {
     const profileDropdown = document.querySelector(
       '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
     );
     if (!profileDropdown) return;
 
-    const logoutButton = Array.from(profileDropdown.querySelectorAll("li")).find(
-      (li) => {
-        return (
-          li.textContent.trim().includes("Logout") ||
-          li.querySelector('a[title="Logout"]')
-        );
-      }
-    );
+    const logoutButton = Array.from(
+      profileDropdown.querySelectorAll("li")
+    ).find((li) => {
+      return (
+        li.textContent.trim().includes("Logout") ||
+        li.querySelector('a[title="Logout"]')
+      );
+    });
 
     if (!logoutButton) return;
 
@@ -1778,13 +1761,12 @@
     });
   }
 
-
   // Initialization from init.js
 
-    function init() {
+  function init() {
     addStyles();
     GM_registerMenuCommand("RPGHQ Userscript Manager", showModal);
-  
+
     // Add event listener for the Insert key to toggle the modal
     document.addEventListener("keydown", toggleModalWithInsertKey);
 
@@ -1795,7 +1777,6 @@
       addMenuButton();
     }
   }
-
 
   // Run initialization
   init();
