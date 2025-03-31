@@ -8,8 +8,6 @@
 // @run-at       document-start
 // @grant        GM_addStyle
 // @grant        GM_registerMenuCommand
-// @grant        GM_getValue
-// @grant        GM_setValue
 // ==/UserScript==
 
 (function () {
@@ -19,6 +17,61 @@
 
   const MANIFEST = {
     scripts: [
+      {
+        id: "notifications",
+        name: "Notifications Improved",
+        version: "1.1.0",
+        description:
+          "Adds reaction smileys to notifications and makes them formatted better",
+        filename: "notifications.js",
+        matches: ["https://rpghq.org/forums/*"],
+        executionPhase: "document-ready",
+        category: "Aesthetic",
+        image: "https://f.rpghq.org/rso7uNB6S4H9.png",
+        settings: [],
+      },
+      {
+        id: "bbcode",
+        name: "BBCode Highlighter",
+        version: "1.1.0",
+        description:
+          "Adds reaction smileys to notifications and makes them formatted better",
+        filename: "bbcode.js",
+        matches: [
+          "https://rpghq.org/forums/posting.php?mode=post*",
+          "https://rpghq.org/forums/posting.php?mode=quote*",
+          "https://rpghq.org/forums/posting.php?mode=reply*",
+          "https://rpghq.org/forums/posting.php?mode=edit*",
+        ],
+        executionPhase: "document-ready",
+        category: "Aesthetic",
+        image: "https://f.rpghq.org/bEm69Td9mEGU.png?n=pasted-file.png",
+        settings: [],
+      },
+      {
+        id: "ignore-threads",
+        name: "Ignore Threads",
+        version: "1.0.0",
+        description: "Ignore threads",
+        filename: "ignore-threads.js",
+        matches: ["https://rpghq.org/forums/*"],
+        executionPhase: "document-start",
+        category: "Iggy Stuff",
+        image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+        settings: [],
+      },
+      {
+        id: "ignore-users",
+        name: "Ignore Users",
+        version: "1.0.0",
+        description: "(Actually) ignore users",
+        filename: "ignore-users.js",
+        matches: ["https://rpghq.org/forums/*"],
+        executionPhase: "document-start",
+        category: "Iggy Stuff",
+        image: "https://f.rpghq.org/v4iqrprFCWq0.png?n=pasted-file.png",
+        settings: [],
+      },
       {
         id: "number-commas",
         name: "Commas on Numbers",
@@ -41,24 +94,40 @@
         ],
       },
       {
-        id: "notifications-customization",
-        name: "RPGHQ Notifications Customization",
-        version: "4.5.0",
-        description:
-          "Customize RPGHQ notifications display with enhanced reactions, better formatting, and automatic marking",
-        filename: "notifications-customization.js",
-        matches: ["https://rpghq.org/*/*"],
+        id: "pin-threads",
+        name: "Pin Threads",
+        version: "1.0.0",
+        description: "Adds a pin button to the forum",
+        filename: "pin-threads.js",
+        matches: ["https://rpghq.org/forums/index.php/*"],
         executionPhase: "document-ready",
-        category: "UI Enhancement",
-        settings: [
-          {
-            id: "enableNotificationStyles",
-            label: "Enable Notification Styling",
-            description: "Apply custom styles to notifications",
-            type: "boolean",
-            default: true,
-          },
-        ],
+        category: "Utility",
+        image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+        settings: [],
+      },
+      {
+        id: "member-search",
+        name: "Member Search Button",
+        version: "1.0.0",
+        description: "Adds a member search button to the forum",
+        filename: "member-search.js",
+        matches: ["https://rpghq.org/forums/*"],
+        executionPhase: "document-ready",
+        category: "Utility",
+        image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+        settings: [],
+      },
+      {
+        id: "random-topic",
+        name: "Random Topic Button",
+        version: "1.0.0",
+        description: "Adds a random topic button to the forum",
+        filename: "random-topic.js",
+        matches: ["https://rpghq.org/forums/*"],
+        executionPhase: "document-ready",
+        category: "Utility",
+        image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+        settings: [],
       },
     ],
     schema: {
@@ -169,37 +238,8 @@
     ],
   };
 
-  // Helper function from Shared/logger.js
-  function logInfo(message) {
-    console.log(
-      "%c[RPGHQ USERSCRIPTS]%c " + message,
-      "color: #2196F3; font-weight: bold;",
-      "color: inherit;"
-    );
-  }
-  function logSuccess(message) {
-    console.log(
-      "%c[RPGHQ USERSCRIPTS]%c " + message,
-      "color: #4CAF50; font-weight: bold;",
-      "color: inherit;"
-    );
-  }
-  function logWarning(message) {
-    console.warn(
-      "%c[RPGHQ USERSCRIPTS]%c " + message,
-      "color: #FFC107; font-weight: bold;",
-      "color: inherit;"
-    );
-  }
-  function logError(message) {
-    console.error(
-      "%c[RPGHQ USERSCRIPTS]%c " + message,
-      "color: #F44336; font-weight: bold;",
-      "color: inherit;"
-    );
-  }
-
   // Helper function from Shared/compareVersions.js
+
   function compareVersions(a, b) {
     const partsA = a.split(".").map(Number);
     const partsB = b.split(".").map(Number);
@@ -207,6 +247,7 @@
     for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
       const numA = partsA[i] || 0;
       const numB = partsB[i] || 0;
+
       if (numA !== numB) {
         return numA - numB;
       }
@@ -216,8 +257,10 @@
   }
 
   // Helper function from Shared/getPhaseDisplayName.js
+
   function getPhaseDisplayName(phase) {
     if (!phase) return "Not specified";
+
     const phaseMap = {
       "document-start": "Document Start",
       "document-ready": "Document Ready",
@@ -230,6 +273,7 @@
   }
 
   // Helper function from Shared/renderSettingControl.js
+
   function renderSettingControl(setting) {
     switch (setting.type) {
       case "boolean":
@@ -269,6 +313,7 @@
   }
 
   // Helper function from Shared/renderPreferenceControl.js
+
   function renderPreferenceControl(preference) {
     switch (preference.type) {
       case "toggle":
@@ -300,19 +345,19 @@
   }
 
   // Helper function from Shared/filterScripts.js
+
   function filterScripts(scripts, filters) {
     if (!filters) {
       // If no filters provided, get them from the DOM
       const category = document.getElementById("category-filter").value;
       const phase = document.getElementById("phase-filter").value;
       const hasSettings = document.getElementById("has-settings-filter").value;
-      const enabled = document.getElementById("enabled-filter").value;
       const searchTerm = document
         .getElementById("search-filter")
         .value.toLowerCase();
       const sortBy = document.getElementById("sort-filter").value;
 
-      filters = { category, phase, hasSettings, enabled, searchTerm, sortBy };
+      filters = { category, phase, hasSettings, searchTerm, sortBy };
     }
 
     // Filter scripts
@@ -328,10 +373,6 @@
           script.settings.length > 0) ||
         (filters.hasSettings === "without" &&
           (!script.settings || script.settings.length === 0));
-      const matchesEnabled =
-        filters.enabled === "all" ||
-        (filters.enabled === "enabled" && isScriptEnabled(script.id)) ||
-        (filters.enabled === "disabled" && !isScriptEnabled(script.id));
       const matchesSearch =
         !filters.searchTerm ||
         script.name.toLowerCase().includes(filters.searchTerm) ||
@@ -339,11 +380,7 @@
           script.description.toLowerCase().includes(filters.searchTerm));
 
       return (
-        matchesCategory &&
-        matchesPhase &&
-        matchesSettings &&
-        matchesEnabled &&
-        matchesSearch
+        matchesCategory && matchesPhase && matchesSettings && matchesSearch
       );
     });
 
@@ -369,6 +406,7 @@
   }
 
   // Helper function from Shared/addStyles.js
+
   function addStyles() {
     GM_addStyle(`
     /* Import Font Awesome */
@@ -826,24 +864,6 @@
         background-color: #666;
     }
     
-    .btn-success {
-        background-color: var(--success-color);
-        color: white;
-    }
-    
-    .btn-success:hover {
-        background-color: #3d8b40;
-    }
-    
-    .btn-danger {
-        background-color: var(--danger-color);
-        color: white;
-    }
-    
-    .btn-danger:hover {
-        background-color: #d32f2f;
-    }
-    
     .btn-small {
         padding: 3px 8px;
         font-size: 0.8em;
@@ -968,32 +988,6 @@
         font-weight: bold;
     }
     
-    /* Styles for toggle buttons */
-    .btn-icon {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 5px;
-        text-align: center;
-        transition: all 0.2s ease;
-    }
-    
-    .btn-icon:hover {
-        opacity: 0.8;
-    }
-    
-    .btn-icon:focus {
-        outline: none;
-    }
-    
-    .text-success {
-        color: #28a745;
-    }
-    
-    .text-muted {
-        color: #6c757d;
-    }
-    
     /* Responsive adjustments */
     @media (max-width: 768px) {
         .script-grid {
@@ -1008,317 +1002,11 @@
             width: 90%;
         }
     }
-    
-    /* Hide modal on ESC key */
-    document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-  const modal = document.getElementById('mod-manager-modal');
-  if (modal && modal.style.display === 'block') {
-          hideModal();
-        }
-      }
-    });
   `);
   }
 
-  // Helper function from Shared/isScriptEnabled.js
-  function isScriptEnabled(scriptId) {
-    // First try to check the enabled scripts array
-    const enabledScripts = GM_getValue("rpghq-enabled-scripts", null);
-    if (enabledScripts) {
-      try {
-        const enabledScriptsArray = JSON.parse(enabledScripts);
-        if (enabledScriptsArray.includes(scriptId)) {
-          logInfo(`Script ${scriptId} is enabled (found in enabled scripts)`);
-          return true;
-        }
-      } catch (e) {
-        logWarning(`Error parsing enabled scripts: ${e.message}`);
-      }
-    }
-
-    // Fall back to checking the disabled scripts array
-    const disabledScripts = GM_getValue("rpghq-disabled-scripts", null);
-    if (!disabledScripts) {
-      logInfo(`Script ${scriptId} is enabled (no disabled scripts found)`);
-      return true; // By default, all scripts are enabled
-    }
-
-    try {
-      const disabledScriptsArray = JSON.parse(disabledScripts);
-      const isEnabled = !disabledScriptsArray.includes(scriptId);
-      logInfo(
-        `Script ${scriptId} is ${
-          isEnabled ? "enabled" : "disabled"
-        } (based on disabled scripts list)`
-      );
-      return isEnabled;
-    } catch (e) {
-      logWarning(`Error parsing disabled scripts: ${e.message}`);
-      return true; // If there's an error parsing, default to enabled
-    }
-  }
-
-  // Helper function from Shared/toggleScriptEnabled.js
-  function toggleScriptEnabled(scriptId) {
-    // For backwards compatibility, read from disabled scripts
-    const disabledScripts = GM_getValue("rpghq-disabled-scripts", null);
-    let disabledScriptsArray = [];
-    if (disabledScripts) {
-      try {
-        disabledScriptsArray = JSON.parse(disabledScripts);
-      } catch (e) {
-        disabledScriptsArray = [];
-        logWarning(`Error parsing disabled scripts: ${e.message}`);
-      }
-    }
-
-    // Get the enabled scripts array
-    const enabledScripts = GM_getValue("rpghq-enabled-scripts", null);
-    let enabledScriptsArray = [];
-    if (enabledScripts) {
-      try {
-        enabledScriptsArray = JSON.parse(enabledScripts);
-      } catch (e) {
-        enabledScriptsArray = [];
-        logWarning(`Error parsing enabled scripts: ${e.message}`);
-      }
-    }
-
-    // If a script isn't in either array, consider it enabled by default
-    const isCurrentlyEnabled = !disabledScriptsArray.includes(scriptId);
-    if (isCurrentlyEnabled) {
-      // Disable the script
-      disabledScriptsArray.push(scriptId);
-      // Remove from enabled scripts if it exists
-      enabledScriptsArray = enabledScriptsArray.filter((id) => id !== scriptId);
-      logInfo(`Disabled script: ${scriptId}`);
-    } else {
-      // Enable the script
-      disabledScriptsArray = disabledScriptsArray.filter(
-        (id) => id !== scriptId
-      );
-      // Add to enabled scripts if it doesn't exist
-      if (!enabledScriptsArray.includes(scriptId)) {
-        enabledScriptsArray.push(scriptId);
-      }
-      logInfo(`Enabled script: ${scriptId}`);
-    }
-
-    // Update both storage items
-    GM_setValue("rpghq-disabled-scripts", JSON.stringify(disabledScriptsArray));
-    GM_setValue("rpghq-enabled-scripts", JSON.stringify(enabledScriptsArray));
-
-    logInfo(
-      `Script state toggled: ${scriptId} is now ${
-        !isCurrentlyEnabled ? "enabled" : "disabled"
-      }`
-    );
-    logInfo(`Enabled scripts: ${JSON.stringify(enabledScriptsArray)}`);
-
-    return !isCurrentlyEnabled;
-  }
-
-  // Helper function from number-commas/calculateForumStatistics.js
-  function calculateForumStatistics() {
-    // Only run on index.php
-    if (!window.location.pathname.endsWith("index.php")) {
-      return;
-    }
-    let totalTopics = 0;
-    let totalPosts = 0;
-
-    // Get all posts and topics elements
-    const postsElements = document.querySelectorAll("dd.posts");
-    const topicsElements = document.querySelectorAll("dd.topics");
-
-    // Sum up posts
-    postsElements.forEach((element) => {
-      const postsText = element.childNodes[0].textContent
-        .trim()
-        .replace(/,/g, "");
-      const posts = parseInt(postsText);
-      if (!isNaN(posts)) {
-        totalPosts += posts;
-      }
-    });
-
-    // Sum up topics
-    topicsElements.forEach((element) => {
-      const topicsText = element.childNodes[0].textContent
-        .trim()
-        .replace(/,/g, "");
-      const topics = parseInt(topicsText);
-      if (!isNaN(topics)) {
-        totalTopics += topics;
-      }
-    });
-
-    // Function to format numbers, only adding commas for 5+ digits
-    function formatStatNumber(num) {
-      return num.toString().length >= 5
-        ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-        : num.toString();
-    }
-
-    // Find and update the statistics block
-    const statsBlock = document.querySelector(".stat-block.statistics");
-    if (statsBlock) {
-      const statsText = statsBlock.querySelector("p");
-      if (statsText) {
-        const existingText = statsText.innerHTML;
-        // Keep the members count and newest member info, but update topics and posts
-        const membersMatch = existingText.match(
-          /Total members <strong>(\d+)<\/strong>/
-        );
-        const newestMemberMatch = existingText.match(
-          /(Our newest member <strong>.*?<\/strong>)/
-        );
-        if (membersMatch && newestMemberMatch) {
-          statsText.innerHTML = `Total posts <strong>${formatStatNumber(
-            totalPosts
-          )}</strong> • Total topics <strong>${formatStatNumber(
-            totalTopics
-          )}</strong> • Total members <strong>${membersMatch[1]}</strong> • ${
-            newestMemberMatch[1]
-          }`;
-        }
-      }
-    }
-  }
-
-  // Helper function from number-commas/formatNumberWithCommas.js
-  function formatNumberWithCommas(number) {
-    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  }
-
-  // Helper function from number-commas/helper-loader.js
-  function loadNumberCommasHelper() {
-    // These functions are already available in the final script through the build process
-    // This is just for reference/documentation of what's needed
-    return {
-      formatNumberWithCommas,
-      processElements,
-      calculateForumStatistics,
-      toggleFourDigitFormatting,
-      updateMenuLabel,
-    };
-  }
-
-  // Helper function from number-commas/processElements.js
-  function processElements(formatFourDigits) {
-    const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
-    const elements = document.querySelectorAll(
-      "dd.posts, dd.profile-posts, dd.views, span.responsive-show.left-box, .column2 .details dd"
-    );
-
-    elements.forEach((element) => {
-      if (
-        element.classList.contains("posts") ||
-        element.classList.contains("views") ||
-        (element.parentElement &&
-          element.parentElement.classList.contains("details"))
-      ) {
-        if (
-          element.previousElementSibling &&
-          element.previousElementSibling.textContent.trim() === "Joined:"
-        ) {
-          return;
-        }
-
-        element.childNodes.forEach((node) => {
-          if (
-            node.nodeType === Node.TEXT_NODE &&
-            numberRegex.test(node.nodeValue)
-          ) {
-            node.nodeValue = node.nodeValue.replace(numberRegex, (match) =>
-              formatNumberWithCommas(match)
-            );
-          }
-        });
-      } else if (element.classList.contains("profile-posts")) {
-        const anchor = element.querySelector("a");
-        if (anchor && numberRegex.test(anchor.textContent)) {
-          anchor.textContent = anchor.textContent.replace(
-            numberRegex,
-            (match) => formatNumberWithCommas(match)
-          );
-        }
-      } else if (element.classList.contains("responsive-show")) {
-        const strong = element.querySelector("strong");
-        if (strong && numberRegex.test(strong.textContent)) {
-          strong.textContent = strong.textContent.replace(
-            numberRegex,
-            (match) => formatNumberWithCommas(match)
-          );
-        }
-      }
-      const strongElements = element.querySelectorAll("strong");
-      strongElements.forEach((strong) => {
-        if (numberRegex.test(strong.textContent)) {
-          strong.textContent = strong.textContent.replace(
-            numberRegex,
-            (match) => formatNumberWithCommas(match)
-          );
-        }
-      });
-    });
-  }
-
-  // Helper function from number-commas/toggleFourDigitFormatting.js
-  function toggleFourDigitFormatting() {
-    const newValue = !GM_getValue("formatFourDigits", false);
-    GM_setValue("formatFourDigits", newValue);
-    updateMenuLabel(newValue);
-    location.reload();
-  }
-  function updateMenuLabel(formatFourDigits) {
-    const label = formatFourDigits
-      ? "Disable 4-digit formatting"
-      : "Enable 4-digit formatting";
-    GM_unregisterMenuCommand("Toggle 4-digit formatting");
-    GM_registerMenuCommand(label, toggleFourDigitFormatting);
-  }
-
-  // Helper function from notifications-customization/constants.js
-
-  // Time constants
-  const ONE_DAY = 24 * 60 * 60 * 1000;
-  const FETCH_DELAY = 500; // Delay between fetches in milliseconds
-
-  // Style constants
-  const REFERENCE_STYLE = {
-    display: "inline-block",
-    background: "rgba(23, 27, 36, 0.5)",
-    color: "#ffffff",
-    padding: "2px 4px",
-    borderRadius: "2px",
-    zIndex: "-1",
-    maxWidth: "98%",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-  };
-  const NOTIFICATION_BLOCK_STYLE = {
-    position: "relative",
-    paddingBottom: "20px", // Make room for the timestamp
-  };
-  const NOTIFICATION_TIME_STYLE = {
-    position: "absolute",
-    bottom: "2px",
-    right: "2px",
-    fontSize: "0.85em",
-    color: "#888",
-  };
-  const NOTIFICATIONS_TIME_STYLE = {
-    position: "absolute",
-    bottom: "2px",
-    left: "2px",
-    fontSize: "0.85em",
-    color: "#888",
-  };
-
   // UI function from showModal.js
+
   function showModal() {
     let modal = document.getElementById("mod-manager-modal");
     if (!modal) {
@@ -1385,6 +1073,7 @@
   }
 
   // UI function from hideModal.js
+
   function hideModal() {
     const modal = document.getElementById("mod-manager-modal");
     if (modal) {
@@ -1400,6 +1089,7 @@
   }
 
   // UI function from loadTabContent.js
+
   function loadTabContent(tabName) {
     const content = document.getElementById("mod-manager-content");
 
@@ -1424,6 +1114,7 @@
   }
 
   // UI function from renderInstalledScriptsTab.js
+
   function renderInstalledScriptsTab(container) {
     // Create the filter panel
     const filterPanel = document.createElement("div");
@@ -1456,14 +1147,6 @@
           <option value="all">All Scripts</option>
           <option value="with">With Settings</option>
           <option value="without">Without Settings</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="enabled-filter">Status</label>
-        <select id="enabled-filter">
-          <option value="all">All Scripts</option>
-          <option value="enabled">Enabled Only</option>
-          <option value="disabled">Disabled Only</option>
         </select>
       </div>
       <div class="filter-group">
@@ -1522,6 +1205,7 @@
     document.getElementById("toggle-filters").addEventListener("click", () => {
       const panel = document.getElementById("filter-panel-body");
       panel.classList.toggle("collapsed");
+
       const icon = document.getElementById("toggle-filters").querySelector("i");
       if (panel.classList.contains("collapsed")) {
         icon.className = "fa fa-chevron-down";
@@ -1533,6 +1217,7 @@
     document.getElementById("grid-view-btn").addEventListener("click", () => {
       document.getElementById("grid-view-btn").className = "btn btn-primary";
       document.getElementById("list-view-btn").className = "btn btn-secondary";
+
       const filteredScripts = filterScripts(MANIFEST.scripts);
       renderScriptsGridView(scriptsContainer, filteredScripts);
     });
@@ -1540,6 +1225,7 @@
     document.getElementById("list-view-btn").addEventListener("click", () => {
       document.getElementById("grid-view-btn").className = "btn btn-secondary";
       document.getElementById("list-view-btn").className = "btn btn-primary";
+
       const filteredScripts = filterScripts(MANIFEST.scripts);
       renderScriptsListView(scriptsContainer, filteredScripts);
     });
@@ -1563,7 +1249,6 @@
       document.getElementById("category-filter").value = "all";
       document.getElementById("phase-filter").value = "all";
       document.getElementById("has-settings-filter").value = "all";
-      document.getElementById("enabled-filter").value = "all";
       document.getElementById("search-filter").value = "";
       document.getElementById("sort-filter").value = "name-asc";
 
@@ -1581,6 +1266,7 @@
   }
 
   // UI function from renderForumPreferencesTab.js
+
   function renderForumPreferencesTab(container) {
     container.innerHTML += `<h2>Forum Preferences</h2>`;
 
@@ -1625,6 +1311,7 @@
   }
 
   // UI function from renderSettingsTab.js
+
   function renderSettingsTab(container) {
     container.innerHTML += `
     <h2>Global Settings</h2>
@@ -1738,6 +1425,7 @@
   }
 
   // UI function from renderThreadsSubtab.js
+
   function renderThreadsSubtab(container) {
     container.innerHTML = `
     <div class="wip-banner">
@@ -1787,6 +1475,7 @@
   }
 
   // UI function from renderUsersSubtab.js
+
   function renderUsersSubtab(container) {
     container.innerHTML = `
     <div class="wip-banner">
@@ -1833,6 +1522,7 @@
   }
 
   // UI function from showScriptSettings.js
+
   function showScriptSettings(script) {
     // Create modal if it doesn't exist
     let modal = document.getElementById("script-settings-modal");
@@ -1917,6 +1607,7 @@
   }
 
   // UI function from renderScriptSettingsContent.js
+
   function renderScriptSettingsContent(script) {
     if (!script.settings || script.settings.length === 0) {
       return "";
@@ -1942,6 +1633,7 @@
   }
 
   // UI function from renderScriptsGridView.js
+
   function renderScriptsGridView(container, scripts) {
     if (scripts.length === 0) {
       container.innerHTML = `
@@ -1955,6 +1647,7 @@
     `;
       return;
     }
+
     const grid = document.createElement("div");
     grid.className = "script-grid";
 
@@ -1987,13 +1680,6 @@
             )}
           </div>
           <div class="script-card-actions">
-            <button class="btn ${
-              isScriptEnabled(script.id) ? "btn-danger" : "btn-success"
-            } btn-small toggle-script" data-script-id="${script.id}">
-              <i class="fa ${
-                isScriptEnabled(script.id) ? "fa-ban" : "fa-check"
-              }"></i> ${isScriptEnabled(script.id) ? "Disable" : "Enable"}
-            </button>
             <button class="btn btn-primary btn-small view-settings" data-script-id="${
               script.id
             }">
@@ -2020,30 +1706,10 @@
         }
       });
     });
-
-    // Add event listeners for toggle script buttons
-    document.querySelectorAll(".toggle-script").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const scriptId = btn.dataset.scriptId;
-        const newState = toggleScriptEnabled(scriptId);
-
-        // Update button state
-        if (newState) {
-          // Script is now enabled
-          btn.classList.remove("btn-success");
-          btn.classList.add("btn-danger");
-          btn.innerHTML = '<i class="fa fa-ban"></i> Disable';
-        } else {
-          // Script is now disabled
-          btn.classList.remove("btn-danger");
-          btn.classList.add("btn-success");
-          btn.innerHTML = '<i class="fa fa-check"></i> Enable';
-        }
-      });
-    });
   }
 
   // UI function from renderScriptsListView.js
+
   function renderScriptsListView(container, scripts) {
     if (scripts.length === 0) {
       container.innerHTML = `
@@ -2057,13 +1723,13 @@
     `;
       return;
     }
+
     const table = document.createElement("table");
     table.className = "data-table";
 
     table.innerHTML = `
     <thead>
       <tr>
-        <th>Status</th>
         <th>Name</th>
         <th>Version</th>
         <th>Category</th>
@@ -2078,21 +1744,6 @@
         .map(
           (script) => `
         <tr>
-          <td>
-            <button class="btn btn-icon toggle-script" data-script-id="${
-              script.id
-            }" title="${
-            isScriptEnabled(script.id)
-              ? "Enabled (click to disable)"
-              : "Disabled (click to enable)"
-          }">
-              <i class="fa ${
-                isScriptEnabled(script.id)
-                  ? "fa-toggle-on text-success"
-                  : "fa-toggle-off text-muted"
-              }" style="font-size: 1.5em;"></i>
-            </button>
-          </td>
           <td><strong>${script.name}</strong></td>
           <td>v${script.version}</td>
           <td>${script.category || "Uncategorized"}</td>
@@ -2130,35 +1781,10 @@
         }
       });
     });
-
-    // Add event listeners for toggle script buttons
-    document.querySelectorAll(".toggle-script").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const scriptId = btn.dataset.scriptId;
-        const newState = toggleScriptEnabled(scriptId);
-
-        // Update icon state
-        const icon = btn.querySelector("i");
-        if (newState) {
-          // Script is now enabled
-          icon.classList.remove("fa-toggle-off");
-          icon.classList.remove("text-muted");
-          icon.classList.add("fa-toggle-on");
-          icon.classList.add("text-success");
-          btn.setAttribute("title", "Enabled (click to disable)");
-        } else {
-          // Script is now disabled
-          icon.classList.remove("fa-toggle-on");
-          icon.classList.remove("text-success");
-          icon.classList.add("fa-toggle-off");
-          icon.classList.add("text-muted");
-          btn.setAttribute("title", "Disabled (click to enable)");
-        }
-      });
-    });
   }
 
   // UI function from getCategoryOptions.js
+
   function getCategoryOptions() {
     const categories = new Set();
     MANIFEST.scripts.forEach((script) => {
@@ -2174,100 +1800,15 @@
   }
 
   // UI function from getExecutionPhaseOptions.js
+
   function getExecutionPhaseOptions() {
     return MANIFEST.schema.executionPhases
       .map((phase) => `<option value="${phase.id}">${phase.name}</option>`)
       .join("");
   }
 
-  // Script function from document-ready/number-commas/number-commas.js
-  function number_commas() {
-    // Get the setting for formatting 4-digit numbers
-    const formatFourDigits = GM_getValue("formatFourDigits", false);
-
-    // Run initial processing
-    processElements(formatFourDigits);
-    calculateForumStatistics();
-
-    // Set up observer for dynamic content
-    const observer = new MutationObserver(() => {
-      processElements(formatFourDigits);
-    });
-
-    // Start observing the document
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
-
-  // Script function from document-ready/notifications-customization/notifications-customization.js
-  function notifications_customization() {
-    // Check if notifications customization is enabled
-    const enableNotificationStyles = GM_getValue(
-      "enableNotificationStyles",
-      true
-    );
-    if (!enableNotificationStyles) return;
-
-    // Add CSS override to set max-width to 50px for .row .list-inner img
-    const styleElement = document.createElement("style");
-    styleElement.textContent = `
-    .row .list-inner img {
-      max-width: 50px !important;
-    }
-  `;
-    document.head.appendChild(styleElement);
-
-    // Initialize notifications customization
-    customizeNotificationPanel();
-    checkAndMarkNotifications();
-
-    // Special handling for notification page
-    if (window.location.href.includes("ucp.php?i=ucp_notifications")) {
-      customizeNotificationPage();
-    }
-
-    // Add debouncing to prevent rapid re-processing
-    let debounceTimer;
-    const debouncedCustomize = () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        customizeNotificationPanel();
-      }, 100);
-    };
-
-    // Observe DOM changes to apply customizations dynamically
-    const observer = new MutationObserver((mutations) => {
-      let shouldProcess = false;
-
-      for (const mutation of mutations) {
-        // Only process if new notification blocks are added
-        if (mutation.type === "childList") {
-          const hasNewNotifications = Array.from(mutation.addedNodes).some(
-            (node) => {
-              return (
-                node.nodeType === Node.ELEMENT_NODE &&
-                (node.classList?.contains("notification-block") ||
-                  node.querySelector?.(".notification-block"))
-              );
-            }
-          );
-          if (hasNewNotifications) {
-            shouldProcess = true;
-            break;
-          }
-        }
-      }
-      if (shouldProcess) {
-        debouncedCustomize();
-      }
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
-
-    // Run storage cleanup
-    cleanupStorage();
-  }
-
   // Initialization from init.js
+
   function init() {
     addStyles();
     GM_registerMenuCommand("RPGHQ Userscript Manager", showModal);
@@ -2281,11 +1822,13 @@
   }
 
   // Initialization from addMenuButton.js
+
   function addMenuButton() {
     const profileDropdown = document.querySelector(
       '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
     );
     if (!profileDropdown) return;
+
     const logoutButton = Array.from(
       profileDropdown.querySelectorAll("li")
     ).find((li) => {
@@ -2294,7 +1837,9 @@
         li.querySelector('a[title="Logout"]')
       );
     });
+
     if (!logoutButton) return;
+
     const userscriptsButton = document.createElement("li");
     userscriptsButton.innerHTML = `
     <a href="#" title="View Userscripts" role="menuitem" style="font-size:0.9em;">
@@ -2308,41 +1853,6 @@
       showModal();
     });
   }
-
-  // Execute scripts by phase
-  document.addEventListener("DOMContentLoaded", function () {
-    // Execute document-ready scripts
-    if (isScriptEnabled("number-commas")) {
-      try {
-        number_commas();
-      } catch (e) {
-        console.error("Error executing number-commas:", e);
-      }
-    }
-    if (isScriptEnabled("notifications-customization")) {
-      try {
-        notifications_customization();
-      } catch (e) {
-        console.error("Error executing notifications-customization:", e);
-      }
-    }
-  });
-
-  // Execute document-start scripts
-
-  // Add handlers for other phases
-  window.addEventListener("load", function () {
-    // Execute document-loaded scripts
-  });
-
-  // Execute document-idle scripts after a short delay
-  window.addEventListener("load", function () {
-    setTimeout(function () {
-      // Execute document-idle scripts
-    }, 500);
-  });
-
-  // Setup handlers for custom event scripts
 
   // Run initialization
   init();

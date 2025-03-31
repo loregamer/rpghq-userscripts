@@ -2,7 +2,7 @@
  * Render the Threads sub-tab content
  * @param {HTMLElement} container - The container to render the content into
  */
-export function renderThreadsSubtab(container) {
+function renderThreadsSubtab(container) {
   container.innerHTML = `
     <div class="wip-banner">
       <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress
@@ -48,4 +48,9 @@ export function renderThreadsSubtab(container) {
       <strong>Note:</strong> This is a view-only display. Additional Thread preferences will be added in future updates.
     </div>
   `;
+}
+
+// Export the function
+if (typeof module !== 'undefined') {
+  module.exports = renderThreadsSubtab;
 }

@@ -1,7 +1,7 @@
 /**
  * Add CSS styles for the modal
  */
-export function addStyles() {
+function addStyles() {
   GM_addStyle(`
     /* Import Font Awesome */
     @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css');
@@ -458,24 +458,6 @@ export function addStyles() {
         background-color: #666;
     }
     
-    .btn-success {
-        background-color: var(--success-color);
-        color: white;
-    }
-    
-    .btn-success:hover {
-        background-color: #3d8b40;
-    }
-    
-    .btn-danger {
-        background-color: var(--danger-color);
-        color: white;
-    }
-    
-    .btn-danger:hover {
-        background-color: #d32f2f;
-    }
-    
     .btn-small {
         padding: 3px 8px;
         font-size: 0.8em;
@@ -600,32 +582,6 @@ export function addStyles() {
         font-weight: bold;
     }
     
-    /* Styles for toggle buttons */
-    .btn-icon {
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 5px;
-        text-align: center;
-        transition: all 0.2s ease;
-    }
-    
-    .btn-icon:hover {
-        opacity: 0.8;
-    }
-    
-    .btn-icon:focus {
-        outline: none;
-    }
-    
-    .text-success {
-        color: #28a745;
-    }
-    
-    .text-muted {
-        color: #6c757d;
-    }
-    
     /* Responsive adjustments */
     @media (max-width: 768px) {
         .script-grid {
@@ -640,15 +596,10 @@ export function addStyles() {
             width: 90%;
         }
     }
-    
-    /* Hide modal on ESC key */
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        const modal = document.getElementById('mod-manager-modal');
-        if (modal && modal.style.display === 'block') {
-          hideModal();
-        }
-      }
-    });
   `);
+}
+
+// Export the function
+if (typeof module !== 'undefined') {
+  module.exports = addStyles;
 }

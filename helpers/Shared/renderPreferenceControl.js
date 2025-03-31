@@ -3,32 +3,31 @@
  * @param {Object} preference - The preference object
  * @returns {string} - HTML for the preference control
  */
-export function renderPreferenceControl(preference) {
+function renderPreferenceControl(preference) {
   switch (preference.type) {
-    case "toggle":
+    case 'toggle':
       return `
         <label class="toggle-switch">
-          <input type="checkbox" ${preference.default ? "checked" : ""}>
+          <input type="checkbox" ${preference.default ? 'checked' : ''}>
           <span class="toggle-slider"></span>
         </label>
       `;
-    case "select":
+    case 'select':
       return `
         <select>
-          ${preference.options
-            .map(
-              (option) => `
-            <option ${
-              option === preference.default ? "selected" : ""
-            }>${option}</option>
-          `
-            )
-            .join("")}
+          ${preference.options.map(option => `
+            <option ${option === preference.default ? 'selected' : ''}>${option}</option>
+          `).join('')}
         </select>
       `;
     default:
       return `
-        <input type="text" value="${preference.default || ""}">
+        <input type="text" value="${preference.default || ''}">
       `;
   }
+}
+
+// Export the function
+if (typeof module !== 'undefined') {
+  module.exports = renderPreferenceControl;
 }

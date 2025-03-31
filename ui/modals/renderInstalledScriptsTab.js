@@ -2,7 +2,7 @@
  * Render the "Installed Scripts" tab content
  * @param {HTMLElement} container - The container to render into
  */
-export function renderInstalledScriptsTab(container) {
+function renderInstalledScriptsTab(container) {
   // Create the filter panel
   const filterPanel = document.createElement("div");
   filterPanel.className = "filter-panel";
@@ -37,14 +37,6 @@ export function renderInstalledScriptsTab(container) {
         </select>
       </div>
       <div class="filter-group">
-        <label for="enabled-filter">Status</label>
-        <select id="enabled-filter">
-          <option value="all">All Scripts</option>
-          <option value="enabled">Enabled Only</option>
-          <option value="disabled">Disabled Only</option>
-        </select>
-      </div>
-      <div class="filter-group">
         <label for="search-filter">Search</label>
         <input type="text" id="search-filter" placeholder="Script name or description...">
       </div>
@@ -69,7 +61,7 @@ export function renderInstalledScriptsTab(container) {
     </div>
   `;
   container.appendChild(filterPanel);
-
+  
   // Create the view options
   const viewOptions = document.createElement("div");
   viewOptions.className = "view-options";
@@ -87,20 +79,20 @@ export function renderInstalledScriptsTab(container) {
     </div>
   `;
   container.appendChild(viewOptions);
-
+  
   // Create the scripts container
   const scriptsContainer = document.createElement("div");
   scriptsContainer.id = "scripts-container";
   container.appendChild(scriptsContainer);
-
+  
   // Render scripts in grid view initially
   renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
-
+  
   // Add event listeners
   document.getElementById("toggle-filters").addEventListener("click", () => {
     const panel = document.getElementById("filter-panel-body");
     panel.classList.toggle("collapsed");
-
+    
     const icon = document.getElementById("toggle-filters").querySelector("i");
     if (panel.classList.contains("collapsed")) {
       icon.className = "fa fa-chevron-down";
@@ -108,51 +100,51 @@ export function renderInstalledScriptsTab(container) {
       icon.className = "fa fa-chevron-up";
     }
   });
-
+  
   document.getElementById("grid-view-btn").addEventListener("click", () => {
     document.getElementById("grid-view-btn").className = "btn btn-primary";
     document.getElementById("list-view-btn").className = "btn btn-secondary";
-
+    
     const filteredScripts = filterScripts(MANIFEST.scripts);
     renderScriptsGridView(scriptsContainer, filteredScripts);
   });
-
+  
   document.getElementById("list-view-btn").addEventListener("click", () => {
     document.getElementById("grid-view-btn").className = "btn btn-secondary";
     document.getElementById("list-view-btn").className = "btn btn-primary";
-
+    
     const filteredScripts = filterScripts(MANIFEST.scripts);
     renderScriptsListView(scriptsContainer, filteredScripts);
   });
-
+  
   document.getElementById("apply-filters").addEventListener("click", () => {
     const filteredScripts = filterScripts(MANIFEST.scripts);
-
+    
     // Use the active view to render
-    if (
-      document.getElementById("grid-view-btn").classList.contains("btn-primary")
-    ) {
+    if (document.getElementById("grid-view-btn").classList.contains("btn-primary")) {
       renderScriptsGridView(scriptsContainer, filteredScripts);
     } else {
       renderScriptsListView(scriptsContainer, filteredScripts);
     }
   });
-
+  
   document.getElementById("reset-filters").addEventListener("click", () => {
     document.getElementById("category-filter").value = "all";
     document.getElementById("phase-filter").value = "all";
     document.getElementById("has-settings-filter").value = "all";
-    document.getElementById("enabled-filter").value = "all";
     document.getElementById("search-filter").value = "";
     document.getElementById("sort-filter").value = "name-asc";
-
+    
     // Use the active view to render
-    if (
-      document.getElementById("grid-view-btn").classList.contains("btn-primary")
-    ) {
+    if (document.getElementById("grid-view-btn").classList.contains("btn-primary")) {
       renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
     } else {
       renderScriptsListView(scriptsContainer, MANIFEST.scripts);
     }
   });
+}
+
+// Export the function
+if (typeof module !== 'undefined') {
+  module.exports = renderInstalledScriptsTab;
 }

@@ -1,8 +1,63 @@
 /**
  * Hard-coded manifest - just for display purposes
  */
-export const MANIFEST = {
+const MANIFEST = {
   scripts: [
+    {
+      id: "notifications",
+      name: "Notifications Improved",
+      version: "1.1.0",
+      description:
+        "Adds reaction smileys to notifications and makes them formatted better",
+      filename: "notifications.js",
+      matches: ["https://rpghq.org/forums/*"],
+      executionPhase: "document-ready",
+      category: "Aesthetic",
+      image: "https://f.rpghq.org/rso7uNB6S4H9.png",
+      settings: [],
+    },
+    {
+      id: "bbcode",
+      name: "BBCode Highlighter",
+      version: "1.1.0",
+      description:
+        "Adds reaction smileys to notifications and makes them formatted better",
+      filename: "bbcode.js",
+      matches: [
+        "https://rpghq.org/forums/posting.php?mode=post*",
+        "https://rpghq.org/forums/posting.php?mode=quote*",
+        "https://rpghq.org/forums/posting.php?mode=reply*",
+        "https://rpghq.org/forums/posting.php?mode=edit*",
+      ],
+      executionPhase: "document-ready",
+      category: "Aesthetic",
+      image: "https://f.rpghq.org/bEm69Td9mEGU.png?n=pasted-file.png",
+      settings: [],
+    },
+    {
+      id: "ignore-threads",
+      name: "Ignore Threads",
+      version: "1.0.0",
+      description: "Ignore threads",
+      filename: "ignore-threads.js",
+      matches: ["https://rpghq.org/forums/*"],
+      executionPhase: "document-start",
+      category: "Iggy Stuff",
+      image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+      settings: [],
+    },
+    {
+      id: "ignore-users",
+      name: "Ignore Users",
+      version: "1.0.0",
+      description: "(Actually) ignore users",
+      filename: "ignore-users.js",
+      matches: ["https://rpghq.org/forums/*"],
+      executionPhase: "document-start",
+      category: "Iggy Stuff",
+      image: "https://f.rpghq.org/v4iqrprFCWq0.png?n=pasted-file.png",
+      settings: [],
+    },
     {
       id: "number-commas",
       name: "Commas on Numbers",
@@ -25,23 +80,40 @@ export const MANIFEST = {
       ],
     },
     {
-      id: "notifications-customization",
-      name: "RPGHQ Notifications Customization",
-      version: "4.5.0",
-      description: "Customize RPGHQ notifications display with enhanced reactions, better formatting, and automatic marking",
-      filename: "notifications-customization.js",
-      matches: ["https://rpghq.org/*/*"],
+      id: "pin-threads",
+      name: "Pin Threads",
+      version: "1.0.0",
+      description: "Adds a pin button to the forum",
+      filename: "pin-threads.js",
+      matches: ["https://rpghq.org/forums/index.php/*"],
       executionPhase: "document-ready",
-      category: "UI Enhancement",
-      settings: [
-        {
-          id: "enableNotificationStyles",
-          label: "Enable Notification Styling",
-          description: "Apply custom styles to notifications",
-          type: "boolean",
-          default: true
-        }
-      ],
+      category: "Utility",
+      image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+      settings: [],
+    },
+    {
+      id: "member-search",
+      name: "Member Search Button",
+      version: "1.0.0",
+      description: "Adds a member search button to the forum",
+      filename: "member-search.js",
+      matches: ["https://rpghq.org/forums/*"],
+      executionPhase: "document-ready",
+      category: "Utility",
+      image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+      settings: [],
+    },
+    {
+      id: "random-topic",
+      name: "Random Topic Button",
+      version: "1.0.0",
+      description: "Adds a random topic button to the forum",
+      filename: "random-topic.js",
+      matches: ["https://rpghq.org/forums/*"],
+      executionPhase: "document-ready",
+      category: "Utility",
+      image: "https://f.rpghq.org/nZiGcejzrfWJ.png?n=pasted-file.png",
+      settings: [],
     },
   ],
   schema: {
@@ -76,3 +148,8 @@ export const MANIFEST = {
     ],
   },
 };
+
+// Export the object if in Node.js environment
+if (typeof module !== 'undefined') {
+  module.exports = MANIFEST;
+}
