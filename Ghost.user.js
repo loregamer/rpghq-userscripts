@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.13.1
+// @version      5.13.2
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -165,13 +165,6 @@
     html body .bg1.ghosted-by-author,
     html body .bg2.ghosted-by-author {
       background-color: var(--ghost-author-highlight, rgba(255, 0, 0, 0.1)) !important;
-    }
-
-    html body .ghosted-by-topic,
-    html body li.row.ghosted-by-topic,
-    html body .bg1.ghosted-by-topic,
-    html body .bg2.ghosted-by-topic {
-      background-color: var(--ghost-topic-highlight, rgba(255, 165, 0, 0.1)) !important;
     }
 
     html body .ghosted-by-content,
@@ -1108,13 +1101,23 @@
     if (hasGhostedClass) {
       // If it's authored by a ghosted user, add both classes
       if (rowItem) {
-        rowItem.classList.add("ghosted-row", "ghosted-by-topic");
+        rowItem.classList.add("ghosted-row", "ghosted-by-content");
+        // Add asterisk to topic title
+        const topicTitle = rowItem.querySelector("a.topictitle");
+        if (topicTitle && !topicTitle.textContent.startsWith("*")) {
+          topicTitle.textContent = "*" + topicTitle.textContent;
+        }
         const lastpost = rowItem.querySelector("dd.lastpost");
         if (lastpost) {
-          lastpost.classList.add("ghosted-by-topic");
+          lastpost.classList.add("ghosted-by-content");
         }
       } else {
-        element.classList.add("ghosted-row", "ghosted-by-topic");
+        element.classList.add("ghosted-row", "ghosted-by-content");
+        // Add asterisk to topic title if it exists
+        const topicTitle = element.querySelector("a.topictitle");
+        if (topicTitle && !topicTitle.textContent.startsWith("*")) {
+          topicTitle.textContent = "*" + topicTitle.textContent;
+        }
       }
       return;
     }
@@ -1253,14 +1256,16 @@
       if (!row) return;
 
       // First check for author-name-* class
-      const authorNameClass = Array.from(row.classList).find(cls => cls.startsWith("author-name-"));
+      const authorNameClass = Array.from(row.classList).find((cls) =>
+        cls.startsWith("author-name-")
+      );
       if (authorNameClass) {
         const username = authorNameClass.replace("author-name-", "");
         if (isUserIgnored(username) && !isNonNotificationUCP()) {
-          row.classList.add("ghosted-row", "ghosted-by-topic");
+          row.classList.add("ghosted-row", "ghosted-by-content");
           const lastpost = row.querySelector("dd.lastpost");
           if (lastpost) {
-            lastpost.classList.add("ghosted-by-topic");
+            lastpost.classList.add("ghosted-by-content");
           }
           return;
         }
@@ -1283,6 +1288,12 @@
       // Get the lastpost cell
       const lastpostCell = row.querySelector("dd.lastpost");
       if (!lastpostCell) return;
+
+      // Get the topic title and add asterisk if not already present
+      const topicTitle = row.querySelector("a.topictitle");
+      if (topicTitle && !topicTitle.textContent.startsWith("*")) {
+        topicTitle.textContent = "*" + topicTitle.textContent;
+      }
 
       // Get the author link in the lastpost cell
       const authorLink = lastpostCell.querySelector(
@@ -2923,12 +2934,12 @@
     resetSettingsBtn.addEventListener("click", () => {
       if (confirm("Reset all settings to default values?")) {
         const defaultConfig = {
-        authorHighlightColor: "rgba(255, 0, 0, 0.1)",
-        topicHighlightColor: "rgba(255, 165, 0, 0.1)",
-        contentHighlightColor: "rgba(255, 128, 0, 0.1)",
-        hideEntireRow: false,
+          authorHighlightColor: "rgba(255, 0, 0, 0.1)",
+          topicHighlightColor: "rgba(255, 165, 0, 0.1)",
+          contentHighlightColor: "rgba(255, 128, 0, 0.1)",
+          hideEntireRow: false,
           hideTopicCreations: true,
-    };
+        };
 
         // Update inputs
         authorColorInput.value = defaultConfig.authorHighlightColor;
