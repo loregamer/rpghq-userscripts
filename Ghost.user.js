@@ -54,6 +54,7 @@
     authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for ghosted-by-author
     contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for ghosted-by-content
     hideEntireRow: true, // Default: only hide lastpost, not entire row
+    hideTopicCreations: true, // Default: hide rows with ghosted username in row class
   });
 
   // Set Oyster Sauce's username color
@@ -149,35 +150,34 @@
     /* -----------------------------------------------------------------
       4) Ghosted element styling - with increased specificity
       ----------------------------------------------------------------- */
-    /* Hiding functionality - only linked to ghosted-row class */
-    html body .ghosted-row,
-    #page-body .ghosted-row,
-    ul.topiclist li.ghosted-row,
+    /* Simple hiding for ghosted-row */
     .ghosted-row {
       display: none !important;
     }
 
-    html body .ghosted-row.show,
-    #page-body .ghosted-row.show,
-    ul.topiclist li.ghosted-row.show,
     .ghosted-row.show {
       display: block !important;
     }
 
-    /* Highlighting colors - independent class purely for colorizing */
+    /* Background colors for highlighting with higher specificity to override site defaults */
     html body .ghosted-by-author,
-    #page-body .ghosted-by-author,
-    ul.topiclist li.ghosted-by-author,
-    dd.lastpost.ghosted-by-author,
-    .ghosted-by-author {
+    html body li.row.ghosted-by-author,
+    html body .bg1.ghosted-by-author,
+    html body .bg2.ghosted-by-author {
       background-color: var(--ghost-author-highlight, rgba(255, 0, 0, 0.1)) !important;
     }
 
+    html body .ghosted-by-topic,
+    html body li.row.ghosted-by-topic,
+    html body .bg1.ghosted-by-topic,
+    html body .bg2.ghosted-by-topic {
+      background-color: var(--ghost-topic-highlight, rgba(255, 165, 0, 0.1)) !important;
+    }
+
     html body .ghosted-by-content,
-    #page-body .ghosted-by-content,
-    ul.topiclist li.ghosted-by-content,
-    dd.lastpost.ghosted-by-content,
-    .ghosted-by-content {
+    html body li.row.ghosted-by-content,
+    html body .bg1.ghosted-by-content,
+    html body .bg2.ghosted-by-content {
       background-color: var(--ghost-content-highlight, rgba(255, 128, 0, 0.1)) !important;
     }
     .topiclist.forums .ghosted-row:not(.show) dd.lastpost,
@@ -1091,19 +1091,30 @@
     const rowItem = element.closest("li.row");
     const hasGhostedClass =
       rowItem &&
-      Array.from(rowItem.classList).some(
-        (cls) =>
-          cls.startsWith("author-name-") &&
-          isUserIgnored(cls.replace("author-name-", "")) &&
-          !isNonNotificationUCP()
-      );
+      Array.from(rowItem.classList).some((cls) => {
+        // Check for author-name-* class
+        if (cls.startsWith("author-name-")) {
+          const username = cls.replace("author-name-", "");
+          return isUserIgnored(username) && !isNonNotificationUCP();
+        }
+        // Check for row-by-* class
+        if (cls.startsWith("row-by-")) {
+          const username = cls.replace("row-by-", "");
+          return isUserIgnored(username) && !isNonNotificationUCP();
+        }
+        return false;
+      });
 
     if (hasGhostedClass) {
-      // If it's authored by a ghosted user, only add ghosted-by-author
+      // If it's authored by a ghosted user, add both classes
       if (rowItem) {
-        lastpostCell.classList.add("ghosted-by-author");
+        rowItem.classList.add("ghosted-row", "ghosted-by-topic");
+        const lastpost = rowItem.querySelector("dd.lastpost");
+        if (lastpost) {
+          lastpost.classList.add("ghosted-by-topic");
+        }
       } else {
-        element.classList.add("ghosted-row", "ghosted-by-author");
+        element.classList.add("ghosted-row", "ghosted-by-topic");
       }
       return;
     }
@@ -1240,6 +1251,20 @@
     rows.forEach((row) => {
       // Skip if not a valid row
       if (!row) return;
+
+      // First check for author-name-* class
+      const authorNameClass = Array.from(row.classList).find(cls => cls.startsWith("author-name-"));
+      if (authorNameClass) {
+        const username = authorNameClass.replace("author-name-", "");
+        if (isUserIgnored(username) && !isNonNotificationUCP()) {
+          row.classList.add("ghosted-row", "ghosted-by-topic");
+          const lastpost = row.querySelector("dd.lastpost");
+          if (lastpost) {
+            lastpost.classList.add("ghosted-by-topic");
+          }
+          return;
+        }
+      }
 
       // Check for special forums we don't want to process
       const forumLinks = row.querySelectorAll(
@@ -2758,6 +2783,14 @@
       </div>
 
       <div class="ghost-settings-row">
+        <label class="ghost-settings-label">Topic Highlight Color:</label>
+        <input type="text" class="ghost-settings-input ghost-topic-color"
+               value="${config.topicHighlightColor}">
+        <div class="ghost-settings-preview topic-preview"
+             style="background-color: ${config.topicHighlightColor};"></div>
+      </div>
+
+      <div class="ghost-settings-row">
         <label class="ghost-settings-label">Content Highlight Color:</label>
         <input type="text" class="ghost-settings-input ghost-content-color"
                value="${config.contentHighlightColor}">
@@ -2772,6 +2805,16 @@
                }>
         <label class="ghost-settings-label" for="ghost-hide-entire-row">
           Hide entire row (not just lastpost) for topics and recent posts
+        </label>
+      </div>
+
+      <div class="ghost-settings-row" style="margin-left: 20px;">
+        <input type="checkbox" class="ghost-settings-checkbox ghost-hide-topic-creations"
+               id="ghost-hide-topic-creations" ${
+                 config.hideTopicCreations ? "checked" : ""
+               }>
+        <label class="ghost-settings-label" for="ghost-hide-topic-creations">
+          Hide topics created by ghosted users
         </label>
       </div>
 
@@ -2856,8 +2899,11 @@
     saveSettingsBtn.addEventListener("click", () => {
       const newConfig = {
         authorHighlightColor: authorColorInput.value,
+        topicHighlightColor: popup.querySelector(".ghost-topic-color").value,
         contentHighlightColor: contentColorInput.value,
         hideEntireRow: popup.querySelector(".ghost-hide-entire-row").checked,
+        hideTopicCreations: popup.querySelector(".ghost-hide-topic-creations")
+          .checked,
       };
 
       // Save to GM storage
@@ -2877,16 +2923,20 @@
     resetSettingsBtn.addEventListener("click", () => {
       if (confirm("Reset all settings to default values?")) {
         const defaultConfig = {
-          authorHighlightColor: "rgba(255, 0, 0, 0.1)",
-          contentHighlightColor: "rgba(255, 128, 0, 0.1)",
-          hideEntireRow: false,
-        };
+        authorHighlightColor: "rgba(255, 0, 0, 0.1)",
+        topicHighlightColor: "rgba(255, 165, 0, 0.1)",
+        contentHighlightColor: "rgba(255, 128, 0, 0.1)",
+        hideEntireRow: false,
+          hideTopicCreations: true,
+    };
 
         // Update inputs
         authorColorInput.value = defaultConfig.authorHighlightColor;
         contentColorInput.value = defaultConfig.contentHighlightColor;
         popup.querySelector(".ghost-hide-entire-row").checked =
           defaultConfig.hideEntireRow;
+        popup.querySelector(".ghost-hide-topic-creations").checked =
+          defaultConfig.hideTopicCreations;
 
         // Update previews
         authorPreview.style.backgroundColor =
@@ -3224,6 +3274,10 @@
     document.documentElement.style.setProperty(
       "--ghost-author-highlight",
       config.authorHighlightColor
+    );
+    document.documentElement.style.setProperty(
+      "--ghost-topic-highlight",
+      config.topicHighlightColor
     );
     document.documentElement.style.setProperty(
       "--ghost-content-highlight",
