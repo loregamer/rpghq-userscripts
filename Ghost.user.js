@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.13.2
+// @version      5.14
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1289,11 +1289,8 @@
       const lastpostCell = row.querySelector("dd.lastpost");
       if (!lastpostCell) return;
 
-      // Get the topic title and add asterisk if not already present
+      // Get the topic title (without adding asterisk to all titles)
       const topicTitle = row.querySelector("a.topictitle");
-      if (topicTitle && !topicTitle.textContent.startsWith("*")) {
-        topicTitle.textContent = "*" + topicTitle.textContent;
-      }
 
       // Get the author link in the lastpost cell
       const authorLink = lastpostCell.querySelector(
