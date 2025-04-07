@@ -1861,23 +1861,27 @@
   }
 
   function processTopicPoster(poster) {
+    // Check if this is a standard poster element with username element
     const usernameEl = poster.querySelector(".username, .username-coloured");
-    if (!usernameEl) return;
-    if (
-      isUserIgnored(usernameEl.textContent.trim()) &&
-      !isNonNotificationUCP()
-    ) {
-      const masWrap = poster.querySelector(".mas-wrap");
-      if (masWrap) {
-        masWrap.innerHTML = `
-          <div class="mas-avatar" style="width: 20px; height: 20px;">
-            <img class="avatar" src="./download/file.php?avatar=58.png" width="102" height="111" alt="User avatar">
-          </div>
-          <div class="mas-username">
-            <a href="https://rpghq.org/forums/memberlist.php?mode=viewprofile&amp;u=58-rusty-shackleford" style="color: #ff6e6e;" class="username-coloured">rusty_shackleford</a>
-          </div>
-        `;
+    if (usernameEl) {
+      if (
+        isUserIgnored(usernameEl.textContent.trim()) &&
+        !isNonNotificationUCP()
+      ) {
+        // Handle the case with mas-wrap (original functionality)
+        const masWrap = poster.querySelector(".mas-wrap");
+        if (masWrap) {
+          masWrap.innerHTML = `
+            <div class="mas-avatar" style="width: 20px; height: 20px;">
+              <img class="avatar" src="./download/file.php?avatar=58.png" width="102" height="111" alt="User avatar">
+            </div>
+            <div class="mas-username">
+              <a href="https://rpghq.org/forums/memberlist.php?mode=viewprofile&amp;u=58-rusty-shackleford" style="color: #ff6e6e;" class="username-coloured">rusty_shackleford</a>
+            </div>
+          `;
+        }
       }
+      return;
     }
   }
 
@@ -2076,6 +2080,33 @@
     setupPollRefreshDetection();
 
     document.querySelectorAll(".topic-poster").forEach(processTopicPoster);
+
+    // Check for topic list rows: Process ALL responsive-hide left-box elements
+    const leftBoxes = document.querySelectorAll(".left-box");
+    leftBoxes.forEach((leftBox) => {
+      const usernameLink = leftBox.querySelector(
+        ".username, .username-coloured"
+      );
+      if (
+        usernameLink &&
+        isUserIgnored(usernameLink.textContent.trim()) &&
+        !isNonNotificationUCP()
+      ) {
+        // Remove only the 'by' text, the '»' character, and username link, not the entire box
+        Array.from(leftBox.childNodes).forEach(node => {
+          // Remove text nodes containing 'by' or '»'
+          if (node.nodeType === Node.TEXT_NODE && 
+              (node.textContent.trim().toLowerCase().includes('by') || 
+               node.textContent.includes('»'))) {
+            node.remove();
+          }
+        });
+        // Remove the username link
+        if (usernameLink) {
+          usernameLink.remove();
+        }
+      }
+    });
 
     document
       .querySelectorAll(".post:not(.content-processed)")
