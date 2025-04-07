@@ -1099,8 +1099,15 @@
       });
 
     if (hasGhostedClass) {
-      // If it's authored by a ghosted user, add both classes
+      // If it's authored by a ghosted user
       if (rowItem) {
+        // If hideTopicCreations is true, delete the entire row
+        if (config.hideTopicCreations) {
+          rowItem.remove();
+          return;
+        }
+
+        // Otherwise just add classes
         rowItem.classList.add("ghosted-row", "ghosted-by-content");
         // Add asterisk to topic title
         const topicTitle = rowItem.querySelector("a.topictitle");
@@ -1112,6 +1119,16 @@
           lastpost.classList.add("ghosted-by-content");
         }
       } else {
+        // If applied to a non-row element
+        if (config.hideTopicCreations) {
+          // Try to find a parent row to remove
+          const parentRow = element.closest("li.row");
+          if (parentRow) {
+            parentRow.remove();
+            return;
+          }
+        }
+
         element.classList.add("ghosted-row", "ghosted-by-content");
         // Add asterisk to topic title if it exists
         const topicTitle = element.querySelector("a.topictitle");
@@ -1860,29 +1877,64 @@
     post.classList.add("content-processed");
   }
 
-  function processTopicPoster(poster) {
-    // Check if this is a standard poster element with username element
-    const usernameEl = poster.querySelector(".username, .username-coloured");
-    if (usernameEl) {
-      if (
-        isUserIgnored(usernameEl.textContent.trim()) &&
-        !isNonNotificationUCP()
-      ) {
-        // Handle the case with mas-wrap (original functionality)
-        const masWrap = poster.querySelector(".mas-wrap");
-        if (masWrap) {
-          masWrap.innerHTML = `
-            <div class="mas-avatar" style="width: 20px; height: 20px;">
-              <img class="avatar" src="./download/file.php?avatar=58.png" width="102" height="111" alt="User avatar">
-            </div>
-            <div class="mas-username">
-              <a href="https://rpghq.org/forums/memberlist.php?mode=viewprofile&amp;u=58-rusty-shackleford" style="color: #ff6e6e;" class="username-coloured">rusty_shackleford</a>
-            </div>
-          `;
+  function processTopicPosters() {
+    // Get the latest ignoredUsers value
+    const currentIgnoredUsers = GM_getValue("ignoredUsers", {});
+
+    // Use correct selector for rows - the "row" is a class, not a tag
+    const rows = document.querySelectorAll(".row");
+
+    rows.forEach((row) => {
+      const leftBox = row.querySelector(".responsive-hide");
+      if (!leftBox) return;
+      const masWrapElements = leftBox.querySelector(".mas-wrap");
+
+      masWrapElements.forEach((element) => {
+        // Check if the element contains any ignored username
+        const elementText = element.textContent || "";
+        let containsGhostedUser = false;
+
+        // Check for any ignored username in the text
+        Object.values(currentIgnoredUsers).forEach((username) => {
+          if (elementText.toLowerCase().includes(username.toLowerCase())) {
+            containsGhostedUser = true;
+          }
+        });
+
+        if (containsGhostedUser) {
+          if (config.hideTopicCreations) {
+            // If hideTopicCreations is true, remove the entire row
+            row.remove();
+          } else {
+            // Otherwise, try to remove "by [author]" text
+            const byTextRegex = /\sby\s+[^\s]+/;
+            if (byTextRegex.test(elementText)) {
+              // Find and remove the text node or element containing "by [author]"
+              const textNodes = Array.from(element.childNodes).filter(
+                (node) =>
+                  node.nodeType === Node.TEXT_NODE &&
+                  byTextRegex.test(node.textContent)
+              );
+
+              if (textNodes.length > 0) {
+                // If found in a text node, replace it
+                textNodes.forEach((node) => {
+                  node.textContent = node.textContent.replace(byTextRegex, "");
+                });
+              } else {
+                // If it's in a child element, try to find and remove that
+                const childElements = element.querySelectorAll("*");
+                childElements.forEach((child) => {
+                  if (byTextRegex.test(child.textContent)) {
+                    child.remove();
+                  }
+                });
+              }
+            }
+          }
         }
-      }
-      return;
-    }
+      });
+    });
   }
 
   function processPoll(poll) {
@@ -2079,7 +2131,10 @@
 
     setupPollRefreshDetection();
 
-    document.querySelectorAll(".topic-poster").forEach(processTopicPoster);
+    processTopicPosters();
+
+    // Remove elements with ghosted author names
+    removeGhostedAuthorElements();
 
     // Check for topic list rows: Process ALL responsive-hide left-box elements
     const leftBoxes = document.querySelectorAll(".left-box");
@@ -2092,12 +2147,23 @@
         isUserIgnored(usernameLink.textContent.trim()) &&
         !isNonNotificationUCP()
       ) {
+        // If hideTopicCreations is true, delete the entire row
+        if (config.hideTopicCreations) {
+          const row = leftBox.closest("li.row");
+          if (row) {
+            row.remove();
+            return;
+          }
+        }
+
         // Remove only the 'by' text, the '»' character, and username link, not the entire box
-        Array.from(leftBox.childNodes).forEach(node => {
+        Array.from(leftBox.childNodes).forEach((node) => {
           // Remove text nodes containing 'by' or '»'
-          if (node.nodeType === Node.TEXT_NODE && 
-              (node.textContent.trim().toLowerCase().includes('by') || 
-               node.textContent.includes('»'))) {
+          if (
+            node.nodeType === Node.TEXT_NODE &&
+            (node.textContent.trim().toLowerCase().includes("by") ||
+              node.textContent.includes("»"))
+          ) {
             node.remove();
           }
         });
@@ -2107,6 +2173,20 @@
         }
       }
     });
+
+    function removeGhostedAuthorElements() {
+      // Get all unique ghosted usernames
+      const ghostedUsernames = new Set(Object.values(ignoredUsers));
+
+      // Process each ghosted username
+      ghostedUsernames.forEach((username) => {
+        // Find and remove all elements with this class
+        const selector = `.author-name-${username}`;
+        document.querySelectorAll(selector).forEach((element) => {
+          element.remove();
+        });
+      });
+    }
 
     document
       .querySelectorAll(".post:not(.content-processed)")
