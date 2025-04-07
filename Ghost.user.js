@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.14.1
+// @version      5.14.2
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1887,7 +1887,7 @@
     rows.forEach((row) => {
       const leftBox = row.querySelector(".responsive-hide");
       if (!leftBox) return;
-      const masWrapElements = leftBox.querySelector(".mas-wrap");
+      const masWrapElements = leftBox.querySelectorAll(".mas-wrap");
 
       masWrapElements.forEach((element) => {
         // Check if the element contains any ignored username
