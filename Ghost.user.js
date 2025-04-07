@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.14.2
+// @version      5.14.3
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -44,7 +44,7 @@
   // 1) DATA LOAD + INITIAL STYLES + CONFIG
   // ---------------------------------------------------------------------
 
-  const ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => lowercased username
+  const ignoredUsers = GM_getValue("ignoredUsers", {}); // userId => username (newer entries preserve case, older entries may be lowercase)
   const replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   const postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
   const userColors = GM_getValue("userColors", {}); // username => color
@@ -907,8 +907,15 @@
   function isUserIgnored(usernameOrId) {
     if (ignoredUsers.hasOwnProperty(usernameOrId)) return true;
     const cleanedUsername = cleanUsername(usernameOrId);
+
+    // Check for exact matches (new format) first
+    if (Object.values(ignoredUsers).includes(cleanedUsername)) return true;
+
+    // Then check for case-insensitive matches (legacy format)
     const lower = cleanedUsername.toLowerCase();
-    return Object.values(ignoredUsers).includes(lower);
+    return Object.values(ignoredUsers).some(
+      (name) => name.toLowerCase() === lower
+    );
   }
 
   function getUserIdFromUrl() {
@@ -921,7 +928,7 @@
     if (ignoredUsers.hasOwnProperty(userId)) {
       delete ignoredUsers[userId];
     } else {
-      ignoredUsers[userId] = cleanedUsername.toLowerCase();
+      ignoredUsers[userId] = cleanedUsername;
     }
     GM_setValue("ignoredUsers", ignoredUsers);
   }
