@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Thread Ignorer
 // @namespace    http://tampermonkey.net/
-// @version      3.6.2
+// @version      3.6.3
 // @description  Add ignore/unignore button to threads on rpghq.org and hide ignored threads with an improved review overlay
 // @match        https://rpghq.org/forums/*
 // @match        https://rpghq.org/forums/memberlist.php*
@@ -43,6 +43,7 @@ SOFTWARE.
   "use strict";
 
   const I_Want_To_Devlishly_Ignore_Many_Many_Threads = false;
+  const I_Want_My_Threads_Not_Auto_Marked_As_Read_So_Rusty_Cant_See = false;
 
   let ignoredThreads = GM_getValue("ignoredThreads", {});
   let ignoreModeActive = GM_getValue("ignoreModeActive", false);
@@ -60,6 +61,8 @@ SOFTWARE.
   document.documentElement.appendChild(style);
 
   function shouldMarkAsRead() {
+    if (I_Want_My_Threads_Not_Auto_Marked_As_Read_So_Rusty_Cant_See)
+      return false;
     const url = window.location.href;
     return (
       url.includes("index.php") ||
