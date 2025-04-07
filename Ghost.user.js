@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.14.3
+// @version      5.14.4
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -18,6 +18,10 @@
 
 (function () {
   "use strict";
+
+  // Store original title and set loading message
+  window.originalTitle = document.title;
+  document.title = "Loading...";
 
   // Inject a small inline script to override the page's activeNotifications update interval.
   const overrideCode = `(${function () {
@@ -3687,23 +3691,40 @@
   }
 
   /**
-   * Clean notification numbers from the tab title
+   * Clean notification numbers from the tab title and format it with [HQ] prefix
    */
   function cleanTitleNotifications() {
-    // If title has notification count, reset it
-    if (/^\(\d+\)\s+/.test(document.title)) {
-      document.title =
-        window.originalTitle || document.title.replace(/^\(\d+\)\s+/, "");
+    // Handle the "Loading..." state specially
+    if (document.title === "Loading...") {
+      // Format originalTitle and set it
+      let formattedTitle = window.originalTitle.replace(/^.*RPGHQ/, "RPGHQ");
+      document.title = formattedTitle;
+      return;
     }
+
+    let newTitle = document.title;
+
+    // Remove notification count if present
+    if (/^\(\d+\)\s+/.test(newTitle)) {
+      newTitle = newTitle.replace(/^\(\d+\)\s+/, "");
+    }
+
+    // Replace RPGHQ and everything before it with [HQ]
+    newTitle = newTitle.replace(/^.*RPGHQ/, "RPGHQ");
+
+    // Update the title
+    document.title = newTitle;
   }
 
   // Main initialization
   document.addEventListener("DOMContentLoaded", async function () {
+    // Immediately call to change from "Loading..." to formatted title
+    cleanTitleNotifications();
     setupPollRefreshDetection();
 
     // Remove zero badges on page load
     removeZeroBadges();
-    cleanTitleNotifications;
+    cleanTitleNotifications();
 
     // Also check periodically for any dynamically added zero badges
     setInterval(removeZeroBadges, 150);
