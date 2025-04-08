@@ -1,7 +1,7 @@
 /**
  * Initialize the userscript
  */
-function init() {
+export function init() {
   addStyles();
   GM_registerMenuCommand("RPGHQ Userscript Manager", showModal);
   

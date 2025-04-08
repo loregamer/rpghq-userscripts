@@ -2,14 +2,19 @@
   "name": "rpghq-userscript-manager",
   "version": "3.0.2",
   "description": "RPGHQ Userscript Manager",
-  "main": "build.js",
+
   "scripts": {
-    "build": "node build.js",
-    "watch": "nodemon --watch './**/*.js' --ignore 'rpghq-userscript-manager.user.js' --exec 'npm run build'"
+    "build": "rollup -c",
+    "watch": "rollup -c -w"
   },
   "author": "loregamer",
   "license": "MIT",
   "devDependencies": {
-    "nodemon": "^2.0.22"
-  }
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "nodemon": "^2.0.22",
+    "rollup": "^4.39.0",
+    "rollup-plugin-userscript": "^0.3.7"
+  },
+  "dependencies": {}
 }
