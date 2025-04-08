@@ -6,7 +6,7 @@
 import {
   fetchReactions,
   fetchPostContent,
-} from "../../helpers/Notifications/API.js";
+} from "../helpers/API.js";
 import {
   removeBBCode,
   removeURLs,
@@ -15,7 +15,7 @@ import {
   extractFirstImageUrl,
   isSingleVideoTag,
   extractFirstVideoUrl,
-} from "../../helpers/Notifications/ContentParsing.js";
+} from "../helpers/ContentParsing.js";
 import {
   NOTIFICATION_BLOCK_STYLE,
   NOTIFICATION_TIME_STYLE,
@@ -31,10 +31,10 @@ import {
   COLOR_REPORT_CLOSED,
   COLOR_POST_APPROVAL,
   SUBTLE_TEXT_STYLE,
-} from "../../helpers/Notifications/Constants.js";
-import { createElement, applyStyle } from "../../helpers/Core/DOMUtils.js"; // Assuming DOM utility functions exist
-import { formatUsernames } from "../../helpers/Core/Formatting.js"; // Assuming username formatting exists
-import { Logger } from "../../helpers/Core/Logger.js";
+} from "../helpers/Constants.js";
+import { createElement, applyStyle } from "../../../shared/helpers/DOMUtils.js"; // Assuming DOM utility functions exist
+import { formatUsernames } from "../../../shared/helpers/Formatting.js"; // Assuming username formatting exists
+import { Logger } from "../../../shared/helpers/Logger.js";
 
 const log = new Logger("Notifications UI");
 

@@ -1,5 +1,5 @@
 import { extractPostIdFromUrl } from "./ContentParsing.js";
-import { Logger } from "../Core/Logger.js";
+import { Logger } from "../../../shared/helpers/Logger.js";
 
 const log = new Logger("Notifications Marker");
 
