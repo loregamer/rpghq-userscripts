@@ -3,6 +3,7 @@ import { showModal } from '../ui/modals/core/showModal.js';
 import { toggleModalWithInsertKey } from '../helpers/Core/ui/toggleModalWithInsertKey.js';
 import { addMenuButton } from './addMenuButton.js';
 import { initializeNotifications } from './NotificationsInit.js'; // Import the new initializer
+import { isScriptEnabled } from '../helpers/Core/settings/scriptState.js'; // Import state checker
 
 /**
  * Initialize the userscript
@@ -19,7 +20,9 @@ export function init() {
     document.addEventListener("DOMContentLoaded", addMenuButton);
   } else {
     addMenuButton();
-    // Initialize Notifications feature (matches document-ready)
-    initializeNotifications();
+    // Initialize Notifications feature (matches document-ready) if enabled
+    if (isScriptEnabled('notifications')) {
+      initializeNotifications();
+    }
   }
 }

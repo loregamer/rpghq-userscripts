@@ -654,84 +654,66 @@
         image: "https://f.rpghq.org/rso7uNB6S4H9.png",
         settings: [],
       },
-    ],
-    schema: {
-      executionPhases: [
-        {
-          id: "document-start",
-          name: "Document Start",
-          description: "Executes before DOM parsing begins",
-        },
-        {
-          id: "document-ready",
-          name: "Document Ready",
-          description:
-            "Executes when basic DOM is available but before resources are loaded",
-        },
-        {
-          id: "document-loaded",
-          name: "Document Loaded",
-          description: "Executes after page is fully loaded",
-        },
-        {
-          id: "document-idle",
-          name: "Document Idle",
-          description: "Executes after a short delay when page is idle",
-        },
-        {
-          id: "custom-event",
-          name: "Custom Event",
-          description: "Executes when a specific custom event is triggered",
-        },
-      ],
-    },
-  };
+    ]};
 
   /**
-   * Get unique categories for the filter dropdown
-   * @returns {string} - HTML options for categories
+   * @module scriptState
+   * @description Helper functions for managing the enabled/disabled state of scripts.
    */
-  function getCategoryOptions() {
-    const categories = new Set();
-    MANIFEST.scripts.forEach((script) => {
-      if (script.category) {
-        categories.add(script.category);
-      }
+
+  const SETTINGS_KEY_PREFIX = 'script_enabled_';
+
+  /**
+   * Gets the enabled state for a specific script. Defaults to true if not set.
+   * @param {string} scriptId - The ID of the script.
+   * @returns {boolean} - True if the script is enabled, false otherwise.
+   */
+  function isScriptEnabled(scriptId) {
+    // Default to enabled (true) if no setting is found
+    return GM_getValue(SETTINGS_KEY_PREFIX + scriptId, true);
+  }
+
+  /**
+   * Sets the enabled state for a specific script.
+   * @param {string} scriptId - The ID of the script.
+   * @param {boolean} isEnabled - The new state (true for enabled, false for disabled).
+   */
+  function setScriptEnabled(scriptId, isEnabled) {
+    GM_setValue(SETTINGS_KEY_PREFIX + scriptId, isEnabled);
+  }
+
+  /**
+   * Creates a toggle switch element for enabling/disabling a script.
+   * @param {string} scriptId - The ID of the script.
+   * @returns {HTMLElement} - The toggle switch element.
+   */
+  function createScriptToggle(scriptId) {
+    const label = document.createElement('label');
+    // Use the classes defined in addStyles.js
+    label.className = 'toggle-switch';
+
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = isScriptEnabled(scriptId);
+    input.dataset.scriptId = scriptId;
+
+    const slider = document.createElement('span');
+    // Use the classes defined in addStyles.js
+    slider.className = 'toggle-slider';
+
+    label.appendChild(input);
+    label.appendChild(slider);
+
+    // Add event listener to handle state changes
+    input.addEventListener('change', (event) => {
+      const scriptId = event.target.dataset.scriptId;
+      const isEnabled = event.target.checked;
+      setScriptEnabled(scriptId, isEnabled);
+      console.log(`Script '${scriptId}' ${isEnabled ? 'enabled' : 'disabled'}`);
+      // Optionally, add visual feedback or trigger other actions here
     });
 
-    return Array.from(categories)
-      .sort()
-      .map((category) => `<option value="${category}">${category}</option>`)
-      .join("");
-  }
-
-  /**
-   * Get execution phase options for the filter dropdown
-   * @returns {string} - HTML options for execution phases
-   */
-  function getExecutionPhaseOptions() {
-    return MANIFEST.schema.executionPhases
-      .map((phase) => `<option value="${phase.id}">${phase.name}</option>`)
-      .join("");
-  }
-
-  /**
-   * Get the user-friendly name for an execution phase
-   * @param {string} phase - The execution phase ID
-   * @returns {string} - User-friendly name for the phase
-   */
-  function getPhaseDisplayName(phase) {
-    if (!phase) return "Not specified";
-
-    const phaseMap = {
-      "document-start": "Document Start",
-      "document-ready": "Document Ready",
-      "document-loaded": "Document Loaded",
-      "document-idle": "Document Idle",
-      "custom-event": "Custom Event",
-    };
-
-    return phaseMap[phase] || phase;
+    return label;
   }
 
   /**
@@ -930,17 +912,15 @@
       <div class="script-card-content">
         <div class="script-card-header">
           <h3 class="script-card-title">${script.name}</h3>
+          <!-- Placeholder for the toggle switch -->
+          <div class="script-card-toggle" data-script-id="${script.id}"></div>
           <span class="script-card-version">v${script.version}</span>
         </div>
         <p class="script-card-description">${
           script.description || "No description available."
         }</p>
         <div class="script-card-footer">
-          <div class="script-card-phase">
-            <i class="fa fa-bolt"></i> ${getPhaseDisplayName(
-              script.executionPhase
-            )}
-          </div>
+          <!-- Execution phase removed -->
           <div class="script-card-actions">
             <button class="btn btn-primary btn-small view-settings" data-script-id="${
               script.id
@@ -957,6 +937,14 @@
 
     container.innerHTML = "";
     container.appendChild(grid);
+
+    // Add toggle switches after appending the grid to the DOM
+    document.querySelectorAll(".script-card-toggle").forEach((toggleContainer) => {
+      const scriptId = toggleContainer.dataset.scriptId;
+      if (scriptId) {
+        toggleContainer.appendChild(createScriptToggle(scriptId));
+      }
+    });
 
     // Add event listeners for settings buttons
     document.querySelectorAll(".view-settings").forEach((btn) => {
@@ -995,11 +983,12 @@
     table.innerHTML = `
     <thead>
       <tr>
+        <th>Enabled</th>
         <th>Name</th>
         <th>Version</th>
         <th>Category</th>
         <th>Description</th>
-        <th>Execution Phase</th>
+        <!-- Execution Phase removed -->
         <th>Settings</th>
         <th>Actions</th>
       </tr>
@@ -1009,11 +998,13 @@
         .map(
           (script) => `
         <tr>
+          <!-- Placeholder for the toggle switch -->
+          <td class="script-toggle-cell" data-script-id="${script.id}"></td>
           <td><strong>${script.name}</strong></td>
           <td>v${script.version}</td>
           <td>${script.category || "Uncategorized"}</td>
           <td>${script.description || "No description available."}</td>
-          <td>${getPhaseDisplayName(script.executionPhase)}</td>
+          <!-- Execution phase removed -->
           <td>${
             script.settings && script.settings.length > 0
               ? `<span class="badge badge-primary">${script.settings.length}</span>`
@@ -1036,6 +1027,14 @@
     container.innerHTML = "";
     container.appendChild(table);
 
+    // Add toggle switches after appending the table to the DOM
+    document.querySelectorAll(".script-toggle-cell").forEach((cell) => {
+      const scriptId = cell.dataset.scriptId;
+      if (scriptId) {
+        cell.appendChild(createScriptToggle(scriptId));
+      }
+    });
+
     // Add event listeners for settings buttons
     document.querySelectorAll(".view-settings").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -1048,154 +1047,14 @@
     });
   }
 
-  /**
-   * Compare version strings (e.g., 1.2.3 vs 1.10.0)
-   * @param {string} a - First version string
-   * @param {string} b - Second version string
-   * @returns {number} - Negative if a < b, positive if a > b, 0 if equal
-   */
-  function compareVersions(a, b) {
-    const partsA = a.split(".").map(Number);
-    const partsB = b.split(".").map(Number);
-
-    for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
-      const numA = partsA[i] || 0;
-      const numB = partsB[i] || 0;
-
-      if (numA !== numB) {
-        return numA - numB;
-      }
-    }
-
-    return 0;
-  }
-
-  /**
-   * Filter scripts based on selected criteria
-   * @param {Array} scripts - The list of scripts to filter
-   * @param {Object} filters - The filter criteria
-   * @returns {Array} - Filtered scripts
-   */
-  function filterScripts(scripts, filters) {
-    if (!filters) {
-      // If no filters provided, get them from the DOM
-      const category = document.getElementById("category-filter").value;
-      const phase = document.getElementById("phase-filter").value;
-      const hasSettings = document.getElementById("has-settings-filter").value;
-      const searchTerm = document
-        .getElementById("search-filter")
-        .value.toLowerCase();
-      const sortBy = document.getElementById("sort-filter").value;
-
-      filters = { category, phase, hasSettings, searchTerm, sortBy };
-    }
-
-    // Filter scripts
-    let filtered = scripts.filter((script) => {
-      const matchesCategory =
-        filters.category === "all" || script.category === filters.category;
-      const matchesPhase =
-        filters.phase === "all" || script.executionPhase === filters.phase;
-      const matchesSettings =
-        filters.hasSettings === "all" ||
-        (filters.hasSettings === "with" &&
-          script.settings &&
-          script.settings.length > 0) ||
-        (filters.hasSettings === "without" &&
-          (!script.settings || script.settings.length === 0));
-      const matchesSearch =
-        !filters.searchTerm ||
-        script.name.toLowerCase().includes(filters.searchTerm) ||
-        (script.description &&
-          script.description.toLowerCase().includes(filters.searchTerm));
-
-      return matchesCategory && matchesPhase && matchesSettings && matchesSearch;
-    });
-
-    // Sort scripts
-    filtered.sort((a, b) => {
-      switch (filters.sortBy) {
-        case "name-asc":
-          return a.name.localeCompare(b.name);
-        case "name-desc":
-          return b.name.localeCompare(a.name);
-        case "version-asc":
-          return compareVersions(a.version, b.version);
-        case "version-desc":
-          return compareVersions(b.version, a.version);
-        case "category":
-          return (a.category || "").localeCompare(b.category || "");
-        default:
-          return 0;
-      }
-    });
-
-    return filtered;
-  }
+  // Removed filter-related imports
 
   /**
    * Render the "Installed Scripts" tab content
    * @param {HTMLElement} container - The container to render into
    */
   function renderInstalledScriptsTab(container) {
-    // Create the filter panel
-    const filterPanel = document.createElement("div");
-    filterPanel.className = "filter-panel";
-    filterPanel.innerHTML = `
-    <div class="filter-panel-header">
-      <h3 class="filter-panel-title">Filter Scripts</h3>
-      <button class="filter-panel-toggle" id="toggle-filters">
-        <i class="fa fa-chevron-up"></i>
-      </button>
-    </div>
-    <div class="filter-panel-body" id="filter-panel-body">
-      <div class="filter-group">
-        <label for="category-filter">Category</label>
-        <select id="category-filter">
-          <option value="all">All Categories</option>
-          ${getCategoryOptions()}
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="phase-filter">Execution Phase</label>
-        <select id="phase-filter">
-          <option value="all">All Phases</option>
-          ${getExecutionPhaseOptions()}
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="has-settings-filter">Settings</label>
-        <select id="has-settings-filter">
-          <option value="all">All Scripts</option>
-          <option value="with">With Settings</option>
-          <option value="without">Without Settings</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label for="search-filter">Search</label>
-        <input type="text" id="search-filter" placeholder="Script name or description...">
-      </div>
-      <div class="filter-group">
-        <label for="sort-filter">Sort By</label>
-        <select id="sort-filter">
-          <option value="name-asc">Name (A-Z)</option>
-          <option value="name-desc">Name (Z-A)</option>
-          <option value="version-asc">Version (Low to High)</option>
-          <option value="version-desc">Version (High to Low)</option>
-          <option value="category">Category</option>
-        </select>
-      </div>
-      <div class="filter-actions">
-        <button id="reset-filters" class="btn btn-secondary">
-          <i class="fa fa-undo btn-icon"></i> Reset
-        </button>
-        <button id="apply-filters" class="btn btn-primary" style="margin-left: 10px;">
-          <i class="fa fa-filter btn-icon"></i> Apply Filters
-        </button>
-      </div>
-    </div>
-  `;
-    container.appendChild(filterPanel);
+    // Filter panel removed
 
     // Create the view options
     const viewOptions = document.createElement("div");
@@ -1224,63 +1083,25 @@
     renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
 
     // Add event listeners
-    document.getElementById("toggle-filters").addEventListener("click", () => {
-      const panel = document.getElementById("filter-panel-body");
-      panel.classList.toggle("collapsed");
-
-      const icon = document.getElementById("toggle-filters").querySelector("i");
-      if (panel.classList.contains("collapsed")) {
-        icon.className = "fa fa-chevron-down";
-      } else {
-        icon.className = "fa fa-chevron-up";
-      }
-    });
+    // Filter toggle listener removed
 
     document.getElementById("grid-view-btn").addEventListener("click", () => {
       document.getElementById("grid-view-btn").className = "btn btn-primary";
       document.getElementById("list-view-btn").className = "btn btn-secondary";
 
-      const filteredScripts = filterScripts(MANIFEST.scripts);
-      renderScriptsGridView(scriptsContainer, filteredScripts);
+      // Removed filtering
+      renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
     });
 
     document.getElementById("list-view-btn").addEventListener("click", () => {
       document.getElementById("grid-view-btn").className = "btn btn-secondary";
       document.getElementById("list-view-btn").className = "btn btn-primary";
 
-      const filteredScripts = filterScripts(MANIFEST.scripts);
-      renderScriptsListView(scriptsContainer, filteredScripts);
+      // Removed filtering
+      renderScriptsListView(scriptsContainer, MANIFEST.scripts);
     });
 
-    document.getElementById("apply-filters").addEventListener("click", () => {
-      const filteredScripts = filterScripts(MANIFEST.scripts);
-
-      // Use the active view to render
-      if (
-        document.getElementById("grid-view-btn").classList.contains("btn-primary")
-      ) {
-        renderScriptsGridView(scriptsContainer, filteredScripts);
-      } else {
-        renderScriptsListView(scriptsContainer, filteredScripts);
-      }
-    });
-
-    document.getElementById("reset-filters").addEventListener("click", () => {
-      document.getElementById("category-filter").value = "all";
-      document.getElementById("phase-filter").value = "all";
-      document.getElementById("has-settings-filter").value = "all";
-      document.getElementById("search-filter").value = "";
-      document.getElementById("sort-filter").value = "name-asc";
-
-      // Use the active view to render
-      if (
-        document.getElementById("grid-view-btn").classList.contains("btn-primary")
-      ) {
-        renderScriptsGridView(scriptsContainer, MANIFEST.scripts);
-      } else {
-        renderScriptsListView(scriptsContainer, MANIFEST.scripts);
-      }
-    });
+    // Apply/Reset filter listeners removed
   }
 
   /**
@@ -3229,8 +3050,10 @@
       document.addEventListener("DOMContentLoaded", addMenuButton);
     } else {
       addMenuButton();
-      // Initialize Notifications feature (matches document-ready)
-      initializeNotifications();
+      // Initialize Notifications feature (matches document-ready) if enabled
+      if (isScriptEnabled('notifications')) {
+        initializeNotifications();
+      }
     }
   }
 

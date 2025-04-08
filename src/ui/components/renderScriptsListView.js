@@ -1,4 +1,4 @@
-import { getPhaseDisplayName } from '../../helpers/Core/formatting/getPhaseDisplayName.js';
+import { createScriptToggle } from './scriptToggle.js';
 import { showScriptSettings } from '../modals/settings/showScriptSettings.js';
 
 /**
@@ -26,11 +26,12 @@ export function renderScriptsListView(container, scripts) {
   table.innerHTML = `
     <thead>
       <tr>
+        <th>Enabled</th>
         <th>Name</th>
         <th>Version</th>
         <th>Category</th>
         <th>Description</th>
-        <th>Execution Phase</th>
+        <!-- Execution Phase removed -->
         <th>Settings</th>
         <th>Actions</th>
       </tr>
@@ -40,11 +41,13 @@ export function renderScriptsListView(container, scripts) {
         .map(
           (script) => `
         <tr>
+          <!-- Placeholder for the toggle switch -->
+          <td class="script-toggle-cell" data-script-id="${script.id}"></td>
           <td><strong>${script.name}</strong></td>
           <td>v${script.version}</td>
           <td>${script.category || "Uncategorized"}</td>
           <td>${script.description || "No description available."}</td>
-          <td>${getPhaseDisplayName(script.executionPhase)}</td>
+          <!-- Execution phase removed -->
           <td>${
             script.settings && script.settings.length > 0
               ? `<span class="badge badge-primary">${script.settings.length}</span>`
@@ -66,6 +69,14 @@ export function renderScriptsListView(container, scripts) {
 
   container.innerHTML = "";
   container.appendChild(table);
+
+  // Add toggle switches after appending the table to the DOM
+  document.querySelectorAll(".script-toggle-cell").forEach((cell) => {
+    const scriptId = cell.dataset.scriptId;
+    if (scriptId) {
+      cell.appendChild(createScriptToggle(scriptId));
+    }
+  });
 
   // Add event listeners for settings buttons
   document.querySelectorAll(".view-settings").forEach((btn) => {
