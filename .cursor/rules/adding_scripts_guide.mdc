@@ -7,6 +7,8 @@ alwaysApply: true
 
 This guide outlines the process for integrating existing userscripts into the `HQ-Userscripts` repository using the Rollup build system and the established modular structure.
 
+G:\Modding\_Github\HQ-Userscripts\
+
 ## Key Principles
 
 1.  **Modularity:** Break down scripts into smaller, reusable functions or modules.
