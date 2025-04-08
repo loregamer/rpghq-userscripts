@@ -7,7 +7,12 @@
 // @match       https://rpghq.org/forums/*
 // @run-at      document-start
 // @grant       GM_addStyle
+// @grant       GM_deleteValue
+// @grant       GM_getValue
+// @grant       GM_listValues
 // @grant       GM_registerMenuCommand
+// @grant       GM_setValue
+// @grant       GM_xmlhttpRequest
 // ==/UserScript==
 
 (function () {
@@ -1694,6 +1699,1522 @@
   }
 
   /**
+   * @module helpers/Notifications/Constants
+   * @description Constants specific to the Notifications feature.
+   */
+
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+  const FETCH_DELAY = 500; // Add delay between fetches (consider if still needed)
+
+  // Base style for displaying quoted content reference in notifications
+  const REFERENCE_STYLE = {
+    display: "inline-block",
+    background: "rgba(23, 27, 36, 0.5)",
+    color: "#ffffff",
+    padding: "2px 4px",
+    borderRadius: "2px",
+    zIndex: "-1", // May not be needed if structure is flat
+    maxWidth: "98%",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    verticalAlign: "bottom", // Align better with text
+    marginLeft: "4px",
+    fontSize: "0.9em",
+  };
+
+  // Style for the notification block container
+  const NOTIFICATION_BLOCK_STYLE = {
+    position: "relative",
+    paddingBottom: "20px", // Make room for the timestamp
+  };
+
+  // Style for the timestamp within a notification block
+  const NOTIFICATION_TIME_STYLE = {
+    position: "absolute",
+    bottom: "2px",
+    right: "2px",
+    fontSize: "0.85em",
+    color: "#888",
+    pointerEvents: "none", // Prevent interfering with clicks
+  };
+
+  // Style for timestamp on the dedicated notification page (ucp.php?i=ucp_notifications)
+  // Note: This might be redundant if the selector can be more specific in CSS
+  const NOTIFICATIONS_PAGE_TIME_STYLE = {
+    position: "absolute",
+    bottom: "2px",
+    left: "2px", // Positioned differently on this page in original script
+    fontSize: "0.85em",
+    color: "#888",
+    pointerEvents: "none",
+  };
+
+  // --- Reaction display ---
+  const REACTION_SPAN_STYLE = {
+    display: "inline-flex",
+    marginLeft: "2px",
+    verticalAlign: "middle",
+  };
+
+  const REACTION_IMAGE_STYLE = {
+    height: "1em !important",
+    width: "auto !important",
+    verticalAlign: "middle !important",
+    marginRight: "2px !important",
+  };
+
+  // --- Color constants for notification types ---
+  // Keep consistent with forum or define a palette
+  const COLOR_REACTED = "#3889ED"; // Blueish
+  const COLOR_MENTIONED = "#FFC107"; // Gold/Yellow
+  const COLOR_QUOTED = "#FF4A66"; // Reddish/Pink
+  const COLOR_REPLY = "#95DB00"; // Greenish
+  const COLOR_WARNING = "#D31141"; // Red
+  const COLOR_REPORT_CLOSED = "#f58c05"; // Orange
+  const COLOR_POST_APPROVAL = "#00AA00"; // Green
+
+  // --- Text styling ---
+  const SUBTLE_TEXT_STYLE = {
+    fontSize: "0.85em",
+    padding: "0 0.25px",
+  };
+
+  /**
+   * @module helpers/Core/Logger
+   * @description A simple console logger class with levels and context.
+   */
+
+  // Define log levels
+  const LogLevel = {
+    DEBUG: 0,
+    INFO: 1,
+    WARN: 2,
+    ERROR: 3};
+
+  // Determine log level (e.g., from settings or a global variable)
+  // Default to INFO for production, DEBUG for development maybe?
+  // For now, let's use INFO as default, but allow override via GM_config or similar later.
+  let currentLogLevel = LogLevel.INFO;
+
+  class Logger {
+    /**
+     * Creates a new Logger instance.
+     * @param {string} context - The context name to prepend to log messages (e.g., 'Notifications API').
+     */
+    constructor(context = "Default") {
+      this.context = context;
+    }
+
+    _log(level, message, ...optionalParams) {
+      if (level < currentLogLevel) {
+        return; // Skip logging if below current level
+      }
+
+      const timestamp = new Date().toISOString();
+      const prefix = `[${timestamp}] [${this.context}]`;
+
+      switch (level) {
+        case LogLevel.DEBUG:
+          console.debug(prefix, message, ...optionalParams);
+          break;
+        case LogLevel.INFO:
+          console.info(prefix, message, ...optionalParams);
+          break;
+        case LogLevel.WARN:
+          console.warn(prefix, message, ...optionalParams);
+          break;
+        case LogLevel.ERROR:
+          console.error(prefix, message, ...optionalParams);
+          break;
+        default:
+          console.log(prefix, message, ...optionalParams);
+      }
+    }
+
+    /**
+     * Logs a debug message.
+     * @param {any} message - The primary message.
+     * @param  {...any} optionalParams - Additional parameters to log.
+     */
+    debug(message, ...optionalParams) {
+      this._log(LogLevel.DEBUG, message, ...optionalParams);
+    }
+
+    /**
+     * Logs an info message.
+     * @param {any} message - The primary message.
+     * @param  {...any} optionalParams - Additional parameters to log.
+     */
+    info(message, ...optionalParams) {
+      this._log(LogLevel.INFO, message, ...optionalParams);
+    }
+
+    /**
+     * Logs a warning message.
+     * @param {any} message - The primary message.
+     * @param  {...any} optionalParams - Additional parameters to log.
+     */
+    warn(message, ...optionalParams) {
+      this._log(LogLevel.WARN, message, ...optionalParams);
+    }
+
+    /**
+     * Logs an error message.
+     * @param {any} message - The primary message.
+     * @param  {...any} optionalParams - Additional parameters to log.
+     */
+    error(message, ...optionalParams) {
+      this._log(LogLevel.ERROR, message, ...optionalParams);
+    }
+  }
+
+  // Example: Set log level based on a script setting or debug flag
+  // import { getSetting } from './SettingsManager'; // Hypothetical settings manager
+  // const debugMode = getSetting('global.debugMode', false);
+  // setGlobalLogLevel(debugMode ? LogLevel.DEBUG : LogLevel.INFO);
+
+  /**
+   * @module helpers/Notifications/Storage
+   * @description Storage handling (GM_getValue/setValue) for notification data like reactions and post content, with caching and cleanup.
+   */
+
+
+  const log$4 = new Logger("Notifications Storage");
+
+  const REACTION_PREFIX = "reactions_";
+  const CONTENT_PREFIX = "post_content_";
+  const CLEANUP_KEY = "last_notification_storage_cleanup";
+
+  /**
+   * Retrieves cached reactions for a post ID if not expired.
+   * @param {string} postId - The post ID.
+   * @returns {Array|null} Cached reactions or null if not found/expired.
+   */
+  function getStoredReactions(postId) {
+    const storedData = GM_getValue(`${REACTION_PREFIX}${postId}`);
+    if (storedData) {
+      try {
+        const { reactions, timestamp } = JSON.parse(storedData);
+        if (Date.now() - timestamp < ONE_DAY) {
+          log$4.debug(`Cache hit for reactions: ${postId}`);
+          return reactions;
+        }
+        log$4.debug(`Cache expired for reactions: ${postId}`);
+        GM_deleteValue(`${REACTION_PREFIX}${postId}`);
+      } catch (e) {
+        log$4.error(`Error parsing stored reactions for ${postId}:`, e);
+        GM_deleteValue(`${REACTION_PREFIX}${postId}`);
+      }
+    }
+    log$4.debug(`Cache miss for reactions: ${postId}`);
+    return null;
+  }
+
+  /**
+   * Stores reactions for a post ID with a timestamp.
+   * @param {string} postId - The post ID.
+   * @param {Array} reactions - The reactions array to store.
+   */
+  function storeReactions(postId, reactions) {
+    if (!postId || !Array.isArray(reactions)) {
+      log$4.warn("Attempted to store invalid reactions data", {
+        postId,
+        reactions,
+      });
+      return;
+    }
+    try {
+      GM_setValue(
+        `${REACTION_PREFIX}${postId}`,
+        JSON.stringify({ reactions, timestamp: Date.now() })
+      );
+      log$4.debug(`Stored reactions for post: ${postId}`);
+    } catch (e) {
+      log$4.error(`Error storing reactions for ${postId}:`, e);
+    }
+  }
+
+  /**
+   * Retrieves cached post content for a post ID if not expired.
+   * @param {string} postId - The post ID.
+   * @returns {string|null} Cached content or null if not found/expired.
+   */
+  function getStoredPostContent(postId) {
+    const storedData = GM_getValue(`${CONTENT_PREFIX}${postId}`);
+    if (storedData) {
+      try {
+        const { content, timestamp } = JSON.parse(storedData);
+        if (Date.now() - timestamp < ONE_DAY) {
+          log$4.debug(`Cache hit for content: ${postId}`);
+          return content;
+        }
+        log$4.debug(`Cache expired for content: ${postId}`);
+        GM_deleteValue(`${CONTENT_PREFIX}${postId}`);
+      } catch (e) {
+        log$4.error(`Error parsing stored content for ${postId}:`, e);
+        GM_deleteValue(`${CONTENT_PREFIX}${postId}`);
+      }
+    }
+    log$4.debug(`Cache miss for content: ${postId}`);
+    return null;
+  }
+
+  /**
+   * Stores post content for a post ID with a timestamp.
+   * @param {string} postId - The post ID.
+   * @param {string} content - The post content to store.
+   */
+  function storePostContent(postId, content) {
+    if (!postId || typeof content !== "string") {
+      log$4.warn("Attempted to store invalid post content data", {
+        postId,
+        content,
+      });
+      return;
+    }
+    try {
+      GM_setValue(
+        `${CONTENT_PREFIX}${postId}`,
+        JSON.stringify({ content, timestamp: Date.now() })
+      );
+      log$4.debug(`Stored content for post: ${postId}`);
+    } catch (e) {
+      log$4.error(`Error storing content for ${postId}:`, e);
+    }
+  }
+
+  /**
+   * Cleans up expired notification-related data from GM storage.
+   */
+  function cleanupStorage() {
+    const lastCleanup = GM_getValue(CLEANUP_KEY, 0);
+    const now = Date.now();
+
+    // Only cleanup if it's been more than 24 hours since last cleanup
+    if (now - lastCleanup < ONE_DAY) {
+      return;
+    }
+
+    log$4.info("Running notification storage cleanup...");
+    let deletedCount = 0;
+
+    try {
+      const allKeys = GM_listValues ? GM_listValues() : [];
+
+      allKeys.forEach((key) => {
+        if (
+          key === CLEANUP_KEY ||
+          (!key.startsWith(REACTION_PREFIX) && !key.startsWith(CONTENT_PREFIX))
+        ) {
+          return; // Skip irrelevant keys
+        }
+
+        const data = GM_getValue(key);
+        if (data) {
+          try {
+            const parsed = JSON.parse(data);
+            // Check if data has a timestamp and if it's older than ONE_DAY
+            if (parsed.timestamp && now - parsed.timestamp >= ONE_DAY) {
+              GM_deleteValue(key);
+              deletedCount++;
+              log$4.debug(`Deleted expired storage key: ${key}`);
+            }
+          } catch (e) {
+            // If we can't parse, it might be old format or corrupted, delete it
+            log$4.warn(`Deleting potentially corrupt key: ${key}`);
+            GM_deleteValue(key);
+            deletedCount++;
+          }
+        }
+      });
+
+      // Update last cleanup timestamp
+      GM_setValue(CLEANUP_KEY, now);
+      log$4.info(
+        `Storage cleanup complete. Deleted ${deletedCount} expired items.`
+      );
+    } catch (error) {
+      log$4.error("Error during storage cleanup:", error);
+    }
+  }
+
+  /**
+   * @module helpers/Notifications/ContentParsing
+   * @description Utilities for parsing and cleaning notification/post content, including BBCode removal and media extraction.
+   */
+
+
+  /**
+   * Aggressively removes nested quote blocks from text.
+   * @param {string} text - The input text.
+   * @returns {string} Text with inner quote blocks removed.
+   */
+  function aggressiveRemoveInnerQuotes(text) {
+    let result = "";
+    let i = 0;
+    let depth = 0;
+
+    while (i < text.length) {
+      // Check for an opening quote tag (simplified, assumes [quote=...]).
+      if (text.startsWith("[quote=", i)) {
+        depth++;
+        const endBracket = text.indexOf("]", i);
+        if (endBracket === -1) break; // Malformed
+        i = endBracket + 1;
+        continue;
+      }
+
+      // Check for a closing quote tag.
+      if (text.startsWith("[/quote]", i)) {
+        if (depth > 0) {
+          depth--;
+        }
+        i += 8; // Skip "[/quote]"
+        continue;
+      }
+
+      // Only append characters that are NOT inside a quote block.
+      if (depth === 0) {
+        result += text[i];
+      }
+      i++;
+    }
+    return result;
+  }
+
+  /**
+   * Cleans up raw post content fetched from the quote page.
+   * Removes outer quote tags and any nested quote blocks.
+   * @param {string} content - The raw post content.
+   * @returns {string} Cleaned post content.
+   */
+  function cleanupPostContent(content) {
+    if (!content) return "";
+
+    // 1. Normalize any [quote="..."] tags to [quote=...]
+    let cleaned = content.replace(/\[quote="([^"]+)"\]/g, "[quote=$1]");
+
+    // 2. Remove ONLY the first occurrence of an opening quote tag.
+    const firstOpenIdx = cleaned.indexOf("[quote=");
+    if (firstOpenIdx !== -1) {
+      const firstCloseBracket = cleaned.indexOf("]", firstOpenIdx);
+      if (firstCloseBracket !== -1) {
+        cleaned =
+          cleaned.slice(0, firstOpenIdx) + cleaned.slice(firstCloseBracket + 1);
+      }
+    }
+
+    // 3. Remove ONLY the last occurrence of a closing quote tag.
+    const lastCloseIdx = cleaned.lastIndexOf("[/quote]");
+    if (lastCloseIdx !== -1) {
+      cleaned = cleaned.slice(0, lastCloseIdx) + cleaned.slice(lastCloseIdx + 8);
+    }
+
+    // 4. Aggressively remove any remaining inner quote blocks.
+    cleaned = aggressiveRemoveInnerQuotes(cleaned);
+
+    return cleaned.trim();
+  }
+
+  /**
+   * Removes common BBCode tags from text, preserving content.
+   * @param {string} text - The input text.
+   * @returns {string} Text with BBCode tags removed.
+   */
+  function removeBBCode(text) {
+    if (!text) return "";
+    return text
+      .replace(/\[(color|size|font)=[^]]*\](.*?)\[\/\1\]/gi, "$2") // color, size, font
+      .replace(/\[(b|i|u|s)\](.*?)\[\/\1\]/gi, "$2") // b, i, u, s
+      .replace(/\[url=[^]]*\](.*?)\[\/url\]/gi, "$1") // url with attr
+      .replace(/\[url\](.*?)\[\/url\]/gi, "$1") // simple url
+      .replace(/\[img(?:\s+[^=\]]+=[^\]]+)?\](.*?)\[\/img\]/gi, "") // img tags (remove content)
+      .replace(/\[(media|webm)\](.*?)\[\/\1\]/gi, "") // media, webm (remove content)
+      .replace(/\[code(?:=[^]]*)?\](.*?)\[\/code\]/gis, "$1") // code (keep content)
+      .replace(/\[list(?:=[^]]*)?\](.*?)\[\/list\]/gis, "$1") // list (keep content)
+      .replace(/\[\*\]/gi, " ") // list items
+      .replace(/\[quote(?:=[^]]*)?\](.*?)\[\/quote\]/gis, "") // quote (remove content, handles nested aggression already)
+      .replace(/\s+/g, " ") // Normalize whitespace
+      .trim();
+  }
+
+  /**
+   * Removes URLs (http, https, ftp, www) from text.
+   * @param {string} text - The input text.
+   * @returns {string} Text with URLs removed.
+   */
+  function removeURLs(text) {
+    if (!text) return "";
+    return text
+      .replace(/(?:https?|ftp):\/\/[^\s]+/gi, "")
+      .replace(/www\.[^\s]+/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  /**
+   * Extracts the URL from the first image tag ([img]...[/img] or [img attr=...]...[/img]) found in the text.
+   * @param {string} text - The text containing potential image tags.
+   * @returns {string|null} The extracted image URL or null if none found.
+   */
+  function extractFirstImageUrl(text) {
+    if (!text) return null;
+
+    // Match [img]url[/img]
+    let match = text.match(/\[img\](.*?)\[\/img\]/i);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+
+    // Match [img attr=val]url[/img]
+    match = text.match(/\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]/i);
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+
+    return null;
+  }
+
+  /**
+   * Checks if the entire string consists of just a single image tag.
+   * @param {string} text - The input text.
+   * @returns {boolean} True if the text is only a single image tag.
+   */
+  function isSingleImageTag(text) {
+    if (!text) return false;
+    const trimmed = text.trim();
+    return (
+      (trimmed.startsWith("[img]") && trimmed.endsWith("[/img]")) ||
+      !!trimmed.match(/^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i)
+    );
+  }
+
+  /**
+   * Extracts the URL and type from the first video tag ([webm]...[/webm] or [media]...[/media]) found.
+   * @param {string} text - The text containing potential video tags.
+   * @returns {{url: string, type: 'webm'|'media'}|null} The extracted video data or null.
+   */
+  function extractFirstVideoUrl(text) {
+    if (!text) return null;
+
+    let match = text.match(/\[webm\](.*?)\[\/webm\]/i);
+    if (match && match[1]) {
+      return { url: match[1].trim(), type: "webm" };
+    }
+
+    match = text.match(/\[media\](.*?)\[\/media\]/i);
+    if (match && match[1]) {
+      return { url: match[1].trim(), type: "media" };
+    }
+
+    return null;
+  }
+
+  /**
+   * Checks if the entire string consists of just a single video tag.
+   * @param {string} text - The input text.
+   * @returns {boolean} True if the text is only a single video tag.
+   */
+  function isSingleVideoTag(text) {
+    if (!text) return false;
+    const trimmed = text.trim();
+    return (
+      (trimmed.startsWith("[webm]") && trimmed.endsWith("[/webm]")) ||
+      (trimmed.startsWith("[media]") && trimmed.endsWith("[/media]"))
+    );
+  }
+
+  /**
+   * Extracts the post ID from a URL string.
+   * @param {string | null | undefined} url - The URL to parse.
+   * @returns {string|null} The extracted post ID or null.
+   */
+  function extractPostIdFromUrl(url) {
+    if (!url) return null;
+    // Look for p=NUMBER or #pNUMBER
+    const match = url.match(/[?&]p=(\d+)|#p(\d+)/);
+    return match ? match[1] || match[2] : null;
+  }
+
+  /**
+   * @module helpers/Core/Utils
+   * @description General utility functions.
+   */
+
+  /**
+   * Creates a promise that resolves after a specified delay.
+   * @param {number} ms - Milliseconds to wait.
+   * @returns {Promise<void>}
+   */
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Escapes HTML special characters in a string.
+   * @param {string} str - The string to escape.
+   * @returns {string} The escaped string.
+   */
+  function escapeHTML(str) {
+    if (!str) return "";
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  /**
+   * @module helpers/Notifications/API
+   * @description Handles API interactions for the Notifications feature, such as fetching reactions and post content.
+   */
+
+
+  const log$3 = new Logger("Notifications API");
+
+  /**
+   * Fetches reactions for a given post ID.
+   * Uses cache first, then fetches from the server.
+   * @param {string} postId - The ID of the post.
+   * @param {boolean} forceFetch - Whether to bypass the cache and force a fetch.
+   * @returns {Promise<Array>} A promise resolving to an array of reaction objects.
+   */
+  async function fetchReactions(postId, forceFetch = false) {
+    log$3.debug(`Fetching reactions for post ${postId}, forceFetch: ${forceFetch}`);
+    if (!forceFetch) {
+      const storedReactions = getStoredReactions(postId);
+      if (storedReactions) {
+        return storedReactions;
+      }
+    }
+
+    // Add a small delay to avoid rate-limiting issues
+    await sleep(FETCH_DELAY);
+
+    try {
+      const response = await fetch(
+        `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
+        {
+          method: "POST", // Original used POST
+          headers: {
+            accept: "application/json, text/javascript, */*; q=0.01",
+            "x-requested-with": "XMLHttpRequest",
+          },
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data || !data.htmlContent) {
+        throw new Error("Invalid response format for reactions");
+      }
+
+      // Parse the HTML to extract reaction details
+      const doc = new DOMParser().parseFromString(data.htmlContent, "text/html");
+      const reactions = Array.from(
+        // Assuming the original selector is correct for the response structure
+        doc.querySelectorAll('.tab-content[data-id="0"] li')
+      ).map((li) => {
+        const userLink = li.querySelector(".cbb-helper-text a");
+        const reactionImage = li.querySelector(".reaction-image");
+        return {
+          username: userLink ? userLink.textContent.trim() : "Unknown User",
+          image: reactionImage ? reactionImage.src : "",
+          name: reactionImage ? reactionImage.alt : "Unknown Reaction",
+        };
+      });
+
+      log$3.debug(
+        `Successfully fetched ${reactions.length} reactions for post ${postId}`
+      );
+      storeReactions(postId, reactions);
+      return reactions;
+    } catch (error) {
+      log$3.error(`Error fetching reactions for post ${postId}:`, error);
+      return []; // Return empty array on error
+    }
+  }
+
+  /**
+   * Fetches the raw BBCode content of a post.
+   * Uses cache first, then fetches from the quote URL.
+   * @param {string} postId - The ID of the post.
+   * @returns {Promise<string|null>} A promise resolving to the post content string or null on error.
+   */
+  async function fetchPostContent(postId) {
+    log$3.debug(`Fetching content for post ${postId}`);
+    const cachedContent = getStoredPostContent(postId);
+    if (cachedContent) {
+      return cachedContent;
+    }
+
+    // Add a small delay
+    await sleep(FETCH_DELAY);
+
+    try {
+      const response = await fetch(
+        `https://rpghq.org/forums/posting.php?mode=quote&p=${postId}`,
+        {
+          headers: { "X-Requested-With": "XMLHttpRequest" }, // Important for getting the raw content
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const text = await response.text();
+
+      // Parse the response HTML to find the message textarea
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = text;
+      const messageArea = tempDiv.querySelector("#message");
+
+      if (!messageArea) {
+        // Maybe the post is inaccessible (deleted, permissions?)
+        log$3.warn(
+          `Could not find message content textarea for post ${postId}. Storing null.`
+        );
+        storePostContent(postId, null); // Store null to prevent refetching immediately
+        return null;
+      }
+
+      // Clean up the raw content from the textarea
+      const content = cleanupPostContent(messageArea.value);
+      log$3.debug(`Successfully fetched and cleaned content for post ${postId}`);
+      storePostContent(postId, content);
+      return content;
+    } catch (error) {
+      log$3.error(`Error fetching post content for ${postId}:`, error);
+      // Store null on error to avoid constant refetch attempts for problematic posts
+      storePostContent(postId, null);
+      return null;
+    }
+  }
+
+  /**
+   * @module helpers/Core/DOMUtils
+   * @description General utility functions for DOM manipulation.
+   */
+
+  /**
+   * Creates an HTML element with specified attributes and inner HTML.
+   * @param {string} tag - The HTML tag name (e.g., 'div', 'span').
+   * @param {Object} [attributes={}] - An object containing element attributes (e.g., { className: 'my-class', id: 'my-id' }).
+   * @param {string} [innerHTML=''] - The inner HTML content for the element.
+   * @returns {HTMLElement} The created HTML element.
+   */
+  function createElement(tag, attributes = {}, innerHTML = "") {
+    const element = document.createElement(tag);
+    for (const key in attributes) {
+      if (Object.hasOwnProperty.call(attributes, key)) {
+        // Handle className separately for convenience
+        if (key === "className") {
+          element.className = attributes[key];
+        } else if (key.startsWith("data-")) {
+          // Use dataset for data attributes
+          element.dataset[key.substring(5)] = attributes[key];
+        } else {
+          element.setAttribute(key, attributes[key]);
+        }
+      }
+    }
+    if (innerHTML) {
+      element.innerHTML = innerHTML;
+    }
+    return element;
+  }
+
+  /**
+   * Applies multiple CSS styles to an element.
+   * @param {HTMLElement} element - The element to style.
+   * @param {Object} styles - An object where keys are CSS property names (camelCase) and values are the property values.
+   */
+  function applyStyle(element, styles) {
+    if (!element || !styles) return;
+    for (const property in styles) {
+      if (Object.hasOwnProperty.call(styles, property)) {
+        element.style[property] = styles[property];
+      }
+    }
+  }
+
+  /**
+   * @module helpers/Core/Formatting
+   * @description Utility functions for formatting data, like usernames or dates.
+   */
+
+
+  /**
+   * Formats an array of username elements (or strings) into a comma-separated string with "and".
+   * Preserves the original HTML structure of the username elements if provided.
+   * @param {Array<HTMLElement|string>} usernames - An array of username elements or plain strings.
+   * @returns {string} A formatted string (e.g., "UserA, UserB and UserC").
+   */
+  function formatUsernames(usernames) {
+    if (!usernames || usernames.length === 0) return "Someone";
+
+    const nameStrings = usernames.map((u) => {
+      if (typeof u === "string") {
+        return escapeHTML(u);
+      } else if (u instanceof HTMLElement) {
+        // Clone the element to avoid modifying the original DOM
+        const clone = u.cloneNode(true);
+        // Optionally remove styles if they interfere
+        // clone.style.cssText = '';
+        return clone.outerHTML;
+      } else {
+        return "unknown";
+      }
+    });
+
+    if (nameStrings.length === 1) {
+      return nameStrings[0];
+    }
+    if (nameStrings.length === 2) {
+      return `${nameStrings[0]} and ${nameStrings[1]}`;
+    }
+    // For 3 or more
+    const last = nameStrings.pop();
+    return `${nameStrings.join(", ")} and ${last}`;
+  }
+
+  // Add other general formatting functions as needed
+
+  /**
+   * @module ui/Notifications/CustomizeNotifications
+   * @description Handles the visual customization of notification elements in the panel and on the notifications page.
+   */
+
+
+  const log$2 = new Logger("Notifications UI");
+
+  // --- Internal Helper Functions ---
+
+  /**
+   * Formats an array of reaction objects into an HTML string.
+   * @param {Array} reactions - Array of reaction objects { image, name, username }.
+   * @returns {string} HTML string representing the reactions.
+   */
+  function formatReactionsHTML(reactions) {
+    if (!reactions || reactions.length === 0) return "";
+
+    const reactionImages = reactions
+      .map((reaction) => {
+        // Basic sanitation
+        const safeUsername =
+          reaction.username?.replace(/["&<>]/g, "") || "unknown";
+        const safeName = reaction.name?.replace(/["&<>]/g, "") || "reaction";
+        const safeImage = reaction.image?.startsWith("https://")
+          ? reaction.image
+          : "";
+
+        if (!safeImage) return ""; // Don't render if image URL is invalid
+
+        const img = createElement("img", {
+          src: safeImage,
+          alt: safeName,
+          title: `${safeUsername}: ${safeName}`,
+          "reaction-username": safeUsername, // Custom attribute from original script
+        });
+        applyStyle(img, REACTION_IMAGE_STYLE);
+        return img.outerHTML;
+      })
+      .join("");
+
+    const span = createElement("span");
+    applyStyle(span, REACTION_SPAN_STYLE);
+    span.innerHTML = reactionImages;
+    return span.outerHTML;
+  }
+
+  /**
+   * Creates or updates the reference element displaying post content.
+   * @param {HTMLElement} titleElement - The notification title element.
+   * @param {HTMLElement} blockElement - The main notification block element.
+   * @param {string|null} content - The post content (or null if not available).
+   * @param {boolean} isLoading - Whether content is still loading.
+   */
+  function updateReferenceElement(
+    titleElement,
+    blockElement,
+    content,
+    isLoading = false
+  ) {
+    let referenceElement = blockElement.querySelector(".notification-reference");
+
+    if (!referenceElement) {
+      referenceElement = createElement("span", {
+        className: "notification-reference",
+      });
+      titleElement.appendChild(createElement("br"));
+      titleElement.appendChild(referenceElement);
+    }
+
+    if (isLoading) {
+      referenceElement.textContent = "Loading content...";
+    } else if (content === null) {
+      referenceElement.textContent = "Content unavailable"; // Indicate fetch failure or empty content
+    } else if (content) {
+      const cleanedText = removeURLs(removeBBCode(content));
+      referenceElement.textContent = cleanedText;
+    } else {
+      referenceElement.textContent = ""; // Clear if empty string content
+    }
+
+    applyStyle(referenceElement, REFERENCE_STYLE);
+  }
+
+  /**
+   * Creates a media preview element (image or video).
+   * @param {string} type - 'image' or 'video'.
+   * @param {string} url - The URL of the media.
+   * @returns {HTMLElement|null} The preview element or null.
+   */
+  function createMediaPreview(type, url) {
+    if (!url) return null;
+
+    const commonStyle = {
+      maxWidth: "100px",
+      maxHeight: "60px",
+      borderRadius: "3px",
+      marginTop: "4px",
+      display: "block", // Ensure it takes block space
+    };
+
+    let element;
+    if (type === "image") {
+      element = createElement("img", { src: url });
+      applyStyle(element, commonStyle);
+    } else if (type === "video") {
+      element = createElement("video", {
+        src: url,
+        loop: true,
+        muted: true,
+        autoplay: true,
+      });
+      applyStyle(element, commonStyle);
+    } else {
+      return null;
+    }
+
+    const container = createElement("div", {
+      className: "notification-media-preview",
+    });
+    container.appendChild(element);
+    return container;
+  }
+
+  /**
+   * Applies common styling and structure to a notification block.
+   * @param {HTMLElement} block - The notification block element (usually an <a> tag).
+   * @param {boolean} isOnNotificationsPage - True if on the dedicated notifications page.
+   */
+  function applyCommonBlockStyling(block, isOnNotificationsPage = false) {
+    applyStyle(block, NOTIFICATION_BLOCK_STYLE);
+
+    const timeElement = block.querySelector(".notification-time");
+    if (timeElement) {
+      const timeStyle = isOnNotificationsPage
+        ? NOTIFICATIONS_PAGE_TIME_STYLE
+        : NOTIFICATION_TIME_STYLE;
+      applyStyle(timeElement, timeStyle);
+    }
+
+    // Ensure `data-real-url` exists for consistent post ID extraction
+    if (!block.dataset.realUrl && block.href) {
+      block.dataset.realUrl = block.href;
+    }
+
+    // Standardize username elements (remove -coloured class if present)
+    block.querySelectorAll(".username-coloured").forEach((el) => {
+      el.classList.replace("username-coloured", "username");
+      el.style.color = ""; // Remove inline color style if any
+    });
+  }
+
+  /**
+   * Applies subtle styling to common words like 'by', 'and', 'in', 'from'.
+   * @param {string} html - Input HTML string.
+   * @returns {string} HTML string with subtle styling applied.
+   */
+  function applySubtleTextStyles(html) {
+    const span = createElement("span");
+    applyStyle(span, SUBTLE_TEXT_STYLE);
+    return html.replace(/\b(by|and|in|from)\b(?!-)/g, (match) => {
+      span.textContent = match;
+      return span.outerHTML;
+    });
+  }
+
+  // --- Specific Notification Type Customizers ---
+
+  /**
+   * Customizes notifications about reactions.
+   * @param {HTMLElement} titleElement - The notification title element.
+   * @param {HTMLElement} block - The notification block element.
+   */
+  async function customizeReactionNotification(titleElement, block) {
+    log$2.debug("Customizing reaction notification");
+    const isUnread = block.href && block.href.includes("mark_notification");
+    const postId = extractPostIdFromUrl(block.dataset.realUrl);
+    if (!postId) return;
+
+    try {
+      // Fetch reactions and post content concurrently
+      const [reactions, postContent] = await Promise.all([
+        fetchReactions(postId, isUnread),
+        fetchPostContent(postId),
+      ]);
+
+      const usernameElements = titleElement.querySelectorAll(".username");
+      const reactingUsernames = Array.from(usernameElements).map((el) =>
+        el.textContent.trim()
+      );
+
+      // Filter fetched reactions to only include those by users mentioned in the title
+      const filteredReactions = reactions.filter((reaction) =>
+        reactingUsernames.includes(reaction.username)
+      );
+      const reactionHTML = formatReactionsHTML(filteredReactions);
+
+      // Update title text
+      const verb = reactingUsernames.length > 1 ? "have" : "has";
+      const verbColor = COLOR_REACTED;
+      const formattedUsernames = formatUsernames(Array.from(usernameElements)); // Use core helper
+
+      titleElement.innerHTML = titleElement.innerHTML.replace(
+        /(?:have|has)\s+reacted.*$/,
+        `${verb} <b style="color: ${verbColor};">reacted</b> ${reactionHTML} to:`
+      );
+
+      // Handle content preview (reference or media)
+      let referenceElement = block.querySelector(".notification-reference");
+      let mediaPreviewElement = block.querySelector(
+        ".notification-media-preview"
+      );
+
+      // Clear existing previews before adding new ones
+      referenceElement?.remove();
+      mediaPreviewElement?.remove();
+
+      let addedPreview = false;
+      if (postContent) {
+        const trimmedContent = postContent.trim();
+
+        if (isSingleVideoTag(trimmedContent)) {
+          const videoData = extractFirstVideoUrl(trimmedContent);
+          const preview = createMediaPreview("video", videoData?.url);
+          if (preview) {
+            titleElement.appendChild(preview);
+            addedPreview = true;
+          }
+        } else if (isSingleImageTag(trimmedContent)) {
+          const imageUrl = extractFirstImageUrl(trimmedContent);
+          const preview = createMediaPreview("image", imageUrl);
+          if (preview) {
+            titleElement.appendChild(preview);
+            addedPreview = true;
+          }
+        }
+      }
+
+      // If no media preview was added, add/update the text reference
+      if (!addedPreview) {
+        updateReferenceElement(titleElement, block, postContent, false);
+      }
+    } catch (error) {
+      log$2.error(
+        `Error customizing reaction notification for post ${postId}:`,
+        error
+      );
+      // Add basic reaction icons even if content fetch fails?
+      const fallbackReactions = formatReactionsHTML(
+        reactingUsernames.map((u) => ({
+          username: u,
+          name: "reaction",
+          image: "",
+        }))
+      ); // Placeholder
+      titleElement.innerHTML = titleElement.innerHTML.replace(
+        /(?:have|has)\s+reacted.*$/,
+        `${verb} <b style="color: ${verbColor};">reacted</b> ${fallbackReactions} to:`
+      );
+    }
+  }
+
+  /**
+   * Customizes notifications about mentions.
+   * @param {HTMLElement} titleElement - The notification title element.
+   * @param {HTMLElement} block - The notification block element.
+   */
+  async function customizeMentionNotification(titleElement, block) {
+    log$2.debug("Customizing mention notification");
+    const postId = extractPostIdFromUrl(block.dataset.realUrl);
+    if (!postId) return;
+
+    const usernameElements = titleElement.querySelectorAll(".username");
+    const formattedUsernames = formatUsernames(Array.from(usernameElements));
+
+    // Extract topic name if possible
+    const originalHTML = titleElement.innerHTML;
+    const parts = originalHTML.split("<br>in ");
+    let topicName =
+      parts.length > 1 ? parts[1].trim().split(":")[0] : "Unknown Topic"; // Attempt to clean up topic
+    topicName = topicName.replace(/<[^>]+>/g, ""); // Strip any remaining HTML tags
+
+    // Update title text
+    titleElement.innerHTML = `
+        <b style="color: ${COLOR_MENTIONED};">Mentioned</b> by ${formattedUsernames}
+        ${applySubtleTextStyles("in")} <b>${topicName}</b>:
+    `;
+
+    // Show loading state for reference initially
+    updateReferenceElement(titleElement, block, null, true);
+
+    // Fetch and display content reference
+    try {
+      const postContent = await fetchPostContent(postId);
+      updateReferenceElement(titleElement, block, postContent, false);
+    } catch (error) {
+      log$2.error(
+        `Error fetching content for mention notification post ${postId}:`,
+        error
+      );
+      updateReferenceElement(titleElement, block, null, false); // Show unavailable
+    }
+  }
+
+  /**
+   * Customizes notifications about private messages.
+   * @param {HTMLElement} titleElement - The notification title element.
+   * @param {HTMLElement} block - The notification block element.
+   */
+  function customizePrivateMessageNotification(titleElement, block) {
+    log$2.debug("Customizing private message notification");
+    const subjectElement = block.querySelector(".notification-reference");
+    const subject = subjectElement?.textContent.trim().replace(/^"(.*)"$/, "$1");
+
+    if (subject === "Board warning issued") {
+      titleElement.innerHTML = titleElement.innerHTML
+        .replace(
+          /<strong>Private Message<\/strong>/,
+          `<strong style="color: ${COLOR_WARNING};">Board warning issued</strong>`
+        )
+        .replace(/from/, applySubtleTextStyles("by"))
+        .replace(/:$/, "");
+      subjectElement?.remove(); // Remove the redundant subject line
+    }
+  }
+
+  /**
+   * Customizes notifications about replies or quotes.
+   * @param {HTMLElement} titleElement - The notification title element.
+   * @param {HTMLElement} block - The notification block element.
+   * @param {'Reply'|'Quoted'} type - The type of notification.
+   */
+  async function customizeReplyQuoteNotification(titleElement, block, type) {
+    log$2.debug(`Customizing ${type} notification`);
+    const postId = extractPostIdFromUrl(block.dataset.realUrl);
+    if (!postId) return;
+
+    const referenceElement = block.querySelector(".notification-reference");
+    const originalTitleHTML = titleElement.innerHTML;
+
+    // Update strong tag color
+    const color = type === "Reply" ? COLOR_REPLY : COLOR_QUOTED;
+    titleElement.innerHTML = originalTitleHTML.replace(
+      `<strong>${type}</strong>`,
+      `<strong style="color: ${color};">${type}</strong>`
+    );
+
+    // Extract and format topic title from reference if available
+    if (referenceElement) {
+      const threadTitle = referenceElement.textContent
+        .trim()
+        .replace(/^"|"$/g, "");
+      titleElement.innerHTML = titleElement.innerHTML.replace(
+        /in(?:\stopic)?:/,
+        `${applySubtleTextStyles("in")} <strong>${threadTitle}</strong>:`
+      );
+      // Set reference to loading state initially
+      updateReferenceElement(titleElement, block, null, true);
+    } else {
+      // If no reference element, ensure the colon is added for consistency
+      if (!titleElement.innerHTML.endsWith(":")) {
+        titleElement.innerHTML += ":";
+      }
+      // Create a loading state reference element
+      updateReferenceElement(titleElement, block, null, true);
+    }
+
+    // Fetch and display content reference
+    try {
+      const postContent = await fetchPostContent(postId);
+      updateReferenceElement(titleElement, block, postContent, false);
+    } catch (error) {
+      log$2.error(
+        `Error fetching content for ${type} notification post ${postId}:`,
+        error
+      );
+      updateReferenceElement(titleElement, block, null, false); // Show unavailable
+    }
+  }
+
+  /**
+   * Customizes generic notification types like report closed or post approval.
+   * @param {HTMLElement} titleElement - The notification title element.
+   * @param {string} titleText - Original innerHTML of the title.
+   */
+  function customizeGenericNotification(titleElement, titleText) {
+    log$2.debug("Customizing generic notification");
+    if (titleText.includes("Report closed")) {
+      titleElement.innerHTML = titleText.replace(
+        /Report closed/,
+        `<strong style="color: ${COLOR_REPORT_CLOSED};">Report closed</strong>`
+      );
+    } else if (titleText.includes("Post approval")) {
+      titleElement.innerHTML = titleText.replace(
+        /<strong>Post approval<\/strong>/,
+        `<strong style="color: ${COLOR_POST_APPROVAL};">Post approval</strong>`
+      );
+    }
+    // Add more generic types here if needed
+  }
+
+  // --- Main Customization Logic ---
+
+  /**
+   * Customizes a single notification block element.
+   * Determines the notification type and calls the appropriate specific customizer.
+   * @param {HTMLElement} block - The notification block element.
+   * @param {boolean} isOnNotificationsPage - Whether the block is on the main notifications page.
+   */
+  async function customizeNotificationBlock(
+    block,
+    isOnNotificationsPage = false
+  ) {
+    if (block.dataset.customized === "true") {
+      log$2.debug("Skipping already customized block", block);
+      return; // Already processed
+    }
+
+    log$2.debug("Applying common styling to block", block);
+    applyCommonBlockStyling(block, isOnNotificationsPage);
+
+    const titleElement = block.querySelector(".notification-title");
+    if (!titleElement) {
+      log$2.warn("Could not find title element in notification block", block);
+      block.dataset.customized = "true"; // Mark as processed even if title missing
+      return;
+    }
+
+    const originalTitleHTML = titleElement.innerHTML;
+    let customizedByType = false;
+
+    try {
+      if (originalTitleHTML.includes("reacted to a message you posted")) {
+        await customizeReactionNotification(titleElement, block);
+        customizedByType = true;
+      } else if (originalTitleHTML.includes("You were mentioned by")) {
+        await customizeMentionNotification(titleElement, block);
+        customizedByType = true;
+      } else if (originalTitleHTML.includes("<strong>Reply</strong>")) {
+        await customizeReplyQuoteNotification(titleElement, block, "Reply");
+        customizedByType = true;
+      } else if (originalTitleHTML.includes("<strong>Quoted</strong>")) {
+        await customizeReplyQuoteNotification(titleElement, block, "Quoted");
+        customizedByType = true;
+      } else if (originalTitleHTML.includes("Private Message")) {
+        customizePrivateMessageNotification(titleElement, block);
+        customizedByType = true;
+      } else {
+        // Handle generic types only if not handled above
+        customizeGenericNotification(titleElement, originalTitleHTML);
+      }
+
+      // Apply subtle text styling globally after specific changes
+      if (titleElement.innerHTML) {
+        // Check if element still exists
+        titleElement.innerHTML = applySubtleTextStyles(titleElement.innerHTML);
+      }
+    } catch (error) {
+      log$2.error("Error during notification block customization:", error, block);
+      // Restore original title on error?
+      // titleElement.innerHTML = originalTitleHTML;
+    }
+
+    block.dataset.customized = "true";
+    log$2.debug("Finished customizing block", block);
+  }
+
+  /**
+   * Customizes all notification blocks within a given container (e.g., dropdown panel or page).
+   * @param {HTMLElement|Document} container - The element containing notification blocks.
+   * @param {string} selector - CSS selector for the notification blocks.
+   * @param {boolean} isOnNotificationsPage - Whether the container is the main notifications page.
+   */
+  function customizeNotificationsContainer(
+    container,
+    selector = ".notification-block",
+    isOnNotificationsPage = false
+  ) {
+    log$2.info(
+      `Customizing notifications in container: ${container.nodeName}, page: ${isOnNotificationsPage}`
+    );
+    const blocks = container.querySelectorAll(selector);
+    log$2.debug(
+      `Found ${blocks.length} notification blocks using selector: ${selector}`
+    );
+
+    if (blocks.length === 0) return;
+
+    // Use Promise.allSettled to process all blocks even if some fail
+    const promises = Array.from(blocks).map((block) =>
+      customizeNotificationBlock(block, isOnNotificationsPage)
+    );
+
+    Promise.allSettled(promises).then((results) => {
+      const fulfilled = results.filter((r) => r.status === "fulfilled").length;
+      const rejected = results.filter((r) => r.status === "rejected").length;
+      log$2.info(
+        `Finished customizing notifications container. Success: ${fulfilled}, Failed: ${rejected}`
+      );
+      if (rejected > 0) {
+        results
+          .filter((r) => r.status === "rejected")
+          .forEach((rej) => {
+            log$2.warn("Customization failure reason:", rej.reason);
+          });
+      }
+    });
+  }
+
+  const log$1 = new Logger("Notifications Marker");
+
+  /**
+   * Gets IDs of posts currently visible in the main content area.
+   * @returns {string[]} Array of visible post IDs.
+   */
+  function getDisplayedPostIds() {
+    // Find post containers (adjust selector if needed)
+    return Array.from(document.querySelectorAll('div[id^="p"]')).map((el) =>
+      el.id.substring(1)
+    );
+  }
+
+  /**
+   * Extracts notification data (link href and associated post ID) from notification elements.
+   * @param {string} notificationSelector - CSS selector for notification link elements.
+   * @returns {Array<{href: string, postId: string}>} Array of notification data objects.
+   */
+  function getNotificationData(
+    notificationSelector = '.notification-block a[href*="mark_notification="]'
+  ) {
+    return Array.from(document.querySelectorAll(notificationSelector))
+      .map((link) => {
+        // Use data-real-url if available (added by customization?), otherwise use href
+        const url = link.dataset.realUrl || link.getAttribute("href");
+        const postId = extractPostIdFromUrl(url);
+        const markReadHref = link.getAttribute("href"); // The actual mark_notification link
+
+        // Ensure we have a valid mark_notification href and a post ID
+        if (
+          markReadHref &&
+          markReadHref.includes("mark_notification=") &&
+          postId
+        ) {
+          return { href: markReadHref, postId };
+        }
+        return null;
+      })
+      .filter(Boolean); // Filter out any null entries
+  }
+
+  /**
+   * Marks a specific notification as read by sending a request.
+   * @param {string} markReadHref - The relative URL to mark the notification as read.
+   */
+  function markNotificationAsRead(markReadHref) {
+    if (!markReadHref || !markReadHref.includes("mark_notification=")) {
+      log$1.warn("Invalid mark-as-read href provided:", markReadHref);
+      return;
+    }
+
+    const fullUrl = new URL(markReadHref, "https://rpghq.org/forums/").toString();
+    log$1.debug(`Marking notification as read: ${fullUrl}`);
+
+    GM_xmlhttpRequest({
+      method: "GET",
+      url: fullUrl,
+      onload: (response) => {
+        if (response.status >= 200 && response.status < 300) {
+          log$1.info(`Notification marked as read successfully: ${markReadHref}`);
+        } else {
+          log$1.warn(
+            `Failed to mark notification as read (${response.status}): ${markReadHref}`
+          );
+        }
+      },
+      onerror: (error) => {
+        log$1.error(
+          `Error during mark as read request for ${markReadHref}:`,
+          error
+        );
+      },
+    });
+  }
+
+  /**
+   * Checks currently displayed posts against notifications and marks matching ones as read.
+   */
+  function checkAndMarkNotifications() {
+    try {
+      const displayedPostIds = getDisplayedPostIds();
+      if (displayedPostIds.length === 0) {
+        log$1.debug("No posts found on the page to check against notifications.");
+        return; // No posts visible, nothing to mark
+      }
+
+      const notificationData = getNotificationData();
+      if (notificationData.length === 0) {
+        log$1.debug("No unread notifications found to check.");
+        return; // No notifications to check
+      }
+
+      log$1.info(
+        `Checking ${notificationData.length} notifications against ${displayedPostIds.length} displayed posts.`
+      );
+
+      let markedCount = 0;
+      notificationData.forEach((notification) => {
+        // If the post associated with the notification is visible on the page
+        if (displayedPostIds.includes(notification.postId)) {
+          markNotificationAsRead(notification.href);
+          markedCount++;
+        }
+      });
+
+      if (markedCount > 0) {
+        log$1.info(
+          `Marked ${markedCount} notifications as read based on viewed posts.`
+        );
+      }
+    } catch (error) {
+      log$1.error("Error during checkAndMarkNotifications:", error);
+    }
+  }
+
+  const log = new Logger("Notifications Init");
+  let observer = null;
+  let debounceTimer = null;
+
+  /**
+   * Debounced function to customize notifications in the main panel.
+   */
+  function debouncedCustomizePanel() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      log.debug("Debounced panel customization triggered.");
+      // Target the dropdown specifically, assuming it gets added/modified
+      const panel = document.querySelector("#notification_list"); // Adjust if selector changes
+      if (panel) {
+        customizeNotificationsContainer(panel, ".notification-block", false);
+      }
+    }, 250); // Increased debounce slightly
+  }
+
+  /**
+   * Sets up a MutationObserver to watch for dynamically added notifications.
+   */
+  function setupObserver() {
+    if (observer) {
+      log.debug("Observer already running.");
+      return; // Don't set up multiple observers
+    }
+
+    observer = new MutationObserver((mutations) => {
+      let shouldProcessPanel = false;
+
+      for (const mutation of mutations) {
+        if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+          // Check if added nodes contain the notification panel or individual blocks
+          const hasNewNotifications = Array.from(mutation.addedNodes).some(
+            (node) =>
+              node.nodeType === Node.ELEMENT_NODE &&
+              (node.id === "notification_list" || // The whole panel was added
+                node.classList?.contains("notification-block") || // A block was added directly
+                node.querySelector?.(".notification-block")) // A block was added inside another node
+          );
+
+          if (hasNewNotifications) {
+            log.debug("Detected new notification nodes.");
+            shouldProcessPanel = true;
+            break; // No need to check further mutations for this batch
+          }
+        }
+      }
+
+      if (shouldProcessPanel) {
+        debouncedCustomizePanel();
+        checkAndMarkNotifications(); // Also check marks when panel updates
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+    log.info("Notification observer started.");
+  }
+
+  /**
+   * Initializes the Notifications feature.
+   * - Applies initial customizations.
+   * - Sets up the observer.
+   * - Runs storage cleanup.
+   */
+  function initializeNotifications() {
+    log.info("Initializing Notifications feature...");
+
+    try {
+      // Initial customization of notifications page if currently on it
+      if (window.location.href.includes("ucp.php?i=ucp_notifications")) {
+        log.debug("On notifications page, running initial customization.");
+        customizeNotificationsContainer(document, ".notification-block", true);
+      }
+
+      // Initial customization of the panel if it exists on load
+      const initialPanel = document.querySelector("#notification_list");
+      if (initialPanel) {
+        log.debug("Notification panel found on initial load, customizing.");
+        customizeNotificationsContainer(
+          initialPanel,
+          ".notification-block",
+          false
+        );
+      }
+
+      // Check for notifications to mark as read on initial load
+      checkAndMarkNotifications();
+
+      // Set up the observer to handle dynamic changes
+      setupObserver();
+
+      // Run storage cleanup (can run last)
+      cleanupStorage();
+
+      log.info("Notifications feature initialized successfully.");
+    } catch (error) {
+      log.error("Error during Notifications initialization:", error);
+    }
+  }
+
+  /**
    * Initialize the userscript
    */
   function init() {
@@ -1708,6 +3229,8 @@
       document.addEventListener("DOMContentLoaded", addMenuButton);
     } else {
       addMenuButton();
+      // Initialize Notifications feature (matches document-ready)
+      initializeNotifications();
     }
   }
 

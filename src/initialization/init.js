@@ -2,6 +2,7 @@ import { addStyles } from '../helpers/Core/ui/addStyles.js';
 import { showModal } from '../ui/modals/core/showModal.js';
 import { toggleModalWithInsertKey } from '../helpers/Core/ui/toggleModalWithInsertKey.js';
 import { addMenuButton } from './addMenuButton.js';
+import { initializeNotifications } from './NotificationsInit.js'; // Import the new initializer
 
 /**
  * Initialize the userscript
@@ -18,5 +19,7 @@ export function init() {
     document.addEventListener("DOMContentLoaded", addMenuButton);
   } else {
     addMenuButton();
+    // Initialize Notifications feature (matches document-ready)
+    initializeNotifications();
   }
 }

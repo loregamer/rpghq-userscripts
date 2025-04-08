@@ -3,6 +3,7 @@ description:
 globs: 
 alwaysApply: true
 ---
+
 # Guide: Adding Existing Userscripts to HQ-Userscripts
 
 This guide outlines the process for integrating existing userscripts into the `HQ-Userscripts` repository using the Rollup build system and the established modular structure.
