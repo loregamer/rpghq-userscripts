@@ -1,7 +1,7 @@
 /**
  * Hide the modal
  */
-function hideModal() {
+export function hideModal() {
   const modal = document.getElementById("mod-manager-modal");
   if (modal) {
     modal.style.display = "none";

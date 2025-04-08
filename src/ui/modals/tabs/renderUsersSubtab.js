@@ -2,7 +2,7 @@
  * Render the Users sub-tab content
  * @param {HTMLElement} container - The container to render the content into
  */
-function renderUsersSubtab(container) {
+export function renderUsersSubtab(container) {
   container.innerHTML = `
     <div class="wip-banner">
       <i class="fa fa-wrench"></i> User Preferences - Work In Progress

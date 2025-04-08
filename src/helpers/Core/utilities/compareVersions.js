@@ -4,7 +4,7 @@
  * @param {string} b - Second version string
  * @returns {number} - Negative if a < b, positive if a > b, 0 if equal
  */
-function compareVersions(a, b) {
+export function compareVersions(a, b) {
   const partsA = a.split(".").map(Number);
   const partsB = b.split(".").map(Number);
 

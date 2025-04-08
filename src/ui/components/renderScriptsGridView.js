@@ -1,9 +1,12 @@
+import { getPhaseDisplayName } from '../../helpers/Core/formatting/getPhaseDisplayName.js';
+import { showScriptSettings } from '../modals/settings/showScriptSettings.js';
+
 /**
  * Render the scripts in a grid view
  * @param {HTMLElement} container - The container to render into
  * @param {Array} scripts - The scripts to render
  */
-function renderScriptsGridView(container, scripts) {
+export function renderScriptsGridView(container, scripts) {
   if (scripts.length === 0) {
     container.innerHTML = `
       <div class="empty-state">

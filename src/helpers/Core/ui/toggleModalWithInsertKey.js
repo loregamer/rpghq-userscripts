@@ -1,7 +1,10 @@
+import { hideModal } from '../../../ui/modals/core/hideModal.js';
+import { showModal } from '../../../ui/modals/core/showModal.js';
+
 /**
  * Toggle the modal visibility when the Insert key is pressed
  */
-function toggleModalWithInsertKey(e) {
+export function toggleModalWithInsertKey(e) {
   // Check if the key pressed is Insert (key code 45)
   if (e.keyCode === 45) {
     // Prevent default behavior
@@ -20,6 +23,4 @@ function toggleModalWithInsertKey(e) {
 }
 
 // Export the function for Node.js environment
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = toggleModalWithInsertKey;
-}
+// Removed for ES Module refactor

@@ -3,7 +3,7 @@
  * @param {Object} setting - The setting object
  * @returns {string} - HTML for the setting control
  */
-function renderSettingControl(setting) {
+export function renderSettingControl(setting) {
   switch (setting.type) {
     case "boolean":
       return `

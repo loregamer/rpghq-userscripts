@@ -1,10 +1,12 @@
+import { compareVersions } from './compareVersions.js';
+
 /**
  * Filter scripts based on selected criteria
  * @param {Array} scripts - The list of scripts to filter
  * @param {Object} filters - The filter criteria
  * @returns {Array} - Filtered scripts
  */
-function filterScripts(scripts, filters) {
+export function filterScripts(scripts, filters) {
   if (!filters) {
     // If no filters provided, get them from the DOM
     const category = document.getElementById("category-filter").value;

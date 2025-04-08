@@ -1,3 +1,8 @@
+import { addStyles } from '../helpers/Core/ui/addStyles.js';
+import { showModal } from '../ui/modals/core/showModal.js';
+import { toggleModalWithInsertKey } from '../helpers/Core/ui/toggleModalWithInsertKey.js';
+import { addMenuButton } from './addMenuButton.js';
+
 /**
  * Initialize the userscript
  */

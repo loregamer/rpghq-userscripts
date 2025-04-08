@@ -1,7 +1,7 @@
 /**
  * Hard-coded manifest - just for display purposes
  */
-const MANIFEST = {
+export const MANIFEST = {
   scripts: [
     {
       id: "notifications",

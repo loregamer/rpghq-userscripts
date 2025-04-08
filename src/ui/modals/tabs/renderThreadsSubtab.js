@@ -2,7 +2,7 @@
  * Render the Threads sub-tab content
  * @param {HTMLElement} container - The container to render the content into
  */
-function renderThreadsSubtab(container) {
+export function renderThreadsSubtab(container) {
   container.innerHTML = `
     <div class="wip-banner">
       <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress

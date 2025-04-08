@@ -1,8 +1,12 @@
+import { renderInstalledScriptsTab } from '../tabs/renderInstalledScriptsTab.js';
+import { renderForumPreferencesTab } from '../tabs/renderForumPreferencesTab.js';
+import { renderSettingsTab } from '../tabs/renderSettingsTab.js';
+
 /**
  * Load content for the selected tab
  * @param {string} tabName - The name of the tab to load
  */
-function loadTabContent(tabName) {
+export function loadTabContent(tabName) {
   const content = document.getElementById("mod-manager-content");
 
   // Clear previous content (except the info note)

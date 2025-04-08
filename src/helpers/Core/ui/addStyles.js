@@ -1,7 +1,7 @@
 /**
  * Add CSS styles for the modal
  */
-function addStyles() {
+export function addStyles() {
   GM_addStyle(`
     /* Import Font Awesome */
     @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css');

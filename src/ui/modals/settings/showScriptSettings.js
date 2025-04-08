@@ -1,8 +1,10 @@
+import { renderScriptSettingsContent } from './renderScriptSettingsContent.js';
+
 /**
  * Show the script settings modal
  * @param {Object} script - The script object to show settings for
  */
-function showScriptSettings(script) {
+export function showScriptSettings(script) {
   // Create modal if it doesn't exist
   let modal = document.getElementById("script-settings-modal");
   if (!modal) {

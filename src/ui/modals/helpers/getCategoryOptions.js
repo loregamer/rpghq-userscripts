@@ -1,8 +1,10 @@
+import { MANIFEST } from '../../../data/MANIFEST.js';
+
 /**
  * Get unique categories for the filter dropdown
  * @returns {string} - HTML options for categories
  */
-function getCategoryOptions() {
+export function getCategoryOptions() {
   const categories = new Set();
   MANIFEST.scripts.forEach((script) => {
     if (script.category) {

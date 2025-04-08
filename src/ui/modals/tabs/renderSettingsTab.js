@@ -2,7 +2,7 @@
  * Render the "Settings" tab content
  * @param {HTMLElement} container - The container to render into
  */
-function renderSettingsTab(container) {
+export function renderSettingsTab(container) {
   container.innerHTML += `
     <h2>Global Settings</h2>
     

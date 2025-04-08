@@ -1,7 +1,10 @@
+import { hideModal } from './hideModal.js';
+import { loadTabContent } from './loadTabContent.js';
+
 /**
  * Create and show the modal with script information
  */
-function showModal() {
+export function showModal() {
   let modal = document.getElementById("mod-manager-modal");
   if (!modal) {
     modal = document.createElement("div");

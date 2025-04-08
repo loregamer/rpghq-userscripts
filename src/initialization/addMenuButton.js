@@ -1,7 +1,9 @@
+import { showModal } from '../ui/modals/core/showModal.js';
+
 /**
  * Add menu button to the page
  */
-function addMenuButton() {
+export function addMenuButton() {
   const profileDropdown = document.querySelector(
     '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
   );

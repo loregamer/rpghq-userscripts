@@ -1,9 +1,11 @@
+import { renderSettingControl } from '../../../helpers/Core/formatting/renderSettingControl.js';
+
 /**
  * Render script settings content
  * @param {Object} script - The script object
  * @returns {string} - HTML for the script settings
  */
-function renderScriptSettingsContent(script) {
+export function renderScriptSettingsContent(script) {
   if (!script.settings || script.settings.length === 0) {
     return "";
   }

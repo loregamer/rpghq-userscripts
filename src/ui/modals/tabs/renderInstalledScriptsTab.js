@@ -1,8 +1,15 @@
+import { MANIFEST } from '../../../data/MANIFEST.js';
+import { getCategoryOptions } from '../helpers/getCategoryOptions.js';
+import { getExecutionPhaseOptions } from '../helpers/getExecutionPhaseOptions.js';
+import { renderScriptsGridView } from '../../components/renderScriptsGridView.js';
+import { renderScriptsListView } from '../../components/renderScriptsListView.js';
+import { filterScripts } from '../../../helpers/Core/utilities/filterScripts.js';
+
 /**
  * Render the "Installed Scripts" tab content
  * @param {HTMLElement} container - The container to render into
  */
-function renderInstalledScriptsTab(container) {
+export function renderInstalledScriptsTab(container) {
   // Create the filter panel
   const filterPanel = document.createElement("div");
   filterPanel.className = "filter-panel";

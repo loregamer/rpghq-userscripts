@@ -1,8 +1,11 @@
+import { renderThreadsSubtab } from './renderThreadsSubtab.js';
+import { renderUsersSubtab } from './renderUsersSubtab.js';
+
 /**
  * Render the "Forum Preferences" tab content
  * @param {HTMLElement} container - The container to render into
  */
-function renderForumPreferencesTab(container) {
+export function renderForumPreferencesTab(container) {
   container.innerHTML += `<h2>Forum Preferences</h2>`;
 
   // Add sub-tabs for Threads and Users
