@@ -1,7 +1,7 @@
-import { customizeNotificationsContainer } from "./ui/CustomizeNotifications.js";
-import { checkAndMarkNotifications } from "./helpers/Marker.js";
-import { cleanupStorage } from "./helpers/Storage.js";
-import { Logger } from "../../shared/helpers/Logger.js";
+import { customizeNotificationsContainer } from "../ui/Notifications/CustomizeNotifications.js";
+import { checkAndMarkNotifications } from "../helpers/Notifications/Marker.js";
+import { cleanupStorage } from "../helpers/Notifications/Storage.js";
+import { Logger } from "../helpers/Core/Logger.js";
 
 const log = new Logger("Notifications Init");
 let observer = null;

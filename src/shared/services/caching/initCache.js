@@ -1,1 +1,0 @@
-// Placeholder for initializing the caching service\n\nexport async function initCache() {\n  console.log(\"Initializing Caching Service...\");\n  // Add logic to set up cache, maybe clear old entries, etc.\n  console.log(\"Caching Service Initialized.\");\n}\n

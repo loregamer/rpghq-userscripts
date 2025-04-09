@@ -4,7 +4,7 @@
  */
 
 import { ONE_DAY } from "./Constants.js";
-import { Logger } from "../../../shared/helpers/Logger.js";
+import { Logger } from "../Core/Logger.js";
 
 const log = new Logger("Notifications Storage");
 
