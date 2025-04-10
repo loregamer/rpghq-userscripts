@@ -84,21 +84,21 @@ This document outlines the development checkpoints and actionable steps for crea
 ## Phase 5: Dynamic Script Execution
 
 - **Checkpoint:** Enabled scripts are actually loaded and executed.
-  - [ ] Refine the script loading logic in `main.js`.
-  - [ ] Instead of just logging, use dynamic `import()` or another suitable mechanism (considering userscript environment limitations) to load and execute the code from the script's `path` specified in the manifest _if_ it is enabled.
-  - [ ] Ensure scripts are loaded in the order defined by the `SCRIPT_MANIFEST` array.
-  - [ ] Handle potential errors during script loading/execution gracefully.
-  - [ ] Implement logic for _unloading_ or disabling a script when toggled off (this can be complex, might initially require a page reload).
+  - [x] Refine the script loading logic in `main.js`.
+  - [x] Instead of just logging, use dynamic `import()` or another suitable mechanism (considering userscript environment limitations) to load and execute the code from the script's `path` specified in the manifest _if_ it is enabled.
+  - [x] Ensure scripts are loaded in the order defined by the `SCRIPT_MANIFEST` array.
+  - [x] Handle potential errors during script loading/execution gracefully.
+  - [x] Implement logic for _unloading_ or disabling a script when toggled off (this can be complex, might initially require a page reload).
 
 ## Phase 6: Populate with Initial Scripts (`src/scripts/`)
 
 - **Checkpoint:** Add 1-2 actual example scripts.
-  - [ ] Create a simple script (e.g., `hello_world.js`) that logs a message or makes a trivial DOM change. Add its definition to `manifest.js`.
-  - [ ] Create a script with settings (e.g., `post_highlighter.js`) that uses a boolean setting from the manifest.
-    - [ ] Implement the script logic to read its setting via `GM_getValue`.
-    - [ ] Define its settings in `manifest.js`.
-    - [ ] Verify the settings UI renders correctly and saving works.
-  - [ ] Test enabling/disabling these scripts and confirming their functionality starts/stops (or requires reload).
+  - [x] Create a simple script (e.g., `example_script1.js`) that logs a message or makes a trivial DOM change. Add its definition to `manifest.js`.
+  - [x] Create a script with settings (e.g., `example_script2.js`) that uses a boolean setting from the manifest.
+    - [x] Implement the script logic to read its setting via `GM_getValue`.
+    - [x] Define its settings in `manifest.js`.
+    - [x] Verify the settings UI renders correctly and saving works.
+  - [x] Test enabling/disabling these scripts and confirming their functionality starts/stops (or requires reload).
 
 ## Phase 7: Refinement & Documentation
 
