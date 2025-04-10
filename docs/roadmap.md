@@ -131,6 +131,7 @@ This document outlines the development checkpoints and actionable steps for crea
     - [x] `document-idle` - After page fully loaded
     - [x] `after_dom` - After a short delay
   - [x] Create documentation for execution phases (`docs/execution_phases.md`)
+  - [x] Fix BBCode script to work with the `after_dom` execution phase
 
 ## Phase 9: Refinement & Documentation
 
