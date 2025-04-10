@@ -13,7 +13,7 @@
 // ==/UserScript==
 
 (function () {
-  'use strict';
+  "use strict";
 
   /**
    * Add CSS styles for the modal
@@ -659,9 +659,11 @@
       document.body.appendChild(modal);
 
       // Add event listeners
-      modal.querySelector(".mod-manager-close").addEventListener("click", () => {
-        hideFunc();
-      });
+      modal
+        .querySelector(".mod-manager-close")
+        .addEventListener("click", () => {
+          hideFunc();
+        });
 
       modal.addEventListener("click", (e) => {
         if (e.target === modal) {
@@ -723,7 +725,8 @@
         image: "https://f.rpghq.org/rso7uNB6S4H9.png",
         settings: [],
       },
-    ]};
+    ],
+  };
 
   /**
    * @module scriptStateHelpers
@@ -753,7 +756,8 @@
 
   const scriptState = {
     isScriptEnabled: _isScriptEnabled,
-    setScriptEnabled: _setScriptEnabled};
+    setScriptEnabled: _setScriptEnabled,
+  };
 
   // src/helpers/scriptHelpers.js
   // Import other general script logic helpers here if needed
@@ -1519,9 +1523,11 @@
     modal.style.display = "block";
 
     // Add event listeners
-    modal.querySelector(".settings-modal-close").addEventListener("click", () => {
-      modal.style.display = "none";
-    });
+    modal
+      .querySelector(".settings-modal-close")
+      .addEventListener("click", () => {
+        modal.style.display = "none";
+      });
 
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
@@ -1565,14 +1571,14 @@
     );
     if (!profileDropdown) return;
 
-    const logoutButton = Array.from(profileDropdown.querySelectorAll("li")).find(
-      (li) => {
-        return (
-          li.textContent.trim().includes("Logout") ||
-          li.querySelector('a[title="Logout"]')
-        );
-      }
-    );
+    const logoutButton = Array.from(
+      profileDropdown.querySelectorAll("li")
+    ).find((li) => {
+      return (
+        li.textContent.trim().includes("Logout") ||
+        li.querySelector('a[title="Logout"]')
+      );
+    });
 
     if (!logoutButton) return;
 
@@ -1612,10 +1618,8 @@
 
   // Import metadata for rollup-plugin-userscript
 
-  (function() {
-
-      // Run initialization
-      init();
+  (function () {
+    // Run initialization
+    init();
   })();
-
 })();
