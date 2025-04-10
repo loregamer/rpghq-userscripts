@@ -32,10 +32,8 @@ export function renderScriptsListView(
     <thead>
       <tr>
         <th>Name</th>
-        <th>Version</th>
         <th>Category</th>
         <th>Description</th>
-        <th>Execution Phase</th>
         <th>Status</th>
         <th>Settings</th>
         <th>Actions</th>
@@ -50,11 +48,9 @@ export function renderScriptsListView(
               : script.enabledByDefault;
           return `
               <tr>
-                <td><strong>${script.name}</strong></td>
-                <td>v${script.version}</td>
+                <td><strong>${script.name}</strong> <span class="script-version-inline">v${script.version}</span></td>
                 <td>${script.category || "Uncategorized"}</td>
                 <td>${script.description || "No description available."}</td>
-                <td>${getPhaseDisplayName(script.executionPhase)}</td>
                 <td>
                   <label class="toggle-switch">
                     <input type="checkbox" class="script-toggle" data-script-id="${script.id}" ${isEnabled ? "checked" : ""}>

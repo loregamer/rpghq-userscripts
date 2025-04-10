@@ -362,6 +362,18 @@ GM_addStyle(`
     border-radius: 3px;
     font-size: 0.8em;
   }
+  
+  .script-card-version-inline {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    font-weight: normal;
+  }
+  
+  .script-version-inline {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    font-weight: normal;
+  }
 
   .script-card-description {
     margin: 0 0 10px 0;

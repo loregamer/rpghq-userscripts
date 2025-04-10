@@ -49,18 +49,12 @@ export function renderScriptsGridView(
       </div>
       <div class="script-card-content">
         <div class="script-card-header">
-          <h3 class="script-card-title">${script.name}</h3>
-          <span class="script-card-version">v${script.version}</span>
+          <h3 class="script-card-title">${script.name} <span class="script-card-version-inline">v${script.version}</span></h3>
         </div>
         <p class="script-card-description">${
           script.description || "No description available."
         }</p>
         <div class="script-card-footer">
-          <div class="script-card-phase">
-            <i class="fa fa-bolt"></i> ${getPhaseDisplayName(
-              script.executionPhase,
-            )}
-          </div>
           <div class="script-card-actions">
             <label class="toggle-switch">
               <input type="checkbox" class="script-toggle" data-script-id="${script.id}" ${isEnabled ? "checked" : ""}>
