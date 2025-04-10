@@ -10,7 +10,7 @@
 export function log(...args) {
   console.log(
     "%c[RPGHQ Userscript Manager]%c",
-    "color: #3889ED; font-weight: bold",
+    "background-color: #3889ED; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;",
     "",
     ...args,
   );
@@ -23,7 +23,7 @@ export function log(...args) {
 export function warn(...args) {
   console.warn(
     "%c[RPGHQ Userscript Manager]%c",
-    "color: #FFC107; font-weight: bold",
+    "background-color: #FFC107; color: black; padding: 2px 6px; border-radius: 10px; font-weight: bold;",
     "",
     ...args,
   );
@@ -36,7 +36,7 @@ export function warn(...args) {
 export function error(...args) {
   console.error(
     "%c[RPGHQ Userscript Manager]%c",
-    "color: #F5575D; font-weight: bold",
+    "background-color: #F5575D; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;",
     "",
     ...args,
   );
@@ -50,7 +50,7 @@ export function error(...args) {
 export function debug(...args) {
   console.debug(
     "%c[RPGHQ Userscript Manager]%c",
-    "color: #00AA00; font-weight: bold",
+    "background-color: #00AA00; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;",
     "",
     ...args,
   );

@@ -8,37 +8,47 @@ const STORAGE_KEY_THREADS = "thread_prefs"; // Key for storing thread preference
 // --- Initialization Function (called by main.js) ---
 export function initializeThreadPrefs() {
   const href = window.location.href;
-  const isOnViewForum = href.includes("viewforum.php");
-  // More specific check for viewtopic, ensuring it's the file name with parameters
-  const isOnViewTopic =
+  const pathname = window.location.pathname; // Get the path part of the URL
+
+  // Check if on a list view (forum view or index page)
+  const isListView =
+    href.includes("viewforum.php") ||
+    pathname === "/forums/" ||
+    pathname === "/forums/index.php";
+
+  // Check if on a topic view
+  const isTopicView =
     href.includes("viewtopic.php?") || href.endsWith("viewtopic.php");
 
-  if (!isOnViewForum && !isOnViewTopic) {
-    return; // Do nothing if not on viewforum or viewtopic
+  // Exit if not on a relevant page
+  if (!isListView && !isTopicView) {
+    return;
   }
 
-  if (isOnViewForum) {
+  if (isListView) {
     // Apply preferences that affect the list view (Pin, Ignore, Highlight)
     applyListPreferences();
     // Add controls to each thread row initially
     addListControlsToThreads();
 
-    // Set up MutationObserver for dynamic content loading
-    const topicListContainer = document.querySelector(
-      ".forumbg .topiclist.topics",
-    ); // Target the specific list
-    if (topicListContainer) {
-      const observer = new MutationObserver(handleMutations);
-      observer.observe(topicListContainer, {
-        childList: true, // Watch for added/removed child nodes (li.row)
-        subtree: false, // No need to watch deeper than the direct children (li elements)
-      });
-    } else {
-      error(
-        `${PREF_ID}: Could not find topic list container for MutationObserver.`,
-      );
+    // Set up MutationObserver for dynamic content loading (only on viewforum)
+    if (href.includes("viewforum.php")) {
+      const topicListContainer = document.querySelector(
+        ".forumbg .topiclist.topics",
+      ); // Target the specific list
+      if (topicListContainer) {
+        const observer = new MutationObserver(handleMutations);
+        observer.observe(topicListContainer, {
+          childList: true, // Watch for added/removed child nodes (li.row)
+          subtree: false, // No need to watch deeper than the direct children (li elements)
+        });
+      } else {
+        error(
+          `${PREF_ID}: Could not find topic list container for MutationObserver on viewforum.php.`,
+        );
+      }
     }
-  } else if (isOnViewTopic) {
+  } else if (isTopicView) {
     // Add controls to the topic action bar
     addTopicControls();
     // Potentially apply highlight to the topic itself if desired in the future
