@@ -119,7 +119,20 @@ This document outlines the development checkpoints and actionable steps for crea
   - [x] Match all animations and transitions from the deprecated manager
   - [x] Ensure responsive behavior matches deprecated version
 
-## Phase 8: Refinement & Documentation
+## Phase 8: Script Execution Control
+
+- **Checkpoint:** Individual scripts can be executed at different page load phases.
+  - [x] Add execution phase property to script manifest (`executionPhase`)
+  - [x] Set main userscript to `@run-at document-start` 
+  - [x] Implement phase-based script loading in main.js
+  - [x] Add support for four execution phases:
+    - [x] `document-start` - As early as possible
+    - [x] `document-end` - When DOM is ready (default)
+    - [x] `document-idle` - After page fully loaded
+    - [x] `after_dom` - After a short delay
+  - [x] Create documentation for execution phases (`docs/execution_phases.md`)
+
+## Phase 9: Refinement & Documentation
 
 - **Checkpoint:** Project is stable and well-documented.
   - [x] Refine UI/UX based on testing.
