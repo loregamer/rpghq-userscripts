@@ -79,6 +79,7 @@ This document outlines the development checkpoints and actionable steps for crea
 - **Checkpoint:** The UI modal appears correctly when triggered.
   - [x] Inject CSS from `src/styles.css` into the page using `GM_addStyle` or similar.
   - [x] Re-implement `addMenuButton` logic to add the "View Userscripts" button to the profile dropdown menu.
+  - [x] Fix visibility issues with modals by using direct style.display instead of class toggling.
 
 ## Phase 5: Dynamic Script Execution
 

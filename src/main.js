@@ -518,21 +518,34 @@ function initializeManager() {
   const { modalElement, overlayElement } = createManagerModal();
   const settingsModalElement = createSettingsModal(); // Create the settings modal
 
-  // Append elements to the body
+  // Append elements to the body and set initial display state
   document.body.appendChild(overlayElement);
   document.body.appendChild(modalElement);
   document.body.appendChild(settingsModalElement); // Append settings modal
 
+  // Set initial visibility
+  modalElement.style.display = "none";
+  overlayElement.style.display = "none";
+  settingsModalElement.style.display = "none";
+
   // --- Modal Visibility Logic ---
   const toggleModalVisibility = () => {
-    const isActive = modalElement.classList.contains("active");
+    const isVisible = modalElement.style.display === "block";
     console.log(
       `Toggling modal visibility. Currently ${
-        isActive ? "active" : "inactive"
+        isVisible ? "visible" : "hidden"
       }.`,
     );
-    modalElement.classList.toggle("active");
-    overlayElement.classList.toggle("active");
+
+    if (isVisible) {
+      modalElement.style.display = "none";
+      overlayElement.style.display = "none";
+      document.body.style.overflow = "";
+    } else {
+      modalElement.style.display = "block";
+      overlayElement.style.display = "block";
+      document.body.style.overflow = "hidden";
+    }
   };
 
   // --- Settings Modal Visibility & Logic ---
@@ -579,9 +592,9 @@ function initializeManager() {
 
         scriptInfoArea.appendChild(infoTable);
       }
-      settingsModalElement.classList.add("active");
+      settingsModalElement.style.display = "block";
     } else {
-      settingsModalElement.classList.remove("active");
+      settingsModalElement.style.display = "none";
     }
   };
 
