@@ -1,6 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
-// @version      v0.1.2
+// @namespace    rpghq-userscripts
+// @version      0.2
 // @description  RPGHQ Userscript Manager
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -788,6 +789,20 @@
       executionPhase: "after_dom",
     },
     {
+      id: "memberSearch",
+      name: "Member Search Button",
+      version: "1.0.0",
+      description: "Adds a quick member search button next to Unread posts",
+      author: "loregamer",
+      image: "https://f.rpghq.org/Rjsn2V3CLLOU.png?n=pasted-file.png",
+      // Add an image URL if available
+      path: "./scripts/memberSearch.js",
+      enabledByDefault: !0,
+      settings: [],
+      categories: ["Fun"],
+      executionPhase: "document-end",
+    },
+    {
       id: "notifications",
       name: "Notification Improver",
       version: "1.0.0",
@@ -818,6 +833,20 @@
       executionPhase: "document-end",
     },
     {
+      id: "randomTopic",
+      name: "Random Topic Button",
+      version: "1.0.0",
+      description: "Adds a Random Topic button, for funsies",
+      author: "loregamer",
+      image: "https://f.rpghq.org/LzsLP40AK6Ut.png?n=pasted-file.png",
+      // Add an image URL if available
+      path: "./scripts/randomTopic.js",
+      enabledByDefault: !0,
+      settings: [],
+      categories: ["Fun"],
+      executionPhase: "document-end",
+    },
+    {
       id: "separateReactions",
       name: "Reaction List Separated",
       version: "1.0.0",
@@ -827,6 +856,21 @@
         "https://f.rpghq.org/H6zBOaMtu9i2.gif?n=Separated%20Reactions%20(2).gif",
       // Add an image URL if available
       path: "./scripts/separateReactions.js",
+      enabledByDefault: !1,
+      settings: [],
+      categories: ["UI"],
+      executionPhase: "document-end",
+    },
+    {
+      id: "recentTopicsFormat",
+      name: "Slightly Formatted Thread Titles in Recent Topics",
+      version: "1.0.0",
+      description:
+        "Adds some minor formatting to thread titles, like unbolding stuff in parantheses, add line wrapping, or reformatting the AG threads",
+      author: "loregamer",
+      image: "https://f.rpghq.org/97x4ryHzRbVf.png?n=pasted-file.png",
+      // Add an image URL if available
+      path: "./scripts/recentTopicsFormat.js",
       enabledByDefault: !1,
       settings: [],
       categories: ["UI"],
@@ -1237,426 +1281,854 @@
    * @param {Array} scriptManifest - Array of script objects from the manifest
    * @param {Function} loadScript - Function to load a script
    * @param {Function} unloadScript - Function to unload a script
-   */ var separateReactions = Object.freeze({
+   */ var recentTopicsFormat = Object.freeze({
     __proto__: null,
     init:
-      // RPGHQ - Reaction List Separated
+      // RPGHQ - Slightly Formatted Thread Titles
       /**
-       * Makes smiley reactions and counts separated
+       * Adds some minor formatting to thread titles, like unbolding stuff in parantheses or reformatting the AG threads
        * Original script by loregamer, adapted for the RPGHQ Userscript Manager.
        * License: MIT
        *
-       * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/separateReactions.md for documentation
+       * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/recentTopicsFormat.md for documentation
        */
       function () {
-        function createReactionList(postId, reactions) {
-          console.log(
-            "createReactionList: Starting to create reaction list for post",
-            postId
-          );
-          const pollVotes = (function () {
-            console.log("getPollVotes: Starting to collect poll votes");
-            const pollVotes = {},
-              polls = document.querySelectorAll(".polls");
-            return (
-              console.log("getPollVotes: Found polls:", polls.length),
-              polls.forEach((poll, pollIndex) => {
-                console.log(`getPollVotes: Processing poll #${pollIndex + 1}`);
-                const dls = poll.querySelectorAll("dl");
-                console.log(
-                  `getPollVotes: Found ${dls.length} dl elements in poll #${pollIndex + 1}`
+        /***************************************
+         * 1) Remove ellipses/truncation in titles
+         ***************************************/
+        const style = document.createElement("style");
+        /**
+         * Process a single title element
+         */
+        function processTitle(titleElem) {
+          // Apply transformations in sequence
+          let newHTML = titleElem.textContent;
+          (newHTML = newHTML.replace(
+            /\([^()]*\)/g,
+            (match) =>
+              `<span style="font-size: 0.85em; font-weight: normal;">${match}</span>`
+          )),
+            (newHTML =
+              /**
+               * Style version numbers by adding 'v' prefix and making them smaller
+               * Matches patterns like: 1.0, 1.0.0, 1.0.0.1, etc.
+               */
+              (function (str) {
+                return str.replace(
+                  /\b(\d+(?:\.\d+)+)\b/g,
+                  (match) => `<span style="font-size: 0.75em;">v${match}</span>`
                 );
-                let currentOption = null;
-                dls.forEach((dl, dlIndex) => {
-                  // First check if this is an option DL
-                  const optionDt = dl.querySelector("dt");
-                  // Then check if this is a voters box for the current option
-                  if (
-                    (!optionDt ||
-                      dl.classList.contains("poll_voters_box") ||
-                      dl.classList.contains("poll_total_votes") ||
-                      ((currentOption = optionDt.textContent.trim()),
-                      console.log(
-                        `getPollVotes: Found option: "${currentOption}"`
-                      )),
-                    dl.classList.contains("poll_voters_box") && currentOption)
-                  ) {
-                    console.log(
-                      `getPollVotes: Processing voters for option: "${currentOption}"`
+              })(
+                /**
+                 * Special formatting for Adventurer's Guild titles
+                 * Format: "[x] Adventurer's Guild - Month: Games" or "Month: Games"
+                 */ newHTML
+              )),
+            (newHTML = (function (str, elem) {
+              // Check if it's an Adventurer's Guild title or post
+              const isGuildTitle = str.includes("Adventurer's Guild"),
+                isGuildForum =
+                  null !==
+                  elem
+                    .closest(".row-item")
+                    .querySelector(
+                      '.forum-links a[href*="adventurer-s-guild"]'
                     );
-                    const votersSpan = dl.querySelector(".poll_voters");
-                    if (!votersSpan) return;
-                    const voters = votersSpan.querySelectorAll("span[name]");
-                    console.log(
-                      `getPollVotes: Found ${voters.length} voters for this option`
-                    ),
-                      voters.forEach((voter, voterIndex) => {
-                        const username = voter.getAttribute("name"),
-                          userLink = voter.querySelector("a");
-                        if (
-                          (console.log(
-                            `getPollVotes: Processing voter #${voterIndex + 1}:`,
-                            {
-                              username: username,
-                              hasUserLink: !!userLink,
-                              linkText: userLink?.textContent,
-                              option: currentOption,
-                              isColoured:
-                                userLink?.classList.contains(
-                                  "username-coloured"
-                                ),
-                              color: userLink?.style.color,
-                            }
-                          ),
-                          username && userLink)
-                        ) {
-                          const lowerUsername = username.toLowerCase();
-                          pollVotes[lowerUsername] ||
-                            (pollVotes[lowerUsername] = {
-                              options: [],
-                              isColoured:
-                                userLink.classList.contains(
-                                  "username-coloured"
-                                ),
-                              color: userLink.style.color || null,
-                            }),
-                            pollVotes[lowerUsername].options.push(
-                              currentOption
-                            );
-                        }
-                      });
-                  }
-                });
-              }),
-              console.log("getPollVotes: Final collected votes:", pollVotes),
-              pollVotes
-            );
-          })();
-          console.log("createReactionList: Got poll votes:", pollVotes);
-          const displayStyle = 0 === reactions.length ? "display: none;" : "";
-          console.log(
-            "createReactionList: Processing",
-            reactions.length,
-            "reactions"
-          );
-          const html = `\n        <div class="reaction-score-list content-processed" data-post-id="${postId}" data-title="Reactions" style="padding-top: 10px !important; ${displayStyle}">\n            <div class="list-scores" style="display: flex; flex-wrap: wrap; gap: 4px;">\n                ${reactions
-            .map(
-              (reaction, reactionIndex) => (
-                console.log(
-                  `createReactionList: Processing reaction #${reactionIndex + 1}:`,
-                  {
-                    title: reaction.title,
-                    userCount: reaction.users.length,
-                  }
-                ),
-                `\n                    <div class="reaction-group" style="display: flex; align-items: center; background-color: #3A404A; border-radius: 8px; padding: 2px 6px; position: relative;">\n                        <img src="${reaction.image}" alt="${reaction.title}" style="width: auto; height: 16px; margin-right: 4px; object-fit: contain;">\n                        <span style="font-size: 12px; color: #dcddde;">${reaction.count}</span>\n                        <div class="reaction-users-popup" style="display: none; position: fixed; background-color: #191919; border: 1px solid #202225; border-radius: 4px; padding: 8px; z-index: 1000; color: #dcddde; font-size: 12px; min-width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">\n                            <div style="font-weight: bold; margin-bottom: 8px;">${reaction.title}</div>\n                            <div style="display: flex; flex-direction: column; gap: 8px;">\n                                ${reaction.users
-                  .map((user, userIndex) => {
-                    console.log(
-                      `createReactionList: Reaction #${reactionIndex + 1}, processing user #${userIndex + 1}:`,
-                      {
-                        username: user.username,
-                        pollVotes:
-                          pollVotes[user.username.toLowerCase()]?.options,
-                      }
-                    );
-                    const userPollVotes =
-                        pollVotes[user.username.toLowerCase()],
-                      pollInfo =
-                        userPollVotes?.options?.length > 0
-                          ? `<div style="font-size: 8.5px; opacity: 0.8; color: #dcddde; margin-top: 2px;">\n                                            ${1 === userPollVotes.options.length ? `<div>${userPollVotes.options[0]}</div>` : userPollVotes.options.map((option) => `<div style="display: flex; align-items: baseline; gap: 4px;">\n                                                  <span style="font-size: 8px;">•</span>\n                                                  <span>${option}</span>\n                                                </div>`).join("")}\n                                          </div>`
-                          : "";
-                    return `\n                                        <div style="display: flex; align-items: flex-start;">\n                                            <div style="width: 24px; height: 24px; margin-right: 8px; flex-shrink: 0;">\n                                                ${user.avatar ? `<img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">` : ""}\n                                            </div>\n                                            <div style="display: flex; flex-direction: column;">\n                                                <a href="${user.profileUrl}" style="${user.isColoured ? `color: ${user.color};` : ""}" class="${user.isColoured ? "username-coloured" : "username"}">${user.username}</a>\n                                                ${pollInfo}\n                                            </div>\n                                        </div>\n                                    `;
-                  })
-                  .join(
-                    ""
-                  )}\n                            </div>\n                        </div>\n                    </div>\n                `
-              )
-            )
-            .join("")}\n            </div>\n        </div>\n    `;
-          return (
-            console.log("createReactionList: Finished creating HTML"), html
-          );
-        }
-        function fetchReactions(postId) {
-          return fetch(
-            `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
-            {
-              method: "POST",
-              headers: {
-                accept: "application/json, text/javascript, */*; q=0.01",
-                "x-requested-with": "XMLHttpRequest",
-              },
-              credentials: "include",
-            }
-          )
-            .then((response) => response.json())
-            .then((data) =>
-              data.htmlContent
-                ? (function (htmlContent) {
-                    const doc = new DOMParser().parseFromString(
-                        htmlContent,
-                        "text/html"
-                      ),
-                      reactions = [];
-                    return (
-                      doc
-                        .querySelectorAll(".tab-header a:not(.active)")
-                        .forEach((a) => {
-                          const image = a.querySelector("img")?.src || "",
-                            title = a.getAttribute("title") || "",
-                            count =
-                              a.querySelector(".tab-counter")?.textContent ||
-                              "0",
-                            dataId = a.getAttribute("data-id");
-                          if (dataId) {
-                            const users = [];
-                            doc
-                              .querySelectorAll(
-                                `.tab-content[data-id="${dataId}"] li`
-                              )
-                              .forEach((li) => {
-                                const userLink =
-                                  li.querySelector(".cbb-helper-text a");
-                                if (userLink) {
-                                  const username = userLink.textContent || "",
-                                    profileUrl = userLink.href || "",
-                                    avatarImg =
-                                      li.querySelector(".user-avatar img"),
-                                    avatar = avatarImg ? avatarImg.src : "",
-                                    isColoured =
-                                      userLink.classList.contains(
-                                        "username-coloured"
-                                      ),
-                                    color = isColoured
-                                      ? userLink.style.color
-                                      : null;
-                                  users.push({
-                                    username: username,
-                                    avatar: avatar,
-                                    profileUrl: profileUrl,
-                                    isColoured: isColoured,
-                                    color: color,
-                                  });
-                                }
-                              }),
-                              reactions.push({
-                                image: image,
-                                title: title,
-                                count: count,
-                                users: users,
-                              });
-                          }
-                        }),
-                      reactions
-                    );
-                  })(data.htmlContent)
-                : (console.error("No HTML content in response:", data), [])
-            )
-            .catch(
-              (error) => (console.error("Error fetching reactions:", error), [])
-            );
-        }
-        function processPost(post) {
-          const postId = post.id.substring(1),
-            existingReactionList = post.querySelector(".reaction-score-list");
-          existingReactionList &&
-            !existingReactionList.dataset.processed &&
-            (function (post, postId) {
-              const existingReactionList = post.querySelector(
-                ".reaction-score-list"
-              );
-              if (
-                existingReactionList &&
-                existingReactionList.dataset.processed
-              )
-                return;
-              fetchReactions(postId)
-                .then((reactions) => {
-                  const reactionListHtml = createReactionList(
-                    postId,
-                    reactions
-                  );
-                  if (existingReactionList)
-                    existingReactionList.outerHTML = reactionListHtml;
-                  else {
-                    const reactionLauncher = post.querySelector(
-                      ".reactions-launcher"
-                    );
-                    reactionLauncher &&
-                      reactionLauncher.insertAdjacentHTML(
-                        "beforebegin",
-                        reactionListHtml
-                      );
-                  }
-                  const newReactionList = post.querySelector(
-                    ".reaction-score-list"
-                  );
-                  newReactionList &&
-                    ((newReactionList.dataset.processed = "true"),
-                    // Add hover effect to reaction groups
-                    newReactionList
-                      .querySelectorAll(".reaction-group")
-                      .forEach((group) => {
-                        const popup = group.querySelector(
-                          ".reaction-users-popup"
-                        );
-                        let isHovering = !1;
-                        group.addEventListener("mouseenter", (e) => {
-                          (isHovering = !0), showPopup(group, popup);
-                        }),
-                          group.addEventListener("mouseleave", () => {
-                            (isHovering = !1),
-                              (function (popup) {
-                                popup.style.display = "none";
-                              })(popup);
-                          }),
-                          // Add scroll event listener
-                          window.addEventListener("scroll", () => {
-                            isHovering && showPopup(group, popup);
-                          });
-                      }));
-                  // Update the reaction launcher
-                  const reactionLauncher = post.querySelector(
-                    ".reactions-launcher"
-                  );
-                  if (reactionLauncher) {
-                    const reactionButton =
-                      reactionLauncher.querySelector(".reaction-button");
-                    if (reactionButton) {
-                      // Check if a reaction is selected
-                      const selectedReaction =
-                        reactionButton.querySelector("img");
-                      if (selectedReaction && GM_getValue("leftMode", !0)) {
-                        // Replace the button content with an "X" icon and center-align it
-                        (reactionButton.innerHTML =
-                          '\n                <svg class="icon" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000" xml:space="preserve">\n                  <path d="M576.3,877.3c-30.5,7.2-62.1,10.9-93.7,10.9c-223.3,0-405-181.7-405-405s181.7-405,405-405c223.3,0,405,181.7,405,405c0,32.8-3.9,65.5-11.7,97.1c-4.5,18.1,6.6,36.4,24.7,40.8c18.1,4.7,36.4-6.5,40.8-24.7c9.1-36.9,13.7-75,13.7-113.3c0-260.6-212-472.5-472.5-472.5C222,10.6,10,222.6,10,483.1c0,260.6,212,472.6,472.5,472.6c36.9,0,73.7-4.3,109.3-12.7c18.1-4.3,29.4-22.4,25-40.6C612.6,884.2,594.4,872.9,576.3,877.3z"></path>\n                  <path d="M250.2,594.7c-14.7,11.5-17.3,32.7-5.8,47.4c58,74.2,145.2,116.7,239.3,116.7c95.1,0,182.9-43.3,240.9-118.7c11.4-14.8,8.6-35.9-6.2-47.3s-35.9-8.6-47.3,6.2c-45.1,58.7-113.4,92.3-187.4,92.3c-73.2,0-141-33.1-186.2-90.8C286.1,585.8,264.8,583.3,250.2,594.7z"></path>\n                  <path d="M382.4,435.9v-67.5c0-28-22.6-50.6-50.6-50.6s-50.6,22.6-50.6,50.6v67.5c0,28,22.6,50.6,50.6,50.6S382.4,463.8,382.4,435.9z"></path>\n                  <path d="M686.2,435.9v-67.5c0-28-22.7-50.6-50.6-50.6S585,340.4,585,368.3v67.5c0,28,22.7,50.6,50.6,50.6S686.2,463.8,686.2,435.9z"></path>\n                  <path d="M956.2,786.9H855V685.6c0-18.7-15.1-33.8-33.8-33.8s-33.8,15.1-33.8,33.8v101.3H686.2c-18.7,0-33.8,15.1-33.8,33.8s15.1,33.8,33.8,33.8h101.3v101.3c0,18.7,15.1,33.8,33.8,33.8s33.8-15.1,33.8-33.8V854.4h101.3c18.7,0,33.8-15.1,33.8-33.8S974.9,786.9,956.2,786.9z"></path>\n                </svg>\n              '),
-                          reactionButton.classList.add("default-icon"),
-                          reactionButton.classList.remove("remove-reaction"),
-                          (reactionButton.title = "Add reaction"),
-                          // Remove any existing inline styles that might interfere
-                          (reactionButton.style.cssText = "");
-                        // Highlight the user's reaction in the reaction list
-                        const userReactionImage = selectedReaction.src,
-                          userReactionGroup = newReactionList.querySelector(
-                            `.reaction-group img[src="${userReactionImage}"]`
-                          );
-                        userReactionGroup &&
-                          userReactionGroup
-                            .closest(".reaction-group")
-                            .classList.add("user-reacted");
-                      }
-                    }
-                  }
-                })
-                .catch((error) =>
-                  console.error("Error fetching reactions:", error)
-                );
-            })(post, postId);
-        }
-        function showPopup(group, popup) {
-          // Show the popup
-          popup.style.display = "block";
-          // Position the popup
-          const rect = group.getBoundingClientRect();
-          let top = rect.bottom,
-            left = rect.left;
-          // Adjust if popup goes off-screen
-          left + popup.offsetWidth > window.innerWidth &&
-            (left = window.innerWidth - popup.offsetWidth),
-            (popup.style.top = `${top}px`),
-            (popup.style.left = `${left}px`);
-        }
-        function toggleLeftMode() {
-          const currentMode = GM_getValue("leftMode", !1);
-          GM_setValue("leftMode", !currentMode), window.location.reload();
-        }
-        function observePosts() {
-          const style = document.createElement("style");
-          (style.textContent =
-            "\n      @media screen and (min-width: 768px) {\n        .post .content {\n          min-height: 125px;\n        }\n      }\n      .reactions-launcher .reaction-button.remove-reaction .icon {\n        font-size: 16px !important;\n        line-height: 1 !important;\n        margin: 0 !important;\n        height: auto !important; /* Override the fixed height */\n      }\n      .reaction-group.user-reacted {\n        background-color: #4A5A6A !important;\n      }\n      .reaction-group.user-reacted span {\n        color: #ffffff !important;\n      }\n    "),
-            document.head.appendChild(style),
-            (function () {
-              const leftMode = GM_getValue("leftMode", !1),
-                style =
-                  document.getElementById("rpghq-reaction-list-style") ||
-                  document.createElement("style");
-              (style.id = "rpghq-reaction-list-style"),
-                (style.textContent = leftMode
-                  ? "\n      .reactions-launcher > .reaction-button.default-icon {\n        padding-top: 7px !important;\n      }\n      .reaction-score-list, .reactions-launcher {\n        float: left !important;\n        margin-right: 4px !important;\n        padding-top: 10px !important;\n        margin: 0 0 5px 0 !important;\n        padding: 4px 4px 4px 0 !important;\n      }\n      .reactions-launcher {\n        display: flex !important;\n        align-items: center !important;\n      }\n      .reactions-launcher a.reaction-button {\n        display: flex !important;\n        align-items: center !important;\n        justify-content: center !important;\n        width: auto !important;\n        height: 16px !important;\n        padding: 0 !important;\n        background: none !important;\n      }\n      .reactions-launcher a.reaction-button svg {\n        width: 16px !important;\n        height: 16px !important;\n        fill: #dcddde !important;\n      }\n    "
-                  : ""),
-                document.head.appendChild(style),
-                leftMode &&
-                  document.querySelectorAll(".postbody").forEach((postbody) => {
-                    const reactionLauncher = postbody.querySelector(
-                        ".reactions-launcher"
-                      ),
-                      reactionScoreList = postbody.querySelector(
-                        ".reaction-score-list"
-                      );
-                    reactionLauncher &&
-                      reactionScoreList &&
-                      reactionLauncher.previousElementSibling !==
-                        reactionScoreList &&
-                      reactionLauncher.parentNode.insertBefore(
-                        reactionScoreList,
-                        reactionLauncher
-                      );
-                  });
-            })(),
-            (function () {
-              if (window.innerWidth <= 768) {
-                // Mobile view check
-                const dropdown = document.querySelector(
-                  "#username_logged_in .dropdown-contents"
-                );
-                if (
-                  dropdown &&
-                  !document.getElementById("toggle-left-reactions-mode")
-                ) {
-                  const leftModeEnabled = GM_getValue("leftMode", !1),
-                    listItem = document.createElement("li"),
-                    toggleButton = document.createElement("a");
-                  (toggleButton.id = "toggle-left-reactions-mode"),
-                    (toggleButton.href = "#"),
-                    (toggleButton.title = "Toggle Left Reactions Mode"),
-                    (toggleButton.role = "menuitem"),
-                    (toggleButton.innerHTML = `\n          <i class="icon fa-align-left fa-fw" aria-hidden="true"></i>\n          <span>Left Reactions Mode (${leftModeEnabled ? "On" : "Off"})</span>\n        `),
-                    toggleButton.addEventListener("click", function (e) {
-                      e.preventDefault(), toggleLeftMode();
-                    }),
-                    listItem.appendChild(toggleButton),
-                    dropdown.insertBefore(listItem, dropdown.lastElementChild);
-                }
+              if (!isGuildTitle && !isGuildForum) return str;
+              let match;
+              if (isGuildTitle) {
+                // Match the pattern: everything before the month, the month, and games list
+                const titleRegex =
+                  /^(?:(Junior)\s+)?Adventurer's Guild\s*-\s*([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
+                match = str.match(titleRegex);
+              } else {
+                // Match the pattern: month and games list
+                const forumRegex = /^([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
+                match = str.match(forumRegex);
               }
-            })();
+              if (!match) return str;
+              if (isGuildTitle) {
+                const [_, juniorPrefix, month, gamesList] = match,
+                  shortPrefix = juniorPrefix ? "Jr. AG - " : "AG - ";
+                return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">${shortPrefix}${month}</span>`;
+              }
+              {
+                const [_, month, gamesList] = match;
+                return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">(AG - ${month})</span>`;
+              }
+            })(
+              /**
+               * Make text after dash unbolded (but keep same size)
+               * e.g. "Title - Game" -> "Title<span style="font-weight: normal"> - Game</span>"
+               * Handles both regular dash and em dash
+               */ newHTML,
+              titleElem
+            )),
+            (newHTML = (function (str, elem) {
+              // Don't process Adventurer's Guild titles or posts
+              const isGuildTitle = str.includes("Adventurer's Guild"),
+                isGuildForum =
+                  null !==
+                  elem
+                    .closest(".row-item")
+                    .querySelector(
+                      '.forum-links a[href*="adventurer-s-guild"]'
+                    );
+              if (isGuildTitle || isGuildForum) return str;
+              // Match both regular dash and em dash with optional spaces
+              const match = str.match(/\s+[-—]\s+/);
+              // If there is no dash, return unmodified
+              if (!match) return str;
+              const dashIndex = match.index;
+              // Part before the dash
+              // Wrap the dash + everything after it, only changing font-weight
+              return `${str.slice(0, dashIndex)}<span style="font-weight: normal;">${str.slice(dashIndex)}</span>`;
+            })(newHTML, titleElem)),
+            // Replace original text with our new HTML
+            (titleElem.innerHTML = newHTML);
+        }
+        /**
+         * Process all titles in a container element
+         */ function processTitlesInContainer(container) {
+          container.querySelectorAll(".topictitle").forEach(processTitle);
+        }
+        // Initial processing
+        (style.textContent =
+          "\n         /* Ensure topic titles don't get truncated with ellipses */\n         .topictitle {\n             white-space: normal !important;\n             overflow: visible !important;\n             text-overflow: unset !important;\n             max-width: none !important;\n             display: inline-block;\n         }\n     "),
+          document.head.appendChild(style),
+          processTitlesInContainer(document),
+          // Start observing the document with the configured parameters
           new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
               "childList" === mutation.type &&
                 mutation.addedNodes.forEach((node) => {
-                  if (node.nodeType === Node.ELEMENT_NODE)
-                    if (node.classList.contains("post")) processPost(node);
-                    else if (node.classList.contains("reaction-score-list")) {
-                      const post = node.closest(".post");
-                      post && processPost(post);
-                    }
+                  node.nodeType === Node.ELEMENT_NODE &&
+                    processTitlesInContainer(node);
                 });
             });
           }).observe(document.body, {
             childList: !0,
             subtree: !0,
-          }),
-            // Process existing posts
-            document.querySelectorAll(".post").forEach(processPost);
-        }
-        GM_registerMenuCommand(
-          "[Reaction List] Toggle Left Mode",
-          toggleLeftMode
-        ),
-          "complete" === document.readyState ||
-          "interactive" === document.readyState
-            ? observePosts()
-            : window.addEventListener("load", observePosts);
+          });
       },
+  });
+  // RPGHQ - Random Topic Button
+  /**
+   * Adds a Random Topic button, for funsies
+   * Original script by loregamer, adapted for the RPGHQ Userscript Manager.
+   * License: MIT
+   *
+   * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/randomTopic.md for documentation
+   */ var randomTopic = Object.freeze({
+    __proto__: null,
+    init: function () {
+      // Function to check if a topic exists
+      function checkTopicExists(topicId) {
+        return new Promise((resolve, reject) => {
+          GM_xmlhttpRequest({
+            method: "HEAD",
+            url: `https://rpghq.org/forums/viewtopic.php?t=${topicId}`,
+            onload: function (response) {
+              resolve(200 === response.status);
+            },
+            onerror: function (error) {
+              reject(error);
+            },
+          });
+        });
+      }
+      // Function to get a valid random topic
+      async function getValidRandomTopic() {
+        let topicId,
+          topicExists = !1;
+        for (; !topicExists; )
+          (topicId = Math.floor(2800 * Math.random()) + 1),
+            (topicExists = await checkTopicExists(topicId));
+        return `https://rpghq.org/forums/viewtopic.php?t=${topicId}`;
+      }
+      // Function to create and add the button
+      function handleRandomTopicClick(e) {
+        e.preventDefault(),
+          (this.style.textDecoration = "none"),
+          (this.innerHTML =
+            '<i class="icon fa-spinner fa-spin fa-fw" aria-hidden="true"></i><span>Loading...</span>'),
+          getValidRandomTopic()
+            .then((validTopic) => {
+              window.location.href = validTopic;
+            })
+            .catch((error) => {
+              console.error("Error finding random topic:", error),
+                (this.innerHTML =
+                  '<i class="icon fa-random fa-fw" aria-hidden="true"></i><span>Random Topic</span>');
+            });
+      }
+      // Run the function when the page is loaded
+      !(function () {
+        // Add to quick links dropdown
+        const quickLinks = document.querySelector(
+          "#quick-links .dropdown-contents"
+        );
+        if (quickLinks) {
+          const listItem = document.createElement("li");
+          listItem.innerHTML =
+            '\n          <a href="#" role="menuitem">\n            <i class="icon fa-random fa-fw" aria-hidden="true"></i><span>Random Topic</span>\n          </a>\n        ';
+          // Insert after "Active topics" in the dropdown
+          const activeTopicsItem = quickLinks.querySelector(
+            'a[href*="search_id=active_topics"]'
+          );
+          if (activeTopicsItem) {
+            const insertAfter = activeTopicsItem.closest("li");
+            insertAfter.parentNode.insertBefore(
+              listItem,
+              insertAfter.nextSibling
+            );
+          } else
+            // If "Active topics" is not found, append to the end of the list
+            quickLinks.appendChild(listItem);
+          // Add click event to the dropdown item
+          listItem.querySelector("a").onclick = handleRandomTopicClick;
+        }
+        // Add as a separate button in the main navigation (existing code)
+        const navMain = document.getElementById("nav-main");
+        if (navMain) {
+          const li = document.createElement("li"),
+            a = document.createElement("a");
+          (a.href = "#"),
+            (a.role = "menuitem"),
+            (a.innerHTML =
+              '<i class="icon fa-random fa-fw" aria-hidden="true"></i><span>Random Topic</span>'),
+            // Add custom styles to the anchor and icon
+            (a.style.cssText =
+              "\n              display: flex;\n              align-items: center;\n              height: 100%;\n              text-decoration: none;\n          "),
+            // Apply styles after a short delay to ensure the icon is loaded
+            setTimeout(() => {
+              const icon = a.querySelector(".icon");
+              icon &&
+                (icon.style.cssText =
+                  "\n                      font-size: 14px;\n                  ");
+            }, 100),
+            (a.onclick = async function (e) {
+              e.preventDefault(),
+                (this.style.textDecoration = "none"),
+                (this.innerHTML =
+                  '<i class="icon fa-spinner fa-spin fa-fw" aria-hidden="true"></i><span>Loading...</span>');
+              try {
+                const validTopic = await getValidRandomTopic();
+                window.location.href = validTopic;
+              } catch (error) {
+                console.error("Error finding random topic:", error),
+                  (this.innerHTML =
+                    '<i class="icon fa-random fa-fw" aria-hidden="true"></i><span>Random Topic</span>');
+              }
+            }),
+            li.appendChild(a),
+            navMain.appendChild(li);
+        }
+      })();
+    },
+  });
+  // RPGHQ - Member Search Button
+  /**
+   * Adds a quick member search button next to Unread posts
+   * Original script by loregamer, adapted for the RPGHQ Userscript Manager.
+   * License: MIT
+   *
+   * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/memberSearch.md for documentation
+   */ var memberSearch = Object.freeze({
+    __proto__: null,
+    init: function () {
+      // Create member search modal
+      function createMemberSearchModal() {
+        const modal = document.createElement("div");
+        (modal.className = "member-search-modal"),
+          (modal.innerHTML =
+            '\n              <div class="member-search-container">\n                  <div class="member-search-close">&times;</div>\n                  <div class="member-search-title">Member Search</div>\n                  <input type="text" class="member-search-input" placeholder="Search for a member...">\n                  <div class="member-search-results"></div>\n              </div>\n          '),
+          document.body.appendChild(modal);
+        return (
+          modal
+            .querySelector(".member-search-close")
+            .addEventListener("click", function () {
+              modal.classList.remove("active");
+            }),
+          // Remove the event listener that closes the modal when clicking outside
+          // This ensures users must click the X to close the overlay
+          // Setup search functionality
+          // Function to setup search functionality
+          (function (modal) {
+            const searchInput = modal.querySelector(".member-search-input"),
+              searchResults = modal.querySelector(".member-search-results");
+            // Handle input changes for search
+            let debounceTimer;
+            searchInput.addEventListener("input", function () {
+              clearTimeout(debounceTimer);
+              const query = this.value.trim();
+              query.length < 2
+                ? (searchResults.innerHTML = "")
+                : ((searchResults.innerHTML =
+                    '<div class="member-search-loading">Searching...</div>'),
+                  (debounceTimer = setTimeout(() => {
+                    !(
+                      // Function to search for members using the API
+                      (function (query, resultsContainer) {
+                        fetch(
+                          `https://rpghq.org/forums/mentionloc?q=${encodeURIComponent(query)}`,
+                          {
+                            method: "GET",
+                            headers: {
+                              accept:
+                                "application/json, text/javascript, */*; q=0.01",
+                              "x-requested-with": "XMLHttpRequest",
+                            },
+                            credentials: "include",
+                          }
+                        )
+                          .then((response) => response.json())
+                          .then((data) => {
+                            !(
+                              // Function to display search results
+                              (function (data, resultsContainer) {
+                                resultsContainer.innerHTML = "";
+                                // Filter to only include users, exclude groups
+                                const filteredData = data.filter(
+                                  (item) => "user" === item.type
+                                );
+                                if (!filteredData || 0 === filteredData.length)
+                                  return void (resultsContainer.innerHTML =
+                                    '<div class="member-search-no-results">No members found</div>');
+                                const fragment =
+                                  document.createDocumentFragment();
+                                // No need to sort since we're only showing users now
+                                filteredData.forEach((item) => {
+                                  const resultItem =
+                                    document.createElement("div");
+                                  (resultItem.className =
+                                    "member-search-result"),
+                                    // User entry
+                                    resultItem.setAttribute(
+                                      "data-user-id",
+                                      item.user_id
+                                    );
+                                  // Create avatar URL with proper format
+                                  const userId = item.user_id,
+                                    username =
+                                      item.value || item.key || "Unknown User",
+                                    defaultAvatar =
+                                      "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
+                                  // Create the result item with image that tries multiple extensions
+                                  (resultItem.innerHTML = `\n          <img \n            src="https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg" \n            alt="${username}'s avatar" \n            onerror="if(this.src.endsWith('.jpg')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.png';}else if(this.src.endsWith('.png')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.gif';}else{this.src='${defaultAvatar}';}"\n          >\n          <span>${username}</span>\n        `),
+                                    resultItem.addEventListener(
+                                      "click",
+                                      function () {
+                                        const userId =
+                                          this.getAttribute("data-user-id");
+                                        window.location.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
+                                      }
+                                    ),
+                                    fragment.appendChild(resultItem);
+                                }),
+                                  resultsContainer.appendChild(fragment);
+                              })(
+                                // Add the member search button to the navigation bar
+                                data,
+                                resultsContainer
+                              )
+                            );
+                          })
+                          .catch((error) => {
+                            console.error(
+                              "Error searching for members:",
+                              error
+                            ),
+                              (resultsContainer.innerHTML =
+                                '<div class="member-search-no-results">Error searching for members</div>');
+                          });
+                      })(query, searchResults)
+                    );
+                  }, 300)));
+            }),
+              // Focus input when modal is opened
+              modal.addEventListener("transitionend", function () {
+                modal.classList.contains("active") && searchInput.focus();
+              });
+            // Also try to focus right away when modal is shown
+            // This helps in browsers that don't fire transitionend properly
+            const activeObserver = new MutationObserver(function (mutations) {
+              mutations.forEach(function (mutation) {
+                "class" === mutation.attributeName &&
+                  modal.classList.contains("active") &&
+                  searchInput.focus();
+              });
+            });
+            activeObserver.observe(modal, {
+              attributes: !0,
+            });
+          })(modal),
+          modal
+        );
+      }
+      // Add CSS styles
+      GM_addStyle(
+        "\n          .member-search-modal {\n              display: none;\n              position: fixed;\n              top: 0;\n              left: 0;\n              width: 100%;\n              height: 100%;\n              background-color: rgba(0, 0, 0, 0.7);\n              z-index: 1000;\n              justify-content: center;\n              align-items: center;\n          }\n          .member-search-modal.active {\n              display: flex;\n          }\n          .member-search-container {\n              background-color: #1e232b;\n              border: 1px solid #292e37;\n              border-radius: 4px;\n              width: 350px;\n              max-width: 80%;\n              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);\n              padding: 20px 20px;\n              position: relative;\n              z-index: 1001;\n              margin: 0 auto;\n              box-sizing: border-box;\n          }\n          .member-search-close {\n              position: absolute;\n              top: 10px;\n              right: 10px;\n              font-size: 20px;\n              color: #888;\n              cursor: pointer;\n          }\n          .member-search-close:hover {\n              color: #fff;\n          }\n          .member-search-title {\n              font-size: 18px;\n              margin-bottom: 15px;\n              color: #fff;\n              text-align: center;\n          }\n          .member-search-input {\n              width: calc(100% - 20px);\n              padding: 8px 10px;\n              border: 1px solid #292e37;\n              border-radius: 4px;\n              background-color: #171b24;\n              color: #fff;\n              margin-bottom: 10px;\n              font-size: 14px;\n              position: relative;\n              z-index: 1002;\n              margin-left: 10px;\n              margin-right: 10px;\n              box-sizing: border-box;\n          }\n          .member-search-input:focus {\n              outline: none;\n              border-color: #8698b3;\n          }\n          .member-search-results {\n              max-height: 300px;\n              overflow-y: auto;\n          }\n          .member-search-result {\n              display: flex;\n              align-items: center;\n              padding: 8px 10px;\n              cursor: pointer;\n              border-radius: 4px;\n          }\n          .member-search-result:hover {\n              background-color: #292e37;\n          }\n          .member-search-result img {\n              width: 32px;\n              height: 32px;\n              border-radius: 50%;\n              margin-right: 10px;\n          }\n          .member-search-result span {\n              white-space: nowrap;\n              overflow: hidden;\n              text-overflow: ellipsis;\n          }\n          .member-search-no-results {\n              padding: 10px;\n              color: #8a8a8a;\n              text-align: center;\n          }\n          .member-search-loading {\n              text-align: center;\n              padding: 10px;\n              color: #8a8a8a;\n          }\n          .member-search-group {\n              background-color: #272e38;\n              padding: 2px 6px;\n              border-radius: 3px;\n              margin-left: 6px;\n              font-size: 0.8em;\n              color: #aaa;\n          }\n      "
+      ),
+        // Initialize the member search functionality
+        (function () {
+          const navMain = document.getElementById("nav-main");
+          if (!navMain) return;
+          // Create the modal first
+          const searchModal = createMemberSearchModal(),
+            li = document.createElement("li");
+          // Create the navigation button
+          li.setAttribute("data-skip-responsive", "true");
+          const a = document.createElement("a");
+          (a.href = "#"),
+            (a.role = "menuitem"),
+            (a.innerHTML =
+              '<i class="icon fa-user-plus fa-fw" aria-hidden="true"></i><span>Find Member</span>'),
+            // Add custom styles to the anchor and icon
+            (a.style.cssText =
+              "\n              display: flex;\n              align-items: center;\n              height: 100%;\n              text-decoration: none;\n          "),
+            // Apply styles after a short delay to ensure the icon is loaded
+            setTimeout(() => {
+              const icon = a.querySelector(".icon");
+              icon &&
+                (icon.style.cssText =
+                  "\n                      font-size: 14px;\n                  ");
+            }, 100),
+            // Add click event to open the search modal
+            a.addEventListener("click", function (e) {
+              e.preventDefault(), searchModal.classList.add("active");
+              const searchInput = searchModal.querySelector(
+                ".member-search-input"
+              );
+              (searchInput.value = ""),
+                searchInput.focus(),
+                (searchModal.querySelector(".member-search-results").innerHTML =
+                  "");
+            }),
+            li.appendChild(a);
+          // Try a different approach for inserting the button in the navigation
+          // Find a good position for the button, like after Chat or near Members
+          const chatItem = Array.from(navMain.children).find(
+              (el) =>
+                el.textContent.trim().includes("Chat") ||
+                el.textContent.trim().includes("IRC")
+            ),
+            membersItem = Array.from(navMain.children).find((el) =>
+              el.textContent.trim().includes("Members")
+            );
+          // Try to find the Members item again, but look for direct children of navMain
+          // Try to insert it after Chat, or Members, or just append to navMain
+          chatItem && chatItem.parentNode === navMain
+            ? navMain.insertBefore(li, chatItem.nextSibling)
+            : membersItem && membersItem.parentNode === navMain
+              ? navMain.insertBefore(li, membersItem.nextSibling)
+              : // Just append it to the navMain as a safe fallback
+                navMain.appendChild(li);
+        })();
+    },
+  });
+  // RPGHQ - Reaction List Separated
+  /**
+   * Makes smiley reactions and counts separated
+   * Original script by loregamer, adapted for the RPGHQ Userscript Manager.
+   * License: MIT
+   *
+   * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/separateReactions.md for documentation
+   */ var separateReactions = Object.freeze({
+    __proto__: null,
+    init: function () {
+      function createReactionList(postId, reactions) {
+        console.log(
+          "createReactionList: Starting to create reaction list for post",
+          postId
+        );
+        const pollVotes = (function () {
+          console.log("getPollVotes: Starting to collect poll votes");
+          const pollVotes = {},
+            polls = document.querySelectorAll(".polls");
+          return (
+            console.log("getPollVotes: Found polls:", polls.length),
+            polls.forEach((poll, pollIndex) => {
+              console.log(`getPollVotes: Processing poll #${pollIndex + 1}`);
+              const dls = poll.querySelectorAll("dl");
+              console.log(
+                `getPollVotes: Found ${dls.length} dl elements in poll #${pollIndex + 1}`
+              );
+              let currentOption = null;
+              dls.forEach((dl, dlIndex) => {
+                // First check if this is an option DL
+                const optionDt = dl.querySelector("dt");
+                // Then check if this is a voters box for the current option
+                if (
+                  (!optionDt ||
+                    dl.classList.contains("poll_voters_box") ||
+                    dl.classList.contains("poll_total_votes") ||
+                    ((currentOption = optionDt.textContent.trim()),
+                    console.log(
+                      `getPollVotes: Found option: "${currentOption}"`
+                    )),
+                  dl.classList.contains("poll_voters_box") && currentOption)
+                ) {
+                  console.log(
+                    `getPollVotes: Processing voters for option: "${currentOption}"`
+                  );
+                  const votersSpan = dl.querySelector(".poll_voters");
+                  if (!votersSpan) return;
+                  const voters = votersSpan.querySelectorAll("span[name]");
+                  console.log(
+                    `getPollVotes: Found ${voters.length} voters for this option`
+                  ),
+                    voters.forEach((voter, voterIndex) => {
+                      const username = voter.getAttribute("name"),
+                        userLink = voter.querySelector("a");
+                      if (
+                        (console.log(
+                          `getPollVotes: Processing voter #${voterIndex + 1}:`,
+                          {
+                            username: username,
+                            hasUserLink: !!userLink,
+                            linkText: userLink?.textContent,
+                            option: currentOption,
+                            isColoured:
+                              userLink?.classList.contains("username-coloured"),
+                            color: userLink?.style.color,
+                          }
+                        ),
+                        username && userLink)
+                      ) {
+                        const lowerUsername = username.toLowerCase();
+                        pollVotes[lowerUsername] ||
+                          (pollVotes[lowerUsername] = {
+                            options: [],
+                            isColoured:
+                              userLink.classList.contains("username-coloured"),
+                            color: userLink.style.color || null,
+                          }),
+                          pollVotes[lowerUsername].options.push(currentOption);
+                      }
+                    });
+                }
+              });
+            }),
+            console.log("getPollVotes: Final collected votes:", pollVotes),
+            pollVotes
+          );
+        })();
+        console.log("createReactionList: Got poll votes:", pollVotes);
+        const displayStyle = 0 === reactions.length ? "display: none;" : "";
+        console.log(
+          "createReactionList: Processing",
+          reactions.length,
+          "reactions"
+        );
+        const html = `\n        <div class="reaction-score-list content-processed" data-post-id="${postId}" data-title="Reactions" style="padding-top: 10px !important; ${displayStyle}">\n            <div class="list-scores" style="display: flex; flex-wrap: wrap; gap: 4px;">\n                ${reactions
+          .map(
+            (reaction, reactionIndex) => (
+              console.log(
+                `createReactionList: Processing reaction #${reactionIndex + 1}:`,
+                {
+                  title: reaction.title,
+                  userCount: reaction.users.length,
+                }
+              ),
+              `\n                    <div class="reaction-group" style="display: flex; align-items: center; background-color: #3A404A; border-radius: 8px; padding: 2px 6px; position: relative;">\n                        <img src="${reaction.image}" alt="${reaction.title}" style="width: auto; height: 16px; margin-right: 4px; object-fit: contain;">\n                        <span style="font-size: 12px; color: #dcddde;">${reaction.count}</span>\n                        <div class="reaction-users-popup" style="display: none; position: fixed; background-color: #191919; border: 1px solid #202225; border-radius: 4px; padding: 8px; z-index: 1000; color: #dcddde; font-size: 12px; min-width: 200px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">\n                            <div style="font-weight: bold; margin-bottom: 8px;">${reaction.title}</div>\n                            <div style="display: flex; flex-direction: column; gap: 8px;">\n                                ${reaction.users
+                .map((user, userIndex) => {
+                  console.log(
+                    `createReactionList: Reaction #${reactionIndex + 1}, processing user #${userIndex + 1}:`,
+                    {
+                      username: user.username,
+                      pollVotes:
+                        pollVotes[user.username.toLowerCase()]?.options,
+                    }
+                  );
+                  const userPollVotes = pollVotes[user.username.toLowerCase()],
+                    pollInfo =
+                      userPollVotes?.options?.length > 0
+                        ? `<div style="font-size: 8.5px; opacity: 0.8; color: #dcddde; margin-top: 2px;">\n                                            ${1 === userPollVotes.options.length ? `<div>${userPollVotes.options[0]}</div>` : userPollVotes.options.map((option) => `<div style="display: flex; align-items: baseline; gap: 4px;">\n                                                  <span style="font-size: 8px;">•</span>\n                                                  <span>${option}</span>\n                                                </div>`).join("")}\n                                          </div>`
+                        : "";
+                  return `\n                                        <div style="display: flex; align-items: flex-start;">\n                                            <div style="width: 24px; height: 24px; margin-right: 8px; flex-shrink: 0;">\n                                                ${user.avatar ? `<img src="${user.avatar}" alt="${user.username}" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">` : ""}\n                                            </div>\n                                            <div style="display: flex; flex-direction: column;">\n                                                <a href="${user.profileUrl}" style="${user.isColoured ? `color: ${user.color};` : ""}" class="${user.isColoured ? "username-coloured" : "username"}">${user.username}</a>\n                                                ${pollInfo}\n                                            </div>\n                                        </div>\n                                    `;
+                })
+                .join(
+                  ""
+                )}\n                            </div>\n                        </div>\n                    </div>\n                `
+            )
+          )
+          .join("")}\n            </div>\n        </div>\n    `;
+        return console.log("createReactionList: Finished creating HTML"), html;
+      }
+      function fetchReactions(postId) {
+        return fetch(
+          `https://rpghq.org/forums/reactions?mode=view&post=${postId}`,
+          {
+            method: "POST",
+            headers: {
+              accept: "application/json, text/javascript, */*; q=0.01",
+              "x-requested-with": "XMLHttpRequest",
+            },
+            credentials: "include",
+          }
+        )
+          .then((response) => response.json())
+          .then((data) =>
+            data.htmlContent
+              ? (function (htmlContent) {
+                  const doc = new DOMParser().parseFromString(
+                      htmlContent,
+                      "text/html"
+                    ),
+                    reactions = [];
+                  return (
+                    doc
+                      .querySelectorAll(".tab-header a:not(.active)")
+                      .forEach((a) => {
+                        const image = a.querySelector("img")?.src || "",
+                          title = a.getAttribute("title") || "",
+                          count =
+                            a.querySelector(".tab-counter")?.textContent || "0",
+                          dataId = a.getAttribute("data-id");
+                        if (dataId) {
+                          const users = [];
+                          doc
+                            .querySelectorAll(
+                              `.tab-content[data-id="${dataId}"] li`
+                            )
+                            .forEach((li) => {
+                              const userLink =
+                                li.querySelector(".cbb-helper-text a");
+                              if (userLink) {
+                                const username = userLink.textContent || "",
+                                  profileUrl = userLink.href || "",
+                                  avatarImg =
+                                    li.querySelector(".user-avatar img"),
+                                  avatar = avatarImg ? avatarImg.src : "",
+                                  isColoured =
+                                    userLink.classList.contains(
+                                      "username-coloured"
+                                    ),
+                                  color = isColoured
+                                    ? userLink.style.color
+                                    : null;
+                                users.push({
+                                  username: username,
+                                  avatar: avatar,
+                                  profileUrl: profileUrl,
+                                  isColoured: isColoured,
+                                  color: color,
+                                });
+                              }
+                            }),
+                            reactions.push({
+                              image: image,
+                              title: title,
+                              count: count,
+                              users: users,
+                            });
+                        }
+                      }),
+                    reactions
+                  );
+                })(data.htmlContent)
+              : (console.error("No HTML content in response:", data), [])
+          )
+          .catch(
+            (error) => (console.error("Error fetching reactions:", error), [])
+          );
+      }
+      function processPost(post) {
+        const postId = post.id.substring(1),
+          existingReactionList = post.querySelector(".reaction-score-list");
+        existingReactionList &&
+          !existingReactionList.dataset.processed &&
+          (function (post, postId) {
+            const existingReactionList = post.querySelector(
+              ".reaction-score-list"
+            );
+            if (existingReactionList && existingReactionList.dataset.processed)
+              return;
+            fetchReactions(postId)
+              .then((reactions) => {
+                const reactionListHtml = createReactionList(postId, reactions);
+                if (existingReactionList)
+                  existingReactionList.outerHTML = reactionListHtml;
+                else {
+                  const reactionLauncher = post.querySelector(
+                    ".reactions-launcher"
+                  );
+                  reactionLauncher &&
+                    reactionLauncher.insertAdjacentHTML(
+                      "beforebegin",
+                      reactionListHtml
+                    );
+                }
+                const newReactionList = post.querySelector(
+                  ".reaction-score-list"
+                );
+                newReactionList &&
+                  ((newReactionList.dataset.processed = "true"),
+                  // Add hover effect to reaction groups
+                  newReactionList
+                    .querySelectorAll(".reaction-group")
+                    .forEach((group) => {
+                      const popup = group.querySelector(
+                        ".reaction-users-popup"
+                      );
+                      let isHovering = !1;
+                      group.addEventListener("mouseenter", (e) => {
+                        (isHovering = !0), showPopup(group, popup);
+                      }),
+                        group.addEventListener("mouseleave", () => {
+                          (isHovering = !1),
+                            (function (popup) {
+                              popup.style.display = "none";
+                            })(popup);
+                        }),
+                        // Add scroll event listener
+                        window.addEventListener("scroll", () => {
+                          isHovering && showPopup(group, popup);
+                        });
+                    }));
+                // Update the reaction launcher
+                const reactionLauncher = post.querySelector(
+                  ".reactions-launcher"
+                );
+                if (reactionLauncher) {
+                  const reactionButton =
+                    reactionLauncher.querySelector(".reaction-button");
+                  if (reactionButton) {
+                    // Check if a reaction is selected
+                    const selectedReaction =
+                      reactionButton.querySelector("img");
+                    if (selectedReaction && GM_getValue("leftMode", !0)) {
+                      // Replace the button content with an "X" icon and center-align it
+                      (reactionButton.innerHTML =
+                        '\n                <svg class="icon" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 1000 1000" enable-background="new 0 0 1000 1000" xml:space="preserve">\n                  <path d="M576.3,877.3c-30.5,7.2-62.1,10.9-93.7,10.9c-223.3,0-405-181.7-405-405s181.7-405,405-405c223.3,0,405,181.7,405,405c0,32.8-3.9,65.5-11.7,97.1c-4.5,18.1,6.6,36.4,24.7,40.8c18.1,4.7,36.4-6.5,40.8-24.7c9.1-36.9,13.7-75,13.7-113.3c0-260.6-212-472.5-472.5-472.5C222,10.6,10,222.6,10,483.1c0,260.6,212,472.6,472.5,472.6c36.9,0,73.7-4.3,109.3-12.7c18.1-4.3,29.4-22.4,25-40.6C612.6,884.2,594.4,872.9,576.3,877.3z"></path>\n                  <path d="M250.2,594.7c-14.7,11.5-17.3,32.7-5.8,47.4c58,74.2,145.2,116.7,239.3,116.7c95.1,0,182.9-43.3,240.9-118.7c11.4-14.8,8.6-35.9-6.2-47.3s-35.9-8.6-47.3,6.2c-45.1,58.7-113.4,92.3-187.4,92.3c-73.2,0-141-33.1-186.2-90.8C286.1,585.8,264.8,583.3,250.2,594.7z"></path>\n                  <path d="M382.4,435.9v-67.5c0-28-22.6-50.6-50.6-50.6s-50.6,22.6-50.6,50.6v67.5c0,28,22.6,50.6,50.6,50.6S382.4,463.8,382.4,435.9z"></path>\n                  <path d="M686.2,435.9v-67.5c0-28-22.7-50.6-50.6-50.6S585,340.4,585,368.3v67.5c0,28,22.7,50.6,50.6,50.6S686.2,463.8,686.2,435.9z"></path>\n                  <path d="M956.2,786.9H855V685.6c0-18.7-15.1-33.8-33.8-33.8s-33.8,15.1-33.8,33.8v101.3H686.2c-18.7,0-33.8,15.1-33.8,33.8s15.1,33.8,33.8,33.8h101.3v101.3c0,18.7,15.1,33.8,33.8,33.8s33.8-15.1,33.8-33.8V854.4h101.3c18.7,0,33.8-15.1,33.8-33.8S974.9,786.9,956.2,786.9z"></path>\n                </svg>\n              '),
+                        reactionButton.classList.add("default-icon"),
+                        reactionButton.classList.remove("remove-reaction"),
+                        (reactionButton.title = "Add reaction"),
+                        // Remove any existing inline styles that might interfere
+                        (reactionButton.style.cssText = "");
+                      // Highlight the user's reaction in the reaction list
+                      const userReactionImage = selectedReaction.src,
+                        userReactionGroup = newReactionList.querySelector(
+                          `.reaction-group img[src="${userReactionImage}"]`
+                        );
+                      userReactionGroup &&
+                        userReactionGroup
+                          .closest(".reaction-group")
+                          .classList.add("user-reacted");
+                    }
+                  }
+                }
+              })
+              .catch((error) =>
+                console.error("Error fetching reactions:", error)
+              );
+          })(post, postId);
+      }
+      function showPopup(group, popup) {
+        // Show the popup
+        popup.style.display = "block";
+        // Position the popup
+        const rect = group.getBoundingClientRect();
+        let top = rect.bottom,
+          left = rect.left;
+        // Adjust if popup goes off-screen
+        left + popup.offsetWidth > window.innerWidth &&
+          (left = window.innerWidth - popup.offsetWidth),
+          (popup.style.top = `${top}px`),
+          (popup.style.left = `${left}px`);
+      }
+      function toggleLeftMode() {
+        const currentMode = GM_getValue("leftMode", !1);
+        GM_setValue("leftMode", !currentMode), window.location.reload();
+      }
+      function observePosts() {
+        const style = document.createElement("style");
+        (style.textContent =
+          "\n      @media screen and (min-width: 768px) {\n        .post .content {\n          min-height: 125px;\n        }\n      }\n      .reactions-launcher .reaction-button.remove-reaction .icon {\n        font-size: 16px !important;\n        line-height: 1 !important;\n        margin: 0 !important;\n        height: auto !important; /* Override the fixed height */\n      }\n      .reaction-group.user-reacted {\n        background-color: #4A5A6A !important;\n      }\n      .reaction-group.user-reacted span {\n        color: #ffffff !important;\n      }\n    "),
+          document.head.appendChild(style),
+          (function () {
+            const leftMode = GM_getValue("leftMode", !1),
+              style =
+                document.getElementById("rpghq-reaction-list-style") ||
+                document.createElement("style");
+            (style.id = "rpghq-reaction-list-style"),
+              (style.textContent = leftMode
+                ? "\n      .reactions-launcher > .reaction-button.default-icon {\n        padding-top: 7px !important;\n      }\n      .reaction-score-list, .reactions-launcher {\n        float: left !important;\n        margin-right: 4px !important;\n        padding-top: 10px !important;\n        margin: 0 0 5px 0 !important;\n        padding: 4px 4px 4px 0 !important;\n      }\n      .reactions-launcher {\n        display: flex !important;\n        align-items: center !important;\n      }\n      .reactions-launcher a.reaction-button {\n        display: flex !important;\n        align-items: center !important;\n        justify-content: center !important;\n        width: auto !important;\n        height: 16px !important;\n        padding: 0 !important;\n        background: none !important;\n      }\n      .reactions-launcher a.reaction-button svg {\n        width: 16px !important;\n        height: 16px !important;\n        fill: #dcddde !important;\n      }\n    "
+                : ""),
+              document.head.appendChild(style),
+              leftMode &&
+                document.querySelectorAll(".postbody").forEach((postbody) => {
+                  const reactionLauncher = postbody.querySelector(
+                      ".reactions-launcher"
+                    ),
+                    reactionScoreList = postbody.querySelector(
+                      ".reaction-score-list"
+                    );
+                  reactionLauncher &&
+                    reactionScoreList &&
+                    reactionLauncher.previousElementSibling !==
+                      reactionScoreList &&
+                    reactionLauncher.parentNode.insertBefore(
+                      reactionScoreList,
+                      reactionLauncher
+                    );
+                });
+          })(),
+          (function () {
+            if (window.innerWidth <= 768) {
+              // Mobile view check
+              const dropdown = document.querySelector(
+                "#username_logged_in .dropdown-contents"
+              );
+              if (
+                dropdown &&
+                !document.getElementById("toggle-left-reactions-mode")
+              ) {
+                const leftModeEnabled = GM_getValue("leftMode", !1),
+                  listItem = document.createElement("li"),
+                  toggleButton = document.createElement("a");
+                (toggleButton.id = "toggle-left-reactions-mode"),
+                  (toggleButton.href = "#"),
+                  (toggleButton.title = "Toggle Left Reactions Mode"),
+                  (toggleButton.role = "menuitem"),
+                  (toggleButton.innerHTML = `\n          <i class="icon fa-align-left fa-fw" aria-hidden="true"></i>\n          <span>Left Reactions Mode (${leftModeEnabled ? "On" : "Off"})</span>\n        `),
+                  toggleButton.addEventListener("click", function (e) {
+                    e.preventDefault(), toggleLeftMode();
+                  }),
+                  listItem.appendChild(toggleButton),
+                  dropdown.insertBefore(listItem, dropdown.lastElementChild);
+              }
+            }
+          })();
+        new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            "childList" === mutation.type &&
+              mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === Node.ELEMENT_NODE)
+                  if (node.classList.contains("post")) processPost(node);
+                  else if (node.classList.contains("reaction-score-list")) {
+                    const post = node.closest(".post");
+                    post && processPost(post);
+                  }
+              });
+          });
+        }).observe(document.body, {
+          childList: !0,
+          subtree: !0,
+        }),
+          // Process existing posts
+          document.querySelectorAll(".post").forEach(processPost);
+      }
+      GM_registerMenuCommand(
+        "[Reaction List] Toggle Left Mode",
+        toggleLeftMode
+      ),
+        "complete" === document.readyState ||
+        "interactive" === document.readyState
+          ? observePosts()
+          : window.addEventListener("load", observePosts);
+    },
   });
   // RPGHQ - Pin Threads
   /**
@@ -4987,6 +5459,9 @@
     notifications: notifications,
     pinThreads: pinThreads,
     separateReactions: separateReactions,
+    memberSearch: memberSearch,
+    randomTopic: randomTopic,
+    recentTopicsFormat: recentTopicsFormat,
   };
   // Load a single script by its manifest entry
   function loadScript(script) {
