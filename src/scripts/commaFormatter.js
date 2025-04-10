@@ -3,6 +3,8 @@
  * Adds commas to large numbers in forum posts and statistics.
  * Original script by loregamer, adapted for the RPGHQ Userscript Manager.
  * License: MIT
+ * 
+ * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/commaFormatter.md for documentation
  */
 
 export function init() {
