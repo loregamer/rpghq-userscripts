@@ -6,7 +6,7 @@ export const SCRIPT_MANIFEST = [
     version: "2.1.2",
     description: "Add commas to large numbers in forum posts and statistics.",
     author: "loregamer",
-    path: "./scripts/commaFormatter.js",
+    path: "./scripts/commaFormatter.js", // Path is kept for reference but not used for loading
     enabledByDefault: true,
     settings: [
       {

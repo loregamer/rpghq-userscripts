@@ -14,9 +14,9 @@ This script adds thousands separators (commas) to large numbers throughout the R
 
 ## Settings
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| Format 4-digit numbers | Checkbox | Off | When enabled, numbers 1,000 and higher will be formatted with commas. When disabled, only numbers 10,000 and higher will be formatted. |
+| Setting                | Type     | Default | Description                                                                                                                            |
+| ---------------------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Format 4-digit numbers | Checkbox | Off     | When enabled, numbers 1,000 and higher will be formatted with commas. When disabled, only numbers 10,000 and higher will be formatted. |
 
 ## Technical Details
 

@@ -65,17 +65,34 @@ function loadEnabledScripts() {
   console.log("Finished loading scripts.");
 }
 
+// Import scripts directly
+import * as exampleScript1 from "./scripts/example_script1.js";
+import * as exampleScript2 from "./scripts/example_script2.js";
+import * as commaFormatter from "./scripts/commaFormatter.js";
+
+// Map of script ids to their modules
+const scriptModules = {
+  script1: exampleScript1,
+  script2: exampleScript2,
+  commaFormatter: commaFormatter,
+};
+
 // Load a single script by its manifest entry
-async function loadScript(script) {
+function loadScript(script) {
   if (loadedScripts[script.id]) {
     console.log(`Script ${script.name} already loaded, skipping.`);
     return;
   }
 
-  console.log(`Loading script: ${script.name} (from ${script.path})`);
+  console.log(`Loading script: ${script.name} (${script.id})`);
   try {
-    // Use dynamic import to load the script module
-    const module = await import(script.path);
+    // Get the module from our imports
+    const module = scriptModules[script.id];
+
+    if (!module) {
+      console.error(`Script module ${script.id} not found`);
+      return;
+    }
 
     // Check if the module has an init function
     if (typeof module.init === "function") {
