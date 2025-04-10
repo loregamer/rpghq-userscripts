@@ -12,7 +12,7 @@ The `add-script.js` tool automates the process of adding a new userscript to the
 ## Usage
 
 ```bash
-node tools/add-script.js scriptId "Script Name" "Description" "Author Name"
+npm run add-script scriptId "Script Name" "Description" "Author Name"
 ```
 
 ### Parameters
@@ -25,7 +25,7 @@ node tools/add-script.js scriptId "Script Name" "Description" "Author Name"
 ### Example
 
 ```bash
-node tools/add-script.js postPreview "Post Preview" "Preview posts before submitting" "johnsmith"
+npm run add-script postPreview "Post Preview" "Preview posts before submitting" "johnsmith"
 ```
 
 ## What the Tool Does

@@ -21,7 +21,7 @@ npm run build
 To add a new script to the userscript manager, use the add-script tool:
 
 ```bash
-node tools/add-script.js scriptId "Script Name" "Description" "Author Name"
+npm run add-script scriptId "Script Name" "Description" "Author Name"
 ```
 
 This will:
