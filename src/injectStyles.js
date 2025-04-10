@@ -382,7 +382,7 @@ GM_addStyle(`
     height: 18px;
     border: 2px solid var(--border-color);
     border-radius: 3px;
-    background-color: var(--bg-dark);
+    background: transparent;
     display: inline-block;
     position: relative;
     margin: 0;
@@ -391,8 +391,8 @@ GM_addStyle(`
   }
 
   input[type="checkbox"]:checked {
-    background-color: var(--success-color);
-    border-color: var(--success-color);
+    background: transparent;
+    border-color: var(--border-color);
   }
 
   input[type="checkbox"]:checked::after {
@@ -402,18 +402,18 @@ GM_addStyle(`
     top: 2px;
     width: 5px;
     height: 10px;
-    border: solid white;
+    border: solid var(--text-primary);
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
   }
 
   input[type="checkbox"]:hover {
-    border-color: var(--success-color);
+    border-color: var(--border-color);
   }
 
   input[type="checkbox"]:focus {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
+    box-shadow: none;
   }
 
   /* Specific styling for the script toggle checkbox */

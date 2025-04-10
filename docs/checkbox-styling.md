@@ -7,9 +7,9 @@ This document describes the custom styling applied to checkboxes throughout the 
 Checkboxes use custom CSS styling instead of browser defaults. The styling includes:
 
 - Custom appearance with CSS
-- Blue accent color when checked (using the success color variable)
-- Checkmark using CSS pseudo-elements
-- Hover and focus states for better UX
+- Transparent background (no background color)
+- Checkmark using CSS pseudo-elements with text color
+- Simple hover states for better UX
 - Consistent sizing and appearance across the application
 
 ## HTML Usage
