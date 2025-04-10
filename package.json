@@ -3,7 +3,7 @@
   "version": "3.0.2",
   "description": "RPGHQ Userscript Manager",
   "scripts": {
-    "build": "npm run lint && npx rollup -c && prettier --write dist/rpghq-userscript-manager.user.js",
+    "build": "npm run lint && npx rollup -c && node scripts/inject-styles.js && prettier --write dist/rpghq-userscript-manager.user.js",
     "watch": "rollup -c -w",
     "lint": "prettier --check ."
   },

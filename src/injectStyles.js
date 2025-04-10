@@ -1,3 +1,13 @@
+/**
+ * This file contains all CSS styles for the RPGHQ Userscript Manager.
+ *
+ * NOTE: This file is not directly imported in the codebase!
+ * Instead, the post-build script (scripts/inject-styles.js) extracts the CSS
+ * from this file and injects it into the final userscript.
+ *
+ * @see docs/style-injection.md for more information.
+ */
+
 GM_addStyle(`
   :root {
     --primary-color: #2196f3;
