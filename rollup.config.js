@@ -40,7 +40,7 @@ const generateMetadata = () => {
     "// @grant        GM_setValue",
     "// @grant        GM_registerMenuCommand",
     "// @grant        GM_addStyle",
-    "// @run-at       document-end",
+    "// @run-at       document-start",
     `// @homepage     ${pkg.homepage || ""}`,
     `// @downloadURL  ${baseUrl}${distPath}`,
     `// @updateURL    ${baseUrl}${distPath}`,

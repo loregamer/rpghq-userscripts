@@ -20,7 +20,11 @@ const EXECUTION_PHASES = [
   { id: "document-start", name: "Document Start" },
   { id: "document-end", name: "Document End" },
   { id: "document-idle", name: "Document Idle" },
+  { id: "after_dom", name: "After DOM Ready" },
 ];
+
+// The current execution phase the page is in
+let currentExecutionPhase = "document-start";
 
 // --- GM Wrappers ---
 function gmGetValue(key, defaultValue) {
@@ -57,13 +61,18 @@ function initializeScriptStates() {
 }
 
 function loadEnabledScripts() {
-  console.log("Loading enabled scripts...");
+  console.log("Loading enabled scripts for phase: " + currentExecutionPhase);
   SCRIPT_MANIFEST.forEach((script) => {
-    if (scriptStates[script.id]) {
+    // Check if script is enabled and either matches current phase or has no phase defined
+    if (
+      scriptStates[script.id] &&
+      (script.executionPhase === currentExecutionPhase ||
+        (!script.executionPhase && currentExecutionPhase === "document-end"))
+    ) {
       loadScript(script);
     }
   });
-  console.log("Finished loading scripts.");
+  console.log("Finished loading scripts for phase: " + currentExecutionPhase);
 }
 
 // Import scripts directly
@@ -89,7 +98,10 @@ function loadScript(script) {
     return;
   }
 
-  console.log(`Loading script: ${script.name} (${script.id})`);
+  const phase = script.executionPhase || "document-end";
+  console.log(
+    `Loading script: ${script.name} (${script.id}) in phase: ${phase}`,
+  );
   try {
     // Get the module from our imports
     const module = scriptModules[script.id];
@@ -299,9 +311,33 @@ function addMenuButton(toggleVisibilityCallback) {
 function init() {
   console.log("Initializing RPGHQ Userscript Manager...");
 
-  // Initialize script states and load enabled scripts
+  // Initialize script states
   initializeScriptStates();
-  loadEnabledScripts();
+
+  // Execute scripts for document-start phase immediately
+  loadEnabledScripts(); // Already in document-start phase
+
+  // Set up listeners for other execution phases
+  document.addEventListener("DOMContentLoaded", () => {
+    // Update current phase to document-end
+    currentExecutionPhase = "document-end";
+    loadEnabledScripts();
+
+    // Add menu button
+    addMenuButton(toggleModalVisibility);
+  });
+
+  window.addEventListener("load", () => {
+    // Update current phase to document-idle
+    currentExecutionPhase = "document-idle";
+    loadEnabledScripts();
+  });
+
+  // Set up a phase for after DOM is fully ready and rendered
+  setTimeout(() => {
+    currentExecutionPhase = "after_dom";
+    loadEnabledScripts();
+  }, 500); // Small delay to ensure everything is loaded
 
   // Add keyboard shortcut listener for Insert key
   document.addEventListener("keydown", (event) => {
@@ -331,18 +367,6 @@ function init() {
     console.log("GM Menu command registered.");
   } catch (e) {
     console.error("Failed to register GM menu command:", e);
-  }
-
-  // Add menu button to the page
-  if (
-    document.readyState === "complete" ||
-    document.readyState === "interactive"
-  ) {
-    addMenuButton(toggleModalVisibility);
-  } else {
-    document.addEventListener("DOMContentLoaded", () => {
-      addMenuButton(toggleModalVisibility);
-    });
   }
 }
 
