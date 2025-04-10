@@ -48,24 +48,22 @@ async function updateLoadOrder() {
     }
 
     SCRIPT_MANIFEST.forEach((script) => {
-      const phase = script.executionPhase || "document-end";
-
-      if (!loadOrder[phase]) {
-        console.warn(
-          `Phase "${phase}" defined for script "${script.id}" not found in load_order.json. Initializing.`,
-        );
-        loadOrder[phase] = [];
-        updated = true;
-      }
-
-      // Add script ID to its designated phase if not already present anywhere in the load order
+      // If script ID from manifest is not found anywhere in load_order.json,
+      // add it to the default 'document-end' phase.
       if (!allLoadOrderItems.has(script.id)) {
-        loadOrder[phase].push(script.id);
+        const defaultPhase = "document-end"; // Default phase for new scripts
+        if (!loadOrder[defaultPhase]) {
+          console.warn(
+            `Default phase "${defaultPhase}" not found in load_order.json. Initializing.`,
+          );
+          loadOrder[defaultPhase] = [];
+        }
+        loadOrder[defaultPhase].push(script.id);
         console.log(
-          `Added missing script "${script.id}" to phase "${phase}" in load_order.json.`,
+          `Added missing script "${script.id}" to default phase "${defaultPhase}" in load_order.json. You may need to adjust its position manually.`,
         );
         updated = true;
-        allLoadOrderItems.add(script.id); // Add to our set track it
+        allLoadOrderItems.add(script.id); // Add to our set to track it
       }
     });
 

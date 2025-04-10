@@ -92,19 +92,14 @@ function executeLoadOrderForPhase(phase) {
     else {
       const script = findScriptById(item);
       if (script) {
-        // Check if script is enabled and its defined phase matches the current execution phase
-        const scriptPhase = script.executionPhase || "document-end"; // Default to document-end
-        if (scriptStates[script.id] && scriptPhase === phase) {
+        // Check if script is enabled
+        if (scriptStates[script.id]) {
           log(
-            `-> Loading script from load order: ${script.name} (${script.id})`,
+            `-> Loading script from load order: ${script.name} (${script.id}) for phase: ${phase}`,
           );
           loadScript(script); // Use the existing loadScript function
-        } else if (!scriptStates[script.id]) {
+        } else {
           log(`-> Script ${item} skipped (disabled).`);
-        } else if (scriptPhase !== phase) {
-          log(
-            `-> Script ${item} skipped (defined for phase ${scriptPhase}, current phase is ${phase}).`,
-          );
         }
       } else {
         warn(
@@ -159,8 +154,8 @@ function loadScript(script) {
     return;
   }
 
-  const phase = script.executionPhase || "document-end";
-  log(`Loading script: ${script.name} (${script.id}) in phase: ${phase}`);
+  // log(`Loading script: ${script.name} (${script.id})`); // Phase is determined by load_order.json
+  log(`Loading script: ${script.name} (${script.id})`);
   try {
     // Get the module from our imports
     const module = scriptModules[script.id];

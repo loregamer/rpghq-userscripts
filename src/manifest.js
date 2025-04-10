@@ -19,7 +19,6 @@ export const SCRIPT_MANIFEST = [
       // Add settings here
     ],
     categories: ["UI"],
-    executionPhase: "document-end",
   },
   {
     id: "kalareact",
@@ -35,7 +34,6 @@ export const SCRIPT_MANIFEST = [
       // Add settings here
     ],
     categories: ["General"],
-    executionPhase: "after_dom",
   },
   {
     id: "memberSearch",
@@ -50,7 +48,6 @@ export const SCRIPT_MANIFEST = [
       // Add settings here
     ],
     categories: ["Fun"],
-    executionPhase: "document-end",
   },
   {
     id: "notifications",
@@ -64,7 +61,6 @@ export const SCRIPT_MANIFEST = [
     enabledByDefault: true,
     settings: [],
     categories: ["UI"],
-    executionPhase: "after_dom",
   },
   {
     id: "pinThreads",
@@ -80,7 +76,6 @@ export const SCRIPT_MANIFEST = [
       // Add settings here
     ],
     categories: ["UI"],
-    executionPhase: "document-end",
   },
   {
     id: "randomTopic",
@@ -95,7 +90,6 @@ export const SCRIPT_MANIFEST = [
       // Add settings here
     ],
     categories: ["Fun"],
-    executionPhase: "document-end",
   },
   {
     id: "separateReactions",
@@ -111,7 +105,6 @@ export const SCRIPT_MANIFEST = [
       // Add settings here
     ],
     categories: ["UI"],
-    executionPhase: "document-end",
   },
   {
     id: "recentTopicsFormat",
@@ -127,7 +120,6 @@ export const SCRIPT_MANIFEST = [
       // Add settings here
     ],
     categories: ["UI"],
-    executionPhase: "document-end",
   },
   {
     id: "commaFormatter",
@@ -139,7 +131,6 @@ export const SCRIPT_MANIFEST = [
     path: "./scripts/commaFormatter.js",
     enabledByDefault: true,
     urlPatterns: [],
-    executionPhase: "document-end",
     settings: [
       {
         id: "formatFourDigits",
