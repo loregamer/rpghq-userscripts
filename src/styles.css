@@ -1,0 +1,141 @@
+/* CSS styles for the RPGHQ Userscript Manager UI */
+
+/* --- Variables --- */
+:root {
+  --bg-dark: #1E1E1E;
+  --bg-light: #FFFFFF;
+  --text-primary: #FFFFFF;
+  --text-secondary: #AAAAAA;
+  --text-dark: #333333;
+  --border-color: #444444;
+  --border-light: #EEEEEE;
+  --primary-color: #007bff; /* Example blue */
+  --primary-hover: #0056b3;
+  --overlay-bg: rgba(0, 0, 0, 0.8);
+  --modal-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  --border-radius: 4px;
+}
+
+/* --- Base Modal Styles --- */
+
+#rpghq-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--overlay-bg);
+  z-index: 9998;
+  display: none; /* Controlled by JS */
+}
+
+#rpghq-manager-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 1200px;
+  max-height: 90vh;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--modal-shadow);
+  z-index: 9999;
+  display: none; /* Controlled by JS */
+  flex-direction: column;
+  overflow: hidden; /* Prevent content spillover before calculating scroll */
+}
+
+/* Modal Header */
+.modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.4em;
+  font-weight: 500;
+}
+
+#rpghq-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 1;
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+#rpghq-modal-close:hover {
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+/* Modal Tabs */
+.modal-tabs {
+  padding: 10px 20px 0 20px; /* No bottom padding, border acts as separator */
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-shrink: 0; /* Prevent tabs from shrinking */
+}
+
+.modal-tabs button {
+  background: none;
+  border: 1px solid transparent; /* Reserve space for border */
+  border-bottom: none; /* Remove bottom border */
+  color: var(--text-secondary);
+  padding: 10px 15px;
+  margin-right: 5px;
+  margin-bottom: -1px; /* Overlap the container's border */
+  cursor: pointer;
+  font-size: 1em;
+  border-radius: var(--border-radius) var(--border-radius) 0 0; /* Rounded top corners */
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.modal-tabs button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.modal-tabs button.active {
+  background-color: var(--bg-dark); /* Match content area bg */
+  color: var(--text-primary);
+  border-color: var(--border-color); /* Use main border color */
+  border-bottom-color: transparent; /* Hide bottom border to merge with content */
+  font-weight: bold;
+}
+
+/* Modal Content */
+.modal-content {
+  padding: 20px;
+  overflow-y: auto; /* Enable scrolling if content overflows */
+  flex-grow: 1; /* Allow content to fill available space */
+}
+
+.tab-pane {
+  display: block; /* Show by default */
+}
+
+.tab-pane:not(.active) {
+    display: none; /* Hide inactive tabs */
+}
+
+/* Add display: flex back for the active modal */
+#rpghq-manager-modal.active {
+    display: flex;
+}
+#rpghq-modal-overlay.active {
+    display: block;
+}
+
