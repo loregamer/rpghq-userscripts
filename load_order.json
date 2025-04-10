@@ -1,9 +1,7 @@
 {
   "document-start": [
-    "_applyThreadPreferences",
     "_cachePostsOnPage",
     "recentTopicsFormat",
-    "_applyUserPreferences",
     "bbcode",
     "commaFormatter"
   ],
@@ -12,7 +10,6 @@
     "randomTopic",
     "kalareact",
     "notifications",
-    "pinThreads",
     "separateReactions"
   ],
   "document-idle": [],

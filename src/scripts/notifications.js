@@ -204,17 +204,13 @@ export function init() {
     },
 
     extractSingleImageUrl: (text) => {
-      console.log("Extracting image URL from text:", text);
-
       // If the entire text is just an image tag, extract it
       const trimmedText = text.trim();
-      console.log("Trimmed text:", trimmedText);
 
       // Handle standard [img]url[/img] format
       if (trimmedText.startsWith("[img]") && trimmedText.endsWith("[/img]")) {
-        console.log("Text is a single image tag");
         const url = trimmedText.slice(5, -6).trim();
-        console.log("Extracted URL:", url);
+
         return url;
       }
 
@@ -223,9 +219,8 @@ export function init() {
         /^\[img\s+([^=\]]+)=([^\]]+)\](.*?)\[\/img\]$/i,
       );
       if (paramImgMatch) {
-        console.log("Text is a single image tag with parameters");
         const url = paramImgMatch[3].trim();
-        console.log("Extracted URL:", url);
+
         return url;
       }
 
@@ -233,10 +228,8 @@ export function init() {
       const imageUrls = text.match(
         /\[img(?:\s+[^=\]]+=[^\]]+)?\](.*?)\[\/img\]/gi,
       );
-      console.log("Found image tags:", imageUrls);
 
       if (imageUrls && imageUrls.length > 0) {
-        console.log("Using first image tag");
         // Extract URL from the first image tag, handling both formats
         const firstTag = imageUrls[0];
         let url;
@@ -251,23 +244,19 @@ export function init() {
             .trim();
         }
 
-        console.log("Extracted URL:", url);
         return url;
       }
 
-      console.log("No valid image URL found");
       return null;
     },
 
     extractVideoUrl: (text) => {
-      console.log("Extracting video URL from text:", text);
       const trimmedText = text.trim();
 
       // Handle [webm] tags
       if (trimmedText.startsWith("[webm]") && trimmedText.endsWith("[/webm]")) {
-        console.log("Text is a single webm tag");
         const url = trimmedText.slice(6, -7).trim();
-        console.log("Extracted webm URL:", url);
+
         return { url, type: "webm" };
       }
 
@@ -276,26 +265,22 @@ export function init() {
         trimmedText.startsWith("[media]") &&
         trimmedText.endsWith("[/media]")
       ) {
-        console.log("Text is a single media tag");
         const url = trimmedText.slice(7, -8).trim();
-        console.log("Extracted media URL:", url);
+
         return { url, type: "media" };
       }
 
       // Find all video tags
       const webmMatch = text.match(/\[webm\](.*?)\[\/webm\]/i);
       if (webmMatch) {
-        console.log("Found webm tag");
         return { url: webmMatch[1].trim(), type: "webm" };
       }
 
       const mediaMatch = text.match(/\[media\](.*?)\[\/media\]/i);
       if (mediaMatch) {
-        console.log("Found media tag");
         return { url: mediaMatch[1].trim(), type: "media" };
       }
 
-      console.log("No valid video URL found");
       return null;
     },
   };
@@ -1050,8 +1035,14 @@ export function init() {
       GM_xmlhttpRequest({
         method: "GET",
         url: "https://rpghq.org/forums/" + href,
-        onload: (response) =>
-          console.log("Notification marked as read:", response.status),
+        onload: (response) => {
+          // Optionally do something with response status, e.g., error check
+          if (response.status < 200 || response.status >= 300) {
+            error(
+              `Failed to mark notification as read. Status: ${response.status}`,
+            );
+          }
+        },
       });
     },
 

@@ -190,7 +190,6 @@ This document outlines the development checkpoints and actionable steps for crea
     - [ ] Populate the dropdown with "Pin", "Ignore", and "Highlight" actions.
     - [ ] Ensure click handlers for dropdown actions trigger the correct preference saving logic.
   - [ ] Enhance the data stored in `thread_prefs` for each topic ID:
-    - [ ] Store the topic `author`.
     - [ ] Store the topic `section` (e.g., "Off-topic", extracted from breadcrumbs).
     - [ ] Store the topic `title`.
     - [ ] Modify preference saving logic to include this additional data.

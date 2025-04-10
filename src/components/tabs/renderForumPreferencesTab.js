@@ -8,8 +8,6 @@ import { renderUsersSubtab } from "./subtabs/renderUsersSubtab.js";
 import { log } from "../../utils/logger.js";
 
 export function renderForumPreferencesTab(container) {
-  log("Rendering Forum Preferences tab with subtabs...");
-
   container.innerHTML = `<h2>Forum Preferences</h2>`;
 
   // Add sub-tabs for Threads and Users

@@ -25,8 +25,6 @@ export function loadTabContent(tabName, context) {
     executionPhases,
   } = context;
 
-  log(`Loading tab content for: ${tabName}`);
-
   // Clear previous content
   container.innerHTML = "";
 

@@ -8,6 +8,13 @@ const loadOrderPath = path.resolve(__dirname, "../load_order.json");
 // Convert manifest path to a file URL for dynamic import
 const manifestFileURL = "file:///" + manifestPath.replace(/\\/g, "/");
 
+// Define known shared function names that should persist in load_order.json
+const knownSharedFunctions = new Set([
+  "_cachePostsOnPage",
+  "_userPreferenceLogic",
+  "_threadPreferenceLogic",
+]);
+
 console.log("Updating load_order.json...");
 
 async function updateLoadOrder() {
@@ -71,10 +78,12 @@ async function updateLoadOrder() {
     for (const phase in loadOrder) {
       const originalLength = loadOrder[phase].length;
       loadOrder[phase] = loadOrder[phase].filter((item) => {
-        // Keep if it's a script in the current manifest OR if it doesn't exist in the manifest set (assume shared func)
+        // Keep if it's a script in the current manifest OR if it's a known shared function
         const isManifestScript = manifestScriptIds.has(item);
-        const likelySharedFunc = !isManifestScript; // Basic assumption
-        if (isManifestScript || likelySharedFunc) {
+        const isSharedFunction = knownSharedFunctions.has(item);
+
+        if (isManifestScript || isSharedFunction) {
+          // Corrected logic
           return true;
         } else {
           console.log(

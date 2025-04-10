@@ -47,7 +47,6 @@ const scriptStates = {};
 const loadedScripts = {};
 
 function initializeScriptStates() {
-  log("Initializing script states...");
   SCRIPT_MANIFEST.forEach((script) => {
     const storageKey = `script_enabled_${script.id}`;
     // Load state from GM storage, falling back to manifest default
@@ -58,7 +57,6 @@ function initializeScriptStates() {
       } (Default: ${script.enabledByDefault})`,
     );
   });
-  log("Script states initialized:", scriptStates);
 }
 
 // Find a script definition in the manifest by its ID
@@ -68,18 +66,15 @@ function findScriptById(scriptId) {
 
 // Execute functions and scripts based on the load order for a specific phase
 function executeLoadOrderForPhase(phase) {
-  log(`Executing load order for phase: ${phase}`);
   const itemsToLoad = loadOrder[phase] || [];
 
   if (itemsToLoad.length === 0) {
-    log(`No items defined in load order for phase: ${phase}`);
     return;
   }
 
   itemsToLoad.forEach((item) => {
     // Check if it's a known shared function
     if (typeof sharedUtils[item] === "function") {
-      log(`-> Executing shared function: ${item}`);
       try {
         sharedUtils[item]();
       } catch (err) {
@@ -97,7 +92,6 @@ function executeLoadOrderForPhase(phase) {
           );
           loadScript(script); // Use the existing loadScript function
         } else {
-          log(`-> Script ${item} skipped (disabled).`);
         }
       } else {
         warn(
@@ -106,8 +100,6 @@ function executeLoadOrderForPhase(phase) {
       }
     }
   });
-
-  log(`Finished executing load order for phase: ${phase}`);
 }
 
 // Import scripts directly
@@ -142,18 +134,16 @@ const scriptModules = {
 // Load a single script by its manifest entry
 function loadScript(script) {
   if (loadedScripts[script.id]) {
-    log(`Script ${script.name} already loaded, skipping.`);
     return;
   }
 
   // Check if the script should run on the current URL
   if (!shouldLoadScript(script)) {
-    log(`Script ${script.name} not loaded: URL pattern did not match.`);
     return;
   }
 
-  // log(`Loading script: ${script.name} (${script.id})`); // Phase is determined by load_order.json
-  log(`Loading script: ${script.name} (${script.id})`);
+  //  // Phase is determined by load_order.json
+
   try {
     // Get the module from our imports
     const module = scriptModules[script.id];
@@ -176,8 +166,6 @@ function loadScript(script) {
             ? result.cleanup
             : null,
       };
-
-      log(`Successfully loaded script: ${script.name}`);
     } else {
       warn(`Script ${script.name} has no init function, skipping.`);
     }
@@ -190,17 +178,13 @@ function loadScript(script) {
 function unloadScript(scriptId) {
   const scriptInfo = loadedScripts[scriptId];
   if (!scriptInfo) {
-    log(`Script ${scriptId} not loaded, nothing to unload.`);
     return;
   }
-
-  log(`Unloading script: ${scriptId}`);
 
   // Call cleanup function if it exists
   if (scriptInfo.cleanup && typeof scriptInfo.cleanup === "function") {
     try {
       scriptInfo.cleanup();
-      log(`Cleanup completed for script: ${scriptId}`);
     } catch (err) {
       error(`Error during cleanup for script ${scriptId}:`, err);
     }
@@ -208,7 +192,6 @@ function unloadScript(scriptId) {
 
   // Remove the script from loadedScripts
   delete loadedScripts[scriptId];
-  log(`Script ${scriptId} unloaded.`);
 }
 
 // --- Script Toggle Event Handler ---
@@ -281,7 +264,6 @@ function ensureFontAwesome() {
     link.href =
       "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css";
     document.head.appendChild(link);
-    log("RPGHQ Manager: Added Font Awesome CSS link.");
   }
 }
 
@@ -319,7 +301,6 @@ function addMenuButton(toggleVisibilityCallback) {
     'a[title="RPGHQ Userscript Manager"]',
   );
   if (existingButton) {
-    log("RPGHQ Manager: Button already exists, updating listener.");
     existingButton.onclick = function (e) {
       e.preventDefault();
       toggleVisibilityCallback();
@@ -343,13 +324,10 @@ function addMenuButton(toggleVisibilityCallback) {
 
   // Insert before logout button
   profileDropdown.insertBefore(userscriptsButton, logoutButton);
-  log("RPGHQ Manager: 'View Userscripts' button added to profile menu.");
 }
 
 // --- Initialization ---
 function init() {
-  log("Initializing RPGHQ Userscript Manager...");
-
   // Initialize script states
   initializeScriptStates();
 
@@ -392,7 +370,6 @@ function init() {
         document.activeElement.tagName === "TEXTAREA" ||
         document.activeElement.isContentEditable
       ) {
-        log("Insert key pressed in input field, ignoring modal toggle.");
         return;
       }
 

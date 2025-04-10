@@ -13,7 +13,6 @@
         typeof window.activeNotifications === "object"
       ) {
         window.activeNotifications.updateInterval = 999999;
-        console.log("activeNotifications.updateInterval set to 999999");
       } else {
         setTimeout(overrideUpdateInterval, 50);
       }

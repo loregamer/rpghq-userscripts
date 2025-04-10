@@ -8,7 +8,6 @@
  */
 
 export function init() {
-  console.log("User Reaction Auto-Marker initialized!");
   const notifications = document.querySelector("#notification_list");
 
   const notificationItems = notifications.querySelectorAll("li");
@@ -30,15 +29,12 @@ export function init() {
       return;
     }
 
-    console.log(`Found notification from ${username}, marking as read`);
-
     // Find and click the mark read button
     const markReadButton = item.querySelector("a.mark_read");
     if (markReadButton) {
       markReadButton.click();
 
       // Remove the notification row from the DOM
-      console.log(`Removing ${username} notification from view`);
     }
     item.remove();
   });

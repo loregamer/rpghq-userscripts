@@ -72,7 +72,6 @@ function renderManagedThreadsList(listContainer) {
 
 // Handler to remove the 'ignored' status
 function handleRemoveIgnore(topicId, listContainer) {
-  log(`Removing ignore for Topic ID: ${topicId}`);
   const prefs = gmGetValue(STORAGE_KEY_THREADS, {});
   if (prefs[topicId]) {
     prefs[topicId].ignored = false;
@@ -89,13 +88,11 @@ function handleRemoveIgnore(topicId, listContainer) {
     gmSetValue(STORAGE_KEY_THREADS, prefs);
     renderManagedThreadsList(listContainer); // Re-render the list
   } else {
-    log(`Could not find prefs for topic ${topicId} to remove ignore.`);
   }
 }
 
 // Handler to remove the 'highlight' status
 function handleRemoveHighlight(topicId, listContainer) {
-  log(`Removing highlight for Topic ID: ${topicId}`);
   const prefs = gmGetValue(STORAGE_KEY_THREADS, {});
   if (prefs[topicId]) {
     prefs[topicId].highlight = "none";
@@ -106,14 +103,11 @@ function handleRemoveHighlight(topicId, listContainer) {
     gmSetValue(STORAGE_KEY_THREADS, prefs);
     renderManagedThreadsList(listContainer); // Re-render the list
   } else {
-    log(`Could not find prefs for topic ${topicId} to remove highlight.`);
   }
 }
 
 // Main function to render the subtab
 export function renderThreadsSubtab(container) {
-  log("Rendering Threads subtab...");
-
   container.innerHTML = `
     <div class="preferences-section">
       <div class="preferences-section-header">

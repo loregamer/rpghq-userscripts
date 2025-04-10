@@ -9,8 +9,6 @@ import { renderSettingControl } from "./renderSettingControl.js";
 import { log } from "../utils/logger.js";
 
 export function renderScriptSettingsContent(script, saveScriptSetting = null) {
-  log(`Rendering settings content for script: ${script.name}`);
-
   if (!script.settings || script.settings.length === 0) {
     return "";
   }

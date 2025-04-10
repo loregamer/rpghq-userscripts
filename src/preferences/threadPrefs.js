@@ -7,13 +7,13 @@ const STORAGE_KEY_THREADS = "thread_prefs"; // Key for storing thread preference
 
 // --- Initialization Function (called by main.js) ---
 export function initializeThreadPrefs() {
-  log(`${PREF_ID}: Initializing...`);
-
-  const isOnViewForum = window.location.href.includes("viewforum.php");
-  const isOnViewTopic = window.location.href.includes("viewtopic.php");
+  const href = window.location.href;
+  const isOnViewForum = href.includes("viewforum.php");
+  // More specific check for viewtopic, ensuring it's the file name with parameters
+  const isOnViewTopic =
+    href.includes("viewtopic.php?") || href.endsWith("viewtopic.php");
 
   if (!isOnViewForum && !isOnViewTopic) {
-    log(`${PREF_ID}: Not on a relevant page, exiting.`);
     return; // Do nothing if not on viewforum or viewtopic
   }
 
@@ -28,7 +28,6 @@ export function initializeThreadPrefs() {
       ".forumbg .topiclist.topics",
     ); // Target the specific list
     if (topicListContainer) {
-      log(`${PREF_ID}: Setting up MutationObserver for topic list.`);
       const observer = new MutationObserver(handleMutations);
       observer.observe(topicListContainer, {
         childList: true, // Watch for added/removed child nodes (li.row)
@@ -45,23 +44,18 @@ export function initializeThreadPrefs() {
     // Potentially apply highlight to the topic itself if desired in the future
   }
 
-  log(`${PREF_ID}: Initialized successfully.`);
-
   // No cleanup function needed here as it's core functionality
 }
 
 // Mutation Observer Callback for ViewForum
 function handleMutations(mutationsList, observer) {
-  log(`${PREF_ID}: MutationObserver detected changes in topic list.`);
   let needsReapply = false;
 
   for (const mutation of mutationsList) {
     if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
-      log(`${PREF_ID}: Nodes added to the list.`);
       mutation.addedNodes.forEach((node) => {
         // Check if the added node is a thread row element
         if (node.nodeType === Node.ELEMENT_NODE && node.matches("li.row")) {
-          log(`${PREF_ID}: Processing added row:`, node);
           // Add controls if they don't exist
           if (!node.querySelector(".rpghq-thread-controls")) {
             const topicId = getTopicId(node);
@@ -70,10 +64,8 @@ function handleMutations(mutationsList, observer) {
               applyPreferencesToSingleRow(node, topicId); // Apply ignore/highlight
               needsReapply = true; // Mark that pinning might need recalculation
             } else {
-              log(`${PREF_ID}: Could not get topic ID for added row.`, node);
             }
           } else {
-            log(`${PREF_ID}: Controls already exist on added row.`, node);
           }
         }
       });
@@ -82,15 +74,14 @@ function handleMutations(mutationsList, observer) {
 
   // If rows were added, re-apply pinning as order might change
   if (needsReapply) {
-    log(`${PREF_ID}: Re-applying pinning due to added rows.`);
     applyPinning(); // Separated pinning logic
   }
 }
 
 // --- Helper Functions ---
 
-// Renamed and updated to get ID from row or URL
-function getTopicId(element = null) {
+// Get Topic ID from row element (viewforum) or URL (viewtopic)
+function getTopicId(element = null /* li.row or null */) {
   // Try from row element first (viewforum)
   if (element) {
     const topicLink = element.querySelector("a.topictitle");
@@ -108,8 +99,38 @@ function getTopicId(element = null) {
     return urlMatch[1];
   }
 
-  log(`${PREF_ID}: Could not determine Topic ID.`);
   return null;
+}
+
+// Get Topic Title from row element or page title
+function getTopicTitle(element = null /* li.row or null */) {
+  // Try from row element first (viewforum)
+  if (element) {
+    const topicLink = element.querySelector("a.topictitle");
+    if (topicLink) {
+      return topicLink.textContent.trim();
+    }
+  }
+
+  // Fallback to document title (viewtopic)
+  // Often looks like "View topic - Forum Name - Topic Title"
+  const titleParts = document.title.split(" - ");
+  if (titleParts.length >= 3) {
+    return titleParts[titleParts.length - 1].trim(); // Get the last part
+  }
+
+  return "Unknown Title"; // Provide a default
+}
+
+// Get Topic Section/Forum Name from breadcrumbs
+function getTopicSection() {
+  const breadcrumbLinks = document.querySelectorAll(".breadcrumbs .crumb a");
+  if (breadcrumbLinks.length >= 2) {
+    // Usually the second-to-last link is the specific forum
+    return breadcrumbLinks[breadcrumbLinks.length - 1].textContent.trim();
+  }
+
+  return "Unknown Section"; // Provide a default
 }
 
 function getStoredPreferences() {
@@ -129,7 +150,6 @@ function getThreadRowElements() {
 
 // Renamed from applyPreferences - separated pinning
 function applyListPreferences() {
-  log(`${PREF_ID}: Applying list preferences (Ignore/Highlight)...`);
   const prefs = getStoredPreferences();
   const rows = getThreadRowElements();
 
@@ -139,8 +159,6 @@ function applyListPreferences() {
   });
 
   applyPinning(prefs); // Apply pinning separately
-
-  log(`${PREF_ID}: List preferences applied.`);
 }
 
 // Helper to apply ignore/highlight to a single row
@@ -154,7 +172,7 @@ function applyPreferencesToSingleRow(row, topicId, prefs = null) {
   // Apply Ignore
   if (topicPrefs.ignored) {
     row.style.display = "none";
-    // log(`${PREF_ID}: Ignoring topic ${topicId} (single row)`);
+    //
   } else {
     row.style.display = ""; // Ensure it's visible if not ignored
   }
@@ -162,7 +180,7 @@ function applyPreferencesToSingleRow(row, topicId, prefs = null) {
   // Apply Highlight
   if (topicPrefs.highlight && topicPrefs.highlight !== "none") {
     row.style.backgroundColor = topicPrefs.highlight;
-    // log(`${PREF_ID}: Highlighting topic ${topicId} with ${topicPrefs.highlight} (single row)`);
+    //
   } else {
     row.style.backgroundColor = ""; // Remove background if no highlight
   }
@@ -170,7 +188,6 @@ function applyPreferencesToSingleRow(row, topicId, prefs = null) {
 
 // Helper to apply pinning logic
 function applyPinning(prefs = null) {
-  log(`${PREF_ID}: Applying pinning...`);
   if (!prefs) prefs = getStoredPreferences(); // Get prefs if not passed
 
   const rows = getThreadRowElements();
@@ -180,7 +197,7 @@ function applyPinning(prefs = null) {
     const topicId = getTopicId(row);
     if (topicId && prefs[topicId] && prefs[topicId].pinned) {
       pinnedRows.push(row);
-      // log(`${PREF_ID}: Marking topic ${topicId} for pinning`);
+      //
     }
   });
 
@@ -195,7 +212,6 @@ function applyPinning(prefs = null) {
           // Reverse to insert in correct order
           topicList.insertBefore(row, headerRow.nextSibling); // Insert after header
         });
-        log(`${PREF_ID}: Moved ${pinnedRows.length} pinned topics to top.`);
       } else {
         error(`${PREF_ID}: Could not find header row in topic list.`);
       }
@@ -209,7 +225,6 @@ function applyPinning(prefs = null) {
 
 // Renamed from addControlsToThreads
 function addListControlsToThreads() {
-  log(`${PREF_ID}: Adding list controls to threads...`);
   const rows = getThreadRowElements();
 
   rows.forEach((row) => {
@@ -218,7 +233,6 @@ function addListControlsToThreads() {
 
     addControlsToSingleThread(row, topicId);
   });
-  log(`${PREF_ID}: List controls added.`);
 }
 
 // Helper to add controls to a single thread row
@@ -251,7 +265,6 @@ function addControlsToSingleThread(row, topicId) {
 
 // --- Core Logic for ViewTopic ---
 function addTopicControls() {
-  log(`${PREF_ID}: Adding controls to topic view...`);
   const topicId = getTopicId(); // Get ID from URL
   if (!topicId) return;
 
@@ -278,68 +291,141 @@ function addTopicControls() {
   } else {
     actionBar.appendChild(controlContainer); // Fallback placement
   }
-
-  log(`${PREF_ID}: Topic controls added.`);
 }
 
-// --- Shared Control Creation ---
-function createControlContainer(topicId, rowElement = null) {
-  const controlContainer = document.createElement("span");
-  controlContainer.className = "rpghq-thread-controls";
-  controlContainer.style.marginLeft = "5px"; // Consistent basic styling
-  controlContainer.style.fontSize = "0.9em"; // Make buttons slightly smaller
+// --- Shared Control Creation (Dropdown) ---
+function createControlContainer(
+  topicId,
+  rowElement = null /* li.row or null */,
+) {
+  const controlContainer = document.createElement("div"); // Use div for easier dropdown structure
+  controlContainer.className = "rpghq-thread-controls rpghq-dropdown"; // Add dropdown class
+  controlContainer.style.position = "relative"; // Needed for dropdown positioning
+  controlContainer.style.display = "inline-block"; // Keep it inline
+  controlContainer.style.marginLeft = "5px";
+  controlContainer.style.verticalAlign = "middle"; // Align with surrounding text/buttons
 
   // Get current preferences to set initial button states if needed (e.g., show Unpin/Unignore)
   const prefs = getStoredPreferences();
   const topicPrefs = prefs[topicId] || {};
 
-  // Pin button
-  const pinButton = document.createElement("button");
-  pinButton.textContent = topicPrefs.pinned ? "Unpin" : "Pin";
-  pinButton.title = topicPrefs.pinned
-    ? "Remove from pinned list"
-    : "Pin thread to top of list";
-  pinButton.onclick = (e) => {
-    e.preventDefault(); // Prevent link navigation if controls are inside <a>
-    handlePinToggle(topicId, rowElement);
-    // Update button text immediately
-    pinButton.textContent = !topicPrefs.pinned ? "Unpin" : "Pin";
-    pinButton.title = !topicPrefs.pinned
-      ? "Remove from pinned list"
-      : "Pin thread to top of list";
-  };
-  styleControlButton(pinButton);
-  controlContainer.appendChild(pinButton);
+  // Create the main button that opens the dropdown using phpBB style
+  const dropdownButton = document.createElement("span");
+  dropdownButton.title = "Thread Tools";
+  dropdownButton.className =
+    "button button-secondary dropdown-trigger dropdown-select dropdown-toggle rpghq-dropdown-toggle"; // Added our class too
+  dropdownButton.innerHTML = `
+			<i class="icon fa-wrench fa-fw" aria-hidden="true"></i>
+			<span class="caret"><i class="icon fa-sort-down fa-fw" aria-hidden="true"></i></span>
+		`;
+  // Remove direct styling as phpBB classes should handle it
+  // styleControlButton(dropdownButton); // Remove this line
+  dropdownButton.setAttribute("aria-haspopup", "true");
+  dropdownButton.setAttribute("aria-expanded", "false");
+  controlContainer.appendChild(dropdownButton);
 
-  // Ignore button
-  const ignoreButton = document.createElement("button");
-  ignoreButton.textContent = topicPrefs.ignored ? "Unignore" : "Ignore";
-  ignoreButton.title = topicPrefs.ignored
-    ? "Stop ignoring this thread"
-    : "Hide this thread from lists";
-  ignoreButton.onclick = (e) => {
-    e.preventDefault();
-    handleIgnoreToggle(topicId, rowElement);
-    // Update button text immediately
-    ignoreButton.textContent = !topicPrefs.ignored ? "Unignore" : "Ignore";
-    ignoreButton.title = !topicPrefs.ignored
-      ? "Stop ignoring this thread"
-      : "Hide this thread from lists";
-  };
-  styleControlButton(ignoreButton);
-  controlContainer.appendChild(ignoreButton);
+  // Create the dropdown menu itself (no change here)
+  const dropdownMenu = document.createElement("ul");
+  dropdownMenu.className = "rpghq-dropdown-menu";
+  dropdownMenu.setAttribute("role", "menu");
+  // Basic dropdown styling (can be enhanced in CSS)
+  dropdownMenu.style.position = "absolute";
+  dropdownMenu.style.top = "100%";
+  dropdownMenu.style.left = "0";
+  dropdownMenu.style.backgroundColor = "var(--rpghq-modal-bg-color, white)"; // Use theme variable
+  dropdownMenu.style.border = "1px solid #ccc";
+  dropdownMenu.style.borderRadius = "3px";
+  dropdownMenu.style.padding = "5px 0";
+  dropdownMenu.style.margin = "2px 0 0";
+  dropdownMenu.style.zIndex = "100"; // Ensure it's above other content
+  dropdownMenu.style.minWidth = "120px";
+  dropdownMenu.style.listStyle = "none";
+  dropdownMenu.style.display = "none"; // Initially hidden
+  controlContainer.appendChild(dropdownMenu);
 
-  // Highlight button
-  const highlightButton = document.createElement("button");
-  highlightButton.textContent = "Highlight";
-  highlightButton.title = "Cycle highlight color for this thread";
-  highlightButton.onclick = (e) => {
+  // Toggle dropdown visibility
+  dropdownButton.onclick = (e) => {
     e.preventDefault();
-    handleHighlight(topicId, rowElement);
-    // No immediate text update needed unless showing current color
+    e.stopPropagation(); // Prevent clicks from closing it immediately
+    const isExpanded = dropdownMenu.style.display === "block";
+    dropdownMenu.style.display = isExpanded ? "none" : "block";
+    dropdownButton.setAttribute("aria-expanded", !isExpanded);
   };
-  styleControlButton(highlightButton);
-  controlContainer.appendChild(highlightButton);
+
+  // Close dropdown when clicking outside
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!controlContainer.contains(e.target)) {
+        dropdownMenu.style.display = "none";
+        dropdownButton.setAttribute("aria-expanded", "false");
+      }
+    },
+    true, // Use capture phase to catch clicks early
+  );
+
+  // --- Populate Dropdown Menu Items ---
+  // Helper function to create menu items
+  const createMenuItem = (text, title, onClickHandler) => {
+    const li = document.createElement("li");
+    const button = document.createElement("button");
+    button.textContent = text;
+    button.title = title;
+    button.style.display = "block";
+    button.style.width = "100%";
+    button.style.padding = "4px 10px";
+    button.style.border = "none";
+    button.style.background = "none";
+    button.style.textAlign = "left";
+    button.style.cursor = "pointer";
+    button.style.fontSize = "inherit"; // Inherit font size
+    button.style.color = "var(--rpghq-text-color, black)"; // Use theme variable
+
+    button.onmouseover = () =>
+      (button.style.backgroundColor = "var(--rpghq-hover-bg-color, #eee)");
+    button.onmouseout = () => (button.style.backgroundColor = "transparent");
+
+    button.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClickHandler();
+      dropdownMenu.style.display = "none"; // Close menu after action
+      dropdownButton.setAttribute("aria-expanded", "false");
+    };
+    li.appendChild(button);
+    return li;
+  };
+
+  // Pin menu item
+  dropdownMenu.appendChild(
+    createMenuItem(
+      topicPrefs.pinned ? "Unpin" : "Pin",
+      topicPrefs.pinned
+        ? "Remove from pinned list"
+        : "Pin thread to top of list",
+      () => handlePinToggle(topicId, rowElement),
+    ),
+  );
+
+  // Ignore menu item
+  dropdownMenu.appendChild(
+    createMenuItem(
+      topicPrefs.ignored ? "Unignore" : "Ignore",
+      topicPrefs.ignored
+        ? "Stop ignoring this thread"
+        : "Hide this thread from lists",
+      () => handleIgnoreToggle(topicId, rowElement),
+    ),
+  );
+
+  // Highlight menu item
+  dropdownMenu.appendChild(
+    createMenuItem(
+      "Highlight", // Could add current color indicator later
+      "Cycle highlight color for this thread",
+      () => handleHighlight(topicId, rowElement),
+    ),
+  );
 
   return controlContainer;
 }
@@ -356,12 +442,45 @@ function styleControlButton(button) {
 }
 
 // --- Event Handlers (Shared) ---
-function handlePinToggle(topicId, rowElement) {
-  log(`${PREF_ID}: Toggling Pin for topic ${topicId}`);
+
+// Helper to get or create preference object, including title and section
+function getOrCreateTopicPrefs(topicId, rowElement = null) {
   const prefs = getStoredPreferences();
-  if (!prefs[topicId]) prefs[topicId] = {};
+  if (!prefs[topicId]) {
+    // If creating, grab title and section
+    const title = getTopicTitle(rowElement);
+    const section = getTopicSection(); // Section depends on current page
+    prefs[topicId] = {
+      pinned: false,
+      ignored: false,
+      highlight: "none",
+      title: title,
+      section: section,
+    };
+    log(
+      `${PREF_ID}: Created initial prefs for ${topicId}: Title='${title}', Section='${section}'`,
+    );
+  } else {
+    // Ensure title and section are present, update if necessary (e.g., if they were added later)
+    if (!prefs[topicId].title || prefs[topicId].title === "Unknown Title") {
+      prefs[topicId].title = getTopicTitle(rowElement);
+    }
+    if (
+      !prefs[topicId].section ||
+      prefs[topicId].section === "Unknown Section"
+    ) {
+      prefs[topicId].section = getTopicSection();
+    }
+  }
+  return prefs;
+}
+function handlePinToggle(topicId, rowElement) {
+  const prefs = getOrCreateTopicPrefs(topicId, rowElement);
 
   prefs[topicId].pinned = !prefs[topicId].pinned;
+  log(
+    `${PREF_ID}: Topic ${topicId} pin status set to ${prefs[topicId].pinned}`,
+  );
 
   saveStoredPreferences(prefs);
 
@@ -372,11 +491,12 @@ function handlePinToggle(topicId, rowElement) {
 }
 
 function handleIgnoreToggle(topicId, rowElement) {
-  log(`${PREF_ID}: Toggling Ignore for topic ${topicId}`);
-  const prefs = getStoredPreferences();
-  if (!prefs[topicId]) prefs[topicId] = {};
+  const prefs = getOrCreateTopicPrefs(topicId, rowElement);
 
   prefs[topicId].ignored = !prefs[topicId].ignored;
+  log(
+    `${PREF_ID}: Topic ${topicId} ignore status set to ${prefs[topicId].ignored}`,
+  );
 
   saveStoredPreferences(prefs);
 
@@ -393,11 +513,9 @@ function handleIgnoreToggle(topicId, rowElement) {
 }
 
 function handleHighlight(topicId, rowElement) {
-  log(`${PREF_ID}: Handling Highlight for topic ${topicId}`);
-  const prefs = getStoredPreferences();
-  if (!prefs[topicId]) prefs[topicId] = {};
+  const prefs = getOrCreateTopicPrefs(topicId, rowElement);
 
-  const currentHighlight = prefs[topicId].highlight;
+  const currentHighlight = prefs[topicId].highlight || "none"; // Default if undefined
   let nextHighlight;
 
   // Basic cycling implementation (TODO: Improve with picker/presets)
