@@ -62,9 +62,9 @@ This document outlines the development checkpoints and actionable steps for crea
         *   [x] Implement Grid View (`renderScriptsGridView`).
         *   [x] Implement List View (`renderScriptsListView`).
         *   [x] Implement view switcher (Grid/List buttons).
-        *   [ ] Implement enable/disable toggle switches for each script.
-            *   [ ] Update the UI state visually.
-            *   [ ] Save the state using `GM_setValue`.
+        *   [x] Implement enable/disable toggle switches for each script.
+            *   [x] Update the UI state visually.
+            *   [x] Save the state using `GM_setValue`.
             *   [ ] Trigger necessary logic to load/unload the actual script functionality (Phase 5).
     *   [ ] Implement placeholder content for "Forum Preferences" and "Settings" tabs.
     *   [ ] Implement the Script Settings modal (`settings-modal`):

@@ -158,18 +158,41 @@ function createManagerModal() {
 // --- UI Rendering (Phase 4 - Installed Scripts Tab) ---
 
 function createScriptToggle(scriptId, initialState) {
-  // Placeholder for toggle switch creation (Step 5)
-  console.log(
-    `Placeholder: Create toggle for ${scriptId}, initial state: ${initialState}`
-  );
   const label = document.createElement("label");
-  label.textContent = initialState ? " Enabled" : " Disabled";
+  label.className = "toggle-switch";
+
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
   checkbox.checked = initialState;
   checkbox.dataset.scriptId = scriptId;
-  label.prepend(checkbox);
-  // TODO: Add event listener for state change (Step 7)
+
+  const slider = document.createElement("span");
+  slider.className = "slider";
+
+  label.appendChild(checkbox);
+  label.appendChild(slider);
+
+  // Event listener for state change
+  checkbox.addEventListener("change", (event) => {
+    const scriptId = event.target.dataset.scriptId;
+    const newState = event.target.checked;
+    const storageKey = `script_enabled_${scriptId}`;
+
+    console.log(
+      `Toggling script '${scriptId}' to ${newState ? "Enabled" : "Disabled"}`
+    );
+
+    // Update the runtime state
+    scriptStates[scriptId] = newState;
+
+    // Save the new state to GM storage
+    gmSetValue(storageKey, newState);
+
+    // Optional: Trigger any immediate actions needed on toggle (e.g., logging, or later, script loading/unloading)
+    console.log(`State for ${scriptId} saved as ${newState}.`);
+    // TODO: Phase 5 - Add logic here or elsewhere to handle dynamic loading/unloading if required immediately.
+  });
+
   return label;
 }
 
@@ -203,11 +226,11 @@ function renderScriptsGridView(container, scripts, states) {
 
     // TODO: Add category overlay if image is implemented
 
-    // Placeholder for Toggle (will be replaced in Step 6)
-    const togglePlaceholder = createScriptToggle(script.id, states[script.id]);
+    // Add actual Toggle Switch
+    const toggleSwitch = createScriptToggle(script.id, states[script.id]);
 
     header.appendChild(title);
-    header.appendChild(togglePlaceholder);
+    header.appendChild(toggleSwitch);
     header.appendChild(version);
 
     const description = document.createElement("p");
