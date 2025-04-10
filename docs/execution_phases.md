@@ -7,14 +7,17 @@ The RPGHQ Userscript Manager supports executing scripts at different phases duri
 Scripts can be executed in one of these phases:
 
 1. `document-start` - Executed as soon as possible, before the DOM is constructed
+
    - Best for scripts that need to intercept network requests or modify page behavior before it loads
    - Use cautiously as DOM elements will not be available
 
 2. `document-end` - Executed after the DOM is ready but before all resources are loaded
+
    - The default phase if none is specified
    - Good for most scripts that need to access the DOM but don't need all resources
 
 3. `document-idle` - Executed after the page is fully loaded (including all resources)
+
    - Good for scripts that need images and other resources to be fully loaded
    - Similar to window.onload
 

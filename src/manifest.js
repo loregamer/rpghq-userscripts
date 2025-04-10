@@ -1,7 +1,7 @@
 // Manifest defining scripts and their metadata
 /**
  * SCRIPT_MANIFEST contains the configuration for all scripts in the manager
- * 
+ *
  * Each script entry can have the following properties:
  * @property {string} id - Unique identifier for the script
  * @property {string} name - Display name of the script
@@ -61,5 +61,7 @@ export const SCRIPT_MANIFEST = [
         defaultValue: false,
         description:
           "Enable to add commas to 4-digit numbers (1,000+). Disable to only format 5-digit numbers (10,000+).",
-      }
-];
+      },
+    ],
+  }
+];;
