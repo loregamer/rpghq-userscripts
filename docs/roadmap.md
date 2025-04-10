@@ -123,7 +123,7 @@ This document outlines the development checkpoints and actionable steps for crea
 
 - **Checkpoint:** Individual scripts can be executed at different page load phases.
   - [x] Add execution phase property to script manifest (`executionPhase`)
-  - [x] Set main userscript to `@run-at document-start` 
+  - [x] Set main userscript to `@run-at document-start`
   - [x] Implement phase-based script loading in main.js
   - [x] Add support for four execution phases:
     - [x] `document-start` - As early as possible
@@ -142,5 +142,6 @@ This document outlines the development checkpoints and actionable steps for crea
   - [x] Create migration guide for existing userscripts
   - [ ] Write comprehensive `README.md` including setup, build, and usage instructions.
   - [x] Add comments to code where necessary.
-  - [ ] Consider adding linters/formatters (e.g., ESLint, Prettier).
+  - [x] Added Prettier formatter.
+  - [x] Added automated manifest sorting by script name.
   - [ ] Final testing across different browsers/userscript managers if possible.
