@@ -372,53 +372,13 @@ GM_addStyle(`
     align-items: center;
   }
 
-  /* Styled checkboxes */
+  /* Default checkboxes - no custom styling */
   input[type="checkbox"] {
     cursor: pointer;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border: 2px solid var(--border-color);
-    border-radius: 3px;
-    background: transparent;
-    display: inline-block;
-    position: relative;
-    margin: 0;
-    vertical-align: middle;
-    transition: all 0.2s ease;
-  }
-
-  input[type="checkbox"]:checked {
-    background: transparent;
-    border-color: var(--border-color);
-  }
-
-  input[type="checkbox"]:checked::after {
-    content: '';
-    position: absolute;
-    left: 5px;
-    top: 2px;
-    width: 5px;
-    height: 10px;
-    border: solid var(--text-primary);
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-  }
-
-  input[type="checkbox"]:hover {
-    border-color: var(--border-color);
-  }
-
-  input[type="checkbox"]:focus {
-    outline: none;
-    box-shadow: none;
   }
 
   /* Specific styling for the script toggle checkbox */
   .script-toggle-checkbox {
-    transform: scale(1.2);
     margin: 2px;
   }
 

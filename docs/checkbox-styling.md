@@ -1,16 +1,12 @@
 # Checkbox Styling in RPGHQ Userscript Manager
 
-This document describes the custom styling applied to checkboxes throughout the Userscript Manager.
+This document describes the checkbox styling approach throughout the Userscript Manager.
 
 ## Styling Implementation
 
-Checkboxes use custom CSS styling instead of browser defaults. The styling includes:
+Checkboxes use browser default styling without any custom CSS modifications. The only style applied is:
 
-- Custom appearance with CSS
-- Transparent background (no background color)
-- Checkmark using CSS pseudo-elements with text color
-- Simple hover states for better UX
-- Consistent sizing and appearance across the application
+- Cursor: pointer for better UX
 
 ## HTML Usage
 
