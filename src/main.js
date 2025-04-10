@@ -126,12 +126,13 @@ function createManagerModal() {
 
   // Modal Header
   const header = document.createElement("div");
-  header.className = "modal-header";
+  header.className = "mod-manager-header";
 
   const title = document.createElement("h2");
   title.textContent = "RPGHQ Userscript Manager";
 
   const closeButton = document.createElement("button");
+  closeButton.className = "mod-manager-close";
   closeButton.id = "rpghq-modal-close";
   closeButton.textContent = "×";
   // Styles handled by CSS
@@ -141,11 +142,12 @@ function createManagerModal() {
 
   // Modal Tabs
   const tabsContainer = document.createElement("div");
-  tabsContainer.className = "modal-tabs";
+  tabsContainer.className = "mod-manager-tabs";
 
   const tabButtons = ["Installed Scripts", "Forum Preferences", "Settings"];
   tabButtons.forEach((text, index) => {
     const button = document.createElement("button");
+    button.className = "mod-manager-tab";
     button.dataset.tabTarget = `tab-${index}`;
     button.textContent = text;
     // Styles handled by CSS
@@ -162,7 +164,7 @@ function createManagerModal() {
 
   // Modal Content Area (inside the content box)
   const contentContainer = document.createElement("div");
-  contentContainer.className = "modal-content";
+  contentContainer.className = "mod-manager-content";
 
   // Create content divs for each tab (initially hidden except the first)
   tabButtons.forEach((_, index) => {
@@ -285,7 +287,7 @@ function createScriptToggle(scriptId, initialState) {
   checkbox.dataset.scriptId = scriptId;
 
   const slider = document.createElement("span");
-  slider.className = "slider";
+  slider.className = "toggle-slider";
 
   label.appendChild(checkbox);
   label.appendChild(slider);
