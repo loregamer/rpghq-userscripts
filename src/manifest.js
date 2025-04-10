@@ -9,6 +9,7 @@ export const SCRIPT_MANIFEST = [
     image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png",
     path: "./scripts/commaFormatter.js", // Path is kept for reference but not used for loading
     enabledByDefault: true,
+    urlPatterns: [], // Empty array means run on all URLs
     settings: [
       {
         id: "formatFourDigits",
@@ -33,6 +34,12 @@ export const SCRIPT_MANIFEST = [
     image: "",
     path: "./scripts/bbcode.js",
     enabledByDefault: true,
+    urlPatterns: [
+      "https://rpghq.org/forums/posting.php?mode=post*",
+      "https://rpghq.org/forums/posting.php?mode=quote*",
+      "https://rpghq.org/forums/posting.php?mode=reply*",
+      "https://rpghq.org/forums/posting.php?mode=edit*",
+    ],
     settings: [
       // Add settings here
     ],

@@ -2,6 +2,7 @@
 import "./meta.js?userscript-metadata";
 import { SCRIPT_MANIFEST } from "./manifest.js";
 import { FORUM_PREFERENCES } from "./forumPreferences.js";
+import { shouldLoadScript } from "./utils/urlMatcher.js";
 
 // Import UI components
 import { showModal } from "./components/showModal.js";
@@ -79,6 +80,12 @@ const scriptModules = {
 function loadScript(script) {
   if (loadedScripts[script.id]) {
     console.log(`Script ${script.name} already loaded, skipping.`);
+    return;
+  }
+
+  // Check if the script should run on the current URL
+  if (!shouldLoadScript(script)) {
+    console.log(`Script ${script.name} not loaded: URL pattern did not match.`);
     return;
   }
 
