@@ -55,7 +55,7 @@ function initializeScriptStates() {
     log(
       `Script '${script.name}' (${script.id}): ${
         scriptStates[script.id] ? "Enabled" : "Disabled"
-      } (Default: ${script.enabledByDefault})`,
+      } (Default: ${script.enabledByDefault})`
     );
   });
   log("Script states initialized:", scriptStates);
@@ -180,7 +180,7 @@ document.addEventListener("script-toggle", (event) => {
     gmSetValue,
     SCRIPT_MANIFEST,
     loadScript,
-    unloadScript,
+    unloadScript
   );
 });
 
@@ -229,7 +229,7 @@ function toggleModalVisibility() {
   const isVisible = modal && modal.style.display === "block";
 
   log(
-    `Toggling modal visibility. Currently ${isVisible ? "visible" : "hidden"}.`,
+    `Toggling modal visibility. Currently ${isVisible ? "visible" : "hidden"}.`
   );
 
   if (isVisible) {
@@ -260,7 +260,7 @@ function addMenuButton(toggleVisibilityCallback) {
   ensureFontAwesome();
 
   const profileDropdown = document.querySelector(
-    '.header-profile.dropdown-container .dropdown-contents[role="menu"]',
+    '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
   );
   if (!profileDropdown) {
     warn("RPGHQ Manager: Could not find profile dropdown menu.");
@@ -276,7 +276,7 @@ function addMenuButton(toggleVisibilityCallback) {
         (link.textContent.trim().includes("Logout") ||
           link.getAttribute("title") === "Logout")
       );
-    },
+    }
   );
 
   if (!logoutButton) {
@@ -286,7 +286,7 @@ function addMenuButton(toggleVisibilityCallback) {
 
   // Check if button already exists
   const existingButton = profileDropdown.querySelector(
-    'a[title="RPGHQ Userscript Manager"]',
+    'a[title="RPGHQ Userscript Manager"]'
   );
   if (existingButton) {
     log("RPGHQ Manager: Button already exists, updating listener.");
@@ -366,15 +366,6 @@ function init() {
       toggleModalVisibility();
     }
   });
-
-  // Register GM menu command
-  try {
-    // eslint-disable-next-line no-undef
-    GM_registerMenuCommand("RPGHQ Userscript Manager", toggleModalVisibility);
-    log("GM Menu command registered.");
-  } catch (e) {
-    error("Failed to register GM menu command:", e);
-  }
 }
 
 // Run initialization
