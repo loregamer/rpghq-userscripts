@@ -100,7 +100,26 @@ This document outlines the development checkpoints and actionable steps for crea
     - [x] Verify the settings UI renders correctly and saving works.
   - [x] Test enabling/disabling these scripts and confirming their functionality starts/stops (or requires reload).
 
-## Phase 7: Refinement & Documentation
+## Phase 7: Match UI with Deprecated Manager
+
+- **Checkpoint:** UI matches exactly with the deprecated-userscript-manager.user.js.
+  - [ ] Implement full tab functionality with all three tabs working properly:
+    - [ ] "Installed Scripts" tab with both Grid and List views
+    - [ ] "Forum Preferences" tab with settings sections and preferences
+    - [ ] "Settings" tab with global manager settings
+  - [ ] Ensure correct styling and layout matching the deprecated manager:
+    - [ ] Implement proper CSS variables for theming
+    - [ ] Match modal dimensions and positions
+    - [ ] Match font styles, buttons, and input controls
+  - [ ] Implement filter panel functionality for filtering scripts
+  - [ ] Implement category and execution phase filtering
+  - [ ] Ensure settings modal matches deprecated version with correct layout for settings controls
+  - [ ] Implement Forum Preferences from FORUM_PREFERENCES object in deprecated manager
+  - [ ] Add proper empty state messaging when no scripts are found
+  - [ ] Match all animations and transitions from the deprecated manager
+  - [ ] Ensure responsive behavior matches deprecated version
+
+## Phase 8: Refinement & Documentation
 
 - **Checkpoint:** Project is stable and well-documented.
   - [x] Refine UI/UX based on testing.
