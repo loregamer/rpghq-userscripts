@@ -70,15 +70,7 @@ export default {
     // Minification with preserved userscript header
     terser({
       format: {
-        comments: function (node, comment) {
-          if (comment.type === "comment2") {
-            // Keep userscript header comments
-            return /@(name|namespace|version|description|author|match|grant|run-at|homepage|downloadURL|updateURL)/.test(
-              comment.value,
-            );
-          }
-          return false;
-        },
+        comments: false, // Let rollup-plugin-userscript handle the header
       },
       mangle: false,
       compress: {}, // Re-enable compression, as CSS is handled separately
