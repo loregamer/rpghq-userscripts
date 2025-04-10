@@ -1,6 +1,27 @@
 // Manifest defining scripts and their metadata
 export const SCRIPT_MANIFEST = [
   {
+    id: "commaFormatter",
+    name: "Thousands Comma Formatter",
+    version: "2.1.2",
+    description: "Add commas to large numbers in forum posts and statistics.",
+    author: "loregamer",
+    path: "./scripts/commaFormatter.js",
+    enabledByDefault: true,
+    settings: [
+      {
+        id: "formatFourDigits",
+        label: "Format 4-digit numbers",
+        type: "checkbox",
+        defaultValue: false,
+        description:
+          "Enable to add commas to 4-digit numbers (1,000+). Disable to only format 5-digit numbers (10,000+).",
+      },
+    ],
+    categories: ["UI Enhancement"],
+    executionPhase: "after_dom",
+  },
+  {
     id: "script1",
     name: "Example Script 1",
     version: "0.1.0",
