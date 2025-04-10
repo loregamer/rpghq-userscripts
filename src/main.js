@@ -66,12 +66,14 @@ function loadEnabledScripts() {
 }
 
 // Import scripts directly
+import * as scriptId from "./scripts/scriptId.js";
 import * as commaFormatter from "./scripts/commaFormatter.js";
 
 // Map of script ids to their modules
 const scriptModules = {
   commaFormatter: commaFormatter,
-};
+
+  scriptId: scriptId,};
 
 // Load a single script by its manifest entry
 function loadScript(script) {
