@@ -196,6 +196,42 @@ function initializeManager() {
     // Fallback or notification? For now, just log error.
   }
 
+  // --- Tab Switching Logic ---
+  const tabsContainer = modalElement.querySelector(".modal-tabs");
+  const contentContainer = modalElement.querySelector(".modal-content");
+
+  if (tabsContainer && contentContainer) {
+    tabsContainer.addEventListener("click", (event) => {
+      const targetButton = event.target.closest("button");
+      if (!targetButton || !targetButton.dataset.tabTarget) return; // Ignore clicks not on tab buttons
+
+      const targetTabId = targetButton.dataset.tabTarget;
+      const targetPane = contentContainer.querySelector(`#${targetTabId}`);
+
+      console.log(`Switching to tab: ${targetTabId}`);
+
+      // Remove active class from all tab buttons and panes
+      tabsContainer
+        .querySelectorAll("button")
+        .forEach((btn) => btn.classList.remove("active"));
+      contentContainer
+        .querySelectorAll(".tab-pane")
+        .forEach((pane) => pane.classList.remove("active"));
+
+      // Add active class to the clicked button and corresponding pane
+      targetButton.classList.add("active");
+      if (targetPane) {
+        targetPane.classList.add("active");
+      } else {
+        console.error(`Could not find tab pane with ID: ${targetTabId}`);
+      }
+    });
+  } else {
+    console.error(
+      "Could not find tabs container or content container for tab switching."
+    );
+  }
+
   console.log("UI Initialized with visibility controls.");
 }
 

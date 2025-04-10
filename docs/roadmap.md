@@ -56,7 +56,7 @@ This document outlines the development checkpoints and actionable steps for crea
         *   [x] `GM_registerMenuCommand` to open the modal.
         *   [x] Keyboard shortcut listener (`Insert` key) to toggle visibility.
         *   [x] Close button functionality.
-    *   [ ] Implement tab switching logic.
+    *   [x] Implement tab switching logic.
     *   [ ] Implement the "Installed Scripts" tab:
         *   [ ] Render scripts from the `SCRIPT_MANIFEST`.
         *   [ ] Implement Grid View (`renderScriptsGridView`).
