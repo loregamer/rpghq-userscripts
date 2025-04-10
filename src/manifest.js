@@ -1,5 +1,5 @@
 export const SCRIPT_MANIFEST = [
-  {
+{
     id: "bbcode",
     name: "BBCode Highlighting",
     version: "1.0.0",
@@ -20,8 +20,8 @@ export const SCRIPT_MANIFEST = [
     ],
     categories: ["UI"],
     executionPhase: "document-end",
-  },
-  {
+  },,
+{
     id: "kalareact",
     name: "Kalarion Reaction Auto-Marker",
     version: "1.0.0",
@@ -36,8 +36,8 @@ export const SCRIPT_MANIFEST = [
     ],
     categories: ["General"],
     executionPhase: "after_dom",
-  },
-  {
+  },,
+{
     id: "notifications",
     name: "Notification Improver",
     version: "1.0.0",
@@ -50,8 +50,8 @@ export const SCRIPT_MANIFEST = [
     settings: [],
     categories: ["UI"],
     executionPhase: "after_dom",
-  },
-  {
+  },,
+{
     id: "pinThreads",
     name: "Pin Threads",
     version: "1.0.0",
@@ -66,8 +66,8 @@ export const SCRIPT_MANIFEST = [
     ],
     categories: ["UI"],
     executionPhase: "document-end",
-  },
-  {
+  },,
+{
     id: "separateReactions",
     name: "Reaction List Separated",
     version: "1.0.0",
@@ -82,8 +82,8 @@ export const SCRIPT_MANIFEST = [
     ],
     categories: ["UI"],
     executionPhase: "document-end",
-  },
-  {
+  },,
+{
     id: "commaFormatter",
     name: "Thousands Comma Formatter",
     version: "2.1.2",
@@ -104,5 +104,20 @@ export const SCRIPT_MANIFEST = [
           "Enable to add commas to 4-digit numbers (1,000+). Disable to only format 5-digit numbers (10,000+).",
       },
     ],
+  },
+  {
+    id: "memberSearch",
+    name: "Member Search Button",
+    version: "1.0.0",
+    description: "Adds a quick member search button next to Unread posts",
+    author: "loregamer",
+    image: "", // Add an image URL if available
+    path: "./scripts/memberSearch.js",
+    enabledByDefault: true,
+    settings: [
+      // Add settings here
+    ],
+    categories: ["Fun"],
+    executionPhase: "document-end",
   }
 ];;

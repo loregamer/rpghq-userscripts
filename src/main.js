@@ -77,6 +77,7 @@ function loadEnabledScripts() {
 }
 
 // Import scripts directly
+import * as memberSearch from "./scripts/memberSearch.js";
 import * as separateReactions from "./scripts/separateReactions.js";
 import * as pinThreads from "./scripts/pinThreads.js";
 import * as notifications from "./scripts/notifications.js";
@@ -96,7 +97,8 @@ const scriptModules = {
   pinThreads: pinThreads,
 
   separateReactions: separateReactions,
-};
+
+  memberSearch: memberSearch,};
 
 // Load a single script by its manifest entry
 function loadScript(script) {
