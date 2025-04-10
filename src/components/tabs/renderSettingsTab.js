@@ -5,6 +5,8 @@
  */
 import { log } from "../../utils/logger.js";
 export function renderSettingsTab(container) {
+  log("Rendering Settings tab...");
+
   container.innerHTML = `
     <h2>Global Settings</h2>
   

@@ -14,6 +14,7 @@ export function init() {
       postId,
     );
     const pollVotes = getPollVotes();
+    console.log("createReactionList: Got poll votes:", pollVotes);
 
     const displayStyle = reactions.length === 0 ? "display: none;" : "";
     console.log(
@@ -118,7 +119,7 @@ export function init() {
             </div>
         </div>
     `;
-
+    console.log("createReactionList: Finished creating HTML");
     return html;
   }
 
@@ -157,10 +158,13 @@ export function init() {
   }
 
   function getPollVotes() {
+    console.log("getPollVotes: Starting to collect poll votes");
     const pollVotes = {};
     const polls = document.querySelectorAll(".polls");
+    console.log("getPollVotes: Found polls:", polls.length);
 
     polls.forEach((poll, pollIndex) => {
+      console.log(`getPollVotes: Processing poll #${pollIndex + 1}`);
       const dls = poll.querySelectorAll("dl");
       console.log(
         `getPollVotes: Found ${dls.length} dl elements in poll #${pollIndex + 1}`,
@@ -177,6 +181,7 @@ export function init() {
           !dl.classList.contains("poll_total_votes")
         ) {
           currentOption = optionDt.textContent.trim();
+          console.log(`getPollVotes: Found option: "${currentOption}"`);
         }
 
         // Then check if this is a voters box for the current option
@@ -220,6 +225,7 @@ export function init() {
       });
     });
 
+    console.log("getPollVotes: Final collected votes:", pollVotes);
     return pollVotes;
   }
 

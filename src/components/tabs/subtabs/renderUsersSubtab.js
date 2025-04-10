@@ -5,6 +5,8 @@
  */
 import { log } from "../../../utils/logger.js";
 export function renderUsersSubtab(container) {
+  log("Rendering Users subtab...");
+
   container.innerHTML = `
     <div class="wip-banner">
       <i class="fa fa-wrench"></i> User Preferences - Work In Progress

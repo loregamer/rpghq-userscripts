@@ -3,6 +3,8 @@
  */
 import { log } from "../utils/logger.js";
 export function hideModal() {
+  log("Hiding userscript manager modal...");
+
   const modal = document.getElementById("mod-manager-modal");
   if (modal) {
     modal.style.display = "none";

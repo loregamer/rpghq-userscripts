@@ -63,6 +63,21 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
   },
   {
+    id: "pinThreads",
+    name: "Pin Threads",
+    version: "1.0.0",
+    description:
+      "Adds a Pin button to threads so you can see them in board index",
+    author: "loregamer",
+    image: "https://f.rpghq.org/HTYypNZVXaOt.png?n=pasted-file.png", // Add an image URL if available
+    path: "./scripts/pinThreads.js",
+    enabledByDefault: true,
+    settings: [
+      // Add settings here
+    ],
+    categories: ["UI"],
+  },
+  {
     id: "randomTopic",
     name: "Random Topic Button",
     version: "1.0.0",

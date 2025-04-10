@@ -21,6 +21,8 @@ export function toggleScriptEnabled(
 ) {
   const storageKey = `script_enabled_${scriptId}`;
 
+  log(`Toggling script '${scriptId}' to ${newState ? "Enabled" : "Disabled"}`);
+
   // Update the runtime state
   scriptStates[scriptId] = newState;
 

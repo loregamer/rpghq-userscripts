@@ -169,33 +169,18 @@ This document outlines the development checkpoints and actionable steps for crea
 
   - [x] Document the execution order and the reasoning behind it (`docs/execution_order.md`).
 
-## Phase 10: Forum Preferences > Threads (Core Functionality)
+- **Checkpoint:** Users can manage topic visibility and appearance directly on forum view pages.
+  - [ ] Identify topic rows (e.g., `li.row`) on forum view pages (`viewforum.php`).
+  - [ ] Add controls (buttons/icons) to each topic row for Pin, Hide, and Highlight actions.
+  - [ ] Implement storage mechanism (`GM_setValue`/`GM_getValue`, perhaps using topic IDs as keys) to save user preferences for each topic.
+  - [ ] On page load, read stored preferences and apply them:
+    - [ ] **Pin:** Move pinned topics to the top of the list (below announcements/stickies if applicable).
+    - [ ] **Hide:** Add a class or style to hide the topic row (`display: none`).
+    - [ ] **Highlight:** Allow users to select a color (or choose from presets) and apply it as a background color or border to the topic row.
+  - [ ] Add a section within the Manager UI (perhaps a new tab or within "Forum Preferences"?) to view and manage hidden/highlighted topics.
+  - [ ] Ensure controls are added dynamically and work with pagination.
 
-- **Checkpoint:** Users can manage topic visibility and appearance directly on forum view/topic pages via built-in controls.
-  - [x] Identify topic rows (`li.row`) on `viewforum.php`. (Implemented in `src/preferences/threadPrefs.js`)
-  - [x] Identify action bar (`.action-bar.bar-top`) on `viewtopic.php`. (Implemented in `src/preferences/threadPrefs.js`)
-  - [ ] Consolidate controls (Pin, Ignore, Highlight) into a single dropdown button (similar to phpBB's "Topic Tools") on topic rows (viewforum) and action bar (viewtopic). (See Phase 10.1)
-  - [x] Implement storage mechanism (`GM_setValue`/`GM_getValue` via `gmUtils.js`) using topic IDs as keys (`thread_prefs`). (Implemented in `src/preferences/threadPrefs.js`)
-  - [x] On `viewforum.php` load, read stored preferences and apply them: (Implemented in `src/preferences/threadPrefs.js`)
-    - [x] **Ignore:** Hide the topic row (`display: none`).
-    - [ ] **Highlight:** Apply background color. (Basic cycling implemented, needs improvement)
-  - [x] Add a section within the Manager UI ("Forum Preferences" > "Threads") to view and manage ignored/highlighted topics. **Pinning logic moves threads to the top.**
-  - [x] Ensure controls on `viewforum.php` are added dynamically and work with pagination (Needs MutationObserver for full robustness).
-
-## Phase 10.1: Forum Preferences > Threads (UI & Data Enhancement)
-
-- **Checkpoint:** Thread controls are consolidated into a dropdown, and more thread metadata is stored.
-  - [ ] Refactor UI elements added in Phase 10 to use a single dropdown button per topic row/viewtopic action bar.
-    - [ ] Style the dropdown to resemble phpBB's native "Topic Tools" dropdown.
-    - [ ] Populate the dropdown with "Pin", "Ignore", and "Highlight" actions.
-    - [ ] Ensure click handlers for dropdown actions trigger the correct preference saving logic.
-  - [ ] Enhance the data stored in `thread_prefs` for each topic ID:
-    - [ ] Store the topic `section` (e.g., "Off-topic", extracted from breadcrumbs).
-    - [ ] Store the topic `title`.
-    - [ ] Modify preference saving logic to include this additional data.
-  - [ ] Update the "Forum Preferences" > "Threads" UI section to potentially display the enhanced data (author, section) alongside managed topics.
-
-## Phase 11: Forum Preferences > Users
+## Phase 11: Forum User Management
 
 - **Checkpoint:** Users can manage preferences for specific forum users.
   - [ ] Implement a UI section (likely within "Forum Preferences") to manage user-specific settings.

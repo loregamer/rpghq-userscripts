@@ -16,6 +16,8 @@ export function renderScriptsGridView(
   scriptStates = {},
   showScriptSettings,
 ) {
+  log("Rendering scripts in Grid View...");
+
   if (!scripts || scripts.length === 0) {
     renderEmptyState(
       container,

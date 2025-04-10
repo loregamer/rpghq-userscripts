@@ -9,6 +9,8 @@
 import { log } from "../utils/logger.js";
 
 export function init() {
+  log("Thousands Comma Formatter initialized!");
+
   // Get user settings
   const formatFourDigits = GM_getValue(
     "RPGHQ_Manager_commaFormatter_formatFourDigits",
@@ -176,6 +178,7 @@ export function init() {
   // Return cleanup function
   return {
     cleanup: () => {
+      log("Thousands Comma Formatter cleanup");
       // Disconnect observer
       observer.disconnect();
       // We can't easily "undo" the formatting without a page reload

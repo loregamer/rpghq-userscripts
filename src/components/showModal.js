@@ -7,6 +7,8 @@
  */
 import { log } from "../utils/logger.js";
 export function showModal({ loadTabContent, hideModal }) {
+  log("Showing userscript manager modal...");
+
   let modal = document.getElementById("mod-manager-modal");
   if (!modal) {
     modal = document.createElement("div");

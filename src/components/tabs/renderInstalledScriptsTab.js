@@ -20,6 +20,8 @@ export function renderInstalledScriptsTab(
   renderScriptsListView,
   executionPhases,
 ) {
+  log("Rendering Installed Scripts tab with filtering...");
+
   // Filter panel removed
 
   // View switcher removed
