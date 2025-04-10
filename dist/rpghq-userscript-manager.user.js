@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
-// @version      v0.1.1
+// @version      v0.1.2
 // @description  RPGHQ Userscript Manager
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -779,7 +779,7 @@
       description:
         "Auto marks Kalarion rape notifs as read (I will move this to user preferences and make it squashed instead)",
       author: "loregamer",
-      image: "https://f.rpghq.org/tTMdhnqxh1kW.gif",
+      image: "https://f.rpghq.org/OA0rQkkRSSVq.png?n=pasted-file.png",
       // Add an image URL if available
       path: "./scripts/kalareact.js",
       enabledByDefault: !1,
