@@ -347,7 +347,8 @@ function createDropdownTrigger(topicId) {
   `;
   button.dataset.topicId = topicId; // Store topicId for easy access
 
-  button.onclick = (e) => {
+  // Use addEventListener for CSP compatibility
+  button.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation(); // Prevent default action and bubbling
 
@@ -361,7 +362,7 @@ function createDropdownTrigger(topicId) {
     associatedDropdown.style.display = isExpanded ? "none" : "block";
     // Optional: Add aria-expanded to the button if needed, although phpBB might handle this via parent classes
     // button.setAttribute('aria-expanded', !isExpanded);
-  };
+  });
 
   return button;
 }
@@ -555,12 +556,12 @@ const createMenuItem = (
     // Example: li.classList.add('disabled-option');
   } else {
     // Attach click handler only if not disabled
-    link.onclick = (e) => {
+    link.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation(); // Stop propagation
       clickHandler(); // Call the specific handler
       // DO NOT close the dropdown here
-    };
+    });
   }
 
   li.appendChild(link);
