@@ -141,6 +141,7 @@ This document outlines the development checkpoints and actionable steps for crea
   - [x] Complete placeholder tabs ("Forum Preferences", "Settings") - implemented with full functionality
   - [x] Start implementing actual userscripts into the manager (Thousands Comma Formatter added)
   - [x] Create migration guide for existing userscripts
+  - [x] Add GM_listValues grant for Notification Improver script
   - [ ] Write comprehensive `README.md` including setup, build, and usage instructions.
   - [x] Add comments to code where necessary.
   - [x] Added Prettier formatter.
