@@ -1,19 +1,20 @@
 {
-  "document-start": [],
-  "document-end": [
+  "document-start": [
     "_cachePostsOnPage",
     "_cacheTopicsOnPage",
+    "recentTopicsFormat",
     "_applyUserPreferences",
     "_applyThreadPreferences",
-    "commaFormatter",
     "bbcode",
+    "commaFormatter"
+  ],
+  "document-end": [
+    "memberSearch",
+    "randomTopic",
     "kalareact",
     "notifications",
     "pinThreads",
-    "separateReactions",
-    "memberSearch",
-    "randomTopic",
-    "recentTopicsFormat"
+    "separateReactions"
   ],
   "document-idle": [],
   "after_dom": []
