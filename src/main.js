@@ -140,7 +140,14 @@ function createManagerModal() {
       tabContent.appendChild(scriptsDisplayContainer);
     } else {
       // Placeholder content for other tabs
-      tabContent.textContent = `Content for ${tabButtons[index]}`;
+      // tabContent.textContent = `Content for ${tabButtons[index]}`;
+      if (index === 1) {
+        tabContent.innerHTML =
+          "<p><i>Forum Preferences placeholder. Content will be added later.</i></p>";
+      } else if (index === 2) {
+        tabContent.innerHTML =
+          "<p><i>Global Settings placeholder. Content will be added later.</i></p>";
+      }
     }
     contentContainer.appendChild(tabContent);
   });

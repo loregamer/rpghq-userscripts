@@ -57,7 +57,7 @@ This document outlines the development checkpoints and actionable steps for crea
         *   [x] Keyboard shortcut listener (`Insert` key) to toggle visibility.
         *   [x] Close button functionality.
     *   [x] Implement tab switching logic.
-    *   [ ] Implement the "Installed Scripts" tab:
+    *   [x] Implement the "Installed Scripts" tab:
         *   [x] Render scripts from the `SCRIPT_MANIFEST`.
         *   [x] Implement Grid View (`renderScriptsGridView`).
         *   [x] Implement List View (`renderScriptsListView`).
@@ -66,7 +66,7 @@ This document outlines the development checkpoints and actionable steps for crea
             *   [x] Update the UI state visually.
             *   [x] Save the state using `GM_setValue`.
             *   [ ] Trigger necessary logic to load/unload the actual script functionality (Phase 5).
-    *   [ ] Implement placeholder content for "Forum Preferences" and "Settings" tabs.
+    *   [x] Implement placeholder content for "Forum Preferences" and "Settings" tabs.
     *   [ ] Implement the Script Settings modal (`settings-modal`):
         *   [ ] Basic modal structure and styling.
         *   [ ] Function to dynamically render settings controls based on script's manifest definition (`renderScriptSettingsContent`).
