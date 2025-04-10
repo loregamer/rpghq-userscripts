@@ -23,6 +23,9 @@ import { showScriptSettings } from "./components/showScriptSettings.js";
 import { renderScriptSettingsContent } from "./components/renderScriptSettingsContent.js";
 import { toggleScriptEnabled } from "./components/toggleScriptEnabled.js";
 
+// Import Core Preference Modules
+import { initializeThreadPrefs } from "./preferences/threadPrefs.js";
+
 // --- Constants ---
 const GM_PREFIX = "RPGHQ_Manager_"; // Prefix for GM_setValue/GM_getValue keys
 const EXECUTION_PHASES = [
@@ -117,7 +120,6 @@ import * as notifications from "./scripts/notifications.js";
 import * as kalareact from "./scripts/kalareact.js";
 import * as bbcode from "./scripts/bbcode.js";
 import * as commaFormatter from "./scripts/commaFormatter.js";
-import * as threadPreferences from "./scripts/threadPreferences.js"; // Added for Phase 10
 
 // Map of script ids to their modules
 const scriptModules = {
@@ -135,7 +137,6 @@ const scriptModules = {
   memberSearch: memberSearch,
   randomTopic: randomTopic,
   recentTopicsFormat: recentTopicsFormat,
-  threadPreferences: threadPreferences, // Added for Phase 10
 };
 
 // Load a single script by its manifest entry
@@ -360,6 +361,9 @@ function init() {
     // Update current phase and execute load order
     currentExecutionPhase = "document-end";
     executeLoadOrderForPhase("document-end");
+
+    // Initialize Core Preferences that need DOM
+    initializeThreadPrefs();
 
     // Add menu button (needs DOM ready)
     addMenuButton(toggleModalVisibility);

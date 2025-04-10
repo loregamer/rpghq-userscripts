@@ -141,19 +141,5 @@ export const SCRIPT_MANIFEST = [
           "Enable to add commas to 4-digit numbers (1,000+). Disable to only format 5-digit numbers (10,000+).",
       },
     ],
-  },
-  {
-    id: "threadPreferences",
-    name: "Thread Preferences (Pin/Hide/Highlight)",
-    version: "1.0.0",
-    description:
-      "Allows pinning, hiding, and highlighting individual threads on forum view pages.",
-    author: "loregamer",
-    path: "./scripts/threadPreferences.js",
-    enabledByDefault: true,
-    urlPatterns: ["*://*.rpghq.org/forums/viewforum.php*"], // Only run on viewforum pages
-    settings: [], // Settings might be managed within the script or a dedicated UI later
-    categories: ["Forum", "UI"],
-    // Note: Execution phase will be handled by load_order.json
   }
 ];;

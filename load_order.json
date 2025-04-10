@@ -13,8 +13,7 @@
     "kalareact",
     "notifications",
     "pinThreads",
-    "separateReactions",
-    "threadPreferences"
+    "separateReactions"
   ],
   "document-idle": [],
   "after_dom": []
