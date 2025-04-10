@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { execSync } from "child_process"; // Import execSync
 
 // Helper to get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -44,6 +45,17 @@ try {
     // Write the modified content back to the file
     fs.writeFileSync(distFile, scriptContent, "utf8");
     console.log("Successfully injected CSS into GM_addStyle in dist file.");
+
+    // Run lint check at the very end of the script, after successful injection
+    console.log("Running final lint check from post-build script...");
+    try {
+      execSync("npm run lint", { stdio: "inherit" });
+      console.log("Final lint check passed.");
+    } catch (lintError) {
+      console.error("Final lint check failed:", lintError.message);
+      // Optionally exit if lint fails
+      // process.exit(1);
+    }
   } else {
     console.error(
       "Error: Could not find the target GM_addStyle block in the dist file.",
