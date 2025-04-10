@@ -1,5 +1,5 @@
 // Main userscript entry point
-import styles from './styles.css'; // Import CSS content as a string
+import './injectStyles.js'; // Import the script that injects CSS
 import { SCRIPT_MANIFEST } from "./manifest.js";
 
 // --- Constants ---
@@ -508,21 +508,7 @@ function initializeManager() {
   initializeScriptStates();
   loadEnabledScripts();
 
-  // --- Inject CSS using GM_addStyle ---
-  // eslint-disable-next-line no-undef
-  if (typeof GM_addStyle === "function") {
-    // eslint-disable-next-line no-undef
-    GM_addStyle(styles);
-    console.log("RPGHQ Manager: Styles injected via GM_addStyle.");
-  } else {
-    console.error("RPGHQ Manager Error: GM_addStyle is not available. Styles cannot be injected.");
-    // Fallback: Append to head (less ideal for userscripts)
-    const styleSheet = document.createElement("style");
-    styleSheet.type = "text/css";
-    styleSheet.innerText = styles;
-    document.head.appendChild(styleSheet);
-    console.warn("RPGHQ Manager: Using fallback style injection.");
-  }
+  // CSS is handled by injectStyles.js
 
   // --- Phase 4: Initialize UI ---
   const { modalElement, overlayElement } = createManagerModal();

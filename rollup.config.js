@@ -1,7 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import { string } from 'rollup-plugin-string'; // Import the correct plugin
-// import raw from '@rollup/plugin-raw'; // Removed incorrect plugin
+// import { string } from 'rollup-plugin-string'; // No longer needed
 import terser from '@rollup/plugin-terser'; // Updated terser plugin
 import metablock from 'rollup-plugin-userscript-metablock';
 import fs from 'fs';
@@ -39,9 +38,7 @@ export default {
   plugins: [
     resolve(), // Resolves node modules
     commonjs(), // Converts CommonJS modules to ES6
-    string({ // Use rollup-plugin-string for CSS files
-      include: "**/*.css",
-    }),
+    // string plugin removed, CSS handled by injectStyles.js
     terser(), // Enable minification
     metablock(metablockOptions) // Generate the userscript metablock
   ],
