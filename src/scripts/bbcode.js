@@ -1499,12 +1499,11 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
   });
 
   // =============================
-  // Run on Page Load
+  // Run Initialization
   // =============================
-  window.addEventListener("load", () => {
-    addStyles();
-    initialize();
-    setupFormSubmitTracking();
-    addCustomColorsToPalette();
-  });
+  // Run immediately rather than waiting for window load
+  addStyles();
+  initialize();
+  setupFormSubmitTracking();
+  addCustomColorsToPalette();
 }
