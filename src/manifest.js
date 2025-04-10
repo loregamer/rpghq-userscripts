@@ -22,6 +22,7 @@ export const SCRIPT_MANIFEST = [
     executionPhase: "document-end",
   },,
 ,
+,
 {
     id: "kalareact",
     name: "Kalarion Reaction Auto-Marker",
@@ -39,6 +40,7 @@ export const SCRIPT_MANIFEST = [
     executionPhase: "after_dom",
   },,
 ,
+,
 {
     id: "notifications",
     name: "Notification Improver",
@@ -53,6 +55,7 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
     executionPhase: "after_dom",
   },,
+,
 ,
 {
     id: "pinThreads",
@@ -71,6 +74,7 @@ export const SCRIPT_MANIFEST = [
     executionPhase: "document-end",
   },,
 ,
+,
 {
     id: "separateReactions",
     name: "Reaction List Separated",
@@ -87,6 +91,7 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
     executionPhase: "document-end",
   },,
+,
 ,
 {
     id: "commaFormatter",
@@ -110,6 +115,7 @@ export const SCRIPT_MANIFEST = [
       },
     ],
   },,
+,
 {
     id: "memberSearch",
     name: "Member Search Button",
@@ -124,8 +130,8 @@ export const SCRIPT_MANIFEST = [
     ],
     categories: ["Fun"],
     executionPhase: "document-end",
-  },
-  {
+  },,
+{
     id: "randomTopic",
     name: "Random Topic Button",
     version: "1.0.0",
@@ -138,6 +144,21 @@ export const SCRIPT_MANIFEST = [
       // Add settings here
     ],
     categories: ["Fun"],
+    executionPhase: "document-end",
+  },
+  {
+    id: "recentTopicsFormat",
+    name: "Slightly Formatted Thread Titles",
+    version: "1.0.0",
+    description: "Adds some minor formatting to thread titles, like unbolding stuff in parantheses or reformatting the AG threads",
+    author: "loregamer",
+    image: "", // Add an image URL if available
+    path: "./scripts/recentTopicsFormat.js",
+    enabledByDefault: false,
+    settings: [
+      // Add settings here
+    ],
+    categories: ["UI"],
     executionPhase: "document-end",
   }
 ];;

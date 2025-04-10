@@ -77,6 +77,7 @@ function loadEnabledScripts() {
 }
 
 // Import scripts directly
+import * as recentTopicsFormat from "./scripts/recentTopicsFormat.js";
 import * as randomTopic from "./scripts/randomTopic.js";
 import * as memberSearch from "./scripts/memberSearch.js";
 import * as separateReactions from "./scripts/separateReactions.js";
@@ -100,7 +101,8 @@ const scriptModules = {
   separateReactions: separateReactions,
 
   memberSearch: memberSearch,
-  randomTopic: randomTopic,};
+  randomTopic: randomTopic,
+  recentTopicsFormat: recentTopicsFormat,};
 
 // Load a single script by its manifest entry
 function loadScript(script) {
