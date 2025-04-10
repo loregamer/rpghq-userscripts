@@ -21,6 +21,7 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
     executionPhase: "document-end",
   },,
+,
 {
     id: "kalareact",
     name: "Kalarion Reaction Auto-Marker",
@@ -37,6 +38,7 @@ export const SCRIPT_MANIFEST = [
     categories: ["General"],
     executionPhase: "after_dom",
   },,
+,
 {
     id: "notifications",
     name: "Notification Improver",
@@ -51,6 +53,7 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
     executionPhase: "after_dom",
   },,
+,
 {
     id: "pinThreads",
     name: "Pin Threads",
@@ -67,6 +70,7 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
     executionPhase: "document-end",
   },,
+,
 {
     id: "separateReactions",
     name: "Reaction List Separated",
@@ -83,6 +87,7 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
     executionPhase: "document-end",
   },,
+,
 {
     id: "commaFormatter",
     name: "Thousands Comma Formatter",
@@ -104,8 +109,8 @@ export const SCRIPT_MANIFEST = [
           "Enable to add commas to 4-digit numbers (1,000+). Disable to only format 5-digit numbers (10,000+).",
       },
     ],
-  },
-  {
+  },,
+{
     id: "memberSearch",
     name: "Member Search Button",
     version: "1.0.0",
@@ -113,6 +118,21 @@ export const SCRIPT_MANIFEST = [
     author: "loregamer",
     image: "", // Add an image URL if available
     path: "./scripts/memberSearch.js",
+    enabledByDefault: true,
+    settings: [
+      // Add settings here
+    ],
+    categories: ["Fun"],
+    executionPhase: "document-end",
+  },
+  {
+    id: "randomTopic",
+    name: "Random Topic Button",
+    version: "1.0.0",
+    description: "Adds a Random Topic button, for funsies",
+    author: "loregamer",
+    image: "", // Add an image URL if available
+    path: "./scripts/randomTopic.js",
     enabledByDefault: true,
     settings: [
       // Add settings here
