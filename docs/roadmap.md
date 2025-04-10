@@ -185,15 +185,15 @@ This document outlines the development checkpoints and actionable steps for crea
 ## Phase 10.1: Forum Preferences > Threads (UI & Data Enhancement)
 
 - **Checkpoint:** Thread controls are consolidated into a dropdown, and more thread metadata is stored.
-  - [x] Refactor UI elements added in Phase 10 to use a single dropdown button per topic row/viewtopic action bar.
-    - [x] Style the dropdown to resemble phpBB's native "Topic Tools" dropdown.
-    - [x] Populate the dropdown with "Pin", "Ignore", and "Highlight" actions.
-    - [x] Ensure click handlers for dropdown actions trigger the correct preference saving logic.
-  - [x] Enhance the data stored in `thread_prefs` for each topic ID:
-    - [x] Store the topic `section` (e.g., "Off-topic", extracted from breadcrumbs).
-    - [x] Store the topic `title`.
-    - [x] Modify preference saving logic to include this additional data.
-  - [x] Update the "Forum Preferences" > "Threads" UI section to potentially display the enhanced data (author, section) alongside managed topics.
+  - [ ] Refactor UI elements added in Phase 10 to use a single dropdown button per topic row/viewtopic action bar.
+    - [ ] Style the dropdown to resemble phpBB's native "Topic Tools" dropdown.
+    - [ ] Populate the dropdown with "Pin", "Ignore", and "Highlight" actions.
+    - [ ] Ensure click handlers for dropdown actions trigger the correct preference saving logic.
+  - [ ] Enhance the data stored in `thread_prefs` for each topic ID:
+    - [ ] Store the topic `section` (e.g., "Off-topic", extracted from breadcrumbs).
+    - [ ] Store the topic `title`.
+    - [ ] Modify preference saving logic to include this additional data.
+  - [ ] Update the "Forum Preferences" > "Threads" UI section to potentially display the enhanced data (author, section) alongside managed topics.
 
 ## Phase 11: Forum Preferences > Users
 
