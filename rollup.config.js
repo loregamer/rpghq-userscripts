@@ -70,7 +70,8 @@ export default {
     // Minification with preserved userscript header
     terser({
       format: {
-        comments: false, // Let rollup-plugin-userscript handle the header
+        comments: true, // Keep comments in the output
+        beautify: true, // Format the output for better readability
       },
       mangle: false,
       compress: {}, // Re-enable compression, as CSS is handled separately
