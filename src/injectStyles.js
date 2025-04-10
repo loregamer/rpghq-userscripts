@@ -27,7 +27,7 @@ GM_addStyle(`
   .mod-manager-modal {
     display: none;
     position: fixed;
-    z-index: 10000;
+    z-index: 1000000;
     left: 0;
     top: 0;
     width: 100%;
@@ -356,7 +356,7 @@ GM_addStyle(`
   .settings-modal {
     display: none;
     position: fixed;
-    z-index: 10001; /* Above main modal */
+    z-index: 1100000; /* Above main modal */
     left: 0;
     top: 0;
     width: 100%;
