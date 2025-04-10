@@ -5,6 +5,7 @@ This guide outlines the process for converting existing standalone userscripts t
 ## Overview
 
 Converting a standalone userscript involves:
+
 1. Creating a module-based script that exports an `init` function
 2. Adding the script to the manager's manifest
 3. Adapting script settings to use the manager's settings system
@@ -13,6 +14,7 @@ Converting a standalone userscript involves:
 ## Step 1: Convert Userscript to Module Format
 
 ### Original Standalone Format
+
 Standalone userscripts typically use an IIFE (Immediately Invoked Function Expression):
 
 ```javascript
@@ -22,16 +24,16 @@ Standalone userscripts typically use an IIFE (Immediately Invoked Function Expre
 // ...more metadata...
 // ==/UserScript==
 
-(function() {
+(function () {
   "use strict";
-  
+
   // Script variables and functions
   const someSetting = GM_getValue("mySetting", defaultValue);
-  
+
   function doSomething() {
     // Function logic
   }
-  
+
   // Script initialization
   doSomething();
   setupEventListeners();
@@ -39,6 +41,7 @@ Standalone userscripts typically use an IIFE (Immediately Invoked Function Expre
 ```
 
 ### New Module Format
+
 For the manager, convert to an ES module that exports an `init` function:
 
 ```javascript
@@ -50,30 +53,37 @@ For the manager, convert to an ES module that exports an `init` function:
 
 export function init() {
   console.log("My Script initialized!");
-  
+
   // Get settings via manager's system
-  const someSetting = GM_getValue("RPGHQ_Manager_scriptId_settingId", defaultValue);
-  
+  const someSetting = GM_getValue(
+    "RPGHQ_Manager_scriptId_settingId",
+    defaultValue,
+  );
+
   function doSomething() {
     // Function logic
   }
-  
+
   // Do initialization
   doSomething();
-  
+
   // Set up event listeners, observers, etc.
-  const observer = new MutationObserver(() => { /* ... */ });
-  observer.observe(document.body, { /* ... */ });
-  
+  const observer = new MutationObserver(() => {
+    /* ... */
+  });
+  observer.observe(document.body, {
+    /* ... */
+  });
+
   // Return cleanup function
   return {
     cleanup: () => {
       // Remove event listeners, observers, DOM elements added by the script
       observer.disconnect();
       // Remove DOM elements
-      const addedElements = document.querySelectorAll('.my-script-element');
-      addedElements.forEach(el => el.remove());
-    }
+      const addedElements = document.querySelectorAll(".my-script-element");
+      addedElements.forEach((el) => el.remove());
+    },
   };
 }
 ```
@@ -85,24 +95,25 @@ Add your script to the `SCRIPT_MANIFEST` array in `src/manifest.js`:
 ```javascript
 export const SCRIPT_MANIFEST = [
   {
-    id: "uniqueScriptId",          // Unique identifier used in settings storage
-    name: "My Script",             // Display name
-    version: "1.0.0",              // Version number
+    id: "uniqueScriptId", // Unique identifier used in settings storage
+    name: "My Script", // Display name
+    version: "1.0.0", // Version number
     description: "Script description...", // Brief description
-    author: "Original Author",     // Original author
+    author: "Original Author", // Original author
     path: "./scripts/myScript.js", // Path for reference only
-    enabledByDefault: true,        // Should script be enabled by default?
-    settings: [                    // Array of settings objects (see below)
+    enabledByDefault: true, // Should script be enabled by default?
+    settings: [
+      // Array of settings objects (see below)
       {
         id: "settingId",
         label: "Setting Display Name",
-        type: "checkbox",          // checkbox, text, select, etc.
+        type: "checkbox", // checkbox, text, select, etc.
         defaultValue: true,
-        description: "Description of what this setting does"
-      }
+        description: "Description of what this setting does",
+      },
     ],
     categories: ["UI Enhancement"], // Category for filtering in manager
-    executionPhase: "after_dom"     // When script should run
+    executionPhase: "after_dom", // When script should run
   },
   // ... other scripts
 ];
@@ -111,15 +122,20 @@ export const SCRIPT_MANIFEST = [
 ## Step 3: Update Settings Usage
 
 Settings in standalone scripts:
+
 ```javascript
 const mySetting = GM_getValue("mySetting", defaultValue);
 GM_setValue("mySetting", newValue);
 ```
 
 Settings in manager scripts:
+
 ```javascript
 // Prefix with RPGHQ_Manager_scriptId_settingId
-const mySetting = GM_getValue("RPGHQ_Manager_uniqueScriptId_settingId", defaultValue);
+const mySetting = GM_getValue(
+  "RPGHQ_Manager_uniqueScriptId_settingId",
+  defaultValue,
+);
 ```
 
 The manager handles saving settings through its UI, so you generally don't need to call `GM_setValue` directly.
@@ -140,13 +156,14 @@ const scriptModules = {
   script1: exampleScript1,
   script2: exampleScript2,
   commaFormatter: commaFormatter,
-  uniqueScriptId: myScript // Add mapping using the ID from manifest
+  uniqueScriptId: myScript, // Add mapping using the ID from manifest
 };
 ```
 
 ## Real Example: Thousands Comma Formatter
 
 ### Original:
+
 ```javascript
 (function () {
   "use strict";
@@ -164,7 +181,7 @@ const scriptModules = {
 
   // Run initial processing
   processElements();
-  
+
   // Set up observer
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
@@ -178,6 +195,7 @@ const scriptModules = {
 ```
 
 ### Converted:
+
 ```javascript
 // RPGHQ - Thousands Comma Formatter
 /**
@@ -189,7 +207,10 @@ export function init() {
   console.log("Thousands Comma Formatter initialized!");
 
   // Get user settings
-  const formatFourDigits = GM_getValue("RPGHQ_Manager_commaFormatter_formatFourDigits", false);
+  const formatFourDigits = GM_getValue(
+    "RPGHQ_Manager_commaFormatter_formatFourDigits",
+    false,
+  );
   const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
 
   function formatNumberWithCommas(number) {
@@ -202,7 +223,7 @@ export function init() {
 
   // Run initial processing
   processElements();
-  
+
   // Set up same observer
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
@@ -224,6 +245,7 @@ export function init() {
 ```
 
 ### Manifest Entry:
+
 ```javascript
 {
   id: "commaFormatter",
@@ -259,6 +281,7 @@ export function init() {
 ## Documentation
 
 Create a markdown file in `docs/scripts/` with details about your script:
+
 - Overview
 - Features
 - Settings explanation
