@@ -5,6 +5,7 @@ import { FORUM_PREFERENCES } from "./forumPreferences.js";
 import { shouldLoadScript } from "./utils/urlMatcher.js";
 import { log, warn, error, debug } from "./utils/logger.js";
 import { sharedUtils } from "./utils/sharedUtils.js"; // Import shared utilities
+import loadOrder from "../load_order.json"; // Import the execution order
 
 // Import UI components
 import { showModal } from "./components/showModal.js";
@@ -62,45 +63,58 @@ function initializeScriptStates() {
   log("Script states initialized:", scriptStates);
 }
 
-function loadEnabledScripts() {
-  log("Loading enabled scripts for phase: " + currentExecutionPhase);
-  SCRIPT_MANIFEST.forEach((script) => {
-    // Check if script is enabled and either matches current phase or has no phase defined
-    if (
-      scriptStates[script.id] &&
-      (script.executionPhase === currentExecutionPhase ||
-        (!script.executionPhase && currentExecutionPhase === "document-end"))
-    ) {
-      loadScript(script);
-    }
-  });
-  log("Finished loading scripts for phase: " + currentExecutionPhase);
+// Find a script definition in the manifest by its ID
+function findScriptById(scriptId) {
+  return SCRIPT_MANIFEST.find((script) => script.id === scriptId);
 }
 
-// --- Shared Logic Execution ---
-function executePhaseSpecificSharedLogic(phase) {
-  log(`Executing shared logic for phase: ${phase}`);
-  // Shared logic primarily runs at document-end, before other scripts
-  if (phase === "document-end") {
-    try {
-      // 1. Caching Logic
-      log("-> Executing caching logic...");
-      sharedUtils.cachePostsOnPage();
-      sharedUtils.cacheTopicsOnPage();
-      log("-> Caching logic complete.");
+// Execute functions and scripts based on the load order for a specific phase
+function executeLoadOrderForPhase(phase) {
+  log(`Executing load order for phase: ${phase}`);
+  const itemsToLoad = loadOrder[phase] || [];
 
-      // 2. Preference Application Logic
-      log("-> Executing preference application logic...");
-      sharedUtils.applyUserPreferences();
-      sharedUtils.applyThreadPreferences();
-      log("-> Preference application logic complete.");
-    } catch (err) {
-      error(`Error executing shared logic for phase ${phase}:`, err);
-    }
-  } else {
-    log(`-> No specific shared logic defined for phase: ${phase}`);
+  if (itemsToLoad.length === 0) {
+    log(`No items defined in load order for phase: ${phase}`);
+    return;
   }
-  log(`Finished executing shared logic for phase: ${phase}`);
+
+  itemsToLoad.forEach((item) => {
+    // Check if it's a known shared function
+    if (typeof sharedUtils[item] === "function") {
+      log(`-> Executing shared function: ${item}`);
+      try {
+        sharedUtils[item]();
+      } catch (err) {
+        error(`Error executing shared function ${item}:`, err);
+      }
+    }
+    // Check if it's a script ID
+    else {
+      const script = findScriptById(item);
+      if (script) {
+        // Check if script is enabled and its defined phase matches the current execution phase
+        const scriptPhase = script.executionPhase || "document-end"; // Default to document-end
+        if (scriptStates[script.id] && scriptPhase === phase) {
+          log(
+            `-> Loading script from load order: ${script.name} (${script.id})`,
+          );
+          loadScript(script); // Use the existing loadScript function
+        } else if (!scriptStates[script.id]) {
+          log(`-> Script ${item} skipped (disabled).`);
+        } else if (scriptPhase !== phase) {
+          log(
+            `-> Script ${item} skipped (defined for phase ${scriptPhase}, current phase is ${phase}).`,
+          );
+        }
+      } else {
+        warn(
+          `-> Item "${item}" in load_order.json is not a known shared function or script ID.`,
+        );
+      }
+    }
+  });
+
+  log(`Finished executing load order for phase: ${phase}`);
 }
 
 // Import scripts directly
@@ -357,44 +371,30 @@ function init() {
   // Initialize script states
   initializeScriptStates();
 
-  // Execute scripts for document-start phase immediately
-  loadEnabledScripts(); // Already in document-start phase
+  // Execute load order for document-start phase immediately
+  executeLoadOrderForPhase("document-start");
 
   // Set up listeners for other execution phases
   document.addEventListener("DOMContentLoaded", () => {
-    // Update current phase to document-end
+    // Update current phase and execute load order
     currentExecutionPhase = "document-end";
+    executeLoadOrderForPhase("document-end");
 
-    // Execute shared logic for this phase BEFORE loading scripts
-    executePhaseSpecificSharedLogic(currentExecutionPhase);
-
-    // Now load the scripts for this phase
-    loadEnabledScripts();
-
-    // Add menu button
+    // Add menu button (needs DOM ready)
     addMenuButton(toggleModalVisibility);
   });
 
   window.addEventListener("load", () => {
-    // Update current phase to document-idle
+    // Update current phase and execute load order
     currentExecutionPhase = "document-idle";
-
-    // Execute shared logic (if any) for this phase
-    executePhaseSpecificSharedLogic(currentExecutionPhase);
-
-    // Load scripts for this phase
-    loadEnabledScripts();
+    executeLoadOrderForPhase("document-idle");
   });
 
   // Set up a phase for after DOM is fully ready and rendered
   setTimeout(() => {
+    // Update current phase and execute load order
     currentExecutionPhase = "after_dom";
-
-    // Execute shared logic (if any) for this phase
-    executePhaseSpecificSharedLogic(currentExecutionPhase);
-
-    // Load scripts for this phase
-    loadEnabledScripts();
+    executeLoadOrderForPhase("after_dom");
   }, 500); // Small delay to ensure everything is loaded
 
   // Add keyboard shortcut listener for Insert key

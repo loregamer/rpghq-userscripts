@@ -5,6 +5,7 @@
 
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
+import json from "@rollup/plugin-json"; // Import the JSON plugin
 import terser from "@rollup/plugin-terser";
 import userscript from "rollup-plugin-userscript";
 import { string } from "rollup-plugin-string"; // Import the string plugin
@@ -64,6 +65,8 @@ export default {
     string({
       include: "**/*.css",
     }),
+    // Import JSON files
+    json(),
     // Resolve node modules
     nodeResolve({
       browser: true,
