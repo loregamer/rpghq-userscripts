@@ -158,6 +158,15 @@ This document outlines the development checkpoints and actionable steps for crea
   - [ ] Ensure caching runs reliably across different page loads and script executions.
   - [ ] Refactor existing or future scripts to utilize these shared caching functions where applicable.
 
+## Phase 9.6: Execution Order Definition
+
+- **Checkpoint:** The precise execution order for shared functions and individual scripts is defined and implemented.
+  - [ ] Define a clear execution order sequence in `main.js` or a configuration file.
+    - [ ] Example order: `cachePostsOnPage`, `cacheTopicsOnPage`, `userPreferenceLogic`, `threadPreferenceLogic`, `script1`, `script2`, ...
+  - [ ] Modify the script/function loading logic in `main.js` to adhere strictly to this defined order.
+  - [ ] Ensure that dependencies between functions/scripts are respected (e.g., caching logic runs before scripts that might use cached data).
+  - [ ] Document the execution order and the reasoning behind it (e.g., in `docs/execution_order.md`).
+
 ## Phase 10: Forum Topic Management
 
 - **Checkpoint:** Users can manage topic visibility and appearance directly on forum view pages.
