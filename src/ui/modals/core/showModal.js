@@ -1,10 +1,13 @@
-import { hideModal } from './hideModal.js';
-import { loadTabContent } from './loadTabContent.js';
+// Remove existing imports for hideModal and loadTabContent
+// import { hideModal } from './hideModal.js';
+// import { loadTabContent } from './loadTabContent.js';
 
 /**
  * Create and show the modal with script information
+ * @param {function} hideFunc - Function to hide the modal.
+ * @param {function} loadFunc - Function to load tab content.
  */
-export function showModal() {
+export function showModal(hideFunc, loadFunc) {
   let modal = document.getElementById("mod-manager-modal");
   if (!modal) {
     modal = document.createElement("div");
@@ -39,12 +42,12 @@ export function showModal() {
 
     // Add event listeners
     modal.querySelector(".mod-manager-close").addEventListener("click", () => {
-      hideModal();
+      hideFunc();
     });
 
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
-        hideModal();
+        hideFunc();
       }
     });
 
@@ -55,7 +58,7 @@ export function showModal() {
           t.classList.remove("active");
         });
         tab.classList.add("active");
-        loadTabContent(tab.dataset.tab);
+        loadFunc(tab.dataset.tab);
       });
     });
   }
@@ -64,5 +67,5 @@ export function showModal() {
   document.body.style.overflow = "hidden";
 
   // Initial view - load the first tab (Installed Scripts)
-  loadTabContent("installed");
+  loadFunc("installed");
 }

@@ -1,5 +1,6 @@
-import { createScriptToggle } from './scriptToggle.js';
-import { showScriptSettings } from '../modals/settings/showScriptSettings.js';
+import { popupHelpers } from "../../helpers/popupHelpers.js";
+import { createScriptToggle } from "./scriptToggle.js";
+import { MANIFEST } from "../../data/MANIFEST.js";
 
 /**
  * Render the scripts in a list view
@@ -74,17 +75,22 @@ export function renderScriptsListView(container, scripts) {
   document.querySelectorAll(".script-toggle-cell").forEach((cell) => {
     const scriptId = cell.dataset.scriptId;
     if (scriptId) {
-      cell.appendChild(createScriptToggle(scriptId));
+      const toggle = popupHelpers.createScriptToggle(scriptId);
+      cell.appendChild(toggle);
     }
   });
 
   // Add event listeners for settings buttons
-  document.querySelectorAll(".view-settings").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const scriptId = btn.dataset.scriptId;
+  container.querySelectorAll(".view-settings").forEach((button) => {
+    button.addEventListener("click", (e) => {
+      const scriptId = e.currentTarget.dataset.scriptId;
       const script = scripts.find((s) => s.id === scriptId);
-      if (script) {
-        showScriptSettings(script);
+      if (script && script.settings) {
+        popupHelpers.showScriptSettings(script);
+      } else {
+        console.warn(
+          `Settings button clicked for script '${scriptId}' which has no settings defined.`
+        );
       }
     });
   });

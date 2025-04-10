@@ -1,4 +1,4 @@
-import { showModal } from '../ui/modals/core/showModal.js';
+import { popupHelpers } from "../helpers/popupHelpers.js";
 
 /**
  * Add menu button to the page
@@ -28,8 +28,8 @@ export function addMenuButton() {
   `;
 
   logoutButton.parentNode.insertBefore(userscriptsButton, logoutButton);
-  userscriptsButton.querySelector("a").addEventListener("click", (e) => {
-    e.preventDefault();
-    showModal();
+  userscriptsButton.querySelector("a").addEventListener("click", (event) => {
+    event.preventDefault();
+    popupHelpers.showModal();
   });
 }

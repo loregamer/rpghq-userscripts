@@ -1,26 +1,23 @@
-import { hideModal } from '../../../ui/modals/core/hideModal.js';
-import { showModal } from '../../../ui/modals/core/showModal.js';
-
 /**
- * Toggle the modal visibility when the Insert key is pressed
+ * Logic to handle the Insert key press for toggling the modal.
+ * This function should be bound to the correct modal show/hide context when used as a listener.
+ * @param {KeyboardEvent} event - The keyboard event.
+ * @param {function} showFunc - The function to call to show the modal.
+ * @param {function} hideFunc - The function to call to hide the modal.
  */
-export function toggleModalWithInsertKey(e) {
-  // Check if the key pressed is Insert (key code 45)
-  if (e.keyCode === 45) {
-    // Prevent default behavior
-    e.preventDefault();
-    
-    // Check if the modal is currently visible
+export function handleInsertKeyPressLogic(event, showFunc, hideFunc) {
+  // Check if the Insert key was pressed and no input field is focused
+  if (
+    event.key === "Insert" &&
+    !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)
+  ) {
+    event.preventDefault(); // Prevent default Insert key behavior (like overtype)
     const modal = document.getElementById("mod-manager-modal");
-    if (modal && modal.style.display === "block") {
-      // If visible, hide it
-      hideModal();
+    // Check if the modal exists and is currently hidden or doesn't exist yet
+    if (!modal || modal.style.display === "none") {
+      showFunc();
     } else {
-      // If not visible, show it
-      showModal();
+      hideFunc();
     }
   }
 }
-
-// Export the function for Node.js environment
-// Removed for ES Module refactor

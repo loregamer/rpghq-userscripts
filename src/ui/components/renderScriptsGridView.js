@@ -1,5 +1,6 @@
-import { createScriptToggle } from './scriptToggle.js';
-import { showScriptSettings } from '../modals/settings/showScriptSettings.js';
+import { popupHelpers } from "../../helpers/popupHelpers.js";
+import { createScriptToggle } from "./scriptToggle.js";
+import { MANIFEST } from "../../data/MANIFEST.js";
 
 /**
  * Render the scripts in a grid view
@@ -67,20 +68,27 @@ export function renderScriptsGridView(container, scripts) {
   container.appendChild(grid);
 
   // Add toggle switches after appending the grid to the DOM
-  document.querySelectorAll(".script-card-toggle").forEach((toggleContainer) => {
-    const scriptId = toggleContainer.dataset.scriptId;
-    if (scriptId) {
-      toggleContainer.appendChild(createScriptToggle(scriptId));
-    }
-  });
+  document
+    .querySelectorAll(".script-card-toggle")
+    .forEach((toggleContainer) => {
+      const scriptId = toggleContainer.dataset.scriptId;
+      if (scriptId) {
+        const toggle = popupHelpers.createScriptToggle(scriptId);
+        toggleContainer.appendChild(toggle);
+      }
+    });
 
   // Add event listeners for settings buttons
-  document.querySelectorAll(".view-settings").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const scriptId = btn.dataset.scriptId;
-      const script = scripts.find((s) => s.id === scriptId);
-      if (script) {
-        showScriptSettings(script);
+  container.querySelectorAll(".view-settings").forEach((button) => {
+    button.addEventListener("click", (e) => {
+      const scriptId = e.currentTarget.dataset.scriptId;
+      const script = MANIFEST.scripts.find((s) => s.id === scriptId);
+      if (script && script.settings) {
+        popupHelpers.showScriptSettings(script);
+      } else {
+        console.warn(
+          `Settings button clicked for script '${scriptId}' which has no settings defined.`
+        );
       }
     });
   });
