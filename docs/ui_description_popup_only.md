@@ -14,32 +14,32 @@ The Userscript Manager UI can be opened in the following ways:
 
 This is the primary interface for the manager.
 
--   **Appearance:**
-    -   A large modal dialog that overlays the page content with a semi-transparent dark background (`rgba(0, 0, 0, 0.8)`).
-    -   Fixed position, taking up the full viewport initially (`display: none`).
-    -   Dark background (`--bg-dark: #1E1E1E`), light text (`--text-primary: #FFFFFF`), defined border (`--border-color: #444444`).
-    -   Responsive width (90% of viewport, max 1200px), limited height (max 90vh), centered horizontally.
-    -   Rounded corners (`4px`).
-    -   Uses flexbox for layout (column direction).
-    -   Scrollable content area if needed.
--   **Header (`mod-manager-header`):**
-    -   Located at the top of the modal content.
-    -   Contains the main title: "RPGHQ Userscript Manager" (`mod-manager-title`).
-    -   Includes a close button (`&times;`) on the right (`mod-manager-close`).
-    -   Separated from the tabs by a bottom border.
--   **Tabs (`mod-manager-tabs`):**
-    -   Horizontal row of tabs below the header.
-    -   Separated from the content area by a bottom border.
-    -   Tabs available:
-        -   **Installed Scripts:** (Default active tab) Icon: `fa-puzzle-piece`.
-        -   **Forum Preferences:** Icon: `fa-sliders-h`.
-        -   **Settings:** Icon: `fa-cog`.
-    -   Active tab is highlighted with a different color (`--primary-color`) and a bottom border.
-    -   Hover effect changes tab background slightly.
--   **Content Area (`mod-manager-content`):**
-    -   Main area below the tabs where tab-specific content is loaded.
-    -   Has an initial "Info Note": "**Note:** This is a view-only display of available userscripts. No scripts will be installed or executed." This note persists across tab changes.
-    -   Vertically scrollable if content exceeds the available height.
+- **Appearance:**
+  - A large modal dialog that overlays the page content with a semi-transparent dark background (`rgba(0, 0, 0, 0.8)`).
+  - Fixed position, taking up the full viewport initially (`display: none`).
+  - Dark background (`--bg-dark: #1E1E1E`), light text (`--text-primary: #FFFFFF`), defined border (`--border-color: #444444`).
+  - Responsive width (90% of viewport, max 1200px), limited height (max 90vh), centered horizontally.
+  - Rounded corners (`4px`).
+  - Uses flexbox for layout (column direction).
+  - Scrollable content area if needed.
+- **Header (`mod-manager-header`):**
+  - Located at the top of the modal content.
+  - Contains the main title: "RPGHQ Userscript Manager" (`mod-manager-title`).
+  - Includes a close button (`&times;`) on the right (`mod-manager-close`).
+  - Separated from the tabs by a bottom border.
+- **Tabs (`mod-manager-tabs`):**
+  - Horizontal row of tabs below the header.
+  - Separated from the content area by a bottom border.
+  - Tabs available:
+    - **Installed Scripts:** (Default active tab) Icon: `fa-puzzle-piece`.
+    - **Forum Preferences:** Icon: `fa-sliders-h`.
+    - **Settings:** Icon: `fa-cog`.
+  - Active tab is highlighted with a different color (`--primary-color`) and a bottom border.
+  - Hover effect changes tab background slightly.
+- **Content Area (`mod-manager-content`):**
+  - Main area below the tabs where tab-specific content is loaded.
+  - Has an initial "Info Note": "**Note:** This is a view-only display of available userscripts. No scripts will be installed or executed." This note persists across tab changes.
+  - Vertically scrollable if content exceeds the available height.
 
 ## Tab Content Details
 
@@ -47,126 +47,126 @@ This is the primary interface for the manager.
 
 Displays the scripts listed in the hard-coded `MANIFEST`.
 
--   **View Options:**
-    -   Located at the top-right of the content area.
-    -   A button group allows switching between Grid View (`fa-th-large`) and List View (`fa-list`). Grid view is the default.
--   **Script Display Area (`scripts-container`):**
-    -   Shows scripts in either a grid or a list format.
-    -   **Grid View (`renderScriptsGridView`):**
-        -   Displays scripts as individual cards (`script-card`) arranged in a responsive grid.
-        -   Each card contains:
-            -   An image (`script-card-image`), with a placeholder if none is provided.
-            -   A category overlay (`script-card-category`) at the top-right of the image.
-            -   Card content (`script-card-content`):
-                -   Header (`script-card-header`) with:
-                    -   Script Title (`script-card-title`).
-                    -   Enable/Disable Toggle Switch (`script-card-toggle`, using `createScriptToggle`).
-                    -   Version Badge (`script-card-version`).
-                -   Description (`script-card-description`, truncated).
-                -   Footer (`script-card-footer`) with:
-                    -   A "Settings" button (`btn-primary`, `btn-small`, `view-settings`) with a cog icon (`fa-cog`). Triggers the Script Settings Modal if the script has settings defined.
-    -   **List View (`renderScriptsListView`):**
-        -   Displays scripts as rows in a table (`data-table`).
-        -   Columns:
-            -   **Enabled:** Contains the Enable/Disable Toggle Switch (`script-toggle-cell`, using `createScriptToggle`).
-            -   **Name:** Script name (bold).
-            -   **Version:** Script version (e.g., "v1.1.0").
-            -   **Category:** Script category.
-            -   **Description:** Script description.
-            -   **Settings:** A badge (`badge-primary`) showing the count of settings, or "-" if none.
-            -   **Actions:** A "Settings" button (`btn-primary`, `btn-small`, `view-settings`) with a cog icon (`fa-cog`). Triggers the Script Settings Modal.
--   **Empty State:** If no scripts match filters (filter UI is currently removed in this version, but the empty state code remains), a message "No scripts found" with a search icon (`fa-search`) is displayed.
+- **View Options:**
+  - Located at the top-right of the content area.
+  - A button group allows switching between Grid View (`fa-th-large`) and List View (`fa-list`). Grid view is the default.
+- **Script Display Area (`scripts-container`):**
+  - Shows scripts in either a grid or a list format.
+  - **Grid View (`renderScriptsGridView`):**
+    - Displays scripts as individual cards (`script-card`) arranged in a responsive grid.
+    - Each card contains:
+      - An image (`script-card-image`), with a placeholder if none is provided.
+      - A category overlay (`script-card-category`) at the top-right of the image.
+      - Card content (`script-card-content`):
+        - Header (`script-card-header`) with:
+          - Script Title (`script-card-title`).
+          - Enable/Disable Toggle Switch (`script-card-toggle`, using `createScriptToggle`).
+          - Version Badge (`script-card-version`).
+        - Description (`script-card-description`, truncated).
+        - Footer (`script-card-footer`) with:
+          - A "Settings" button (`btn-primary`, `btn-small`, `view-settings`) with a cog icon (`fa-cog`). Triggers the Script Settings Modal if the script has settings defined.
+  - **List View (`renderScriptsListView`):**
+    - Displays scripts as rows in a table (`data-table`).
+    - Columns:
+      - **Enabled:** Contains the Enable/Disable Toggle Switch (`script-toggle-cell`, using `createScriptToggle`).
+      - **Name:** Script name (bold).
+      - **Version:** Script version (e.g., "v1.1.0").
+      - **Category:** Script category.
+      - **Description:** Script description.
+      - **Settings:** A badge (`badge-primary`) showing the count of settings, or "-" if none.
+      - **Actions:** A "Settings" button (`btn-primary`, `btn-small`, `view-settings`) with a cog icon (`fa-cog`). Triggers the Script Settings Modal.
+- **Empty State:** If no scripts match filters (filter UI is currently removed in this version, but the empty state code remains), a message "No scripts found" with a search icon (`fa-search`) is displayed.
 
 ### 2. Forum Preferences Tab (`data-tab="forum"`)
 
 Provides forum-related (but currently view-only/mock) preferences.
 
--   **Header:** Displays "Forum Preferences".
--   **Sub-Tabs (`sub-tabs`):**
-    -   Located below the main header for this tab.
-    -   Styled similarly to the main tabs but within the content area.
-    -   Tabs available:
-        -   **Threads:** (Default active sub-tab) Icon: `fa-comments`.
-        -   **Users:** Icon: `fa-users`.
--   **Sub-Tab Content Area (`forum-subtab-content`):**
-    -   Displays content based on the selected sub-tab.
-    -   **Threads Sub-Tab (`renderThreadsSubtab`):**
-        -   Shows a "Work In Progress" banner (`wip-banner`).
-        -   Contains a "Thread Display" section (`preferences-section`) with mock settings:
-            -   "Thread Layout" (Select: Compact, Standard, Expanded).
-            -   "Threads Per Page" (Select: 10, 20, 30, 50).
-        -   Includes an info note about it being view-only.
-    -   **Users Sub-Tab (`renderUsersSubtab`):**
-        -   Shows a "Work In Progress" banner.
-        -   Contains a "User Display" section with mock settings:
-            -   "Show User Signatures" (Toggle Switch).
-            -   "Show User Avatars" (Toggle Switch).
-        -   Includes an info note about it being view-only.
+- **Header:** Displays "Forum Preferences".
+- **Sub-Tabs (`sub-tabs`):**
+  - Located below the main header for this tab.
+  - Styled similarly to the main tabs but within the content area.
+  - Tabs available:
+    - **Threads:** (Default active sub-tab) Icon: `fa-comments`.
+    - **Users:** Icon: `fa-users`.
+- **Sub-Tab Content Area (`forum-subtab-content`):**
+  - Displays content based on the selected sub-tab.
+  - **Threads Sub-Tab (`renderThreadsSubtab`):**
+    - Shows a "Work In Progress" banner (`wip-banner`).
+    - Contains a "Thread Display" section (`preferences-section`) with mock settings:
+      - "Thread Layout" (Select: Compact, Standard, Expanded).
+      - "Threads Per Page" (Select: 10, 20, 30, 50).
+    - Includes an info note about it being view-only.
+  - **Users Sub-Tab (`renderUsersSubtab`):**
+    - Shows a "Work In Progress" banner.
+    - Contains a "User Display" section with mock settings:
+      - "Show User Signatures" (Toggle Switch).
+      - "Show User Avatars" (Toggle Switch).
+    - Includes an info note about it being view-only.
 
 ### 3. Settings Tab (`data-tab="settings"`)
 
 Displays global (but currently view-only/mock) settings for the manager itself.
 
--   **Header:** Displays "Global Settings".
--   **Settings Sections (`preferences-section`):**
-    -   Organized into sections: "Appearance", "Behavior", "Advanced".
-    -   Each section has a header (`preferences-section-header`) and body (`preferences-section-body`).
-    -   Each setting (`preference-item`) includes:
-        -   Name (`preference-name`).
-        -   Control (`preference-control`) (e.g., Select dropdown, Toggle switch).
-        -   Description (`preference-description`).
-    -   **Appearance Settings:**
-        -   Theme (Select: Dark, Light, System Default).
-        -   Script Card Size (Select: Small, Medium, Large).
-    -   **Behavior Settings:**
-        -   Default View (Select: Grid, List).
-        -   Auto-check for Updates (Toggle Switch).
-    -   **Advanced Settings:**
-        -   Update Check Interval (Select: Daily, Weekly, Monthly).
-        -   Debug Mode (Toggle Switch).
--   **Info Note:** Ends with a note stating these are view-only representations.
+- **Header:** Displays "Global Settings".
+- **Settings Sections (`preferences-section`):**
+  - Organized into sections: "Appearance", "Behavior", "Advanced".
+  - Each section has a header (`preferences-section-header`) and body (`preferences-section-body`).
+  - Each setting (`preference-item`) includes:
+    - Name (`preference-name`).
+    - Control (`preference-control`) (e.g., Select dropdown, Toggle switch).
+    - Description (`preference-description`).
+  - **Appearance Settings:**
+    - Theme (Select: Dark, Light, System Default).
+    - Script Card Size (Select: Small, Medium, Large).
+  - **Behavior Settings:**
+    - Default View (Select: Grid, List).
+    - Auto-check for Updates (Toggle Switch).
+  - **Advanced Settings:**
+    - Update Check Interval (Select: Daily, Weekly, Monthly).
+    - Debug Mode (Toggle Switch).
+- **Info Note:** Ends with a note stating these are view-only representations.
 
 ## Script Settings Modal (`settings-modal`)
 
 A separate modal displayed when the "Settings" button for a specific script is clicked.
 
--   **Appearance:**
-    -   Similar dark theme and styling to the main modal, but typically smaller (60% width, max 800px).
-    -   Appears on top of the main modal (`z-index: 10001`).
--   **Header (`settings-modal-header`):**
-    -   Title: "[Script Name] Settings" (`settings-modal-title`).
-    -   Close button (`&times;`) on the right (`settings-modal-close`).
--   **Content (`settings-modal-content`):**
-    -   **Settings Area:**
-        -   Displays settings defined in the script's manifest entry (`renderScriptSettingsContent`).
-        -   Organized into groups (`setting-group`) if needed (though the current rendering function doesn't explicitly group them beyond the script itself).
-        -   Each setting (`setting-item`) shows:
-            -   Label (`setting-label`).
-            -   Description (`setting-description`).
-            -   Control (`setting-control`) based on `setting.type`:
-                -   `boolean`: Toggle Switch.
-                -   `select`: Dropdown (`<select>`).
-                -   `number`: Number input (`<input type="number">`).
-                -   `text` (or default): Text input (`<input type="text">`).
-        -   **Empty State:** If the script has no settings, a message "No Settings Available" with a cog icon is shown.
-    -   **Script Information (`script-info`):**
-        -   A section below the settings, separated by a top border.
-        -   Displays script metadata in a table (`data-table`):
-            -   ID
-            -   Version
-            -   Category
-            -   Execution Phase
-            -   Matches (URLs where the script runs)
-    -   **Info Note:** Ends with a note stating this is a view-only display and changes won't be saved.
+- **Appearance:**
+  - Similar dark theme and styling to the main modal, but typically smaller (60% width, max 800px).
+  - Appears on top of the main modal (`z-index: 10001`).
+- **Header (`settings-modal-header`):**
+  - Title: "[Script Name] Settings" (`settings-modal-title`).
+  - Close button (`&times;`) on the right (`settings-modal-close`).
+- **Content (`settings-modal-content`):**
+  - **Settings Area:**
+    - Displays settings defined in the script's manifest entry (`renderScriptSettingsContent`).
+    - Organized into groups (`setting-group`) if needed (though the current rendering function doesn't explicitly group them beyond the script itself).
+    - Each setting (`setting-item`) shows:
+      - Label (`setting-label`).
+      - Description (`setting-description`).
+      - Control (`setting-control`) based on `setting.type`:
+        - `boolean`: Toggle Switch.
+        - `select`: Dropdown (`<select>`).
+        - `number`: Number input (`<input type="number">`).
+        - `text` (or default): Text input (`<input type="text">`).
+    - **Empty State:** If the script has no settings, a message "No Settings Available" with a cog icon is shown.
+  - **Script Information (`script-info`):**
+    - A section below the settings, separated by a top border.
+    - Displays script metadata in a table (`data-table`):
+      - ID
+      - Version
+      - Category
+      - Execution Phase
+      - Matches (URLs where the script runs)
+  - **Info Note:** Ends with a note stating this is a view-only display and changes won't be saved.
 
 ## General Styling Elements
 
--   **Font Awesome:** Used for icons throughout the UI.
--   **Color Scheme:** Primarily dark backgrounds with blue (`--primary-color`) accents and light text. Specific colors defined for success, warning, danger states.
--   **Buttons (`.btn`):** Styled buttons with primary and secondary variants, including small versions (`.btn-small`). Support icons within buttons.
--   **Toggle Switches (`.toggle-switch`):** Custom-styled checkboxes rendered as sliders.
--   **Tables (`.data-table`):** Basic table styling for list views and information display.
--   **Badges (`.badge`):** Small inline elements for displaying information like version or settings count.
--   **Info Notes (`.info-note`):** Styled blocks for informational messages.
--   **WIP Banners (`.wip-banner`):** Used to indicate sections under development.
--   **Responsiveness:** Basic adjustments for smaller screens (e.g., single-column grid view).
+- **Font Awesome:** Used for icons throughout the UI.
+- **Color Scheme:** Primarily dark backgrounds with blue (`--primary-color`) accents and light text. Specific colors defined for success, warning, danger states.
+- **Buttons (`.btn`):** Styled buttons with primary and secondary variants, including small versions (`.btn-small`). Support icons within buttons.
+- **Toggle Switches (`.toggle-switch`):** Custom-styled checkboxes rendered as sliders.
+- **Tables (`.data-table`):** Basic table styling for list views and information display.
+- **Badges (`.badge`):** Small inline elements for displaying information like version or settings count.
+- **Info Notes (`.info-note`):** Styled blocks for informational messages.
+- **WIP Banners (`.wip-banner`):** Used to indicate sections under development.
+- **Responsiveness:** Basic adjustments for smaller screens (e.g., single-column grid view).

@@ -175,7 +175,7 @@
                 <option ${
                   option === preference.default ? "selected" : ""
                 }>${option}</option>
-              `
+              `,
                 )
                 .join("")}
             </select>
@@ -205,9 +205,9 @@
                 .map(
                   (option) => `
                 <option value="${option}" ${
-                    option === setting.default ? "selected" : ""
-                  }>${option}</option>
-              `
+                  option === setting.default ? "selected" : ""
+                }>${option}</option>
+              `,
                 )
                 .join("")}
             </select>
@@ -971,7 +971,7 @@
             <div class="script-card-footer">
               <div class="script-card-phase">
                 <i class="fa fa-bolt"></i> ${getPhaseDisplayName(
-                  script.executionPhase
+                  script.executionPhase,
                 )}
               </div>
               <div class="script-card-actions">
@@ -1057,7 +1057,7 @@
                 </button>
               </td>
             </tr>
-          `
+          `,
             )
             .join("")}
         </tbody>
@@ -1229,7 +1229,7 @@
                 ${renderSettingControl(setting)}
               </div>
             </div>
-          `
+          `,
             )
             .join("")}
         </div>
@@ -1733,12 +1733,12 @@
 
   function addMenuButton() {
     const profileDropdown = document.querySelector(
-      '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
+      '.header-profile.dropdown-container .dropdown-contents[role="menu"]',
     );
     if (!profileDropdown) return;
 
     const logoutButton = Array.from(
-      profileDropdown.querySelectorAll("li")
+      profileDropdown.querySelectorAll("li"),
     ).find((li) => {
       return (
         li.textContent.trim().includes("Logout") ||

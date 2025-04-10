@@ -3,8 +3,9 @@
   "version": "3.0.2",
   "description": "RPGHQ Userscript Manager",
   "scripts": {
-    "build": "rollup -c && node scripts/post-build.js",
-    "watch": "rollup -c -w"
+    "build": "npm run lint && rollup -c && node scripts/post-build.js && npm run lint",
+    "watch": "rollup -c -w",
+    "lint": "prettier --check ."
   },
   "author": "loregamer",
   "license": "MIT",

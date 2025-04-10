@@ -1,6 +1,6 @@
 // Main userscript entry point
-import './meta.js?userscript-metadata';
-import './injectStyles.js'; // Import the script that injects CSS
+import "./meta.js?userscript-metadata";
+import "./injectStyles.js"; // Import the script that injects CSS
 import { SCRIPT_MANIFEST } from "./manifest.js";
 
 // --- Constants ---
@@ -31,7 +31,7 @@ function initializeScriptStates() {
     console.log(
       `Script '${script.name}' (${script.id}): ${
         scriptStates[script.id] ? "Enabled" : "Disabled"
-      } (Default: ${script.enabledByDefault})`
+      } (Default: ${script.enabledByDefault})`,
     );
   });
   console.log("Script states initialized:", scriptStates);
@@ -236,7 +236,7 @@ function createScriptToggle(scriptId, initialState) {
     const storageKey = `script_enabled_${scriptId}`;
 
     console.log(
-      `Toggling script '${scriptId}' to ${newState ? "Enabled" : "Disabled"}`
+      `Toggling script '${scriptId}' to ${newState ? "Enabled" : "Disabled"}`,
     );
 
     // Update the runtime state
@@ -408,7 +408,8 @@ function renderScriptSettingsContent(container, script) {
   }
 
   // TODO: Implement actual rendering of controls based on script.settings
-  container.innerHTML = "<p><i>Settings controls placeholder... Implement actual rendering later.</i></p>";
+  container.innerHTML =
+    "<p><i>Settings controls placeholder... Implement actual rendering later.</i></p>";
 }
 
 // Placeholder for Forum Preferences tab content
@@ -437,9 +438,10 @@ function renderSettingsTab(container) {
 // Add Font Awesome CSS if not already present (basic check)
 function ensureFontAwesome() {
   if (!document.querySelector('link[href*="font-awesome"]')) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css';
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href =
+      "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css";
     document.head.appendChild(link);
     console.log("RPGHQ Manager: Added Font Awesome CSS link.");
   }
@@ -450,7 +452,7 @@ function addMenuButton(toggleVisibilityCallback) {
   ensureFontAwesome();
 
   const profileDropdown = document.querySelector(
-    '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
+    '.header-profile.dropdown-container .dropdown-contents[role="menu"]',
   );
   if (!profileDropdown) {
     console.warn("RPGHQ Manager: Could not find profile dropdown menu.");
@@ -466,7 +468,7 @@ function addMenuButton(toggleVisibilityCallback) {
         (link.textContent.trim().includes("Logout") ||
           link.getAttribute("title") === "Logout")
       );
-    }
+    },
   );
 
   if (!logoutButton) {
@@ -475,13 +477,13 @@ function addMenuButton(toggleVisibilityCallback) {
   }
 
   // Check if button already exists
-  if (profileDropdown.querySelector('.rpghq-manager-menu-item')) {
+  if (profileDropdown.querySelector(".rpghq-manager-menu-item")) {
     console.log("RPGHQ Manager: Menu button already exists.");
     return;
   }
 
   const userscriptsButton = document.createElement("li");
-  userscriptsButton.className = 'rpghq-manager-menu-item'; // Add class for identification
+  userscriptsButton.className = "rpghq-manager-menu-item"; // Add class for identification
   userscriptsButton.innerHTML = `
         <a href="#" title="View Userscripts" role="menuitem" style="font-size:0.9em;">
           <i class="fa fa-puzzle-piece fa-fw"></i><span> View Userscripts</span>
@@ -500,7 +502,9 @@ function addMenuButton(toggleVisibilityCallback) {
     }
   });
 
-  console.log("RPGHQ Manager: 'View Userscripts' button added to profile menu.");
+  console.log(
+    "RPGHQ Manager: 'View Userscripts' button added to profile menu.",
+  );
 }
 
 // --- Initialization ---
@@ -526,7 +530,7 @@ function initializeManager() {
     console.log(
       `Toggling modal visibility. Currently ${
         isActive ? "active" : "inactive"
-      }.`
+      }.`,
     );
     modalElement.classList.toggle("active");
     overlayElement.classList.toggle("active");
@@ -537,14 +541,14 @@ function initializeManager() {
 
   const toggleSettingsModalVisibility = (show, script = null) => {
     console.log(
-      `Toggling settings modal visibility: ${show ? "show" : "hide"}`
+      `Toggling settings modal visibility: ${show ? "show" : "hide"}`,
     );
     currentSettingsScript = show ? script : null;
 
     if (show && script) {
       // Populate Title
       const titleElement = settingsModalElement.querySelector(
-        "#rpghq-settings-modal-title"
+        "#rpghq-settings-modal-title",
       );
       if (titleElement) titleElement.textContent = `${script.name} Settings`;
 
@@ -584,11 +588,11 @@ function initializeManager() {
 
   // Settings Modal Close Button
   const settingsCloseButton = settingsModalElement.querySelector(
-    "#rpghq-settings-modal-close"
+    "#rpghq-settings-modal-close",
   );
   if (settingsCloseButton) {
     settingsCloseButton.addEventListener("click", () =>
-      toggleSettingsModalVisibility(false)
+      toggleSettingsModalVisibility(false),
     );
   } else {
     console.error("Could not find settings modal close button.");
@@ -621,7 +625,7 @@ function initializeManager() {
         toggleModalVisibility();
       } else {
         console.log(
-          "Insert key pressed in input field, ignoring modal toggle."
+          "Insert key pressed in input field, ignoring modal toggle.",
         );
       }
     }
@@ -644,7 +648,7 @@ function initializeManager() {
 
   if (tabsContainer && contentContainer && installedScriptsPane) {
     const scriptsDisplayContainer = installedScriptsPane.querySelector(
-      ".scripts-display-container"
+      ".scripts-display-container",
     );
     const viewSwitcher = installedScriptsPane.querySelector(".view-switcher");
 
@@ -662,13 +666,13 @@ function initializeManager() {
     renderScriptsGridView(
       scriptsDisplayContainer,
       SCRIPT_MANIFEST,
-      scriptStates
+      scriptStates,
     );
 
     // Ensure the first tab's content pane is marked active on init
     const initialPane = contentContainer.querySelector("#tab-0");
     if (initialPane) {
-        initialPane.classList.add("active");
+      initialPane.classList.add("active");
     }
 
     // --- View Switcher Logic ---
@@ -693,14 +697,14 @@ function initializeManager() {
           renderScriptsListView(
             scriptsDisplayContainer,
             SCRIPT_MANIFEST,
-            scriptStates
+            scriptStates,
           );
         } else {
           // Default to grid view
           renderScriptsGridView(
             scriptsDisplayContainer,
             SCRIPT_MANIFEST,
-            scriptStates
+            scriptStates,
           );
         }
       });
@@ -750,7 +754,7 @@ function initializeManager() {
     });
   } else {
     console.error(
-      "Could not find tabs container, content container, or installed scripts pane for setup."
+      "Could not find tabs container, content container, or installed scripts pane for setup.",
     );
   }
 
