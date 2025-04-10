@@ -43,29 +43,24 @@ export function renderScriptsGridView(
         <img src="${
           script.image || "https://via.placeholder.com/240x130?text=No+Image"
         }" alt="${script.name}">
-        <div class="script-card-category">${
-          script.category || "Uncategorized"
-        }</div>
       </div>
       <div class="script-card-content">
         <div class="script-card-header">
-          <h3 class="script-card-title">${script.name} <span class="script-card-version-inline">v${script.version}</span></h3>
+          <h3 class="script-card-title">${script.name}</h3>
+          <div class="script-card-actions-top">
+            <span class="script-toggle-wrapper" data-script-id="${script.id}">
+              <i class="fa ${isEnabled ? "fa-toggle-on" : "fa-toggle-off"} fa-fw script-toggle-icon" data-script-id="${script.id}"></i>
+            </span>
+            <button class="btn btn-icon view-settings" data-script-id="${script.id}">
+              <i class="fa fa-cog"></i>
+            </button>
+          </div>
         </div>
         <p class="script-card-description">${
           script.description || "No description available."
         }</p>
         <div class="script-card-footer">
-          <div class="script-card-actions">
-            <label class="toggle-switch">
-              <input type="checkbox" class="script-toggle" data-script-id="${script.id}" ${isEnabled ? "checked" : ""}>
-              <span class="toggle-slider"></span>
-            </label>
-            <button class="btn btn-primary btn-small view-settings" data-script-id="${
-              script.id
-            }">
-              <i class="fa fa-cog"></i> Settings
-            </button>
-          </div>
+          <span class="script-card-version">v${script.version}</span>
         </div>
       </div>
     `;
@@ -87,11 +82,21 @@ export function renderScriptsGridView(
     });
   });
 
-  // Add event listeners for toggle switches
-  document.querySelectorAll(".script-toggle").forEach((toggle) => {
-    toggle.addEventListener("change", (e) => {
+  // Add event listeners for toggle icons
+  document.querySelectorAll(".script-toggle-icon").forEach((toggle) => {
+    toggle.addEventListener("click", (e) => {
       const scriptId = toggle.dataset.scriptId;
-      const newState = toggle.checked;
+      const isCurrentlyEnabled = toggle.classList.contains("fa-toggle-on");
+      const newState = !isCurrentlyEnabled;
+
+      // Update the icon
+      if (newState) {
+        toggle.classList.remove("fa-toggle-off");
+        toggle.classList.add("fa-toggle-on");
+      } else {
+        toggle.classList.remove("fa-toggle-on");
+        toggle.classList.add("fa-toggle-off");
+      }
 
       // Dispatch a custom event that main.js can listen for
       const event = new CustomEvent("script-toggle", {

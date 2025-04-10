@@ -327,16 +327,7 @@ GM_addStyle(`
     object-fit: cover;
   }
 
-  .script-card-category {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background-color: rgba(0, 0, 0, 0.7);
-    color: var(--text-primary);
-    padding: 3px 8px;
-    border-radius: 3px;
-    font-size: 0.8em;
-  }
+  /* Category display removed */
 
   .script-card-content {
     padding: 10px;
@@ -345,14 +336,55 @@ GM_addStyle(`
   .script-card-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     margin-bottom: 8px;
+  }
+
+  .script-card-actions-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .script-toggle-wrapper {
+    cursor: pointer;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+  }
+
+  .script-toggle-icon {
+    color: var(--primary-color);
+  }
+
+  .fa-toggle-off.script-toggle-icon {
+    color: #777;
+  }
+
+  .btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+  }
+
+  .btn-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
   }
 
   .script-card-title {
     font-size: 1.1em;
     font-weight: bold;
     margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    padding-right: 8px;
   }
 
   .script-card-version {
@@ -388,8 +420,14 @@ GM_addStyle(`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid var(--border-color);
     padding-top: 8px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .script-card-version {
+    font-size: 0.8em;
+    color: var(--text-secondary);
   }
 
   .script-card-phase {
@@ -582,51 +620,7 @@ GM_addStyle(`
     font-size: 0.8em;
   }
 
-  /* Toggle switch */
-  .toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 46px;
-    height: 22px;
-  }
-
-  .toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #444;
-    border-radius: 3px;
-    transition: 0.2s;
-  }
-
-  .toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    border-radius: 2px;
-    transition: 0.2s;
-  }
-
-  input:checked + .toggle-slider {
-    background-color: var(--primary-color);
-  }
-
-  input:checked + .toggle-slider:before {
-    transform: translateX(24px);
-  }
+  /* Toggle switch - replaced with font awesome icons */
 
   /* Tables */
   .data-table {
