@@ -83,8 +83,8 @@ export function init() {
     }
     const currentState = util.getShowOnNewPosts();
     const label = currentState
-      ? "Disable Pinned Threads on New Posts"
-      : "Enable Pinned Threads on New Posts";
+      ? "[Pinned Threads] Disable on New Posts"
+      : "[Pinned Threads] Enable on New Posts";
     menuCommandId = GM_registerMenuCommand(label, toggleNewPostsDisplay);
   }
 

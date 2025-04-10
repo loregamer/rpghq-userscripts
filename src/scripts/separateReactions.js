@@ -474,7 +474,7 @@ export function init() {
     }
   }
 
-  GM_registerMenuCommand("Toggle Left Mode", toggleLeftMode);
+  GM_registerMenuCommand("[Reaction List] Toggle Left Mode", toggleLeftMode);
 
   function observePosts() {
     const style = document.createElement("style");
