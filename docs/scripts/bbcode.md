@@ -1,8 +1,8 @@
-# Notifications
+# BBCode Highlighting
 
 ## Description
 
-Asdfasdfasdf
+Adds BBCode highlighting and other QOL improvements to the text editor
 
 ## Author
 

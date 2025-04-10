@@ -25,6 +25,7 @@ npm run add-script
 ```
 
 You'll be prompted to enter all needed information interactively. This will:
+
 - Create a new script file in src/scripts/
 - Add the script to the manifest (sorted alphabetically by name)
 - Update imports in main.js

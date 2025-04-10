@@ -22,4 +22,21 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI Enhancement"],
     executionPhase: "after_dom",
   },
+  ,
+  {
+    id: "bbcode",
+    name: "BBCode Highlighting",
+    version: "1.0.0",
+    description:
+      "Adds BBCode highlighting and other QOL improvements to the text editor",
+    author: "loregamer",
+    image: "",
+    path: "./scripts/bbcode.js",
+    enabledByDefault: true,
+    settings: [
+      // Add settings here
+    ],
+    categories: ["UI"],
+    executionPhase: "after_dom",
+  },
 ];
