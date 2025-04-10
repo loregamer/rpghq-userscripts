@@ -1,4 +1,5 @@
 // Main userscript entry point
+import './styles.css'; // Import CSS - Rollup handles injection or bundling
 import { SCRIPT_MANIFEST } from "./manifest.js";
 
 // --- Constants ---
@@ -141,12 +142,11 @@ function createManagerModal() {
     } else {
       // Placeholder content for other tabs
       // tabContent.textContent = `Content for ${tabButtons[index]}`;
+      // Add placeholder content for other tabs using dedicated render functions
       if (index === 1) {
-        tabContent.innerHTML =
-          "<p><i>Forum Preferences placeholder. Content will be added later.</i></p>";
+        renderForumPreferencesTab(tabContent);
       } else if (index === 2) {
-        tabContent.innerHTML =
-          "<p><i>Global Settings placeholder. Content will be added later.</i></p>";
+        renderSettingsTab(tabContent);
       }
     }
     contentContainer.appendChild(tabContent);
@@ -407,7 +407,29 @@ function renderScriptSettingsContent(container, script) {
   }
 
   // TODO: Implement actual rendering of controls based on script.settings
-  container.innerHTML = "<p><i>Settings controls placeholder...</i></p>";
+  container.innerHTML = "<p><i>Settings controls placeholder... Implement actual rendering later.</i></p>";
+}
+
+// Placeholder for Forum Preferences tab content
+function renderForumPreferencesTab(container) {
+  console.log("Rendering Forum Preferences tab...");
+  container.innerHTML = `
+    <div class="wip-banner">
+      <i class="fa fa-wrench"></i> Work in Progress: Forum Preferences not yet implemented.
+    </div>
+    <p>This section will contain options to customize your forum experience.</p>
+  `;
+}
+
+// Placeholder for Settings tab content
+function renderSettingsTab(container) {
+  console.log("Rendering Settings tab...");
+  container.innerHTML = `
+    <div class="wip-banner">
+      <i class="fa fa-cog"></i> Work in Progress: Global Settings not yet implemented.
+    </div>
+    <p>This section will contain global settings for the script manager itself.</p>
+  `;
 }
 
 // --- Add Button to Profile Dropdown ---
@@ -486,155 +508,158 @@ function initializeManager() {
   initializeScriptStates();
   loadEnabledScripts();
 
-  // --- Inject CSS ---
+  // --- CSS Injection ---
+  // Note: styles.css is imported at the top and handled by Rollup.
+  // However, we need to inject the *final* CSS string using GM_addStyle
+  // for compatibility, especially if the Rollup CSS plugin isn't perfect
+  // or if not using one.
+  // We will copy the contents of src/styles.css here manually for now.
+  // TODO: Find a better way to automatically include the built CSS content.
   // eslint-disable-next-line no-undef
   if (typeof GM_addStyle !== "function") {
     console.error("RPGHQ Manager Error: GM_addStyle is not available. Styles will not be applied.");
   } else {
+    // Fetch the content of styles.css - this is a placeholder.
+    // Ideally, Rollup would make this available or we'd fetch it.
+    // For now, we'll duplicate the CSS content here.
     const managerStyles = `
-/* CSS styles for the RPGHQ Userscript Manager UI */
+/* Import Font Awesome */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css');
 
-/* --- Variables --- */
 :root {
-  --bg-dark: #1e1e1e;
-  --bg-light: #ffffff;
-  --text-primary: #ffffff;
-  --text-secondary: #aaaaaa;
-  --text-dark: #333333;
-  --border-color: #444444;
-  --border-light: #eeeeee;
-  --primary-color: #007bff; /* Example blue */
-  --primary-hover: #0056b3;
-  --overlay-bg: rgba(0, 0, 0, 0.8);
-  --modal-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-  --border-radius: 4px;
+    --primary-color: #2196F3;
+    --primary-dark: #1976D2;
+    --accent-color: #FF9800;
+    --success-color: #4CAF50;
+    --warning-color: #FFC107;
+    --danger-color: #F44336;
+    --text-primary: #FFFFFF;
+    --text-secondary: #B0BEC5;
+    --bg-dark: #1E1E1E;
+    --bg-card: #2D2D2D;
+    --border-color: #444444;
 }
 
-/* --- Base Modal Styles --- */
-
+/* Modal container */
 #rpghq-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--overlay-bg);
-  z-index: 9998;
-  display: none; /* Controlled by JS */
+    display: none;
+    position: fixed;
+    z-index: 9998;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+#rpghq-modal-overlay.active {
+    display: block;
 }
 
+/* Modal content box */
 #rpghq-manager-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 1200px;
-  max-height: 90vh;
-  background-color: var(--bg-dark);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--modal-shadow);
-  z-index: 9999;
-  display: none; /* Controlled by JS */
-  flex-direction: column;
-  overflow: hidden; /* Prevent content spillover before calculating scroll */
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 9999;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 1200px;
+    max-height: 90vh;
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    display: flex; /* Use flex for internal layout */
+    flex-direction: column;
+    overflow: hidden; /* Prevent content spill */
+}
+#rpghq-manager-modal.active {
+    display: flex; /* Show when active */
 }
 
-/* Modal Header */
+/* Header and close button */
 .modal-header {
-  padding: 15px 20px;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0; /* Prevent header from shrinking */
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
 }
 
 .modal-header h2 {
-  margin: 0;
-  font-size: 1.4em;
-  font-weight: 500;
+    margin: 0;
+    font-size: 1.4em;
 }
 
 #rpghq-modal-close {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 2em;
-  font-weight: bold;
-  line-height: 1;
-  opacity: 0.7;
-  cursor: pointer;
-  padding: 0 5px;
+    background: none;
+    border: none;
+    font-size: 2em;
+    font-weight: bold;
+    line-height: 1;
+    color: var(--text-secondary);
+    cursor: pointer;
+    opacity: 0.7;
+    padding: 0 5px;
 }
-
 #rpghq-modal-close:hover {
-  color: var(--text-primary);
-  opacity: 1;
+    color: var(--text-primary);
+    opacity: 1;
 }
 
-/* Modal Tabs */
+/* Tab system */
 .modal-tabs {
-  padding: 10px 20px 0 20px; /* No bottom padding, border acts as separator */
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  flex-shrink: 0; /* Prevent tabs from shrinking */
+    padding: 10px 20px 0 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-shrink: 0;
 }
 
 .modal-tabs button {
-  background: none;
-  border: 1px solid transparent; /* Reserve space for border */
-  border-bottom: none; /* Remove bottom border */
-  color: var(--text-secondary);
-  padding: 10px 15px;
-  margin-right: 5px;
-  margin-bottom: -1px; /* Overlap the container's border */
-  cursor: pointer;
-  font-size: 1em;
-  border-radius: var(--border-radius) var(--border-radius) 0 0; /* Rounded top corners */
-  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    background: none;
+    border: 1px solid transparent;
+    border-bottom: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 1em;
+    color: var(--text-secondary);
+    position: relative;
+    margin-right: 5px;
+    margin-bottom: -1px; /* Overlap bottom border */
+    border-radius: 4px 4px 0 0;
 }
 
 .modal-tabs button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
 }
 
 .modal-tabs button.active {
-  background-color: var(--bg-dark); /* Match content area bg */
-  color: var(--text-primary);
-  border-color: var(--border-color); /* Use main border color */
-  border-bottom-color: transparent; /* Hide bottom border to merge with content */
-  font-weight: bold;
+    color: var(--primary-color);
+    font-weight: bold;
+    border-color: var(--border-color);
+    border-bottom-color: var(--bg-dark); /* Make it look like it merges */
+    background-color: var(--bg-dark); /* Match content background */
 }
 
-/* Modal Content */
+/* Content area */
 .modal-content {
-  padding: 20px;
-  overflow-y: auto; /* Enable scrolling if content overflows */
-  flex-grow: 1; /* Allow content to fill available space */
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
 }
 
 .tab-pane {
-  display: block; /* Show by default */
-}
-
-.tab-pane:not(.active) {
-  display: none; /* Hide inactive tabs */
-}
-
-/* Add display: flex back for the active modal */
-#rpghq-manager-modal.active {
-  display: flex;
-}
-#rpghq-modal-overlay.active {
   display: block;
 }
 
-/* --- Installed Scripts Tab Specific Styles --- */
+.tab-pane:not(.active) {
+  display: none;
+}
 
+/* Installed Scripts Tab Specific Styles */
 .view-switcher {
   display: flex;
   justify-content: flex-end;
@@ -642,15 +667,15 @@ function initializeManager() {
 }
 
 .view-switcher .view-btn {
-  background-color: var(--border-color); /* Darker background */
+  background-color: var(--border-color);
   color: var(--text-secondary);
   border: 1px solid var(--border-color);
   padding: 5px 10px;
   margin-left: 5px;
   cursor: pointer;
-  font-size: 1.2em; /* Make icons slightly larger */
+  font-size: 1.2em;
   line-height: 1;
-  border-radius: var(--border-radius);
+  border-radius: 4px;
   transition: background-color 0.2s, color 0.2s;
 }
 
@@ -661,282 +686,176 @@ function initializeManager() {
 
 .view-switcher .view-btn.active {
   background-color: var(--primary-color);
-  color: var(--bg-light);
+  color: #fff;
   border-color: var(--primary-color);
 }
 
 .scripts-display-container {
-  /* Styles for grid/list will be added here or handled by render functions */
-  clear: both; /* Ensure it clears the floated switcher if needed */
+  clear: both;
 }
 
-/* Grid View Styles */
+/* Script grid */
 .script-grid {
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(250px, 1fr)
-  ); /* Responsive grid */
-  gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 15px;
 }
 
 .script-card {
-  background-color: #2a2a2a; /* Slightly lighter dark background */
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  transition: box-shadow 0.2s;
-}
-
-.script-card:hover {
-  box-shadow: 0 0 10px rgba(var(--primary-color), 0.5);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
 }
 
 .script-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .script-card-title {
-  font-weight: bold;
-  font-size: 1.1em;
-  color: var(--text-primary);
-  flex-grow: 1; /* Allow title to take available space */
-  margin-right: 10px; /* Space before toggle/version */
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: 0;
+    flex-grow: 1;
+    margin-right: 10px;
 }
 
 .script-card-version {
-  font-size: 0.9em;
-  color: var(--text-secondary);
-  background-color: var(--border-color);
-  padding: 2px 5px;
-  border-radius: var(--border-radius);
-  white-space: nowrap;
-  margin-left: 10px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    white-space: nowrap;
+    margin-left: 5px; /* Space between toggle and version */
 }
 
 .script-card-description {
-  font-size: 0.95em;
-  color: var(--text-secondary);
-  flex-grow: 1; /* Allow description to take space */
-  margin-bottom: 15px;
-  line-height: 1.4;
+    margin: 0 0 15px 0;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    line-height: 1.4;
+    flex-grow: 1; /* Take up available space */
 }
 
 .script-card-footer {
-  margin-top: auto; /* Push footer to the bottom */
-  padding-top: 10px;
-  border-top: 1px solid var(--border-color);
-  text-align: right;
+    display: flex;
+    justify-content: flex-end; /* Align button to the right */
+    align-items: center;
+    border-top: 1px solid var(--border-color);
+    padding-top: 10px;
+    margin-top: auto; /* Push to bottom */
 }
 
 /* List View (Table) Styles */
 .data-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
 }
 
 .data-table th,
 .data-table td {
-  padding: 10px 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-  vertical-align: middle;
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
 }
 
 .data-table th {
-  background-color: #2a2a2a; /* Header background */
-  color: var(--text-secondary);
-  font-weight: bold;
-  font-size: 0.9em;
-  text-transform: uppercase;
+    background-color: rgba(255, 255, 255, 0.05);
+    font-weight: bold;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
 }
 
 .data-table tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(255, 255, 255, 0.03);
 }
 
 .script-toggle-cell {
-  width: 80px; /* Fixed width for toggle */
-  text-align: center;
+    width: 80px;
+    text-align: center;
 }
 
-/* General UI Elements (Buttons, Badges) - Add if not already defined */
-.btn {
-  display: inline-block;
-  padding: 8px 15px;
-  font-size: 0.9em;
-  font-weight: bold;
-  text-align: center;
-  vertical-align: middle;
-  cursor: pointer;
-  border: 1px solid transparent;
-  border-radius: var(--border-radius);
-  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-  white-space: nowrap;
+.script-list-table td:nth-child(2) { /* Name column */
+    font-weight: bold;
 }
 
-.btn-primary {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-  color: var(--bg-light);
+.script-list-table td:nth-child(5), /* Settings column */
+.script-list-table td:nth-child(6) { /* Actions column */
+    text-align: center;
 }
 
-.btn-primary:hover {
-  background-color: var(--primary-hover);
-  border-color: var(--primary-hover);
-}
-
-.btn-small {
-  padding: 5px 10px;
-  font-size: 0.85em;
-}
-
-.badge {
-  display: inline-block;
-  padding: 4px 8px;
-  font-size: 0.85em;
-  font-weight: bold;
-  line-height: 1;
-  text-align: center;
-  white-space: nowrap;
-  vertical-align: baseline;
-  border-radius: var(--border-radius);
-}
-
-.badge-primary {
-  background-color: var(--primary-color);
-  color: var(--bg-light);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 30px;
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-/* Toggle Switch Styles */
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 40px; /* Smaller width */
-  height: 20px; /* Smaller height */
-  vertical-align: middle; /* Align with text/icons */
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #555; /* Darker grey for off state */
-  transition: 0.4s;
-  border-radius: 20px; /* Fully rounded */
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 14px; /* Smaller circle */
-  width: 14px; /* Smaller circle */
-  left: 3px; /* Adjusted position */
-  bottom: 3px; /* Adjusted position */
-  background-color: white;
-  transition: 0.4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: var(--primary-color);
-}
-
-input:focus + .slider {
-  box-shadow: 0 0 1px var(--primary-color);
-}
-
-input:checked + .slider:before {
-  transform: translateX(20px); /* Adjusted translation */
-}
-
-/* --- Settings Modal Styles --- */
+/* Settings modal */
 #rpghq-settings-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 70%; /* Slightly smaller than main modal */
-  max-width: 800px;
-  max-height: 85vh;
-  background-color: var(--bg-dark);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--modal-shadow);
-  z-index: 10001; /* Above main modal overlay */
-  display: none; /* Controlled by JS */
-  flex-direction: column;
-  overflow: hidden;
+    display: none;
+    position: fixed;
+    z-index: 10001; /* Above main modal */
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 60%;
+    max-width: 800px;
+    max-height: 85vh;
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+#rpghq-settings-modal.active {
+    display: flex;
 }
 
-/* Use similar header style, potentially different class name if needed */
 .settings-modal-header {
-  padding: 15px 20px;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
 }
 
-.settings-modal-header h2 {
-  margin: 0;
-  font-size: 1.3em; /* Slightly smaller title */
-  font-weight: 500;
+#rpghq-settings-modal-title {
+    font-size: 1.3em;
+    margin: 0;
 }
 
-/* Use same close button style */
 #rpghq-settings-modal-close {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 2em;
-  font-weight: bold;
-  line-height: 1;
-  opacity: 0.7;
-  cursor: pointer;
-  padding: 0 5px;
+    background: none;
+    border: none;
+    font-size: 2em;
+    font-weight: bold;
+    line-height: 1;
+    color: var(--text-secondary);
+    cursor: pointer;
+    opacity: 0.7;
+    padding: 0 5px;
 }
-
 #rpghq-settings-modal-close:hover {
-  color: var(--text-primary);
-  opacity: 1;
+    color: var(--text-primary);
+    opacity: 1;
 }
 
 .settings-modal-content {
-  padding: 20px;
-  overflow-y: auto;
-  flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    flex-grow: 1;
 }
 
 .settings-area {
   margin-bottom: 20px;
-  /* Styles for individual settings items will go here */
 }
 
 .script-info {
@@ -946,23 +865,145 @@ input:checked + .slider:before {
   color: var(--text-secondary);
 }
 
+/* Use existing data-table styles for script info */
 .script-info .data-table td {
-  padding: 6px 10px; /* Slightly smaller padding */
+  padding: 6px 10px;
+}
+.script-info .data-table td:first-child {
+  font-weight: bold;
+  color: var(--text-primary);
 }
 
-/* Add display: flex back for the active settings modal */
-#rpghq-settings-modal.active {
-  display: flex;
+/* Buttons */
+.btn {
+    padding: 8px 15px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    text-decoration: none;
+    transition: background-color 0.2s;
 }
 
-/* Add display: flex back for the active modal */
-#rpghq-manager-modal.active {
-  display: flex;
+.btn i.fa {
+    line-height: 1; /* Align icon better */
 }
-`;
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #555;
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background-color: #666;
+    color: var(--text-primary);
+}
+
+.btn-small {
+    padding: 5px 10px;
+    font-size: 0.8em;
+}
+
+/* Toggle switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px; /* Slightly smaller */
+    height: 20px;
+    vertical-align: middle;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #555; /* Grey when off */
+    border-radius: 20px; /* Rounded */
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px; /* Smaller knob */
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.badge-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* WIP Banner */
+.wip-banner {
+    background-color: var(--warning-color);
+    color: #000;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+}
+.wip-banner i.fa {
+    margin-right: 8px;
+}
+    `;
     // eslint-disable-next-line no-undef
     GM_addStyle(managerStyles);
-    console.log("RPGHQ Manager: Styles injected.");
+    console.log("RPGHQ Manager: Styles injected via GM_addStyle.");
   }
 
 
@@ -1120,6 +1161,12 @@ input:checked + .slider:before {
       scriptStates
     );
 
+    // Ensure the first tab's content pane is marked active on init
+    const initialPane = contentContainer.querySelector("#tab-0");
+    if (initialPane) {
+        initialPane.classList.add("active");
+    }
+
     // --- View Switcher Logic ---
     if (viewSwitcher) {
       viewSwitcher.addEventListener("click", (event) => {
@@ -1207,6 +1254,15 @@ input:checked + .slider:before {
   // We call this here ensuring the DOM is likely ready because initializeManager
   // is called after DOMContentLoaded or immediately if already loaded.
   addMenuButton(toggleModalVisibility);
+
+  // --- Register GM Menu Command ---
+  try {
+    // eslint-disable-next-line no-undef
+    GM_registerMenuCommand("RPGHQ Userscript Manager", toggleModalVisibility);
+    console.log("GM Menu command registered.");
+  } catch (e) {
+    console.error("Failed to register GM menu command:", e);
+  }
 
   console.log("UI Initialized with visibility controls.");
 }
