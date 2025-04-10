@@ -44,7 +44,7 @@ export const SCRIPT_MANIFEST = [
     description:
       "Adds smileys to reacted notifs, adds colors, idk just makes em cooler I guess",
     author: "loregamer",
-    image: "", // Add an image URL if available
+    image: "https://f.rpghq.org/rso7uNB6S4H9.png", // Add an image URL if available
     path: "./scripts/notifications.js",
     enabledByDefault: true,
     settings: [],

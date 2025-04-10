@@ -358,7 +358,7 @@ GM_addStyle(`
   }
 
   .script-card-actions-top {
-    display: flex;
+    display: none;
     align-items: center;
     gap: 8px;
     white-space: nowrap;
