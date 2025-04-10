@@ -2,7 +2,6 @@
   "name": "rpghq-userscript-manager",
   "version": "3.0.2",
   "description": "RPGHQ Userscript Manager",
-
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w"
@@ -10,11 +9,25 @@
   "author": "loregamer",
   "license": "MIT",
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^28.0.3",
-    "@rollup/plugin-node-resolve": "^16.0.1",
-    "nodemon": "^2.0.22",
     "rollup": "^4.39.0",
-    "rollup-plugin-userscript": "^0.3.7"
+    "rollup-plugin-terser": "^7.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "rollup-plugin-import-css": "^3.5.1",
+    "rollup-plugin-userscript-metablock": "^0.4.0"
   },
-  "dependencies": {}
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loregamer/rpghq-userscripts.git"
+  },
+  "keywords": [],
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/loregamer/rpghq-userscripts/issues"
+  },
+  "homepage": "https://github.com/loregamer/rpghq-userscripts#readme"
 }

@@ -1,5 +1,2 @@
-.aider*
-_SourceCode
-.cursor/mcp.json
-/node_modules
-/old-scripts
+node_modules/
+dist/
