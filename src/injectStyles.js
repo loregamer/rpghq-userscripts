@@ -340,7 +340,6 @@ GM_addStyle(`
     top: 10px;
     right: 10px;
     z-index: 10;
-    background: rgba(0, 0, 0, 0.5);
     border-radius: 3px;
     padding: 3px;
   }
