@@ -30,6 +30,10 @@ export function init() {
         const markReadButton = item.querySelector("a.mark_read");
         if (markReadButton) {
           markReadButton.click();
+          
+          // Remove the notification row from the DOM
+          console.log("Removing Kalarion notification from view");
+          item.remove();
         }
       }
     });
