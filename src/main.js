@@ -77,6 +77,7 @@ function loadEnabledScripts() {
 }
 
 // Import scripts directly
+import * as kalareact from "./scripts/kalareact.js";
 import * as bbcode from "./scripts/bbcode.js";
 import * as commaFormatter from "./scripts/commaFormatter.js";
 
@@ -84,6 +85,8 @@ import * as commaFormatter from "./scripts/commaFormatter.js";
 const scriptModules = {
   commaFormatter: commaFormatter,
   bbcode: bbcode,
+
+  kalareact: kalareact,
 };
 
 // Load a single script by its manifest entry

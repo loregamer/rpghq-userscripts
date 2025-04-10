@@ -22,6 +22,22 @@ export const SCRIPT_MANIFEST = [
     executionPhase: "after_dom",
   },
   {
+    id: "kalareact",
+    name: "Kalarion Reaction Auto-Marker",
+    version: "1.0.0",
+    description:
+      "Auto marks Kalarion rape notifs as read (I will move this to user preferences and make it squashed instead)",
+    author: "loregamer",
+    image: "https://f.rpghq.org/tTMdhnqxh1kW.gif", // Add an image URL if available
+    path: "./scripts/kalareact.js",
+    enabledByDefault: false,
+    settings: [
+      // Add settings here
+    ],
+    categories: ["General"],
+    executionPhase: "after_dom",
+  },
+  {
     id: "commaFormatter",
     name: "Thousands Comma Formatter",
     version: "2.1.2",
