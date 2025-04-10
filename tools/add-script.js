@@ -12,6 +12,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import readline from "readline";
+import { execSync } from "child_process"; // Import execSync
 
 // Get current file's directory (equivalent to __dirname in CommonJS)
 const __filename = fileURLToPath(import.meta.url);
@@ -322,6 +323,16 @@ export function init() {
       scriptDetails.category,
       scriptDetails.enabledByDefault,
     );
+
+    // Update load_order.json after adding script to manifest
+    console.log("\nRunning update-load-order script...");
+    try {
+      execSync("node scripts/update-load-order.cjs", { stdio: "inherit" });
+      console.log("update-load-order script completed.");
+    } catch (updateError) {
+      console.error("Error running update-load-order script:", updateError);
+      // Decide if this should be a fatal error for the add-script process
+    }
   } catch (error) {
     console.error("Error:", error);
     process.exit(1);
