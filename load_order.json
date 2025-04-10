@@ -1,10 +1,10 @@
 {
   "document-start": [],
   "document-end": [
-    "cachePostsOnPage",
-    "cacheTopicsOnPage",
-    "applyUserPreferences",
-    "applyThreadPreferences",
+    "_cachePostsOnPage",
+    "_cacheTopicsOnPage",
+    "_applyUserPreferences",
+    "_applyThreadPreferences",
     "commaFormatter",
     "bbcode",
     "kalareact",
