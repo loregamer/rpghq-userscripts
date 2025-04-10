@@ -213,8 +213,8 @@ export function init() {
   
   // Sort the objects by name property
   objects.sort((a, b) => {
-    const nameA = a.match(/name:\s*"([^"]+)"/)?.[1] || '';
-    const nameB = b.match(/name:\s*"([^"]+)"/)?.[1] || '';
+    const nameA = a.match(/name:\\s*"([^"]+)"/)?.[1] || '';
+    const nameB = b.match(/name:\\s*"([^"]+)"/)?.[1] || '';
     return nameA.localeCompare(nameB);
   });
   
@@ -231,7 +231,6 @@ export function init() {
   
   fs.writeFileSync(manifestPath, newManifestContent);
   console.log(`Updated manifest.js with new script entry for ${scriptId} (sorted alphabetically)`);
-}
 
   // Update main.js
   let mainJsContent = fs.readFileSync(mainJsPath, 'utf8');
@@ -282,12 +281,12 @@ export function init() {
   try {
     const scriptDetails = await createScript();
     await processFiles(
-      scriptDetails?.scriptId,
-      scriptDetails?.scriptName,
-      scriptDetails?.description,
-      scriptDetails?.author,
-      scriptDetails?.category,
-      scriptDetails?.enabledByDefault
+      scriptDetails.scriptId,
+      scriptDetails.scriptName,
+      scriptDetails.description,
+      scriptDetails.author,
+      scriptDetails.category,
+      scriptDetails.enabledByDefault
     );
   } catch (error) {
     console.error('Error:', error);
