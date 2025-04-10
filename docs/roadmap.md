@@ -61,7 +61,7 @@ This document outlines the development checkpoints and actionable steps for crea
         *   [ ] Render scripts from the `SCRIPT_MANIFEST`.
         *   [ ] Implement Grid View (`renderScriptsGridView`).
         *   [ ] Implement List View (`renderScriptsListView`).
-        *   [ ] Implement view switcher (Grid/List buttons).
+        *   [x] Implement view switcher (Grid/List buttons).
         *   [ ] Implement enable/disable toggle switches for each script.
             *   [ ] Update the UI state visually.
             *   [ ] Save the state using `GM_setValue`.

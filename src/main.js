@@ -113,9 +113,35 @@ function createManagerModal() {
     tabContent.className = "tab-pane";
     if (index === 0) {
       tabContent.classList.add("active"); // Add active class to first pane
+
+      // Add View Switcher for Installed Scripts tab
+      const viewSwitcher = document.createElement("div");
+      viewSwitcher.className = "view-switcher";
+
+      const gridButton = document.createElement("button");
+      gridButton.className = "view-btn active"; // Default to grid view
+      gridButton.dataset.view = "grid";
+      gridButton.innerHTML = "&#x25A6;"; // Placeholder Grid Icon (change later if using FontAwesome)
+      gridButton.title = "Grid View";
+
+      const listButton = document.createElement("button");
+      listButton.className = "view-btn";
+      listButton.dataset.view = "list";
+      listButton.innerHTML = "&#x2630;"; // Placeholder List Icon
+      listButton.title = "List View";
+
+      viewSwitcher.appendChild(gridButton);
+      viewSwitcher.appendChild(listButton);
+      tabContent.appendChild(viewSwitcher);
+
+      // Add container for script cards/rows
+      const scriptsDisplayContainer = document.createElement("div");
+      scriptsDisplayContainer.className = "scripts-display-container";
+      tabContent.appendChild(scriptsDisplayContainer);
+    } else {
+      // Placeholder content for other tabs
+      tabContent.textContent = `Content for ${tabButtons[index]}`;
     }
-    // Placeholder content (will be replaced later)
-    tabContent.textContent = `Content for ${tabButtons[index]}`;
     contentContainer.appendChild(tabContent);
   });
 
@@ -127,6 +153,39 @@ function createManagerModal() {
   console.log("Manager modal structure created.");
   // Return elements for setup in initializeManager
   return { modalElement: modal, overlayElement: overlay };
+}
+
+// --- UI Rendering (Phase 4 - Installed Scripts Tab) ---
+
+function createScriptToggle(scriptId, initialState) {
+  // Placeholder for toggle switch creation (Step 5)
+  console.log(
+    `Placeholder: Create toggle for ${scriptId}, initial state: ${initialState}`
+  );
+  const label = document.createElement("label");
+  label.textContent = initialState ? " Enabled" : " Disabled";
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.checked = initialState;
+  checkbox.dataset.scriptId = scriptId;
+  label.prepend(checkbox);
+  // TODO: Add event listener for state change (Step 7)
+  return label;
+}
+
+function renderScriptsGridView(container, scripts, states) {
+  // Placeholder for Grid View rendering (Step 4)
+  console.log("Rendering scripts in Grid View...");
+  container.innerHTML = "<p>Grid View Placeholder</p>";
+  // TODO: Implement actual grid rendering
+}
+
+function renderScriptsListView(container, scripts, states) {
+  // Placeholder for List View rendering (Step 4)
+  console.log("Rendering scripts in List View...");
+  container.innerHTML = ""; // Clear previous content
+  container.innerHTML = "<p>List View Placeholder</p>"; // Add placeholder
+  // TODO: Implement actual list rendering
 }
 
 // --- Initialization ---
@@ -199,8 +258,67 @@ function initializeManager() {
   // --- Tab Switching Logic ---
   const tabsContainer = modalElement.querySelector(".modal-tabs");
   const contentContainer = modalElement.querySelector(".modal-content");
+  const installedScriptsPane = contentContainer.querySelector("#tab-0"); // Get the specific pane for scripts
 
-  if (tabsContainer && contentContainer) {
+  if (tabsContainer && contentContainer && installedScriptsPane) {
+    const scriptsDisplayContainer = installedScriptsPane.querySelector(
+      ".scripts-display-container"
+    );
+    const viewSwitcher = installedScriptsPane.querySelector(".view-switcher");
+
+    // Check if elements exist before proceeding
+    if (!scriptsDisplayContainer) {
+      console.error("Could not find scripts display container");
+      return; // Exit initialization if critical elements are missing
+    }
+    if (!viewSwitcher) {
+      console.error("Could not find view switcher");
+      // Continue initialization, but view switching won't work
+    }
+
+    // Initial rendering of the default view (Grid)
+    renderScriptsGridView(
+      scriptsDisplayContainer,
+      SCRIPT_MANIFEST,
+      scriptStates
+    );
+
+    // --- View Switcher Logic ---
+    if (viewSwitcher) {
+      viewSwitcher.addEventListener("click", (event) => {
+        const targetButton = event.target.closest(".view-btn");
+        if (!targetButton || targetButton.classList.contains("active")) {
+          return; // Ignore clicks not on buttons or on the active button
+        }
+
+        const viewType = targetButton.dataset.view;
+        console.log(`Switching view to: ${viewType}`);
+
+        // Update active button state
+        viewSwitcher
+          .querySelectorAll(".view-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        targetButton.classList.add("active");
+
+        // Re-render the script list with the selected view
+        if (viewType === "list") {
+          renderScriptsListView(
+            scriptsDisplayContainer,
+            SCRIPT_MANIFEST,
+            scriptStates
+          );
+        } else {
+          // Default to grid view
+          renderScriptsGridView(
+            scriptsDisplayContainer,
+            SCRIPT_MANIFEST,
+            scriptStates
+          );
+        }
+      });
+    }
+
+    // --- Tab Switching Logic ---
     tabsContainer.addEventListener("click", (event) => {
       const targetButton = event.target.closest("button");
       if (!targetButton || !targetButton.dataset.tabTarget) return; // Ignore clicks not on tab buttons
@@ -228,7 +346,7 @@ function initializeManager() {
     });
   } else {
     console.error(
-      "Could not find tabs container or content container for tab switching."
+      "Could not find tabs container, content container, or installed scripts pane for setup."
     );
   }
 
