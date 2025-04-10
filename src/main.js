@@ -4,6 +4,7 @@ import { SCRIPT_MANIFEST } from "./manifest.js";
 import { FORUM_PREFERENCES } from "./forumPreferences.js";
 import { shouldLoadScript } from "./utils/urlMatcher.js";
 import { log, warn, error, debug } from "./utils/logger.js";
+import { sharedUtils } from "./utils/sharedUtils.js"; // Import shared utilities
 
 // Import UI components
 import { showModal } from "./components/showModal.js";
@@ -74,6 +75,27 @@ function loadEnabledScripts() {
     }
   });
   log("Finished loading scripts for phase: " + currentExecutionPhase);
+}
+
+// --- Shared Logic Execution ---
+function executePhaseSpecificSharedLogic(phase) {
+  log(`Executing shared logic for phase: ${phase}`);
+  if (phase === "document-end") {
+    // Conceptually run caching logic first
+    log("-> Running caching logic (placeholder)...");
+    // Example conceptual calls:
+    // sharedUtils.cachePostsOnPage();
+    // sharedUtils.cacheTopicsOnPage();
+
+    // Then run preference logic
+    log("-> Running preference logic (placeholder)...");
+    // Example conceptual calls:
+    // applyUserPreferences();
+    // applyThreadPreferences();
+  } else {
+    log(`-> No specific shared logic defined for phase: ${phase}`);
+  }
+  log(`Finished executing shared logic for phase: ${phase}`);
 }
 
 // Import scripts directly
@@ -337,6 +359,12 @@ function init() {
   document.addEventListener("DOMContentLoaded", () => {
     // Update current phase to document-end
     currentExecutionPhase = "document-end";
+
+    // Execute shared logic for this phase BEFORE loading scripts
+    executePhaseSpecificSharedLogic(currentExecutionPhase);
+
+    // Now load the scripts for this phase
+    currentExecutionPhase = "document-end";
     loadEnabledScripts();
 
     // Add menu button
@@ -346,12 +374,23 @@ function init() {
   window.addEventListener("load", () => {
     // Update current phase to document-idle
     currentExecutionPhase = "document-idle";
+
+    // Execute shared logic (if any) for this phase
+    executePhaseSpecificSharedLogic(currentExecutionPhase);
+
+    // Load scripts for this phase
+    currentExecutionPhase = "document-idle";
     loadEnabledScripts();
   });
 
   // Set up a phase for after DOM is fully ready and rendered
   setTimeout(() => {
     currentExecutionPhase = "after_dom";
+
+    // Execute shared logic (if any) for this phase
+    executePhaseSpecificSharedLogic(currentExecutionPhase);
+
+    // Load scripts for this phase
     loadEnabledScripts();
   }, 500); // Small delay to ensure everything is loaded
 

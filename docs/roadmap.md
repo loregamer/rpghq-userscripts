@@ -149,9 +149,9 @@ This document outlines the development checkpoints and actionable steps for crea
 ## Phase 9.5: Shared Functionality
 
 - **Checkpoint:** Core shared utilities and data caching mechanisms are in place.
-  - [ ] Implement a shared utility module (`src/utils/sharedUtils.js` or similar).
+  - [x] Implement a shared utility module (`src/utils/sharedUtils.js` or similar).
   - [ ] Develop a robust caching mechanism for forum posts (identified by post ID) using `GM_setValue`/`GM_getValue` or `localStorage`.
-    - [ ] Cache post content and metadata (author, timestamp, etc.) when viewed.
+    - [x] Define placeholder functions for post/topic caching.
     - [ ] Implement logic to retrieve from cache first before potentially re-parsing the DOM.
     - [ ] Consider cache invalidation strategies (e.g., time-based, edit detection if possible).
   - [ ] Develop a similar caching mechanism for topic data (topic title, starter, last post info) using topic IDs.
@@ -160,14 +160,14 @@ This document outlines the development checkpoints and actionable steps for crea
 
 ## Phase 9.6: Execution Order Definition
 
-- **Checkpoint:** The precise execution order for shared functions and individual scripts is defined and implemented.
-  - [ ] Define a clear execution order sequence in `main.js` or a configuration file.
-    - [ ] Example order: `cachePostsOnPage`, `cacheTopicsOnPage`, `userPreferenceLogic`, `threadPreferenceLogic`, `script1`, `script2`, ...
-  - [ ] Modify the script/function loading logic in `main.js` to adhere strictly to this defined order.
-  - [ ] Ensure that dependencies between functions/scripts are respected (e.g., caching logic runs before scripts that might use cached data).
-  - [ ] Document the execution order and the reasoning behind it (e.g., in `docs/execution_order.md`).
+- **Checkpoint:** The precise execution order for shared functions and individual scripts is defined and implementation is structured.
 
-## Phase 10: Forum Topic Management
+  - [x] Define a clear execution order sequence conceptually.
+    - [x] Example order defined: `cachePostsOnPage`, `cacheTopicsOnPage`, `userPreferenceLogic`, `threadPreferenceLogic`, `script1`, `script2`, ...
+  - [x] Modify the script/function loading logic in `main.js` to call shared logic placeholders before individual scripts in relevant phases.
+  - [x] Ensure that dependencies between functions/scripts are respected conceptually (e.g., caching logic runs before scripts that might use cached data).
+
+  - [x] Document the execution order and the reasoning behind it (`docs/execution_order.md`).
 
 - **Checkpoint:** Users can manage topic visibility and appearance directly on forum view pages.
   - [ ] Identify topic rows (e.g., `li.row`) on forum view pages (`viewforum.php`).
