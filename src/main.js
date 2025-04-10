@@ -545,6 +545,38 @@ function initializeManager() {
       modalElement.style.display = "block";
       overlayElement.style.display = "block";
       document.body.style.overflow = "hidden";
+
+      // Log the modal HTML structure
+      console.log("Modal HTML Structure:");
+      console.log(modalElement.outerHTML);
+
+      // Log modal's computed style and position
+      const computedStyle = window.getComputedStyle(modalElement);
+      console.log("Modal Computed Style:");
+      console.log({
+        display: computedStyle.display,
+        position: computedStyle.position,
+        zIndex: computedStyle.zIndex,
+        left: computedStyle.left,
+        top: computedStyle.top,
+        width: computedStyle.width,
+        height: computedStyle.height,
+      });
+
+      // Log the DOM structure to see where the modal is located
+      console.log("Document body structure:");
+      const domStructure = [];
+      for (const child of document.body.children) {
+        domStructure.push({
+          tagName: child.tagName,
+          id: child.id || "(no id)",
+          className: child.className || "(no class)",
+          isModalElement: child === modalElement,
+          isOverlayElement: child === overlayElement,
+          isSettingsModalElement: child === settingsModalElement,
+        });
+      }
+      console.log(domStructure);
     }
   };
 
