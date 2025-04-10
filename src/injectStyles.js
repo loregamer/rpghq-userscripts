@@ -313,23 +313,35 @@ GM_addStyle(`
     border: 1px solid var(--border-color);
     border-radius: 4px;
     overflow: hidden;
-    transition: border-color 0.3s ease;
+    transition: all 0.3s ease;
   }
   
-  .script-card.enabled {
-    border: 2px solid var(--success-color);
+  .script-card.disabled {
+    opacity: 0.7;
+    filter: grayscale(0.8);
   }
 
   .script-card-image {
     position: relative;
     height: 130px;
     overflow: hidden;
+    cursor: pointer;
   }
 
   .script-card-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+  
+  .image-toggle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 3px;
+    padding: 3px;
   }
 
   /* Category display removed */
@@ -361,8 +373,9 @@ GM_addStyle(`
 
   .script-toggle-checkbox {
     cursor: pointer;
-    transform: scale(1.3);
+    transform: scale(1.5);
     accent-color: var(--success-color);
+    margin: 2px;
   }
 
   .btn-icon {
