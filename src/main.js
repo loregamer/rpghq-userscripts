@@ -21,6 +21,9 @@ function gmSetValue(key, value) {
 // Object to hold the runtime state of scripts (enabled/disabled)
 const scriptStates = {};
 
+// Object to hold loaded script modules and their cleanup functions
+const loadedScripts = {};
+
 function initializeScriptStates() {
   console.log("Initializing script states...");
   SCRIPT_MANIFEST.forEach((script) => {
@@ -40,20 +43,69 @@ function loadEnabledScripts() {
   console.log("Loading enabled scripts...");
   SCRIPT_MANIFEST.forEach((script) => {
     if (scriptStates[script.id]) {
-      console.log(`Loading script: ${script.name} (from ${script.path})`);
-      // TODO: Phase 5 - Implement dynamic script loading (e.g., using dynamic import())
-      // For now, we just log.
-      // Example (needs adjustments for userscript environment):
-      // import(script.path)
-      //   .then(module => {
-      //     if (typeof module.init === 'function') {
-      //       module.init(); // Assuming scripts have an init function
-      //     }
-      //   })
-      //   .catch(err => console.error(`Failed to load script ${script.name}:`, err));
+      loadScript(script);
     }
   });
   console.log("Finished loading scripts.");
+}
+
+// Load a single script by its manifest entry
+async function loadScript(script) {
+  if (loadedScripts[script.id]) {
+    console.log(`Script ${script.name} already loaded, skipping.`);
+    return;
+  }
+
+  console.log(`Loading script: ${script.name} (from ${script.path})`);
+  try {
+    // Use dynamic import to load the script module
+    const module = await import(script.path);
+
+    // Check if the module has an init function
+    if (typeof module.init === "function") {
+      // Call init and store any returned cleanup function or object
+      const result = module.init();
+
+      // Store the loaded module and any cleanup function
+      loadedScripts[script.id] = {
+        module,
+        cleanup:
+          result && typeof result.cleanup === "function"
+            ? result.cleanup
+            : null,
+      };
+
+      console.log(`Successfully loaded script: ${script.name}`);
+    } else {
+      console.warn(`Script ${script.name} has no init function, skipping.`);
+    }
+  } catch (err) {
+    console.error(`Failed to load script ${script.name}:`, err);
+  }
+}
+
+// Unload a single script by its ID
+function unloadScript(scriptId) {
+  const scriptInfo = loadedScripts[scriptId];
+  if (!scriptInfo) {
+    console.log(`Script ${scriptId} not loaded, nothing to unload.`);
+    return;
+  }
+
+  console.log(`Unloading script: ${scriptId}`);
+
+  // Call cleanup function if it exists
+  if (scriptInfo.cleanup && typeof scriptInfo.cleanup === "function") {
+    try {
+      scriptInfo.cleanup();
+      console.log(`Cleanup completed for script: ${scriptId}`);
+    } catch (err) {
+      console.error(`Error during cleanup for script ${scriptId}:`, err);
+    }
+  }
+
+  // Remove from loaded scripts
+  delete loadedScripts[scriptId];
 }
 
 // --- UI Creation (Phase 4) ---
@@ -254,9 +306,24 @@ function createScriptToggle(scriptId, initialState) {
     // Save the new state to GM storage
     gmSetValue(storageKey, newState);
 
-    // Optional: Trigger any immediate actions needed on toggle (e.g., logging, or later, script loading/unloading)
-    console.log(`State for ${scriptId} saved as ${newState}.`);
-    // TODO: Phase 5 - Add logic here or elsewhere to handle dynamic loading/unloading if required immediately.
+    // Trigger immediate loading/unloading based on new state
+    console.log(
+      `State for ${scriptId} saved as ${newState}. Triggering script ${newState ? "loading" : "unloading"}...`,
+    );
+
+    // Find the script in the manifest
+    const script = SCRIPT_MANIFEST.find((s) => s.id === scriptId);
+    if (!script) {
+      console.error(`Could not find script with ID ${scriptId} in manifest.`);
+      return;
+    }
+
+    // Load or unload the script based on new state
+    if (newState) {
+      loadScript(script);
+    } else {
+      unloadScript(scriptId);
+    }
   });
 
   return label;
