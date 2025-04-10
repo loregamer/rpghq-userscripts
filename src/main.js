@@ -80,18 +80,23 @@ function loadEnabledScripts() {
 // --- Shared Logic Execution ---
 function executePhaseSpecificSharedLogic(phase) {
   log(`Executing shared logic for phase: ${phase}`);
+  // Shared logic primarily runs at document-end, before other scripts
   if (phase === "document-end") {
-    // Conceptually run caching logic first
-    log("-> Running caching logic (placeholder)...");
-    // Example conceptual calls:
-    // sharedUtils.cachePostsOnPage();
-    // sharedUtils.cacheTopicsOnPage();
+    try {
+      // 1. Caching Logic
+      log("-> Executing caching logic...");
+      sharedUtils.cachePostsOnPage();
+      sharedUtils.cacheTopicsOnPage();
+      log("-> Caching logic complete.");
 
-    // Then run preference logic
-    log("-> Running preference logic (placeholder)...");
-    // Example conceptual calls:
-    // applyUserPreferences();
-    // applyThreadPreferences();
+      // 2. Preference Application Logic
+      log("-> Executing preference application logic...");
+      sharedUtils.applyUserPreferences();
+      sharedUtils.applyThreadPreferences();
+      log("-> Preference application logic complete.");
+    } catch (err) {
+      error(`Error executing shared logic for phase ${phase}:`, err);
+    }
   } else {
     log(`-> No specific shared logic defined for phase: ${phase}`);
   }
@@ -364,7 +369,6 @@ function init() {
     executePhaseSpecificSharedLogic(currentExecutionPhase);
 
     // Now load the scripts for this phase
-    currentExecutionPhase = "document-end";
     loadEnabledScripts();
 
     // Add menu button
@@ -379,7 +383,6 @@ function init() {
     executePhaseSpecificSharedLogic(currentExecutionPhase);
 
     // Load scripts for this phase
-    currentExecutionPhase = "document-idle";
     loadEnabledScripts();
   });
 

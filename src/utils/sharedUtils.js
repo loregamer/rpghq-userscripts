@@ -12,6 +12,26 @@ export const sharedUtils = {
     // return cached ? JSON.parse(cached) : null;
     return null; // Placeholder
   },
+
+  // Page-level Caching Logic (Placeholders)
+  cachePostsOnPage: () => {
+    console.log("Shared Logic: Caching posts on current page (stub).");
+    // Logic to find all posts on the page and call cachePostData for each
+  },
+  cacheTopicsOnPage: () => {
+    console.log("Shared Logic: Caching topics on current page (stub).");
+    // Logic to find all topics (e.g., in viewforum) and call cacheTopicData
+  },
+
+  // Preference Application Logic (Placeholders)
+  applyUserPreferences: () => {
+    console.log("Shared Logic: Applying user preferences (stub).");
+    // Logic to read stored user preferences (hiding/highlighting users) and apply them
+  },
+  applyThreadPreferences: () => {
+    console.log("Shared Logic: Applying thread preferences (stub).");
+    // Logic to read stored thread preferences (pinning/hiding/highlighting topics) and apply them
+  },
   cacheTopicData: (topicId, data) => {
     console.log(`Caching data for topic ${topicId}`);
     // GM_setValue(`topic_${topicId}`, JSON.stringify(data)); // Example structure
