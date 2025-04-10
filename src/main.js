@@ -69,6 +69,7 @@ function createManagerModal() {
   // Create modal container
   const modal = document.createElement("div");
   modal.id = "rpghq-manager-modal";
+  modal.className = "mod-manager-modal";
   // Styles handled by CSS
 
   // Modal Header
@@ -103,7 +104,11 @@ function createManagerModal() {
     tabsContainer.appendChild(button);
   });
 
-  // Modal Content Area
+  // Create the modal content box that will contain all elements
+  const modalContentBox = document.createElement("div");
+  modalContentBox.className = "mod-manager-modal-content";
+
+  // Modal Content Area (inside the content box)
   const contentContainer = document.createElement("div");
   contentContainer.className = "modal-content";
 
@@ -153,9 +158,13 @@ function createManagerModal() {
   });
 
   // Assemble Modal
-  modal.appendChild(header);
-  modal.appendChild(tabsContainer);
-  modal.appendChild(contentContainer);
+  // First put header, tabs and content into the content box
+  modalContentBox.appendChild(header);
+  modalContentBox.appendChild(tabsContainer);
+  modalContentBox.appendChild(contentContainer);
+
+  // Then put the content box into the modal
+  modal.appendChild(modalContentBox);
 
   console.log("Manager modal structure created.");
   // Return elements for setup in initializeManager
@@ -168,6 +177,7 @@ function createSettingsModal() {
   // Settings Modal Container (no separate overlay needed, sits on top)
   const modal = document.createElement("div");
   modal.id = "rpghq-settings-modal"; // Different ID
+  modal.className = "settings-modal";
   // Styles handled by CSS
 
   // Settings Modal Header

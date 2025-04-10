@@ -22,6 +22,19 @@ GM_addStyle(`
     --bg-card: #2d2d2d;
     --border-color: #444444;
   }
+  
+  /* Modal overlay */
+  #rpghq-modal-overlay {
+    display: none;
+    position: fixed;
+    z-index: 1000000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+  }
 
   /* Modal container */
   .mod-manager-modal {
