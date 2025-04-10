@@ -40,7 +40,7 @@ This document outlines the development checkpoints and actionable steps for crea
     - [x] Set `src/main.js` as input.
     - [x] Set `dist/rpghq-userscript-manager.user.js` as output (`iife` format).
     - [x] Include necessary plugins (`node-resolve`, `commonjs`).
-  - [x] Configure Rollup to handle `src/styles.css` (e.g., using `rollup-plugin-import-css` to inject into JS or bundle separately if needed).
+  - [x] Configure Rollup to handle styles (using a postbuild script to inject CSS into the built userscript).
   - [x] Configure Rollup to generate the Userscript Metadata Block:
     - [x] Use `rollup-plugin-userscript-metablock` or manually construct the header string.
     - [x] Include essential `@name`, `@version` (from `package.json`), `@namespace`, `@match` (e.g., `*://*.rpghq.org/*`), `@grant` (start with `GM_getValue`, `GM_setValue`, `GM_registerMenuCommand`), `@run-at`.
