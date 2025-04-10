@@ -26,12 +26,8 @@ export function loadTabContent(tabName, context) {
 
   console.log(`Loading tab content for: ${tabName}`);
 
-  // Clear previous content (except the info note)
-  const infoNote = container.querySelector(".info-note");
+  // Clear previous content
   container.innerHTML = "";
-  if (infoNote) {
-    container.appendChild(infoNote);
-  }
 
   switch (tabName) {
     case "installed":

@@ -29,9 +29,6 @@ export function showModal({ loadTabContent, hideModal }) {
           <!-- Settings tab temporarily hidden -->
         </div>
         <div class="mod-manager-content" id="mod-manager-content">
-          <div class="info-note">
-            <strong>Note:</strong> Changes to script settings may require a page reload to take effect.
-          </div>
           <!-- Content loaded dynamically -->
         </div>
       </div>
