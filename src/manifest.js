@@ -8,7 +8,7 @@ export const SCRIPT_MANIFEST = [
     author: "loregamer",
     path: "./scripts/bbcode.js",
     enabledByDefault: true,
-    image: "https://f.rpghq.org/9Fl4tjANOkgO.png?n=pasted-file.png",
+    image: "https://f.rpghq.org/bEm69Td9mEGU.png?n=pasted-file.png",
     urlPatterns: [
       "https://rpghq.org/forums/posting.php?mode=post*",
       "https://rpghq.org/forums/posting.php?mode=quote*",
@@ -35,6 +35,20 @@ export const SCRIPT_MANIFEST = [
       // Add settings here
     ],
     categories: ["General"],
+    executionPhase: "after_dom",
+  },
+  {
+    id: "notifications",
+    name: "Notification Improver",
+    version: "1.0.0",
+    description:
+      "Adds smileys to reacted notifs, adds colors, idk just makes em cooler I guess",
+    author: "loregamer",
+    image: "", // Add an image URL if available
+    path: "./scripts/notifications.js",
+    enabledByDefault: true,
+    settings: [],
+    categories: ["UI"],
     executionPhase: "after_dom",
   },
   {

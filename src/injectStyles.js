@@ -685,20 +685,6 @@ GM_addStyle(`
     margin-bottom: 10px;
   }
 
-  /* Badges */
-  .badge {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 0.8em;
-    font-weight: bold;
-  }
-
-  .badge-primary {
-    background-color: var(--primary-color);
-    color: white;
-  }
-
   /* Info note */
   .info-note {
     background-color: rgba(33, 150, 243, 0.1);
