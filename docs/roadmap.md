@@ -58,9 +58,9 @@ This document outlines the development checkpoints and actionable steps for crea
         *   [x] Close button functionality.
     *   [x] Implement tab switching logic.
     *   [ ] Implement the "Installed Scripts" tab:
-        *   [ ] Render scripts from the `SCRIPT_MANIFEST`.
-        *   [ ] Implement Grid View (`renderScriptsGridView`).
-        *   [ ] Implement List View (`renderScriptsListView`).
+        *   [x] Render scripts from the `SCRIPT_MANIFEST`.
+        *   [x] Implement Grid View (`renderScriptsGridView`).
+        *   [x] Implement List View (`renderScriptsListView`).
         *   [x] Implement view switcher (Grid/List buttons).
         *   [ ] Implement enable/disable toggle switches for each script.
             *   [ ] Update the UI state visually.

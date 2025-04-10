@@ -174,18 +174,147 @@ function createScriptToggle(scriptId, initialState) {
 }
 
 function renderScriptsGridView(container, scripts, states) {
-  // Placeholder for Grid View rendering (Step 4)
   console.log("Rendering scripts in Grid View...");
-  container.innerHTML = "<p>Grid View Placeholder</p>";
-  // TODO: Implement actual grid rendering
+  container.innerHTML = ""; // Clear previous content
+
+  const gridWrapper = document.createElement("div");
+  gridWrapper.className = "script-grid";
+
+  if (scripts.length === 0) {
+    container.innerHTML = '<p class="empty-state">No scripts found.</p>'; // TODO: Add icon later
+    return;
+  }
+
+  scripts.forEach((script) => {
+    const card = document.createElement("div");
+    card.className = "script-card";
+
+    // Simple Card Structure (based on description)
+    const header = document.createElement("div");
+    header.className = "script-card-header";
+
+    const title = document.createElement("span");
+    title.className = "script-card-title";
+    title.textContent = script.name;
+
+    const version = document.createElement("span");
+    version.className = "script-card-version";
+    version.textContent = `v${script.version}`;
+
+    // TODO: Add category overlay if image is implemented
+
+    // Placeholder for Toggle (will be replaced in Step 6)
+    const togglePlaceholder = createScriptToggle(script.id, states[script.id]);
+
+    header.appendChild(title);
+    header.appendChild(togglePlaceholder);
+    header.appendChild(version);
+
+    const description = document.createElement("p");
+    description.className = "script-card-description";
+    description.textContent = script.description || "No description available.";
+
+    const footer = document.createElement("div");
+    footer.className = "script-card-footer";
+
+    // Settings Button (only if settings exist)
+    if (script.settings && script.settings.length > 0) {
+      const settingsButton = document.createElement("button");
+      settingsButton.className = "btn btn-primary btn-small view-settings"; // Basic classes
+      settingsButton.textContent = "Settings"; // TODO: Add icon later
+      settingsButton.dataset.scriptId = script.id;
+      // TODO: Add event listener for settings modal
+      footer.appendChild(settingsButton);
+    }
+
+    card.appendChild(header);
+    card.appendChild(description);
+    card.appendChild(footer);
+    gridWrapper.appendChild(card);
+  });
+
+  container.appendChild(gridWrapper);
 }
 
 function renderScriptsListView(container, scripts, states) {
-  // Placeholder for List View rendering (Step 4)
   console.log("Rendering scripts in List View...");
   container.innerHTML = ""; // Clear previous content
-  container.innerHTML = "<p>List View Placeholder</p>"; // Add placeholder
-  // TODO: Implement actual list rendering
+
+  if (scripts.length === 0) {
+    container.innerHTML = '<p class="empty-state">No scripts found.</p>'; // TODO: Add icon later
+    return;
+  }
+
+  const table = document.createElement("table");
+  table.className = "data-table script-list-table"; // Add specific class if needed
+
+  // Table Header
+  const thead = table.createTHead();
+  const headerRow = thead.insertRow();
+  const headers = [
+    "Enabled",
+    "Name",
+    "Version",
+    "Description",
+    "Settings",
+    "Actions",
+  ];
+  headers.forEach((text) => {
+    const th = document.createElement("th");
+    th.textContent = text;
+    headerRow.appendChild(th);
+  });
+
+  // Table Body
+  const tbody = table.createTBody();
+  scripts.forEach((script) => {
+    const row = tbody.insertRow();
+
+    // Enabled Toggle
+    const toggleCell = row.insertCell();
+    toggleCell.className = "script-toggle-cell";
+    toggleCell.appendChild(createScriptToggle(script.id, states[script.id]));
+
+    // Name
+    const nameCell = row.insertCell();
+    nameCell.textContent = script.name;
+    nameCell.style.fontWeight = "bold";
+
+    // Version
+    const versionCell = row.insertCell();
+    versionCell.textContent = `v${script.version}`;
+
+    // Description
+    const descCell = row.insertCell();
+    descCell.textContent = script.description || "-";
+
+    // Settings Count/Badge
+    const settingsCell = row.insertCell();
+    const settingsCount = script.settings ? script.settings.length : 0;
+    if (settingsCount > 0) {
+      const badge = document.createElement("span");
+      badge.className = "badge badge-primary"; // Basic classes
+      badge.textContent = `${settingsCount} setting${
+        settingsCount > 1 ? "s" : ""
+      }`;
+      settingsCell.appendChild(badge);
+    } else {
+      settingsCell.textContent = "-";
+    }
+
+    // Actions (Settings Button)
+    const actionsCell = row.insertCell();
+    if (settingsCount > 0) {
+      const settingsButton = document.createElement("button");
+      settingsButton.className = "btn btn-primary btn-small view-settings"; // Basic classes
+      settingsButton.textContent = "Settings"; // TODO: Add icon later
+      settingsButton.dataset.scriptId = script.id;
+      // TODO: Add event listener for settings modal
+      actionsCell.appendChild(settingsButton);
+    }
+  });
+
+  container.appendChild(table);
 }
 
 // --- Initialization ---
