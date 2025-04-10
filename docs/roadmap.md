@@ -146,6 +146,18 @@ This document outlines the development checkpoints and actionable steps for crea
   - [x] Added Prettier formatter.
   - [x] Added automated manifest sorting by script name.
 
+## Phase 9.5: Shared Functionality
+
+- **Checkpoint:** Core shared utilities and data caching mechanisms are in place.
+  - [ ] Implement a shared utility module (`src/utils/sharedUtils.js` or similar).
+  - [ ] Develop a robust caching mechanism for forum posts (identified by post ID) using `GM_setValue`/`GM_getValue` or `localStorage`.
+    - [ ] Cache post content and metadata (author, timestamp, etc.) when viewed.
+    - [ ] Implement logic to retrieve from cache first before potentially re-parsing the DOM.
+    - [ ] Consider cache invalidation strategies (e.g., time-based, edit detection if possible).
+  - [ ] Develop a similar caching mechanism for topic data (topic title, starter, last post info) using topic IDs.
+  - [ ] Ensure caching runs reliably across different page loads and script executions.
+  - [ ] Refactor existing or future scripts to utilize these shared caching functions where applicable.
+
 ## Phase 10: Forum Topic Management
 
 - **Checkpoint:** Users can manage topic visibility and appearance directly on forum view pages.
