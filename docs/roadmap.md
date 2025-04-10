@@ -52,10 +52,10 @@ This document outlines the development checkpoints and actionable steps for crea
 *   **Checkpoint:** The core UI modal is functional and displays script information.
     *   [x] Implement HTML structure creation for the main modal (`mod-manager-modal`) within `main.js`.
     *   [x] Implement CSS in `src/styles.css` for the modal, overlay, header, tabs, and content area (based on `docs/ui_description_popup_only.md`).
-    *   [ ] Implement basic modal visibility logic (show/hide on command/shortcut).
-        *   [ ] `GM_registerMenuCommand` to open the modal.
-        *   [ ] Keyboard shortcut listener (`Insert` key) to toggle visibility.
-        *   [ ] Close button functionality.
+    *   [x] Implement basic modal visibility logic (show/hide on command/shortcut).
+        *   [x] `GM_registerMenuCommand` to open the modal.
+        *   [x] Keyboard shortcut listener (`Insert` key) to toggle visibility.
+        *   [x] Close button functionality.
     *   [ ] Implement tab switching logic.
     *   [ ] Implement the "Installed Scripts" tab:
         *   [ ] Render scripts from the `SCRIPT_MANIFEST`.

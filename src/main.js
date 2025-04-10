@@ -57,63 +57,30 @@ function loadEnabledScripts() {
 
 // --- UI Creation (Phase 4) ---
 function createManagerModal() {
-  console.log("Creating manager modal UI...");
+  // Return the created elements instead of appending/styling directly
+  console.log("Creating manager modal structure...");
 
   // Create overlay
   const overlay = document.createElement("div");
   overlay.id = "rpghq-modal-overlay";
-  overlay.style.display = "none"; // Initially hidden
-  // Basic overlay styles (will be refined in CSS)
-  overlay.style.position = "fixed";
-  overlay.style.top = "0";
-  overlay.style.left = "0";
-  overlay.style.width = "100%";
-  overlay.style.height = "100%";
-  overlay.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-  overlay.style.zIndex = "9998"; // Below modal
+  // Styles handled by CSS
 
   // Create modal container
   const modal = document.createElement("div");
   modal.id = "rpghq-manager-modal";
-  modal.style.display = "none"; // Initially hidden
-  // Basic modal styles (will be refined in CSS)
-  modal.style.position = "fixed";
-  modal.style.top = "50%";
-  modal.style.left = "50%";
-  modal.style.transform = "translate(-50%, -50%)";
-  modal.style.width = "80%";
-  modal.style.maxWidth = "800px";
-  modal.style.maxHeight = "80vh";
-  modal.style.backgroundColor = "white";
-  modal.style.border = "1px solid #ccc";
-  modal.style.boxShadow = "0 4px 8px rgba(0,0,0,0.1)";
-  modal.style.zIndex = "9999"; // Above overlay
-  modal.style.display = "flex";
-  modal.style.flexDirection = "column";
+  // Styles handled by CSS
 
   // Modal Header
   const header = document.createElement("div");
   header.className = "modal-header";
-  // Basic header styles
-  header.style.padding = "10px 15px";
-  header.style.borderBottom = "1px solid #eee";
-  header.style.display = "flex";
-  header.style.justifyContent = "space-between";
-  header.style.alignItems = "center";
 
   const title = document.createElement("h2");
   title.textContent = "RPGHQ Userscript Manager";
-  title.style.margin = "0";
-  title.style.fontSize = "1.2em";
 
   const closeButton = document.createElement("button");
   closeButton.id = "rpghq-modal-close";
   closeButton.textContent = "×";
-  // Basic button styles
-  closeButton.style.background = "none";
-  closeButton.style.border = "none";
-  closeButton.style.fontSize = "1.5em";
-  closeButton.style.cursor = "pointer";
+  // Styles handled by CSS
 
   header.appendChild(title);
   header.appendChild(closeButton);
@@ -121,28 +88,16 @@ function createManagerModal() {
   // Modal Tabs
   const tabsContainer = document.createElement("div");
   tabsContainer.className = "modal-tabs";
-  // Basic tabs styles
-  tabsContainer.style.padding = "10px 15px";
-  tabsContainer.style.borderBottom = "1px solid #eee";
-  tabsContainer.style.display = "flex";
 
   const tabButtons = ["Installed Scripts", "Forum Preferences", "Settings"];
   tabButtons.forEach((text, index) => {
     const button = document.createElement("button");
-    button.dataset.tabTarget = `tab-${index}`; // Link button to tab content
+    button.dataset.tabTarget = `tab-${index}`;
     button.textContent = text;
-    // Basic tab button styles
-    button.style.padding = "8px 12px";
-    button.style.marginRight = "5px";
-    button.style.cursor = "pointer";
-    button.style.border = "1px solid #ccc";
-    button.style.borderBottom = "none";
-    button.style.background = "#eee";
+    // Styles handled by CSS
     if (index === 0) {
       button.classList.add("active"); // Mark first tab as active initially
-      button.style.background = "white";
-      button.style.borderBottom = "1px solid white"; // Visually connect to content
-      button.style.marginBottom = "-1px";
+      // Active styles handled by CSS
     }
     tabsContainer.appendChild(button);
   });
@@ -150,20 +105,17 @@ function createManagerModal() {
   // Modal Content Area
   const contentContainer = document.createElement("div");
   contentContainer.className = "modal-content";
-  // Basic content styles
-  contentContainer.style.padding = "15px";
-  contentContainer.style.overflowY = "auto"; // Make content scrollable if needed
-  contentContainer.style.flexGrow = "1"; // Allow content to fill space
 
   // Create content divs for each tab (initially hidden except the first)
   tabButtons.forEach((_, index) => {
     const tabContent = document.createElement("div");
     tabContent.id = `tab-${index}`;
     tabContent.className = "tab-pane";
-    if (index !== 0) {
-      tabContent.style.display = "none";
+    if (index === 0) {
+      tabContent.classList.add("active"); // Add active class to first pane
     }
-    tabContent.textContent = `Content for ${tabButtons[index]}`; // Placeholder
+    // Placeholder content (will be replaced later)
+    tabContent.textContent = `Content for ${tabButtons[index]}`;
     contentContainer.appendChild(tabContent);
   });
 
@@ -172,11 +124,9 @@ function createManagerModal() {
   modal.appendChild(tabsContainer);
   modal.appendChild(contentContainer);
 
-  // Append overlay and modal to body
-  document.body.appendChild(overlay);
-  document.body.appendChild(modal);
-
-  console.log("Manager modal UI created.");
+  console.log("Manager modal structure created.");
+  // Return elements for setup in initializeManager
+  return { modalElement: modal, overlayElement: overlay };
 }
 
 // --- Initialization ---
@@ -184,8 +134,69 @@ function initializeManager() {
   console.log("RPGHQ Userscript Manager Initializing...");
   initializeScriptStates();
   loadEnabledScripts();
-  // Phase 4: Initialize UI
-  createManagerModal();
+
+  // --- Phase 4: Initialize UI ---
+  const { modalElement, overlayElement } = createManagerModal();
+
+  // Append elements to the body
+  document.body.appendChild(overlayElement);
+  document.body.appendChild(modalElement);
+
+  // --- Modal Visibility Logic ---
+  const toggleModalVisibility = () => {
+    const isActive = modalElement.classList.contains("active");
+    console.log(
+      `Toggling modal visibility. Currently ${
+        isActive ? "active" : "inactive"
+      }.`
+    );
+    modalElement.classList.toggle("active");
+    overlayElement.classList.toggle("active");
+  };
+
+  // Get close button reference
+  const closeButton = modalElement.querySelector("#rpghq-modal-close");
+  if (closeButton) {
+    closeButton.addEventListener("click", toggleModalVisibility);
+  } else {
+    console.error("Could not find close button.");
+  }
+
+  // Close modal when clicking overlay
+  overlayElement.addEventListener("click", (event) => {
+    // Only close if the overlay itself (not content inside it) is clicked
+    if (event.target === overlayElement) {
+      toggleModalVisibility();
+    }
+  });
+
+  // Keyboard shortcut (Insert key)
+  document.addEventListener("keydown", (event) => {
+    // Check if Insert key is pressed and the target is not an input element
+    if (event.key === "Insert" || event.keyCode === 45) {
+      const targetTagName = event.target.tagName.toLowerCase();
+      if (!["input", "textarea", "select"].includes(targetTagName)) {
+        event.preventDefault(); // Prevent potential default browser behavior for Insert
+        toggleModalVisibility();
+      } else {
+        console.log(
+          "Insert key pressed in input field, ignoring modal toggle."
+        );
+      }
+    }
+  });
+
+  // Register GM Menu Command
+  try {
+    // eslint-disable-next-line no-undef
+    GM_registerMenuCommand("RPGHQ Userscript Manager", toggleModalVisibility);
+    console.log("GM Menu command registered.");
+  } catch (e) {
+    console.error("Failed to register GM menu command:", e);
+    // Fallback or notification? For now, just log error.
+  }
+
+  console.log("UI Initialized with visibility controls.");
 }
 
 // --- Run ---
