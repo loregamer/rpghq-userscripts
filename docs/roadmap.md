@@ -163,7 +163,7 @@ This document outlines the development checkpoints and actionable steps for crea
 - **Checkpoint:** The precise execution order for shared functions and individual scripts is defined and implementation is structured.
 
   - [x] Define a clear execution order sequence conceptually.
-    - [x] Example order defined: `cachePostsOnPage`, `cacheTopicsOnPage`, `userPreferenceLogic`, `threadPreferenceLogic`, `script1`, `script2`, ...
+    - [x] Example order defined: `_cachePostsOnPage`, `_userPreferenceLogic`, `_threadPreferenceLogic`, `script1`, `script2`, ...
   - [x] Modify the script/function loading logic in `main.js` to call shared logic placeholders before individual scripts in relevant phases.
   - [x] Ensure that dependencies between functions/scripts are respected conceptually (e.g., caching logic runs before scripts that might use cached data).
 
