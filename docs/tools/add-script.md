@@ -5,28 +5,27 @@ The `add-script.js` tool automates the process of adding a new userscript to the
 ## Features
 
 - Creates a new script file with boilerplate code
-- Adds the script to the manifest
+- Adds the script to the manifest (sorted alphabetically by name)
 - Updates imports and module mapping in main.js
 - Creates documentation template for the script
+- Interactive prompts for all script details
 
 ## Usage
 
 ```bash
-npm run add-script scriptId "Script Name" "Description" "Author Name"
+npm run add-script
 ```
 
-### Parameters
+### Interactive Prompts
 
-- `scriptId`: The identifier for the script. Must start with a letter and contain only alphanumeric characters. This is used for file names and internal references.
-- `Script Name`: The display name of the script (in quotes).
-- `Description` (optional): A brief description of what the script does (in quotes).
-- `Author Name` (optional): The name of the script author (in quotes).
+The tool will prompt you for the following information:
 
-### Example
-
-```bash
-npm run add-script postPreview "Post Preview" "Preview posts before submitting" "johnsmith"
-```
+- **Script ID**: The identifier for the script. Must start with a letter and contain only alphanumeric characters. This is used for file names and internal references.
+- **Script Name**: The display name of the script.
+- **Description**: A brief description of what the script does.
+- **Author Name**: The name of the script author.
+- **Category**: The category the script belongs to (defaults to "General").
+- **Enable by Default**: Whether the script should be enabled by default (y/n).
 
 ## What the Tool Does
 
