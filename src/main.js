@@ -51,12 +51,10 @@ function initializeScriptStates() {
     const storageKey = `script_enabled_${script.id}`;
     // Load state from GM storage, falling back to manifest default
     scriptStates[script.id] = gmGetValue(storageKey, script.enabledByDefault);
+    // Log status with scriptId as context
     log(
-      script.id, // Pass script.id as the context
-      `Script '${script.name}': ${
-        // The rest is the message
-        scriptStates[script.id] ? "Enabled" : "Disabled"
-      } (Default: ${script.enabledByDefault})`,
+      script.id,
+      `${scriptStates[script.id] ? "Enabled" : "Disabled"} (Default: ${script.enabledByDefault})`,
     );
   });
 }
