@@ -71,6 +71,7 @@ async function createScript() {
     category,
     enabledByDefault
   };
+}
 
 async function processFiles(scriptId, scriptName, description, author, category, enabledByDefault) {
   // File paths
@@ -272,6 +273,8 @@ export function init() {
   console.log(`2. Update ${docsFilePath} with complete documentation`);
   console.log(`3. Add an image URL to the manifest entry if desired`);
   console.log(`4. Add settings to the manifest entry if needed`);
+  
+  return { newScriptPath, docsFilePath };
 }
 
 // Run the script
