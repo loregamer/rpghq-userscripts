@@ -38,6 +38,7 @@ const generateMetadata = () => {
     "// @match        *://*.rpghq.org/*",
     "// @grant        GM_getValue",
     "// @grant        GM_setValue",
+    "// @grant        GM_listValues",
     "// @grant        GM_registerMenuCommand",
     "// @grant        GM_addStyle",
     "// @run-at       document-start",
