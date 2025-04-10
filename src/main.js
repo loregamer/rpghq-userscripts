@@ -162,6 +162,55 @@ function createManagerModal() {
   return { modalElement: modal, overlayElement: overlay };
 }
 
+function createSettingsModal() {
+  console.log("Creating settings modal structure...");
+
+  // Settings Modal Container (no separate overlay needed, sits on top)
+  const modal = document.createElement("div");
+  modal.id = "rpghq-settings-modal"; // Different ID
+  // Styles handled by CSS
+
+  // Settings Modal Header
+  const header = document.createElement("div");
+  header.className = "settings-modal-header";
+
+  const title = document.createElement("h2");
+  title.id = "rpghq-settings-modal-title"; // ID to update title
+  title.textContent = "Script Settings"; // Default title
+
+  const closeButton = document.createElement("button");
+  closeButton.id = "rpghq-settings-modal-close";
+  closeButton.textContent = "×";
+  // Styles handled by CSS
+
+  header.appendChild(title);
+  header.appendChild(closeButton);
+
+  // Settings Modal Content Area
+  const contentContainer = document.createElement("div");
+  contentContainer.className = "settings-modal-content";
+
+  // Area for dynamically rendered settings
+  const settingsArea = document.createElement("div");
+  settingsArea.className = "settings-area";
+  settingsArea.innerHTML = "<p>Loading settings...</p>"; // Placeholder
+
+  // Area for script metadata
+  const scriptInfoArea = document.createElement("div");
+  scriptInfoArea.className = "script-info";
+  scriptInfoArea.innerHTML = "<p>Loading script info...</p>"; // Placeholder
+
+  contentContainer.appendChild(settingsArea);
+  contentContainer.appendChild(scriptInfoArea);
+
+  // Assemble Modal
+  modal.appendChild(header);
+  modal.appendChild(contentContainer);
+
+  console.log("Settings modal structure created.");
+  return modal; // Return the element
+}
+
 // --- UI Rendering (Phase 4 - Installed Scripts Tab) ---
 
 function createScriptToggle(scriptId, initialState) {
@@ -347,6 +396,20 @@ function renderScriptsListView(container, scripts, states) {
   container.appendChild(table);
 }
 
+// Placeholder function for rendering settings controls
+function renderScriptSettingsContent(container, script) {
+  console.log(`Rendering settings content for: ${script.name}`);
+  container.innerHTML = ""; // Clear previous content
+
+  if (!script.settings || script.settings.length === 0) {
+    container.innerHTML = '<p class="empty-state">No Settings Available</p>'; // TODO: Add icon
+    return;
+  }
+
+  // TODO: Implement actual rendering of controls based on script.settings
+  container.innerHTML = "<p><i>Settings controls placeholder...</i></p>";
+}
+
 // --- Initialization ---
 function initializeManager() {
   console.log("RPGHQ Userscript Manager Initializing...");
@@ -355,10 +418,12 @@ function initializeManager() {
 
   // --- Phase 4: Initialize UI ---
   const { modalElement, overlayElement } = createManagerModal();
+  const settingsModalElement = createSettingsModal(); // Create the settings modal
 
   // Append elements to the body
   document.body.appendChild(overlayElement);
   document.body.appendChild(modalElement);
+  document.body.appendChild(settingsModalElement); // Append settings modal
 
   // --- Modal Visibility Logic ---
   const toggleModalVisibility = () => {
@@ -371,6 +436,68 @@ function initializeManager() {
     modalElement.classList.toggle("active");
     overlayElement.classList.toggle("active");
   };
+
+  // --- Settings Modal Visibility & Logic ---
+  let currentSettingsScript = null; // Keep track of which script's settings are showing
+
+  const toggleSettingsModalVisibility = (show, script = null) => {
+    console.log(
+      `Toggling settings modal visibility: ${show ? "show" : "hide"}`
+    );
+    currentSettingsScript = show ? script : null;
+
+    if (show && script) {
+      // Populate Title
+      const titleElement = settingsModalElement.querySelector(
+        "#rpghq-settings-modal-title"
+      );
+      if (titleElement) titleElement.textContent = `${script.name} Settings`;
+
+      // Populate Settings Area (Placeholder call)
+      const settingsArea = settingsModalElement.querySelector(".settings-area");
+      if (settingsArea) renderScriptSettingsContent(settingsArea, script);
+
+      // Populate Script Info Area
+      const scriptInfoArea = settingsModalElement.querySelector(".script-info");
+      if (scriptInfoArea) {
+        scriptInfoArea.innerHTML = ""; // Clear previous
+        const infoTable = document.createElement("table");
+        infoTable.className = "data-table";
+        const tbody = infoTable.createTBody();
+
+        const addInfoRow = (label, value) => {
+          const row = tbody.insertRow();
+          const labelCell = row.insertCell();
+          labelCell.textContent = label;
+          labelCell.style.fontWeight = "bold";
+          const valueCell = row.insertCell();
+          valueCell.textContent = value || "-";
+        };
+
+        addInfoRow("ID", script.id);
+        addInfoRow("Version", script.version);
+        addInfoRow("Author", script.author);
+        // Add other relevant metadata later if needed (category, match URLs etc)
+
+        scriptInfoArea.appendChild(infoTable);
+      }
+      settingsModalElement.classList.add("active");
+    } else {
+      settingsModalElement.classList.remove("active");
+    }
+  };
+
+  // Settings Modal Close Button
+  const settingsCloseButton = settingsModalElement.querySelector(
+    "#rpghq-settings-modal-close"
+  );
+  if (settingsCloseButton) {
+    settingsCloseButton.addEventListener("click", () =>
+      toggleSettingsModalVisibility(false)
+    );
+  } else {
+    console.error("Could not find settings modal close button.");
+  }
 
   // Get close button reference
   const closeButton = modalElement.querySelector("#rpghq-modal-close");
@@ -476,6 +603,22 @@ function initializeManager() {
         }
       });
     }
+
+    // --- Settings Button Click Listener (Event Delegation) ---
+    scriptsDisplayContainer.addEventListener("click", (event) => {
+      const settingsButton = event.target.closest(".view-settings");
+      if (!settingsButton) return; // Ignore clicks not on a settings button
+
+      const scriptId = settingsButton.dataset.scriptId;
+      const script = SCRIPT_MANIFEST.find((s) => s.id === scriptId);
+
+      if (script) {
+        console.log(`Opening settings modal for script: ${scriptId}`);
+        toggleSettingsModalVisibility(true, script);
+      } else {
+        console.error(`Could not find script data for ID: ${scriptId}`);
+      }
+    });
 
     // --- Tab Switching Logic ---
     tabsContainer.addEventListener("click", (event) => {

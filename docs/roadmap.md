@@ -67,11 +67,11 @@ This document outlines the development checkpoints and actionable steps for crea
             *   [x] Save the state using `GM_setValue`.
             *   [ ] Trigger necessary logic to load/unload the actual script functionality (Phase 5).
     *   [x] Implement placeholder content for "Forum Preferences" and "Settings" tabs.
-    *   [ ] Implement the Script Settings modal (`settings-modal`):
-        *   [ ] Basic modal structure and styling.
-        *   [ ] Function to dynamically render settings controls based on script's manifest definition (`renderScriptSettingsContent`).
-        *   [ ] Display script metadata (`script-info`).
-        *   [ ] Functionality for "Settings" button on script card/row to open this modal for the correct script.
+    *   [x] Implement the Script Settings modal (`settings-modal`):
+        *   [x] Basic modal structure and styling.
+        *   [x] Function to dynamically render settings controls based on script's manifest definition (`renderScriptSettingsContent`) (placeholder implemented).
+        *   [x] Display script metadata (`script-info`).
+        *   [x] Functionality for "Settings" button on script card/row to open this modal for the correct script.
         *   [ ] (Later) Hook up controls to save settings via `GM_setValue`.
 
 ## Phase 5: Dynamic Script Execution

@@ -379,3 +379,89 @@ input:focus + .slider {
 input:checked + .slider:before {
   transform: translateX(20px); /* Adjusted translation */
 }
+
+/* --- Settings Modal Styles --- */
+#rpghq-settings-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70%; /* Slightly smaller than main modal */
+  max-width: 800px;
+  max-height: 85vh;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--modal-shadow);
+  z-index: 10001; /* Above main modal overlay */
+  display: none; /* Controlled by JS */
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Use similar header style, potentially different class name if needed */
+.settings-modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.settings-modal-header h2 {
+  margin: 0;
+  font-size: 1.3em; /* Slightly smaller title */
+  font-weight: 500;
+}
+
+/* Use same close button style */
+#rpghq-settings-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 1;
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+#rpghq-settings-modal-close:hover {
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+.settings-modal-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.settings-area {
+  margin-bottom: 20px;
+  /* Styles for individual settings items will go here */
+}
+
+.script-info {
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.9em;
+  color: var(--text-secondary);
+}
+
+.script-info .data-table td {
+  padding: 6px 10px; /* Slightly smaller padding */
+}
+
+/* Add display: flex back for the active settings modal */
+#rpghq-settings-modal.active {
+  display: flex;
+}
+
+/* Add display: flex back for the active modal */
+#rpghq-manager-modal.active {
+  display: flex;
+}
