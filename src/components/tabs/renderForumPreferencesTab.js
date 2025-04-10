@@ -7,7 +7,7 @@ import { renderThreadsSubtab } from "./subtabs/renderThreadsSubtab.js";
 import { renderUsersSubtab } from "./subtabs/renderUsersSubtab.js";
 
 export function renderForumPreferencesTab(container) {
-  console.log("Rendering Forum Preferences tab with subtabs...");
+  log("Rendering Forum Preferences tab with subtabs...");
 
   container.innerHTML = `<h2>Forum Preferences</h2>`;
 

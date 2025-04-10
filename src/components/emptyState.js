@@ -10,7 +10,7 @@ export function renderEmptyState(
   message = "No scripts found.",
   iconClass = "fa-search",
 ) {
-  console.log("Rendering empty state...");
+  log("Rendering empty state...");
 
   container.innerHTML = `
     <div class="empty-state">

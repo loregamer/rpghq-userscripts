@@ -8,10 +8,7 @@ export function renderPreferenceControl(preference) {
   switch (preference.type) {
     case "toggle":
       return `
-          <label class="toggle-switch">
-            <input type="checkbox" ${preference.default ? "checked" : ""}>
-            <span class="toggle-slider"></span>
-          </label>
+          <input type="checkbox" name="${preference.id}" ${preference.default ? "checked" : ""}>
         `;
     case "select":
       return `

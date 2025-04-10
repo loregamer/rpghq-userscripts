@@ -4,7 +4,7 @@
  * @param {HTMLElement} container - The container element to render into
  */
 export function renderSettingsTab(container) {
-  console.log("Rendering Settings tab...");
+  log("Rendering Settings tab...");
 
   container.innerHTML = `
     <h2>Global Settings</h2>

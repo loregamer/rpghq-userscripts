@@ -8,7 +8,7 @@
  */
 
 export function init() {
-  console.log("Thousands Comma Formatter initialized!");
+  log("Thousands Comma Formatter initialized!");
 
   // Get user settings
   const formatFourDigits = GM_getValue(
@@ -177,7 +177,7 @@ export function init() {
   // Return cleanup function
   return {
     cleanup: () => {
-      console.log("Thousands Comma Formatter cleanup");
+      log("Thousands Comma Formatter cleanup");
       // Disconnect observer
       observer.disconnect();
       // We can't easily "undo" the formatting without a page reload

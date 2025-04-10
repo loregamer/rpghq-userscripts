@@ -12,7 +12,7 @@ export function showScriptSettings(
   renderScriptSettingsContent,
   saveScriptSetting = null,
 ) {
-  console.log(`Showing settings modal for script: ${script.name}`);
+  log(`Showing settings modal for script: ${script.name}`);
 
   // Create modal if it doesn't exist
   let modal = document.getElementById("script-settings-modal");

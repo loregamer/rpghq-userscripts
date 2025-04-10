@@ -24,7 +24,7 @@ export function loadTabContent(tabName, context) {
     executionPhases,
   } = context;
 
-  console.log(`Loading tab content for: ${tabName}`);
+  log(`Loading tab content for: ${tabName}`);
 
   // Clear previous content
   container.innerHTML = "";
@@ -47,7 +47,7 @@ export function loadTabContent(tabName, context) {
       renderSettingsTab(container);
       break;
     default:
-      console.error(`Unknown tab: ${tabName}`);
+      error(`Unknown tab: ${tabName}`);
       container.innerHTML = `<div class="error-message">Unknown tab: ${tabName}</div>`;
   }
 }

@@ -4,7 +4,7 @@
  * @param {HTMLElement} container - The container element to render into
  */
 export function renderUsersSubtab(container) {
-  console.log("Rendering Users subtab...");
+  log("Rendering Users subtab...");
 
   container.innerHTML = `
     <div class="wip-banner">
@@ -20,10 +20,7 @@ export function renderUsersSubtab(container) {
           <div class="preference-header">
             <h4 class="preference-name">Show User Signatures</h4>
             <div class="preference-control">
-              <label class="toggle-switch">
-                <input type="checkbox" checked>
-                <span class="toggle-slider"></span>
-              </label>
+              <input type="checkbox" name="user.display.signatures" checked>
             </div>
           </div>
           <p class="preference-description">Display user signatures in posts</p>
@@ -33,10 +30,7 @@ export function renderUsersSubtab(container) {
           <div class="preference-header">
             <h4 class="preference-name">Show User Avatars</h4>
             <div class="preference-control">
-              <label class="toggle-switch">
-                <input type="checkbox" checked>
-                <span class="toggle-slider"></span>
-              </label>
+              <input type="checkbox" name="user.display.avatars" checked>
             </div>
           </div>
           <p class="preference-description">Display user avatars in posts and listings</p>

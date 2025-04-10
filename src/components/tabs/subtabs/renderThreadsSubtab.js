@@ -4,7 +4,7 @@
  * @param {HTMLElement} container - The container element to render into
  */
 export function renderThreadsSubtab(container) {
-  console.log("Rendering Threads subtab...");
+  log("Rendering Threads subtab...");
 
   container.innerHTML = `
     <div class="wip-banner">

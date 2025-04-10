@@ -3,6 +3,7 @@ import "./meta.js?userscript-metadata";
 import { SCRIPT_MANIFEST } from "./manifest.js";
 import { FORUM_PREFERENCES } from "./forumPreferences.js";
 import { shouldLoadScript } from "./utils/urlMatcher.js";
+import { log, warn, error, debug } from "./utils/logger.js";
 
 // Import UI components
 import { showModal } from "./components/showModal.js";
@@ -46,22 +47,22 @@ const scriptStates = {};
 const loadedScripts = {};
 
 function initializeScriptStates() {
-  console.log("Initializing script states...");
+  log("Initializing script states...");
   SCRIPT_MANIFEST.forEach((script) => {
     const storageKey = `script_enabled_${script.id}`;
     // Load state from GM storage, falling back to manifest default
     scriptStates[script.id] = gmGetValue(storageKey, script.enabledByDefault);
-    console.log(
+    log(
       `Script '${script.name}' (${script.id}): ${
         scriptStates[script.id] ? "Enabled" : "Disabled"
       } (Default: ${script.enabledByDefault})`,
     );
   });
-  console.log("Script states initialized:", scriptStates);
+  log("Script states initialized:", scriptStates);
 }
 
 function loadEnabledScripts() {
-  console.log("Loading enabled scripts for phase: " + currentExecutionPhase);
+  log("Loading enabled scripts for phase: " + currentExecutionPhase);
   SCRIPT_MANIFEST.forEach((script) => {
     // Check if script is enabled and either matches current phase or has no phase defined
     if (
@@ -72,7 +73,7 @@ function loadEnabledScripts() {
       loadScript(script);
     }
   });
-  console.log("Finished loading scripts for phase: " + currentExecutionPhase);
+  log("Finished loading scripts for phase: " + currentExecutionPhase);
 }
 
 // Import scripts directly
@@ -88,26 +89,24 @@ const scriptModules = {
 // Load a single script by its manifest entry
 function loadScript(script) {
   if (loadedScripts[script.id]) {
-    console.log(`Script ${script.name} already loaded, skipping.`);
+    log(`Script ${script.name} already loaded, skipping.`);
     return;
   }
 
   // Check if the script should run on the current URL
   if (!shouldLoadScript(script)) {
-    console.log(`Script ${script.name} not loaded: URL pattern did not match.`);
+    log(`Script ${script.name} not loaded: URL pattern did not match.`);
     return;
   }
 
   const phase = script.executionPhase || "document-end";
-  console.log(
-    `Loading script: ${script.name} (${script.id}) in phase: ${phase}`,
-  );
+  log(`Loading script: ${script.name} (${script.id}) in phase: ${phase}`);
   try {
     // Get the module from our imports
     const module = scriptModules[script.id];
 
     if (!module) {
-      console.error(`Script module ${script.id} not found`);
+      error(`Script module ${script.id} not found`);
       return;
     }
 
@@ -125,12 +124,12 @@ function loadScript(script) {
             : null,
       };
 
-      console.log(`Successfully loaded script: ${script.name}`);
+      log(`Successfully loaded script: ${script.name}`);
     } else {
-      console.warn(`Script ${script.name} has no init function, skipping.`);
+      warn(`Script ${script.name} has no init function, skipping.`);
     }
   } catch (err) {
-    console.error(`Failed to load script ${script.name}:`, err);
+    error(`Failed to load script ${script.name}:`, err);
   }
 }
 
@@ -138,25 +137,25 @@ function loadScript(script) {
 function unloadScript(scriptId) {
   const scriptInfo = loadedScripts[scriptId];
   if (!scriptInfo) {
-    console.log(`Script ${scriptId} not loaded, nothing to unload.`);
+    log(`Script ${scriptId} not loaded, nothing to unload.`);
     return;
   }
 
-  console.log(`Unloading script: ${scriptId}`);
+  log(`Unloading script: ${scriptId}`);
 
   // Call cleanup function if it exists
   if (scriptInfo.cleanup && typeof scriptInfo.cleanup === "function") {
     try {
       scriptInfo.cleanup();
-      console.log(`Cleanup completed for script: ${scriptId}`);
+      log(`Cleanup completed for script: ${scriptId}`);
     } catch (err) {
-      console.error(`Error during cleanup for script ${scriptId}:`, err);
+      error(`Error during cleanup for script ${scriptId}:`, err);
     }
   }
 
   // Remove the script from loadedScripts
   delete loadedScripts[scriptId];
-  console.log(`Script ${scriptId} unloaded.`);
+  log(`Script ${scriptId} unloaded.`);
 }
 
 // --- Script Toggle Event Handler ---
@@ -189,7 +188,7 @@ function handleShowScriptSettings(script) {
 function saveScriptSetting(scriptId, settingId, value) {
   const storageKey = `script_setting_${scriptId}_${settingId}`;
   gmSetValue(storageKey, value);
-  console.log(`Saved setting: ${scriptId}.${settingId} = ${value}`);
+  log(`Saved setting: ${scriptId}.${settingId} = ${value}`);
 }
 
 function getScriptSetting(scriptId, settingId, defaultValue) {
@@ -217,7 +216,7 @@ function toggleModalVisibility() {
   const modal = document.getElementById("mod-manager-modal");
   const isVisible = modal && modal.style.display === "block";
 
-  console.log(
+  log(
     `Toggling modal visibility. Currently ${isVisible ? "visible" : "hidden"}.`,
   );
 
@@ -240,7 +239,7 @@ function ensureFontAwesome() {
     link.href =
       "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css";
     document.head.appendChild(link);
-    console.log("RPGHQ Manager: Added Font Awesome CSS link.");
+    log("RPGHQ Manager: Added Font Awesome CSS link.");
   }
 }
 
@@ -252,7 +251,7 @@ function addMenuButton(toggleVisibilityCallback) {
     '.header-profile.dropdown-container .dropdown-contents[role="menu"]',
   );
   if (!profileDropdown) {
-    console.warn("RPGHQ Manager: Could not find profile dropdown menu.");
+    warn("RPGHQ Manager: Could not find profile dropdown menu.");
     return;
   }
 
@@ -269,7 +268,7 @@ function addMenuButton(toggleVisibilityCallback) {
   );
 
   if (!logoutButton) {
-    console.warn("RPGHQ Manager: Could not find logout button for reference.");
+    warn("RPGHQ Manager: Could not find logout button for reference.");
     return;
   }
 
@@ -278,7 +277,7 @@ function addMenuButton(toggleVisibilityCallback) {
     'a[title="RPGHQ Userscript Manager"]',
   );
   if (existingButton) {
-    console.log("RPGHQ Manager: Button already exists, updating listener.");
+    log("RPGHQ Manager: Button already exists, updating listener.");
     existingButton.onclick = function (e) {
       e.preventDefault();
       toggleVisibilityCallback();
@@ -302,14 +301,12 @@ function addMenuButton(toggleVisibilityCallback) {
 
   // Insert before logout button
   profileDropdown.insertBefore(userscriptsButton, logoutButton);
-  console.log(
-    "RPGHQ Manager: 'View Userscripts' button added to profile menu.",
-  );
+  log("RPGHQ Manager: 'View Userscripts' button added to profile menu.");
 }
 
 // --- Initialization ---
 function init() {
-  console.log("Initializing RPGHQ Userscript Manager...");
+  log("Initializing RPGHQ Userscript Manager...");
 
   // Initialize script states
   initializeScriptStates();
@@ -349,9 +346,7 @@ function init() {
         document.activeElement.tagName === "TEXTAREA" ||
         document.activeElement.isContentEditable
       ) {
-        console.log(
-          "Insert key pressed in input field, ignoring modal toggle.",
-        );
+        log("Insert key pressed in input field, ignoring modal toggle.");
         return;
       }
 
@@ -364,9 +359,9 @@ function init() {
   try {
     // eslint-disable-next-line no-undef
     GM_registerMenuCommand("RPGHQ Userscript Manager", toggleModalVisibility);
-    console.log("GM Menu command registered.");
+    log("GM Menu command registered.");
   } catch (e) {
-    console.error("Failed to register GM menu command:", e);
+    error("Failed to register GM menu command:", e);
   }
 }
 

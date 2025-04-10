@@ -15,7 +15,7 @@ export function renderScriptsListView(
   scriptStates = {},
   showScriptSettings,
 ) {
-  console.log("Rendering scripts in List View...");
+  log("Rendering scripts in List View...");
 
   if (!scripts || scripts.length === 0) {
     renderEmptyState(

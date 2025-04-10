@@ -6,6 +6,7 @@
  * from this file and injects it into the final userscript.
  *
  * @see docs/style-injection.md for more information.
+ * @see docs/checkbox-styling.md for information about checkbox styling.
  */
 
 GM_addStyle(`
@@ -371,10 +372,53 @@ GM_addStyle(`
     align-items: center;
   }
 
-  .script-toggle-checkbox {
+  /* Styled checkboxes */
+  input[type="checkbox"] {
     cursor: pointer;
-    transform: scale(1.5);
-    accent-color: var(--success-color);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--border-color);
+    border-radius: 3px;
+    background-color: var(--bg-dark);
+    display: inline-block;
+    position: relative;
+    margin: 0;
+    vertical-align: middle;
+    transition: all 0.2s ease;
+  }
+
+  input[type="checkbox"]:checked {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+  }
+
+  input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  input[type="checkbox"]:hover {
+    border-color: var(--success-color);
+  }
+
+  input[type="checkbox"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
+  }
+
+  /* Specific styling for the script toggle checkbox */
+  .script-toggle-checkbox {
+    transform: scale(1.2);
     margin: 2px;
   }
 

@@ -8,10 +8,7 @@ export function renderSettingControl(setting) {
   switch (setting.type) {
     case "boolean":
       return `
-          <label class="toggle-switch">
-            <input type="checkbox" ${setting.default ? "checked" : ""}>
-            <span class="toggle-slider"></span>
-          </label>
+          <input type="checkbox" name="${setting.id}" ${setting.default ? "checked" : ""}>
         `;
     case "select":
       return `

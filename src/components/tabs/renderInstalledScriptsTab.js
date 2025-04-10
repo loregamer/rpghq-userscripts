@@ -19,7 +19,7 @@ export function renderInstalledScriptsTab(
   renderScriptsListView,
   executionPhases,
 ) {
-  console.log("Rendering Installed Scripts tab with filtering...");
+  log("Rendering Installed Scripts tab with filtering...");
 
   // Filter panel removed
 

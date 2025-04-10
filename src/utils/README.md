@@ -2,6 +2,51 @@
 
 This directory contains utility functions that are used across the userscript manager.
 
+## Logger (`logger.js`)
+
+The Logger utility provides standardized logging functions that prefix all console outputs with a stylized "[RPGHQ Userscript Manager]" label.
+
+### Functions
+
+#### `log(...args)`
+
+Logs a message to the console with a blue prefix.
+
+- **Parameters:**
+  - `...args` (any): Arguments to pass to console.log
+
+#### `warn(...args)`
+
+Logs a warning to the console with a yellow prefix.
+
+- **Parameters:**
+  - `...args` (any): Arguments to pass to console.warn
+
+#### `error(...args)`
+
+Logs an error to the console with a red prefix.
+
+- **Parameters:**
+  - `...args` (any): Arguments to pass to console.error
+
+#### `debug(...args)`
+
+Logs debug information to the console with a green prefix.
+
+- **Parameters:**
+  - `...args` (any): Arguments to pass to console.debug
+
+### Example
+
+```js
+import { log, warn, error, debug } from "./utils/logger.js";
+
+log("Script initialized");
+warn("This is a warning");
+error("Something went wrong");
+debug("Debug information");
+```
+
 ## URL Matcher (`urlMatcher.js`)
 
 The URL Matcher utility provides functions to check if the current URL matches a pattern or set of patterns.

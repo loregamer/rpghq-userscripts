@@ -6,7 +6,7 @@
  * @param {Function} options.hideModal - Function to hide the modal
  */
 export function showModal({ loadTabContent, hideModal }) {
-  console.log("Showing userscript manager modal...");
+  log("Showing userscript manager modal...");
 
   let modal = document.getElementById("mod-manager-modal");
   if (!modal) {
