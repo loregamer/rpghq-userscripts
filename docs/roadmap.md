@@ -180,8 +180,8 @@ This document outlines the development checkpoints and actionable steps for crea
     - [x] **Pin:** Move pinned topics to the top of the list.
     - [x] **Ignore:** Hide the topic row (`display: none`).
     - [ ] **Highlight:** Apply background color. (Basic cycling implemented, needs improvement)
-  - [ ] Add a section within the Manager UI ("Forum Preferences" > "Threads") to view and manage ignored/highlighted topics.
-  - [ ] Ensure controls on `viewforum.php` are added dynamically and work with pagination (Needs MutationObserver for full robustness).
+  - [x] Add a section within the Manager UI ("Forum Preferences" > "Threads") to view and manage ignored/highlighted topics.
+  - [x] Ensure controls on `viewforum.php` are added dynamically and work with pagination (Needs MutationObserver for full robustness).
 
 ## Phase 11: Forum Preferences > Users
 

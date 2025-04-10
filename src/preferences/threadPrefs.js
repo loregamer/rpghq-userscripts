@@ -20,23 +20,71 @@ export function initializeThreadPrefs() {
   if (isOnViewForum) {
     // Apply preferences that affect the list view (Pin, Ignore, Highlight)
     applyListPreferences();
-    // Add controls to each thread row
+    // Add controls to each thread row initially
     addListControlsToThreads();
+
+    // Set up MutationObserver for dynamic content loading
+    const topicListContainer = document.querySelector(
+      ".forumbg .topiclist.topics",
+    ); // Target the specific list
+    if (topicListContainer) {
+      log(`${PREF_ID}: Setting up MutationObserver for topic list.`);
+      const observer = new MutationObserver(handleMutations);
+      observer.observe(topicListContainer, {
+        childList: true, // Watch for added/removed child nodes (li.row)
+        subtree: false, // No need to watch deeper than the direct children (li elements)
+      });
+    } else {
+      error(
+        `${PREF_ID}: Could not find topic list container for MutationObserver.`,
+      );
+    }
   } else if (isOnViewTopic) {
     // Add controls to the topic action bar
     addTopicControls();
     // Potentially apply highlight to the topic itself if desired in the future
   }
 
-  // Optional: Add MutationObserver if dynamic content loading needs handling on viewforum
-  // if (isOnViewForum) {
-  //   const observer = new MutationObserver(mutations => { ... });
-  //   observer.observe(document.querySelector('.forumbg'), { childList: true, subtree: true });
-  // }
-
   log(`${PREF_ID}: Initialized successfully.`);
 
   // No cleanup function needed here as it's core functionality
+}
+
+// Mutation Observer Callback for ViewForum
+function handleMutations(mutationsList, observer) {
+  log(`${PREF_ID}: MutationObserver detected changes in topic list.`);
+  let needsReapply = false;
+
+  for (const mutation of mutationsList) {
+    if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+      log(`${PREF_ID}: Nodes added to the list.`);
+      mutation.addedNodes.forEach((node) => {
+        // Check if the added node is a thread row element
+        if (node.nodeType === Node.ELEMENT_NODE && node.matches("li.row")) {
+          log(`${PREF_ID}: Processing added row:`, node);
+          // Add controls if they don't exist
+          if (!node.querySelector(".rpghq-thread-controls")) {
+            const topicId = getTopicId(node);
+            if (topicId) {
+              addControlsToSingleThread(node, topicId); // Add controls
+              applyPreferencesToSingleRow(node, topicId); // Apply ignore/highlight
+              needsReapply = true; // Mark that pinning might need recalculation
+            } else {
+              log(`${PREF_ID}: Could not get topic ID for added row.`, node);
+            }
+          } else {
+            log(`${PREF_ID}: Controls already exist on added row.`, node);
+          }
+        }
+      });
+    }
+  }
+
+  // If rows were added, re-apply pinning as order might change
+  if (needsReapply) {
+    log(`${PREF_ID}: Re-applying pinning due to added rows.`);
+    applyPinning(); // Separated pinning logic
+  }
 }
 
 // --- Helper Functions ---
@@ -74,46 +122,65 @@ function saveStoredPreferences(prefs) {
 
 function getThreadRowElements() {
   // Selector for viewforum page
-  return document.querySelectorAll(".forumbg ul.topiclist li.row");
+  return document.querySelectorAll(".forumbg ul.topiclist.topics li.row"); // More specific selector
 }
 
 // --- Core Logic for ViewForum ---
 
-// Renamed from applyPreferences
+// Renamed from applyPreferences - separated pinning
 function applyListPreferences() {
-  log(`${PREF_ID}: Applying list preferences (Pin/Ignore/Highlight)...`);
+  log(`${PREF_ID}: Applying list preferences (Ignore/Highlight)...`);
   const prefs = getStoredPreferences();
+  const rows = getThreadRowElements();
+
+  rows.forEach((row) => {
+    const topicId = getTopicId(row); // Pass the row element
+    applyPreferencesToSingleRow(row, topicId, prefs); // Use helper
+  });
+
+  applyPinning(prefs); // Apply pinning separately
+
+  log(`${PREF_ID}: List preferences applied.`);
+}
+
+// Helper to apply ignore/highlight to a single row
+function applyPreferencesToSingleRow(row, topicId, prefs = null) {
+  if (!topicId) return; // Need topic ID
+  if (!prefs) prefs = getStoredPreferences(); // Get prefs if not passed
+  if (!prefs[topicId]) return; // Skip if no prefs for this topic
+
+  const topicPrefs = prefs[topicId];
+
+  // Apply Ignore
+  if (topicPrefs.ignored) {
+    row.style.display = "none";
+    // log(`${PREF_ID}: Ignoring topic ${topicId} (single row)`);
+  } else {
+    row.style.display = ""; // Ensure it's visible if not ignored
+  }
+
+  // Apply Highlight
+  if (topicPrefs.highlight && topicPrefs.highlight !== "none") {
+    row.style.backgroundColor = topicPrefs.highlight;
+    // log(`${PREF_ID}: Highlighting topic ${topicId} with ${topicPrefs.highlight} (single row)`);
+  } else {
+    row.style.backgroundColor = ""; // Remove background if no highlight
+  }
+}
+
+// Helper to apply pinning logic
+function applyPinning(prefs = null) {
+  log(`${PREF_ID}: Applying pinning...`);
+  if (!prefs) prefs = getStoredPreferences(); // Get prefs if not passed
+
   const rows = getThreadRowElements();
   const pinnedRows = [];
 
   rows.forEach((row) => {
-    const topicId = getTopicId(row); // Pass the row element
-    if (!topicId || !prefs[topicId]) return; // Skip if no ID or no prefs
-
-    const topicPrefs = prefs[topicId];
-
-    // Apply Ignore
-    if (topicPrefs.ignored) {
-      row.style.display = "none";
-      log(`${PREF_ID}: Ignoring topic ${topicId}`);
-    } else {
-      row.style.display = ""; // Ensure it's visible if not ignored
-    }
-
-    // Apply Highlight
-    if (topicPrefs.highlight && topicPrefs.highlight !== "none") {
-      row.style.backgroundColor = topicPrefs.highlight;
-      log(
-        `${PREF_ID}: Highlighting topic ${topicId} with ${topicPrefs.highlight}`,
-      );
-    } else {
-      row.style.backgroundColor = ""; // Remove background if no highlight
-    }
-
-    // Collect Pinned
-    if (topicPrefs.pinned) {
+    const topicId = getTopicId(row);
+    if (topicId && prefs[topicId] && prefs[topicId].pinned) {
       pinnedRows.push(row);
-      log(`${PREF_ID}: Marking topic ${topicId} for pinning`);
+      // log(`${PREF_ID}: Marking topic ${topicId} for pinning`);
     }
   });
 
@@ -138,8 +205,6 @@ function applyListPreferences() {
       );
     }
   }
-
-  log(`${PREF_ID}: List preferences applied.`);
 }
 
 // Renamed from addControlsToThreads
@@ -151,33 +216,37 @@ function addListControlsToThreads() {
     const topicId = getTopicId(row);
     if (!topicId) return;
 
-    // Prevent adding controls multiple times if observer re-runs
-    if (row.querySelector(".rpghq-thread-controls")) return;
-
-    const controlContainer = createControlContainer(topicId, row);
-
-    // Add container to a suitable place in the row (e.g., after topic title)
-    const topicTitleElement = row.querySelector("a.topictitle");
-    if (topicTitleElement && topicTitleElement.parentElement) {
-      // Insert after the topic title link itself
-      topicTitleElement.parentElement.insertBefore(
-        controlContainer,
-        topicTitleElement.nextSibling,
-      );
-    } else {
-      // Fallback: append to the first <dt> which usually contains the title
-      const firstDt = row.querySelector("dl > dt");
-      if (firstDt) {
-        firstDt.appendChild(controlContainer);
-      } else {
-        error(
-          `${PREF_ID}: Could not find suitable location for controls in row for topic ${topicId}`,
-        );
-        // row.appendChild(controlContainer); // Avoid less ideal placement
-      }
-    }
+    addControlsToSingleThread(row, topicId);
   });
   log(`${PREF_ID}: List controls added.`);
+}
+
+// Helper to add controls to a single thread row
+function addControlsToSingleThread(row, topicId) {
+  // Prevent adding controls multiple times
+  if (row.querySelector(".rpghq-thread-controls")) return;
+
+  const controlContainer = createControlContainer(topicId, row);
+
+  // Add container to a suitable place in the row (e.g., after topic title)
+  const topicTitleElement = row.querySelector("a.topictitle");
+  if (topicTitleElement && topicTitleElement.parentElement) {
+    // Insert after the topic title link itself
+    topicTitleElement.parentElement.insertBefore(
+      controlContainer,
+      topicTitleElement.nextSibling,
+    );
+  } else {
+    // Fallback: append to the first <dt> which usually contains the title
+    const firstDt = row.querySelector("dl > dt");
+    if (firstDt) {
+      firstDt.appendChild(controlContainer);
+    } else {
+      error(
+        `${PREF_ID}: Could not find suitable location for controls in row for topic ${topicId}`,
+      );
+    }
+  }
 }
 
 // --- Core Logic for ViewTopic ---
@@ -298,8 +367,7 @@ function handlePinToggle(topicId, rowElement) {
 
   // Re-apply only if on the list view where visual order matters
   if (window.location.href.includes("viewforum.php")) {
-    applyListPreferences();
-    // We might need to re-add controls if applyListPreferences clears/rebuilds rows, but current implementation modifies in place.
+    applyPinning(); // Only re-apply pinning, not all list prefs
   }
 }
 
@@ -314,7 +382,13 @@ function handleIgnoreToggle(topicId, rowElement) {
 
   // Re-apply only if on the list view where visibility matters
   if (window.location.href.includes("viewforum.php")) {
-    applyListPreferences();
+    // Apply directly to the row if provided, otherwise re-scan
+    if (rowElement) {
+      const prefs = getStoredPreferences(); // Get latest prefs
+      applyPreferencesToSingleRow(rowElement, topicId, prefs);
+    } else {
+      applyListPreferences(); // Full rescan if row element isn't available
+    }
   }
 }
 
@@ -337,11 +411,18 @@ function handleHighlight(topicId, rowElement) {
 
   // Re-apply only if on the list view where background color matters
   if (window.location.href.includes("viewforum.php")) {
-    applyListPreferences();
+    // Apply directly to the row if provided
+    if (rowElement) {
+      const prefs = getStoredPreferences(); // Get latest prefs
+      applyPreferencesToSingleRow(rowElement, topicId, prefs);
+    } else {
+      applyListPreferences(); // Full rescan if row element isn't available
+    }
   } else if (window.location.href.includes("viewtopic.php")) {
     // Apply highlight to the rowElement if provided (viewforum)
     // or find the relevant element to highlight on viewtopic if needed
     if (rowElement) {
+      // This condition might be redundant if only called from viewforum context in this handler
       rowElement.style.backgroundColor =
         nextHighlight === "none" ? "" : nextHighlight;
     }
