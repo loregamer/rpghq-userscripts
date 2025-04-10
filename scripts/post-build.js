@@ -17,26 +17,34 @@ const distFile = path.join(
 console.log("Running post-build script...");
 
 try {
-  // Read the built userscript content
+  // Step 1: Initial Prettier format on the dist file
+  console.log(`Running initial Prettier format on ${distFile}...`);
+  try {
+    execSync(`npx prettier --write ${distFile}`, { stdio: "inherit" });
+    console.log("Initial Prettier format completed.");
+  } catch (prettierError) {
+    console.error("Initial Prettier formatting failed:", prettierError.message);
+    process.exit(1);
+  }
+
+  // Step 2: Read the formatted content
   let scriptContent = fs.readFileSync(distFile, "utf8");
 
-  // Find the GM_addStyle(css`...`); call
-  // Use a simple string replacement for robustness
+  // Step 3: Find and remove the `css` tag
   const oldGmAddStyleCall = "GM_addStyle(css`";
+  const newGmAddStyleCall = "GM_addStyle(`";
 
   if (scriptContent.includes(oldGmAddStyleCall)) {
-    // Construct the new GM_addStyle call without the `css` tag
-    const newGmAddStyleCall = "GM_addStyle(`";
-    // Replace the beginning of the GM_addStyle call
+    // Step 4: Replace the `css` tag
     scriptContent = scriptContent.replace(oldGmAddStyleCall, newGmAddStyleCall);
 
-    // Write the modified content back to the file
+    // Step 5: Write the modified content back
     fs.writeFileSync(distFile, scriptContent, "utf8");
     console.log(
       "Successfully removed `css` tag from GM_addStyle in dist file.",
     );
 
-    // Run lint check at the very end of the script, after successful injection
+    // Step 6: Run final lint check (which includes Prettier check)
     console.log("Running final lint check from post-build script...");
     try {
       execSync("npm run lint", { stdio: "inherit" });
