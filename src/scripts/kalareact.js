@@ -8,49 +8,38 @@
  */
 
 export function init() {
-  console.log("Kalarion Reaction Auto-Marker initialized!");
+  console.log("User Reaction Auto-Marker initialized!");
+  const notifications = document.querySelector("#notification_list");
 
-  // Function to check for notifications from Kalarion and mark them as read
-  function checkAndMarkKalarionNotifications() {
-    // Find all notification items
-    const notificationItems = document.querySelectorAll("li.bg2");
+  const notificationItems = notifications.querySelectorAll("li");
 
-    notificationItems.forEach((item) => {
-      // Find the username span within this notification
-      const usernameSpan = item.querySelector("span.username");
+  notificationItems.forEach((item) => {
+    // Return early if there's no notification-block link
+    if (!item.querySelector("a.notification-block")) {
+      return;
+    }
 
-      // If the username starts with 'Kalarion', click the mark read button
-      if (
-        usernameSpan &&
-        usernameSpan.textContent.trim().startsWith("Kalarion")
-      ) {
-        console.log("Found notification from Kalarion, marking as read");
+    // Find the username span within this notification
+    const usernameSpan = item.querySelector("span.username");
+    if (!usernameSpan) return;
 
-        // Find and click the mark read button
-        const markReadButton = item.querySelector("a.mark_read");
-        if (markReadButton) {
-          markReadButton.click();
-          
-          // Remove the notification row from the DOM
-          console.log("Removing Kalarion notification from view");
-          item.remove();
-        }
-      }
-    });
-  }
+    const username = usernameSpan.textContent.trim();
 
-  // Check for Kalarion notifications immediately
-  checkAndMarkKalarionNotifications();
+    // Return if username doesn't start with "Kalarion" or "dolor"
+    if (!username.startsWith("Kalarion") && !username.startsWith("dolor")) {
+      return;
+    }
 
-  // Set up an interval to periodically check for new notifications
-  const intervalId = setInterval(checkAndMarkKalarionNotifications, 5000); // Check every 5 seconds
+    console.log(`Found notification from ${username}, marking as read`);
 
-  // Return cleanup function
-  return {
-    cleanup: () => {
-      console.log("Kalarion Reaction Auto-Marker cleanup");
-      // Clear the interval when the script is disabled
-      clearInterval(intervalId);
-    },
-  };
+    // Find and click the mark read button
+    const markReadButton = item.querySelector("a.mark_read");
+    if (markReadButton) {
+      markReadButton.click();
+
+      // Remove the notification row from the DOM
+      console.log(`Removing ${username} notification from view`);
+    }
+    item.remove();
+  });
 }
