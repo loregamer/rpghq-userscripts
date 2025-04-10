@@ -80,8 +80,8 @@ export default {
           return false;
         },
       },
-      mangle: true,
-      compress: {},
+      mangle: false,
+      compress: {}, // Re-enable compression, as CSS is handled separately
     }),
 
     // Generate userscript header

@@ -1,4 +1,4 @@
-GM_addStyle(css`
+GM_addStyle(`
   :root {
     --primary-color: #2196f3;
     --primary-dark: #1976d2;
