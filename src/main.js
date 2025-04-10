@@ -4,6 +4,12 @@ import { SCRIPT_MANIFEST } from "./manifest.js";
 import { FORUM_PREFERENCES } from "./forumPreferences.js";
 import { shouldLoadScript } from "./utils/urlMatcher.js";
 import { log, warn, error, debug } from "./utils/logger.js";
+import {
+  gmGetValue,
+  gmSetValue,
+  getScriptSetting,
+  saveScriptSetting,
+} from "./utils/gmUtils.js"; // Import GM utilities
 import { sharedUtils } from "./utils/sharedUtils.js"; // Import shared utilities
 import loadOrder from "../load_order.json"; // Import the execution order
 
@@ -28,17 +34,6 @@ const EXECUTION_PHASES = [
 
 // The current execution phase the page is in
 let currentExecutionPhase = "document-start";
-
-// --- GM Wrappers ---
-function gmGetValue(key, defaultValue) {
-  // eslint-disable-next-line no-undef
-  return GM_getValue(GM_PREFIX + key, defaultValue);
-}
-
-function gmSetValue(key, value) {
-  // eslint-disable-next-line no-undef
-  GM_setValue(GM_PREFIX + key, value);
-}
 
 // --- Core Logic ---
 
@@ -122,6 +117,7 @@ import * as notifications from "./scripts/notifications.js";
 import * as kalareact from "./scripts/kalareact.js";
 import * as bbcode from "./scripts/bbcode.js";
 import * as commaFormatter from "./scripts/commaFormatter.js";
+import * as threadPreferences from "./scripts/threadPreferences.js"; // Added for Phase 10
 
 // Map of script ids to their modules
 const scriptModules = {
@@ -139,6 +135,7 @@ const scriptModules = {
   memberSearch: memberSearch,
   randomTopic: randomTopic,
   recentTopicsFormat: recentTopicsFormat,
+  threadPreferences: threadPreferences, // Added for Phase 10
 };
 
 // Load a single script by its manifest entry
@@ -220,7 +217,7 @@ document.addEventListener("script-toggle", (event) => {
     scriptId,
     enabled,
     scriptStates,
-    gmSetValue,
+    gmSetValue, // Pass imported function
     SCRIPT_MANIFEST,
     loadScript,
     unloadScript,
@@ -237,18 +234,7 @@ function handleRenderScriptsListView(container, scripts, states) {
 }
 
 function handleShowScriptSettings(script) {
-  showScriptSettings(script, renderScriptSettingsContent, saveScriptSetting);
-}
-
-function saveScriptSetting(scriptId, settingId, value) {
-  const storageKey = `script_setting_${scriptId}_${settingId}`;
-  gmSetValue(storageKey, value);
-  log(`Saved setting: ${scriptId}.${settingId} = ${value}`);
-}
-
-function getScriptSetting(scriptId, settingId, defaultValue) {
-  const storageKey = `script_setting_${scriptId}_${settingId}`;
-  return gmGetValue(storageKey, defaultValue);
+  showScriptSettings(script, renderScriptSettingsContent, saveScriptSetting); // Use imported saveScriptSetting
 }
 
 // --- Tab Content Handling ---
