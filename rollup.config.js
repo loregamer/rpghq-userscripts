@@ -39,6 +39,7 @@ const generateMetadata = () => {
     "// @grant        GM_getValue",
     "// @grant        GM_setValue",
     "// @grant        GM_listValues",
+    "// @grant        GM_xmlhttpRequest",
     "// @grant        GM_registerMenuCommand",
     "// @grant        GM_addStyle",
     "// @run-at       document-start",

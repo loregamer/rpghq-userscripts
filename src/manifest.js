@@ -19,7 +19,7 @@ export const SCRIPT_MANIFEST = [
       // Add settings here
     ],
     categories: ["UI"],
-    executionPhase: "after_dom",
+    executionPhase: "document-end",
   },
   {
     id: "kalareact",
@@ -52,6 +52,22 @@ export const SCRIPT_MANIFEST = [
     executionPhase: "after_dom",
   },
   {
+    id: "pinThreads",
+    name: "Pin Threads",
+    version: "1.0.0",
+    description:
+      "Adds a Pin button to threads so you can see them in board index",
+    author: "loregamer",
+    image: "https://f.rpghq.org/HTYypNZVXaOt.png?n=pasted-file.png", // Add an image URL if available
+    path: "./scripts/pinThreads.js",
+    enabledByDefault: true,
+    settings: [
+      // Add settings here
+    ],
+    categories: ["UI"],
+    executionPhase: "document-end",
+  },
+  {
     id: "commaFormatter",
     name: "Thousands Comma Formatter",
     version: "2.1.2",
@@ -61,6 +77,7 @@ export const SCRIPT_MANIFEST = [
     path: "./scripts/commaFormatter.js",
     enabledByDefault: true,
     urlPatterns: [],
+    executionPhase: "document-end",
     settings: [
       {
         id: "formatFourDigits",
