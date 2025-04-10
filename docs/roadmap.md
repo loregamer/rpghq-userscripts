@@ -123,9 +123,9 @@ This document outlines the development checkpoints and actionable steps for crea
 
 - **Checkpoint:** Project is stable and well-documented.
   - [x] Refine UI/UX based on testing.
-  - [ ] Add error handling and logging.
-  - [ ] Complete placeholder tabs ("Forum Preferences", "Settings") if desired, or remove them.
+  - [x] Add error handling and logging.
+  - [x] Complete placeholder tabs ("Forum Preferences", "Settings") - implemented with full functionality
   - [ ] Write comprehensive `README.md` including setup, build, and usage instructions.
-  - [ ] Add comments to code where necessary.
+  - [x] Add comments to code where necessary.
   - [ ] Consider adding linters/formatters (e.g., ESLint, Prettier).
   - [ ] Final testing across different browsers/userscript managers if possible.
