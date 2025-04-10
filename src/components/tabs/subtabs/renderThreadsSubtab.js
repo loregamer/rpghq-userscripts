@@ -1,11 +1,11 @@
 /**
  * Renders the "Threads" subtab content within the Forum Preferences tab.
- * 
+ *
  * @param {HTMLElement} container - The container element to render into
  */
 export function renderThreadsSubtab(container) {
   console.log("Rendering Threads subtab...");
-  
+
   container.innerHTML = `
     <div class="wip-banner">
       <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress

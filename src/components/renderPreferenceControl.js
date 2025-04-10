@@ -1,6 +1,6 @@
 /**
  * Renders an appropriate HTML control element based on the preference type.
- * 
+ *
  * @param {Object} preference - The preference object with type, options, etc.
  * @returns {string} - HTML string for the rendered control
  */

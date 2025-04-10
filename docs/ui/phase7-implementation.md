@@ -5,6 +5,7 @@ This document outlines the implementation details for Phase 7 of the RPGHQ Users
 ## Implemented Components
 
 ### Core Structure
+
 - Created utility functions in `src/utils/` for shared functionality
 - Created UI components in `src/components/` for UI rendering
 - Added proper tabs and subtabs similar to the deprecated manager
@@ -12,6 +13,7 @@ This document outlines the implementation details for Phase 7 of the RPGHQ Users
 ### Files Created
 
 #### Utilities
+
 - `src/utils/compareVersions.js` - Function to compare version strings
 - `src/utils/filterScripts.js` - Function to filter scripts by various criteria
 - `src/utils/getCategoryOptions.js` - Generate category options for filter dropdown
@@ -19,27 +21,33 @@ This document outlines the implementation details for Phase 7 of the RPGHQ Users
 - `src/utils/getPhaseDisplayName.js` - Get user-friendly display name for execution phases
 
 #### UI Components
+
 - `src/components/renderPreferenceControl.js` - Render controls for forum preferences
 - `src/components/renderSettingControl.js` - Render controls for script settings
 - `src/components/loadTabContent.js` - Loads the appropriate tab content
 
 #### Tabs
+
 - `src/components/tabs/renderInstalledScriptsTab.js` - Renders the Installed Scripts tab with filtering
 - `src/components/tabs/renderForumPreferencesTab.js` - Renders the Forum Preferences tab with subtabs
 - `src/components/tabs/renderSettingsTab.js` - Renders the Settings tab with global settings
 
 #### Subtabs
+
 - `src/components/tabs/subtabs/renderThreadsSubtab.js` - Renders the Threads subtab in Forum Preferences
 - `src/components/tabs/subtabs/renderUsersSubtab.js` - Renders the Users subtab in Forum Preferences
 
 ### Data Models
+
 - Added `src/forumPreferences.js` with the FORUM_PREFERENCES object
 
 ## Updates to Existing Files
+
 - Updated `src/main.js` to use the new components
 - Enhanced CSS in `src/injectStyles.js` to match the deprecated manager
 
 ## Improvements from Previous Version
+
 - Added proper filter panel functionality
 - Added category and execution phase filtering
 - Added proper empty state messaging

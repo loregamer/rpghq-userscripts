@@ -1,6 +1,6 @@
 /**
  * Returns a user-friendly display name for script execution phases.
- * 
+ *
  * @param {string} phase - The execution phase identifier
  * @returns {string} - The formatted display name for the phase
  */

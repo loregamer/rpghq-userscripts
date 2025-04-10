@@ -1,11 +1,11 @@
 /**
  * Renders the "Users" subtab content within the Forum Preferences tab.
- * 
+ *
  * @param {HTMLElement} container - The container element to render into
  */
 export function renderUsersSubtab(container) {
   console.log("Rendering Users subtab...");
-  
+
   container.innerHTML = `
     <div class="wip-banner">
       <i class="fa fa-wrench"></i> User Preferences - Work In Progress

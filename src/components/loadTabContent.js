@@ -1,6 +1,6 @@
 /**
  * Loads the appropriate tab content based on the selected tab.
- * 
+ *
  * @param {string} tabName - The name of the tab to load ('installed', 'forum', or 'settings')
  * @param {Object} context - Object containing necessary data and functions for rendering tabs
  * @param {HTMLElement} context.container - The container element to render into
@@ -10,13 +10,20 @@
  * @param {Function} context.renderScriptsListView - Function to render scripts in list view
  * @param {Array} context.executionPhases - Array of execution phase objects from manifest schema
  */
-import { renderInstalledScriptsTab } from './tabs/renderInstalledScriptsTab.js';
-import { renderForumPreferencesTab } from './tabs/renderForumPreferencesTab.js';
-import { renderSettingsTab } from './tabs/renderSettingsTab.js';
+import { renderInstalledScriptsTab } from "./tabs/renderInstalledScriptsTab.js";
+import { renderForumPreferencesTab } from "./tabs/renderForumPreferencesTab.js";
+import { renderSettingsTab } from "./tabs/renderSettingsTab.js";
 
 export function loadTabContent(tabName, context) {
-  const { container, scripts, scriptStates, renderScriptsGridView, renderScriptsListView, executionPhases } = context;
-  
+  const {
+    container,
+    scripts,
+    scriptStates,
+    renderScriptsGridView,
+    renderScriptsListView,
+    executionPhases,
+  } = context;
+
   console.log(`Loading tab content for: ${tabName}`);
 
   // Clear previous content (except the info note)
@@ -29,12 +36,12 @@ export function loadTabContent(tabName, context) {
   switch (tabName) {
     case "installed":
       renderInstalledScriptsTab(
-        container, 
-        scripts, 
-        scriptStates, 
-        renderScriptsGridView, 
+        container,
+        scripts,
+        scriptStates,
+        renderScriptsGridView,
         renderScriptsListView,
-        executionPhases
+        executionPhases,
       );
       break;
     case "forum":

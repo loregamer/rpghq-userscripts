@@ -1,6 +1,6 @@
 /**
  * Renders an appropriate HTML control element based on the setting type.
- * 
+ *
  * @param {Object} setting - The setting object with type, options, etc.
  * @returns {string} - HTML string for the rendered control
  */

@@ -1,6 +1,6 @@
 /**
  * Compares two version strings (e.g., "1.2.3" vs "1.3.0").
- * 
+ *
  * @param {string} a - First version string
  * @param {string} b - Second version string
  * @returns {number} - Negative if a < b, positive if a > b, 0 if equal

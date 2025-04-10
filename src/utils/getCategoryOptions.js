@@ -1,6 +1,6 @@
 /**
  * Generates a list of <option> HTML elements for all unique categories in scripts.
- * 
+ *
  * @param {Array} scripts - The scripts array from SCRIPT_MANIFEST
  * @returns {string} - HTML string of <option> elements for categories
  */

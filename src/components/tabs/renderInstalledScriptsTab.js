@@ -1,26 +1,26 @@
 /**
  * Renders the "Installed Scripts" tab content with filtering and view options.
- * 
+ *
  * @param {HTMLElement} container - The container element to render into
  * @param {Array} scripts - The array of script objects from SCRIPT_MANIFEST
  * @param {Object} scriptStates - Object containing enabled/disabled states for scripts
  * @param {Function} renderScriptsGridView - Function to render scripts in grid view
  * @param {Function} renderScriptsListView - Function to render scripts in list view
  */
-import { filterScripts } from '../../utils/filterScripts.js';
-import { getCategoryOptions } from '../../utils/getCategoryOptions.js';
-import { getExecutionPhaseOptions } from '../../utils/getExecutionPhaseOptions.js';
+import { filterScripts } from "../../utils/filterScripts.js";
+import { getCategoryOptions } from "../../utils/getCategoryOptions.js";
+import { getExecutionPhaseOptions } from "../../utils/getExecutionPhaseOptions.js";
 
 export function renderInstalledScriptsTab(
-  container, 
-  scripts, 
+  container,
+  scripts,
   scriptStates,
   renderScriptsGridView,
   renderScriptsListView,
-  executionPhases
+  executionPhases,
 ) {
   console.log("Rendering Installed Scripts tab with filtering...");
-  
+
   // Create the filter panel
   const filterPanel = document.createElement("div");
   filterPanel.className = "filter-panel";
@@ -118,16 +118,20 @@ export function renderInstalledScriptsTab(
   });
 
   document.getElementById("grid-view-btn").addEventListener("click", () => {
-    document.getElementById("grid-view-btn").className = "view-btn btn btn-primary";
-    document.getElementById("list-view-btn").className = "view-btn btn btn-secondary";
+    document.getElementById("grid-view-btn").className =
+      "view-btn btn btn-primary";
+    document.getElementById("list-view-btn").className =
+      "view-btn btn btn-secondary";
 
     const filteredScripts = filterScripts(scripts);
     renderScriptsGridView(scriptsContainer, filteredScripts, scriptStates);
   });
 
   document.getElementById("list-view-btn").addEventListener("click", () => {
-    document.getElementById("grid-view-btn").className = "view-btn btn btn-secondary";
-    document.getElementById("list-view-btn").className = "view-btn btn btn-primary";
+    document.getElementById("grid-view-btn").className =
+      "view-btn btn btn-secondary";
+    document.getElementById("list-view-btn").className =
+      "view-btn btn btn-primary";
 
     const filteredScripts = filterScripts(scripts);
     renderScriptsListView(scriptsContainer, filteredScripts, scriptStates);
@@ -138,9 +142,7 @@ export function renderInstalledScriptsTab(
 
     // Use the active view to render
     if (
-      document
-        .getElementById("grid-view-btn")
-        .classList.contains("btn-primary")
+      document.getElementById("grid-view-btn").classList.contains("btn-primary")
     ) {
       renderScriptsGridView(scriptsContainer, filteredScripts, scriptStates);
     } else {
@@ -157,9 +159,7 @@ export function renderInstalledScriptsTab(
 
     // Use the active view to render
     if (
-      document
-        .getElementById("grid-view-btn")
-        .classList.contains("btn-primary")
+      document.getElementById("grid-view-btn").classList.contains("btn-primary")
     ) {
       renderScriptsGridView(scriptsContainer, scripts, scriptStates);
     } else {

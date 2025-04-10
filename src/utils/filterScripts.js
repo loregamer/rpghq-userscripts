@@ -1,12 +1,12 @@
 /**
  * Filters and sorts the scripts array based on provided filters.
  * If no filters are provided, retrieves them from the DOM.
- * 
+ *
  * @param {Array} scripts - Array of script objects from the manifest
  * @param {Object} filters - Filter criteria (optional)
  * @returns {Array} - Filtered and sorted array of scripts
  */
-import { compareVersions } from './compareVersions.js';
+import { compareVersions } from "./compareVersions.js";
 
 export function filterScripts(scripts, filters) {
   if (!filters) {
@@ -41,9 +41,7 @@ export function filterScripts(scripts, filters) {
       (script.description &&
         script.description.toLowerCase().includes(filters.searchTerm));
 
-    return (
-      matchesCategory && matchesPhase && matchesSettings && matchesSearch
-    );
+    return matchesCategory && matchesPhase && matchesSettings && matchesSearch;
   });
 
   // Sort scripts
