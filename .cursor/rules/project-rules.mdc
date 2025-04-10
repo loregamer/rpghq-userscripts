@@ -4,3 +4,6 @@ globs:
 alwaysApply: true
 ---
 do a git commit and edit roadmap.md when tasks are complete
+
+
+never directly edit dist/rpghq-userscript-manager.user.js as it is an outputted rollup js file
