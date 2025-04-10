@@ -14,11 +14,9 @@ const distFile = path.join(
   "rpghq-userscript-manager.user.js",
 );
 
-
 console.log("Running post-build script...");
 
 try {
-
   // Read the built userscript content
   let scriptContent = fs.readFileSync(distFile, "utf8");
 
@@ -26,10 +24,7 @@ try {
   // Use a simple string replacement for robustness
   const oldGmAddStyleCall = "GM_addStyle(css`";
 
-
-
   if (scriptContent.includes(oldGmAddStyleCall)) {
-
     // Construct the new GM_addStyle call without the `css` tag
     const newGmAddStyleCall = "GM_addStyle(`";
     // Replace the beginning of the GM_addStyle call
@@ -37,7 +32,9 @@ try {
 
     // Write the modified content back to the file
     fs.writeFileSync(distFile, scriptContent, "utf8");
-    console.log("Successfully removed `css` tag from GM_addStyle in dist file.");
+    console.log(
+      "Successfully removed `css` tag from GM_addStyle in dist file.",
+    );
 
     // Run lint check at the very end of the script, after successful injection
     console.log("Running final lint check from post-build script...");
