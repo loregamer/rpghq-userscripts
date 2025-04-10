@@ -139,6 +139,26 @@ GM_addStyle(`
     color: var(--primary-color);
     font-weight: bold;
     border-bottom: 2px solid var(--primary-color);
+    background-color: var(--bg-card);
+    border-radius: 4px 4px 0 0;
+  }
+
+  .sub-tab {
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 1em;
+    color: var(--text-secondary);
+    position: relative;
+  }
+
+  .sub-tab:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .sub-tab.active {
+    color: var(--primary-color);
+    font-weight: bold;
+    border-bottom: 2px solid var(--primary-color);
   }
 
   /* Content area */
@@ -149,6 +169,72 @@ GM_addStyle(`
   }
 
   /* Filter panel */
+  .filter-panel {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+
+  .filter-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .filter-panel-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  .filter-panel-toggle {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 1.1em;
+  }
+
+  .filter-panel-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+
+  .filter-panel-body.collapsed {
+    display: none;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .filter-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 0.9em;
+  }
+
+  .filter-group select,
+  .filter-group input {
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+  }
+
+  .filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+    grid-column: 1 / -1;
+  }
+  
   .filter-panel {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -594,6 +680,24 @@ GM_addStyle(`
     border-radius: 0 4px 4px 0;
   }
 
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-secondary);
+  }
+
+  .empty-state-icon {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    opacity: 0.5;
+  }
+
+  .empty-state-message {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+  }
+  
   /* WIP Banner */
   .wip-banner {
     background-color: var(--warning-color);
