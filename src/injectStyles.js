@@ -399,12 +399,14 @@ GM_addStyle(`
     font-size: 0.8em;
     color: var(--text-secondary);
     font-weight: normal;
+    display: none; /* Hide version for now */
   }
   
   .script-version-inline {
     font-size: 0.8em;
     color: var(--text-secondary);
     font-weight: normal;
+    display: none; /* Hide version for now */
   }
 
   .script-card-description {
@@ -428,6 +430,7 @@ GM_addStyle(`
   .script-card-version {
     font-size: 0.8em;
     color: var(--text-secondary);
+    display: none; /* Hide version for now */
   }
 
   .script-card-phase {
