@@ -27,7 +27,7 @@ try {
 const generateMetadata = () => {
   const baseUrl = (pkg.homepage || '').replace('#readme', '');
   const distPath = '/raw/main/dist/rpghq-userscript-manager.user.js';
-  
+
   return [
     '// ==UserScript==',
     `// @name         ${pkg.name}`,
@@ -63,31 +63,27 @@ export default {
       browser: true,
       preferBuiltins: false,
     }),
-    
+
     // Convert CommonJS modules to ES6
     commonjs(),
-    
+
     // Minification with preserved userscript header
-    // Ensure terser doesn't minify the CSS string further if needed
     terser({
       format: {
-        comments: function(node, comment) {
+        comments: function (node, comment) {
           if (comment.type === "comment2") {
             // Keep userscript header comments
-            return /@(name|namespace|version|description|author|match|grant|run-at|homepage|downloadURL|updateURL)/.test(comment.value);
+            return /@(name|namespace|version|description|author|match|grant|run-at|homepage|downloadURL|updateURL)/.test(
+              comment.value
+            );
           }
           return false;
         },
-        // Optionally, prevent compression of strings if it still causes issues
-        // Although rollup-plugin-string should handle this.
-        // compress: {
-        //   strings: false 
-        // }
       },
-      // Important: Ensure mangling doesn't break GM_addStyle or variable names if necessary
-      mangle: true, 
+      mangle: true,
+      compress: {},
     }),
-    
+
     // Generate userscript header
     userscript(generateMetadata),
   ],
