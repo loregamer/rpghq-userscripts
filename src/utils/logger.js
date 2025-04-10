@@ -16,9 +16,9 @@ function isLikelyScriptId(str) {
  */
 export function log(context, ...args) {
   const managerStyle =
-    "background-color: #242A36; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;";
+    "background-color: #FF4A66; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;";
   const contextStyle =
-    "background-color: #2D323E; color: white; padding: 1px 4px; border-radius: 8px; font-size: 0.9em; margin-left: 4px;";
+    "background-color: #378CE7; color: white; padding: 1px 4px; border-radius: 8px; font-size: 0.9em; margin-left: 4px;";
 
   if (typeof context === "string") {
     if (isLikelyScriptId(context)) {
