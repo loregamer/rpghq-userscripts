@@ -142,8 +142,41 @@ This document outlines the development checkpoints and actionable steps for crea
   - [x] Start implementing actual userscripts into the manager (Thousands Comma Formatter added)
   - [x] Create migration guide for existing userscripts
   - [x] Add GM_listValues grant for Notification Improver script
-  - [ ] Write comprehensive `README.md` including setup, build, and usage instructions.
   - [x] Add comments to code where necessary.
   - [x] Added Prettier formatter.
   - [x] Added automated manifest sorting by script name.
+
+## Phase 10: Forum Topic Management
+
+- **Checkpoint:** Users can manage topic visibility and appearance directly on forum view pages.
+  - [ ] Identify topic rows (e.g., `li.row`) on forum view pages (`viewforum.php`).
+  - [ ] Add controls (buttons/icons) to each topic row for Pin, Hide, and Highlight actions.
+  - [ ] Implement storage mechanism (`GM_setValue`/`GM_getValue`, perhaps using topic IDs as keys) to save user preferences for each topic.
+  - [ ] On page load, read stored preferences and apply them:
+    - [ ] **Pin:** Move pinned topics to the top of the list (below announcements/stickies if applicable).
+    - [ ] **Hide:** Add a class or style to hide the topic row (`display: none`).
+    - [ ] **Highlight:** Allow users to select a color (or choose from presets) and apply it as a background color or border to the topic row.
+  - [ ] Add a section within the Manager UI (perhaps a new tab or within "Forum Preferences"?) to view and manage hidden/highlighted topics.
+  - [ ] Ensure controls are added dynamically and work with pagination.
+
+## Phase 11: Forum User Management
+
+- **Checkpoint:** Users can manage preferences for specific forum users.
+  - [ ] Implement a UI section (likely within "Forum Preferences") to manage user-specific settings.
+  - [ ] Allow users to add specific forum usernames (or user IDs) to a list.
+  - [ ] For each added user, provide options/controls for:
+    - [ ] **Highlight Posts:** Apply a specific background color or style to posts made by this user.
+    - [ ] **Auto-Read Notifications:** Automatically mark notifications triggered by this user (e.g., replies, quotes) as read. (Consider filtering by notification type).
+    - [ ] **Hide Topics:** Hide topics started by this user on forum view pages.
+    - [ ] **Highlight Topics:** Apply a specific background color or style to topics started by this user.
+    - [ ] **Hide Posts:** Hide posts made by this user in topic views.
+    - [ ] **Hide Reactions:** Hide reactions made by this user on posts.
+  - [ ] Implement storage mechanism (`GM_setValue`/`GM_getValue`, likely using user IDs or usernames as keys) to save these preferences.
+  - [ ] On relevant page loads (forum views, topic views, notification pages), read stored user preferences and apply the corresponding actions (hiding elements, adding styles).
+  - [ ] Ensure user matching is robust (handle potential username changes if relying on names).
+
+## Phase 12: Final Refinements & Documentation
+
+- **Checkpoint:** Project is fully documented and ready for wider use.
+  - [ ] Write comprehensive `README.md` including setup, build, and usage instructions.
   - [ ] Final testing across different browsers/userscript managers if possible.
