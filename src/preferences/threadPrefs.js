@@ -294,152 +294,239 @@ function addTopicControls() {
 }
 
 // --- Shared Control Creation (Dropdown) ---
+
+// Helper function to create the dropdown trigger button
+function createDropdownTrigger(topicId) {
+  const button = document.createElement("button"); // Use button for accessibility
+  button.title = "Thread Tools";
+  button.className =
+    "button button-secondary icon-only rpghq-thread-prefs-trigger"; // Use standard phpBB classes + custom one
+  button.setAttribute("type", "button"); // Explicitly set type
+  button.innerHTML = `
+    <i class="icon fa-puzzle-piece fa-fw" aria-hidden="true"></i>
+    <span class="sr-only">Thread Preferences</span>
+  `;
+  button.dataset.topicId = topicId; // Store topicId for easy access
+
+  button.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent default action and bubbling
+
+    // Find the associated dropdown menu using the data attribute
+    const associatedDropdown = document.querySelector(
+      `.rpghq-thread-prefs-dropdown[data-topic-id="${topicId}"]`,
+    );
+    if (!associatedDropdown) return;
+
+    const isExpanded = associatedDropdown.style.display === "block";
+    associatedDropdown.style.display = isExpanded ? "none" : "block";
+    // Optional: Add aria-expanded to the button if needed, although phpBB might handle this via parent classes
+    // button.setAttribute('aria-expanded', !isExpanded);
+  };
+
+  return button;
+}
+
+// Main function to create the whole control set (trigger + dropdown)
 function createControlContainer(
   topicId,
   rowElement = null /* li.row or null */,
 ) {
-  const controlContainer = document.createElement("div"); // Use div for easier dropdown structure
-  controlContainer.className = "rpghq-thread-controls rpghq-dropdown"; // Add dropdown class
-  controlContainer.style.position = "relative"; // Needed for dropdown positioning
-  controlContainer.style.display = "inline-block"; // Keep it inline
-  controlContainer.style.marginLeft = "5px";
-  controlContainer.style.verticalAlign = "middle"; // Align with surrounding text/buttons
+  const outerContainer = document.createElement("span"); // Inline container for button + dropdown
+  outerContainer.className = "rpghq-thread-controls"; // Main identifier
+  outerContainer.dataset.topicId = topicId; // Add topic ID for easy reference
+  outerContainer.style.position = "relative"; // For dropdown positioning
+  outerContainer.style.display = "inline-block";
+  outerContainer.style.marginLeft = "5px";
+  outerContainer.style.verticalAlign = "middle";
 
-  // Get current preferences to set initial button states if needed (e.g., show Unpin/Unignore)
+  // 1. Create the trigger button
+  const dropdownTrigger = createDropdownTrigger(topicId);
+  outerContainer.appendChild(dropdownTrigger);
+
+  // 2. Create the dropdown container itself (mimics phpBB structure)
+  const dropdownContainer = document.createElement("div");
+  dropdownContainer.className = "dropdown rpghq-thread-prefs-dropdown"; // phpBB class + custom
+  dropdownContainer.dataset.topicId = topicId; // Link to trigger
+  dropdownContainer.style.display = "none"; // Initially hidden
+  dropdownContainer.style.position = "absolute"; // Position relative to outerContainer
+  dropdownContainer.style.left = "0"; // Align with trigger
+  dropdownContainer.style.top = "100%"; // Position below trigger
+  dropdownContainer.style.marginTop = "2px"; // Small gap
+  dropdownContainer.style.zIndex = "110"; // Ensure above most elements
+
+  // 3. Add the pointer element (phpBB style)
+  const pointerDiv = document.createElement("div");
+  pointerDiv.className = "pointer";
+  pointerDiv.innerHTML = '<div class="pointer-inner"></div>';
+  dropdownContainer.appendChild(pointerDiv);
+
+  // 4. Create the dropdown menu list
+  const dropdownMenu = document.createElement("ul");
+  dropdownMenu.className = "dropdown-contents"; // Use phpBB class
+  dropdownMenu.setAttribute("role", "menu");
+  // Remove direct styling - rely on phpBB CSS for .dropdown-contents
+  dropdownContainer.appendChild(dropdownMenu);
+
+  // 5. Add the dropdown to the outer container
+  outerContainer.appendChild(dropdownContainer);
+
+  // 6. Get current preferences
   const prefs = getStoredPreferences();
   const topicPrefs = prefs[topicId] || {};
 
-  // Create the main button that opens the dropdown using phpBB style
-  const dropdownButton = document.createElement("span");
-  dropdownButton.title = "Thread Tools";
-  dropdownButton.className =
-    "button button-secondary dropdown-trigger dropdown-select dropdown-toggle rpghq-dropdown-toggle"; // Added our class too
-  dropdownButton.innerHTML = `
-			<i class="icon fa-wrench fa-fw" aria-hidden="true"></i>
-			<span class="caret"><i class="icon fa-sort-down fa-fw" aria-hidden="true"></i></span>
-		`;
-  // Remove direct styling as phpBB classes should handle it
-  // styleControlButton(dropdownButton); // Remove this line
-  dropdownButton.setAttribute("aria-haspopup", "true");
-  dropdownButton.setAttribute("aria-expanded", "false");
-  controlContainer.appendChild(dropdownButton);
+  // 7. Populate the initial dropdown items
+  updateDropdownItems(topicId, dropdownMenu, rowElement); // Call helper to populate
 
-  // Create the dropdown menu itself (no change here)
-  const dropdownMenu = document.createElement("ul");
-  dropdownMenu.className = "rpghq-dropdown-menu";
-  dropdownMenu.setAttribute("role", "menu");
-  // Basic dropdown styling (can be enhanced in CSS)
-  dropdownMenu.style.position = "absolute";
-  dropdownMenu.style.top = "100%";
-  dropdownMenu.style.left = "0";
-  dropdownMenu.style.backgroundColor = "var(--rpghq-modal-bg-color, white)"; // Use theme variable
-  dropdownMenu.style.border = "1px solid #ccc";
-  dropdownMenu.style.borderRadius = "3px";
-  dropdownMenu.style.padding = "5px 0";
-  dropdownMenu.style.margin = "2px 0 0";
-  dropdownMenu.style.zIndex = "100"; // Ensure it's above other content
-  dropdownMenu.style.minWidth = "120px";
-  dropdownMenu.style.listStyle = "none";
-  dropdownMenu.style.display = "none"; // Initially hidden
-  controlContainer.appendChild(dropdownMenu);
-
-  // Toggle dropdown visibility
-  dropdownButton.onclick = (e) => {
-    e.preventDefault();
-    e.stopPropagation(); // Prevent clicks from closing it immediately
-    const isExpanded = dropdownMenu.style.display === "block";
-    dropdownMenu.style.display = isExpanded ? "none" : "block";
-    dropdownButton.setAttribute("aria-expanded", !isExpanded);
+  // 8. Add listener to close dropdown when clicking outside
+  // Store the handler reference to remove it later if the element is destroyed
+  const outsideClickListener = (e) => {
+    // Check if the click is outside the *outer* container and the dropdown is visible
+    if (
+      !outerContainer.contains(e.target) &&
+      dropdownContainer.style.display === "block"
+    ) {
+      dropdownContainer.style.display = "none";
+      // dropdownTrigger.setAttribute('aria-expanded', 'false');
+    }
   };
+  document.addEventListener("click", outsideClickListener, true);
+  // Optional: Store listener ref on element for cleanup if needed: outerContainer._outsideClickListener = outsideClickListener;
 
-  // Close dropdown when clicking outside
-  document.addEventListener(
-    "click",
-    (e) => {
-      if (!controlContainer.contains(e.target)) {
-        dropdownMenu.style.display = "none";
-        dropdownButton.setAttribute("aria-expanded", "false");
-      }
-    },
-    true, // Use capture phase to catch clicks early
-  );
+  return outerContainer; // Return the main span containing button and dropdown
+}
 
-  // --- Populate Dropdown Menu Items ---
-  // Helper function to create menu items
-  const createMenuItem = (text, title, onClickHandler) => {
-    const li = document.createElement("li");
-    const button = document.createElement("button");
-    button.textContent = text;
-    button.title = title;
-    button.style.display = "block";
-    button.style.width = "100%";
-    button.style.padding = "4px 10px";
-    button.style.border = "none";
-    button.style.background = "none";
-    button.style.textAlign = "left";
-    button.style.cursor = "pointer";
-    button.style.fontSize = "inherit"; // Inherit font size
-    button.style.color = "var(--rpghq-text-color, black)"; // Use theme variable
+// --- Update Dropdown Menu Items ---
+// This function clears and refills the dropdown menu based on current prefs
+function updateDropdownItems(topicId, dropdownMenuElement, rowElement = null) {
+  dropdownMenuElement.innerHTML = ""; // Clear existing items
 
-    button.onmouseover = () =>
-      (button.style.backgroundColor = "var(--rpghq-hover-bg-color, #eee)");
-    button.onmouseout = () => (button.style.backgroundColor = "transparent");
-
-    button.onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onClickHandler();
-      dropdownMenu.style.display = "none"; // Close menu after action
-      dropdownButton.setAttribute("aria-expanded", "false");
-    };
-    li.appendChild(button);
-    return li;
-  };
+  const prefs = getStoredPreferences();
+  const topicPrefs = prefs[topicId] || {}; // Get latest prefs
 
   // Pin menu item
-  dropdownMenu.appendChild(
+  dropdownMenuElement.appendChild(
     createMenuItem(
-      topicPrefs.pinned ? "Unpin" : "Pin",
-      topicPrefs.pinned
-        ? "Remove from pinned list"
-        : "Pin thread to top of list",
-      () => handlePinToggle(topicId, rowElement),
+      topicId,
+      topicPrefs,
+      "pin",
+      rowElement,
+      dropdownMenuElement, // Pass dropdown menu to handlers
     ),
   );
 
   // Ignore menu item
-  dropdownMenu.appendChild(
+  dropdownMenuElement.appendChild(
     createMenuItem(
-      topicPrefs.ignored ? "Unignore" : "Ignore",
-      topicPrefs.ignored
-        ? "Stop ignoring this thread"
-        : "Hide this thread from lists",
-      () => handleIgnoreToggle(topicId, rowElement),
+      topicId,
+      topicPrefs,
+      "ignore",
+      rowElement,
+      dropdownMenuElement,
     ),
   );
 
   // Highlight menu item
-  dropdownMenu.appendChild(
+  dropdownMenuElement.appendChild(
     createMenuItem(
-      "Highlight", // Could add current color indicator later
-      "Cycle highlight color for this thread",
-      () => handleHighlight(topicId, rowElement),
+      topicId,
+      topicPrefs,
+      "highlight",
+      rowElement,
+      dropdownMenuElement,
     ),
   );
-
-  return controlContainer;
 }
 
-function styleControlButton(button) {
-  // Basic styling to make them less intrusive than default buttons
-  button.style.marginLeft = "3px";
-  button.style.padding = "2px 5px";
-  button.style.fontSize = "inherit";
-  button.style.border = "1px solid #ccc";
-  button.style.background = "#f0f0f0";
-  button.style.cursor = "pointer";
-  button.style.borderRadius = "3px";
-}
+// --- Populate Dropdown Menu Items (Refactored) ---
+// Helper function to create individual menu items (<a> tags)
+const createMenuItem = (
+  topicId,
+  topicPrefs,
+  actionType, // 'pin', 'ignore', 'highlight'
+  rowElement,
+  dropdownMenuElement, // Pass the UL element
+) => {
+  const li = document.createElement("li");
+  const link = document.createElement("a");
+  link.href = "#"; // Prevent navigation
+  link.title = ""; // Set specific title below
+  link.style.cursor = "pointer"; // Ensure pointer cursor
+
+  const icon = document.createElement("i");
+  icon.setAttribute("aria-hidden", "true");
+  icon.className = "icon fa-fw"; // Base classes
+
+  const textSpan = document.createElement("span");
+
+  let isDisabled = false;
+  let clickHandler = () => {};
+
+  // Configure based on actionType
+  switch (actionType) {
+    case "pin":
+      icon.classList.add(topicPrefs.pinned ? "fa-thumb-tack" : "fa-thumb-tack"); // Using same icon, style might change if pinned
+      textSpan.textContent = topicPrefs.pinned ? " Unpin" : " Pin";
+      link.title = topicPrefs.pinned
+        ? "Remove from pinned list"
+        : "Pin thread to top of list";
+      if (topicPrefs.ignored) {
+        isDisabled = true; // Disable Pin if Ignored
+        link.title += " (Disabled while ignored)";
+      }
+      // Pass dropdownMenuElement to the handler
+      clickHandler = () =>
+        handlePinToggle(topicId, rowElement, dropdownMenuElement);
+      break;
+    case "ignore":
+      icon.classList.add(topicPrefs.ignored ? "fa-eye-slash" : "fa-eye");
+      textSpan.textContent = topicPrefs.ignored ? " Unignore" : " Ignore";
+      link.title = topicPrefs.ignored
+        ? "Stop ignoring this thread"
+        : "Hide this thread from lists";
+      if (topicPrefs.pinned) {
+        isDisabled = true; // Disable Ignore if Pinned
+        link.title += " (Disabled while pinned)";
+      }
+      // Pass dropdownMenuElement to the handler
+      clickHandler = () =>
+        handleIgnoreToggle(topicId, rowElement, dropdownMenuElement);
+      break;
+    case "highlight":
+      icon.classList.add("fa-paint-brush");
+      textSpan.textContent = " Highlight";
+      link.title = "Cycle highlight color for this thread";
+      // Highlight is never disabled by pin/ignore
+      // Pass dropdownMenuElement to the handler
+      clickHandler = () =>
+        handleHighlight(topicId, rowElement, dropdownMenuElement);
+      break;
+  }
+
+  link.appendChild(icon);
+  link.appendChild(textSpan);
+
+  // Apply disabled state
+  if (isDisabled) {
+    li.classList.add("disabled"); // Add class for styling
+    link.style.opacity = "0.5"; // Dim the link
+    link.style.pointerEvents = "none"; // Prevent clicks
+    link.removeAttribute("href"); // Remove href for disabled state
+    // Add specific class for disabled items based on phpBB structure if needed
+    // Example: li.classList.add('disabled-option');
+  } else {
+    // Attach click handler only if not disabled
+    link.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation(); // Stop propagation
+      clickHandler(); // Call the specific handler
+      // DO NOT close the dropdown here
+    };
+  }
+
+  li.appendChild(link);
+  return li;
+};
 
 // --- Event Handlers (Shared) ---
 
@@ -474,77 +561,117 @@ function getOrCreateTopicPrefs(topicId, rowElement = null) {
   }
   return prefs;
 }
-function handlePinToggle(topicId, rowElement) {
+
+// Modified handler: Accepts dropdownMenuElement to update it
+function handlePinToggle(topicId, rowElement, dropdownMenuElement) {
   const prefs = getOrCreateTopicPrefs(topicId, rowElement);
+  const currentPrefs = prefs[topicId];
 
-  prefs[topicId].pinned = !prefs[topicId].pinned;
-  log(
-    `${PREF_ID}: Topic ${topicId} pin status set to ${prefs[topicId].pinned}`,
-  );
-
-  saveStoredPreferences(prefs);
-
-  // Re-apply only if on the list view where visual order matters
-  if (window.location.href.includes("viewforum.php")) {
-    applyPinning(); // Only re-apply pinning, not all list prefs
+  // Toggle pin status
+  currentPrefs.pinned = !currentPrefs.pinned;
+  // If pinning, ensure ignore is false (mutual exclusion)
+  if (currentPrefs.pinned) {
+    currentPrefs.ignored = false;
   }
-}
 
-function handleIgnoreToggle(topicId, rowElement) {
-  const prefs = getOrCreateTopicPrefs(topicId, rowElement);
-
-  prefs[topicId].ignored = !prefs[topicId].ignored;
-  log(
-    `${PREF_ID}: Topic ${topicId} ignore status set to ${prefs[topicId].ignored}`,
-  );
+  log(`${PREF_ID}: Topic ${topicId} pin status set to ${currentPrefs.pinned}`);
 
   saveStoredPreferences(prefs);
 
-  // Re-apply only if on the list view where visibility matters
+  // Update the dropdown items immediately to reflect the new state
+  if (dropdownMenuElement) {
+    updateDropdownItems(topicId, dropdownMenuElement, rowElement);
+  }
+
+  // Re-apply page view changes (pinning order and ignore visibility)
   if (window.location.href.includes("viewforum.php")) {
-    // Apply directly to the row if provided, otherwise re-scan
+    applyPinning(); // Re-apply pinning order
+    // Re-apply ignore/highlight to the specific row if possible
     if (rowElement) {
-      const prefs = getStoredPreferences(); // Get latest prefs
-      applyPreferencesToSingleRow(rowElement, topicId, prefs);
+      const latestPrefs = getStoredPreferences(); // Get fresh prefs after potential ignore change
+      applyPreferencesToSingleRow(rowElement, topicId, latestPrefs);
     } else {
-      applyListPreferences(); // Full rescan if row element isn't available
+      // Fallback to full list refresh if row isn't available (less likely here)
+      applyListPreferences();
     }
   }
 }
 
-function handleHighlight(topicId, rowElement) {
+// Modified handler: Accepts dropdownMenuElement to update it
+function handleIgnoreToggle(topicId, rowElement, dropdownMenuElement) {
   const prefs = getOrCreateTopicPrefs(topicId, rowElement);
+  const currentPrefs = prefs[topicId];
 
-  const currentHighlight = prefs[topicId].highlight || "none"; // Default if undefined
+  // Toggle ignore status
+  currentPrefs.ignored = !currentPrefs.ignored;
+  // If ignoring, ensure pin is false (mutual exclusion)
+  if (currentPrefs.ignored) {
+    currentPrefs.pinned = false;
+  }
+
+  log(
+    `${PREF_ID}: Topic ${topicId} ignore status set to ${currentPrefs.ignored}`,
+  );
+
+  saveStoredPreferences(prefs);
+
+  // Update the dropdown items immediately
+  if (dropdownMenuElement) {
+    updateDropdownItems(topicId, dropdownMenuElement, rowElement);
+  }
+
+  // Re-apply page view changes (pinning order and ignore visibility)
+  if (window.location.href.includes("viewforum.php")) {
+    // Re-apply ignore/highlight first
+    if (rowElement) {
+      const latestPrefs = getStoredPreferences(); // Get fresh prefs
+      applyPreferencesToSingleRow(rowElement, topicId, latestPrefs);
+    } else {
+      applyListPreferences(); // Fallback
+    }
+    applyPinning(); // Re-apply pinning as ignore might have unpinned
+  }
+}
+
+// Modified handler: Accepts dropdownMenuElement to update it
+function handleHighlight(topicId, rowElement, dropdownMenuElement) {
+  const prefs = getOrCreateTopicPrefs(topicId, rowElement);
+  const currentPrefs = prefs[topicId];
+
+  const currentHighlight = currentPrefs.highlight || "none"; // Default if undefined
   let nextHighlight;
 
   // Basic cycling implementation (TODO: Improve with picker/presets)
-  const highlightColors = ["none", "#fffbcc", "#e0ffe0", "#ffe0e0"];
+  const highlightColors = ["none", "#fffbcc", "#e0ffe0", "#ffe0e0"]; // Consider theme vars
   const currentIndex = highlightColors.indexOf(currentHighlight);
   nextHighlight = highlightColors[(currentIndex + 1) % highlightColors.length];
 
-  prefs[topicId].highlight = nextHighlight;
+  currentPrefs.highlight = nextHighlight;
+  log(
+    `${PREF_ID}: Topic ${topicId} highlight set to ${currentPrefs.highlight}`,
+  );
 
   saveStoredPreferences(prefs);
+
+  // Update the dropdown items immediately (though highlight doesn't change text/disabled state)
+  if (dropdownMenuElement) {
+    updateDropdownItems(topicId, dropdownMenuElement, rowElement);
+  }
 
   // Re-apply only if on the list view where background color matters
   if (window.location.href.includes("viewforum.php")) {
     // Apply directly to the row if provided
     if (rowElement) {
-      const prefs = getStoredPreferences(); // Get latest prefs
-      applyPreferencesToSingleRow(rowElement, topicId, prefs);
+      const latestPrefs = getStoredPreferences(); // Get latest prefs
+      applyPreferencesToSingleRow(rowElement, topicId, latestPrefs);
     } else {
       applyListPreferences(); // Full rescan if row element isn't available
     }
   } else if (window.location.href.includes("viewtopic.php")) {
     // Apply highlight to the rowElement if provided (viewforum)
     // or find the relevant element to highlight on viewtopic if needed
-    if (rowElement) {
-      // This condition might be redundant if only called from viewforum context in this handler
-      rowElement.style.backgroundColor =
-        nextHighlight === "none" ? "" : nextHighlight;
-    }
-    // Potentially highlight topic title or background on viewtopic itself?
+    // Currently, this doesn't apply visual highlight on viewtopic page itself
+    // if (rowElement) { ... }
   }
 }
 
