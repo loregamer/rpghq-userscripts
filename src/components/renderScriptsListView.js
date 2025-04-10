@@ -8,6 +8,7 @@
  */
 import { getPhaseDisplayName } from "../utils/getPhaseDisplayName.js";
 import { renderEmptyState } from "./emptyState.js";
+import { log } from "../utils/logger.js";
 
 export function renderScriptsListView(
   container,

@@ -5,6 +5,7 @@
  * @param {Function} options.loadTabContent - Function to load tab content
  * @param {Function} options.hideModal - Function to hide the modal
  */
+import { log } from "../utils/logger.js";
 export function showModal({ loadTabContent, hideModal }) {
   log("Showing userscript manager modal...");
 

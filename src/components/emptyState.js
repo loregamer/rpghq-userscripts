@@ -5,6 +5,7 @@
  * @param {string} message - The message to display (optional)
  * @param {string} iconClass - The Font Awesome icon class to use (optional)
  */
+import { log } from "../utils/logger.js";
 export function renderEmptyState(
   container,
   message = "No scripts found.",

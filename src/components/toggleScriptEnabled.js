@@ -9,6 +9,7 @@
  * @param {Function} loadScript - Function to load a script
  * @param {Function} unloadScript - Function to unload a script
  */
+import { log, error } from "../utils/logger.js";
 export function toggleScriptEnabled(
   scriptId,
   newState,

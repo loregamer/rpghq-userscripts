@@ -6,6 +6,7 @@
  * @returns {string} - HTML string for the settings content
  */
 import { renderSettingControl } from "./renderSettingControl.js";
+import { log } from "../utils/logger.js";
 
 export function renderScriptSettingsContent(script, saveScriptSetting = null) {
   log(`Rendering settings content for script: ${script.name}`);

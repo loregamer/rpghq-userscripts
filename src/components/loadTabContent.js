@@ -13,6 +13,7 @@
 import { renderInstalledScriptsTab } from "./tabs/renderInstalledScriptsTab.js";
 import { renderForumPreferencesTab } from "./tabs/renderForumPreferencesTab.js";
 import { renderSettingsTab } from "./tabs/renderSettingsTab.js";
+import { log, error } from "../utils/logger.js";
 
 export function loadTabContent(tabName, context) {
   const {

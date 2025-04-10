@@ -6,6 +6,7 @@
  * @param {Function} saveScriptSetting - Function to save a script setting
  */
 import { renderEmptyState } from "./emptyState.js";
+import { log } from "../utils/logger.js";
 
 export function showScriptSettings(
   script,

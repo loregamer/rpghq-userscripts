@@ -3,6 +3,7 @@
  *
  * @param {HTMLElement} container - The container element to render into
  */
+import { log } from "../../../utils/logger.js";
 export function renderUsersSubtab(container) {
   log("Rendering Users subtab...");
 

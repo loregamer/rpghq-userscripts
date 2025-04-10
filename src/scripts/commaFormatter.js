@@ -6,6 +6,7 @@
  *
  * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/commaFormatter.md for documentation
  */
+import { log } from "../utils/logger.js";
 
 export function init() {
   log("Thousands Comma Formatter initialized!");

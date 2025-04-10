@@ -10,6 +10,7 @@
 import { filterScripts } from "../../utils/filterScripts.js";
 import { getCategoryOptions } from "../../utils/getCategoryOptions.js";
 import { getExecutionPhaseOptions } from "../../utils/getExecutionPhaseOptions.js";
+import { log } from "../../utils/logger.js";
 
 export function renderInstalledScriptsTab(
   container,
