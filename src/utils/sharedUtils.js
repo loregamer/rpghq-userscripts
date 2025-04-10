@@ -18,10 +18,6 @@ export const sharedUtils = {
     console.log("Shared Logic: Caching posts on current page (stub).");
     // Logic to find all posts on the page and call cachePostData for each
   },
-  _cacheTopicsOnPage: () => {
-    console.log("Shared Logic: Caching topics on current page (stub).");
-    // Logic to find all topics (e.g., in viewforum) and call cacheTopicData
-  },
 
   // Preference Application Logic (Placeholders)
   _applyUserPreferences: () => {

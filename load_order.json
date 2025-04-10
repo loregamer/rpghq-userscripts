@@ -2,7 +2,6 @@
   "document-start": [
     "_applyThreadPreferences",
     "_cachePostsOnPage",
-    "_cacheTopicsOnPage",
     "recentTopicsFormat",
     "_applyUserPreferences",
     "bbcode",
