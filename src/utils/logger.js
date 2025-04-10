@@ -29,7 +29,7 @@ export function log(context, ...args) {
         "", // Reset style after manager bubble
         contextStyle,
         "", // Reset style after context bubble
-        ...args
+        ...args,
       );
     } else {
       // Context is a string but not a script ID, treat as part of message
@@ -38,7 +38,7 @@ export function log(context, ...args) {
         managerStyle,
         "", // Reset style
         context,
-        ...args // Pass context and the rest as message parts
+        ...args, // Pass context and the rest as message parts
       );
     }
   } else {
@@ -48,7 +48,7 @@ export function log(context, ...args) {
       managerStyle,
       "", // Reset style
       context,
-      ...args // Pass the first arg (originally context) and the rest as message parts
+      ...args, // Pass the first arg (originally context) and the rest as message parts
     );
   }
 }
@@ -73,7 +73,7 @@ export function warn(context, ...args) {
         "", // Reset style after manager bubble
         contextStyle,
         "", // Reset style after context bubble
-        ...args
+        ...args,
       );
     } else {
       // Context is a string but not a script ID, treat as part of message
@@ -82,7 +82,7 @@ export function warn(context, ...args) {
         managerStyle,
         "", // Reset style
         context,
-        ...args // Pass context and the rest as message parts
+        ...args, // Pass context and the rest as message parts
       );
     }
   } else {
@@ -92,7 +92,7 @@ export function warn(context, ...args) {
       managerStyle,
       "", // Reset style
       context,
-      ...args // Pass the first arg (originally context) and the rest as message parts
+      ...args, // Pass the first arg (originally context) and the rest as message parts
     );
   }
 }
@@ -117,7 +117,7 @@ export function error(context, ...args) {
         "", // Reset style after manager bubble
         contextStyle,
         "", // Reset style after context bubble
-        ...args
+        ...args,
       );
     } else {
       // Context is a string but not a script ID, treat as part of message
@@ -126,7 +126,7 @@ export function error(context, ...args) {
         managerStyle,
         "", // Reset style
         context,
-        ...args // Pass context and the rest as message parts
+        ...args, // Pass context and the rest as message parts
       );
     }
   } else {
@@ -136,7 +136,7 @@ export function error(context, ...args) {
       managerStyle,
       "", // Reset style
       context,
-      ...args // Pass the first arg (originally context) and the rest as message parts
+      ...args, // Pass the first arg (originally context) and the rest as message parts
     );
   }
 }
@@ -163,7 +163,7 @@ export function debug(context, ...args) {
         "", // Reset style after manager bubble
         contextStyle,
         "", // Reset style after context bubble
-        ...args
+        ...args,
       );
     } else {
       // Context is a string but not a script ID, treat as part of message
@@ -172,7 +172,7 @@ export function debug(context, ...args) {
         managerStyle,
         "", // Reset style
         context,
-        ...args // Pass context and the rest as message parts
+        ...args, // Pass context and the rest as message parts
       );
     }
   } else {
@@ -182,7 +182,7 @@ export function debug(context, ...args) {
       managerStyle,
       "", // Reset style
       context,
-      ...args // Pass the first arg (originally context) and the rest as message parts
+      ...args, // Pass the first arg (originally context) and the rest as message parts
     );
   }
 }

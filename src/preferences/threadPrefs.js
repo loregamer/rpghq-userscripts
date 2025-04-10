@@ -531,7 +531,13 @@ const createMenuItem = (
       e.preventDefault();
       e.stopPropagation(); // Stop propagation
       clickHandler(); // Call the specific handler
-      // DO NOT close the dropdown here
+      // Close the dropdown after clicking an action
+      const dropdownContainer = dropdownMenuElement.closest(
+        ".rpghq-thread-prefs-dropdown",
+      );
+      if (dropdownContainer) {
+        dropdownContainer.style.display = "none";
+      }
     };
   }
 
