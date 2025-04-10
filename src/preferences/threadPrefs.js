@@ -152,8 +152,9 @@ function saveStoredPreferences(prefs) {
 }
 
 function getThreadRowElements() {
-  // Selector for viewforum page
-  return document.querySelectorAll(".forumbg ul.topiclist.topics li.row"); // More specific selector
+  // More general selector to find rows in both viewforum and index
+  // It targets list items with both 'row' and 'topic' classes within any '.forumbg'
+  return document.querySelectorAll(".forumbg li.row.topic");
 }
 
 // --- Core Logic for ViewForum ---

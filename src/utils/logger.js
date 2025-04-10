@@ -4,54 +4,131 @@
  */
 
 /**
- * Log a message to the console with RPGHQ Userscript Manager prefix
+ * Log a message to the console with RPGHQ Userscript Manager prefix and optional context
+ * @param {string} [context] - Optional context/scriptId string
  * @param {...any} args - Arguments to pass to console.log
  */
-export function log(...args) {
-  console.log(
-    "%c[RPGHQ Userscript Manager]%c",
-    "background-color: #3889ED; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;",
-    "",
-    ...args,
-  );
+export function log(context, ...args) {
+  const managerStyle =
+    "background-color: #3889ED; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;";
+  const contextStyle =
+    "background-color: #6c757d; color: white; padding: 1px 4px; border-radius: 8px; font-size: 0.9em; margin-left: 4px;";
+
+  if (typeof context === "string") {
+    console.log(
+      `%c[RPGHQ USM]%c %c[${context}]%c`,
+      managerStyle,
+      "", // Reset style after manager bubble
+      contextStyle,
+      "", // Reset style after context bubble
+      ...args,
+    );
+  } else {
+    // If first arg isn't a string, assume it's part of the message and no context is provided
+    console.log(
+      "%c[RPGHQ USM]%c",
+      managerStyle,
+      "", // Reset style
+      context,
+      ...args, // Pass the first arg (originally context) and the rest as message parts
+    );
+  }
 }
 
 /**
- * Log a warning to the console with RPGHQ Userscript Manager prefix
+ * Log a warning to the console with RPGHQ Userscript Manager prefix and optional context
+ * @param {string} [context] - Optional context/scriptId string
  * @param {...any} args - Arguments to pass to console.warn
  */
-export function warn(...args) {
-  console.warn(
-    "%c[RPGHQ Userscript Manager]%c",
-    "background-color: #FFC107; color: black; padding: 2px 6px; border-radius: 10px; font-weight: bold;",
-    "",
-    ...args,
-  );
+export function warn(context, ...args) {
+  const managerStyle =
+    "background-color: #FFC107; color: black; padding: 2px 6px; border-radius: 10px; font-weight: bold;";
+  const contextStyle =
+    "background-color: #6c757d; color: white; padding: 1px 4px; border-radius: 8px; font-size: 0.9em; margin-left: 4px;";
+
+  if (typeof context === "string") {
+    console.warn(
+      `%c[RPGHQ USM]%c %c[${context}]%c`,
+      managerStyle,
+      "", // Reset style after manager bubble
+      contextStyle,
+      "", // Reset style after context bubble
+      ...args,
+    );
+  } else {
+    // If first arg isn't a string, assume it's part of the message and no context is provided
+    console.warn(
+      "%c[RPGHQ USM]%c",
+      managerStyle,
+      "", // Reset style
+      context,
+      ...args, // Pass the first arg (originally context) and the rest as message parts
+    );
+  }
 }
 
 /**
- * Log an error to the console with RPGHQ Userscript Manager prefix
+ * Log an error to the console with RPGHQ Userscript Manager prefix and optional context
+ * @param {string} [context] - Optional context/scriptId string
  * @param {...any} args - Arguments to pass to console.error
  */
-export function error(...args) {
-  console.error(
-    "%c[RPGHQ Userscript Manager]%c",
-    "background-color: #F5575D; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;",
-    "",
-    ...args,
-  );
+export function error(context, ...args) {
+  const managerStyle =
+    "background-color: #F5575D; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;";
+  const contextStyle =
+    "background-color: #6c757d; color: white; padding: 1px 4px; border-radius: 8px; font-size: 0.9em; margin-left: 4px;";
+
+  if (typeof context === "string") {
+    console.error(
+      `%c[RPGHQ USM]%c %c[${context}]%c`,
+      managerStyle,
+      "", // Reset style after manager bubble
+      contextStyle,
+      "", // Reset style after context bubble
+      ...args,
+    );
+  } else {
+    // If first arg isn't a string, assume it's part of the message and no context is provided
+    console.error(
+      "%c[RPGHQ USM]%c",
+      managerStyle,
+      "", // Reset style
+      context,
+      ...args, // Pass the first arg (originally context) and the rest as message parts
+    );
+  }
 }
 
 /**
- * Log debug information to the console with RPGHQ Userscript Manager prefix
+ * Log debug information to the console with RPGHQ Userscript Manager prefix and optional context
  * Only logs if not in production environment
+ * @param {string} [context] - Optional context/scriptId string
  * @param {...any} args - Arguments to pass to console.debug
  */
-export function debug(...args) {
-  console.debug(
-    "%c[RPGHQ Userscript Manager]%c",
-    "background-color: #00AA00; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;",
-    "",
-    ...args,
-  );
+export function debug(context, ...args) {
+  // Consider adding a check here if debug logging is globally enabled
+  const managerStyle =
+    "background-color: #00AA00; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;";
+  const contextStyle =
+    "background-color: #6c757d; color: white; padding: 1px 4px; border-radius: 8px; font-size: 0.9em; margin-left: 4px;";
+
+  if (typeof context === "string") {
+    console.debug(
+      `%c[RPGHQ USM]%c %c[${context}]%c`,
+      managerStyle,
+      "", // Reset style after manager bubble
+      contextStyle,
+      "", // Reset style after context bubble
+      ...args,
+    );
+  } else {
+    // If first arg isn't a string, assume it's part of the message and no context is provided
+    console.debug(
+      "%c[RPGHQ USM]%c",
+      managerStyle,
+      "", // Reset style
+      context,
+      ...args, // Pass the first arg (originally context) and the rest as message parts
+    );
+  }
 }
