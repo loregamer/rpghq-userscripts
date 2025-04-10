@@ -28,7 +28,7 @@ export const SCRIPT_MANIFEST = [
     description:
       "Auto marks Kalarion rape notifs as read (I will move this to user preferences and make it squashed instead)",
     author: "loregamer",
-    image: "https://f.rpghq.org/tTMdhnqxh1kW.gif", // Add an image URL if available
+    image: "https://f.rpghq.org/OA0rQkkRSSVq.png?n=pasted-file.png", // Add an image URL if available
     path: "./scripts/kalareact.js",
     enabledByDefault: false,
     settings: [
@@ -43,7 +43,7 @@ export const SCRIPT_MANIFEST = [
     version: "1.0.0",
     description: "Adds a quick member search button next to Unread posts",
     author: "loregamer",
-    image: "https://f.rpghq.org/lL2dlrpLeH1P.png", // Add an image URL if available
+    image: "https://f.rpghq.org/Rjsn2V3CLLOU.png?n=pasted-file.png", // Add an image URL if available
     path: "./scripts/memberSearch.js",
     enabledByDefault: true,
     settings: [
@@ -150,5 +150,5 @@ export const SCRIPT_MANIFEST = [
           "Enable to add commas to 4-digit numbers (1,000+). Disable to only format 5-digit numbers (10,000+).",
       },
     ],
-  }
-];;
+  },
+];
