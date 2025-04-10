@@ -13,38 +13,31 @@ const distFile = path.join(
   "dist",
   "rpghq-userscript-manager.user.js",
 );
-const cssFile = path.join(__dirname, "..", "src", "styles.css");
+
 
 console.log("Running post-build script...");
 
 try {
-  // Read the CSS content
-  let cssContent = fs.readFileSync(cssFile, "utf8");
-  // Escape backticks and ${ sequences for template literal injection
-  // Escape backticks and ${ sequences for template literal injection
-  cssContent = cssContent.replace(/`/g, "\\`").replace(/\${/g, "\\${"); // Refined regex for ${
 
   // Read the built userscript content
   let scriptContent = fs.readFileSync(distFile, "utf8");
 
-  // Find the placeholder GM_addStyle(''); call block
-  // Adjust the regex to match the exact placeholder, including potential surrounding whitespace/minification
-  // Adjust the regex to match the exact placeholder with double quotes
-  const gmAddStyleRegex = /GM_addStyle\s*\(\s*""\s*\)/;
+  // Find the GM_addStyle(css`...`); call
+  // Use a simple string replacement for robustness
+  const oldGmAddStyleCall = "GM_addStyle(css`";
 
-  const match = scriptContent.match(gmAddStyleRegex);
 
-  if (match) {
-    const oldBlock = match[0];
-    // Construct the new GM_addStyle call with the raw CSS content
-    // Construct the new GM_addStyle call using string concatenation
-    const newGmAddStyleCall = "GM_addStyle(`" + cssContent + "`);";
-    // Replace the old block with just the new call
-    scriptContent = scriptContent.replace(oldBlock, newGmAddStyleCall);
+
+  if (scriptContent.includes(oldGmAddStyleCall)) {
+
+    // Construct the new GM_addStyle call without the `css` tag
+    const newGmAddStyleCall = "GM_addStyle(`";
+    // Replace the beginning of the GM_addStyle call
+    scriptContent = scriptContent.replace(oldGmAddStyleCall, newGmAddStyleCall);
 
     // Write the modified content back to the file
     fs.writeFileSync(distFile, scriptContent, "utf8");
-    console.log("Successfully injected CSS into GM_addStyle in dist file.");
+    console.log("Successfully removed `css` tag from GM_addStyle in dist file.");
 
     // Run lint check at the very end of the script, after successful injection
     console.log("Running final lint check from post-build script...");
@@ -54,16 +47,16 @@ try {
     } catch (lintError) {
       console.error("Final lint check failed:", lintError.message);
       // Optionally exit if lint fails
-      // process.exit(1);
+      process.exit(1); // Exit if lint fails to prevent potentially broken script release
     }
   } else {
     console.error(
-      "Error: Could not find the target GM_addStyle block in the dist file.",
+      "Error: Could not find the target GM_addStyle(css` block in the dist file.",
     );
     process.exit(1); // Indicate failure
   }
 } catch (error) {
-  console.error("Error during post-build CSS injection:", error);
+  console.error("Error during post-build CSS modification:", error);
   process.exit(1); // Indicate failure
 }
 
