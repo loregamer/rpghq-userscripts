@@ -1,6 +1,6 @@
 /**
  * Toggles a script's enabled state, saves the state, and loads/unloads the script.
- * 
+ *
  * @param {string} scriptId - The ID of the script to toggle
  * @param {boolean} newState - The new enabled state
  * @param {Object} scriptStates - Object containing enabled/disabled states for scripts
@@ -10,13 +10,13 @@
  * @param {Function} unloadScript - Function to unload a script
  */
 export function toggleScriptEnabled(
-  scriptId, 
-  newState, 
-  scriptStates, 
-  gmSetValue, 
-  scriptManifest, 
-  loadScript, 
-  unloadScript
+  scriptId,
+  newState,
+  scriptStates,
+  gmSetValue,
+  scriptManifest,
+  loadScript,
+  unloadScript,
 ) {
   const storageKey = `script_enabled_${scriptId}`;
 

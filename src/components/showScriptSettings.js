@@ -1,15 +1,19 @@
 /**
  * Shows the settings modal for a script.
- * 
+ *
  * @param {Object} script - The script object from the manifest
  * @param {Function} renderScriptSettingsContent - Function to render the settings content
  * @param {Function} saveScriptSetting - Function to save a script setting
  */
-import { renderEmptyState } from './emptyState.js';
+import { renderEmptyState } from "./emptyState.js";
 
-export function showScriptSettings(script, renderScriptSettingsContent, saveScriptSetting = null) {
+export function showScriptSettings(
+  script,
+  renderScriptSettingsContent,
+  saveScriptSetting = null,
+) {
   console.log(`Showing settings modal for script: ${script.name}`);
-  
+
   // Create modal if it doesn't exist
   let modal = document.getElementById("script-settings-modal");
   if (!modal) {
@@ -28,7 +32,9 @@ export function showScriptSettings(script, renderScriptSettingsContent, saveScri
       </div>
     
       ${
-        script.settings && script.settings.length > 0 && renderScriptSettingsContent
+        script.settings &&
+        script.settings.length > 0 &&
+        renderScriptSettingsContent
           ? renderScriptSettingsContent(script, saveScriptSetting)
           : `<div class="empty-state">
               <div class="empty-state-icon">
@@ -77,11 +83,9 @@ export function showScriptSettings(script, renderScriptSettingsContent, saveScri
   modal.style.display = "block";
 
   // Add event listeners
-  modal
-    .querySelector(".settings-modal-close")
-    .addEventListener("click", () => {
-      modal.style.display = "none";
-    });
+  modal.querySelector(".settings-modal-close").addEventListener("click", () => {
+    modal.style.display = "none";
+  });
 
   modal.addEventListener("click", (e) => {
     if (e.target === modal) {
@@ -93,14 +97,14 @@ export function showScriptSettings(script, renderScriptSettingsContent, saveScri
   if (script.settings && script.settings.length > 0 && saveScriptSetting) {
     setTimeout(() => {
       // Need to add these with a small delay to ensure the DOM is ready
-      const settingsInputs = modal.querySelectorAll('.setting-input');
-      settingsInputs.forEach(input => {
+      const settingsInputs = modal.querySelectorAll(".setting-input");
+      settingsInputs.forEach((input) => {
         const settingId = input.dataset.settingId;
         if (!settingId) return;
-        
-        const eventType = input.type === 'checkbox' ? 'change' : 'input';
+
+        const eventType = input.type === "checkbox" ? "change" : "input";
         input.addEventListener(eventType, (e) => {
-          const value = input.type === 'checkbox' ? input.checked : input.value;
+          const value = input.type === "checkbox" ? input.checked : input.value;
           saveScriptSetting(script.id, settingId, value);
         });
       });

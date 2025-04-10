@@ -1,19 +1,27 @@
 /**
  * Renders scripts in a list/table view.
- * 
+ *
  * @param {HTMLElement} container - The container element to render into
  * @param {Array} scripts - Array of script objects from the manifest
  * @param {Object} scriptStates - Object containing enabled/disabled states for scripts
  * @param {Function} showScriptSettings - Function to show the settings modal for a script
  */
-import { getPhaseDisplayName } from '../utils/getPhaseDisplayName.js';
-import { renderEmptyState } from './emptyState.js';
+import { getPhaseDisplayName } from "../utils/getPhaseDisplayName.js";
+import { renderEmptyState } from "./emptyState.js";
 
-export function renderScriptsListView(container, scripts, scriptStates = {}, showScriptSettings) {
+export function renderScriptsListView(
+  container,
+  scripts,
+  scriptStates = {},
+  showScriptSettings,
+) {
   console.log("Rendering scripts in List View...");
-  
+
   if (!scripts || scripts.length === 0) {
-    renderEmptyState(container, "No scripts found. Try adjusting your filters to see more results.");
+    renderEmptyState(
+      container,
+      "No scripts found. Try adjusting your filters to see more results.",
+    );
     return;
   }
 
@@ -35,10 +43,12 @@ export function renderScriptsListView(container, scripts, scriptStates = {}, sho
     </thead>
     <tbody>
       ${scripts
-        .map(
-          (script) => {
-            const isEnabled = scriptStates[script.id] !== undefined ? scriptStates[script.id] : script.enabledByDefault;
-            return `
+        .map((script) => {
+          const isEnabled =
+            scriptStates[script.id] !== undefined
+              ? scriptStates[script.id]
+              : script.enabledByDefault;
+          return `
               <tr>
                 <td><strong>${script.name}</strong></td>
                 <td>v${script.version}</td>
@@ -47,7 +57,7 @@ export function renderScriptsListView(container, scripts, scriptStates = {}, sho
                 <td>${getPhaseDisplayName(script.executionPhase)}</td>
                 <td>
                   <label class="toggle-switch">
-                    <input type="checkbox" class="script-toggle" data-script-id="${script.id}" ${isEnabled ? 'checked' : ''}>
+                    <input type="checkbox" class="script-toggle" data-script-id="${script.id}" ${isEnabled ? "checked" : ""}>
                     <span class="toggle-slider"></span>
                   </label>
                 </td>
@@ -65,8 +75,7 @@ export function renderScriptsListView(container, scripts, scriptStates = {}, sho
                 </td>
               </tr>
             `;
-          }
-        )
+        })
         .join("")}
     </tbody>
   `;
@@ -90,10 +99,10 @@ export function renderScriptsListView(container, scripts, scriptStates = {}, sho
     toggle.addEventListener("change", (e) => {
       const scriptId = toggle.dataset.scriptId;
       const newState = toggle.checked;
-      
+
       // Dispatch a custom event that main.js can listen for
       const event = new CustomEvent("script-toggle", {
-        detail: { scriptId, enabled: newState }
+        detail: { scriptId, enabled: newState },
       });
       document.dispatchEvent(event);
     });

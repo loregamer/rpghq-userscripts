@@ -18,7 +18,7 @@ const GM_PREFIX = "RPGHQ_Manager_"; // Prefix for GM_setValue/GM_getValue keys
 const EXECUTION_PHASES = [
   { id: "document-start", name: "Document Start" },
   { id: "document-end", name: "Document End" },
-  { id: "document-idle", name: "Document Idle" }
+  { id: "document-idle", name: "Document Idle" },
 ];
 
 // --- GM Wrappers ---
@@ -135,7 +135,7 @@ document.addEventListener("script-toggle", (event) => {
     gmSetValue,
     SCRIPT_MANIFEST,
     loadScript,
-    unloadScript
+    unloadScript,
   );
 });
 
@@ -149,11 +149,7 @@ function handleRenderScriptsListView(container, scripts, states) {
 }
 
 function handleShowScriptSettings(script) {
-  showScriptSettings(
-    script,
-    renderScriptSettingsContent,
-    saveScriptSetting
-  );
+  showScriptSettings(script, renderScriptSettingsContent, saveScriptSetting);
 }
 
 function saveScriptSetting(scriptId, settingId, value) {
@@ -178,7 +174,7 @@ function handleLoadTabContent(tabName) {
     scriptStates,
     renderScriptsGridView: handleRenderScriptsGridView,
     renderScriptsListView: handleRenderScriptsListView,
-    executionPhases: EXECUTION_PHASES
+    executionPhases: EXECUTION_PHASES,
   });
 }
 
@@ -186,15 +182,17 @@ function handleLoadTabContent(tabName) {
 function toggleModalVisibility() {
   const modal = document.getElementById("mod-manager-modal");
   const isVisible = modal && modal.style.display === "block";
-  
-  console.log(`Toggling modal visibility. Currently ${isVisible ? "visible" : "hidden"}.`);
-  
+
+  console.log(
+    `Toggling modal visibility. Currently ${isVisible ? "visible" : "hidden"}.`,
+  );
+
   if (isVisible) {
     hideModal();
   } else {
     showModal({
       loadTabContent: handleLoadTabContent,
-      hideModal
+      hideModal,
     });
   }
 }
@@ -278,7 +276,7 @@ function addMenuButton(toggleVisibilityCallback) {
 // --- Initialization ---
 function init() {
   console.log("Initializing RPGHQ Userscript Manager...");
-  
+
   // Initialize script states and load enabled scripts
   initializeScriptStates();
   loadEnabledScripts();
@@ -298,7 +296,7 @@ function init() {
         );
         return;
       }
-      
+
       event.preventDefault();
       toggleModalVisibility();
     }
@@ -312,9 +310,12 @@ function init() {
   } catch (e) {
     console.error("Failed to register GM menu command:", e);
   }
-  
+
   // Add menu button to the page
-  if (document.readyState === "complete" || document.readyState === "interactive") {
+  if (
+    document.readyState === "complete" ||
+    document.readyState === "interactive"
+  ) {
     addMenuButton(toggleModalVisibility);
   } else {
     document.addEventListener("DOMContentLoaded", () => {

@@ -1,13 +1,13 @@
 /**
  * Shows the userscript manager modal and sets up tab functionality.
- * 
+ *
  * @param {Object} options - Configuration options
  * @param {Function} options.loadTabContent - Function to load tab content
  * @param {Function} options.hideModal - Function to hide the modal
  */
 export function showModal({ loadTabContent, hideModal }) {
   console.log("Showing userscript manager modal...");
-  
+
   let modal = document.getElementById("mod-manager-modal");
   if (!modal) {
     modal = document.createElement("div");
@@ -41,11 +41,9 @@ export function showModal({ loadTabContent, hideModal }) {
     document.body.appendChild(modal);
 
     // Add event listeners
-    modal
-      .querySelector(".mod-manager-close")
-      .addEventListener("click", () => {
-        hideModal();
-      });
+    modal.querySelector(".mod-manager-close").addEventListener("click", () => {
+      hideModal();
+    });
 
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {
