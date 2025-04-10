@@ -102,7 +102,8 @@ const scriptModules = {
 
   memberSearch: memberSearch,
   randomTopic: randomTopic,
-  recentTopicsFormat: recentTopicsFormat,};
+  recentTopicsFormat: recentTopicsFormat,
+};
 
 // Load a single script by its manifest entry
 function loadScript(script) {

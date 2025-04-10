@@ -1,5 +1,5 @@
 export const SCRIPT_MANIFEST = [
-{
+  {
     id: "bbcode",
     name: "BBCode Highlighting",
     version: "1.0.0",
@@ -20,10 +20,8 @@ export const SCRIPT_MANIFEST = [
     ],
     categories: ["UI"],
     executionPhase: "document-end",
-  },,
-,
-,
-{
+  },
+  {
     id: "kalareact",
     name: "Kalarion Reaction Auto-Marker",
     version: "1.0.0",
@@ -38,10 +36,23 @@ export const SCRIPT_MANIFEST = [
     ],
     categories: ["General"],
     executionPhase: "after_dom",
-  },,
-,
-,
-{
+  },
+  {
+    id: "memberSearch",
+    name: "Member Search Button",
+    version: "1.0.0",
+    description: "Adds a quick member search button next to Unread posts",
+    author: "loregamer",
+    image: "https://f.rpghq.org/lL2dlrpLeH1P.png", // Add an image URL if available
+    path: "./scripts/memberSearch.js",
+    enabledByDefault: true,
+    settings: [
+      // Add settings here
+    ],
+    categories: ["Fun"],
+    executionPhase: "document-end",
+  },
+  {
     id: "notifications",
     name: "Notification Improver",
     version: "1.0.0",
@@ -54,10 +65,8 @@ export const SCRIPT_MANIFEST = [
     settings: [],
     categories: ["UI"],
     executionPhase: "after_dom",
-  },,
-,
-,
-{
+  },
+  {
     id: "pinThreads",
     name: "Pin Threads",
     version: "1.0.0",
@@ -72,10 +81,23 @@ export const SCRIPT_MANIFEST = [
     ],
     categories: ["UI"],
     executionPhase: "document-end",
-  },,
-,
-,
-{
+  },
+  {
+    id: "randomTopic",
+    name: "Random Topic Button",
+    version: "1.0.0",
+    description: "Adds a Random Topic button, for funsies",
+    author: "loregamer",
+    image: "https://f.rpghq.org/LzsLP40AK6Ut.png?n=pasted-file.png", // Add an image URL if available
+    path: "./scripts/randomTopic.js",
+    enabledByDefault: true,
+    settings: [
+      // Add settings here
+    ],
+    categories: ["Fun"],
+    executionPhase: "document-end",
+  },
+  {
     id: "separateReactions",
     name: "Reaction List Separated",
     version: "1.0.0",
@@ -90,10 +112,24 @@ export const SCRIPT_MANIFEST = [
     ],
     categories: ["UI"],
     executionPhase: "document-end",
-  },,
-,
-,
-{
+  },
+  {
+    id: "recentTopicsFormat",
+    name: "Slightly Formatted Thread Titles in Recent Topics",
+    version: "1.0.0",
+    description:
+      "Adds some minor formatting to thread titles, like unbolding stuff in parantheses, add line wrapping, or reformatting the AG threads",
+    author: "loregamer",
+    image: "https://f.rpghq.org/97x4ryHzRbVf.png?n=pasted-file.png", // Add an image URL if available
+    path: "./scripts/recentTopicsFormat.js",
+    enabledByDefault: false,
+    settings: [
+      // Add settings here
+    ],
+    categories: ["UI"],
+    executionPhase: "document-end",
+  },
+  {
     id: "commaFormatter",
     name: "Thousands Comma Formatter",
     version: "2.1.2",
@@ -114,51 +150,5 @@ export const SCRIPT_MANIFEST = [
           "Enable to add commas to 4-digit numbers (1,000+). Disable to only format 5-digit numbers (10,000+).",
       },
     ],
-  },,
-,
-{
-    id: "memberSearch",
-    name: "Member Search Button",
-    version: "1.0.0",
-    description: "Adds a quick member search button next to Unread posts",
-    author: "loregamer",
-    image: "", // Add an image URL if available
-    path: "./scripts/memberSearch.js",
-    enabledByDefault: true,
-    settings: [
-      // Add settings here
-    ],
-    categories: ["Fun"],
-    executionPhase: "document-end",
-  },,
-{
-    id: "randomTopic",
-    name: "Random Topic Button",
-    version: "1.0.0",
-    description: "Adds a Random Topic button, for funsies",
-    author: "loregamer",
-    image: "", // Add an image URL if available
-    path: "./scripts/randomTopic.js",
-    enabledByDefault: true,
-    settings: [
-      // Add settings here
-    ],
-    categories: ["Fun"],
-    executionPhase: "document-end",
-  },
-  {
-    id: "recentTopicsFormat",
-    name: "Slightly Formatted Thread Titles",
-    version: "1.0.0",
-    description: "Adds some minor formatting to thread titles, like unbolding stuff in parantheses or reformatting the AG threads",
-    author: "loregamer",
-    image: "", // Add an image URL if available
-    path: "./scripts/recentTopicsFormat.js",
-    enabledByDefault: false,
-    settings: [
-      // Add settings here
-    ],
-    categories: ["UI"],
-    executionPhase: "document-end",
   }
 ];;

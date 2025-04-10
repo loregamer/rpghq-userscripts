@@ -208,7 +208,7 @@ export function init() {
           "x-requested-with": "XMLHttpRequest",
         },
         credentials: "include",
-      }
+      },
     )
       .then((response) => response.json())
       .then((data) => {
@@ -326,12 +326,12 @@ export function init() {
     const chatItem = Array.from(navMain.children).find(
       (el) =>
         el.textContent.trim().includes("Chat") ||
-        el.textContent.trim().includes("IRC")
+        el.textContent.trim().includes("IRC"),
     );
 
     // Try to find the Members item again, but look for direct children of navMain
     const membersItem = Array.from(navMain.children).find((el) =>
-      el.textContent.trim().includes("Members")
+      el.textContent.trim().includes("Members"),
     );
 
     // Try to insert it after Chat, or Members, or just append to navMain

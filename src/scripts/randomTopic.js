@@ -46,7 +46,7 @@ export function init() {
   function addRandomTopicButton() {
     // Add to quick links dropdown
     const quickLinks = document.querySelector(
-      "#quick-links .dropdown-contents"
+      "#quick-links .dropdown-contents",
     );
     if (quickLinks) {
       const listItem = document.createElement("li");
@@ -57,7 +57,7 @@ export function init() {
         `;
       // Insert after "Active topics" in the dropdown
       const activeTopicsItem = quickLinks.querySelector(
-        'a[href*="search_id=active_topics"]'
+        'a[href*="search_id=active_topics"]',
       );
       if (activeTopicsItem) {
         const insertAfter = activeTopicsItem.closest("li");

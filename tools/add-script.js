@@ -43,11 +43,11 @@ async function createScript() {
   let scriptId;
   do {
     scriptId = await prompt(
-      "Enter Script ID (alphanumeric, start with letter): "
+      "Enter Script ID (alphanumeric, start with letter): ",
     );
     if (!isValidScriptId(scriptId)) {
       console.error(
-        "Error: Script ID must start with a letter and contain only alphanumeric characters"
+        "Error: Script ID must start with a letter and contain only alphanumeric characters",
       );
     }
   } while (!isValidScriptId(scriptId));
@@ -85,7 +85,7 @@ async function processFiles(
   description,
   author,
   category,
-  enabledByDefault
+  enabledByDefault,
 ) {
   // File paths
   const manifestPath = path.join(__dirname, "../src/manifest.js");
@@ -97,7 +97,7 @@ async function processFiles(
   // Check if the script already exists
   if (fs.existsSync(newScriptPath)) {
     console.error(
-      `Error: Script with ID "${scriptId}" already exists at ${newScriptPath}`
+      `Error: Script with ID "${scriptId}" already exists at ${newScriptPath}`,
     );
     process.exit(1);
   }
@@ -166,13 +166,13 @@ export function init() {
 
   // Find the array declaration
   const arrayStart = manifestContent.indexOf(
-    "export const SCRIPT_MANIFEST = ["
+    "export const SCRIPT_MANIFEST = [",
   );
   const arrayEnd = manifestContent.lastIndexOf("];");
 
   if (arrayStart === -1 || arrayEnd === -1) {
     console.error(
-      "Error: Could not locate SCRIPT_MANIFEST array in manifest.js"
+      "Error: Could not locate SCRIPT_MANIFEST array in manifest.js",
     );
     process.exit(1);
   }
@@ -180,7 +180,7 @@ export function init() {
   // Extract the array content
   const arrayContent = manifestContent.substring(
     arrayStart + "export const SCRIPT_MANIFEST = [".length,
-    arrayEnd
+    arrayEnd,
   );
 
   // Split the array into individual objects by looking for object boundaries
@@ -250,7 +250,7 @@ export function init() {
 
   fs.writeFileSync(manifestPath, newManifestContent);
   console.log(
-    `Updated manifest.js with new script entry for ${scriptId} (sorted alphabetically)`
+    `Updated manifest.js with new script entry for ${scriptId} (sorted alphabetically)`,
   );
 
   // Update main.js
@@ -271,13 +271,13 @@ export function init() {
 
     // Find the script modules mapping
     const scriptModulesSection = mainJsContent.indexOf(
-      "const scriptModules = {"
+      "const scriptModules = {",
     );
     if (scriptModulesSection !== -1) {
       // Find the end of the object
       const modulesMappingEnd = mainJsContent.indexOf(
         "};",
-        scriptModulesSection
+        scriptModulesSection,
       );
 
       // Add the new module mapping
@@ -289,7 +289,7 @@ export function init() {
 
       fs.writeFileSync(mainJsPath, mainJsContent);
       console.log(
-        `Updated main.js with import and module mapping for ${scriptId}`
+        `Updated main.js with import and module mapping for ${scriptId}`,
       );
     } else {
       console.error("Error: Could not locate scriptModules mapping in main.js");
@@ -320,7 +320,7 @@ export function init() {
       scriptDetails.description,
       scriptDetails.author,
       scriptDetails.category,
-      scriptDetails.enabledByDefault
+      scriptDetails.enabledByDefault,
     );
   } catch (error) {
     console.error("Error:", error);
