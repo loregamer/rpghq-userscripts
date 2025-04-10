@@ -66,14 +66,10 @@ function loadEnabledScripts() {
 }
 
 // Import scripts directly
-import * as exampleScript1 from "./scripts/example_script1.js";
-import * as exampleScript2 from "./scripts/example_script2.js";
 import * as commaFormatter from "./scripts/commaFormatter.js";
 
 // Map of script ids to their modules
 const scriptModules = {
-  script1: exampleScript1,
-  script2: exampleScript2,
   commaFormatter: commaFormatter,
 };
 
