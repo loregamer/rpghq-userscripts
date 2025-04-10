@@ -1,7 +1,8 @@
-// Rollup configuration file
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import css from 'rollup-plugin-import-css';
+import { string } from 'rollup-plugin-string'; // Import the correct plugin
+// import raw from '@rollup/plugin-raw'; // Removed incorrect plugin
+import terser from '@rollup/plugin-terser'; // Updated terser plugin
 import metablock from 'rollup-plugin-userscript-metablock';
 import fs from 'fs';
 import path from 'path';
@@ -38,14 +39,10 @@ export default {
   plugins: [
     resolve(), // Resolves node modules
     commonjs(), // Converts CommonJS modules to ES6
-    css({ 
-      // Configuration for CSS handling
-      // Inject CSS into the head of the document
-      inject: true, 
-      // Minify CSS output
-      minify: true, 
+    string({ // Use rollup-plugin-string for CSS files
+      include: "**/*.css",
     }),
-    // terser(), // Uncomment to enable minification (requires rollup-plugin-terser or @rollup/plugin-terser)
+    terser(), // Enable minification
     metablock(metablockOptions) // Generate the userscript metablock
   ],
 };
