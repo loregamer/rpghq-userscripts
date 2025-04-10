@@ -1,8 +1,7 @@
 // Core logic for managing thread preferences: Pin, Ignore, Highlight
 import { gmGetValue, gmSetValue } from "../utils/gmUtils.js";
 import { log, error } from "../utils/logger.js";
-// import { refreshPinnedView } from "../scripts/pinThreads.js"; // Use CommonJS require below
-const { refreshPinnedView } = require("../scripts/pinThreads.js"); // Import the view refresh function (CommonJS)
+import { refreshPinnedView } from "../scripts/pinThreads.js"; // Import the view refresh function
 
 const PREF_ID = "core_threadPrefs"; // Identifier for logging
 const STORAGE_KEY_THREADS = "thread_prefs"; // Key for storing thread preferences
