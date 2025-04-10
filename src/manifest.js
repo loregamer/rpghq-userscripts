@@ -1,25 +1,3 @@
-// Manifest defining scripts and their metadata
-/**
- * SCRIPT_MANIFEST contains the configuration for all scripts in the manager
- *
- * Each script entry can have the following properties:
- * @property {string} id - Unique identifier for the script
- * @property {string} name - Display name of the script
- * @property {string} version - Version number
- * @property {string} description - Brief description of what the script does
- * @property {string} author - Author's name
- * @property {string} image - URL to an image icon representing the script
- * @property {string} path - Reference path to the script file (for documentation purposes)
- * @property {boolean} enabledByDefault - Whether the script should be enabled when first installed
- * @property {string[]} urlPatterns - Array of URL patterns where the script should run (empty for all URLs)
- * @property {Object[]} settings - Array of setting objects for the script
- * @property {string[]} categories - Categories the script belongs to
- * @property {string} executionPhase - When the script should execute, one of:
- *   - "document-start" - As soon as possible in page load
- *   - "document-end" - When DOM is ready but before all resources loaded (default if not specified)
- *   - "document-idle" - After page is fully loaded
- *   - "after_dom" - Small delay after the page is loaded (for UI scripts)
- */
 export const SCRIPT_MANIFEST = [
   {
     id: "bbcode",
@@ -50,9 +28,9 @@ export const SCRIPT_MANIFEST = [
     description: "Add commas to large numbers in forum posts and statistics.",
     author: "loregamer",
     image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png",
-    path: "./scripts/commaFormatter.js", // Path is kept for reference but not used for loading
+    path: "./scripts/commaFormatter.js",
     enabledByDefault: true,
-    urlPatterns: [], // Empty array means run on all URLs
+    urlPatterns: [],
     settings: [
       {
         id: "formatFourDigits",

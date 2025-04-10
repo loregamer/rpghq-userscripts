@@ -26,7 +26,7 @@ export function showModal({ loadTabContent, hideModal }) {
           <div class="mod-manager-tab" data-tab="forum">
             <i class="fa fa-sliders"></i> Forum Preferences
           </div>
-          <!-- Settings tab temporarily hidden -->
+          <!-- Settings tab completely hidden -->
         </div>
         <div class="mod-manager-content" id="mod-manager-content">
           <!-- Content loaded dynamically -->

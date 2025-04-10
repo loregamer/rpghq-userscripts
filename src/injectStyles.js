@@ -313,6 +313,11 @@ GM_addStyle(`
     border: 1px solid var(--border-color);
     border-radius: 4px;
     overflow: hidden;
+    transition: border-color 0.3s ease;
+  }
+  
+  .script-card.enabled {
+    border: 2px solid var(--success-color);
   }
 
   .script-card-image {
@@ -354,12 +359,10 @@ GM_addStyle(`
     align-items: center;
   }
 
-  .script-toggle-icon {
-    color: var(--primary-color);
-  }
-
-  .fa-toggle-off.script-toggle-icon {
-    color: #777;
+  .script-toggle-checkbox {
+    cursor: pointer;
+    transform: scale(1.3);
+    accent-color: var(--success-color);
   }
 
   .btn-icon {
