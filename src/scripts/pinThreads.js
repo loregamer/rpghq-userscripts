@@ -8,7 +8,6 @@
  */
 
 export function init() {
-  const PINNED_THREADS_KEY = "rpghq_pinned_threads";
   const PINNED_FORUMS_KEY = "rpghq_pinned_forums";
   const SHOW_ON_NEW_POSTS_KEY = "rpghq_show_pinned_on_new_posts";
   const ZOMBOID_THREAD_ID = "2756";
@@ -17,8 +16,6 @@ export function init() {
 
   // Utility functions
   const util = {
-    getPinnedThreads: () => GM_getValue(PINNED_THREADS_KEY, {}),
-    setPinnedThreads: (threads) => GM_setValue(PINNED_THREADS_KEY, threads),
     getPinnedForums: () => GM_getValue(PINNED_FORUMS_KEY, {}),
     setPinnedForums: (forums) => GM_setValue(PINNED_FORUMS_KEY, forums),
     getShowOnNewPosts: () => GM_getValue(SHOW_ON_NEW_POSTS_KEY, false),
@@ -88,54 +85,26 @@ export function init() {
     menuCommandId = GM_registerMenuCommand(label, toggleNewPostsDisplay);
   }
 
-  // Main functions
-  function addPinButton() {
-    // For backward compatibility, redirect to the new function
-    addThreadPinButton();
-  }
+  // Function removed - handled by threadPrefs.js
 
-  function createPinButton(threadId) {
-    // For backward compatibility, redirect to the new function
-    return createThreadPinButton(threadId);
-  }
+  // Function removed - logic moved to refreshPinnedView
+  // async function createPinnedThreadsSection() { ... }
 
-  function togglePinThread(threadId, button) {
-    const pinnedThreads = util.getPinnedThreads();
-    const threadInfo = getThreadInfo();
-
-    if (pinnedThreads.hasOwnProperty(threadId)) {
-      delete pinnedThreads[threadId];
-    } else {
-      pinnedThreads[threadId] = threadInfo;
+  // --- Exported Function for Refreshing Pinned View (CommonJS export) ---
+  async function refreshPinnedView(pinnedThreads) {
+    // Remove existing pinned threads section if it exists
+    const existingSection = document.getElementById("pinned-threads");
+    if (existingSection) {
+      existingSection.remove();
     }
 
-    util.setPinnedThreads(pinnedThreads);
-    updatePinButtonState(button, pinnedThreads.hasOwnProperty(threadId));
-  }
+    const threadIds = Object.keys(pinnedThreads);
+    if (threadIds.length === 0) return; // Nothing to pin
 
-  function getThreadInfo() {
-    return {
-      title: document.querySelector(".topic-title").textContent.trim(),
-      author: document.querySelector(".author").textContent.trim(),
-      postTime: document.querySelector(".author time").getAttribute("datetime"),
-    };
-  }
-
-  async function createPinnedThreadsSection() {
     const pageBody = document.querySelector("#page-body");
     if (!pageBody) return;
 
-    const pinnedThreads = util.getPinnedThreads();
-    const pinnedForums = util.getPinnedForums();
-
-    // If there's nothing to display, exit early
-    if (
-      Object.keys(pinnedThreads).length === 0 &&
-      Object.keys(pinnedForums).length === 0
-    )
-      return;
-
-    // Determine the correct insertion point based on the current page
+    // --- Determine Insertion Point (copied from createPinnedThreadsSection) ---
     let insertionPoint;
     if (window.location.href.includes("/search.php")) {
       insertionPoint = findSearchPageInsertionPoint(pageBody);
@@ -143,60 +112,45 @@ export function init() {
       const indexLeft = pageBody.querySelector(".index-left");
       insertionPoint = indexLeft || pageBody.querySelector(".forumbg");
     }
-
     if (!insertionPoint) return;
 
-    // Create and insert pinned sections if needed
-    if (Object.keys(pinnedForums).length > 0) {
-      const pinnedForumsSection = createPinnedForumsSectionElement();
+    // --- Create Pinned Threads Section Element (copied from create...) ---
+    const pinnedThreadsSection = createPinnedThreadsSectionElement();
 
-      // Insert the pinned forums section
-      if (insertionPoint.classList.contains("index-left")) {
-        insertionPoint.insertAdjacentElement("afterbegin", pinnedForumsSection);
+    // --- Insert the Pinned Threads Section ---
+    const existingForumsSection = document.getElementById("pinned-forums");
+    if (insertionPoint.classList.contains("index-left")) {
+      if (existingForumsSection) {
+        insertionPoint.insertBefore(
+          pinnedThreadsSection,
+          existingForumsSection.nextSibling,
+        ); // Insert after forums if they exist
       } else {
-        insertionPoint.parentNode.insertBefore(
-          pinnedForumsSection,
-          insertionPoint,
-        );
-      }
-
-      populatePinnedForumsSection(pinnedForumsSection);
-    }
-
-    if (Object.keys(pinnedThreads).length > 0) {
-      const pinnedThreadsSection = createPinnedThreadsSectionElement();
-
-      // Insert the pinned threads section
-      if (insertionPoint.classList.contains("index-left")) {
         insertionPoint.insertAdjacentElement(
           "afterbegin",
           pinnedThreadsSection,
-        );
-      } else {
-        if (Object.keys(pinnedForums).length > 0) {
-          // If we already have pinned forums, insert after that section
-          const pinnedForumsSection = document.getElementById("pinned-forums");
-          if (pinnedForumsSection) {
-            pinnedForumsSection.insertAdjacentElement(
-              "afterend",
-              pinnedThreadsSection,
-            );
-          } else {
-            insertionPoint.parentNode.insertBefore(
-              pinnedThreadsSection,
-              insertionPoint,
-            );
-          }
-        } else {
-          insertionPoint.parentNode.insertBefore(
-            pinnedThreadsSection,
-            insertionPoint,
-          );
-        }
+        ); // Insert at top if no forums
       }
-
-      await populatePinnedThreadsSection(pinnedThreadsSection);
+    } else {
+      if (existingForumsSection) {
+        existingForumsSection.insertAdjacentElement(
+          "afterend",
+          pinnedThreadsSection,
+        ); // Insert after forums
+      } else {
+        insertionPoint.parentNode.insertBefore(
+          pinnedThreadsSection,
+          insertionPoint,
+        ); // Insert before main content
+      }
     }
+
+    // --- Populate Pinned Threads Section (logic will be added next) ---
+    await _populatePinnedThreadsSectionInternal(
+      pinnedThreadsSection,
+      pinnedThreads,
+      threadIds,
+    );
   }
 
   function populatePinnedForumsSection(pinnedSection) {
@@ -826,23 +780,26 @@ export function init() {
     (window.location.href.includes("/search.php?search_id=newposts") &&
       util.getShowOnNewPosts())
   ) {
-    createPinnedThreadsSection();
+    // createPinnedThreadsSection(); // Removed - Now called by threadPrefs.js via refreshPinnedView
   }
 
-  async function populatePinnedThreadsSection(pinnedSection) {
-    const pinnedThreads = util.getPinnedThreads();
-    const pinnedList = pinnedSection.querySelector("#pinned-threads-list");
-    const threadIds = Object.keys(pinnedThreads);
+  async function _populatePinnedThreadsSectionInternal(
+    pinnedThreadsSection,
+    pinnedThreads,
+    threadIds,
+  ) {
+    // --- Populate Pinned Threads Section (logic from populatePinnedThreadsSection) ---
+    const pinnedList = pinnedThreadsSection.querySelector(
+      "#pinned-threads-list",
+    );
 
-    // First, check if threads exist on the current page
+    // Check for threads on current page
     const existingThreadRows = findExistingThreadRows(threadIds);
-
-    // For threads that don't exist on the page, we'll need to fetch them
     const threadsToFetch = threadIds.filter(
       (id) => !existingThreadRows.has(id),
     );
 
-    // Create loading placeholders for threads we need to fetch
+    // Create loading placeholders
     threadsToFetch.forEach((threadId) => {
       pinnedList.insertAdjacentHTML(
         "beforeend",
@@ -850,7 +807,7 @@ export function init() {
       );
     });
 
-    // Set up Intersection Observer
+    // Observer setup
     let isVisible = false;
     const observer = new IntersectionObserver(
       (entries) => {
@@ -858,21 +815,15 @@ export function init() {
       },
       { threshold: 0.1 },
     );
-    observer.observe(pinnedSection);
+    observer.observe(pinnedThreadsSection);
+    const initialHeight = pinnedThreadsSection.offsetHeight;
 
-    // Store the initial height
-    const initialHeight = pinnedSection.offsetHeight;
-
-    // Add existing thread rows first
+    // Add existing rows
     for (const [threadId, row] of existingThreadRows.entries()) {
       const clonedRow = row.cloneNode(true);
       clonedRow.id = `pinned-thread-${threadId}`;
-
-      // Remove any unwanted elements or classes
       clonedRow.querySelectorAll(".pagination").forEach((el) => el.remove());
       clonedRow.classList.add("content-processed");
-
-      // Find the placeholder if it exists and replace it, or just append
       const placeholder = pinnedList.querySelector(
         `#pinned-thread-${threadId}`,
       );
@@ -883,7 +834,7 @@ export function init() {
       }
     }
 
-    // Fetch and process threads that don't exist on the page
+    // Fetch missing threads
     if (threadsToFetch.length > 0) {
       const threadsData = await Promise.all(
         threadsToFetch.map((threadId) =>
@@ -896,16 +847,16 @@ export function init() {
         ),
       );
 
-      // Sort threads
+      // Sort fetched threads (using sortableTitle for robustness)
       threadsData.sort((a, b) =>
-        a.title.localeCompare(b.title, undefined, {
-          numeric: true,
-          sensitivity: "base",
-          ignorePunctuation: false,
-        }),
+        (a.sortableTitle || a.title).localeCompare(
+          b.sortableTitle || b.title,
+          undefined,
+          { numeric: true, sensitivity: "base", ignorePunctuation: false },
+        ),
       );
 
-      // Update the list with sorted threads
+      // Update list with fetched threads
       threadsData.forEach((threadData) => {
         const placeholder = pinnedList.querySelector(
           `#pinned-thread-${threadData.threadId}`,
@@ -918,7 +869,7 @@ export function init() {
       });
     }
 
-    // Sort all thread rows now that we have all of them
+    // Sort all rows
     const allRows = Array.from(pinnedList.children);
     allRows.sort((a, b) => {
       const aTitle = a.querySelector(".topictitle")?.textContent || "";
@@ -929,21 +880,25 @@ export function init() {
         ignorePunctuation: false,
       });
     });
+    allRows.forEach((row) => pinnedList.appendChild(row)); // Re-append sorted
 
-    // Re-append in sorted order
-    allRows.forEach((row) => pinnedList.appendChild(row));
-
-    // Adjust scroll position if necessary
-    const newHeight = pinnedSection.offsetHeight;
+    // Scroll adjustment
+    const newHeight = pinnedThreadsSection.offsetHeight;
     const heightDifference = newHeight - initialHeight;
-
     if (!isVisible && heightDifference > 0) {
       window.scrollBy(0, heightDifference);
     }
 
-    // Clean up the observer
-    observer.disconnect();
+    observer.disconnect(); // Clean up observer
   }
+
+  // Function removed - logic moved to _populatePinnedThreadsSectionInternal
+  // async function populatePinnedThreadsSection(pinnedSection) { ... }
+
+  // Export the function for use in other modules (CommonJS style)
+  module.exports = {
+    refreshPinnedView,
+  };
 
   function findExistingThreadRows(threadIds) {
     const result = new Map();
@@ -966,39 +921,7 @@ export function init() {
     return result;
   }
 
-  // Thread pinning functions
-  function addThreadPinButton() {
-    const actionBar = document.querySelector(".action-bar.bar-top");
-    const threadId = util.getThreadId();
-    if (
-      actionBar &&
-      threadId &&
-      !document.getElementById("pin-thread-button")
-    ) {
-      const dropdownContainer = createDropdownContainer();
-      const pinButton = createThreadPinButton(threadId);
-      dropdownContainer.appendChild(pinButton);
-      actionBar.insertBefore(dropdownContainer, actionBar.firstChild);
-      addResponsiveStyle();
-    }
-  }
-
-  function createThreadPinButton(threadId) {
-    const button = document.createElement("span");
-    button.id = "pin-thread-button";
-    button.className = "button button-secondary dropdown-trigger";
-
-    const pinnedThreads = util.getPinnedThreads();
-    const isPinned = pinnedThreads.hasOwnProperty(threadId);
-    updatePinButtonState(button, isPinned);
-
-    button.addEventListener("click", (e) => {
-      e.preventDefault();
-      togglePinThread(threadId, button);
-    });
-
-    return button;
-  }
+  // Function removed - handled by threadPrefs.js
 
   // Forum pinning functions
   function addForumPinButton() {
@@ -1074,10 +997,5 @@ export function init() {
     return container;
   }
 
-  function updatePinButtonState(button, isPinned) {
-    button.innerHTML = isPinned
-      ? '<i class="icon fa-thumb-tack fa-fw" aria-hidden="true"></i><span>Unpin</span>'
-      : '<i class="icon fa-thumb-tack fa-fw" aria-hidden="true"></i><span>Pin</span>';
-    button.title = isPinned ? "Unpin" : "Pin";
-  }
+  // Function removed - handled by threadPrefs.js
 }

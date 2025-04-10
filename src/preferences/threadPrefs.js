@@ -1,6 +1,8 @@
 // Core logic for managing thread preferences: Pin, Ignore, Highlight
 import { gmGetValue, gmSetValue } from "../utils/gmUtils.js";
 import { log, error } from "../utils/logger.js";
+// import { refreshPinnedView } from "../scripts/pinThreads.js"; // Use CommonJS require below
+const { refreshPinnedView } = require("../scripts/pinThreads.js"); // Import the view refresh function (CommonJS)
 
 const PREF_ID = "core_threadPrefs"; // Identifier for logging
 const STORAGE_KEY_THREADS = "thread_prefs"; // Key for storing thread preferences
@@ -26,10 +28,14 @@ export function initializeThreadPrefs() {
   }
 
   if (isListView) {
-    // Apply preferences that affect the list view (Pin, Ignore, Highlight)
+    // Apply preferences that affect the list view (Ignore, Highlight)
+    // Pinning is handled separately by its own imported function
     applyListPreferences();
     // Add controls to each thread row initially
     addListControlsToThreads();
+
+    // Apply initial pinning view
+    applyPinning(); // This now calls refreshPinnedView internally
 
     // Set up MutationObserver for dynamic content loading (only on viewforum)
     if (href.includes("viewforum.php")) {
@@ -82,9 +88,11 @@ function handleMutations(mutationsList, observer) {
     }
   }
 
-  // If rows were added, re-apply pinning as order might change
+  // If rows were added, re-apply ignore/highlight and refresh pinning
   if (needsReapply) {
-    applyPinning(); // Separated pinning logic
+    // Re-apply ignore/highlight to potentially newly added rows (though applyPreferencesToSingleRow already did)
+    // applyListPreferences(); // Might be redundant
+    applyPinning(); // Refresh the pinned view as order/content changed
   }
 }
 
@@ -169,7 +177,7 @@ function applyListPreferences() {
     applyPreferencesToSingleRow(row, topicId, prefs); // Use helper
   });
 
-  applyPinning(prefs); // Apply pinning separately
+  // applyPinning(prefs); // Removed call - Pinning is applied once at init or via handlePinToggle
 }
 
 // Helper to apply ignore/highlight to a single row
@@ -197,10 +205,13 @@ function applyPreferencesToSingleRow(row, topicId, prefs = null) {
   }
 }
 
-// Helper to apply pinning logic
+// Helper to apply pinning logic (State check only - DOM manipulation moved to pinThreads.js)
 function applyPinning(prefs = null) {
   if (!prefs) prefs = getStoredPreferences(); // Get prefs if not passed
 
+  // --- DOM Manipulation Removed ---
+  // The following logic is now handled by refreshPinnedView in pinThreads.js
+  /*
   const rows = getThreadRowElements();
   const pinnedRows = [];
 
@@ -231,6 +242,23 @@ function applyPinning(prefs = null) {
         `${PREF_ID}: Could not find topic list container to move pinned threads.`,
       );
     }
+  }
+  */
+
+  // We might still want to call the refresh function here initially
+  // or ensure it's called after applyListPreferences completes.
+  // For now, the call is primarily triggered by handlePinToggle.
+  const pinnedThreads = Object.entries(prefs)
+    .filter(([id, data]) => data.pinned)
+    .reduce((obj, [id, data]) => {
+      obj[id] = data;
+      return obj;
+    }, {});
+
+  // Call the external function to update the view
+  if (window.location.href.includes("viewforum.php")) {
+    // Only run refresh on list views
+    refreshPinnedView(pinnedThreads); // Call the imported function
   }
 }
 
@@ -594,17 +622,21 @@ function handlePinToggle(topicId, rowElement, dropdownMenuElement) {
     updateDropdownItems(topicId, dropdownMenuElement, rowElement);
   }
 
-  // Re-apply page view changes (pinning order and ignore visibility)
+  // Re-apply visual changes
+  const latestPrefs = getStoredPreferences(); // Get fresh prefs
   if (window.location.href.includes("viewforum.php")) {
-    applyPinning(); // Re-apply pinning order
-    // Re-apply ignore/highlight to the specific row if possible
-    if (rowElement) {
-      const latestPrefs = getStoredPreferences(); // Get fresh prefs after potential ignore change
+    // Re-apply ignore/highlight to the specific row if it was affected by unignoring
+    if (rowElement && !currentPrefs.ignored) {
       applyPreferencesToSingleRow(rowElement, topicId, latestPrefs);
-    } else {
-      // Fallback to full list refresh if row isn't available (less likely here)
-      applyListPreferences();
     }
+    // Refresh the pinned threads view using the imported function
+    const pinnedThreads = Object.entries(latestPrefs)
+      .filter(([id, data]) => data.pinned)
+      .reduce((obj, [id, data]) => {
+        obj[id] = data;
+        return obj;
+      }, {});
+    refreshPinnedView(pinnedThreads);
   }
 }
 
