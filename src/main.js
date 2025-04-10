@@ -410,11 +410,561 @@ function renderScriptSettingsContent(container, script) {
   container.innerHTML = "<p><i>Settings controls placeholder...</i></p>";
 }
 
+// --- Add Button to Profile Dropdown ---
+// Add Font Awesome CSS if not already present (basic check)
+function ensureFontAwesome() {
+  if (!document.querySelector('link[href*="font-awesome"]')) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css';
+    document.head.appendChild(link);
+    console.log("RPGHQ Manager: Added Font Awesome CSS link.");
+  }
+}
+
+function addMenuButton(toggleVisibilityCallback) {
+  // Ensure FA is loaded for the icon
+  ensureFontAwesome();
+
+  const profileDropdown = document.querySelector(
+    '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
+  );
+  if (!profileDropdown) {
+    console.warn("RPGHQ Manager: Could not find profile dropdown menu.");
+    return;
+  }
+
+  // Find the logout button more robustly (check text content and attribute)
+  const logoutButton = Array.from(profileDropdown.querySelectorAll("li")).find(
+    (li) => {
+      const link = li.querySelector("a");
+      return (
+        link &&
+        (link.textContent.trim().includes("Logout") ||
+          link.getAttribute("title") === "Logout")
+      );
+    }
+  );
+
+  if (!logoutButton) {
+    console.warn("RPGHQ Manager: Could not find logout button in dropdown.");
+    return; // Don't add if logout isn't found
+  }
+
+  // Check if button already exists
+  if (profileDropdown.querySelector('.rpghq-manager-menu-item')) {
+    console.log("RPGHQ Manager: Menu button already exists.");
+    return;
+  }
+
+  const userscriptsButton = document.createElement("li");
+  userscriptsButton.className = 'rpghq-manager-menu-item'; // Add class for identification
+  userscriptsButton.innerHTML = `
+        <a href="#" title="View Userscripts" role="menuitem" style="font-size:0.9em;">
+          <i class="fa fa-puzzle-piece fa-fw"></i><span> View Userscripts</span>
+        </a>
+      `;
+
+  // Insert before the logout button
+  logoutButton.parentNode.insertBefore(userscriptsButton, logoutButton);
+
+  // Add click listener
+  userscriptsButton.querySelector("a").addEventListener("click", (e) => {
+    e.preventDefault();
+    console.log("RPGHQ Manager: Menu button clicked.");
+    if (typeof toggleVisibilityCallback === "function") {
+      toggleVisibilityCallback();
+    }
+  });
+
+  console.log("RPGHQ Manager: 'View Userscripts' button added to profile menu.");
+}
+
 // --- Initialization ---
 function initializeManager() {
   console.log("RPGHQ Userscript Manager Initializing...");
   initializeScriptStates();
   loadEnabledScripts();
+
+  // --- Inject CSS ---
+  // eslint-disable-next-line no-undef
+  if (typeof GM_addStyle !== "function") {
+    console.error("RPGHQ Manager Error: GM_addStyle is not available. Styles will not be applied.");
+  } else {
+    const managerStyles = `
+/* CSS styles for the RPGHQ Userscript Manager UI */
+
+/* --- Variables --- */
+:root {
+  --bg-dark: #1e1e1e;
+  --bg-light: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #aaaaaa;
+  --text-dark: #333333;
+  --border-color: #444444;
+  --border-light: #eeeeee;
+  --primary-color: #007bff; /* Example blue */
+  --primary-hover: #0056b3;
+  --overlay-bg: rgba(0, 0, 0, 0.8);
+  --modal-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  --border-radius: 4px;
+}
+
+/* --- Base Modal Styles --- */
+
+#rpghq-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--overlay-bg);
+  z-index: 9998;
+  display: none; /* Controlled by JS */
+}
+
+#rpghq-manager-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 1200px;
+  max-height: 90vh;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--modal-shadow);
+  z-index: 9999;
+  display: none; /* Controlled by JS */
+  flex-direction: column;
+  overflow: hidden; /* Prevent content spillover before calculating scroll */
+}
+
+/* Modal Header */
+.modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.4em;
+  font-weight: 500;
+}
+
+#rpghq-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 1;
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+#rpghq-modal-close:hover {
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+/* Modal Tabs */
+.modal-tabs {
+  padding: 10px 20px 0 20px; /* No bottom padding, border acts as separator */
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-shrink: 0; /* Prevent tabs from shrinking */
+}
+
+.modal-tabs button {
+  background: none;
+  border: 1px solid transparent; /* Reserve space for border */
+  border-bottom: none; /* Remove bottom border */
+  color: var(--text-secondary);
+  padding: 10px 15px;
+  margin-right: 5px;
+  margin-bottom: -1px; /* Overlap the container's border */
+  cursor: pointer;
+  font-size: 1em;
+  border-radius: var(--border-radius) var(--border-radius) 0 0; /* Rounded top corners */
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.modal-tabs button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.modal-tabs button.active {
+  background-color: var(--bg-dark); /* Match content area bg */
+  color: var(--text-primary);
+  border-color: var(--border-color); /* Use main border color */
+  border-bottom-color: transparent; /* Hide bottom border to merge with content */
+  font-weight: bold;
+}
+
+/* Modal Content */
+.modal-content {
+  padding: 20px;
+  overflow-y: auto; /* Enable scrolling if content overflows */
+  flex-grow: 1; /* Allow content to fill available space */
+}
+
+.tab-pane {
+  display: block; /* Show by default */
+}
+
+.tab-pane:not(.active) {
+  display: none; /* Hide inactive tabs */
+}
+
+/* Add display: flex back for the active modal */
+#rpghq-manager-modal.active {
+  display: flex;
+}
+#rpghq-modal-overlay.active {
+  display: block;
+}
+
+/* --- Installed Scripts Tab Specific Styles --- */
+
+.view-switcher {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+.view-switcher .view-btn {
+  background-color: var(--border-color); /* Darker background */
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  padding: 5px 10px;
+  margin-left: 5px;
+  cursor: pointer;
+  font-size: 1.2em; /* Make icons slightly larger */
+  line-height: 1;
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.view-switcher .view-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
+.view-switcher .view-btn.active {
+  background-color: var(--primary-color);
+  color: var(--bg-light);
+  border-color: var(--primary-color);
+}
+
+.scripts-display-container {
+  /* Styles for grid/list will be added here or handled by render functions */
+  clear: both; /* Ensure it clears the floated switcher if needed */
+}
+
+/* Grid View Styles */
+.script-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(250px, 1fr)
+  ); /* Responsive grid */
+  gap: 20px;
+}
+
+.script-card {
+  background-color: #2a2a2a; /* Slightly lighter dark background */
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s;
+}
+
+.script-card:hover {
+  box-shadow: 0 0 10px rgba(var(--primary-color), 0.5);
+}
+
+.script-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.script-card-title {
+  font-weight: bold;
+  font-size: 1.1em;
+  color: var(--text-primary);
+  flex-grow: 1; /* Allow title to take available space */
+  margin-right: 10px; /* Space before toggle/version */
+}
+
+.script-card-version {
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  background-color: var(--border-color);
+  padding: 2px 5px;
+  border-radius: var(--border-radius);
+  white-space: nowrap;
+  margin-left: 10px;
+}
+
+.script-card-description {
+  font-size: 0.95em;
+  color: var(--text-secondary);
+  flex-grow: 1; /* Allow description to take space */
+  margin-bottom: 15px;
+  line-height: 1.4;
+}
+
+.script-card-footer {
+  margin-top: auto; /* Push footer to the bottom */
+  padding-top: 10px;
+  border-top: 1px solid var(--border-color);
+  text-align: right;
+}
+
+/* List View (Table) Styles */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.data-table th {
+  background-color: #2a2a2a; /* Header background */
+  color: var(--text-secondary);
+  font-weight: bold;
+  font-size: 0.9em;
+  text-transform: uppercase;
+}
+
+.data-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.script-toggle-cell {
+  width: 80px; /* Fixed width for toggle */
+  text-align: center;
+}
+
+/* General UI Elements (Buttons, Badges) - Add if not already defined */
+.btn {
+  display: inline-block;
+  padding: 8px 15px;
+  font-size: 0.9em;
+  font-weight: bold;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: var(--bg-light);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.btn-small {
+  padding: 5px 10px;
+  font-size: 0.85em;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  font-size: 0.85em;
+  font-weight: bold;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: var(--border-radius);
+}
+
+.badge-primary {
+  background-color: var(--primary-color);
+  color: var(--bg-light);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 30px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Toggle Switch Styles */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px; /* Smaller width */
+  height: 20px; /* Smaller height */
+  vertical-align: middle; /* Align with text/icons */
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #555; /* Darker grey for off state */
+  transition: 0.4s;
+  border-radius: 20px; /* Fully rounded */
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 14px; /* Smaller circle */
+  width: 14px; /* Smaller circle */
+  left: 3px; /* Adjusted position */
+  bottom: 3px; /* Adjusted position */
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--primary-color);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px var(--primary-color);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px); /* Adjusted translation */
+}
+
+/* --- Settings Modal Styles --- */
+#rpghq-settings-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70%; /* Slightly smaller than main modal */
+  max-width: 800px;
+  max-height: 85vh;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--modal-shadow);
+  z-index: 10001; /* Above main modal overlay */
+  display: none; /* Controlled by JS */
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Use similar header style, potentially different class name if needed */
+.settings-modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.settings-modal-header h2 {
+  margin: 0;
+  font-size: 1.3em; /* Slightly smaller title */
+  font-weight: 500;
+}
+
+/* Use same close button style */
+#rpghq-settings-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 2em;
+  font-weight: bold;
+  line-height: 1;
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+#rpghq-settings-modal-close:hover {
+  color: var(--text-primary);
+  opacity: 1;
+}
+
+.settings-modal-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.settings-area {
+  margin-bottom: 20px;
+  /* Styles for individual settings items will go here */
+}
+
+.script-info {
+  padding-top: 15px;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.9em;
+  color: var(--text-secondary);
+}
+
+.script-info .data-table td {
+  padding: 6px 10px; /* Slightly smaller padding */
+}
+
+/* Add display: flex back for the active settings modal */
+#rpghq-settings-modal.active {
+  display: flex;
+}
+
+/* Add display: flex back for the active modal */
+#rpghq-manager-modal.active {
+  display: flex;
+}
+`;
+    // eslint-disable-next-line no-undef
+    GM_addStyle(managerStyles);
+    console.log("RPGHQ Manager: Styles injected.");
+  }
+
 
   // --- Phase 4: Initialize UI ---
   const { modalElement, overlayElement } = createManagerModal();
@@ -521,6 +1071,7 @@ function initializeManager() {
     if (event.key === "Insert" || event.keyCode === 45) {
       const targetTagName = event.target.tagName.toLowerCase();
       if (!["input", "textarea", "select"].includes(targetTagName)) {
+        console.log("Insert key detected, attempting to toggle modal.");
         event.preventDefault(); // Prevent potential default browser behavior for Insert
         toggleModalVisibility();
       } else {
@@ -651,6 +1202,11 @@ function initializeManager() {
       "Could not find tabs container, content container, or installed scripts pane for setup."
     );
   }
+
+  // --- Add Profile Menu Button ---
+  // We call this here ensuring the DOM is likely ready because initializeManager
+  // is called after DOMContentLoaded or immediately if already loaded.
+  addMenuButton(toggleModalVisibility);
 
   console.log("UI Initialized with visibility controls.");
 }

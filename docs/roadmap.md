@@ -74,6 +74,13 @@ This document outlines the development checkpoints and actionable steps for crea
         *   [x] Functionality for "Settings" button on script card/row to open this modal for the correct script.
         *   [ ] (Later) Hook up controls to save settings via `GM_setValue`.
 
+## Phase 4.1: UI Activation (`src/main.js` & `src/styles.css`)
+
+*   **Checkpoint:** The UI modal appears correctly when triggered.
+    *   [x] Inject CSS from `src/styles.css` into the page using `GM_addStyle` or similar.
+    *   [x] Re-implement `addMenuButton` logic to add the "View Userscripts" button to the profile dropdown menu.
+    *   [ ] Verify modal appears via GM menu command, Insert key, *and* the profile menu button.
+
 ## Phase 5: Dynamic Script Execution
 
 *   **Checkpoint:** Enabled scripts are actually loaded and executed.
