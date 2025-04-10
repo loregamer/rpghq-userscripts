@@ -77,6 +77,7 @@ function loadEnabledScripts() {
 }
 
 // Import scripts directly
+import * as separateReactions from "./scripts/separateReactions.js";
 import * as pinThreads from "./scripts/pinThreads.js";
 import * as notifications from "./scripts/notifications.js";
 import * as kalareact from "./scripts/kalareact.js";
@@ -93,6 +94,8 @@ const scriptModules = {
   notifications: notifications,
 
   pinThreads: pinThreads,
+
+  separateReactions: separateReactions,
 };
 
 // Load a single script by its manifest entry

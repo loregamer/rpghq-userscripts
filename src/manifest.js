@@ -68,6 +68,22 @@ export const SCRIPT_MANIFEST = [
     executionPhase: "document-end",
   },
   {
+    id: "separateReactions",
+    name: "Reaction List Separated",
+    version: "1.0.0",
+    description: "Makes smiley reactions and counts separated",
+    author: "loregamer",
+    image:
+      "https://f.rpghq.org/H6zBOaMtu9i2.gif?n=Separated%20Reactions%20(2).gif", // Add an image URL if available
+    path: "./scripts/separateReactions.js",
+    enabledByDefault: false,
+    settings: [
+      // Add settings here
+    ],
+    categories: ["UI"],
+    executionPhase: "document-end",
+  },
+  {
     id: "commaFormatter",
     name: "Thousands Comma Formatter",
     version: "2.1.2",
