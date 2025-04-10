@@ -39,6 +39,7 @@ const generateMetadata = () => {
     "// @grant        GM_getValue",
     "// @grant        GM_setValue",
     "// @grant        GM_registerMenuCommand",
+    "// @grant        GM_addStyle",
     "// @run-at       document-end",
     `// @homepage     ${pkg.homepage || ""}`,
     `// @downloadURL  ${baseUrl}${distPath}`,

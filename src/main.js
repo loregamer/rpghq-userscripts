@@ -1,6 +1,6 @@
 // Main userscript entry point
 import "./meta.js?userscript-metadata";
-// import "./injectStyles.js"; // Import the script that injects CSS - Handled by postbuild script
+import "./injectStyles.js"; // Import the script that injects CSS
 import { SCRIPT_MANIFEST } from "./manifest.js";
 
 // --- Constants ---
