@@ -39,6 +39,8 @@ SOFTWARE.
 (function () {
   "use strict";
 
+  const I_Want_To_Devlishly_Ignore_Many_Many_Threads = false;
+
   // --- Inject CSS for Instant Hiding ---
   const style = document.createElement("style");
   style.textContent = `li.thread-ignored { display: none !important; }`;
@@ -154,10 +156,10 @@ SOFTWARE.
       const showButton = document.createElement("a");
       showButton.id = "show-ignored-export-button";
       showButton.href = "#";
-      showButton.title = "Export Ignored Threads";
+      showButton.title = "Export Userscript Iggys";
       showButton.role = "menuitem";
       showButton.innerHTML =
-        '<i class="icon fa-download fa-fw" aria-hidden="true"></i><span>Export Ignored Threads</span>';
+        '<i class="icon fa-download fa-fw" aria-hidden="true"></i><span>Export Userscript Iggys</span>';
       showButton.addEventListener("click", function (e) {
         e.preventDefault();
         showIgnoredThreadsPopup();
@@ -208,17 +210,21 @@ SOFTWARE.
       toggleButton.setAttribute("aria-checked", String(ignoreModeActive));
       toggleButton.title = `Quick Ignore Mode (${ignoreModeActive ? "ON" : "OFF"})`;
     }
-    if (ignoreModeActive) {
-      updateIgnoreButtons(); // Add buttons if activating
-    } else {
-      // Remove existing quick ignore buttons
-      document
-        .querySelectorAll(".quick-ignore-button")
-        .forEach((b) => b.remove());
+    if (I_Want_To_Devlishly_Ignore_Many_Many_Threads) {
+      if (ignoreModeActive) {
+        updateIgnoreButtons(); // Add buttons if activating
+      } else {
+        // Remove existing quick ignore buttons
+        document
+          .querySelectorAll(".quick-ignore-button")
+          .forEach((b) => b.remove());
+      }
     }
   }
 
   function addToggleIgnoreModeButton() {
+    if (!I_Want_To_Devlishly_Ignore_Many_Many_Threads) return;
+
     const dropdown = document.querySelector(
       "#username_logged_in .dropdown-contents"
     );
@@ -255,7 +261,12 @@ SOFTWARE.
   }
 
   function updateIgnoreButtons() {
-    if (!isThreadListPage() || !ignoreModeActive) return;
+    if (
+      !I_Want_To_Devlishly_Ignore_Many_Many_Threads ||
+      !isThreadListPage() ||
+      !ignoreModeActive
+    )
+      return;
     const threadItems = document.querySelectorAll(
       ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
     );
@@ -384,7 +395,11 @@ SOFTWARE.
     }
 
     if (relevantChange) {
-      if (ignoreModeActive && isThreadListPage()) {
+      if (
+        I_Want_To_Devlishly_Ignore_Many_Many_Threads &&
+        ignoreModeActive &&
+        isThreadListPage()
+      ) {
         updateIgnoreButtons();
       }
     }
@@ -394,10 +409,12 @@ SOFTWARE.
   function initializeScript() {
     // Note: removeIgnoredThreadsOnLoad() is now handled by earlyObserver
     addShowExportButton();
-    addToggleIgnoreModeButton(); // Add the toggle button
+    if (I_Want_To_Devlishly_Ignore_Many_Many_Threads) {
+      addToggleIgnoreModeButton(); // Add the toggle button
 
-    if (ignoreModeActive && isThreadListPage()) {
-      updateIgnoreButtons(); // Add buttons if mode is initially active
+      if (ignoreModeActive && isThreadListPage()) {
+        updateIgnoreButtons(); // Add buttons if mode is initially active
+      }
     }
 
     // Observe for dynamically loaded threads
