@@ -48,7 +48,7 @@ export function renderScriptsListView(
               ? scriptStates[script.id]
               : script.enabledByDefault;
           return `
-              <tr>
+              <tr class="${isEnabled ? "enabled" : ""}">
                 <td><strong>${script.name}</strong> <span class="script-version-inline">v${script.version}</span></td>
                 <td>${script.category || "Uncategorized"}</td>
                 <td>${script.description || "No description available."}</td>

@@ -322,6 +322,13 @@ GM_addStyle(`
     filter: grayscale(0.8);
   }
 
+  /* Style for enabled script card in Grid View */
+  .script-card:not(.disabled) {
+    border: 2px solid #99C8FF; /* Added border */
+    /* Adjust margin slightly to compensate for border */
+    margin: -1px; /* Prevent layout shift due to border */
+  }
+
   .script-card-image {
     position: relative;
     height: 130px;
@@ -665,6 +672,13 @@ GM_addStyle(`
 
   .data-table tr:hover {
     background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  /* Style for enabled script row in List View */
+  .data-table tr.enabled {
+    border-left: 3px solid #99C8FF; /* Added left border */
+    /* Optionally adjust padding if needed */
+    /* padding-left: 7px; /* Adjust padding */
   }
 
   /* Empty state */
