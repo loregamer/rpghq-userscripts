@@ -210,15 +210,13 @@ SOFTWARE.
       toggleButton.setAttribute("aria-checked", String(ignoreModeActive));
       toggleButton.title = `Quick Ignore Mode (${ignoreModeActive ? "ON" : "OFF"})`;
     }
-    if (I_Want_To_Devlishly_Ignore_Many_Many_Threads) {
-      if (ignoreModeActive) {
-        updateIgnoreButtons(); // Add buttons if activating
-      } else {
-        // Remove existing quick ignore buttons
-        document
-          .querySelectorAll(".quick-ignore-button")
-          .forEach((b) => b.remove());
-      }
+    if (ignoreModeActive) {
+      updateIgnoreButtons(); // Add buttons if activating
+    } else {
+      // Remove existing quick ignore buttons
+      document
+        .querySelectorAll(".quick-ignore-button")
+        .forEach((b) => b.remove());
     }
   }
 
@@ -261,12 +259,7 @@ SOFTWARE.
   }
 
   function updateIgnoreButtons() {
-    if (
-      !I_Want_To_Devlishly_Ignore_Many_Many_Threads ||
-      !isThreadListPage() ||
-      !ignoreModeActive
-    )
-      return;
+    if (!isThreadListPage() || !ignoreModeActive) return;
     const threadItems = document.querySelectorAll(
       ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
     );
@@ -427,6 +420,20 @@ SOFTWARE.
     if (pageBody) {
       threadObserver.observe(pageBody, { childList: true, subtree: true });
     }
+
+    // Add keydown listener for toggling ignore mode
+    document.addEventListener("keydown", function (event) {
+      // Check if the pressed key is Backslash (\) and not inside an input/textarea
+      // or contentEditable element
+      if (
+        event.key === "\\" &&
+        !/^(input|textarea)$/i.test(event.target.tagName) &&
+        event.target.contentEditable !== "true"
+      ) {
+        event.preventDefault(); // Prevent typing the backslash if needed
+        toggleIgnoreMode();
+      }
+    });
   }
 
   // Initialize when DOM is ready
