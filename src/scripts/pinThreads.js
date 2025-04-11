@@ -658,12 +658,6 @@ export function init() {
       iconElement.classList.add(isUnread ? "icon-red" : "icon-lightgray");
     }
 
-    // Remove lastpost column
-    const lastpostColumn = row.querySelector(".lastpost");
-    if (lastpostColumn) {
-      lastpostColumn.remove();
-    }
-
     // Modify the topic hyperlink
     const topicLink = row.querySelector(".topictitle");
     if (topicLink) {
