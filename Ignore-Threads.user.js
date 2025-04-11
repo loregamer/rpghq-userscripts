@@ -7,6 +7,7 @@
 // @grant        GM_getValue
 // @grant        GM_setValue // Still needed for ignoreThread() function
 // @license      MIT
+// @run-at       document-start
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Ignore-Threads.user.js
 // @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Ignore-Threads.user.js
 // @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
@@ -37,6 +38,11 @@ SOFTWARE.
 */
 (function () {
   "use strict";
+
+  // --- Inject CSS for Instant Hiding ---
+  const style = document.createElement("style");
+  style.textContent = `.thread-ignored { display: none !important; }`;
+  (document.head || document.documentElement).appendChild(style);
 
   // --- localStorage Wrapper Functions ---
   function storageGetValue(key, defaultValue) {
@@ -304,6 +310,57 @@ SOFTWARE.
     ignoredThreads = currentIgnoredThreads; // Update local cache
   }
 
+  function removeIgnoredThreadsOnLoad() {
+    if (!isThreadListPage()) return;
+
+    const ignoredIds = Object.keys(ignoredThreads); // Get ignored IDs once
+
+    // Handle main thread list items
+    const threadItems = document.querySelectorAll(
+      ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
+    );
+    threadItems.forEach((item) => {
+      const threadLink = item.querySelector("a.topictitle");
+      if (threadLink) {
+        const idMatch = threadLink.href.match(/[?&]t=(\d+)/);
+        // Add class if the thread ID is in the ignored list
+        if (idMatch && idMatch[1] && ignoredIds.includes(idMatch[1])) {
+          item.classList.add("thread-ignored");
+        }
+      }
+    });
+
+    // Handle last post links (restored logic from old script)
+    const lastPosts = document.querySelectorAll(".lastpost"); // Select the container
+    lastPosts.forEach((lastPostContainer) => {
+      // Find a link within the container that points to a topic (viewtopic.php?t=...)
+      // Exclude links to search results (search.php?p=...) which might also be present
+      const lastPostLink = lastPostContainer.querySelector(
+        "a[href*='viewtopic.php?t=']"
+      );
+      if (lastPostLink) {
+        const href = lastPostLink.getAttribute("href");
+        const idMatch = href ? href.match(/[?&]t=(\d+)/) : null;
+        // Add class to the container if the thread ID is in the ignored list
+        if (idMatch && idMatch[1] && ignoredIds.includes(idMatch[1])) {
+          lastPostContainer.classList.add("thread-ignored");
+        }
+      }
+    });
+  }
+
+  // --- Early Observer for Instant Removal ---
+  const earlyObserver = new MutationObserver((mutations) => {
+    // Re-run removal logic on any early changes before DOM is fully loaded
+    removeIgnoredThreadsOnLoad();
+  });
+
+  // Start observing the document element immediately
+  earlyObserver.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
+
   // --- Mutation Observer for Dynamic Content ---
   const threadObserver = new MutationObserver((mutations) => {
     let relevantChange = false;
@@ -333,6 +390,7 @@ SOFTWARE.
 
   // --- Initialization ---
   function initializeScript() {
+    // Note: removeIgnoredThreadsOnLoad() is now handled by earlyObserver
     addShowExportButton();
     addToggleIgnoreModeButton(); // Add the toggle button
 
@@ -350,8 +408,12 @@ SOFTWARE.
   // Initialize when DOM is ready
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initializeScript);
+    document.addEventListener("DOMContentLoaded", () => {
+      earlyObserver.disconnect(); // Stop early observer once DOM is ready
+      initializeScript();
+    });
   } else {
+    earlyObserver.disconnect(); // Stop early observer if script loads after DOM is ready
     initializeScript();
   }
 })();
