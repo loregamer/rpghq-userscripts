@@ -5,6 +5,7 @@
 // @description  Export previously ignored threads from the old RPGHQ Thread Ignorer userscript.
 // @match        https://rpghq.org/forums/*
 // @grant        GM_getValue
+// @grant        GM_setValue // Still needed for ignoreThread() function
 // @license      MIT
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/Ignore-Threads.user.js
 // @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/Ignore-Threads.user.js
@@ -34,11 +35,34 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
 (function () {
   "use strict";
 
-  let ignoredThreads = GM_getValue("ignoredThreads", {});
+  // --- localStorage Wrapper Functions ---
+  function storageGetValue(key, defaultValue) {
+    const storedValue = localStorage.getItem(key);
+    if (storedValue === null) {
+      return defaultValue;
+    }
+    try {
+      return JSON.parse(storedValue);
+    } catch (e) {
+      console.error(`Error parsing localStorage item "${key}":`, e);
+      return defaultValue;
+    }
+  }
+
+  function storageSetValue(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      console.error(`Error setting localStorage item "${key}":`, e);
+    }
+  }
+  // --- End localStorage Wrapper Functions ---
+
+  let ignoredThreads = GM_getValue("ignoredThreads", {}); // Keep using GM for the export data
+  let ignoreModeActive = storageGetValue("ignoreModeActive", false); // Use localStorage for this
 
   function exportIgnoredThreadsJson() {
     const exportData = JSON.stringify(ignoredThreads, null, 2); // Pretty print JSON
@@ -97,13 +121,14 @@ SOFTWARE.
       });
 
     if (Object.keys(ignoredThreads).length === 0) {
-        threadList.innerHTML = '<p>No previously ignored threads found.</p>';
+      threadList.innerHTML = "<p>No previously ignored threads found.</p>";
     }
 
     const bottomControls = document.createElement("div");
     bottomControls.style.cssText = `padding: 10px; background-color: #2a2e36; border-top: 1px solid #3a3f4b; text-align: center;`;
     const exportJsonButton = document.createElement("button");
-    exportJsonButton.innerHTML = '<i class="icon fa-download fa-fw" aria-hidden="true"></i> Export as JSON';
+    exportJsonButton.innerHTML =
+      '<i class="icon fa-download fa-fw" aria-hidden="true"></i> Export as JSON';
     exportJsonButton.style.cssText = `background-color: #4a5464; color: #c5d0db; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;`;
     exportJsonButton.onclick = exportIgnoredThreadsJson;
     bottomControls.appendChild(exportJsonButton);
@@ -115,7 +140,9 @@ SOFTWARE.
   }
 
   function addShowExportButton() {
-    const dropdown = document.querySelector("#username_logged_in .dropdown-contents");
+    const dropdown = document.querySelector(
+      "#username_logged_in .dropdown-contents"
+    );
     if (dropdown && !document.getElementById("show-ignored-export-button")) {
       const listItem = document.createElement("li");
       const showButton = document.createElement("a");
@@ -123,7 +150,8 @@ SOFTWARE.
       showButton.href = "#";
       showButton.title = "Export Ignored Threads";
       showButton.role = "menuitem";
-      showButton.innerHTML = '<i class="icon fa-download fa-fw" aria-hidden="true"></i><span>Export Ignored Threads</span>';
+      showButton.innerHTML =
+        '<i class="icon fa-download fa-fw" aria-hidden="true"></i><span>Export Ignored Threads</span>';
       showButton.addEventListener("click", function (e) {
         e.preventDefault();
         showIgnoredThreadsPopup();
@@ -131,15 +159,19 @@ SOFTWARE.
       listItem.appendChild(showButton);
 
       // Find the "Never Iggy Users" button/list item
-      const neverIggyUsersButton = document.getElementById("show-never-ignored-users-button");
-      const neverIggyListItem = neverIggyUsersButton ? neverIggyUsersButton.closest('li') : null;
+      const neverIggyUsersButton = document.getElementById(
+        "show-never-ignored-users-button"
+      );
+      const neverIggyListItem = neverIggyUsersButton
+        ? neverIggyUsersButton.closest("li")
+        : null;
 
       // Add indentation
       listItem.style.paddingLeft = "15px";
 
       if (neverIggyListItem && neverIggyListItem.parentNode === dropdown) {
         // Insert after "Never Iggy Users" if found
-        neverIggyListItem.insertAdjacentElement('afterend', listItem);
+        neverIggyListItem.insertAdjacentElement("afterend", listItem);
       } else {
         // Fallback: Insert before the last item (usually Logout)
         dropdown.insertBefore(listItem, dropdown.lastElementChild);
@@ -147,11 +179,176 @@ SOFTWARE.
     }
   }
 
+  // --- Helper Functions ---
+  function isThreadListPage() {
+    const url = window.location.href;
+    return (
+      url.includes("index.php") ||
+      url.includes("viewforum.php") ||
+      url.includes("newposts") ||
+      url.includes("search.php")
+    );
+  }
+
+  // --- Quick Ignore Mode ---
+  function toggleIgnoreMode() {
+    ignoreModeActive = !ignoreModeActive;
+    storageSetValue("ignoreModeActive", ignoreModeActive); // Use localStorage
+    const toggleButton = document.getElementById("toggle-ignore-mode-button");
+    if (toggleButton) {
+      const icon = toggleButton.querySelector("i.icon");
+      if (icon)
+        icon.className = `icon ${ignoreModeActive ? "fa-toggle-on" : "fa-toggle-off"} fa-fw`;
+      toggleButton.setAttribute("aria-checked", String(ignoreModeActive));
+      toggleButton.title = `Quick Ignore Mode (${ignoreModeActive ? "ON" : "OFF"})`;
+    }
+    if (ignoreModeActive) {
+      updateIgnoreButtons(); // Add buttons if activating
+    } else {
+      // Remove existing quick ignore buttons
+      document
+        .querySelectorAll(".quick-ignore-button")
+        .forEach((b) => b.remove());
+    }
+  }
+
+  function addToggleIgnoreModeButton() {
+    const dropdown = document.querySelector(
+      "#username_logged_in .dropdown-contents"
+    );
+    if (dropdown && !document.getElementById("toggle-ignore-mode-button")) {
+      const li = document.createElement("li");
+      li.className = "small-icon icon-settings"; // Use a relevant icon class
+      const a = document.createElement("a");
+      a.id = "toggle-ignore-mode-button";
+      a.href = "#";
+      a.role = "menuitemcheckbox";
+      a.setAttribute("aria-checked", String(ignoreModeActive));
+      a.title = `Quick Ignore Mode (${ignoreModeActive ? "ON" : "OFF"})`;
+      a.innerHTML = `<i class="icon ${ignoreModeActive ? "fa-toggle-on" : "fa-toggle-off"} fa-fw" aria-hidden="true"></i> <span>Quick Ignore</span>`;
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleIgnoreMode();
+      });
+      li.appendChild(a);
+
+      // Find the Export button li
+      const exportButtonLi = document
+        .getElementById("show-ignored-export-button")
+        ?.closest("li");
+
+      if (exportButtonLi && exportButtonLi.parentNode === dropdown) {
+        // Insert after the export button
+        exportButtonLi.insertAdjacentElement("afterend", li);
+      } else {
+        // Fallback: Insert before the last item (usually Logout)
+        dropdown.insertBefore(li, dropdown.lastElementChild);
+      }
+    }
+  }
+
+  function updateIgnoreButtons() {
+    if (!isThreadListPage() || !ignoreModeActive) return;
+    const threadItems = document.querySelectorAll(
+      ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
+    );
+    threadItems.forEach((item) => {
+      if (!item.parentNode || item.querySelector(".quick-ignore-button"))
+        return;
+      const threadLink = item.querySelector("a.topictitle");
+      if (!threadLink) return;
+      // Button should be appended directly to the list item now
+
+      const button = createIgnoreButton();
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const idMatch = threadLink.href.match(/[?&]t=(\d+)/);
+        const title = threadLink.textContent.trim();
+        if (
+          idMatch &&
+          idMatch[1] &&
+          title &&
+          confirm(`Quick Ignore: "${title}"?`)
+        ) {
+          ignoreThread(idMatch[1], title);
+          item.remove(); // Remove the whole list item
+        }
+      });
+      item.appendChild(button); // Append to the list item directly
+    });
+  }
+
+  function createIgnoreButton() {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "quick-ignore-button"; // Rely on external CSS
+    button.title = "Quick Ignore";
+    button.setAttribute("aria-label", "Quick Ignore Thread");
+    button.textContent = "✕";
+    button.style.zIndex = "1"; // Set z-index
+    return button;
+  }
+
+  function ignoreThread(threadId, threadTitle) {
+    if (
+      !threadId ||
+      typeof threadTitle !== "string" ||
+      threadTitle.trim() === ""
+    )
+      return;
+    let currentIgnoredThreads = GM_getValue("ignoredThreads", {});
+    currentIgnoredThreads[String(threadId)] = threadTitle.trim();
+    GM_setValue("ignoredThreads", currentIgnoredThreads);
+    ignoredThreads = currentIgnoredThreads; // Update local cache
+  }
+
+  // --- Mutation Observer for Dynamic Content ---
+  const threadObserver = new MutationObserver((mutations) => {
+    let relevantChange = false;
+    for (const mutation of mutations) {
+      if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+        for (const node of mutation.addedNodes) {
+          if (
+            node.nodeType === Node.ELEMENT_NODE &&
+            node.matches(
+              ".topiclist.topics > li, #recent-topics > ul > li, ul.topiclist.topics > li"
+            )
+          ) {
+            relevantChange = true;
+            break;
+          }
+        }
+      }
+      if (relevantChange) break;
+    }
+
+    if (relevantChange) {
+      if (ignoreModeActive && isThreadListPage()) {
+        updateIgnoreButtons();
+      }
+    }
+  });
+
+  // --- Initialization ---
   function initializeScript() {
     addShowExportButton();
+    addToggleIgnoreModeButton(); // Add the toggle button
+
+    if (ignoreModeActive && isThreadListPage()) {
+      updateIgnoreButtons(); // Add buttons if mode is initially active
+    }
+
+    // Observe for dynamically loaded threads
+    const pageBody = document.getElementById("page-body") || document.body;
+    if (pageBody) {
+      threadObserver.observe(pageBody, { childList: true, subtree: true });
+    }
   }
 
   // Initialize when DOM is ready
+
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initializeScript);
   } else {
