@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Ignored Thread Enhancer
 // @namespace    http://tampermonkey.net/
-// @version      4.0.0
+// @version      4.0.1
 // @description  Export previously ignored threads from the old RPGHQ Thread Ignorer userscript.
 // @match        https://rpghq.org/forums/*
 // @grant        GM_getValue
@@ -315,16 +315,21 @@ SOFTWARE.
       threadTitle.trim() === ""
     )
       return;
-    let currentIgnoredThreads = GM_getValue("ignoredThreads", {});
+    // Read from localStorage for active ignores
+    let currentIgnoredThreads = storageGetValue("ignoredThreads", {});
     currentIgnoredThreads[String(threadId)] = threadTitle.trim();
+    // Write back to localStorage
     storageSetValue("ignoredThreads", currentIgnoredThreads);
-    ignoredThreads = currentIgnoredThreads; // Update local cache
+    // No need to update the global ignoredThreads used for export
   }
 
   function removeIgnoredThreadsOnLoad() {
     if (!isThreadListPage()) return;
 
-    const ignoredIds = Object.keys(ignoredThreads); // Get ignored IDs once
+    // Get active ignored threads from localStorage for hiding
+    const activeIgnoredThreads = storageGetValue("ignoredThreads", {});
+    const ignoredIds = Object.keys(activeIgnoredThreads);
+    const ignoredTitles = Object.values(activeIgnoredThreads);
 
     // Handle main thread list items
     const threadItems = document.querySelectorAll(
@@ -334,16 +339,16 @@ SOFTWARE.
       const threadLink = item.querySelector("a.topictitle");
       if (threadLink) {
         const idMatch = threadLink.href.match(/[?&]t=(\d+)/);
-        // Add class if the thread ID is in the ignored list
+        // Add class if the thread ID is in the ignored list (from localStorage)
         if (idMatch && idMatch[1] && ignoredIds.includes(idMatch[1])) {
           item.classList.add("thread-ignored");
         }
       }
     });
 
-    // Handle last post links based on title match
+    // Handle last post links based on title match (from localStorage)
     const lastPosts = document.querySelectorAll("dd.lastpost"); // Target dd elements
-    const ignoredTitles = Object.values(ignoredThreads); // Get just the titles
+    // Note: ignoredTitles is already defined above using localStorage data
 
     lastPosts.forEach((lastPostContainer) => {
       // Check if it's already marked
