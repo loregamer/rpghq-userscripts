@@ -269,8 +269,8 @@ SOFTWARE.
         if (
           idMatch &&
           idMatch[1] &&
-          title &&
-          confirm(`Quick Ignore: "${title}"?`)
+          title
+          // Removed confirm() check
         ) {
           ignoreThread(idMatch[1], title);
           item.remove(); // Remove the whole list item
@@ -300,7 +300,7 @@ SOFTWARE.
       return;
     let currentIgnoredThreads = GM_getValue("ignoredThreads", {});
     currentIgnoredThreads[String(threadId)] = threadTitle.trim();
-    GM_setValue("ignoredThreads", currentIgnoredThreads);
+    storageSetValue("ignoredThreads", currentIgnoredThreads);
     ignoredThreads = currentIgnoredThreads; // Update local cache
   }
 
