@@ -156,7 +156,7 @@ export function init() {
       } else {
         insertionPoint.parentNode.insertBefore(
           pinnedForumsSection,
-          insertionPoint,
+          insertionPoint
         );
       }
 
@@ -170,7 +170,7 @@ export function init() {
       if (insertionPoint.classList.contains("index-left")) {
         insertionPoint.insertAdjacentElement(
           "afterbegin",
-          pinnedThreadsSection,
+          pinnedThreadsSection
         );
       } else {
         if (Object.keys(pinnedForums).length > 0) {
@@ -179,18 +179,18 @@ export function init() {
           if (pinnedForumsSection) {
             pinnedForumsSection.insertAdjacentElement(
               "afterend",
-              pinnedThreadsSection,
+              pinnedThreadsSection
             );
           } else {
             insertionPoint.parentNode.insertBefore(
               pinnedThreadsSection,
-              insertionPoint,
+              insertionPoint
             );
           }
         } else {
           insertionPoint.parentNode.insertBefore(
             pinnedThreadsSection,
-            insertionPoint,
+            insertionPoint
           );
         }
       }
@@ -208,7 +208,7 @@ export function init() {
       a.name.localeCompare(b.name, undefined, {
         numeric: true,
         sensitivity: "base",
-      }),
+      })
     );
 
     // Add each forum to the list
@@ -246,7 +246,7 @@ export function init() {
             if (dlElement) {
               dlElement.className = dlElement.className.replace(
                 /forum_\w+/g,
-                "forum_read",
+                "forum_read"
               );
             }
           }
@@ -273,7 +273,7 @@ export function init() {
           if (listInner) {
             const walker = document.createTreeWalker(
               listInner,
-              NodeFilter.SHOW_TEXT,
+              NodeFilter.SHOW_TEXT
             );
             const textNodesToProcess = [];
 
@@ -312,7 +312,7 @@ export function init() {
         // If not found, create a new row
         pinnedList.insertAdjacentHTML(
           "beforeend",
-          createForumListItemHTML(forumId, forumInfo),
+          createForumListItemHTML(forumId, forumInfo)
         );
       }
     });
@@ -412,7 +412,7 @@ export function init() {
                 <dt><div class="list-inner"><i class="icon fa-thumb-tack fa-fw icon-sm" aria-hidden="true"></i> Pinned Topics</div></dt>
                 <dd class="posts">Replies</dd>
                 <dd class="views">Views</dd>
-                <dd class="lastpost">Last post</dd>
+                <dd class="lastpost">Last Post</dd>
               </dl>
             </li>
           </ul>
@@ -434,7 +434,6 @@ export function init() {
                 <dt><div class="list-inner"><i class="icon fa-thumb-tack fa-fw icon-sm" aria-hidden="true"></i> Pinned Forums</div></dt>
                 <dd class="posts">Topics</dd>
                 <dd class="views">Posts</dd>
-                <dd class="lastpost">Last post</dd>
               </dl>
             </li>
           </ul>
@@ -457,6 +456,7 @@ export function init() {
             </dt>
             <dd class="posts">-</dd>
             <dd class="views">-</dd>
+            <dd class="lastpost">-</dd>
           </dl>
         </li>
       `;
@@ -464,7 +464,7 @@ export function init() {
 
   async function fetchAllThreadsData(pinnedThreads) {
     const threadDataPromises = Object.entries(pinnedThreads).map(
-      ([threadId, threadInfo]) => fetchThreadData(threadId, threadInfo),
+      ([threadId, threadInfo]) => fetchThreadData(threadId, threadInfo)
     );
     return Promise.all(threadDataPromises);
   }
@@ -474,7 +474,7 @@ export function init() {
     title,
     forumName,
     forumUrl,
-    errorMessage = "",
+    errorMessage = ""
   ) {
     const titleWithError = errorMessage ? `${title} (${errorMessage})` : title;
     const forumInfo =
@@ -519,7 +519,7 @@ export function init() {
           title,
           forumName,
           forumUrl,
-          "Thread not found in forum list",
+          "Thread not found in forum list"
         );
         const sortableTitle = title.replace(/^[【】\[\]\s]+/, "");
         return { threadId, title, sortableTitle, rowHTML };
@@ -535,7 +535,7 @@ export function init() {
           `Error loading thread ${threadId}`,
           "",
           "",
-          errorMessage,
+          errorMessage
         ),
       };
     }
@@ -570,7 +570,7 @@ export function init() {
     threadTitle,
     forumUrl,
     page = 1,
-    maxPages = 5,
+    maxPages = 5
   ) {
     const url = `${forumUrl}&start=${(page - 1) * 25}`;
 
@@ -580,11 +580,11 @@ export function init() {
 
       // Check if we're redirected to a login page or error page
       const loginForm = doc.querySelector(
-        'form[action="./ucp.php?mode=login"]',
+        'form[action="./ucp.php?mode=login"]'
       );
       if (loginForm) {
         throw new Error(
-          "Redirected to login page. User might not be authenticated.",
+          "Redirected to login page. User might not be authenticated."
         );
       }
 
@@ -607,7 +607,7 @@ export function init() {
           threadTitle,
           forumUrl,
           page + 1,
-          maxPages,
+          maxPages
         );
       }
 
@@ -702,23 +702,23 @@ export function init() {
 
   function fetchZomboidStatus(doc) {
     const playerCountElement = doc.querySelector(
-      'span[style="background-color:black"] strong.text-strong',
+      'span[style="background-color:black"] strong.text-strong'
     );
 
     if (playerCountElement) {
       const statusDiv = playerCountElement.closest("div");
       const onlinePlayersElements = statusDiv.querySelectorAll(
-        'span[style="font-size:85%;line-height:116%"]',
+        'span[style="font-size:85%;line-height:116%"]'
       );
       const lastUpdatedElement = statusDiv.querySelector(
-        'span[style="font-size:55%;line-height:116%"] em',
+        'span[style="font-size:55%;line-height:116%"] em'
       );
 
       if (playerCountElement && lastUpdatedElement) {
         return {
           playerCount: playerCountElement.textContent,
           onlinePlayers: Array.from(onlinePlayersElements).map(
-            (el) => el.textContent,
+            (el) => el.textContent
           ),
           lastUpdated: lastUpdatedElement.textContent,
         };
@@ -798,18 +798,11 @@ export function init() {
           font-size: 0.9em;
           color: #8c8c8c;
         }
-
-        dd.lastpost {
-          width: 20%; /* Adjust width as needed */
-          /* Add specific styling for last post column if needed */
-        }
-
         @media (max-width: 700px) {
           #pinned-threads .responsive-show, #pinned-forums .responsive-show {
             display: none !important;
           }
-          #pinned-threads .responsive-hide, #pinned-forums .responsive-hide,
-          #pinned-threads .lastpost, #pinned-forums .lastpost {
+          #pinned-threads .responsive-hide, #pinned-forums .responsive-hide {
             display: none !important;
           }
         }
@@ -843,14 +836,14 @@ export function init() {
 
     // For threads that don't exist on the page, we'll need to fetch them
     const threadsToFetch = threadIds.filter(
-      (id) => !existingThreadRows.has(id),
+      (id) => !existingThreadRows.has(id)
     );
 
     // Create loading placeholders for threads we need to fetch
     threadsToFetch.forEach((threadId) => {
       pinnedList.insertAdjacentHTML(
         "beforeend",
-        createLoadingListItem(threadId),
+        createLoadingListItem(threadId)
       );
     });
 
@@ -860,7 +853,7 @@ export function init() {
       (entries) => {
         isVisible = entries[0].isIntersecting;
       },
-      { threshold: 0.1 },
+      { threshold: 0.1 }
     );
     observer.observe(pinnedSection);
 
@@ -878,7 +871,7 @@ export function init() {
 
       // Find the placeholder if it exists and replace it, or just append
       const placeholder = pinnedList.querySelector(
-        `#pinned-thread-${threadId}`,
+        `#pinned-thread-${threadId}`
       );
       if (placeholder) {
         pinnedList.replaceChild(clonedRow, placeholder);
@@ -896,8 +889,8 @@ export function init() {
             title: `Error loading thread ${threadId}`,
             sortableTitle: `error loading thread ${threadId}`,
             rowHTML: createErrorListItemHTML(threadId),
-          })),
-        ),
+          }))
+        )
       );
 
       // Sort threads
@@ -906,13 +899,13 @@ export function init() {
           numeric: true,
           sensitivity: "base",
           ignorePunctuation: false,
-        }),
+        })
       );
 
       // Update the list with sorted threads
       threadsData.forEach((threadData) => {
         const placeholder = pinnedList.querySelector(
-          `#pinned-thread-${threadData.threadId}`,
+          `#pinned-thread-${threadData.threadId}`
         );
         if (placeholder) {
           placeholder.outerHTML = threadData.rowHTML;
@@ -952,7 +945,7 @@ export function init() {
   function findExistingThreadRows(threadIds) {
     const result = new Map();
     const threadRowsOnPage = document.querySelectorAll(
-      ".topiclist.topics .row",
+      ".topiclist.topics .row"
     );
 
     for (const row of threadRowsOnPage) {
