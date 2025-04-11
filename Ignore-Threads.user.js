@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         RPGHQ Ignored Thread Exporter
+// @name         RPGHQ Ignored Thread Enhancer
 // @namespace    http://tampermonkey.net/
 // @version      4.0.0
 // @description  Export previously ignored threads from the old RPGHQ Thread Ignorer userscript.
@@ -41,7 +41,7 @@ SOFTWARE.
 
   // --- Inject CSS for Instant Hiding ---
   const style = document.createElement("style");
-  style.textContent = `.thread-ignored { display: none !important; }`;
+  style.textContent = `li.thread-ignored { display: none !important; }`;
   (document.head || document.documentElement).appendChild(style);
 
   // --- localStorage Wrapper Functions ---
@@ -330,20 +330,22 @@ SOFTWARE.
       }
     });
 
-    // Handle last post links (restored logic from old script)
-    const lastPosts = document.querySelectorAll(".lastpost"); // Select the container
+    // Handle last post links based on title match
+    const lastPosts = document.querySelectorAll("dd.lastpost"); // Target dd elements
+    const ignoredTitles = Object.values(ignoredThreads); // Get just the titles
+
     lastPosts.forEach((lastPostContainer) => {
-      // Find a link within the container that points to a topic (viewtopic.php?t=...)
-      // Exclude links to search results (search.php?p=...) which might also be present
-      const lastPostLink = lastPostContainer.querySelector(
-        "a[href*='viewtopic.php?t=']"
-      );
-      if (lastPostLink) {
-        const href = lastPostLink.getAttribute("href");
-        const idMatch = href ? href.match(/[?&]t=(\d+)/) : null;
-        // Add class to the container if the thread ID is in the ignored list
-        if (idMatch && idMatch[1] && ignoredIds.includes(idMatch[1])) {
-          lastPostContainer.classList.add("thread-ignored");
+      // Check if it's already marked
+      if (lastPostContainer.classList.contains("lastpost-ignored")) return;
+
+      const lastSubjectLink = lastPostContainer.querySelector("a.lastsubject");
+      if (lastSubjectLink) {
+        const lastSubjectTitle = lastSubjectLink.getAttribute("title")?.trim(); // Get title from link
+        if (lastSubjectTitle && ignoredTitles.includes(lastSubjectTitle)) {
+          // Mark as ignored and replace content
+          lastPostContainer.classList.add("lastpost-ignored");
+          lastPostContainer.innerHTML =
+            '<span class="lastpost-ignored-text" style="opacity: 0.7;"><dfn>Last post</dfn> <span>(Topic Ignored)</span></span>';
         }
       }
     });
