@@ -324,7 +324,7 @@ GM_addStyle(`
 
   /* Style for enabled script card in Grid View */
   .script-card:not(.disabled) {
-    border: 2px solid #99C8FF; /* Added border */
+    border: 1px solid #99C8FF; /* Added border */
     /* Adjust margin slightly to compensate for border */
     margin: -1px; /* Prevent layout shift due to border */
   }
@@ -676,7 +676,7 @@ GM_addStyle(`
 
   /* Style for enabled script row in List View */
   .data-table tr.enabled {
-    border-left: 3px solid #99C8FF; /* Added left border */
+    border-left: 1px solid #cce5ff; /* Make border thinner and lighter */
     /* Optionally adjust padding if needed */
     /* padding-left: 7px; /* Adjust padding */
   }

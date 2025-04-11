@@ -53,10 +53,7 @@ export function renderScriptsListView(
                 <td>${script.category || "Uncategorized"}</td>
                 <td>${script.description || "No description available."}</td>
                 <td>
-                  <label class="toggle-switch">
-                    <input type="checkbox" class="script-toggle" data-script-id="${script.id}" ${isEnabled ? "checked" : ""}>
-                    <span class="toggle-slider"></span>
-                  </label>
+                  <!-- Removed toggle switch -->
                 </td>
                 <td>${
                   script.settings && script.settings.length > 0
@@ -91,17 +88,5 @@ export function renderScriptsListView(
     });
   });
 
-  // Add event listeners for toggle switches
-  document.querySelectorAll(".script-toggle").forEach((toggle) => {
-    toggle.addEventListener("change", (e) => {
-      const scriptId = toggle.dataset.scriptId;
-      const newState = toggle.checked;
-
-      // Dispatch a custom event that main.js can listen for
-      const event = new CustomEvent("script-toggle", {
-        detail: { scriptId, enabled: newState },
-      });
-      document.dispatchEvent(event);
-    });
-  });
+  // Event listeners for toggle switches were removed.
 }

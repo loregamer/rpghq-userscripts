@@ -41,9 +41,7 @@ export function renderScriptsGridView(
 
     card.innerHTML = `
       <div class="script-card-image">
-        <div class="script-toggle-wrapper image-toggle" data-script-id="${script.id}">
-          <input type="checkbox" class="script-toggle-checkbox" data-script-id="${script.id}" ${isEnabled ? "checked" : ""}>
-        </div>
+        <!-- Removed toggle wrapper -->
         <img src="${
           script.image || "https://via.placeholder.com/240x130?text=No+Image"
         }" alt="${script.name}" class="script-image-toggle" data-script-id="${script.id}">
@@ -83,46 +81,31 @@ export function renderScriptsGridView(
     });
   });
 
-  // Add event listeners for checkbox toggles
-  document.querySelectorAll(".script-toggle-checkbox").forEach((toggle) => {
-    toggle.addEventListener("change", (e) => {
-      const scriptId = toggle.dataset.scriptId;
-      const newState = toggle.checked;
+  // Checkbox toggle event listener removed.
 
-      // Update the card class to show disabled state
-      const card = document.querySelector(
-        `.script-card[data-script-id="${scriptId}"]`,
-      );
+  // Make the image clickable for toggling state
+  document.querySelectorAll(".script-image-toggle").forEach((img) => {
+    img.addEventListener("click", (e) => {
+      const scriptId = img.dataset.scriptId;
+      const card = img.closest(".script-card"); // Find the parent card
+
       if (card) {
+        // Determine the new state based on current class
+        const currentState = !card.classList.contains("disabled"); // true if enabled, false if disabled
+        const newState = !currentState; // The desired new state
+
+        // Update the card's visual state
         if (newState) {
           card.classList.remove("disabled");
         } else {
           card.classList.add("disabled");
         }
-      }
 
-      // Dispatch a custom event that main.js can listen for
-      const event = new CustomEvent("script-toggle", {
-        detail: { scriptId, enabled: newState },
-      });
-      document.dispatchEvent(event);
-    });
-  });
-
-  // Make the image clickable for toggling
-  document.querySelectorAll(".script-image-toggle").forEach((img) => {
-    img.addEventListener("click", (e) => {
-      const scriptId = img.dataset.scriptId;
-      const checkbox = document.querySelector(
-        `.script-toggle-checkbox[data-script-id="${scriptId}"]`,
-      );
-      if (checkbox) {
-        // Toggle the checkbox state
-        checkbox.checked = !checkbox.checked;
-
-        // Trigger the change event to update everything
-        const changeEvent = new Event("change");
-        checkbox.dispatchEvent(changeEvent);
+        // Dispatch the event to notify the application
+        const event = new CustomEvent("script-toggle", {
+          detail: { scriptId, enabled: newState },
+        });
+        document.dispatchEvent(event);
       }
     });
   });
