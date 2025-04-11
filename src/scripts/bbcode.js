@@ -1491,12 +1491,12 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         isFormSubmitting = true;
       });
   };
-  window.addEventListener("beforeunload", (e) => {
-    if (isFormSubmitting) return;
-    const msg = "You have unsaved changes. Are you sure you want to leave?";
-    e.returnValue = msg;
-    return msg;
-  });
+  // window.addEventListener("beforeunload", (e) => {
+  //   if (isFormSubmitting) return;
+  //   const msg = "You have unsaved changes. Are you sure you want to leave?";
+  //   e.returnValue = msg;
+  //   return msg;
+  // });
 
   // =============================
   // Run Initialization

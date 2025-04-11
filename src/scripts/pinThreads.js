@@ -381,6 +381,7 @@ export function init() {
             </dt>
             <dd class="posts">-</dd>
             <dd class="views">-</dd>
+            <dd class="lastpost">-</dd>
           </dl>
         </li>
       `;
@@ -411,6 +412,7 @@ export function init() {
                 <dt><div class="list-inner"><i class="icon fa-thumb-tack fa-fw icon-sm" aria-hidden="true"></i> Pinned Topics</div></dt>
                 <dd class="posts">Replies</dd>
                 <dd class="views">Views</dd>
+                <dd class="lastpost">Last post</dd>
               </dl>
             </li>
           </ul>
@@ -432,6 +434,7 @@ export function init() {
                 <dt><div class="list-inner"><i class="icon fa-thumb-tack fa-fw icon-sm" aria-hidden="true"></i> Pinned Forums</div></dt>
                 <dd class="posts">Topics</dd>
                 <dd class="views">Posts</dd>
+                <dd class="lastpost">Last post</dd>
               </dl>
             </li>
           </ul>
@@ -795,11 +798,18 @@ export function init() {
           font-size: 0.9em;
           color: #8c8c8c;
         }
+
+        dd.lastpost {
+          width: 20%; /* Adjust width as needed */
+          /* Add specific styling for last post column if needed */
+        }
+
         @media (max-width: 700px) {
           #pinned-threads .responsive-show, #pinned-forums .responsive-show {
             display: none !important;
           }
-          #pinned-threads .responsive-hide, #pinned-forums .responsive-hide {
+          #pinned-threads .responsive-hide, #pinned-forums .responsive-hide,
+          #pinned-threads .lastpost, #pinned-forums .lastpost {
             display: none !important;
           }
         }
