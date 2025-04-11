@@ -555,66 +555,18 @@ SOFTWARE.
   }
 
   function exportIgnoredThreads() {
-    const isMobile = window.innerWidth <= 700;
     const exportData = JSON.stringify(ignoredThreads, null, 2); // Pretty print JSON with 2 spaces
 
-    if (isMobile) {
-      // On mobile, copy JSON directly to clipboard
-      navigator.clipboard
-        .writeText(exportData)
-        .then(() => {
-          alert("Ignored threads data copied to clipboard!");
-        })
-        .catch((err) => {
-          // Fallback for browsers that don't support clipboard API
-          const textarea = document.createElement("textarea");
-          textarea.value = exportData;
-          document.body.appendChild(textarea);
-          textarea.select();
-          try {
-            document.execCommand("copy");
-            alert("Ignored threads data copied to clipboard!");
-          } catch (e) {
-            alert(
-              "Failed to copy to clipboard. Your browser may not support this feature."
-            );
-          }
-          document.body.removeChild(textarea);
-        });
-    } else {
-      // On desktop, download JSON file
-      const jsonBlob = new Blob([exportData], { type: "application/json" });
-      const jsonUrl = URL.createObjectURL(jsonBlob);
-      const jsonLink = document.createElement("a");
-      jsonLink.href = jsonUrl;
-      jsonLink.download = "ignored_threads.json";
-      document.body.appendChild(jsonLink);
-      jsonLink.click();
-      document.body.removeChild(jsonLink);
-      URL.revokeObjectURL(jsonUrl);
-
-      // Export uBlock Origin filters
-      let uBlockFilters = "! RPGHQ Thread Ignorer - Ignored Threads\n";
-      for (const threadId in ignoredThreads) {
-        const threadTitle = escapeForUblock(ignoredThreads[threadId]);
-        uBlockFilters += `
-! Thread ID: ${threadId}
-! Thread Title: ${threadTitle}
-
-rpghq.org##ul.topiclist li:has(a:has-text(/${threadTitle}/))
-rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
-`;
-      }
-      const textBlob = new Blob([uBlockFilters], { type: "text/plain" });
-      const textUrl = URL.createObjectURL(textBlob);
-      const textLink = document.createElement("a");
-      textLink.href = textUrl;
-      textLink.download = "ignored_threads_ublock.txt";
-      document.body.appendChild(textLink);
-      textLink.click();
-      document.body.removeChild(textLink);
-      URL.revokeObjectURL(textUrl);
-    }
+    // Download JSON file
+    const jsonBlob = new Blob([exportData], { type: "application/json" });
+    const jsonUrl = URL.createObjectURL(jsonBlob);
+    const jsonLink = document.createElement("a");
+    jsonLink.href = jsonUrl;
+    jsonLink.download = "ignored_threads.json";
+    document.body.appendChild(jsonLink);
+    jsonLink.click();
+    document.body.removeChild(jsonLink);
+    URL.revokeObjectURL(jsonUrl);
   }
 
   function importIgnoredThreads() {
@@ -1231,12 +1183,38 @@ rpghq.org##div#recent-topics li:has(a:has-text(/${threadTitle}/))
     }
   }
 
+  function addExportIgnoredThreadsButton() {
+    const dropdown = document.querySelector(
+      "#username_logged_in .dropdown-contents"
+    );
+    if (dropdown && !document.getElementById("export-ignored-threads-button")) {
+      const listItem = document.createElement("li");
+      listItem.classList.add("small-icon", "icon-download"); // Add classes for indentation and icon
+      const exportButton = document.createElement("a");
+      exportButton.id = "export-ignored-threads-button";
+      exportButton.href = "#";
+      exportButton.title = "Export Ignored Threads";
+      exportButton.role = "menuitem";
+      exportButton.innerHTML =
+        '<i class="icon fa-download fa-fw" aria-hidden="true"></i><span>Export Ignored Threads</span>';
+
+      exportButton.addEventListener("click", function (e) {
+        e.preventDefault();
+        exportIgnoredThreads();
+      });
+
+      listItem.appendChild(exportButton);
+      dropdown.insertBefore(listItem, dropdown.lastElementChild);
+    }
+  }
+
   function initializeScript() {
     hideIgnoredThreads();
     addIgnoreButton();
     addShowIgnoredThreadsButton();
     addShowNeverIgnoredUsersButton();
     addNeverIgnoreButton();
+    addExportIgnoredThreadsButton(); // Add the call here
     if (I_Want_To_Devlishly_Ignore_Many_Many_Threads) {
       addToggleIgnoreModeButton();
       if (ignoreModeActive) {
