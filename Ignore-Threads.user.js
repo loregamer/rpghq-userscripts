@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Ignored Thread Enhancer
 // @namespace    http://tampermonkey.net/
-// @version      4.0.2
+// @version      4.0.3
 // @description  Export previously ignored threads from the old RPGHQ Thread Ignorer userscript.
 // @match        https://rpghq.org/forums/*
 // @grant        GM_getValue
@@ -70,7 +70,7 @@ SOFTWARE.
   // --- End localStorage Wrapper Functions ---
 
   let ignoredThreads = GM_getValue("ignoredThreads", {}); // Keep using GM for the export data
-  let ignoreModeActive = storageGetValue("ignoreModeActive", false); // Use localStorage for this
+  let ignoreModeActive = false;
 
   function exportIgnoredThreadsJson() {
     const exportData = JSON.stringify(ignoredThreads, null, 2); // Pretty print JSON
