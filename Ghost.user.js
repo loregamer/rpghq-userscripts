@@ -2491,21 +2491,6 @@
 
     showToggleNotification();
     updatePaginationPostCount();
-
-    // If we're showing ghosted content, scroll to the first shown element
-    if (showGhostedPosts) {
-      const firstShownElement =
-        document.querySelector(".post.ghosted-post.show") ||
-        document.querySelector(".ghosted-quote.show") ||
-        document.querySelector(".ghosted-row.show");
-
-      if (firstShownElement) {
-        firstShownElement.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }
-    }
   }
 
   // Add keyboard shortcut listener
@@ -3002,13 +2987,6 @@
     const settingsBtn = popup.querySelector(".ghost-settings-btn");
     settingsBtn.addEventListener("click", () => {
       settingsPanel.classList.toggle("visible");
-
-      // Update scroll position to show settings if they're visible
-      if (settingsPanel.classList.contains("visible")) {
-        setTimeout(() => {
-          settingsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 100);
-      }
     });
 
     // Color input previews
