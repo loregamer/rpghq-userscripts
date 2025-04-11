@@ -324,7 +324,7 @@ GM_addStyle(`
 
   /* Style for enabled script card in Grid View */
   .script-card:not(.disabled) {
-    border: 1px solid #99C8FF; /* Added border */
+    border: 1px solid #C62D51; /* Added border */
     /* Adjust margin slightly to compensate for border */
     margin: -1px; /* Prevent layout shift due to border */
   }
