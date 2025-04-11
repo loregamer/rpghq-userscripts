@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Ignored Thread Enhancer
 // @namespace    http://tampermonkey.net/
-// @version      4.0.3
+// @version      4.0.4
 // @description  Export previously ignored threads from the old RPGHQ Thread Ignorer userscript.
 // @match        https://rpghq.org/forums/*
 // @grant        GM_getValue
