@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
 // @namespace    rpghq-userscripts
-// @version      0.2
+// @version      0.2.1
 // @description  RPGHQ Userscript Manager
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -771,7 +771,6 @@
       ],
       settings: [],
       categories: ["UI"],
-      executionPhase: "document-end",
     },
     {
       id: "kalareact",
@@ -786,7 +785,6 @@
       enabledByDefault: !1,
       settings: [],
       categories: ["General"],
-      executionPhase: "after_dom",
     },
     {
       id: "memberSearch",
@@ -800,7 +798,6 @@
       enabledByDefault: !0,
       settings: [],
       categories: ["Fun"],
-      executionPhase: "document-end",
     },
     {
       id: "notifications",
@@ -815,7 +812,6 @@
       enabledByDefault: !0,
       settings: [],
       categories: ["UI"],
-      executionPhase: "after_dom",
     },
     {
       id: "pinThreads",
@@ -830,7 +826,6 @@
       enabledByDefault: !0,
       settings: [],
       categories: ["UI"],
-      executionPhase: "document-end",
     },
     {
       id: "randomTopic",
@@ -844,7 +839,6 @@
       enabledByDefault: !0,
       settings: [],
       categories: ["Fun"],
-      executionPhase: "document-end",
     },
     {
       id: "separateReactions",
@@ -859,7 +853,6 @@
       enabledByDefault: !1,
       settings: [],
       categories: ["UI"],
-      executionPhase: "document-end",
     },
     {
       id: "recentTopicsFormat",
@@ -874,7 +867,6 @@
       enabledByDefault: !1,
       settings: [],
       categories: ["UI"],
-      executionPhase: "document-end",
     },
     {
       id: "commaFormatter",
@@ -886,7 +878,6 @@
       path: "./scripts/commaFormatter.js",
       enabledByDefault: !0,
       urlPatterns: [],
-      executionPhase: "document-end",
       settings: [
         {
           id: "formatFourDigits",
@@ -979,13 +970,59 @@
       ...args
     );
   }
-  /**
-   * Shows the userscript manager modal and sets up tab functionality.
-   *
-   * @param {Object} options - Configuration options
-   * @param {Function} options.loadTabContent - Function to load tab content
-   * @param {Function} options.hideModal - Function to hide the modal
-   */
+  // Shared utility functions for RPGHQ Userscripts
+  const sharedUtils = {
+    // Caching functions will go here
+    _cachePostData: (postId, data) => {
+      console.log(`Caching data for post ${postId}`);
+      // GM_setValue(`post_${postId}`, JSON.stringify(data)); // Example structure
+    },
+    _getCachedPostData: (postId) => (
+      console.log(`Getting cached data for post ${postId}`), null
+    ), // Placeholder
+    // Page-level Caching Logic (Placeholders)
+    _cachePostsOnPage: () => {
+      console.log("Shared Logic: Caching posts on current page (stub).");
+      // Logic to find all posts on the page and call cachePostData for each
+    },
+    // Preference Application Logic (Placeholders)
+    _applyUserPreferences: () => {
+      console.log("Shared Logic: Applying user preferences (stub).");
+      // Logic to read stored user preferences (hiding/highlighting users) and apply them
+    },
+    _applyThreadPreferences: () => {
+      console.log("Shared Logic: Applying thread preferences (stub).");
+      // Logic to read stored thread preferences (pinning/hiding/highlighting topics) and apply them
+    },
+    _cacheTopicData: (topicId, data) => {
+      console.log(`Caching data for topic ${topicId}`);
+      // GM_setValue(`topic_${topicId}`, JSON.stringify(data)); // Example structure
+    },
+    _getCachedTopicData: (topicId) => (
+      console.log(`Getting cached data for topic ${topicId}`), null
+    ),
+    // Placeholder
+  };
+  var loadOrder = {
+    "document-start": [
+      "_applyThreadPreferences",
+      "_cachePostsOnPage",
+      "recentTopicsFormat",
+      "_applyUserPreferences",
+      "bbcode",
+      "commaFormatter",
+    ],
+    "document-end": [
+      "memberSearch",
+      "randomTopic",
+      "kalareact",
+      "notifications",
+      "pinThreads",
+      "separateReactions",
+    ],
+    "document-idle": [],
+    after_dom: [],
+  };
   /**
    * Hides the userscript manager modal.
    */
@@ -2237,7 +2274,7 @@
         return (
           forumInfo.parentForumName &&
             (breadcrumbsText = `Subforum of ${forumInfo.parentForumName}`),
-          `\n        <li class="row content-processed" id="pinned-forum-${forumId}">\n          <dl class="row-item ${forumClass}">\n            <dt title="${forumInfo.name}">\n              <div class="list-inner">\n                <a href="${forumInfo.url}" class="forumtitle">${forumInfo.name}</a>\n                <br><span class="forum-path responsive-hide">${breadcrumbsText}</span>\n              </div>\n            </dt>\n            <dd class="posts">-</dd>\n            <dd class="views">-</dd>\n          </dl>\n        </li>\n      `
+          `\n        <li class="row content-processed" id="pinned-forum-${forumId}">\n          <dl class="row-item ${forumClass}">\n            <dt title="${forumInfo.name}">\n              <div class="list-inner">\n                <a href="${forumInfo.url}" class="forumtitle">${forumInfo.name}</a>\n                <br><span class="forum-path responsive-hide">${breadcrumbsText}</span>\n              </div>\n            </dt>\n            <dd class="posts">-</dd>\n            <dd class="views">-</dd>\n            <dd class="lastpost">              -</dd>\n          </dl>\n        </li>\n      `
         );
       }
       function createCustomThreadRowHTML(
@@ -2650,7 +2687,7 @@
                         (section.id = "pinned-threads"),
                         (section.className = "forabg"),
                         (section.innerHTML =
-                          '\n        <div class="inner">\n          <ul class="topiclist content-processed">\n            <li class="header">\n              <dl class="row-item">\n                <dt><div class="list-inner"><i class="icon fa-thumb-tack fa-fw icon-sm" aria-hidden="true"></i> Pinned Topics</div></dt>\n                <dd class="posts">Replies</dd>\n                <dd class="views">Views</dd>\n              </dl>\n            </li>\n          </ul>\n          <ul class="topiclist topics content-processed" id="pinned-threads-list"></ul>\n        </div>\n      '),
+                          '\n        <div class="inner">\n          <ul class="topiclist content-processed">\n            <li class="header">\n              <dl class="row-item">\n                <dt><div class="list-inner"><i class="icon fa-thumb-tack fa-fw icon-sm" aria-hidden="true"></i> Pinned Topics</div></dt>\n                <dd class="posts">Replies</dd>\n                <dd class="views">Views</dd>\n                <dd class="lastpost">Last Post</dd>\n              </dl>\n            </li>\n          </ul>\n          <ul class="topiclist topics content-processed" id="pinned-threads-list"></ul>\n        </div>\n      '),
                         section
                       );
                     })();
@@ -2709,7 +2746,7 @@
                         pinnedList.insertAdjacentHTML(
                           "beforeend",
                           (function (threadId) {
-                            return `\n        <li class="row bg1 content-processed" id="pinned-thread-${threadId}">\n          <dl class="row-item topic_read">\n            <dt>\n              <div class="list-inner">\n                <span class="topic-title">\n                  <i class="fa fa-spinner fa-spin"></i> Loading...\n                </span>\n              </div>\n            </dt>\n            <dd class="posts">-</dd>\n            <dd class="views">-</dd>\n          </dl>\n        </li>\n      `;
+                            return `\n        <li class="row bg1 content-processed" id="pinned-thread-${threadId}">\n          <dl class="row-item topic_read">\n            <dt>\n              <div class="list-inner">\n                <span class="topic-title">\n                  <i class="fa fa-spinner fa-spin"></i> Loading...\n                </span>\n              </div>\n            </dt>\n            <dd class="posts">-</dd>\n            <dd class="views">-</dd>\n            <dd class="lastpost"><span style="padding-left: 2.75em;">-</span></dd>\n          </dl>\n        </li>\n      `;
                           })(threadId)
                         );
                       });
@@ -2886,10 +2923,6 @@
                                       iconElement.classList.add(
                                         isUnread ? "icon-red" : "icon-lightgray"
                                       ));
-                                    // Remove lastpost column
-                                    const lastpostColumn =
-                                      row.querySelector(".lastpost");
-                                    lastpostColumn && lastpostColumn.remove();
                                     // Modify the topic hyperlink
                                     const topicLink =
                                       row.querySelector(".topictitle");
@@ -5157,32 +5190,26 @@
               positionSmileyBox(), positionEditorHeader();
             });
         };
+      // window.addEventListener("beforeunload", (e) => {
+      //   if (isFormSubmitting) return;
+      //   const msg = "You have unsaved changes. Are you sure you want to leave?";
+      //   e.returnValue = msg;
+      //   return msg;
+      // });
       // =============================
-      // Form Submission Tracking & Warning
+      // Run Initialization
       // =============================
-      let isFormSubmitting = !1;
-      window.addEventListener("beforeunload", (e) => {
-        if (isFormSubmitting) return;
-        const msg = "You have unsaved changes. Are you sure you want to leave?";
-        return (e.returnValue = msg), msg;
-      }),
-        // =============================
-        // Run Initialization
-        // =============================
-        // Run immediately rather than waiting for window load
-        (() => {
-          const style = document.createElement("style");
-          (style.textContent =
-            "\n      .bbcode-bracket { color: #D4D4D4; }\n      .bbcode-tag-0 { color: #569CD6; }\n      .bbcode-tag-1 { color: #CE9178; }\n      .bbcode-tag-2 { color: #DCDCAA; }\n      .bbcode-tag-3 { color: #C586C0; }\n      .bbcode-tag-4 { color: #4EC9B0; }\n      .bbcode-attribute { color: #9CDCFE; }\n      .bbcode-list-item, .bbcode-smiley { color: #FFD700; }\n      #bbcode-highlight {\n        white-space: pre-wrap;\n        word-wrap: break-word;\n        position: absolute;\n        top: 0; left: 0;\n        z-index: 3;\n        width: 100%; height: 100%;\n        overflow: hidden;\n        pointer-events: none;\n        box-sizing: border-box;\n        padding: 3px;\n        font-family: Verdana, Helvetica, Arial, sans-serif;\n        font-size: 11px;\n        line-height: 15.4px;\n        background-color: transparent;\n        color: transparent;\n        transition: all 0.5s ease, height 0.001s linear;\n      }\n      #message {\n        position: relative;\n        z-index: 2;\n        background: transparent;\n        color: rgb(204, 204, 204);\n        caret-color: white;\n        width: 100%;\n        height: 100%;\n        padding: 3px;\n        box-sizing: border-box;\n        resize: none;\n        overflow: auto;\n        font-family: Verdana, Helvetica, Arial, sans-serif;\n        font-size: 11px;\n        line-height: 15.4px;\n      }\n      .editor-container { position: relative; width: 100%; height: auto; }\n      .bbcode-link { color: #5D8FBD; }\n      .smiley-button, .custom-smiley-button {\n        display: inline-flex; justify-content: center; align-items: center;\n        width: 22px; height: 22px; margin: 2px;\n        text-decoration: none; vertical-align: middle; overflow: hidden;\n      }\n      .smiley-button img, .custom-smiley-button img {\n        max-width: 80%; max-height: 80%; object-fit: contain;\n      }\n      .emoji-smiley { font-size: 18px; display: flex; justify-content: center; align-items: center; width: 80%; height: 80%; }\n      #smiley-box {\n        position: absolute; max-height: 80vh; width: 17%;\n        overflow-y: auto; border-radius: 5px; z-index: 1000;\n      }\n      .smiley-group { margin-bottom: 10px; }\n      #smiley-box a { color: #5D8FBD; text-decoration: none; }\n      #smiley-box a:hover { text-decoration: underline; }\n      #abbc3_buttons.fixed { position: fixed; top: 0; z-index: 1000; background-color: #3A404A !important; }\n      .abbc3_buttons_row.fixed { background-color: #3A404A !important; position: fixed; top: 0; z-index: 1000; }\n      .custom-buttons-container { margin-top: 10px; }\n      .custom-button { margin-bottom: 5px; margin-right: 5px; }\n      .smiley-group-separator { margin: 10px 0; }\n      @media (max-width: 768px) {\n        #smiley-box {\n          position: static !important; width: 100% !important;\n          max-height: none !important; overflow-y: visible !important; margin-bottom: 10px;\n        }\n        .smiley-button, .custom-smiley-button { width: 36px; height: 36px; }\n        .smiley-button img, .custom-smiley-button img { width: 30px; height: 30px; }\n        .emoji-smiley { font-size: 24px; }\n      }\n    "),
-            document.head.appendChild(style);
-        })(),
+      // Run immediately rather than waiting for window load
+      (() => {
+        const style = document.createElement("style");
+        (style.textContent =
+          "\n      .bbcode-bracket { color: #D4D4D4; }\n      .bbcode-tag-0 { color: #569CD6; }\n      .bbcode-tag-1 { color: #CE9178; }\n      .bbcode-tag-2 { color: #DCDCAA; }\n      .bbcode-tag-3 { color: #C586C0; }\n      .bbcode-tag-4 { color: #4EC9B0; }\n      .bbcode-attribute { color: #9CDCFE; }\n      .bbcode-list-item, .bbcode-smiley { color: #FFD700; }\n      #bbcode-highlight {\n        white-space: pre-wrap;\n        word-wrap: break-word;\n        position: absolute;\n        top: 0; left: 0;\n        z-index: 3;\n        width: 100%; height: 100%;\n        overflow: hidden;\n        pointer-events: none;\n        box-sizing: border-box;\n        padding: 3px;\n        font-family: Verdana, Helvetica, Arial, sans-serif;\n        font-size: 11px;\n        line-height: 15.4px;\n        background-color: transparent;\n        color: transparent;\n        transition: all 0.5s ease, height 0.001s linear;\n      }\n      #message {\n        position: relative;\n        z-index: 2;\n        background: transparent;\n        color: rgb(204, 204, 204);\n        caret-color: white;\n        width: 100%;\n        height: 100%;\n        padding: 3px;\n        box-sizing: border-box;\n        resize: none;\n        overflow: auto;\n        font-family: Verdana, Helvetica, Arial, sans-serif;\n        font-size: 11px;\n        line-height: 15.4px;\n      }\n      .editor-container { position: relative; width: 100%; height: auto; }\n      .bbcode-link { color: #5D8FBD; }\n      .smiley-button, .custom-smiley-button {\n        display: inline-flex; justify-content: center; align-items: center;\n        width: 22px; height: 22px; margin: 2px;\n        text-decoration: none; vertical-align: middle; overflow: hidden;\n      }\n      .smiley-button img, .custom-smiley-button img {\n        max-width: 80%; max-height: 80%; object-fit: contain;\n      }\n      .emoji-smiley { font-size: 18px; display: flex; justify-content: center; align-items: center; width: 80%; height: 80%; }\n      #smiley-box {\n        position: absolute; max-height: 80vh; width: 17%;\n        overflow-y: auto; border-radius: 5px; z-index: 1000;\n      }\n      .smiley-group { margin-bottom: 10px; }\n      #smiley-box a { color: #5D8FBD; text-decoration: none; }\n      #smiley-box a:hover { text-decoration: underline; }\n      #abbc3_buttons.fixed { position: fixed; top: 0; z-index: 1000; background-color: #3A404A !important; }\n      .abbc3_buttons_row.fixed { background-color: #3A404A !important; position: fixed; top: 0; z-index: 1000; }\n      .custom-buttons-container { margin-top: 10px; }\n      .custom-button { margin-bottom: 5px; margin-right: 5px; }\n      .smiley-group-separator { margin: 10px 0; }\n      @media (max-width: 768px) {\n        #smiley-box {\n          position: static !important; width: 100% !important;\n          max-height: none !important; overflow-y: visible !important; margin-bottom: 10px;\n        }\n        .smiley-button, .custom-smiley-button { width: 36px; height: 36px; }\n        .smiley-button img, .custom-smiley-button img { width: 30px; height: 30px; }\n        .emoji-smiley { font-size: 24px; }\n      }\n    "),
+          document.head.appendChild(style);
+      })(),
         initialize(),
         (() => {
           const postForm = document.getElementById("postform");
-          postForm &&
-            postForm.addEventListener("submit", () => {
-              isFormSubmitting = !0;
-            });
+          postForm && postForm.addEventListener("submit", () => {});
         })(),
         (() => {
           // Immediate check for existing palette
@@ -5262,11 +5289,7 @@
    * License: MIT
    *
    * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/commaFormatter.md for documentation
-   */ // Prefix for GM_setValue/GM_getValue keys
-  // The current execution phase the page is in
-  let currentExecutionPhase = "document-start";
-  // --- GM Wrappers ---
-  function gmSetValue(key, value) {
+   */ function gmSetValue(key, value) {
     // eslint-disable-next-line no-undef
     GM_setValue("RPGHQ_Manager_" + key, value);
   }
@@ -5280,6 +5303,8 @@
       SCRIPT_MANIFEST.forEach((script) => {
         const storageKey = `script_enabled_${script.id}`;
         // Load state from GM storage, falling back to manifest default
+        // Prefix for GM_setValue/GM_getValue keys
+        // --- GM Wrappers ---
         var key, defaultValue;
         (scriptStates[script.id] =
           ((key = storageKey),
@@ -5291,17 +5316,43 @@
       }),
       log("Script states initialized:", scriptStates);
   }
-  function loadEnabledScripts() {
-    log("Loading enabled scripts for phase: " + currentExecutionPhase),
-      SCRIPT_MANIFEST.forEach((script) => {
-        // Check if script is enabled and either matches current phase or has no phase defined
-        scriptStates[script.id] &&
-          (script.executionPhase === currentExecutionPhase ||
-            (!script.executionPhase &&
-              "document-end" === currentExecutionPhase)) &&
-          loadScript(script);
-      }),
-      log("Finished loading scripts for phase: " + currentExecutionPhase);
+  // Find a script definition in the manifest by its ID
+  // Execute functions and scripts based on the load order for a specific phase
+  function executeLoadOrderForPhase(phase) {
+    log(`Executing load order for phase: ${phase}`);
+    const itemsToLoad = loadOrder[phase] || [];
+    0 !== itemsToLoad.length
+      ? (itemsToLoad.forEach((item) => {
+          // Check if it's a known shared function
+          if ("function" == typeof sharedUtils[item]) {
+            log(`-> Executing shared function: ${item}`);
+            try {
+              sharedUtils[item]();
+            } catch (err) {
+              error(`Error executing shared function ${item}:`, err);
+            }
+          }
+          // Check if it's a script ID
+          else {
+            const script =
+              ((scriptId = item),
+              SCRIPT_MANIFEST.find((script) => script.id === scriptId));
+            script
+              ? // Check if script is enabled
+                scriptStates[script.id]
+                ? (log(
+                    `-> Loading script from load order: ${script.name} (${script.id}) for phase: ${phase}`
+                  ),
+                  loadScript(script))
+                : log(`-> Script ${item} skipped (disabled).`)
+              : warn(
+                  `-> Item "${item}" in load_order.json is not a known shared function or script ID.`
+                );
+          }
+          var scriptId;
+        }),
+        log(`Finished executing load order for phase: ${phase}`))
+      : log(`No items defined in load order for phase: ${phase}`);
   }
   // Map of script ids to their modules
   const scriptModules = {
@@ -5466,35 +5517,33 @@
   // Load a single script by its manifest entry
   function loadScript(script) {
     if (loadedScripts[script.id])
-      return void log(`Script ${script.name} already loaded, skipping.`);
-    // Check if the script should run on the current URL
-    if (!shouldLoadScript(script))
-      return void log(
-        `Script ${script.name} not loaded: URL pattern did not match.`
-      );
-    const phase = script.executionPhase || "document-end";
-    log(`Loading script: ${script.name} (${script.id}) in phase: ${phase}`);
-    try {
-      // Get the module from our imports
-      const module = scriptModules[script.id];
-      if (!module) return void error(`Script module ${script.id} not found`);
-      // Check if the module has an init function
-      if ("function" == typeof module.init) {
-        // Call init and store any returned cleanup function or object
-        const result = module.init();
-        // Store the loaded module and any cleanup function
-        (loadedScripts[script.id] = {
-          module: module,
-          cleanup:
-            result && "function" == typeof result.cleanup
-              ? result.cleanup
-              : null,
-        }),
-          log(`Successfully loaded script: ${script.name}`);
-      } else warn(`Script ${script.name} has no init function, skipping.`);
-    } catch (err) {
-      error(`Failed to load script ${script.name}:`, err);
-    }
+      log(`Script ${script.name} already loaded, skipping.`);
+    else if (shouldLoadScript(script)) {
+      // Check if the script should run on the current URL
+      // log(`Loading script: ${script.name} (${script.id})`); // Phase is determined by load_order.json
+      log(`Loading script: ${script.name} (${script.id})`);
+      try {
+        // Get the module from our imports
+        const module = scriptModules[script.id];
+        if (!module) return void error(`Script module ${script.id} not found`);
+        // Check if the module has an init function
+        if ("function" == typeof module.init) {
+          // Call init and store any returned cleanup function or object
+          const result = module.init();
+          // Store the loaded module and any cleanup function
+          (loadedScripts[script.id] = {
+            module: module,
+            cleanup:
+              result && "function" == typeof result.cleanup
+                ? result.cleanup
+                : null,
+          }),
+            log(`Successfully loaded script: ${script.name}`);
+        } else warn(`Script ${script.name} has no init function, skipping.`);
+      } catch (err) {
+        error(`Failed to load script ${script.name}:`, err);
+      }
+    } else log(`Script ${script.name} not loaded: URL pattern did not match.`);
   }
   // Unload a single script by its ID
   function unloadScript(scriptId) {
@@ -5585,7 +5634,14 @@
     ),
       isVisible
         ? hideModal()
-        : (function ({ loadTabContent: loadTabContent, hideModal: hideModal }) {
+        : /**
+           * Shows the userscript manager modal and sets up tab functionality.
+           *
+           * @param {Object} options - Configuration options
+           * @param {Function} options.loadTabContent - Function to load tab content
+           * @param {Function} options.hideModal - Function to hide the modal
+           */
+          (function ({ loadTabContent: loadTabContent, hideModal: hideModal }) {
             log("Showing userscript manager modal...");
             let modal = document.getElementById("mod-manager-modal");
             modal ||
@@ -5725,23 +5781,20 @@
     log("Initializing RPGHQ Userscript Manager..."),
     // Initialize script states
     initializeScriptStates(),
-    // Execute scripts for document-start phase immediately
-    loadEnabledScripts(), // Already in document-start phase
+    // Execute load order for document-start phase immediately
+    executeLoadOrderForPhase("document-start"),
     // Set up listeners for other execution phases
     document.addEventListener("DOMContentLoaded", () => {
-      // Update current phase to document-end
-      (currentExecutionPhase = "document-end"),
-        loadEnabledScripts(),
-        // Add menu button
+      executeLoadOrderForPhase("document-end"),
+        // Add menu button (needs DOM ready)
         addMenuButton(toggleModalVisibility);
     }),
     window.addEventListener("load", () => {
-      // Update current phase to document-idle
-      (currentExecutionPhase = "document-idle"), loadEnabledScripts();
+      executeLoadOrderForPhase("document-idle");
     }),
     // Set up a phase for after DOM is fully ready and rendered
     setTimeout(() => {
-      (currentExecutionPhase = "after_dom"), loadEnabledScripts();
+      executeLoadOrderForPhase("after_dom");
     }, 500), // Small delay to ensure everything is loaded
     // Add keyboard shortcut listener for Insert key
     document.addEventListener("keydown", (event) => {
