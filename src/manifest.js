@@ -164,5 +164,5 @@ export const SCRIPT_MANIFEST = [
           "Enable to add commas to 4-digit numbers (1,000+). Disable to only format 5-digit numbers (10,000+).",
       },
     ],
-  }
-];;
+  },
+];

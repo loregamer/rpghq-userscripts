@@ -6,15 +6,20 @@
     "build": "npm run lint && node scripts/sort-manifest.js && node scripts/update-load-order.cjs && npx rollup -c && node scripts/inject-styles.js && prettier --write dist/rpghq-userscript-manager.user.js",
     "watch": "rollup -c -w",
     "lint": "prettier --write .",
-    "add-script": "node tools/add-script.js"
+    "add-script": "node tools/add-script.js",
+    "outline": "node scripts/generate-outline.cjs"
   },
   "author": "loregamer",
   "license": "MIT",
   "devDependencies": {
+    "@babel/parser": "^7.27.0",
+    "@babel/traverse": "^7.27.0",
     "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-terser": "^0.4.4",
+    "glob": "^11.0.1",
+    "micromatch": "^4.0.8",
     "prettier": "^3.5.3",
     "rollup": "^4.39.0",
     "rollup-plugin-import-css": "^3.5.1",
