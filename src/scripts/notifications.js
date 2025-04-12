@@ -732,22 +732,22 @@ export function init({ getScriptSetting }) {
       const replyColorSetting = _getScriptSetting(
         "notifications",
         "replyColor",
-        "#f5fffa",
+        "#f5fffa", // MintCream
       );
       const reactionColorSetting = _getScriptSetting(
         "notifications",
         "reactionColor",
-        "#fffafa",
+        "#fffafa", // Snow
       );
       const mentionColorSetting = _getScriptSetting(
         "notifications",
         "mentionColor",
-        "#fff0f5",
+        "#fff0f5", // LavenderBlush
       );
       const editColorSetting = _getScriptSetting(
         "notifications",
         "editColor",
-        "#fafad2",
+        "#fafad2", // LightGoldenrodYellow
       );
 
       // Apply base container styling
@@ -977,22 +977,22 @@ export function init({ getScriptSetting }) {
       const replyColorSetting = _getScriptSetting(
         "notifications",
         "replyColor",
-        "#f5fffa",
+        "#f5fffa", // MintCream
       );
       const reactionColorSetting = _getScriptSetting(
         "notifications",
         "reactionColor",
-        "#fffafa",
+        "#fffafa", // Snow
       );
       const mentionColorSetting = _getScriptSetting(
         "notifications",
         "mentionColor",
-        "#fff0f5",
+        "#fff0f5", // LavenderBlush
       );
       const editColorSetting = _getScriptSetting(
         "notifications",
         "editColor",
-        "#fafad2",
+        "#fafad2", // LightGoldenrodYellow
       );
 
       // Define colors (get from settings or use defaults)
