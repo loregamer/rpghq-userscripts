@@ -649,7 +649,102 @@ GM_addStyle(`
     font-size: 0.8em;
   }
 
-  /* Toggle switch - replaced with font awesome icons */
+
+  /* New Settings Item Layout */
+  .setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .setting-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .setting-details {
+    flex-grow: 1;
+    padding-right: 20px; /* Space between details and control */
+  }
+  .setting-name {
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+  }
+  .setting-description {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+  }
+  .setting-control {
+    flex-shrink: 0; /* Prevent control from shrinking */
+  }
+  .setting-control .setting-input {
+    /* General styling for non-toggle inputs in the new layout */
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    min-width: 150px; /* Ensure inputs have some minimum width */
+  }
+  .setting-control select.setting-input {
+    /* Specific styles for select if needed */
+    padding: 8px 10px; /* Adjust padding for select dropdown arrow */
+  }
+
+
+  /* Toggle Switch Styles */
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px; /* Width of the toggle */
+    height: 24px; /* Height of the toggle */
+  }
+
+  .toggle-switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #555; /* Off state background */
+    transition: .4s;
+    border-radius: 24px; /* Rounded slider */
+  }
+
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px; /* Height of the knob */
+    width: 18px; /* Width of the knob */
+    left: 3px; /* Padding from left */
+    bottom: 3px; /* Padding from bottom */
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%; /* Circular knob */
+  }
+
+  input:checked + .toggle-slider {
+    background-color: var(--primary-color); /* On state background */
+  }
+
+  input:focus + .toggle-slider {
+    box-shadow: 0 0 1px var(--primary-color);
+  }
+
+  input:checked + .toggle-slider:before {
+    transform: translateX(24px); /* Move knob to the right */
+  }
+  
 
   /* Tables */
   .data-table {
