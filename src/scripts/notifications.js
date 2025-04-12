@@ -12,10 +12,26 @@ let _getScriptSetting = () => undefined; // Placeholder
 export function init({ getScriptSetting }) {
   _getScriptSetting = getScriptSetting; // Store the passed function
   const ONE_DAY = 24 * 60 * 60 * 1000;
+  const referenceBackgroundColor = _getScriptSetting(
+    "notifications",
+    "referenceBackgroundColor",
+    "rgba(23, 27, 36, 0.5)",
+  );
+  const referenceTextColor = _getScriptSetting(
+    "notifications",
+    "referenceTextColor",
+    "#ffffff",
+  );
+  const timestampColor = _getScriptSetting(
+    "notifications",
+    "timestampColor",
+    "#888888",
+  );
+
   const REFERENCE_STYLE = {
     display: "inline-block",
-    background: "rgba(23, 27, 36, 0.5)",
-    color: "#ffffff",
+    background: referenceBackgroundColor,
+    color: referenceTextColor,
     padding: "2px 4px",
     borderRadius: "2px",
     zIndex: "-1",
@@ -38,7 +54,7 @@ export function init({ getScriptSetting }) {
     bottom: "2px",
     right: "2px",
     fontSize: "0.85em",
-    color: "#888",
+    color: timestampColor,
   };
 
   // Add notification time style for notification page
@@ -466,6 +482,12 @@ export function init({ getScriptSetting }) {
         false,
       );
 
+      const reactionColorSetting = _getScriptSetting(
+        "notifications",
+        "reactionColor",
+        "#3889ED", // Default value if setting not found
+      );
+
       // Apply container styling (assuming base style already applied by caller)
       // Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
 
@@ -505,7 +527,7 @@ export function init({ getScriptSetting }) {
       }
 
       const isReactedTo = titleText.includes("reacted to a message you posted");
-      const reactionVerb = `<b style="color: #3889ED;">reacted</b>`;
+      const reactionVerb = `<b style="color: ${reactionColorSetting};">reacted</b>`;
 
       if (isReactedTo) {
         // Update title with reaction info
@@ -621,6 +643,12 @@ export function init({ getScriptSetting }) {
     },
 
     async customizeMentionNotification(notificationBlock) {
+      const mentionColorSetting = _getScriptSetting(
+        "notifications",
+        "mentionColor",
+        "#FFC107", // Default value
+      );
+
       // Apply container styling to the block
       Object.assign(notificationBlock.style, NOTIFICATION_BLOCK_STYLE);
 
@@ -641,7 +669,7 @@ export function init({ getScriptSetting }) {
       let topicName = parts.length > 1 ? parts[1].trim() : "Unknown Topic";
 
       titleElement.innerHTML = `
-          <b style="color: #FFC107;">Mentioned</b> by ${usernames} in <b>${topicName}</b>
+          <b style="color: ${mentionColorSetting};">Mentioned</b> by ${usernames} in <b>${topicName}</b>
         `;
 
       // Create or update reference element for post content
@@ -673,6 +701,12 @@ export function init({ getScriptSetting }) {
     },
 
     customizePrivateMessageNotification(titleElement, block) {
+      const warningColorSetting = _getScriptSetting(
+        "notifications",
+        "warningColor",
+        "#D31141", // Default value
+      );
+
       // Apply container styling to the block
       Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
 
@@ -690,7 +724,7 @@ export function init({ getScriptSetting }) {
         titleElement.innerHTML = titleElement.innerHTML
           .replace(
             /<strong>Private Message<\/strong>/,
-            '<strong style="color: #D31141;">Board warning issued</strong>',
+            `<strong style="color: ${warningColorSetting};">Board warning issued</strong>`,
           )
           .replace(/from/, "by")
           .replace(/:$/, "");
@@ -707,18 +741,6 @@ export function init({ getScriptSetting }) {
         "enableNotificationColors",
         true,
       );
-      const rawColorsJson = _getScriptSetting(
-        "notifications",
-        "notificationColors",
-        "{}",
-      );
-      let notificationColors = {};
-      try {
-        notificationColors = JSON.parse(rawColorsJson);
-      } catch (e) {
-        console.error("Invalid JSON in notificationColors setting:", e);
-        notificationColors = { default: "#ffffff" }; // Fallback
-      }
       const resizeFillers = _getScriptSetting(
         "notifications",
         "resizeFillerWords",
@@ -727,27 +749,38 @@ export function init({ getScriptSetting }) {
       const quoteColorSetting = _getScriptSetting(
         "notifications",
         "quoteColor",
-        "#f0f8ff", // Default from manifest
       );
       const replyColorSetting = _getScriptSetting(
         "notifications",
         "replyColor",
-        "#f5fffa", // MintCream
       );
       const reactionColorSetting = _getScriptSetting(
         "notifications",
         "reactionColor",
-        "#fffafa", // Snow
       );
       const mentionColorSetting = _getScriptSetting(
         "notifications",
         "mentionColor",
-        "#fff0f5", // LavenderBlush
       );
       const editColorSetting = _getScriptSetting(
         "notifications",
         "editColor",
-        "#fafad2", // LightGoldenrodYellow
+        "#8A2BE2", // Default value
+      );
+      const approvalColorSetting = _getScriptSetting(
+        "notifications",
+        "approvalColor",
+        "#00AA00", // Default value
+      );
+      const reportColorSetting = _getScriptSetting(
+        "notifications",
+        "reportColor",
+        "#f58c05", // Default value
+      );
+      const warningColorSetting = _getScriptSetting(
+        "notifications",
+        "warningColor",
+        "#D31141", // Default value
       );
 
       // Apply base container styling
@@ -791,13 +824,13 @@ export function init({ getScriptSetting }) {
           notificationType = "report";
           titleElement.innerHTML = titleText.replace(
             /Report closed/,
-            '<strong style="color: #f58c05;">Report closed</strong>',
+            `<strong style="color: ${reportColorSetting};">Report closed</strong>`,
           );
         } else if (titleText.includes("Post approval")) {
           notificationType = "approval";
           titleElement.innerHTML = titleText.replace(
             /<strong>Post approval<\/strong>/,
-            '<strong style="color: #00AA00;">Post approval</strong>',
+            `<strong style="color: ${approvalColorSetting};">Post approval</strong>`,
           );
         } else if (titleText.includes("<strong>Quoted</strong>")) {
           notificationType = "quote";
@@ -808,7 +841,7 @@ export function init({ getScriptSetting }) {
           // Add styling for edit notifications if desired
           titleElement.innerHTML = titleText.replace(
             /edited a message you posted/,
-            '<strong style="color: #8A2BE2;">edited</strong> a message you posted',
+            `<strong style="color: ${editColorSetting};">edited</strong> a message you posted`,
           );
         }
 
@@ -869,9 +902,9 @@ export function init({ getScriptSetting }) {
       const reactionColor = reactionColorSetting;
       const mentionColor = mentionColorSetting;
       const editColor = editColorSetting; // Example purple
-      const approvalColor = colors.approval || "#00AA00";
-      const reportColor = colors.report || "#f58c05";
-      const warningColor = colors.warning || "#D31141";
+      const approvalColor = approvalColorSetting;
+      const reportColor = reportColorSetting;
+      const warningColor = warningColorSetting;
 
       // Apply standard strong tag styling (can be overridden by specific types)
       currentHtml = currentHtml
@@ -885,32 +918,32 @@ export function init({ getScriptSetting }) {
         )
         // Apply reaction color (might already be done by customizeReactionNotification, but good fallback)
         .replace(
-          /<b style=\"color: #3889ED;\">reacted<\/b>/g, // Match the existing style tag precisely
+          /<b style=\"color: ${reactionColorSetting};\">reacted<\/b>/g, // Match the dynamically set style
           `<b style="color: ${reactionColor};">reacted</b>`,
         )
         // Apply mention color (might already be done by customizeMentionNotification)
         .replace(
-          /<b style=\"color: #FFC107;\">Mentioned<\/b>/g,
+          /<b style=\"color: ${mentionColorSetting};\">Mentioned<\/b>/g, // Match the dynamically set style
           `<b style="color: ${mentionColor};">Mentioned</b>`,
         )
         // Apply edit color
         .replace(
-          /<strong style=\"color: #8A2BE2;\">edited<\/strong>/g,
+          /<strong style=\"color: ${editColorSetting};\">edited<\/strong>/g, // Match the dynamically set style
           `<strong style="color: ${editColor};">edited</strong>`,
         )
         // Apply approval color
         .replace(
-          /<strong style=\"color: #00AA00;\">Post approval<\/strong>/g,
+          /<strong style=\"color: ${approvalColorSetting};\">Post approval<\/strong>/g, // Match the dynamically set style
           `<strong style="color: ${approvalColor};">Post approval</strong>`,
         )
         // Apply report color
         .replace(
-          /<strong style=\"color: #f58c05;\">Report closed<\/strong>/g,
+          /<strong style=\"color: ${reportColorSetting};\">Report closed<\/strong>/g, // Match the dynamically set style
           `<strong style="color: ${reportColor};">Report closed</strong>`,
         )
         // Apply warning color (might be done by customizePrivateMessageNotification)
         .replace(
-          /<strong style=\"color: #D31141;\">Board warning issued<\/strong>/g,
+          /<strong style=\"color: ${warningColorSetting};\">Board warning issued<\/strong>/g, // Match the dynamically set style
           `<strong style="color: ${warningColor};">Board warning issued</strong>`,
         );
 
@@ -962,7 +995,6 @@ export function init({ getScriptSetting }) {
       const enableSmileys = _getScriptSetting(
         "notifications",
         "enableReactionSmileys",
-        true,
       );
       const resizeFillers = _getScriptSetting(
         "notifications",
@@ -972,27 +1004,53 @@ export function init({ getScriptSetting }) {
       const quoteColorSetting = _getScriptSetting(
         "notifications",
         "quoteColor",
-        "#f0f8ff", // Default from manifest
       );
       const replyColorSetting = _getScriptSetting(
         "notifications",
         "replyColor",
-        "#f5fffa", // MintCream
       );
       const reactionColorSetting = _getScriptSetting(
         "notifications",
         "reactionColor",
-        "#fffafa", // Snow
       );
       const mentionColorSetting = _getScriptSetting(
         "notifications",
         "mentionColor",
-        "#fff0f5", // LavenderBlush
       );
       const editColorSetting = _getScriptSetting(
         "notifications",
         "editColor",
-        "#fafad2", // LightGoldenrodYellow
+        "#8A2BE2", // Default value
+      );
+      const approvalColorSetting = _getScriptSetting(
+        "notifications",
+        "approvalColor",
+        "#00AA00", // Default value
+      );
+      const reportColorSetting = _getScriptSetting(
+        "notifications",
+        "reportColor",
+        "#f58c05", // Default value
+      );
+      const warningColorSetting = _getScriptSetting(
+        "notifications",
+        "warningColor",
+        "#D31141", // Default value
+      );
+      const defaultColorSetting = _getScriptSetting(
+        "notifications",
+        "defaultColor",
+        "#ffffff", // Default value
+      );
+      const referenceBackgroundColorSetting = _getScriptSetting(
+        "notifications",
+        "referenceBackgroundColor",
+        "rgba(23, 27, 36, 0.5)",
+      );
+      const referenceTextColorSetting = _getScriptSetting(
+        "notifications",
+        "referenceTextColor",
+        "#ffffff",
       );
 
       // Define colors (get from settings or use defaults)
@@ -1002,10 +1060,12 @@ export function init({ getScriptSetting }) {
       const reactionColor = reactionColorSetting;
       const mentionColor = mentionColorSetting;
       const editColor = editColorSetting;
-      const approvalColor = colors.approval || "#00AA00";
-      const reportColor = colors.report || "#f58c05";
-      const warningColor = colors.warning || "#D31141"; // Assuming a warning type exists
-      const defaultColor = colors.default || "#ffffff";
+      const approvalColor = approvalColorSetting;
+      const reportColor = reportColorSetting;
+      const warningColor = warningColorSetting;
+      const defaultColor = defaultColorSetting;
+      const referenceBackgroundColor = referenceBackgroundColorSetting;
+      const referenceTextColor = referenceTextColorSetting;
 
       document.querySelectorAll(".cplist .row").forEach(async (row) => {
         if (row.dataset.customized === "true") return;
@@ -1062,7 +1122,7 @@ export function init({ getScriptSetting }) {
             newHtmlContent = `
               <div class="notification-block">
                 <div class="notification-title">${styleKeyword("Mentioned", mentionColor)} ${mentionText.substring(mentionText.indexOf(resizeFillers ? styleFiller("by") : "by"))}</div>
-                <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
+                <div class="notification-reference" style="background: ${referenceBackgroundColor}; color: ${referenceTextColor}; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
                   Loading...
                 </div>
               </div>
@@ -1129,7 +1189,7 @@ export function init({ getScriptSetting }) {
             newHtmlContent = `
               <div class="notification-block">
                 <div class="notification-title">${finalTitle}</div>
-                <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
+                <div class="notification-reference" style="background: ${referenceBackgroundColor}; color: ${referenceTextColor}; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
                   Loading...
                 </div>
               </div>
@@ -1251,7 +1311,7 @@ export function init({ getScriptSetting }) {
               <div class="notification-title">${styledTitle}</div>
               ${
                 referenceText !== null // Only add reference div if needed
-                  ? `<div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
+                  ? `<div class="notification-reference" style="background: ${referenceBackgroundColor}; color: ${referenceTextColor}; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
                 ${referenceText}
               </div>`
                   : ""

@@ -259,7 +259,20 @@ function saveScriptSetting(scriptId, settingId, value) {
 
 function getScriptSetting(scriptId, settingId, defaultValue) {
   const storageKey = `script_setting_${scriptId}_${settingId}`;
-  return gmGetValue(storageKey, defaultValue);
+  let value = gmGetValue(storageKey, defaultValue);
+
+  // If the value retrieved is the default (meaning it wasn't set),
+  // or explicitly undefined, set it in storage now.
+  // Tampermonkey might return the default value directly if the key doesn't exist.
+  // We check if the retrieved value *is* the default to cover this.
+  const currentValueInStorage = gmGetValue(storageKey); // Check actual stored value
+  if (currentValueInStorage === undefined) {
+    gmSetValue(storageKey, defaultValue);
+    log(`Setting default value for ${scriptId}.${settingId}: ${defaultValue}`);
+    value = defaultValue; // Ensure we return the default we just set
+  }
+
+  return value;
 }
 
 // --- Tab Content Handling ---

@@ -486,6 +486,8 @@ HQ-Userscripts
 │   │    └─> findScriptById
 │   │    └─> getScriptSetting
 │   │        └─> gmGetValue (from src/main.js)
+│   │        └─> gmSetValue (from src/main.js)
+│   │        └─> log (from src/utils/logger.js)
 │   │    └─> gmGetValue
 │   │    └─> gmSetValue
 │   │    └─> handleLoadTabContent

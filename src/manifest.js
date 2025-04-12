@@ -72,30 +72,29 @@ export const SCRIPT_MANIFEST = [
         id: "quoteColor",
         label: "Quote Notification Color",
         type: "color",
-        defaultValue: "#f0f8ff", // AliceBlue
-        description:
-          "Set the background color for quote notifications. (Overrides the JSON setting if 'Enable Notification Type Colors' is active).",
+        defaultValue: "#3889ED",
+        description: "Set the text color for quote notifications.",
       },
       {
         id: "replyColor",
         label: "Reply Notification Color",
         type: "color",
-        defaultValue: "#f5fffa", // MintCream
-        description: "Set the background color for reply notifications.",
+        defaultValue: "#2E8B57", // SeaGreen - Default Reply Color
+        description: "Set the text color for reply notifications.",
       },
       {
         id: "reactionColor",
         label: "Reaction Notification Color",
         type: "color",
-        defaultValue: "#fffafa", // Snow
-        description: "Set the background color for reaction notifications.",
+        defaultValue: "#3889ED", // Default Reaction Color
+        description: "Set the text color for reaction notifications.",
       },
       {
         id: "mentionColor",
         label: "Mention Notification Color",
         type: "color",
-        defaultValue: "#fff0f5", // LavenderBlush
-        description: "Set the background color for mention notifications.",
+        defaultValue: "#FFC107",
+        description: "Set the text color for mention notifications.",
       },
       {
         id: "editColor",
@@ -105,22 +104,54 @@ export const SCRIPT_MANIFEST = [
         description: "Set the background color for edit notifications.",
       },
       {
-        id: "notificationColors",
-        label: "Notification Colors (JSON)",
-        type: "text", // Consider a more advanced color picker type later
-        defaultValue: JSON.stringify(
-          {
-            // reply: "#f5fffa", // MintCream - Replaced by individual setting
-            // reaction: "#fffafa", // Snow - Replaced by individual setting
-            // mention: "#fff0f5", // LavenderBlush - Replaced by individual setting
-            // edit: "#fafad2", // LightGoldenrodYellow - Replaced by individual setting
-            default: "#ffffff", // White
-          },
-          null,
-          2,
-        ),
+        id: "approvalColor",
+        label: "Approval Notification Color",
+        type: "color",
+        defaultValue: "#00AA00",
+        description: "Set the text color for approval notifications.",
+      },
+      {
+        id: "reportColor",
+        label: "Report Notification Color",
+        type: "color",
+        defaultValue: "#f58c05",
+        description: "Set the text color for report notifications.",
+      },
+      {
+        id: "warningColor",
+        label: "Warning Notification Color",
+        type: "color",
+        defaultValue: "#D31141",
+        description: "Set the text color for warning notifications.",
+      },
+      {
+        id: "timestampColor",
+        label: "Timestamp Color",
+        type: "color",
+        defaultValue: "#888888",
+        description: "Set the text color for notification timestamps.",
+      },
+      {
+        id: "referenceBackgroundColor",
+        label: "Reference Background Color",
+        type: "color",
+        defaultValue: "rgba(23, 27, 36, 0.5)",
+        description: "Set the background color for the post reference preview.",
+      },
+      {
+        id: "referenceTextColor",
+        label: "Reference Text Color",
+        type: "color",
+        defaultValue: "#ffffff",
+        description: "Set the text color for the post reference preview.",
+      },
+      {
+        id: "defaultColor",
+        label: "Default Notification Row Background",
+        type: "color",
+        defaultValue: "#ffffff",
         description:
-          "Define a default background color and colors for less common notification types (e.g., approval, report) using JSON. Colors for Quote, Reply, Reaction, Mention, and Edit are set using the dedicated color pickers above.",
+          "Set the default background color for notification rows on the main page (used if type-specific colors are off or not set).",
       },
       {
         id: "enableImagePreviews",
