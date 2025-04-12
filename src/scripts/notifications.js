@@ -491,10 +491,7 @@ export function init({ getScriptSetting }) {
 
       let reactionHTML = "";
       if (enableSmileys) {
-        const reactions = await ReactionHandler.fetchReactions(
-          postId,
-          isUnread,
-        );
+        const reactions = await ReactionHandler.fetchReactions(postId, isUnread);
         const filteredReactions = reactions.filter((reaction) =>
           usernames.includes(reaction.username),
         );
@@ -549,7 +546,9 @@ export function init({ getScriptSetting }) {
               enableImagePreview &&
               ((trimmedContent.startsWith("[img]") &&
                 trimmedContent.endsWith("[/img]")) ||
-                trimmedContent.match(/^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i))
+                trimmedContent.match(
+                  /^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i,
+                ))
             ) {
               let imageUrl;
               if (trimmedContent.startsWith("[img]")) {
@@ -749,8 +748,7 @@ export function init({ getScriptSetting }) {
         if (titleText.includes("You were mentioned by")) {
           notificationType = "mention";
           await this.customizeMentionNotification(block);
-        } else if (titleText.includes("reacted to")) {
-          // Broader check for reactions
+        } else if (titleText.includes("reacted to")) { // Broader check for reactions
           notificationType = "reaction";
           await this.customizeReactionNotification(titleElement, block);
         } else if (titleText.includes("Private Message")) {
@@ -782,30 +780,22 @@ export function init({ getScriptSetting }) {
           notificationType = "edit";
           // Add styling for edit notifications if desired
           titleElement.innerHTML = titleText.replace(
-            /edited a message you posted/,
-            '<strong style="color: #8A2BE2;">edited</strong> a message you posted',
+              /edited a message you posted/,
+              '<strong style="color: #8A2BE2;">edited</strong> a message you posted'
           );
         }
 
         // Apply background color if enabled
-        // Apply background color if enabled (Now applying to text keywords instead)
-        // if (enableColors) {
-        //   const color =
-        //     notificationColors[notificationType] ||
-        //     notificationColors.default ||
-        //     "#ffffff";
-        //   block.style.backgroundColor = color;
-        // }
+        if (enableColors) {
+          const color = notificationColors[notificationType] || notificationColors.default || "#ffffff";
+          block.style.backgroundColor = color;
         }
 
         // Handle previews for Reply/Quote
         const referenceElement = notificationText.querySelector(
           ".notification-reference",
         );
-        if (
-          referenceElement &&
-          (notificationType === "reply" || notificationType === "quote")
-        ) {
+        if (referenceElement && (notificationType === "reply" || notificationType === "quote")) {
           const threadTitle = referenceElement.textContent
             .trim()
             .replace(/^"|"$/g, "");
@@ -837,60 +827,20 @@ export function init({ getScriptSetting }) {
           );
         }
 
-        // Define colors (get from settings or use defaults)
-        const colors = enableColors ? notificationColors : {};
-        const quoteColor = colors.quote || "#FF4A66";
-        const replyColor = colors.reply || "#95DB00";
-        const reactionColor = colors.reaction || "#3889ED";
-        const mentionColor = colors.mention || "#FFC107";
-        const editColor = colors.edit || "#8A2BE2"; // Example purple
-        const approvalColor = colors.approval || "#00AA00";
-        const reportColor = colors.report || "#f58c05";
-        const warningColor = colors.warning || "#D31141";
-
         // Apply standard strong tag styling (can be overridden by specific types)
         currentHtml = currentHtml
           .replace(
             /<strong>Quoted<\/strong>/,
-            `<strong style="color: ${quoteColor};">Quoted</strong>`,
+            '<strong style="color: #FF4A66;">Quoted</strong>',
           )
           .replace(
             /<strong>Reply<\/strong>/,
-            `<strong style="color: ${replyColor};">Reply</strong>`,
-          )
-           // Apply reaction color (might already be done by customizeReactionNotification, but good fallback)
-          .replace(
-            /<b style=\"color: #3889ED;\">reacted<\/b>/g, // Match the existing style tag precisely
-            `<b style="color: ${reactionColor};">reacted</b>`
-          )
-          // Apply mention color (might already be done by customizeMentionNotification)
-           .replace(
-             /<b style=\"color: #FFC107;\">Mentioned<\/b>/g,
-             `<b style="color: ${mentionColor};">Mentioned</b>`
-          )
-           // Apply edit color
-          .replace(
-             /<strong style=\"color: #8A2BE2;\">edited<\/strong>/g,
-             `<strong style="color: ${editColor};">edited</strong>`
-           )
-           // Apply approval color
-            .replace(
-             /<strong style=\"color: #00AA00;\">Post approval<\/strong>/g,
-            `<strong style="color: ${approvalColor};">Post approval</strong>`
-           )
-          // Apply report color
-            .replace(
-             /<strong style=\"color: #f58c05;\">Report closed<\/strong>/g,
-            `<strong style="color: ${reportColor};">Report closed</strong>`
-           )
-          // Apply warning color (might be done by customizePrivateMessageNotification)
-            .replace(
-            /<strong style=\"color: #D31141;\">Board warning issued<\/strong>/g,
-            `<strong style="color: ${warningColor};">Board warning issued</strong>`
-           );
-
-        // Ensure specific styles added earlier persist
+            '<strong style="color: #95DB00;">Reply</strong>',
+          );
+        // Ensure specific styles added earlier (like mention, reaction, edit) persist
         titleElement.innerHTML = currentHtml;
+
+      }
 
       const referenceElement = block.querySelector(".notification-reference");
       if (referenceElement) {
@@ -934,24 +884,12 @@ export function init({ getScriptSetting }) {
         console.error("Invalid JSON in notificationColors setting:", e);
         notificationColors = { default: "#ffffff" }; // Fallback
       }
-      const enableSmileys = _getScriptSetting(
+      const resizeFillers = _getScriptSetting(
         "notifications",
-        "enableReactionSmileys",
+        "resizeFillerWords",
         true,
       );
-
-      // Define colors (get from settings or use defaults)
-      const colors = enableColors ? notificationColors : {};
-      const quoteColor = colors.quote || "#FF4A66";
-      const replyColor = colors.reply || "#95DB00";
-      const reactionColor = colors.reaction || "#3889ED";
-      const mentionColor = colors.mention || "#FFC107";
-      const editColor = colors.edit || "#8A2BE2"; // Example purple
-      const approvalColor = colors.approval || "#00AA00";
-      const reportColor = colors.report || "#f58c05";
-      const warningColor = colors.warning || "#D31141";
-
-      document.querySelectorAll(".cplist .row").forEach(async (row) => {
+      const enableSmileys = _getScriptSetting(
         "notifications",
         "enableReactionSmileys",
         true,
@@ -990,12 +928,15 @@ export function init({ getScriptSetting }) {
               // Create the new HTML structure for mentions
               const newHtml = `
                   <div class="notification-block">
-                    <div class="notification-title"><b style="color: ${mentionColor};">Mentioned</b> ${titleText.substring(titleText.indexOf("by"))}</div>
+                    <div class="notification-title">${titleText}</div>
                     <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
                       Loading...
                     </div>
                   </div>
                 `;
+
+              anchorElement.innerHTML = newHtml;
+
               // Queue the content fetch
               const referenceElement = anchorElement.querySelector(
                 ".notification-reference",
@@ -1054,13 +995,10 @@ export function init({ getScriptSetting }) {
                     usernameElements[usernameElements.length - 1].outerHTML
                   }`;
               } else {
-                formattedUsernames =
-                  usernameElements.length > 0
-                    ? usernameElements[0].outerHTML
-                    : "Someone"; // Fallback
+                formattedUsernames = usernameElements.length > 0 ? usernameElements[0].outerHTML : "Someone"; // Fallback
               }
 
-              const reactionVerb = `<b style="color: ${reactionColor};">reacted</b>`; // Use color variable
+              const reactionVerb = `<b style="color: #3889ED;">reacted</b>`;
               titleText =
                 firstPart +
                 formattedUsernames +
@@ -1075,6 +1013,9 @@ export function init({ getScriptSetting }) {
                     </div>
                   </div>
                 `;
+
+              anchorElement.innerHTML = newHtml;
+
               // Queue the content fetch
               const referenceElement = anchorElement.querySelector(
                 ".notification-reference",
@@ -1091,15 +1032,15 @@ export function init({ getScriptSetting }) {
           else {
             // Determine type for coloring & logic
             if (titleText.includes("<strong>Quoted</strong>")) {
-              notificationType = "quote";
+               notificationType = "quote";
             } else if (titleText.includes("<strong>Reply</strong>")) {
-              notificationType = "reply";
+               notificationType = "reply";
             } else if (titleText.includes("edited a message")) {
-              notificationType = "edit";
+                notificationType = "edit";
             } else if (titleText.includes("Post approval")) {
-              notificationType = "approval";
+                notificationType = "approval";
             } else if (titleText.includes("Report closed")) {
-              notificationType = "report";
+                notificationType = "report";
             } // Add more specific types if needed
 
             const lastQuoteMatch = titleText.match(/"([^"]*)"$/);
@@ -1107,7 +1048,7 @@ export function init({ getScriptSetting }) {
               // Only remove the quote from title if it's not a "Quoted" notification
               // (Keep quote for quote notifications)
               if (notificationType !== "quote") {
-                titleText = titleText.replace(/"[^"]*"$/, "").trim();
+                 titleText = titleText.replace(/"[^"]*"$/, "").trim();
               }
 
               // Apply text styling (conditionally for fillers)
@@ -1118,62 +1059,26 @@ export function init({ getScriptSetting }) {
                       '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>',
                   );
               }
-
-              // Define colors (get from settings or use defaults)
-              const colors = enableColors ? notificationColors : {};
-              const quoteColor = colors.quote || "#FF4A66";
-              const replyColor = colors.reply || "#95DB00";
-              const editColor = colors.edit || "#8A2BE2"; // Example purple
-              const approvalColor = colors.approval || "#00AA00";
-              const reportColor = colors.report || "#f58c05";
-
               styledTitle = styledTitle
                 .replace(
                   /<strong>Quoted<\/strong>/,
-                  `<strong style="color: ${quoteColor};">Quoted</strong>`,
-                )
-                .replace(
-                  /<strong>Reply<\/strong>/,
-                  `<strong style="color: ${replyColor};">Reply</strong>`,
-                )
-                .replace(
-                    /edited a message/, // Basic styling for edit
-                    `<strong style="color: ${editColor};">edited</strong> a message`
-                )
-                .replace(
-                    /<strong>Post approval<\/strong>/, // Keep existing styles
-                    `<strong style="color: ${approvalColor};">Post approval</strong>`
-                )
-                 .replace(
-                    /Report closed/, // Keep existing styles
-                    `<strong style="color: ${reportColor};">Report closed</strong>`
-                );
-
-              // Create the new HTML structure
-              const newHtml = `
-                  <div class="notification-block">
-                    <div class="notification-title">${styledTitle}</div>
-                    <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
-                      Loading...
-                    </div>
-                  </div>
-                `;
+                  '<strong style="color: #FF4A66;">Quoted</strong>',
                 )
                 .replace(
                   /<strong>Reply<\/strong>/,
                   '<strong style="color: #95DB00;">Reply</strong>',
                 )
                 .replace(
-                  /edited a message/, // Basic styling for edit
-                  '<strong style="color: #8A2BE2;">edited</strong> a message',
+                    /edited a message/, // Basic styling for edit
+                    '<strong style="color: #8A2BE2;">edited</strong> a message'
                 )
                 .replace(
-                  /<strong>Post approval<\/strong>/, // Keep existing styles
-                  '<strong style="color: #00AA00;">Post approval</strong>',
+                    /<strong>Post approval<\/strong>/, // Keep existing styles
+                    '<strong style="color: #00AA00;">Post approval</strong>'
                 )
-                .replace(
-                  /Report closed/, // Keep existing styles
-                  '<strong style="color: #f58c05;">Report closed</strong>',
+                 .replace(
+                    /Report closed/, // Keep existing styles
+                    '<strong style="color: #f58c05;">Report closed</strong>'
                 );
 
               // Create the new HTML structure
@@ -1204,14 +1109,9 @@ export function init({ getScriptSetting }) {
           // Apply background color if enabled
           if (enableColors) {
              const color = notificationColors[notificationType] || notificationColors.default || "#ffffff";
-          // Apply background color if enabled
-          if (enableColors) {
-             const color = notificationColors[notificationType] || notificationColors.default || "#ffffff";
              // Apply color to the outer row for page view
              row.style.backgroundColor = color;
           }
-
-          // Color application is handled during HTML reconstruction above for this function.
 
           // Convert username-coloured to username
           anchorElement.querySelectorAll(".username-coloured").forEach((el) => {
@@ -1236,11 +1136,10 @@ export function init({ getScriptSetting }) {
         "enableVideoPreviews",
         false,
       );
-      const enableQuotePreview = _getScriptSetting(
-        // Need this for quote notifications
-        "notifications",
-        "enableQuotePreviews",
-        true,
+      const enableQuotePreview = _getScriptSetting( // Need this for quote notifications
+          "notifications",
+          "enableQuotePreviews",
+          true,
       );
 
       // Determine notification type from URL or placeholder context if possible?
@@ -1267,69 +1166,66 @@ export function init({ getScriptSetting }) {
         if (postContent && placeholder.parentNode) {
           const trimmedContent = postContent.trim();
 
-          // Always create the media preview container, but only add if needed
-          const mediaPreviewContainer = Utils.createElement("div", {
-            className: "notification-media-preview",
-          });
-          let mediaFound = false;
+        // Always create the media preview container, but only add if needed
+        const mediaPreviewContainer = Utils.createElement("div", {
+          className: "notification-media-preview",
+        });
+        let mediaFound = false;
 
-          // Check for video first
-          if (
-            enableVideoPreview &&
-            ((trimmedContent.startsWith("[webm]") &&
-              trimmedContent.endsWith("[/webm]")) ||
-              (trimmedContent.startsWith("[media]") &&
-                trimmedContent.endsWith("[/media]")))
-          ) {
-            const videoData = Utils.extractVideoUrl(trimmedContent);
-            if (videoData) {
-              mediaPreviewContainer.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay title="Video Preview"></video>`;
-              mediaFound = true;
-            }
+        // Check for video first
+        if (
+          enableVideoPreview &&
+          ((trimmedContent.startsWith("[webm]") &&
+            trimmedContent.endsWith("[/webm]")) ||
+            (trimmedContent.startsWith("[media]") &&
+              trimmedContent.endsWith("[/media]")))
+        ) {
+          const videoData = Utils.extractVideoUrl(trimmedContent);
+          if (videoData) {
+            mediaPreviewContainer.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay title="Video Preview"></video>`;
+            mediaFound = true;
           }
+        }
 
-          // If no video or video disabled, check for image
-          if (
-            !mediaFound &&
-            enableImagePreview &&
-            ((trimmedContent.startsWith("[img]") &&
-              trimmedContent.endsWith("[/img]")) ||
-              trimmedContent.match(/^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i))
-          ) {
-            let imageUrl;
-            if (trimmedContent.startsWith("[img]")) {
-              imageUrl = trimmedContent.slice(5, -6).trim();
-            } else {
-              const paramMatch = trimmedContent.match(
-                /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i,
-              );
-              imageUrl = paramMatch ? paramMatch[1].trim() : null;
-            }
-            if (imageUrl) {
-              mediaPreviewContainer.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" title="Image Preview">`;
-              mediaFound = true;
-            }
-          }
-
-          // Decision time: Show media, text, or nothing?
-          if (mediaFound && wantsPreview) {
-            // Media found and previews enabled: Insert media, remove placeholder
-            placeholder.parentNode.insertBefore(
-              mediaPreviewContainer,
-              placeholder,
+        // If no video or video disabled, check for image
+        if (
+          !mediaFound &&
+          enableImagePreview &&
+          ((trimmedContent.startsWith("[img]") &&
+            trimmedContent.endsWith("[/img]")) ||
+            trimmedContent.match(/^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i))
+        ) {
+          let imageUrl;
+          if (trimmedContent.startsWith("[img]")) {
+            imageUrl = trimmedContent.slice(5, -6).trim();
+          } else {
+            const paramMatch = trimmedContent.match(
+              /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i,
             );
+            imageUrl = paramMatch ? paramMatch[1].trim() : null;
+          }
+          if (imageUrl) {
+            mediaPreviewContainer.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" title="Image Preview">`;
+            mediaFound = true;
+          }
+        }
+
+        // Decision time: Show media, text, or nothing?
+        if (mediaFound && wantsPreview) {
+            // Media found and previews enabled: Insert media, remove placeholder
+            placeholder.parentNode.insertBefore(mediaPreviewContainer, placeholder);
             placeholder.remove();
-          } else if (wantsTextQuote) {
+        } else if (wantsTextQuote) {
             // Show text content (for quotes or if media previews off/no media found)
             placeholder.textContent = Utils.removeBBCode(postContent);
             Utils.styleReference(placeholder);
             mediaPreviewContainer.remove(); // Ensure empty preview div is not added
-          } else {
-            // No text quote wanted, no media preview shown -> remove placeholder
-            placeholder.remove();
-            mediaPreviewContainer.remove();
-          }
         } else {
+             // No text quote wanted, no media preview shown -> remove placeholder
+             placeholder.remove();
+             mediaPreviewContainer.remove();
+        }
+      } else {
           placeholder.remove();
         }
       } catch (error) {

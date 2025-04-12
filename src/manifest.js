@@ -92,7 +92,8 @@ export const SCRIPT_MANIFEST = [
         label: "Enable Image Previews",
         type: "checkbox",
         defaultValue: true,
-        description: "Shows image previews in 'Post replied to' notifications.",
+        description:
+          "Shows image previews in 'Post replied to' notifications.",
       },
       {
         id: "enableVideoPreviews",
