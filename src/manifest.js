@@ -61,12 +61,65 @@ export const SCRIPT_MANIFEST = [
     enabledByDefault: true,
     settings: [
       {
-        id: "enableReactionEnhancements",
-        label: "Enable Reaction Enhancements",
+        id: "enableNotificationColors",
+        label: "Enable Notification Type Colors",
         type: "checkbox",
         defaultValue: true,
-        description: "Shows reaction icons directly within notification text.",
+        description:
+          "Applies different background colors based on notification type.",
       },
+      {
+        id: "notificationColors",
+        label: "Notification Colors (JSON)",
+        type: "text", // Consider a more advanced color picker type later
+        defaultValue: JSON.stringify(
+          {
+            quote: "#f0f8ff", // AliceBlue
+            reply: "#f5fffa", // MintCream
+            reaction: "#fffafa", // Snow
+            mention: "#fff0f5", // LavenderBlush
+            edit: "#fafad2", // LightGoldenrodYellow
+            default: "#ffffff", // White
+          },
+          null,
+          2,
+        ),
+        description:
+          "Define custom background colors for notification types using JSON format (hex codes). Requires 'Enable Notification Type Colors' to be active.",
+      },
+      {
+        id: "enableImagePreviews",
+        label: "Enable Image Previews",
+        type: "checkbox",
+        defaultValue: true,
+        description:
+          "Shows image previews in 'Post replied to' notifications.",
+      },
+      {
+        id: "enableVideoPreviews",
+        label: "Enable Video Previews",
+        type: "checkbox",
+        defaultValue: false, // Off by default
+        description:
+          "Shows video previews in 'Post replied to' notifications. Warning: This might impact performance.",
+      },
+      {
+        id: "enableReactionSmileys",
+        label: "Show Reaction Smileys",
+        type: "checkbox",
+        defaultValue: true,
+        description:
+          "Fetches and displays reaction smileys within reaction notifications.",
+      },
+      {
+        id: "resizeFillerWords",
+        label: "Resize Filler Words",
+        type: "checkbox",
+        defaultValue: true,
+        description:
+          "Makes common filler words like 'and', 'by', 'in' smaller in notification text for better readability.",
+      },
+      // Keep existing unrelated settings if any, e.g., quote previews
       {
         id: "enableQuotePreviews",
         label: "Enable Quote Previews",
@@ -75,15 +128,6 @@ export const SCRIPT_MANIFEST = [
         description:
           "Shows a preview of the quoted text in 'Post quoted' notifications.",
       },
-      {
-        id: "enableMediaPreviews",
-        label: "Enable Media Previews",
-        type: "checkbox",
-        defaultValue: true,
-        description:
-          "Shows image or video previews in 'Post replied to' notifications.",
-      },
-      /* Removed autoMarkAsRead setting */
     ],
     categories: ["UI"],
   },

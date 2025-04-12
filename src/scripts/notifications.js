@@ -7,7 +7,10 @@
  * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/notifications.md for documentation
  */
 
-export function init() {
+let _getScriptSetting = () => undefined; // Placeholder
+
+export function init({ getScriptSetting }) {
+  _getScriptSetting = getScriptSetting; // Store the passed function
   const ONE_DAY = 24 * 60 * 60 * 1000;
   const REFERENCE_STYLE = {
     display: "inline-block",
@@ -446,14 +449,31 @@ export function init() {
     async customizeReactionNotification(titleElement, block) {
       if (block.dataset.reactionCustomized === "true") return;
 
-      // Apply container styling to the block
-      Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
+      // Get settings
+      const enableSmileys = _getScriptSetting(
+        "notifications",
+        "enableReactionSmileys",
+        true,
+      );
+      const enableImagePreview = _getScriptSetting(
+        "notifications",
+        "enableImagePreviews",
+        true,
+      );
+      const enableVideoPreview = _getScriptSetting(
+        "notifications",
+        "enableVideoPreviews",
+        false,
+      );
 
-      // Move time element to bottom right
-      const timeElement = block.querySelector(".notification-time");
-      if (timeElement) {
-        Object.assign(timeElement.style, NOTIFICATION_TIME_STYLE);
-      }
+      // Apply container styling (assuming base style already applied by caller)
+      // Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
+
+      // Move time element (assuming done by caller)
+      // const timeElement = block.querySelector(".notification-time");
+      // if (timeElement) {
+      //   Object.assign(timeElement.style, NOTIFICATION_TIME_STYLE);
+      // }
 
       const titleText = titleElement.innerHTML;
       const isUnread = block.href && block.href.includes("mark_notification");
@@ -468,106 +488,132 @@ export function init() {
       const usernames = Array.from(usernameElements).map((el) =>
         el.textContent.trim(),
       );
-      const reactions = await ReactionHandler.fetchReactions(postId, isUnread);
-      const filteredReactions = reactions.filter((reaction) =>
-        usernames.includes(reaction.username),
-      );
-      const reactionHTML = Utils.formatReactions(filteredReactions);
+
+      let reactionHTML = "";
+      if (enableSmileys) {
+        const reactions = await ReactionHandler.fetchReactions(postId, isUnread);
+        const filteredReactions = reactions.filter((reaction) =>
+          usernames.includes(reaction.username),
+        );
+        reactionHTML = Utils.formatReactions(filteredReactions);
+      } else {
+        // If smileys disabled, maybe show a simple count or just the word 'reacted'?
+        // For now, just show the action verb.
+      }
+
       const isReactedTo = titleText.includes("reacted to a message you posted");
+      const reactionVerb = `<b style="color: #3889ED;">reacted</b>`;
 
       if (isReactedTo) {
+        // Update title with reaction info
         titleElement.innerHTML = titleText.replace(
           /(have|has)\s+reacted.*$/,
-          `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`,
+          `${reactionVerb} ${reactionHTML} to:`,
         );
-        const postContent = await ReactionHandler.fetchPostContent(postId);
-        if (postContent) {
-          const trimmedContent = postContent.trim();
-          let referenceElement = block.querySelector(".notification-reference");
 
-          if (!referenceElement) {
-            referenceElement = Utils.createElement("span", {
-              className: "notification-reference",
+        // Fetch content for preview (only if a preview type is enabled)
+        if (enableImagePreview || enableVideoPreview) {
+          const postContent = await ReactionHandler.fetchPostContent(postId);
+          if (postContent) {
+            const trimmedContent = postContent.trim();
+            let referenceElement = block.querySelector(
+              ".notification-reference",
+            );
+            const mediaPreviewContainer = Utils.createElement("div", {
+              className: "notification-media-preview",
             });
-            Utils.styleReference(referenceElement);
-            titleElement.appendChild(document.createElement("br"));
-            titleElement.appendChild(referenceElement);
-          }
 
-          // Always create the image/video preview div
-          const mediaPreview = Utils.createElement("div", {
-            className: "notification-image-preview",
-          });
+            let mediaFound = false;
 
-          // Check for video content first - only if the entire content is just a video tag
-          if (
-            (trimmedContent.startsWith("[webm]") &&
-              trimmedContent.endsWith("[/webm]")) ||
-            (trimmedContent.startsWith("[media]") &&
-              trimmedContent.endsWith("[/media]"))
-          ) {
-            const videoData = Utils.extractVideoUrl(trimmedContent);
-            if (videoData) {
-              // Create video element for preview
-              mediaPreview.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay></video>`;
+            // Check for video first
+            if (
+              enableVideoPreview &&
+              ((trimmedContent.startsWith("[webm]") &&
+                trimmedContent.endsWith("[/webm]")) ||
+                (trimmedContent.startsWith("[media]") &&
+                  trimmedContent.endsWith("[/media]")))
+            ) {
+              const videoData = Utils.extractVideoUrl(trimmedContent);
+              if (videoData) {
+                mediaPreviewContainer.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay title="Video Preview (click to pause)"></video>`;
+                mediaFound = true;
+              }
+            }
 
-              // If we have a video, remove any existing reference element and don't create a new one
+            // If no video or video preview disabled, check for image
+            if (
+              !mediaFound &&
+              enableImagePreview &&
+              ((trimmedContent.startsWith("[img]") &&
+                trimmedContent.endsWith("[/img]")) ||
+                trimmedContent.match(
+                  /^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i,
+                ))
+            ) {
+              let imageUrl;
+              if (trimmedContent.startsWith("[img]")) {
+                imageUrl = trimmedContent.slice(5, -6).trim();
+              } else {
+                const paramMatch = trimmedContent.match(
+                  /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i,
+                );
+                imageUrl = paramMatch ? paramMatch[1].trim() : null;
+              }
+              if (imageUrl) {
+                mediaPreviewContainer.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" title="Image Preview">`;
+                mediaFound = true;
+              }
+            }
+
+            // Handle placement of preview/reference
+            if (mediaFound) {
+              // If media found, remove placeholder and add preview
               if (referenceElement) {
                 referenceElement.remove();
               }
-              titleElement.appendChild(mediaPreview);
-            }
-          }
-          // If no video, check for image tag before any BBCode removal
-          else if (
-            (trimmedContent.startsWith("[img]") &&
-              trimmedContent.endsWith("[/img]")) ||
-            trimmedContent.match(/^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i)
-          ) {
-            let imageUrl;
-
-            if (trimmedContent.startsWith("[img]")) {
-              // Standard format
-              imageUrl = trimmedContent.slice(5, -6).trim();
+              titleElement.appendChild(mediaPreviewContainer);
             } else {
-              // Format with parameters
-              const paramMatch = trimmedContent.match(
-                /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i,
-              );
-              imageUrl = paramMatch[1].trim();
-            }
-
-            mediaPreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`;
-
-            // If we have an image, remove any existing reference element and don't create a new one
-            if (referenceElement) {
-              referenceElement.remove();
-            }
-            titleElement.appendChild(mediaPreview);
-          } else {
-            // Only create/update reference element if there's no image or video
-            if (referenceElement) {
+              // No media preview shown, ensure reference element exists and show text
+              if (!referenceElement) {
+                referenceElement = Utils.createElement("span", {
+                  className: "notification-reference",
+                });
+                titleElement.appendChild(document.createElement("br"));
+                titleElement.appendChild(referenceElement);
+              }
               referenceElement.textContent = Utils.removeURLs(
                 Utils.removeBBCode(postContent),
               );
               Utils.styleReference(referenceElement);
-              referenceElement.insertAdjacentElement("afterend", mediaPreview);
-            } else {
-              referenceElement = Utils.createElement("span", {
-                className: "notification-reference",
-                textContent: Utils.removeURLs(Utils.removeBBCode(postContent)),
-              });
+              // Ensure media container isn't added if empty
+              mediaPreviewContainer.remove();
+            }
+          }
+        }
+        // If no previews enabled, ensure reference element is handled if it exists
+        else {
+          const referenceElement = block.querySelector(
+            ".notification-reference",
+          );
+          if (referenceElement) {
+            // If previews disabled, just remove the loading placeholder?
+            // Or fetch content anyway to show text? Let's fetch for text.
+            const postContent = await ReactionHandler.fetchPostContent(postId);
+            if (postContent) {
+              referenceElement.textContent = Utils.removeURLs(
+                Utils.removeBBCode(postContent),
+              );
               Utils.styleReference(referenceElement);
-              titleElement.appendChild(document.createElement("br"));
-              titleElement.appendChild(referenceElement);
-              referenceElement.insertAdjacentElement("afterend", mediaPreview);
+            } else {
+              referenceElement.remove(); // Remove if fetch fails
             }
           }
         }
       } else {
+        // Handle cases like "X, Y, and Z reacted to your post in Topic T"
         titleElement.innerHTML = titleText.replace(
           /(have|has)\s+reacted.*$/,
-          `<b style="color: #3889ED;">reacted</b> ${reactionHTML}`,
+          `${reactionVerb} ${reactionHTML}`,
         );
       }
       block.dataset.reactionCustomized = "true";
@@ -654,7 +700,31 @@ export function init() {
     async customizeNotificationBlock(block) {
       if (block.dataset.customized === "true") return;
 
-      // Apply container styling to the block
+      // Get settings
+      const enableColors = _getScriptSetting(
+        "notifications",
+        "enableNotificationColors",
+        true,
+      );
+      const rawColorsJson = _getScriptSetting(
+        "notifications",
+        "notificationColors",
+        "{}",
+      );
+      let notificationColors = {};
+      try {
+        notificationColors = JSON.parse(rawColorsJson);
+      } catch (e) {
+        console.error("Invalid JSON in notificationColors setting:", e);
+        notificationColors = { default: "#ffffff" }; // Fallback
+      }
+      const resizeFillers = _getScriptSetting(
+        "notifications",
+        "resizeFillerWords",
+        true,
+      );
+
+      // Apply base container styling
       Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
 
       const notificationText = block.querySelector(".notification_text");
@@ -672,35 +742,65 @@ export function init() {
 
       if (titleElement) {
         let titleText = titleElement.innerHTML;
+        let notificationType = "default"; // Determine type for coloring
+
+        // Determine notification type and potentially call specialized handlers
         if (titleText.includes("You were mentioned by")) {
+          notificationType = "mention";
           await this.customizeMentionNotification(block);
-        } else if (titleText.includes("reacted to a message you posted")) {
+        } else if (titleText.includes("reacted to")) { // Broader check for reactions
+          notificationType = "reaction";
           await this.customizeReactionNotification(titleElement, block);
         } else if (titleText.includes("Private Message")) {
+          // Specific PM types might override color later
+          notificationType = "pm"; // Default PM color?
           this.customizePrivateMessageNotification(titleElement, block);
+          // Re-check titleText in case customizePrivateMessageNotification changed it
+          titleText = titleElement.innerHTML;
+          if (titleText.includes("Board warning issued")) {
+            notificationType = "warning"; // More specific type
+          }
         } else if (titleText.includes("Report closed")) {
+          notificationType = "report";
           titleElement.innerHTML = titleText.replace(
             /Report closed/,
             '<strong style="color: #f58c05;">Report closed</strong>',
           );
         } else if (titleText.includes("Post approval")) {
+          notificationType = "approval";
           titleElement.innerHTML = titleText.replace(
             /<strong>Post approval<\/strong>/,
             '<strong style="color: #00AA00;">Post approval</strong>',
           );
+        } else if (titleText.includes("<strong>Quoted</strong>")) {
+          notificationType = "quote";
+        } else if (titleText.includes("<strong>Reply</strong>")) {
+          notificationType = "reply";
+        } else if (titleText.includes("edited a message")) {
+          notificationType = "edit";
+          // Add styling for edit notifications if desired
+          titleElement.innerHTML = titleText.replace(
+              /edited a message you posted/,
+              '<strong style="color: #8A2BE2;">edited</strong> a message you posted'
+          );
         }
 
+        // Apply background color if enabled
+        if (enableColors) {
+          const color = notificationColors[notificationType] || notificationColors.default || "#ffffff";
+          block.style.backgroundColor = color;
+        }
+
+        // Handle previews for Reply/Quote
         const referenceElement = notificationText.querySelector(
           ".notification-reference",
         );
-        if (
-          referenceElement &&
-          (titleText.includes("<strong>Reply</strong>") ||
-            titleText.includes("<strong>Quoted</strong>"))
-        ) {
+        if (referenceElement && (notificationType === "reply" || notificationType === "quote")) {
           const threadTitle = referenceElement.textContent
             .trim()
             .replace(/^"|"$/g, "");
+
+          // Update title structure FIRST before styling/resizing
           titleElement.innerHTML = titleElement.innerHTML.replace(
             /in(?:\stopic)?:/,
             `<span style="font-size: 0.85em; padding: 0 0.25px;">in</span> <strong>${threadTitle}</strong>:`,
@@ -710,19 +810,25 @@ export function init() {
           referenceElement.textContent = "Loading...";
           Utils.styleReference(referenceElement);
 
-          // Queue the content fetch
+          // Queue the content fetch (will respect preview settings internally)
           this.queuePostContentFetch(
             block.getAttribute("data-real-url") || block.href,
             referenceElement,
           );
         }
 
-        // Apply text resizing to all notifications
-        titleElement.innerHTML = titleElement.innerHTML
-          .replace(
+        // Apply text resizing and other styling *after* structure changes
+        let currentHtml = titleElement.innerHTML; // Get potentially updated HTML
+
+        if (resizeFillers) {
+          currentHtml = currentHtml.replace(
             /\b(by|and|in|from)\b(?!-)/g,
             '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>',
-          )
+          );
+        }
+
+        // Apply standard strong tag styling (can be overridden by specific types)
+        currentHtml = currentHtml
           .replace(
             /<strong>Quoted<\/strong>/,
             '<strong style="color: #FF4A66;">Quoted</strong>',
@@ -731,6 +837,9 @@ export function init() {
             /<strong>Reply<\/strong>/,
             '<strong style="color: #95DB00;">Reply</strong>',
           );
+        // Ensure specific styles added earlier (like mention, reaction, edit) persist
+        titleElement.innerHTML = currentHtml;
+
       }
 
       const referenceElement = block.querySelector(".notification-reference");
@@ -757,6 +866,35 @@ export function init() {
     },
 
     customizeNotificationPage() {
+      // Get settings needed for this page
+      const enableColors = _getScriptSetting(
+        "notifications",
+        "enableNotificationColors",
+        true,
+      );
+      const rawColorsJson = _getScriptSetting(
+        "notifications",
+        "notificationColors",
+        "{}",
+      );
+      let notificationColors = {};
+      try {
+        notificationColors = JSON.parse(rawColorsJson);
+      } catch (e) {
+        console.error("Invalid JSON in notificationColors setting:", e);
+        notificationColors = { default: "#ffffff" }; // Fallback
+      }
+      const resizeFillers = _getScriptSetting(
+        "notifications",
+        "resizeFillerWords",
+        true,
+      );
+      const enableSmileys = _getScriptSetting(
+        "notifications",
+        "enableReactionSmileys",
+        true,
+      );
+
       document.querySelectorAll(".cplist .row").forEach(async (row) => {
         if (row.dataset.customized === "true") return;
 
@@ -778,9 +916,11 @@ export function init() {
             ".notifications_title",
           );
           let titleText = titleElement.innerHTML;
+          let notificationType = "default"; // For coloring
 
           // Handle mentioned notifications specially
           if (titleText.includes("You were mentioned by")) {
+            notificationType = "mention";
             const parts = titleText.split("<br>");
             if (parts.length === 2) {
               titleText = parts[0] + " " + parts[1];
@@ -811,6 +951,7 @@ export function init() {
           }
           // Handle reaction notifications
           else if (titleText.includes("reacted to")) {
+            notificationType = "reaction";
             const usernameElements = Array.from(
               titleElement.querySelectorAll(".username, .username-coloured"),
             );
@@ -820,14 +961,17 @@ export function init() {
 
             const postId = Utils.extractPostId(anchorElement.href);
             if (postId) {
-              const reactions = await ReactionHandler.fetchReactions(
-                postId,
-                false,
-              );
-              const filteredReactions = reactions.filter((reaction) =>
-                usernames.includes(reaction.username),
-              );
-              const reactionHTML = Utils.formatReactions(filteredReactions);
+              let reactionHTML = "";
+              if (enableSmileys) {
+                const reactions = await ReactionHandler.fetchReactions(
+                  postId,
+                  false, // Assuming page notifications are always 'read'
+                );
+                const filteredReactions = reactions.filter((reaction) =>
+                  usernames.includes(reaction.username),
+                );
+                reactionHTML = Utils.formatReactions(filteredReactions);
+              }
 
               // Keep everything up to the first username
               const firstPart = titleText.split(
@@ -851,13 +995,14 @@ export function init() {
                     usernameElements[usernameElements.length - 1].outerHTML
                   }`;
               } else {
-                formattedUsernames = usernameElements[0].outerHTML;
+                formattedUsernames = usernameElements.length > 0 ? usernameElements[0].outerHTML : "Someone"; // Fallback
               }
 
+              const reactionVerb = `<b style="color: #3889ED;">reacted</b>`;
               titleText =
                 firstPart +
                 formattedUsernames +
-                ` <b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`;
+                ` ${reactionVerb} ${reactionHTML} to:`;
 
               // Create the new HTML structure
               const newHtml = `
@@ -885,19 +1030,36 @@ export function init() {
           }
           // Handle other notifications with quotes
           else {
+            // Determine type for coloring & logic
+            if (titleText.includes("<strong>Quoted</strong>")) {
+               notificationType = "quote";
+            } else if (titleText.includes("<strong>Reply</strong>")) {
+               notificationType = "reply";
+            } else if (titleText.includes("edited a message")) {
+                notificationType = "edit";
+            } else if (titleText.includes("Post approval")) {
+                notificationType = "approval";
+            } else if (titleText.includes("Report closed")) {
+                notificationType = "report";
+            } // Add more specific types if needed
+
             const lastQuoteMatch = titleText.match(/"([^"]*)"$/);
             if (lastQuoteMatch) {
               // Only remove the quote from title if it's not a "Quoted" notification
-              if (!titleText.includes("<strong>Quoted</strong>")) {
-                titleText = titleText.replace(/"[^"]*"$/, "").trim();
+              // (Keep quote for quote notifications)
+              if (notificationType !== "quote") {
+                 titleText = titleText.replace(/"[^"]*"$/, "").trim();
               }
 
-              // Apply text styling
-              titleText = titleText
-                .replace(
-                  /\b(by|and|in|from)\b(?!-)/g,
-                  '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>',
-                )
+              // Apply text styling (conditionally for fillers)
+              let styledTitle = titleText;
+              if (resizeFillers) {
+                  styledTitle = styledTitle.replace(
+                      /\b(by|and|in|from)\b(?!-)/g,
+                      '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>',
+                  );
+              }
+              styledTitle = styledTitle
                 .replace(
                   /<strong>Quoted<\/strong>/,
                   '<strong style="color: #FF4A66;">Quoted</strong>',
@@ -905,12 +1067,24 @@ export function init() {
                 .replace(
                   /<strong>Reply<\/strong>/,
                   '<strong style="color: #95DB00;">Reply</strong>',
+                )
+                .replace(
+                    /edited a message/, // Basic styling for edit
+                    '<strong style="color: #8A2BE2;">edited</strong> a message'
+                )
+                .replace(
+                    /<strong>Post approval<\/strong>/, // Keep existing styles
+                    '<strong style="color: #00AA00;">Post approval</strong>'
+                )
+                 .replace(
+                    /Report closed/, // Keep existing styles
+                    '<strong style="color: #f58c05;">Report closed</strong>'
                 );
 
               // Create the new HTML structure
               const newHtml = `
                   <div class="notification-block">
-                    <div class="notification-title">${titleText}</div>
+                    <div class="notification-title">${styledTitle}</div>
                     <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
                       Loading...
                     </div>
@@ -932,6 +1106,13 @@ export function init() {
             }
           }
 
+          // Apply background color if enabled
+          if (enableColors) {
+             const color = notificationColors[notificationType] || notificationColors.default || "#ffffff";
+             // Apply color to the outer row for page view
+             row.style.backgroundColor = color;
+          }
+
           // Convert username-coloured to username
           anchorElement.querySelectorAll(".username-coloured").forEach((el) => {
             el.classList.replace("username-coloured", "username");
@@ -944,6 +1125,28 @@ export function init() {
     },
 
     async queuePostContentFetch(url, placeholder) {
+      // Get relevant settings
+      const enableImagePreview = _getScriptSetting(
+        "notifications",
+        "enableImagePreviews",
+        true,
+      );
+      const enableVideoPreview = _getScriptSetting(
+        "notifications",
+        "enableVideoPreviews",
+        false,
+      );
+      const enableQuotePreview = _getScriptSetting( // Need this for quote notifications
+          "notifications",
+          "enableQuotePreviews",
+          true,
+      );
+
+      // Determine notification type from URL or placeholder context if possible?
+      // For now, assume we want text unless specific previews are enabled and match.
+      const wantsPreview = enableImagePreview || enableVideoPreview;
+      const wantsTextQuote = enableQuotePreview; // Specifically for quote notifications
+
       const postId = Utils.extractPostId(url);
       if (!postId) {
         placeholder.remove();
@@ -963,58 +1166,66 @@ export function init() {
         if (postContent && placeholder.parentNode) {
           const trimmedContent = postContent.trim();
 
-          // Always create the image/video preview div
-          const mediaPreview = Utils.createElement("div", {
-            className: "notification-image-preview",
-          });
+        // Always create the media preview container, but only add if needed
+        const mediaPreviewContainer = Utils.createElement("div", {
+          className: "notification-media-preview",
+        });
+        let mediaFound = false;
 
-          // Check for video content first - only if the entire content is just a video tag
-          if (
-            (trimmedContent.startsWith("[webm]") &&
-              trimmedContent.endsWith("[/webm]")) ||
+        // Check for video first
+        if (
+          enableVideoPreview &&
+          ((trimmedContent.startsWith("[webm]") &&
+            trimmedContent.endsWith("[/webm]")) ||
             (trimmedContent.startsWith("[media]") &&
-              trimmedContent.endsWith("[/media]"))
-          ) {
-            const videoData = Utils.extractVideoUrl(trimmedContent);
-            if (videoData) {
-              // Create video element for preview
-              mediaPreview.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay></video>`;
-
-              // Remove the placeholder and add the video preview
-              placeholder.parentNode.insertBefore(mediaPreview, placeholder);
-              placeholder.remove();
-            }
+              trimmedContent.endsWith("[/media]")))
+        ) {
+          const videoData = Utils.extractVideoUrl(trimmedContent);
+          if (videoData) {
+            mediaPreviewContainer.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay title="Video Preview"></video>`;
+            mediaFound = true;
           }
-          // Only add image if content is just an image tag
-          else if (
-            (trimmedContent.startsWith("[img]") &&
-              trimmedContent.endsWith("[/img]")) ||
-            trimmedContent.match(/^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i)
-          ) {
-            let imageUrl;
+        }
 
-            if (trimmedContent.startsWith("[img]")) {
-              // Standard format
-              imageUrl = trimmedContent.slice(5, -6).trim();
-            } else {
-              // Format with parameters
-              const paramMatch = trimmedContent.match(
-                /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i,
-              );
-              imageUrl = paramMatch[1].trim();
-            }
-
-            mediaPreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`;
-            // Remove the placeholder and add the image preview
-            placeholder.parentNode.insertBefore(mediaPreview, placeholder);
-            placeholder.remove();
+        // If no video or video disabled, check for image
+        if (
+          !mediaFound &&
+          enableImagePreview &&
+          ((trimmedContent.startsWith("[img]") &&
+            trimmedContent.endsWith("[/img]")) ||
+            trimmedContent.match(/^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i))
+        ) {
+          let imageUrl;
+          if (trimmedContent.startsWith("[img]")) {
+            imageUrl = trimmedContent.slice(5, -6).trim();
           } else {
-            // If not an image or video, update the placeholder with the text content
-            placeholder.insertAdjacentElement("afterend", mediaPreview);
+            const paramMatch = trimmedContent.match(
+              /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i,
+            );
+            imageUrl = paramMatch ? paramMatch[1].trim() : null;
+          }
+          if (imageUrl) {
+            mediaPreviewContainer.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" title="Image Preview">`;
+            mediaFound = true;
+          }
+        }
+
+        // Decision time: Show media, text, or nothing?
+        if (mediaFound && wantsPreview) {
+            // Media found and previews enabled: Insert media, remove placeholder
+            placeholder.parentNode.insertBefore(mediaPreviewContainer, placeholder);
+            placeholder.remove();
+        } else if (wantsTextQuote) {
+            // Show text content (for quotes or if media previews off/no media found)
             placeholder.textContent = Utils.removeBBCode(postContent);
             Utils.styleReference(placeholder);
-          }
+            mediaPreviewContainer.remove(); // Ensure empty preview div is not added
         } else {
+             // No text quote wanted, no media preview shown -> remove placeholder
+             placeholder.remove();
+             mediaPreviewContainer.remove();
+        }
+      } else {
           placeholder.remove();
         }
       } catch (error) {
