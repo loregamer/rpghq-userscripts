@@ -796,101 +796,101 @@ export function init({ getScriptSetting }) {
         //     "#ffffff";
         //   block.style.backgroundColor = color;
         // }
-        }
+      }
 
-        // Handle previews for Reply/Quote
-        const referenceElement = notificationText.querySelector(
-          ".notification-reference",
+      // Handle previews for Reply/Quote
+      referenceElement = notificationText.querySelector(
+        ".notification-reference",
+      );
+      if (
+        referenceElement &&
+        (notificationType === "reply" || notificationType === "quote")
+      ) {
+        const threadTitle = referenceElement.textContent
+          .trim()
+          .replace(/^"|"$/g, "");
+
+        // Update title structure FIRST before styling/resizing
+        titleElement.innerHTML = titleElement.innerHTML.replace(
+          /in(?:\stopic)?:/,
+          `<span style="font-size: 0.85em; padding: 0 0.25px;">in</span> <strong>${threadTitle}</strong>:`,
         );
-        if (
-          referenceElement &&
-          (notificationType === "reply" || notificationType === "quote")
-        ) {
-          const threadTitle = referenceElement.textContent
-            .trim()
-            .replace(/^"|"$/g, "");
 
-          // Update title structure FIRST before styling/resizing
-          titleElement.innerHTML = titleElement.innerHTML.replace(
-            /in(?:\stopic)?:/,
-            `<span style="font-size: 0.85em; padding: 0 0.25px;">in</span> <strong>${threadTitle}</strong>:`,
-          );
+        // Update the existing reference element with loading state
+        referenceElement.textContent = "Loading...";
+        Utils.styleReference(referenceElement);
 
-          // Update the existing reference element with loading state
-          referenceElement.textContent = "Loading...";
-          Utils.styleReference(referenceElement);
+        // Queue the content fetch (will respect preview settings internally)
+        this.queuePostContentFetch(
+          block.getAttribute("data-real-url") || block.href,
+          referenceElement,
+        );
+      }
 
-          // Queue the content fetch (will respect preview settings internally)
-          this.queuePostContentFetch(
-            block.getAttribute("data-real-url") || block.href,
-            referenceElement,
-          );
-        }
+      // Apply text resizing and other styling *after* structure changes
+      let currentHtml = titleElement.innerHTML; // Get potentially updated HTML
 
-        // Apply text resizing and other styling *after* structure changes
-        let currentHtml = titleElement.innerHTML; // Get potentially updated HTML
+      if (resizeFillers) {
+        currentHtml = currentHtml.replace(
+          /\b(by|and|in|from)\b(?!-)/g,
+          '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>',
+        );
+      }
 
-        if (resizeFillers) {
-          currentHtml = currentHtml.replace(
-            /\b(by|and|in|from)\b(?!-)/g,
-            '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>',
-          );
-        }
+      // Define colors (get from settings or use defaults)
+      const colors = enableColors ? notificationColors : {};
+      const quoteColor = colors.quote || "#FF4A66";
+      const replyColor = colors.reply || "#95DB00";
+      const reactionColor = colors.reaction || "#3889ED";
+      const mentionColor = colors.mention || "#FFC107";
+      const editColor = colors.edit || "#8A2BE2"; // Example purple
+      const approvalColor = colors.approval || "#00AA00";
+      const reportColor = colors.report || "#f58c05";
+      const warningColor = colors.warning || "#D31141";
 
-        // Define colors (get from settings or use defaults)
-        const colors = enableColors ? notificationColors : {};
-        const quoteColor = colors.quote || "#FF4A66";
-        const replyColor = colors.reply || "#95DB00";
-        const reactionColor = colors.reaction || "#3889ED";
-        const mentionColor = colors.mention || "#FFC107";
-        const editColor = colors.edit || "#8A2BE2"; // Example purple
-        const approvalColor = colors.approval || "#00AA00";
-        const reportColor = colors.report || "#f58c05";
-        const warningColor = colors.warning || "#D31141";
+      // Apply standard strong tag styling (can be overridden by specific types)
+      currentHtml = currentHtml
+        .replace(
+          /<strong>Quoted<\/strong>/,
+          `<strong style="color: ${quoteColor};">Quoted</strong>`,
+        )
+        .replace(
+          /<strong>Reply<\/strong>/,
+          `<strong style="color: ${replyColor};">Reply</strong>`,
+        )
+        // Apply reaction color (might already be done by customizeReactionNotification, but good fallback)
+        .replace(
+          /<b style=\"color: #3889ED;\">reacted<\/b>/g, // Match the existing style tag precisely
+          `<b style="color: ${reactionColor};">reacted</b>`,
+        )
+        // Apply mention color (might already be done by customizeMentionNotification)
+        .replace(
+          /<b style=\"color: #FFC107;\">Mentioned<\/b>/g,
+          `<b style="color: ${mentionColor};">Mentioned</b>`,
+        )
+        // Apply edit color
+        .replace(
+          /<strong style=\"color: #8A2BE2;\">edited<\/strong>/g,
+          `<strong style="color: ${editColor};">edited</strong>`,
+        )
+        // Apply approval color
+        .replace(
+          /<strong style=\"color: #00AA00;\">Post approval<\/strong>/g,
+          `<strong style="color: ${approvalColor};">Post approval</strong>`,
+        )
+        // Apply report color
+        .replace(
+          /<strong style=\"color: #f58c05;\">Report closed<\/strong>/g,
+          `<strong style="color: ${reportColor};">Report closed</strong>`,
+        )
+        // Apply warning color (might be done by customizePrivateMessageNotification)
+        .replace(
+          /<strong style=\"color: #D31141;\">Board warning issued<\/strong>/g,
+          `<strong style="color: ${warningColor};">Board warning issued</strong>`,
+        );
 
-        // Apply standard strong tag styling (can be overridden by specific types)
-        currentHtml = currentHtml
-          .replace(
-            /<strong>Quoted<\/strong>/,
-            `<strong style="color: ${quoteColor};">Quoted</strong>`,
-          )
-          .replace(
-            /<strong>Reply<\/strong>/,
-            `<strong style="color: ${replyColor};">Reply</strong>`,
-          )
-           // Apply reaction color (might already be done by customizeReactionNotification, but good fallback)
-          .replace(
-            /<b style=\"color: #3889ED;\">reacted<\/b>/g, // Match the existing style tag precisely
-            `<b style="color: ${reactionColor};">reacted</b>`
-          )
-          // Apply mention color (might already be done by customizeMentionNotification)
-           .replace(
-             /<b style=\"color: #FFC107;\">Mentioned<\/b>/g,
-             `<b style="color: ${mentionColor};">Mentioned</b>`
-          )
-           // Apply edit color
-          .replace(
-             /<strong style=\"color: #8A2BE2;\">edited<\/strong>/g,
-             `<strong style="color: ${editColor};">edited</strong>`
-           )
-           // Apply approval color
-            .replace(
-             /<strong style=\"color: #00AA00;\">Post approval<\/strong>/g,
-            `<strong style="color: ${approvalColor};">Post approval</strong>`
-           )
-          // Apply report color
-            .replace(
-             /<strong style=\"color: #f58c05;\">Report closed<\/strong>/g,
-            `<strong style="color: ${reportColor};">Report closed</strong>`
-           )
-          // Apply warning color (might be done by customizePrivateMessageNotification)
-            .replace(
-            /<strong style=\"color: #D31141;\">Board warning issued<\/strong>/g,
-            `<strong style="color: ${warningColor};">Board warning issued</strong>`
-           );
-
-        // Ensure specific styles added earlier persist
-        titleElement.innerHTML = currentHtml;
+      // Ensure specific styles added earlier persist
+      titleElement.innerHTML = currentHtml;
 
       const referenceElement = block.querySelector(".notification-reference");
       if (referenceElement) {
@@ -939,6 +939,11 @@ export function init({ getScriptSetting }) {
         "enableReactionSmileys",
         true,
       );
+      const resizeFillers = _getScriptSetting(
+        "notifications",
+        "resizeFillerWords",
+        true,
+      );
 
       // Define colors (get from settings or use defaults)
       const colors = enableColors ? notificationColors : {};
@@ -946,283 +951,307 @@ export function init({ getScriptSetting }) {
       const replyColor = colors.reply || "#95DB00";
       const reactionColor = colors.reaction || "#3889ED";
       const mentionColor = colors.mention || "#FFC107";
-      const editColor = colors.edit || "#8A2BE2"; // Example purple
+      const editColor = colors.edit || "#8A2BE2";
       const approvalColor = colors.approval || "#00AA00";
       const reportColor = colors.report || "#f58c05";
-      const warningColor = colors.warning || "#D31141";
-
-      document.querySelectorAll(".cplist .row").forEach(async (row) => {
-        "notifications",
-        "enableReactionSmileys",
-        true,
-      );
+      const warningColor = colors.warning || "#D31141"; // Assuming a warning type exists
+      const defaultColor = colors.default || "#ffffff";
 
       document.querySelectorAll(".cplist .row").forEach(async (row) => {
         if (row.dataset.customized === "true") return;
 
-        // Ensure row has position relative for absolute positioning
         row.style.position = "relative";
         row.style.paddingBottom = "20px"; // Make room for timestamp
 
-        // Handle the notifications_time elements
         const timeElement = row.querySelector(".notifications_time");
         if (timeElement) {
           Object.assign(timeElement.style, NOTIFICATIONS_TIME_STYLE);
         }
 
         const notificationBlock = row.querySelector(".notifications");
-        const anchorElement = notificationBlock.querySelector("a");
+        const anchorElement = notificationBlock?.querySelector("a");
 
-        if (anchorElement) {
-          const titleElement = anchorElement.querySelector(
-            ".notifications_title",
-          );
-          let titleText = titleElement.innerHTML;
-          let notificationType = "default"; // For coloring
-
-          // Handle mentioned notifications specially
-          if (titleText.includes("You were mentioned by")) {
-            notificationType = "mention";
-            const parts = titleText.split("<br>");
-            if (parts.length === 2) {
-              titleText = parts[0] + " " + parts[1];
-
-              // Create the new HTML structure for mentions
-              const newHtml = `
-                  <div class="notification-block">
-                    <div class="notification-title"><b style="color: ${mentionColor};">Mentioned</b> ${titleText.substring(titleText.indexOf("by"))}</div>
-                    <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
-                      Loading...
-                    </div>
-                  </div>
-                `;
-              // Queue the content fetch
-              const referenceElement = anchorElement.querySelector(
-                ".notification-reference",
-              );
-              if (referenceElement) {
-                NotificationCustomizer.queuePostContentFetch(
-                  anchorElement.href,
-                  referenceElement,
-                );
-              }
-            }
-          }
-          // Handle reaction notifications
-          else if (titleText.includes("reacted to")) {
-            notificationType = "reaction";
-            const usernameElements = Array.from(
-              titleElement.querySelectorAll(".username, .username-coloured"),
-            );
-            const usernames = usernameElements.map((el) =>
-              el.textContent.trim(),
-            );
-
-            const postId = Utils.extractPostId(anchorElement.href);
-            if (postId) {
-              let reactionHTML = "";
-              if (enableSmileys) {
-                const reactions = await ReactionHandler.fetchReactions(
-                  postId,
-                  false, // Assuming page notifications are always 'read'
-                );
-                const filteredReactions = reactions.filter((reaction) =>
-                  usernames.includes(reaction.username),
-                );
-                reactionHTML = Utils.formatReactions(filteredReactions);
-              }
-
-              // Keep everything up to the first username
-              const firstPart = titleText.split(
-                usernameElements[0].outerHTML,
-              )[0];
-
-              const smallAnd =
-                '<span style="font-size: 0.85em; padding: 0 0.25px;">and</span>';
-
-              // Format usernames based on count
-              let formattedUsernames;
-              if (usernameElements.length === 2) {
-                formattedUsernames = `${usernameElements[0].outerHTML} ${smallAnd} ${usernameElements[1].outerHTML}`;
-              } else if (usernameElements.length > 2) {
-                formattedUsernames =
-                  usernameElements
-                    .slice(0, -1)
-                    .map((el) => el.outerHTML)
-                    .join(", ") +
-                  `, ${smallAnd} ${
-                    usernameElements[usernameElements.length - 1].outerHTML
-                  }`;
-              } else {
-                formattedUsernames =
-                  usernameElements.length > 0
-                    ? usernameElements[0].outerHTML
-                    : "Someone"; // Fallback
-              }
-
-              const reactionVerb = `<b style="color: ${reactionColor};">reacted</b>`; // Use color variable
-              titleText =
-                firstPart +
-                formattedUsernames +
-                ` ${reactionVerb} ${reactionHTML} to:`;
-
-              // Create the new HTML structure
-              const newHtml = `
-                  <div class="notification-block">
-                    <div class="notification-title">${titleText}</div>
-                    <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
-                      Loading...
-                    </div>
-                  </div>
-                `;
-              // Queue the content fetch
-              const referenceElement = anchorElement.querySelector(
-                ".notification-reference",
-              );
-              if (referenceElement) {
-                NotificationCustomizer.queuePostContentFetch(
-                  anchorElement.href,
-                  referenceElement,
-                );
-              }
-            }
-          }
-          // Handle other notifications with quotes
-          else {
-            // Determine type for coloring & logic
-            if (titleText.includes("<strong>Quoted</strong>")) {
-              notificationType = "quote";
-            } else if (titleText.includes("<strong>Reply</strong>")) {
-              notificationType = "reply";
-            } else if (titleText.includes("edited a message")) {
-              notificationType = "edit";
-            } else if (titleText.includes("Post approval")) {
-              notificationType = "approval";
-            } else if (titleText.includes("Report closed")) {
-              notificationType = "report";
-            } // Add more specific types if needed
-
-            const lastQuoteMatch = titleText.match(/"([^"]*)"$/);
-            if (lastQuoteMatch) {
-              // Only remove the quote from title if it's not a "Quoted" notification
-              // (Keep quote for quote notifications)
-              if (notificationType !== "quote") {
-                titleText = titleText.replace(/"[^"]*"$/, "").trim();
-              }
-
-              // Apply text styling (conditionally for fillers)
-              let styledTitle = titleText;
-              if (resizeFillers) {
-                  styledTitle = styledTitle.replace(
-                      /\b(by|and|in|from)\b(?!-)/g,
-                      '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>',
-                  );
-              }
-
-              // Define colors (get from settings or use defaults)
-              const colors = enableColors ? notificationColors : {};
-              const quoteColor = colors.quote || "#FF4A66";
-              const replyColor = colors.reply || "#95DB00";
-              const editColor = colors.edit || "#8A2BE2"; // Example purple
-              const approvalColor = colors.approval || "#00AA00";
-              const reportColor = colors.report || "#f58c05";
-
-              styledTitle = styledTitle
-                .replace(
-                  /<strong>Quoted<\/strong>/,
-                  `<strong style="color: ${quoteColor};">Quoted</strong>`,
-                )
-                .replace(
-                  /<strong>Reply<\/strong>/,
-                  `<strong style="color: ${replyColor};">Reply</strong>`,
-                )
-                .replace(
-                    /edited a message/, // Basic styling for edit
-                    `<strong style="color: ${editColor};">edited</strong> a message`
-                )
-                .replace(
-                    /<strong>Post approval<\/strong>/, // Keep existing styles
-                    `<strong style="color: ${approvalColor};">Post approval</strong>`
-                )
-                 .replace(
-                    /Report closed/, // Keep existing styles
-                    `<strong style="color: ${reportColor};">Report closed</strong>`
-                );
-
-              // Create the new HTML structure
-              const newHtml = `
-                  <div class="notification-block">
-                    <div class="notification-title">${styledTitle}</div>
-                    <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
-                      Loading...
-                    </div>
-                  </div>
-                `;
-                )
-                .replace(
-                  /<strong>Reply<\/strong>/,
-                  '<strong style="color: #95DB00;">Reply</strong>',
-                )
-                .replace(
-                  /edited a message/, // Basic styling for edit
-                  '<strong style="color: #8A2BE2;">edited</strong> a message',
-                )
-                .replace(
-                  /<strong>Post approval<\/strong>/, // Keep existing styles
-                  '<strong style="color: #00AA00;">Post approval</strong>',
-                )
-                .replace(
-                  /Report closed/, // Keep existing styles
-                  '<strong style="color: #f58c05;">Report closed</strong>',
-                );
-
-              // Create the new HTML structure
-              const newHtml = `
-                  <div class="notification-block">
-                    <div class="notification-title">${styledTitle}</div>
-                    <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
-                      Loading...
-                    </div>
-                  </div>
-                `;
-
-              anchorElement.innerHTML = newHtml;
-
-              // Queue the content fetch
-              const referenceElement = anchorElement.querySelector(
-                ".notification-reference",
-              );
-              if (referenceElement) {
-                NotificationCustomizer.queuePostContentFetch(
-                  anchorElement.href,
-                  referenceElement,
-                );
-              }
-            }
-          }
-
-          // Apply background color if enabled
-          if (enableColors) {
-             const color = notificationColors[notificationType] || notificationColors.default || "#ffffff";
-          // Apply background color if enabled
-          if (enableColors) {
-             const color = notificationColors[notificationType] || notificationColors.default || "#ffffff";
-             // Apply color to the outer row for page view
-             row.style.backgroundColor = color;
-          }
-
-          // Color application is handled during HTML reconstruction above for this function.
-
-          // Convert username-coloured to username
-          anchorElement.querySelectorAll(".username-coloured").forEach((el) => {
-            el.classList.replace("username-coloured", "username");
-            el.style.color = "";
-          });
+        if (!anchorElement) {
+          row.dataset.customized = "true"; // Mark as processed even if no anchor
+          return;
         }
+
+        const titleElement = anchorElement.querySelector(
+          ".notifications_title",
+        );
+        if (!titleElement) {
+          row.dataset.customized = "true"; // Mark as processed even if no title
+          return;
+        }
+
+        let originalTitleHTML = titleElement.innerHTML;
+        let notificationType = "default";
+        let newHtmlContent = ""; // Store the final HTML for the anchor
+        let placeholderElement; // Store ref to placeholder for fetch later
+
+        // Helper for styling keywords
+        const styleKeyword = (keyword, color) =>
+          `<strong style="color: ${color};">${keyword}</strong>`;
+        const styleFiller = (word) =>
+          `<span style="font-size: 0.85em; padding: 0 0.25px;">${word}</span>`;
+
+        // --- Mention Handling ---
+        if (originalTitleHTML.includes("You were mentioned by")) {
+          notificationType = "mention";
+          const parts = originalTitleHTML.split("<br>");
+          if (parts.length === 2) {
+            let mentionText = parts[0] + " " + parts[1];
+            // Apply filler styling first if enabled
+            if (resizeFillers) {
+              mentionText = mentionText.replace(
+                /\b(by|in)\b(?!-)/g,
+                styleFiller("$1"),
+              );
+            }
+
+            newHtmlContent = `
+              <div class="notification-block">
+                <div class="notification-title">${styleKeyword("Mentioned", mentionColor)} ${mentionText.substring(mentionText.indexOf(resizeFillers ? styleFiller("by") : "by"))}</div>
+                <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
+                  Loading...
+                </div>
+              </div>
+            `;
+            anchorElement.innerHTML = newHtmlContent; // Update DOM to find placeholder
+            placeholderElement = anchorElement.querySelector(
+              ".notification-reference",
+            );
+          } else {
+            // Fallback if format unexpected
+            newHtmlContent = originalTitleHTML; // Keep original if parsing fails
+          }
+        }
+        // --- Reaction Handling ---
+        else if (originalTitleHTML.includes("reacted to")) {
+          notificationType = "reaction";
+          const usernameElements = Array.from(
+            titleElement.querySelectorAll(".username, .username-coloured"),
+          );
+          const usernames = usernameElements.map((el) => el.textContent.trim());
+          const postId = Utils.extractPostId(anchorElement.href);
+
+          if (postId) {
+            let reactionHTML = "";
+            if (enableSmileys) {
+              const reactions = await ReactionHandler.fetchReactions(
+                postId,
+                false,
+              );
+              const filteredReactions = reactions.filter((r) =>
+                usernames.includes(r.username),
+              );
+              reactionHTML = Utils.formatReactions(filteredReactions);
+            }
+
+            const firstUsernameHTML =
+              usernameElements.length > 0 ? usernameElements[0].outerHTML : "";
+            const firstPart = originalTitleHTML.substring(
+              0,
+              originalTitleHTML.indexOf(firstUsernameHTML),
+            );
+
+            // Format usernames with styled fillers
+            let formattedUsernames;
+            const smallAnd = resizeFillers ? styleFiller("and") : "and";
+            if (usernameElements.length === 1) {
+              formattedUsernames = usernameElements[0].outerHTML;
+            } else if (usernameElements.length === 2) {
+              formattedUsernames = `${usernameElements[0].outerHTML} ${smallAnd} ${usernameElements[1].outerHTML}`;
+            } else if (usernameElements.length > 2) {
+              formattedUsernames =
+                usernameElements
+                  .slice(0, -1)
+                  .map((el) => el.outerHTML)
+                  .join(", ") +
+                `, ${smallAnd} ${usernameElements[usernameElements.length - 1].outerHTML}`;
+            } else {
+              formattedUsernames = "Someone"; // Fallback
+            }
+
+            const reactionVerb = styleKeyword("reacted", reactionColor);
+            const finalTitle = `${firstPart}${formattedUsernames} ${reactionVerb} ${reactionHTML} to:`;
+
+            newHtmlContent = `
+              <div class="notification-block">
+                <div class="notification-title">${finalTitle}</div>
+                <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
+                  Loading...
+                </div>
+              </div>
+            `;
+            anchorElement.innerHTML = newHtmlContent; // Update DOM
+            placeholderElement = anchorElement.querySelector(
+              ".notification-reference",
+            );
+          } else {
+            newHtmlContent = originalTitleHTML; // Keep original if no postId
+          }
+        }
+        // --- Other Notification Types (Quote, Reply, Edit, Approval, Report) ---
+        else {
+          const lastQuoteMatch = originalTitleHTML.match(/"([^"]*)"$/);
+          let baseTitleText = originalTitleHTML;
+          let referenceText = "Loading..."; // Default for placeholder
+
+          // Determine type and adjust base title
+          if (originalTitleHTML.includes("<strong>Quoted</strong>")) {
+            notificationType = "quote";
+            // Keep the quote in the title for 'Quoted' notifications
+            referenceText = lastQuoteMatch
+              ? `"${lastQuoteMatch[1]}"`
+              : "Loading...";
+          } else {
+            // For other types, remove the trailing quote from the title if present
+            if (lastQuoteMatch) {
+              baseTitleText = originalTitleHTML.replace(/"[^"]*"$/, "").trim();
+              referenceText = `"${lastQuoteMatch[1]}"`; // Use the extracted quote for the reference initially
+            }
+
+            if (originalTitleHTML.includes("<strong>Reply</strong>")) {
+              notificationType = "reply";
+            } else if (originalTitleHTML.includes("edited a message")) {
+              notificationType = "edit";
+            } else if (originalTitleHTML.includes("Post approval")) {
+              notificationType = "approval";
+            } else if (originalTitleHTML.includes("Report closed")) {
+              notificationType = "report";
+            } else if (originalTitleHTML.includes("Private Message")) {
+              // Basic PM handling, could be expanded like in customizeNotificationBlock
+              notificationType = "pm";
+              const subjectMatch = originalTitleHTML.match(
+                /<strong>Private Message<\/strong>(?: from [^:]+):? "?([^"]*)"?/,
+              );
+              if (subjectMatch && subjectMatch[1] === "Board warning issued") {
+                notificationType = "warning";
+                baseTitleText = originalTitleHTML
+                  .replace(
+                    /<strong>Private Message<\/strong>/,
+                    styleKeyword("Board warning issued", warningColor),
+                  )
+                  .replace(/from/, "by")
+                  .replace(/:$/, "")
+                  .replace(/"[^"]*"$/, "")
+                  .trim();
+                referenceText = null; // No reference for warnings
+              } else {
+                baseTitleText = originalTitleHTML
+                  .replace(
+                    /<strong>Private Message<\/strong>/,
+                    styleKeyword("Private Message", defaultColor),
+                  )
+                  .replace(/"[^"]*"$/, "")
+                  .trim();
+              }
+            }
+          }
+
+          // Apply keyword styling based on determined type
+          let styledTitle = baseTitleText;
+          switch (notificationType) {
+            case "quote":
+              styledTitle = styledTitle.replace(
+                /<strong>Quoted<\/strong>/,
+                styleKeyword("Quoted", quoteColor),
+              );
+              break;
+            case "reply":
+              styledTitle = styledTitle.replace(
+                /<strong>Reply<\/strong>/,
+                styleKeyword("Reply", replyColor),
+              );
+              break;
+            case "edit":
+              styledTitle = styledTitle.replace(
+                /edited a message/,
+                `${styleKeyword("edited", editColor)} a message`,
+              );
+              break;
+            case "approval":
+              styledTitle = styledTitle.replace(
+                /<strong>Post approval<\/strong>/,
+                styleKeyword("Post approval", approvalColor),
+              );
+              break;
+            case "report":
+              styledTitle = styledTitle.replace(
+                /Report closed/,
+                styleKeyword("Report closed", reportColor),
+              );
+              break;
+            // Warning already styled if detected
+            // PM default styling handled above
+          }
+
+          // Apply filler styling if enabled
+          if (resizeFillers) {
+            styledTitle = styledTitle.replace(
+              /\b(by|and|in|from)\b(?!-)/g,
+              styleFiller("$1"),
+            );
+          }
+
+          // Construct HTML
+          newHtmlContent = `
+            <div class="notification-block">
+              <div class="notification-title">${styledTitle}</div>
+              ${
+                referenceText !== null // Only add reference div if needed
+                  ? `<div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">
+                ${referenceText}
+              </div>`
+                  : ""
+              }
+            </div>
+          `;
+          anchorElement.innerHTML = newHtmlContent; // Update DOM
+          if (referenceText !== null) {
+            placeholderElement = anchorElement.querySelector(
+              ".notification-reference",
+            );
+          }
+        }
+
+        // --- Post-Processing ---
+
+        // Queue content fetch if a placeholder exists
+        if (
+          placeholderElement &&
+          placeholderElement.textContent.includes("Loading...")
+        ) {
+          // Check if the placeholder already has content (e.g., extracted quote)
+          const alreadyHasContent =
+            !placeholderElement.textContent.includes("Loading...");
+          if (!alreadyHasContent) {
+            NotificationCustomizer.queuePostContentFetch(
+              anchorElement.href,
+              placeholderElement,
+            );
+          } else {
+            // If it already has text content (like a quote), style it
+            Utils.styleReference(placeholderElement);
+          }
+        }
+
+        // Apply background color to the row if enabled
+        if (enableColors) {
+          const color = notificationColors[notificationType] || defaultColor;
+          row.style.backgroundColor = color;
+        }
+
+        // Convert username-coloured to username and remove inline style
+        anchorElement.querySelectorAll(".username-coloured").forEach((el) => {
+          el.classList.replace("username-coloured", "username");
+          el.style.color = ""; // Remove inline color style if any
+        });
 
         row.dataset.customized = "true";
       });
-    },
+    }, // End of customizeNotificationPage
 
     async queuePostContentFetch(url, placeholder) {
       // Get relevant settings
