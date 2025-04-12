@@ -14,14 +14,14 @@ export function renderScriptsListView(
   container,
   scripts,
   scriptStates = {},
-  showScriptSettings
+  showScriptSettings,
 ) {
   log("Rendering scripts in List View...");
 
   if (!scripts || scripts.length === 0) {
     renderEmptyState(
       container,
-      "No scripts found. Try adjusting your filters to see more results."
+      "No scripts found. Try adjusting your filters to see more results.",
     );
     return;
   }

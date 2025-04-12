@@ -167,8 +167,13 @@ function loadScript(script) {
 
     // Check if the module has an init function
     if (typeof module.init === "function") {
-      // Call init and store any returned cleanup function or object
-      const result = module.init();
+      let result;
+      // Pass dependencies if needed
+      if (script.id === "recentTopicsFormat") {
+        result = module.init({ getScriptSetting }); // Pass getScriptSetting
+      } else {
+        result = module.init(); // Original call
+      }
 
       // Store the loaded module and any cleanup function
       loadedScripts[script.id] = {
@@ -237,7 +242,13 @@ function handleRenderScriptsListView(container, scripts, states) {
 }
 
 function handleShowScriptSettings(script) {
-  showScriptSettings(script, renderScriptSettingsContent, saveScriptSetting);
+  // Pass getScriptSetting as the third argument now
+  showScriptSettings(
+    script,
+    renderScriptSettingsContent, // Renders the content area
+    getScriptSetting, // Function to get current setting value
+    saveScriptSetting, // Function to save setting value
+  );
 }
 
 function saveScriptSetting(scriptId, settingId, value) {

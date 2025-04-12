@@ -117,7 +117,30 @@ export const SCRIPT_MANIFEST = [
     path: "./scripts/recentTopicsFormat.js",
     enabledByDefault: false,
     settings: [
-      // Add settings here
+      {
+        id: "unboldParentheses",
+        label: "Unbold Text in Parentheses",
+        type: "checkbox",
+        defaultValue: true,
+        description:
+          "Removes bold formatting from text within parentheses in recent topics titles.",
+      },
+      {
+        id: "wrapTitles",
+        label: "Wrap Long Titles",
+        type: "checkbox",
+        defaultValue: true,
+        description:
+          "Allows long thread titles in recent topics to wrap instead of being cut off.",
+      },
+      {
+        id: "reformatAGThreads",
+        label: "Reformat AG Thread Titles",
+        type: "checkbox",
+        defaultValue: true,
+        description:
+          "Reformats 'All Games' thread titles for better readability (e.g., moves chapter number).",
+      },
     ],
     categories: ["UI"],
   },

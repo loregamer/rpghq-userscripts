@@ -7,22 +7,29 @@
  * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/recentTopicsFormat.md for documentation
  */
 
-export function init() {
+// Note: Assumes getScriptSetting is provided to init by main.js
+export function init({ getScriptSetting }) {
+  const SCRIPT_ID = "recentTopicsFormat"; // Define script ID for settings
+
   /***************************************
-   * 1) Remove ellipses/truncation in titles
+   * 1) Remove ellipses/truncation in titles (Conditional)
    ***************************************/
-  const style = document.createElement("style");
-  style.textContent = `
-         /* Ensure topic titles don't get truncated with ellipses */
-         .topictitle {
-             white-space: normal !important;
-             overflow: visible !important;
-             text-overflow: unset !important;
-             max-width: none !important;
-             display: inline-block;
-         }
-     `;
-  document.head.appendChild(style);
+  const shouldWrapTitles = getScriptSetting(SCRIPT_ID, "wrapTitles", true);
+
+  if (shouldWrapTitles) {
+    const style = document.createElement("style");
+    style.textContent = `
+           /* Ensure topic titles don't get truncated with ellipses */
+           .topictitle {
+               white-space: normal !important;
+               overflow: visible !important;
+               text-overflow: unset !important;
+               max-width: none !important;
+               display: inline-block;
+           }
+       `;
+    document.head.appendChild(style);
+  }
 
   /*******************************************
    * 2) Functions to style different elements
@@ -33,8 +40,17 @@ export function init() {
    * e.g. "Title (Extra Info)" -> "Title (<span>Extra Info</span>)"
    */
   function styleParentheses(str) {
-    return str.replace(/\([^()]*\)/g, (match) => {
-      return `<span style="font-size: 0.85em; font-weight: normal;">${match}</span>`;
+    // Use HTML replace to avoid breaking existing spans
+    return str.replace(/\(([^()]*)\)/g, (match, innerText) => {
+      // Avoid double-wrapping
+      if (
+        innerText.includes(
+          '<span style="font-size: 0.85em; font-weight: normal;">',
+        )
+      ) {
+        return match;
+      }
+      return `(<span style="font-size: 0.85em; font-weight: normal;">${innerText}</span>)`;
     });
   }
 
@@ -43,8 +59,17 @@ export function init() {
    * Matches patterns like: 1.0, 1.0.0, 1.0.0.1, etc.
    */
   function styleVersionNumbers(str) {
-    return str.replace(/\b(\d+(?:\.\d+)+)\b/g, (match) => {
-      return `<span style="font-size: 0.75em;">v${match}</span>`;
+    // Use HTML replace
+    return str.replace(/\b(\d+(?:\.\d+)+)\b/g, (match, versionNumber) => {
+      // Avoid double-wrapping
+      if (
+        str.includes(
+          `<span style="font-size: 0.75em;">v${versionNumber}</span>`,
+        )
+      ) {
+        return match;
+      }
+      return `<span style="font-size: 0.75em;">v${versionNumber}</span>`;
     });
   }
 
@@ -54,27 +79,28 @@ export function init() {
    */
   function styleAdventurersGuildTitle(str, elem) {
     // Check if it's an Adventurer's Guild title or post
-    const isGuildTitle = str.includes("Adventurer's Guild");
+    const plainText = elem.textContent; // Use textContent for matching patterns
+    const isGuildTitle = plainText.includes("Adventurer's Guild");
     const isGuildForum =
       elem
         .closest(".row-item")
-        .querySelector('.forum-links a[href*="adventurer-s-guild"]') !== null;
+        ?.querySelector('.forum-links a[href*="adventurer-s-guild"]') !== null;
 
-    if (!isGuildTitle && !isGuildForum) return str;
+    if (!isGuildTitle && !isGuildForum) return str; // Return original HTML if not relevant
 
     let match;
     if (isGuildTitle) {
-      // Match the pattern: everything before the month, the month, and games list
+      // Match the pattern: optional Junior, Month, Games
       const titleRegex =
         /^(?:(Junior)\s+)?Adventurer's Guild\s*-\s*([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
-      match = str.match(titleRegex);
+      match = plainText.match(titleRegex);
     } else {
-      // Match the pattern: month and games list
+      // Match the pattern: Month, Games (when in AG forum)
       const forumRegex = /^([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
-      match = str.match(forumRegex);
+      match = plainText.match(forumRegex);
     }
 
-    if (!match) return str;
+    if (!match) return str; // Return original HTML if no pattern match
 
     if (isGuildTitle) {
       const [_, juniorPrefix, month, gamesList] = match;
@@ -92,52 +118,130 @@ export function init() {
    * Handles both regular dash and em dash
    */
   function styleEverythingAfterFirstDash(str, elem) {
-    // Don't process Adventurer's Guild titles or posts
-    const isGuildTitle = str.includes("Adventurer's Guild");
+    // Context check needed here because AG formatting might not run if setting is off
+    const plainText = elem.textContent;
+    const isGuildTitle = plainText.includes("Adventurer's Guild");
     const isGuildForum =
       elem
         .closest(".row-item")
-        .querySelector('.forum-links a[href*="adventurer-s-guild"]') !== null;
-    if (isGuildTitle || isGuildForum) return str;
+        ?.querySelector('.forum-links a[href*="adventurer-s-guild"]') !== null;
 
-    // Match both regular dash and em dash with optional spaces
-    const dashRegex = /\s+[-—]\s+/;
-    const match = str.match(dashRegex);
+    if (isGuildTitle || isGuildForum) return str; // Don't process AG titles/posts here
 
-    // If there is no dash, return unmodified
-    if (!match) return str;
+    // Match both regular dash and em dash with optional spaces, ensuring it's not inside HTML tags
+    // This is tricky with regex on HTML, might need a simpler approach or DOM parsing
+    // Simple approach: find the first dash in text content, then reconstruct HTML
+    const dashMatch = plainText.match(/\s+[-—]\s+/);
+    if (!dashMatch) return str;
 
-    const dashIndex = match.index;
-    // Part before the dash
-    const beforePart = str.slice(0, dashIndex);
-    // Part from the dash to the end
-    const afterPart = str.slice(dashIndex);
+    // Find the index of the first dash in the text content
+    const dashIndexInText = dashMatch.index;
 
-    // Wrap the dash + everything after it, only changing font-weight
-    return `${beforePart}<span style="font-weight: normal;">${afterPart}</span>`;
+    // Reconstruct carefully - this might break existing spans across the dash
+    // A more robust solution would parse the DOM nodes within the title element
+    let charCount = 0;
+    let splitIndex = -1;
+    for (let i = 0; i < elem.childNodes.length; i++) {
+      const node = elem.childNodes[i];
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (charCount + node.length >= dashIndexInText) {
+          // Dash is in this text node
+          const textBeforeDash = node.textContent.slice(
+            0,
+            dashIndexInText - charCount,
+          );
+          const textAfterDash = node.textContent.slice(
+            dashIndexInText - charCount,
+          );
+
+          // Create new nodes
+          const beforeNode = document.createTextNode(textBeforeDash);
+          const spanNode = document.createElement("span");
+          spanNode.style.fontWeight = "normal";
+          spanNode.textContent = textAfterDash; // Includes the dash itself
+
+          // Replace the original text node
+          elem.replaceChild(spanNode, node);
+          elem.insertBefore(beforeNode, spanNode);
+
+          // Wrap subsequent nodes
+          for (let j = i + 1; j < elem.childNodes.length; j++) {
+            if (elem.childNodes[j] !== spanNode) {
+              // Avoid re-wrapping the span we just added
+              spanNode.appendChild(elem.childNodes[j].cloneNode(true));
+            }
+          }
+          // Remove original subsequent nodes that were cloned
+          while (elem.childNodes.length > i + 2) {
+            elem.removeChild(elem.childNodes[i + 2]);
+          }
+
+          splitIndex = i; // Mark where split happened
+          break; // Found and processed dash
+        }
+        charCount += node.length;
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        // Could try to estimate length, but skip complex tags for now
+        charCount += node.textContent.length;
+      }
+    }
+
+    return elem.innerHTML; // Return potentially modified HTML
   }
 
   /**
-   * Process a single title element
+   * Process a single title element based on settings
    */
   function processTitle(titleElem) {
-    const originalText = titleElem.textContent;
+    const shouldUnboldParens = getScriptSetting(
+      SCRIPT_ID,
+      "unboldParentheses",
+      true,
+    );
+    const shouldReformatAG = getScriptSetting(
+      SCRIPT_ID,
+      "reformatAGThreads",
+      true,
+    );
+    // Add settings checks for other styles if needed in the future
 
-    // Apply transformations in sequence
-    let newHTML = originalText;
-    newHTML = styleParentheses(newHTML);
-    newHTML = styleVersionNumbers(newHTML);
-    newHTML = styleAdventurersGuildTitle(newHTML, titleElem);
-    newHTML = styleEverythingAfterFirstDash(newHTML, titleElem);
+    const originalHTML = titleElem.innerHTML; // Work with HTML
+    let currentHTML = originalHTML;
+    let agFormatted = false;
 
-    // Replace original text with our new HTML
-    titleElem.innerHTML = newHTML;
+    // Apply AG formatting first if enabled
+    if (shouldReformatAG) {
+      const agResult = styleAdventurersGuildTitle(currentHTML, titleElem);
+      if (agResult !== currentHTML) {
+        currentHTML = agResult;
+        agFormatted = true; // Mark that AG formatting was applied
+      }
+    }
+
+    // Apply parentheses styling if enabled
+    if (shouldUnboldParens) {
+      currentHTML = styleParentheses(currentHTML);
+    }
+
+    // Apply version styling (always, for now)
+    currentHTML = styleVersionNumbers(currentHTML);
+
+    // Apply dash styling ONLY if AG formatting didn't run
+    if (!agFormatted) {
+      currentHTML = styleEverythingAfterFirstDash(currentHTML, titleElem);
+    }
+
+    // Update DOM only if HTML actually changed
+    if (currentHTML !== originalHTML) {
+      titleElem.innerHTML = currentHTML;
+    }
   }
 
   /**
    * Process all titles in a container element
    */
   function processTitlesInContainer(container) {
+    // Query only for direct children or specific containers if performance is an issue
     const titles = container.querySelectorAll(".topictitle");
     titles.forEach(processTitle);
   }
@@ -148,16 +252,29 @@ export function init() {
   // Set up mutation observer for dynamic updates
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
-      if (mutation.type === "childList") {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === Node.ELEMENT_NODE) {
+      mutation.addedNodes.forEach((node) => {
+        // Check if the added node is an element and contains titles or is a title itself
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.matches(".topictitle")) {
+            processTitle(node);
+          } else if (node.querySelector(".topictitle")) {
+            // If the added node contains titles, process them
             processTitlesInContainer(node);
           }
-        });
-      }
+        }
+      });
     });
   });
 
-  // Start observing the document with the configured parameters
+  // Start observing the document body for added nodes
   observer.observe(document.body, { childList: true, subtree: true });
+
+  // Return a cleanup function to disconnect the observer when the script is disabled
+  return {
+    cleanup: () => {
+      observer.disconnect();
+      // Potentially add code here to revert styles if needed, though complex
+      console.log("Disconnected recentTopicsFormat observer.");
+    },
+  };
 }
