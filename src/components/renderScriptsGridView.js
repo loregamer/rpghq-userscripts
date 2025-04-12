@@ -53,14 +53,19 @@ export function renderScriptsGridView(
         <div class="script-card-header">
           <h3 class="script-card-title">${script.name}</h3>
           <div class="script-card-actions-top">
+            ${
+              hasSettings
+                ? `
             <button 
               class="btn btn-icon view-settings" 
-              title="${hasSettings ? "Settings" : "No Settings Available"}" 
-              data-script-id="${script.id}" 
-              ${!hasSettings ? "disabled" : ""}
+              title="Settings" 
+              data-script-id="${script.id}"
             >
               <i class="fa fa-cog"></i>
             </button>
+            `
+                : ""
+            }
           </div>
         </div>
         <p class="script-card-description">${script.description || "No description available."}</p>

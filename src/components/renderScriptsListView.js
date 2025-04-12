@@ -58,7 +58,7 @@ export function renderScriptsListView(
                 <td>${
                   script.settings && script.settings.length > 0
                     ? `<span class="badge badge-primary">${script.settings.length}</span>`
-                    : "-"
+                    : ""
                 }</td>
                 <td>${
                   script.settings && script.settings.length > 0

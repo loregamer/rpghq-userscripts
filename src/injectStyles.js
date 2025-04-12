@@ -365,7 +365,6 @@ GM_addStyle(`
   }
 
   .script-card-actions-top {
-    /* display: none; */ /* Removed to show settings button */
     align-items: center;
     gap: 8px;
     white-space: nowrap;
