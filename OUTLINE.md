@@ -32,79 +32,79 @@ HQ-Userscripts
 │   ├── generate-outline.cjs
 │   ├── inject-styles.js
 │   ├── sort-manifest.js
-│   │    └─> **extractBalancedContent**
-│   │    └─> **extractName**
-│   │    └─> **extractScriptObjects**
+│   │    └─> extractBalancedContent
+│   │    └─> extractName
+│   │    └─> extractScriptObjects
 │   └── update-load-order.cjs
 ├── src
 │   ├── components
 │   │   ├── tabs
 │   │   │   ├── subtabs
 │   │   │   │   ├── renderThreadsSubtab.js
-│   │   │   │   │    └─> **renderThreadsSubtab**
+│   │   │   │   │    └─> renderThreadsSubtab
 │   │   │   │   │        └─> log (from src/utils/logger.js)
 │   │   │   │   └── renderUsersSubtab.js
-│   │   │   │        └─> **renderUsersSubtab**
+│   │   │   │        └─> renderUsersSubtab
 │   │   │   │            └─> log (from src/utils/logger.js)
 │   │   │   ├── renderForumPreferencesTab.js
-│   │   │   │    └─> **renderForumPreferencesTab**
+│   │   │   │    └─> renderForumPreferencesTab
 │   │   │   │        └─> log (from src/utils/logger.js)
 │   │   │   │        └─> renderThreadsSubtab (from src/components/tabs/subtabs/renderThreadsSubtab.js)
 │   │   │   │        └─> renderUsersSubtab (from src/components/tabs/subtabs/renderUsersSubtab.js)
 │   │   │   ├── renderInstalledScriptsTab.js
-│   │   │   │    └─> **renderInstalledScriptsTab**
+│   │   │   │    └─> renderInstalledScriptsTab
 │   │   │   │        └─> log (from src/utils/logger.js)
 │   │   │   │        └─> renderScriptsGridView (from src/components/renderScriptsGridView.js)
 │   │   │   └── renderSettingsTab.js
-│   │   │        └─> **renderSettingsTab**
+│   │   │        └─> renderSettingsTab
 │   │   │            └─> log (from src/utils/logger.js)
 │   │   ├── emptyState.js
-│   │   │    └─> **renderEmptyState**
+│   │   │    └─> renderEmptyState
 │   │   │        └─> log (from src/utils/logger.js)
 │   │   ├── hideModal.js
-│   │   │    └─> **hideModal**
+│   │   │    └─> hideModal
 │   │   │        └─> log (from src/utils/logger.js)
 │   │   ├── loadTabContent.js
-│   │   │    └─> **loadTabContent**
+│   │   │    └─> loadTabContent
 │   │   │        └─> error (from src/utils/logger.js)
 │   │   │        └─> log (from src/utils/logger.js)
 │   │   │        └─> renderForumPreferencesTab (from src/components/tabs/renderForumPreferencesTab.js)
 │   │   │        └─> renderInstalledScriptsTab (from src/components/tabs/renderInstalledScriptsTab.js)
 │   │   │        └─> renderSettingsTab (from src/components/tabs/renderSettingsTab.js)
 │   │   ├── renderPreferenceControl.js
-│   │   │    └─> **renderPreferenceControl**
+│   │   │    └─> renderPreferenceControl
 │   │   ├── renderScriptSettingsContent.js
-│   │   │    └─> **renderScriptSettingsContent**
+│   │   │    └─> renderScriptSettingsContent
 │   │   │        └─> getScriptSetting (from src/main.js)
 │   │   │        └─> log (from src/utils/logger.js)
 │   │   │        └─> renderSettingControl (from src/components/renderSettingControl.js)
 │   │   ├── renderScriptsGridView.js
-│   │   │    └─> **renderScriptsGridView**
+│   │   │    └─> renderScriptsGridView
 │   │   │        └─> log (from src/utils/logger.js)
 │   │   │        └─> renderEmptyState (from src/components/emptyState.js)
 │   │   │        └─> showScriptSettings (from src/components/showScriptSettings.js)
 │   │   ├── renderScriptsListView.js
-│   │   │    └─> **renderScriptsListView**
+│   │   │    └─> renderScriptsListView
 │   │   │        └─> log (from src/utils/logger.js)
 │   │   │        └─> renderEmptyState (from src/components/emptyState.js)
 │   │   │        └─> showScriptSettings (from src/components/showScriptSettings.js)
 │   │   ├── renderSettingControl.js
-│   │   │    └─> **renderSettingControl**
+│   │   │    └─> renderSettingControl
 │   │   │        └─> getScriptSetting (from src/main.js)
 │   │   ├── showModal.js
-│   │   │    └─> **showModal**
+│   │   │    └─> showModal
 │   │   │        └─> hideModal (from src/components/hideModal.js)
 │   │   │        └─> loadTabContent (from src/components/loadTabContent.js)
 │   │   │        └─> log (from src/utils/logger.js)
 │   │   ├── showScriptSettings.js
-│   │   │    └─> **showScriptSettings**
+│   │   │    └─> showScriptSettings
 │   │   │        └─> log (from src/utils/logger.js)
 │   │   │        └─> renderEmptyState (from src/components/emptyState.js)
 │   │   │        └─> renderScriptSettingsContent (from src/components/renderScriptSettingsContent.js)
 │   │   │        └─> saveScriptSetting (from src/main.js)
 │   │   │        └─> warn (from src/utils/logger.js)
 │   │   └── toggleScriptEnabled.js
-│   │        └─> **toggleScriptEnabled**
+│   │        └─> toggleScriptEnabled
 │   │            └─> error (from src/utils/logger.js)
 │   │            └─> gmSetValue (from src/main.js)
 │   │            └─> loadScript (from src/main.js)
@@ -112,36 +112,36 @@ HQ-Userscripts
 │   │            └─> unloadScript (from src/main.js)
 │   ├── scripts
 │   │   ├── bbcode.js
-│   │   │    └─> **addColorButtonListeners**
+│   │   │    └─> addColorButtonListeners
 │   │   │        └─> addCustomColorsToExistingPalette (from src/scripts/bbcode.js)
-│   │   │    └─> **addCustomButtons**
+│   │   │    └─> addCustomButtons
 │   │   │        └─> insertBloomeryPing (from src/scripts/bbcode.js)
 │   │   │        └─> insertModTemplate (from src/scripts/bbcode.js)
 │   │   │        └─> insertTable (from src/scripts/bbcode.js)
-│   │   │    └─> **addCustomColorsToExistingPalette**
+│   │   │    └─> addCustomColorsToExistingPalette
 │   │   │        └─> adjustTextareaAndHighlight (from src/scripts/bbcode.js)
 │   │   │        └─> updateHighlight (from src/scripts/bbcode.js)
 │   │   │        └─> wrapSelectedText (from src/scripts/bbcode.js)
-│   │   │    └─> **addCustomColorsToPalette**
+│   │   │    └─> addCustomColorsToPalette
 │   │   │        └─> addColorButtonListeners (from src/scripts/bbcode.js)
 │   │   │        └─> addCustomColorsToExistingPalette (from src/scripts/bbcode.js)
-│   │   │    └─> **addCustomSmileyButtons**
+│   │   │    └─> addCustomSmileyButtons
 │   │   │        └─> insertSmiley (from src/scripts/bbcode.js)
-│   │   │    └─> **addStyles**
-│   │   │    └─> **adjustTextareaAndHighlight**
+│   │   │    └─> addStyles
+│   │   │    └─> adjustTextareaAndHighlight
 │   │   │        └─> positionEditorHeader (from src/scripts/bbcode.js)
 │   │   │        └─> positionSmileyBox (from src/scripts/bbcode.js)
-│   │   │    └─> **checkForUpdates**
+│   │   │    └─> checkForUpdates
 │   │   │        └─> adjustTextareaAndHighlight (from src/scripts/bbcode.js)
 │   │   │        └─> updateHighlight (from src/scripts/bbcode.js)
-│   │   │    └─> **escapeHTML**
-│   │   │    └─> **getColorIndex**
-│   │   │    └─> **getContrastColor**
-│   │   │    └─> **highlightBBCode**
+│   │   │    └─> escapeHTML
+│   │   │    └─> getColorIndex
+│   │   │    └─> getContrastColor
+│   │   │    └─> highlightBBCode
 │   │   │        └─> escapeHTML (from src/scripts/bbcode.js)
 │   │   │        └─> getColorIndex (from src/scripts/bbcode.js)
 │   │   │        └─> getContrastColor (from src/scripts/bbcode.js)
-│   │   │    └─> **init**
+│   │   │    └─> init
 │   │   │        └─> addColorButtonListeners (from src/scripts/bbcode.js)
 │   │   │        └─> addCustomButtons (from src/scripts/bbcode.js)
 │   │   │        └─> addCustomColorsToExistingPalette (from src/scripts/bbcode.js)
@@ -171,7 +171,7 @@ HQ-Userscripts
 │   │   │        └─> updatePageTitle (from src/scripts/bbcode.js)
 │   │   │        └─> updateSmileyList (from src/scripts/bbcode.js)
 │   │   │        └─> wrapSelectedText (from src/scripts/bbcode.js)
-│   │   │    └─> **initialize**
+│   │   │    └─> initialize
 │   │   │        └─> addCustomButtons (from src/scripts/bbcode.js)
 │   │   │        └─> addCustomSmileyButtons (from src/scripts/bbcode.js)
 │   │   │        └─> adjustTextareaAndHighlight (from src/scripts/bbcode.js)
@@ -183,135 +183,135 @@ HQ-Userscripts
 │   │   │        └─> updateHighlight (from src/scripts/bbcode.js)
 │   │   │        └─> updatePageTitle (from src/scripts/bbcode.js)
 │   │   │        └─> wrapSelectedText (from src/scripts/bbcode.js)
-│   │   │    └─> **insertBloomeryPing**
+│   │   │    └─> insertBloomeryPing
 │   │   │        └─> insertTextAtCursor (from src/scripts/bbcode.js)
-│   │   │    └─> **insertModTemplate**
+│   │   │    └─> insertModTemplate
 │   │   │        └─> insertTextAtCursor (from src/scripts/bbcode.js)
-│   │   │    └─> **insertSmiley**
+│   │   │    └─> insertSmiley
 │   │   │        └─> adjustTextareaAndHighlight (from src/scripts/bbcode.js)
 │   │   │        └─> updateHighlight (from src/scripts/bbcode.js)
-│   │   │    └─> **insertTable**
+│   │   │    └─> insertTable
 │   │   │        └─> insertTextAtCursor (from src/scripts/bbcode.js)
-│   │   │    └─> **insertTextAtCursor**
+│   │   │    └─> insertTextAtCursor
 │   │   │        └─> adjustTextareaAndHighlight (from src/scripts/bbcode.js)
 │   │   │        └─> updateHighlight (from src/scripts/bbcode.js)
-│   │   │    └─> **isSingleEmoji**
-│   │   │    └─> **positionEditorHeader**
-│   │   │    └─> **positionSmileyBox**
-│   │   │    └─> **removeInterferingEventListeners**
-│   │   │    └─> **saveCustomSmileys**
+│   │   │    └─> isSingleEmoji
+│   │   │    └─> positionEditorHeader
+│   │   │    └─> positionSmileyBox
+│   │   │    └─> removeInterferingEventListeners
+│   │   │    └─> saveCustomSmileys
 │   │   │        └─> addCustomSmileyButtons (from src/scripts/bbcode.js)
-│   │   │    └─> **saveFormData**
-│   │   │    └─> **setupFormSubmitTracking**
-│   │   │    └─> **showCustomSmileysPopup**
+│   │   │    └─> saveFormData
+│   │   │    └─> setupFormSubmitTracking
+│   │   │    └─> showCustomSmileysPopup
 │   │   │        └─> isSingleEmoji (from src/scripts/bbcode.js)
 │   │   │        └─> saveCustomSmileys (from src/scripts/bbcode.js)
 │   │   │        └─> updateSmileyList (from src/scripts/bbcode.js)
-│   │   │    └─> **updateHighlight**
+│   │   │    └─> updateHighlight
 │   │   │        └─> highlightBBCode (from src/scripts/bbcode.js)
-│   │   │    └─> **updatePageTitle**
-│   │   │    └─> **updateSmileyList**
+│   │   │    └─> updatePageTitle
+│   │   │    └─> updateSmileyList
 │   │   │        └─> isSingleEmoji (from src/scripts/bbcode.js)
 │   │   │        └─> saveCustomSmileys (from src/scripts/bbcode.js)
 │   │   │        └─> updateSmileyList (from src/scripts/bbcode.js)
-│   │   │    └─> **wrapSelectedText**
+│   │   │    └─> wrapSelectedText
 │   │   ├── commaFormatter.js
-│   │   │    └─> **calculateForumStatistics**
+│   │   │    └─> calculateForumStatistics
 │   │   │        └─> formatNumberWithCommas (from src/scripts/commaFormatter.js)
 │   │   │        └─> formatStatNumber (from src/scripts/commaFormatter.js)
-│   │   │    └─> **formatNumberWithCommas**
-│   │   │    └─> **formatStatNumber**
+│   │   │    └─> formatNumberWithCommas
+│   │   │    └─> formatStatNumber
 │   │   │        └─> formatNumberWithCommas (from src/scripts/commaFormatter.js)
-│   │   │    └─> **init**
+│   │   │    └─> init
 │   │   │        └─> calculateForumStatistics (from src/scripts/commaFormatter.js)
 │   │   │        └─> formatNumberWithCommas (from src/scripts/commaFormatter.js)
 │   │   │        └─> formatStatNumber (from src/scripts/commaFormatter.js)
 │   │   │        └─> log (from src/utils/logger.js)
 │   │   │        └─> processElements (from src/scripts/commaFormatter.js)
-│   │   │    └─> **processElements**
+│   │   │    └─> processElements
 │   │   │        └─> formatNumberWithCommas (from src/scripts/commaFormatter.js)
 │   │   ├── kalareact.js
-│   │   │    └─> **init**
+│   │   │    └─> init
 │   │   │        └─> log (from src/utils/logger.js)
 │   │   ├── memberSearch.js
-│   │   │    └─> **addMemberSearchButton**
+│   │   │    └─> addMemberSearchButton
 │   │   │        └─> createMemberSearchModal (from src/scripts/memberSearch.js)
-│   │   │    └─> **createMemberSearchModal**
+│   │   │    └─> createMemberSearchModal
 │   │   │        └─> setupSearchFunctionality (from src/scripts/memberSearch.js)
-│   │   │    └─> **displaySearchResults**
-│   │   │    └─> **init**
+│   │   │    └─> displaySearchResults
+│   │   │    └─> init
 │   │   │        └─> addMemberSearchButton (from src/scripts/memberSearch.js)
 │   │   │        └─> createMemberSearchModal (from src/scripts/memberSearch.js)
 │   │   │        └─> displaySearchResults (from src/scripts/memberSearch.js)
 │   │   │        └─> error (from src/utils/logger.js)
 │   │   │        └─> searchMembers (from src/scripts/memberSearch.js)
 │   │   │        └─> setupSearchFunctionality (from src/scripts/memberSearch.js)
-│   │   │    └─> **searchMembers**
+│   │   │    └─> searchMembers
 │   │   │        └─> displaySearchResults (from src/scripts/memberSearch.js)
 │   │   │        └─> error (from src/utils/logger.js)
-│   │   │    └─> **setupSearchFunctionality**
+│   │   │    └─> setupSearchFunctionality
 │   │   │        └─> searchMembers (from src/scripts/memberSearch.js)
 │   │   ├── notifications.js
-│   │   │    └─> **debouncedCustomize**
-│   │   │    └─> **init**
+│   │   │    └─> debouncedCustomize
+│   │   │    └─> init
 │   │   │        └─> debouncedCustomize (from src/scripts/notifications.js)
 │   │   │        └─> error (from src/utils/logger.js)
 │   │   │        └─> fetchReactions (from src/scripts/separateReactions.js)
 │   │   │        └─> init (from src/main.js, src/scripts/bbcode.js, src/scripts/commaFormatter.js, src/scripts/kalareact.js, src/scripts/memberSearch.js, src/scripts/notifications.js, src/scripts/pinThreads.js, src/scripts/randomTopic.js, src/scripts/recentTopicsFormat.js, src/scripts/separateReactions.js)
 │   │   │        └─> log (from src/utils/logger.js)
 │   │   ├── pinThreads.js
-│   │   │    └─> **addForumPinButton**
+│   │   │    └─> addForumPinButton
 │   │   │        └─> addResponsiveStyle (from src/scripts/pinThreads.js)
 │   │   │        └─> createDropdownContainer (from src/scripts/pinThreads.js)
 │   │   │        └─> createForumPinButton (from src/scripts/pinThreads.js)
-│   │   │    └─> **addPinButton**
+│   │   │    └─> addPinButton
 │   │   │        └─> addThreadPinButton (from src/scripts/pinThreads.js)
-│   │   │    └─> **addResponsiveStyle**
-│   │   │    └─> **addThreadPinButton**
+│   │   │    └─> addResponsiveStyle
+│   │   │    └─> addThreadPinButton
 │   │   │        └─> addResponsiveStyle (from src/scripts/pinThreads.js)
 │   │   │        └─> createDropdownContainer (from src/scripts/pinThreads.js)
 │   │   │        └─> createThreadPinButton (from src/scripts/pinThreads.js)
-│   │   │    └─> **createCustomThreadRowHTML**
-│   │   │    └─> **createDropdownContainer**
-│   │   │    └─> **createErrorListItemHTML**
-│   │   │    └─> **createForumListItemHTML**
-│   │   │    └─> **createForumPinButton**
+│   │   │    └─> createCustomThreadRowHTML
+│   │   │    └─> createDropdownContainer
+│   │   │    └─> createErrorListItemHTML
+│   │   │    └─> createForumListItemHTML
+│   │   │    └─> createForumPinButton
 │   │   │        └─> togglePinForum (from src/scripts/pinThreads.js)
 │   │   │        └─> updatePinButtonState (from src/scripts/pinThreads.js)
-│   │   │    └─> **createLoadingListItem**
-│   │   │    └─> **createPinButton**
+│   │   │    └─> createLoadingListItem
+│   │   │    └─> createPinButton
 │   │   │        └─> createThreadPinButton (from src/scripts/pinThreads.js)
-│   │   │    └─> **createPinnedForumsSectionElement**
-│   │   │    └─> **createPinnedSectionsContainer**
-│   │   │    └─> **createPinnedThreadsSection**
+│   │   │    └─> createPinnedForumsSectionElement
+│   │   │    └─> createPinnedSectionsContainer
+│   │   │    └─> createPinnedThreadsSection
 │   │   │        └─> createPinnedForumsSectionElement (from src/scripts/pinThreads.js)
 │   │   │        └─> createPinnedThreadsSectionElement (from src/scripts/pinThreads.js)
 │   │   │        └─> findSearchPageInsertionPoint (from src/scripts/pinThreads.js)
 │   │   │        └─> populatePinnedForumsSection (from src/scripts/pinThreads.js)
 │   │   │        └─> populatePinnedThreadsSection (from src/scripts/pinThreads.js)
-│   │   │    └─> **createPinnedThreadsSectionElement**
-│   │   │    └─> **createThreadPinButton**
+│   │   │    └─> createPinnedThreadsSectionElement
+│   │   │    └─> createThreadPinButton
 │   │   │        └─> togglePinThread (from src/scripts/pinThreads.js)
 │   │   │        └─> updatePinButtonState (from src/scripts/pinThreads.js)
-│   │   │    └─> **createZomboidStatusHTML**
-│   │   │    └─> **fetchAllThreadsData**
+│   │   │    └─> createZomboidStatusHTML
+│   │   │    └─> fetchAllThreadsData
 │   │   │        └─> fetchThreadData (from src/scripts/pinThreads.js)
-│   │   │    └─> **fetchThreadData**
+│   │   │    └─> fetchThreadData
 │   │   │        └─> createCustomThreadRowHTML (from src/scripts/pinThreads.js)
 │   │   │        └─> fetchThreadRowFromForum (from src/scripts/pinThreads.js)
 │   │   │        └─> fetchThreadTitleAndForum (from src/scripts/pinThreads.js)
 │   │   │        └─> modifyRowHTML (from src/scripts/pinThreads.js)
-│   │   │    └─> **fetchThreadRowFromForum**
+│   │   │    └─> fetchThreadRowFromForum
 │   │   │        └─> fetchThreadRowFromForum (from src/scripts/pinThreads.js)
-│   │   │    └─> **fetchThreadTitleAndForum**
+│   │   │    └─> fetchThreadTitleAndForum
 │   │   │        └─> fetchZomboidStatus (from src/scripts/pinThreads.js)
-│   │   │    └─> **fetchZomboidStatus**
-│   │   │    └─> **findExistingForumRow**
-│   │   │    └─> **findExistingThreadRows**
-│   │   │    └─> **findSearchPageInsertionPoint**
-│   │   │    └─> **getForumInfo**
-│   │   │    └─> **getThreadInfo**
-│   │   │    └─> **init**
+│   │   │    └─> fetchZomboidStatus
+│   │   │    └─> findExistingForumRow
+│   │   │    └─> findExistingThreadRows
+│   │   │    └─> findSearchPageInsertionPoint
+│   │   │    └─> getForumInfo
+│   │   │    └─> getThreadInfo
+│   │   │    └─> init
 │   │   │        └─> addForumPinButton (from src/scripts/pinThreads.js)
 │   │   │        └─> addResponsiveStyle (from src/scripts/pinThreads.js)
 │   │   │        └─> addThreadPinButton (from src/scripts/pinThreads.js)
@@ -341,45 +341,45 @@ HQ-Userscripts
 │   │   │        └─> togglePinThread (from src/scripts/pinThreads.js)
 │   │   │        └─> updateMenuCommand (from src/scripts/pinThreads.js)
 │   │   │        └─> updatePinButtonState (from src/scripts/pinThreads.js)
-│   │   │    └─> **modifyRowHTML**
-│   │   │    └─> **populatePinnedForumsSection**
+│   │   │    └─> modifyRowHTML
+│   │   │    └─> populatePinnedForumsSection
 │   │   │        └─> createForumListItemHTML (from src/scripts/pinThreads.js)
 │   │   │        └─> findExistingForumRow (from src/scripts/pinThreads.js)
-│   │   │    └─> **populatePinnedThreadsSection**
+│   │   │    └─> populatePinnedThreadsSection
 │   │   │        └─> createErrorListItemHTML (from src/scripts/pinThreads.js)
 │   │   │        └─> createLoadingListItem (from src/scripts/pinThreads.js)
 │   │   │        └─> fetchThreadData (from src/scripts/pinThreads.js)
 │   │   │        └─> findExistingThreadRows (from src/scripts/pinThreads.js)
-│   │   │    └─> **toggleNewPostsDisplay**
+│   │   │    └─> toggleNewPostsDisplay
 │   │   │        └─> updateMenuCommand (from src/scripts/pinThreads.js)
-│   │   │    └─> **togglePinForum**
+│   │   │    └─> togglePinForum
 │   │   │        └─> getForumInfo (from src/scripts/pinThreads.js)
 │   │   │        └─> updatePinButtonState (from src/scripts/pinThreads.js)
-│   │   │    └─> **togglePinThread**
+│   │   │    └─> togglePinThread
 │   │   │        └─> getThreadInfo (from src/scripts/pinThreads.js)
 │   │   │        └─> updatePinButtonState (from src/scripts/pinThreads.js)
-│   │   │    └─> **updateMenuCommand**
-│   │   │    └─> **updatePinButtonState**
+│   │   │    └─> updateMenuCommand
+│   │   │    └─> updatePinButtonState
 │   │   ├── randomTopic.js
-│   │   │    └─> **addRandomTopicButton**
+│   │   │    └─> addRandomTopicButton
 │   │   │        └─> error (from src/utils/logger.js)
 │   │   │        └─> getValidRandomTopic (from src/scripts/randomTopic.js)
-│   │   │    └─> **checkTopicExists**
-│   │   │    └─> **getRandomTopicId**
-│   │   │    └─> **getValidRandomTopic**
+│   │   │    └─> checkTopicExists
+│   │   │    └─> getRandomTopicId
+│   │   │    └─> getValidRandomTopic
 │   │   │        └─> checkTopicExists (from src/scripts/randomTopic.js)
 │   │   │        └─> getRandomTopicId (from src/scripts/randomTopic.js)
-│   │   │    └─> **handleRandomTopicClick**
+│   │   │    └─> handleRandomTopicClick
 │   │   │        └─> error (from src/utils/logger.js)
 │   │   │        └─> getValidRandomTopic (from src/scripts/randomTopic.js)
-│   │   │    └─> **init**
+│   │   │    └─> init
 │   │   │        └─> addRandomTopicButton (from src/scripts/randomTopic.js)
 │   │   │        └─> checkTopicExists (from src/scripts/randomTopic.js)
 │   │   │        └─> error (from src/utils/logger.js)
 │   │   │        └─> getRandomTopicId (from src/scripts/randomTopic.js)
 │   │   │        └─> getValidRandomTopic (from src/scripts/randomTopic.js)
 │   │   ├── recentTopicsFormat.js
-│   │   │    └─> **init**
+│   │   │    └─> init
 │   │   │        └─> getScriptSetting (from src/main.js)
 │   │   │        └─> log (from src/utils/logger.js)
 │   │   │        └─> processTitle (from src/scripts/recentTopicsFormat.js)
@@ -388,31 +388,31 @@ HQ-Userscripts
 │   │   │        └─> styleEverythingAfterFirstDash (from src/scripts/recentTopicsFormat.js)
 │   │   │        └─> styleParentheses (from src/scripts/recentTopicsFormat.js)
 │   │   │        └─> styleVersionNumbers (from src/scripts/recentTopicsFormat.js)
-│   │   │    └─> **processTitle**
+│   │   │    └─> processTitle
 │   │   │        └─> getScriptSetting (from src/main.js)
 │   │   │        └─> styleAdventurersGuildTitle (from src/scripts/recentTopicsFormat.js)
 │   │   │        └─> styleEverythingAfterFirstDash (from src/scripts/recentTopicsFormat.js)
 │   │   │        └─> styleParentheses (from src/scripts/recentTopicsFormat.js)
 │   │   │        └─> styleVersionNumbers (from src/scripts/recentTopicsFormat.js)
-│   │   │    └─> **processTitlesInContainer**
-│   │   │    └─> **styleAdventurersGuildTitle**
-│   │   │    └─> **styleEverythingAfterFirstDash**
-│   │   │    └─> **styleParentheses**
-│   │   │    └─> **styleVersionNumbers**
+│   │   │    └─> processTitlesInContainer
+│   │   │    └─> styleAdventurersGuildTitle
+│   │   │    └─> styleEverythingAfterFirstDash
+│   │   │    └─> styleParentheses
+│   │   │    └─> styleVersionNumbers
 │   │   └── separateReactions.js
-│   │        └─> **addToggleLeftModeOption**
+│   │        └─> addToggleLeftModeOption
 │   │            └─> toggleLeftMode (from src/scripts/separateReactions.js)
-│   │        └─> **applyLeftMode**
-│   │        └─> **createReactionList**
+│   │        └─> applyLeftMode
+│   │        └─> createReactionList
 │   │            └─> getPollVotes (from src/scripts/separateReactions.js)
 │   │            └─> log (from src/utils/logger.js)
-│   │        └─> **fetchReactions**
+│   │        └─> fetchReactions
 │   │            └─> error (from src/utils/logger.js)
 │   │            └─> parseReactions (from src/scripts/separateReactions.js)
-│   │        └─> **getPollVotes**
+│   │        └─> getPollVotes
 │   │            └─> log (from src/utils/logger.js)
-│   │        └─> **hidePopup**
-│   │        └─> **init**
+│   │        └─> hidePopup
+│   │        └─> init
 │   │            └─> addToggleLeftModeOption (from src/scripts/separateReactions.js)
 │   │            └─> applyLeftMode (from src/scripts/separateReactions.js)
 │   │            └─> createReactionList (from src/scripts/separateReactions.js)
@@ -427,16 +427,16 @@ HQ-Userscripts
 │   │            └─> showPopup (from src/scripts/separateReactions.js)
 │   │            └─> toggleLeftMode (from src/scripts/separateReactions.js)
 │   │            └─> updateReactions (from src/scripts/separateReactions.js)
-│   │        └─> **observePosts**
+│   │        └─> observePosts
 │   │            └─> addToggleLeftModeOption (from src/scripts/separateReactions.js)
 │   │            └─> applyLeftMode (from src/scripts/separateReactions.js)
 │   │            └─> processPost (from src/scripts/separateReactions.js)
-│   │        └─> **parseReactions**
-│   │        └─> **processPost**
+│   │        └─> parseReactions
+│   │        └─> processPost
 │   │            └─> updateReactions (from src/scripts/separateReactions.js)
-│   │        └─> **showPopup**
-│   │        └─> **toggleLeftMode**
-│   │        └─> **updateReactions**
+│   │        └─> showPopup
+│   │        └─> toggleLeftMode
+│   │        └─> updateReactions
 │   │            └─> createReactionList (from src/scripts/separateReactions.js)
 │   │            └─> error (from src/utils/logger.js)
 │   │            └─> fetchReactions (from src/scripts/separateReactions.js)
@@ -444,90 +444,90 @@ HQ-Userscripts
 │   │            └─> showPopup (from src/scripts/separateReactions.js)
 │   ├── utils
 │   │   ├── compareVersions.js
-│   │   │    └─> **compareVersions**
+│   │   │    └─> compareVersions
 │   │   ├── filterScripts.js
-│   │   │    └─> **filterScripts**
+│   │   │    └─> filterScripts
 │   │   │        └─> compareVersions (from src/utils/compareVersions.js)
 │   │   ├── getCategoryOptions.js
-│   │   │    └─> **getCategoryOptions**
+│   │   │    └─> getCategoryOptions
 │   │   ├── getExecutionPhaseOptions.js
-│   │   │    └─> **getExecutionPhaseOptions**
+│   │   │    └─> getExecutionPhaseOptions
 │   │   ├── getPhaseDisplayName.js
-│   │   │    └─> **getPhaseDisplayName**
+│   │   │    └─> getPhaseDisplayName
 │   │   ├── logger.js
 │   │   │    (Error parsing: [object Object])
 │   │   ├── README.md
 │   │   ├── sharedUtils.js
 │   │   └── urlMatcher.js
-│   │        └─> **matchesUrl**
-│   │        └─> **shouldLoadScript**
+│   │        └─> matchesUrl
+│   │        └─> shouldLoadScript
 │   │            └─> matchesUrl (from src/utils/urlMatcher.js)
 │   ├── forumPreferences.js
 │   ├── injectStyles.js
 │   ├── main.js
-│   │    └─> **addMenuButton**
+│   │    └─> addMenuButton
 │   │        └─> ensureFontAwesome (from src/main.js)
 │   │        └─> log (from src/utils/logger.js)
 │   │        └─> warn (from src/utils/logger.js)
-│   │    └─> **ensureFontAwesome**
+│   │    └─> ensureFontAwesome
 │   │        └─> log (from src/utils/logger.js)
-│   │    └─> **executeLoadOrderForPhase**
+│   │    └─> executeLoadOrderForPhase
 │   │        └─> error (from src/utils/logger.js)
 │   │        └─> findScriptById (from src/main.js)
 │   │        └─> loadScript (from src/main.js)
 │   │        └─> log (from src/utils/logger.js)
 │   │        └─> warn (from src/utils/logger.js)
-│   │    └─> **findScriptById**
-│   │    └─> **getScriptSetting**
+│   │    └─> findScriptById
+│   │    └─> getScriptSetting
 │   │        └─> gmGetValue (from src/main.js)
-│   │    └─> **gmGetValue**
-│   │    └─> **gmSetValue**
-│   │    └─> **handleLoadTabContent**
+│   │    └─> gmGetValue
+│   │    └─> gmSetValue
+│   │    └─> handleLoadTabContent
 │   │        └─> loadTabContent (from src/components/loadTabContent.js)
-│   │    └─> **handleRenderScriptsGridView**
+│   │    └─> handleRenderScriptsGridView
 │   │        └─> renderScriptsGridView (from src/components/renderScriptsGridView.js)
-│   │    └─> **handleRenderScriptsListView**
+│   │    └─> handleRenderScriptsListView
 │   │        └─> renderScriptsListView (from src/components/renderScriptsListView.js)
-│   │    └─> **handleShowScriptSettings**
+│   │    └─> handleShowScriptSettings
 │   │        └─> showScriptSettings (from src/components/showScriptSettings.js)
-│   │    └─> **init**
+│   │    └─> init
 │   │        └─> addMenuButton (from src/main.js)
 │   │        └─> executeLoadOrderForPhase (from src/main.js)
 │   │        └─> initializeScriptStates (from src/main.js)
 │   │        └─> log (from src/utils/logger.js)
 │   │        └─> toggleModalVisibility (from src/main.js)
-│   │    └─> **initializeScriptStates**
+│   │    └─> initializeScriptStates
 │   │        └─> gmGetValue (from src/main.js)
 │   │        └─> log (from src/utils/logger.js)
-│   │    └─> **loadScript**
+│   │    └─> loadScript
 │   │        └─> error (from src/utils/logger.js)
 │   │        └─> init (from src/main.js, src/scripts/bbcode.js, src/scripts/commaFormatter.js, src/scripts/kalareact.js, src/scripts/memberSearch.js, src/scripts/notifications.js, src/scripts/pinThreads.js, src/scripts/randomTopic.js, src/scripts/recentTopicsFormat.js, src/scripts/separateReactions.js)
 │   │        └─> log (from src/utils/logger.js)
 │   │        └─> shouldLoadScript (from src/utils/urlMatcher.js)
 │   │        └─> warn (from src/utils/logger.js)
-│   │    └─> **saveScriptSetting**
+│   │    └─> saveScriptSetting
 │   │        └─> gmSetValue (from src/main.js)
 │   │        └─> log (from src/utils/logger.js)
-│   │    └─> **toggleModalVisibility**
+│   │    └─> toggleModalVisibility
 │   │        └─> hideModal (from src/components/hideModal.js)
 │   │        └─> log (from src/utils/logger.js)
 │   │        └─> showModal (from src/components/showModal.js)
-│   │    └─> **unloadScript**
+│   │    └─> unloadScript
 │   │        └─> error (from src/utils/logger.js)
 │   │        └─> log (from src/utils/logger.js)
 │   ├── manifest.js
 │   └── meta.js
 └── tools
     └── add-script.js
-         └─> **createScript**
+         └─> createScript
              └─> error (from src/utils/logger.js)
              └─> isValidScriptId (from tools/add-script.js)
              └─> log (from src/utils/logger.js)
              └─> prompt (from tools/add-script.js)
-         └─> **isValidScriptId**
-         └─> **processFiles**
+         └─> isValidScriptId
+         └─> processFiles
              └─> error (from src/utils/logger.js)
              └─> log (from src/utils/logger.js)
-         └─> **prompt**
+         └─> prompt
 
 ```

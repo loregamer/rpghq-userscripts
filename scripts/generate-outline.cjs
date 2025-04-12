@@ -20,7 +20,7 @@ const ignorePatterns = [
 const functionDataCache = {}; // Cache for { absolutePath: { funcName: { calls: Set<string> } } }
 const definedFunctionNames = new Set();
 const functionDefinitionLocations = new Map(); // ADDED: Map<funcName, Set<absolutePath>>
-const allowedTopLevelDirs = ['docs', 'scripts', 'src', 'tools'];
+const allowedTopLevelDirs = ["docs", "scripts", "src", "tools"];
 
 // --- Phase 1: Pre-analyze all JS files ---
 console.log("Analyzing JavaScript files...");
@@ -44,36 +44,52 @@ jsFiles.forEach((filePath) => {
     const functionsInFile = {};
     traverse(ast, {
       FunctionDeclaration(nodePath) {
-        const functionName = nodePath.node.id ? nodePath.node.id.name : "[Anonymous FunctionDeclaration]";
+        const functionName = nodePath.node.id
+          ? nodePath.node.id.name
+          : "[Anonymous FunctionDeclaration]";
         definedFunctionNames.add(functionName);
         // ADDED: Store definition location
         if (!functionDefinitionLocations.has(functionName)) {
-            functionDefinitionLocations.set(functionName, new Set());
+          functionDefinitionLocations.set(functionName, new Set());
         }
         functionDefinitionLocations.get(functionName).add(normalizedPath);
         // END ADDED
-        if (!functionsInFile[functionName]) functionsInFile[functionName] = { calls: new Set() };
-        nodePath.traverse({
+        if (!functionsInFile[functionName])
+          functionsInFile[functionName] = { calls: new Set() };
+        nodePath.traverse(
+          {
             CallExpression(innerPath) {
               let calledName = "";
               const callee = innerPath.node.callee;
               if (callee.type === "Identifier") calledName = callee.name;
-              else if (callee.type === "MemberExpression" && callee.property.type === "Identifier") calledName = callee.property.name;
-              if (calledName) functionsInFile[functionName].calls.add(calledName);
-            }
-        }, this);
+              else if (
+                callee.type === "MemberExpression" &&
+                callee.property.type === "Identifier"
+              )
+                calledName = callee.property.name;
+              if (calledName)
+                functionsInFile[functionName].calls.add(calledName);
+            },
+          },
+          this
+        );
       },
       VariableDeclarator(nodePath) {
-        if (nodePath.node.id.type === "Identifier" && (nodePath.node.init?.type === "FunctionExpression" || nodePath.node.init?.type === "ArrowFunctionExpression")) {
+        if (
+          nodePath.node.id.type === "Identifier" &&
+          (nodePath.node.init?.type === "FunctionExpression" ||
+            nodePath.node.init?.type === "ArrowFunctionExpression")
+        ) {
           const functionName = nodePath.node.id.name;
           definedFunctionNames.add(functionName);
           // ADDED: Store definition location
           if (!functionDefinitionLocations.has(functionName)) {
-              functionDefinitionLocations.set(functionName, new Set());
+            functionDefinitionLocations.set(functionName, new Set());
           }
           functionDefinitionLocations.get(functionName).add(normalizedPath);
           // END ADDED
-          if (!functionsInFile[functionName]) functionsInFile[functionName] = { calls: new Set() };
+          if (!functionsInFile[functionName])
+            functionsInFile[functionName] = { calls: new Set() };
           const functionBodyPath = nodePath.get("init.body");
           if (functionBodyPath) {
             functionBodyPath.traverse({
@@ -81,9 +97,14 @@ jsFiles.forEach((filePath) => {
                 let calledName = "";
                 const callee = innerPath.node.callee;
                 if (callee.type === "Identifier") calledName = callee.name;
-                else if (callee.type === "MemberExpression" && callee.property.type === "Identifier") calledName = callee.property.name;
-                if (calledName) functionsInFile[functionName].calls.add(calledName);
-              }
+                else if (
+                  callee.type === "MemberExpression" &&
+                  callee.property.type === "Identifier"
+                )
+                  calledName = callee.property.name;
+                if (calledName)
+                  functionsInFile[functionName].calls.add(calledName);
+              },
             });
           }
         }
@@ -95,12 +116,18 @@ jsFiles.forEach((filePath) => {
     }
   } catch (err) {
     if (err instanceof SyntaxError) {
-      console.warn(`Warning: Could not parse ${path.relative(projectRoot, filePath)}: ${err.message}`);
-      functionDataCache[normalizedPath] = { error: `Syntax Error: ${err.message.split("\\n")[0]}` };
+      console.warn(
+        `Warning: Could not parse ${path.relative(projectRoot, filePath)}: ${err.message}`
+      );
+      functionDataCache[normalizedPath] = {
+        error: `Syntax Error: ${err.message.split("\\n")[0]}`,
+      };
     }
   }
 });
-console.log(`Analyzed ${jsFiles.length} JS files. Found functions/data for ${Object.keys(functionDataCache).length}. Defined functions: ${definedFunctionNames.size}`);
+console.log(
+  `Analyzed ${jsFiles.length} JS files. Found functions/data for ${Object.keys(functionDataCache).length}. Defined functions: ${definedFunctionNames.size}`
+);
 
 // --- Phase 2: Generate Directory Tree ---
 console.log("Generating file tree...");
@@ -112,21 +139,25 @@ function generateTree(directoryPath, prefix = "", isRootLevel = false) {
     entries = fs.readdirSync(directoryPath, { withFileTypes: true });
   } catch (error) {
     if (error.code !== "EPERM" && error.code !== "EACCES") {
-      console.error(`Error reading directory ${directoryPath}: ${error.message}`);
+      console.error(
+        `Error reading directory ${directoryPath}: ${error.message}`
+      );
     }
     return;
   }
 
   let filteredEntries = entries.filter((entry) => {
     const fullPath = path.join(directoryPath, entry.name);
-    const relativePath = path.relative(projectRoot, fullPath).replace(/\\/g, "/");
+    const relativePath = path
+      .relative(projectRoot, fullPath)
+      .replace(/\\/g, "/");
     return !micromatch.isMatch(relativePath, ignorePatterns, { dot: true });
   });
 
   if (isRootLevel) {
-      filteredEntries = filteredEntries.filter(entry =>
-          entry.isDirectory() && allowedTopLevelDirs.includes(entry.name)
-      );
+    filteredEntries = filteredEntries.filter(
+      (entry) => entry.isDirectory() && allowedTopLevelDirs.includes(entry.name)
+    );
   }
 
   filteredEntries.sort((a, b) => {
@@ -161,10 +192,10 @@ function generateTree(directoryPath, prefix = "", isRootLevel = false) {
         if (functionNames.length > 0) {
           functionNames.forEach((funcName) => {
             const projectCalls = Array.from(functionData[funcName].calls)
-                                     .filter(call => definedFunctionNames.has(call))
-                                     .sort();
+              .filter((call) => definedFunctionNames.has(call))
+              .sort();
 
-            markdownContent += `${funcIndent}└─> **${funcName}**\n`;
+            markdownContent += `${funcIndent}└─> ${funcName}\n`;
             if (projectCalls.length > 0) {
               projectCalls.forEach((call) => {
                 let locationString = "";
@@ -172,8 +203,10 @@ function generateTree(directoryPath, prefix = "", isRootLevel = false) {
                 if (locations && locations.size > 0) {
                   // MODIFIED: Get relative paths and join
                   const relativePaths = Array.from(locations)
-                                            .map(loc => path.relative(projectRoot, loc).replace(/\\/g, "/"))
-                                            .sort(); // Sort relative paths for consistency
+                    .map((loc) =>
+                      path.relative(projectRoot, loc).replace(/\\/g, "/")
+                    )
+                    .sort(); // Sort relative paths for consistency
                   locationString = ` (from ${relativePaths.join(", ")})`;
                 }
                 markdownContent += `${funcIndent}    └─> ${call}${locationString}\n`;
