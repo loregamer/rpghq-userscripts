@@ -268,4 +268,4 @@ export const SCRIPT_MANIFEST = [
       },
     ],
   }
-];
+];;

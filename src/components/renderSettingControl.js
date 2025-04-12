@@ -62,7 +62,7 @@ export function renderSettingControl(setting, scriptId, getScriptSetting) {
           id=\"${controlId}\"
           data-setting-id=\"${setting.id}\"
           name=\"${setting.id}\"
-          value=\"${currentValue ?? '#ffffff'}\"
+          value=\"${currentValue ?? "#ffffff"}\"
         >`;
     default: // Default to text
       return `

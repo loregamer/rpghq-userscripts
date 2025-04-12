@@ -252,13 +252,19 @@ HQ-Userscripts
 │   │   │    └─> setupSearchFunctionality
 │   │   │        └─> searchMembers (from src/scripts/memberSearch.js)
 │   │   ├── notifications.js
+│   │   │    └─> _getScriptSetting
 │   │   │    └─> debouncedCustomize
 │   │   │    └─> init
+│   │   │        └─> _getScriptSetting (from src/scripts/notifications.js)
 │   │   │        └─> debouncedCustomize (from src/scripts/notifications.js)
 │   │   │        └─> error (from src/utils/logger.js)
 │   │   │        └─> fetchReactions (from src/scripts/separateReactions.js)
 │   │   │        └─> init (from src/main.js, src/scripts/bbcode.js, src/scripts/commaFormatter.js, src/scripts/kalareact.js, src/scripts/memberSearch.js, src/scripts/notifications.js, src/scripts/pinThreads.js, src/scripts/randomTopic.js, src/scripts/recentTopicsFormat.js, src/scripts/separateReactions.js)
 │   │   │        └─> log (from src/utils/logger.js)
+│   │   │        └─> styleFiller (from src/scripts/notifications.js)
+│   │   │        └─> styleKeyword (from src/scripts/notifications.js)
+│   │   │    └─> styleFiller
+│   │   │    └─> styleKeyword
 │   │   ├── pinThreads.js
 │   │   │    └─> addForumPinButton
 │   │   │        └─> addResponsiveStyle (from src/scripts/pinThreads.js)

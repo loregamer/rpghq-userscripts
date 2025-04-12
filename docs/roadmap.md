@@ -139,7 +139,7 @@ This document outlines the development checkpoints and actionable steps for crea
   - [x] Refine UI/UX based on testing.
   - [x] Add error handling and logging.
   - [x] Complete placeholder tabs ("Forum Preferences", "Settings") - implemented with full functionality
-  - [x] Start implementing actual userscripts into the manager (Thousands Comma Formatter added, Notifications settings added and refined)
+  - [x] Start implementing actual userscripts into the manager (Thousands Comma Formatter added, Notifications settings added and refined, Pin Threads added, BBCode enhancements added, Member Search added, Random Topic added, Kalarion Reaction Filter added, Separate Reactions added, Recent Topics Formatting added)
   - [x] Create migration guide for existing userscripts
   - [x] Add GM_listValues grant for Notification Improver script
   - [x] Add comments to code where necessary.
@@ -168,6 +168,14 @@ This document outlines the development checkpoints and actionable steps for crea
   - [x] Ensure that dependencies between functions/scripts are respected conceptually (e.g., caching logic runs before scripts that might use cached data).
 
   - [x] Document the execution order and the reasoning behind it (`docs/execution_order.md`).
+
+## Future Ideas / Potential Phases
+
+- [x] **Color Picker for Notification Settings:** Implement a visual color picker input type instead of relying on hex codes in text fields or JSON.
+- [ ] **Advanced Script Filtering/Search:** More robust search within the manager UI.
+- [ ] **Import/Export Settings:** Allow users to backup and restore their manager and script settings.
+- [ ] **Online Script Repository Integration:** (Ambitious) Ability to browse and install scripts from an online source.
+- [ ] **Profile-Based Settings:** Allow different sets of enabled scripts/settings for different forum activities.
 
 - **Checkpoint:** Users can manage topic visibility and appearance directly on forum view pages.
   - [ ] Identify topic rows (e.g., `li.row`) on forum view pages (`viewforum.php`).
