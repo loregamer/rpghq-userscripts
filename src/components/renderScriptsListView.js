@@ -14,14 +14,14 @@ export function renderScriptsListView(
   container,
   scripts,
   scriptStates = {},
-  showScriptSettings,
+  showScriptSettings
 ) {
   log("Rendering scripts in List View...");
 
   if (!scripts || scripts.length === 0) {
     renderEmptyState(
       container,
-      "No scripts found. Try adjusting your filters to see more results.",
+      "No scripts found. Try adjusting your filters to see more results."
     );
     return;
   }
@@ -60,13 +60,13 @@ export function renderScriptsListView(
                     ? `<span class="badge badge-primary">${script.settings.length}</span>`
                     : "-"
                 }</td>
-                <td>
-                  <button class="btn btn-primary btn-small view-settings" data-script-id="${
-                    script.id
-                  }">
-                    <i class="fa fa-cog"></i> Settings
-                  </button>
-                </td>
+                <td>${
+                  script.settings && script.settings.length > 0
+                    ? `\n                  <button class="btn btn-primary btn-small view-settings" title="Settings" data-script-id="${
+                        script.id
+                      }">\n                    <i class="fa fa-cog"></i> Settings\n                  </button>`
+                    : ""
+                }</td>
               </tr>
             `;
         })

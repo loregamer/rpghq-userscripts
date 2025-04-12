@@ -6,7 +6,7 @@
  */
 export function renderSettingControl(setting) {
   switch (setting.type) {
-    case "boolean":
+    case "checkbox": // Changed from boolean
       return `
           <input type="checkbox" name="${setting.id}" ${setting.default ? "checked" : ""}>
         `;

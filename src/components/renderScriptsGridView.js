@@ -48,7 +48,7 @@ export function renderScriptsGridView(
       </div>
       <div class="script-card-content">
         <div class="script-card-header">
-          <h3 class="script-card-title">${script.name}</h3>
+          <h3 class="script-card-title">${script.name}</h3>\n          <div class="script-card-actions-top">\n            ${script.settings && script.settings.length > 0 ? `\n            <button class="btn btn-icon view-settings" title="Settings" data-script-id="${script.id}">\n              <i class="fa fa-cog"></i>\n            </button>` : ""}\n          </div>
           <div class="script-card-actions-top">
             <button class="btn btn-icon view-settings" data-script-id="${script.id}">
               <i class="fa fa-cog"></i>
