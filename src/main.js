@@ -169,7 +169,7 @@ function loadScript(script) {
     if (typeof module.init === "function") {
       let result;
       // Pass dependencies if needed
-      if (script.id === "recentTopicsFormat") {
+      if (script.id === "recentTopicsFormat" || script.id === "notifications") {
         result = module.init({ getScriptSetting }); // Pass getScriptSetting
       } else {
         result = module.init(); // Original call

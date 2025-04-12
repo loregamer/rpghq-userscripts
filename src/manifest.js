@@ -59,7 +59,39 @@ export const SCRIPT_MANIFEST = [
     image: "https://f.rpghq.org/rso7uNB6S4H9.png", // Add an image URL if available
     path: "./scripts/notifications.js",
     enabledByDefault: true,
-    settings: [],
+    settings: [
+      {
+        id: "enableReactionEnhancements",
+        label: "Enable Reaction Enhancements",
+        type: "checkbox",
+        defaultValue: true,
+        description: "Shows reaction icons directly within notification text.",
+      },
+      {
+        id: "enableQuotePreviews",
+        label: "Enable Quote Previews",
+        type: "checkbox",
+        defaultValue: true,
+        description:
+          "Shows a preview of the quoted text in 'Post quoted' notifications.",
+      },
+      {
+        id: "enableMediaPreviews",
+        label: "Enable Media Previews",
+        type: "checkbox",
+        defaultValue: true,
+        description:
+          "Shows image or video previews in 'Post replied to' notifications.",
+      },
+      {
+        id: "autoMarkAsRead",
+        label: "Auto-Mark Notifications as Read",
+        type: "checkbox",
+        defaultValue: false,
+        description:
+          "Automatically marks notifications as read when they are displayed (use with caution).",
+      },
+    ],
     categories: ["UI"],
   },
   {
@@ -164,5 +196,5 @@ export const SCRIPT_MANIFEST = [
           "Enable to add commas to 4-digit numbers (1,000+). Disable to only format 5-digit numbers (10,000+).",
       },
     ],
-  },
-];
+  }
+];;

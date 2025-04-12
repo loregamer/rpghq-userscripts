@@ -71,7 +71,7 @@ jsFiles.forEach((filePath) => {
                 functionsInFile[functionName].calls.add(calledName);
             },
           },
-          this
+          this,
         );
       },
       VariableDeclarator(nodePath) {
@@ -117,7 +117,7 @@ jsFiles.forEach((filePath) => {
   } catch (err) {
     if (err instanceof SyntaxError) {
       console.warn(
-        `Warning: Could not parse ${path.relative(projectRoot, filePath)}: ${err.message}`
+        `Warning: Could not parse ${path.relative(projectRoot, filePath)}: ${err.message}`,
       );
       functionDataCache[normalizedPath] = {
         error: `Syntax Error: ${err.message.split("\\n")[0]}`,
@@ -126,7 +126,7 @@ jsFiles.forEach((filePath) => {
   }
 });
 console.log(
-  `Analyzed ${jsFiles.length} JS files. Found functions/data for ${Object.keys(functionDataCache).length}. Defined functions: ${definedFunctionNames.size}`
+  `Analyzed ${jsFiles.length} JS files. Found functions/data for ${Object.keys(functionDataCache).length}. Defined functions: ${definedFunctionNames.size}`,
 );
 
 // --- Phase 2: Generate Directory Tree ---
@@ -140,7 +140,7 @@ function generateTree(directoryPath, prefix = "", isRootLevel = false) {
   } catch (error) {
     if (error.code !== "EPERM" && error.code !== "EACCES") {
       console.error(
-        `Error reading directory ${directoryPath}: ${error.message}`
+        `Error reading directory ${directoryPath}: ${error.message}`,
       );
     }
     return;
@@ -156,7 +156,8 @@ function generateTree(directoryPath, prefix = "", isRootLevel = false) {
 
   if (isRootLevel) {
     filteredEntries = filteredEntries.filter(
-      (entry) => entry.isDirectory() && allowedTopLevelDirs.includes(entry.name)
+      (entry) =>
+        entry.isDirectory() && allowedTopLevelDirs.includes(entry.name),
     );
   }
 
@@ -204,7 +205,7 @@ function generateTree(directoryPath, prefix = "", isRootLevel = false) {
                   // MODIFIED: Get relative paths and join
                   const relativePaths = Array.from(locations)
                     .map((loc) =>
-                      path.relative(projectRoot, loc).replace(/\\/g, "/")
+                      path.relative(projectRoot, loc).replace(/\\/g, "/"),
                     )
                     .sort(); // Sort relative paths for consistency
                   locationString = ` (from ${relativePaths.join(", ")})`;
