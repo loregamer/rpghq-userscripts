@@ -54,6 +54,16 @@ export function renderSettingControl(setting, scriptId, getScriptSetting) {
           name="${setting.id}" 
           value="${currentValue ?? 0}"
         >`;
+    case "color":
+      return `
+        <input
+          type=\"color\"
+          class=\"setting-input setting-color-input\" // Add specific class for styling
+          id=\"${controlId}\"
+          data-setting-id=\"${setting.id}\"
+          name=\"${setting.id}\"
+          value=\"${currentValue ?? '#ffffff'}\"
+        >`;
     default: // Default to text
       return `
         <input 

@@ -66,7 +66,43 @@ export const SCRIPT_MANIFEST = [
         type: "checkbox",
         defaultValue: true,
         description:
-          "Applies different background colors based on notification type.",
+          "Define custom background colors for notification types using JSON format (hex codes). Requires 'Enable Notification Type Colors' to be active.",
+      },
+      {
+        id: "quoteColor",
+        label: "Quote Notification Color",
+        type: "color",
+        defaultValue: "#f0f8ff", // AliceBlue
+        description:
+          "Set the background color for quote notifications. (Overrides the JSON setting if 'Enable Notification Type Colors' is active).",
+      },
+      {
+        id: "replyColor",
+        label: "Reply Notification Color",
+        type: "color",
+        defaultValue: "#f5fffa", // MintCream
+        description: "Set the background color for reply notifications.",
+      },
+      {
+        id: "reactionColor",
+        label: "Reaction Notification Color",
+        type: "color",
+        defaultValue: "#fffafa", // Snow
+        description: "Set the background color for reaction notifications.",
+      },
+      {
+        id: "mentionColor",
+        label: "Mention Notification Color",
+        type: "color",
+        defaultValue: "#fff0f5", // LavenderBlush
+        description: "Set the background color for mention notifications.",
+      },
+      {
+        id: "editColor",
+        label: "Edit Notification Color",
+        type: "color",
+        defaultValue: "#fafad2", // LightGoldenrodYellow
+        description: "Set the background color for edit notifications.",
       },
       {
         id: "notificationColors",
@@ -74,18 +110,17 @@ export const SCRIPT_MANIFEST = [
         type: "text", // Consider a more advanced color picker type later
         defaultValue: JSON.stringify(
           {
-            quote: "#f0f8ff", // AliceBlue
-            reply: "#f5fffa", // MintCream
-            reaction: "#fffafa", // Snow
-            mention: "#fff0f5", // LavenderBlush
-            edit: "#fafad2", // LightGoldenrodYellow
+            // reply: "#f5fffa", // MintCream - Replaced by individual setting
+            // reaction: "#fffafa", // Snow - Replaced by individual setting
+            // mention: "#fff0f5", // LavenderBlush - Replaced by individual setting
+            // edit: "#fafad2", // LightGoldenrodYellow - Replaced by individual setting
             default: "#ffffff", // White
           },
           null,
           2,
         ),
         description:
-          "Define custom background colors for notification types using JSON format (hex codes). Requires 'Enable Notification Type Colors' to be active.",
+          "Define a default background color and colors for less common notification types (e.g., approval, report) using JSON. Colors for Quote, Reply, Reaction, Mention, and Edit are set using the dedicated color pickers above.",
       },
       {
         id: "enableImagePreviews",
@@ -233,4 +268,4 @@ export const SCRIPT_MANIFEST = [
       },
     ],
   }
-];;
+];

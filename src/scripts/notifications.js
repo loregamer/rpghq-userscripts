@@ -724,6 +724,31 @@ export function init({ getScriptSetting }) {
         "resizeFillerWords",
         true,
       );
+      const quoteColorSetting = _getScriptSetting(
+        "notifications",
+        "quoteColor",
+        "#f0f8ff", // Default from manifest
+      );
+      const replyColorSetting = _getScriptSetting(
+        "notifications",
+        "replyColor",
+        "#f5fffa",
+      );
+      const reactionColorSetting = _getScriptSetting(
+        "notifications",
+        "reactionColor",
+        "#fffafa",
+      );
+      const mentionColorSetting = _getScriptSetting(
+        "notifications",
+        "mentionColor",
+        "#fff0f5",
+      );
+      const editColorSetting = _getScriptSetting(
+        "notifications",
+        "editColor",
+        "#fafad2",
+      );
 
       // Apply base container styling
       Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
@@ -839,11 +864,11 @@ export function init({ getScriptSetting }) {
 
       // Define colors (get from settings or use defaults)
       const colors = enableColors ? notificationColors : {};
-      const quoteColor = colors.quote || "#FF4A66";
-      const replyColor = colors.reply || "#95DB00";
-      const reactionColor = colors.reaction || "#3889ED";
-      const mentionColor = colors.mention || "#FFC107";
-      const editColor = colors.edit || "#8A2BE2"; // Example purple
+      const quoteColor = quoteColorSetting; // Use the specific setting
+      const replyColor = replyColorSetting;
+      const reactionColor = reactionColorSetting;
+      const mentionColor = mentionColorSetting;
+      const editColor = editColorSetting; // Example purple
       const approvalColor = colors.approval || "#00AA00";
       const reportColor = colors.report || "#f58c05";
       const warningColor = colors.warning || "#D31141";
@@ -944,14 +969,39 @@ export function init({ getScriptSetting }) {
         "resizeFillerWords",
         true,
       );
+      const quoteColorSetting = _getScriptSetting(
+        "notifications",
+        "quoteColor",
+        "#f0f8ff", // Default from manifest
+      );
+      const replyColorSetting = _getScriptSetting(
+        "notifications",
+        "replyColor",
+        "#f5fffa",
+      );
+      const reactionColorSetting = _getScriptSetting(
+        "notifications",
+        "reactionColor",
+        "#fffafa",
+      );
+      const mentionColorSetting = _getScriptSetting(
+        "notifications",
+        "mentionColor",
+        "#fff0f5",
+      );
+      const editColorSetting = _getScriptSetting(
+        "notifications",
+        "editColor",
+        "#fafad2",
+      );
 
       // Define colors (get from settings or use defaults)
       const colors = enableColors ? notificationColors : {};
-      const quoteColor = colors.quote || "#FF4A66";
-      const replyColor = colors.reply || "#95DB00";
-      const reactionColor = colors.reaction || "#3889ED";
-      const mentionColor = colors.mention || "#FFC107";
-      const editColor = colors.edit || "#8A2BE2";
+      const quoteColor = quoteColorSetting; // Use the specific setting
+      const replyColor = replyColorSetting;
+      const reactionColor = reactionColorSetting;
+      const mentionColor = mentionColorSetting;
+      const editColor = editColorSetting;
       const approvalColor = colors.approval || "#00AA00";
       const reportColor = colors.report || "#f58c05";
       const warningColor = colors.warning || "#D31141"; // Assuming a warning type exists
