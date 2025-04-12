@@ -139,7 +139,7 @@ This document outlines the development checkpoints and actionable steps for crea
   - [x] Refine UI/UX based on testing.
   - [x] Add error handling and logging.
   - [x] Complete placeholder tabs ("Forum Preferences", "Settings") - implemented with full functionality
-  - [x] Start implementing actual userscripts into the manager (Thousands Comma Formatter added, Notifications settings added)
+  - [x] Start implementing actual userscripts into the manager (Thousands Comma Formatter added, Notifications settings added and refined)
   - [x] Create migration guide for existing userscripts
   - [x] Add GM_listValues grant for Notification Improver script
   - [x] Add comments to code where necessary.
