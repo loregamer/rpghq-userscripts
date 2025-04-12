@@ -1079,11 +1079,7 @@ export function init() {
     document.head.appendChild(styleElement);
 
     NotificationCustomizer.customizeNotificationPanel();
-
-    // Auto-mark as read if enabled
-    if (getSetting("notifications", "autoMarkAsRead", false)) {
-      NotificationMarker.checkAndMarkNotifications();
-    }
+    NotificationMarker.checkAndMarkNotifications(); // Now unconditional
 
     if (window.location.href.includes("ucp.php?i=ucp_notifications")) {
       NotificationCustomizer.customizeNotificationPage();

@@ -83,14 +83,7 @@ export const SCRIPT_MANIFEST = [
         description:
           "Shows image or video previews in 'Post replied to' notifications.",
       },
-      {
-        id: "autoMarkAsRead",
-        label: "Auto-Mark Notifications as Read",
-        type: "checkbox",
-        defaultValue: false,
-        description:
-          "Automatically marks notifications as read when they are displayed (use with caution).",
-      },
+      /* Removed autoMarkAsRead setting */
     ],
     categories: ["UI"],
   },
