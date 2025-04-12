@@ -18,7 +18,8 @@ const ignorePatterns = [
   "OUTLINE.md", // Don't include the outline itself
 ];
 const functionDataCache = {}; // Cache for { absolutePath: { funcName: { calls: Set<string> } } }
-const definedFunctionNames = new Set(); // ADDED: To store all defined function names
+const definedFunctionNames = new Set();
+const functionDefinitionLocations = new Map(); // ADDED: Map<funcName, Set<absolutePath>>
 const allowedTopLevelDirs = ['docs', 'scripts', 'src', 'tools'];
 
 // --- Phase 1: Pre-analyze all JS files ---
@@ -44,7 +45,13 @@ jsFiles.forEach((filePath) => {
     traverse(ast, {
       FunctionDeclaration(nodePath) {
         const functionName = nodePath.node.id ? nodePath.node.id.name : "[Anonymous FunctionDeclaration]";
-        definedFunctionNames.add(functionName); // ADDED: Track defined function
+        definedFunctionNames.add(functionName);
+        // ADDED: Store definition location
+        if (!functionDefinitionLocations.has(functionName)) {
+            functionDefinitionLocations.set(functionName, new Set());
+        }
+        functionDefinitionLocations.get(functionName).add(normalizedPath);
+        // END ADDED
         if (!functionsInFile[functionName]) functionsInFile[functionName] = { calls: new Set() };
         nodePath.traverse({
             CallExpression(innerPath) {
@@ -59,7 +66,13 @@ jsFiles.forEach((filePath) => {
       VariableDeclarator(nodePath) {
         if (nodePath.node.id.type === "Identifier" && (nodePath.node.init?.type === "FunctionExpression" || nodePath.node.init?.type === "ArrowFunctionExpression")) {
           const functionName = nodePath.node.id.name;
-          definedFunctionNames.add(functionName); // ADDED: Track defined function
+          definedFunctionNames.add(functionName);
+          // ADDED: Store definition location
+          if (!functionDefinitionLocations.has(functionName)) {
+              functionDefinitionLocations.set(functionName, new Set());
+          }
+          functionDefinitionLocations.get(functionName).add(normalizedPath);
+          // END ADDED
           if (!functionsInFile[functionName]) functionsInFile[functionName] = { calls: new Set() };
           const functionBodyPath = nodePath.get("init.body");
           if (functionBodyPath) {
@@ -135,7 +148,7 @@ function generateTree(directoryPath, prefix = "", isRootLevel = false) {
       generateTree(fullPath, childPrefix, false);
     } else if (
       entry.isFile() &&
-      (entry.name.endsWith(".js") || entry.name.endsWith(".cjs")) && // Include .cjs
+      (entry.name.endsWith(".js") || entry.name.endsWith(".cjs")) &&
       functionDataCache[normalizedPath]
     ) {
       const functionData = functionDataCache[normalizedPath];
@@ -147,15 +160,23 @@ function generateTree(directoryPath, prefix = "", isRootLevel = false) {
         const functionNames = Object.keys(functionData).sort();
         if (functionNames.length > 0) {
           functionNames.forEach((funcName) => {
-            // Filter calls to only include defined functions
             const projectCalls = Array.from(functionData[funcName].calls)
                                      .filter(call => definedFunctionNames.has(call))
                                      .sort();
 
             markdownContent += `${funcIndent}└─> **${funcName}**\n`;
-            if (projectCalls.length > 0) { // MODIFIED: Check filtered calls
+            if (projectCalls.length > 0) {
               projectCalls.forEach((call) => {
-                markdownContent += `${funcIndent}    - ${call}\n`;
+                let locationString = "";
+                const locations = functionDefinitionLocations.get(call);
+                if (locations && locations.size > 0) {
+                  // MODIFIED: Get relative paths and join
+                  const relativePaths = Array.from(locations)
+                                            .map(loc => path.relative(projectRoot, loc).replace(/\\/g, "/"))
+                                            .sort(); // Sort relative paths for consistency
+                  locationString = ` (from ${relativePaths.join(", ")})`;
+                }
+                markdownContent += `${funcIndent}    - ${call}${locationString}\n`; // MODIFIED Line
               });
             }
           });
