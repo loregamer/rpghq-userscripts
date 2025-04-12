@@ -102,7 +102,10 @@ HQ-Userscripts
 │   │   │        └─> renderEmptyState (from src/components/emptyState.js)
 │   │   │        └─> renderScriptSettingsContent (from src/components/renderScriptSettingsContent.js)
 │   │   │        └─> saveScriptSetting (from src/main.js)
+│   │   │        └─> updateDependentSettingsVisibility (from src/components/showScriptSettings.js)
 │   │   │        └─> warn (from src/utils/logger.js)
+│   │   │    └─> updateDependentSettingsVisibility
+│   │   │        └─> log (from src/utils/logger.js)
 │   │   └── toggleScriptEnabled.js
 │   │        └─> toggleScriptEnabled
 │   │            └─> error (from src/utils/logger.js)
