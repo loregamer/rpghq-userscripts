@@ -657,6 +657,16 @@ GM_addStyle(`
     margin-bottom: 15px;
     padding-bottom: 15px;
     border-bottom: 1px solid var(--border-color);
+    transition: opacity 0.3s ease, max-height 0.3s ease; /* Add transitions */
+    overflow: hidden; /* Hide content when collapsed */
+  }
+  .setting-item.setting-item-hidden {
+    opacity: 0;
+    max-height: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+    pointer-events: none; /* Prevent interaction when hidden */
   }
   .setting-item:last-child {
     border-bottom: none;

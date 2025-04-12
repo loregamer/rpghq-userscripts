@@ -8,16 +8,14 @@
  */
 import { renderEmptyState } from "./emptyState.js";
 import { log } from "../utils/logger.js";
-
 export function showScriptSettings(
   script,
   renderScriptSettingsContent,
-  getScriptSetting, // Added getScriptSetting parameter
-  saveScriptSetting, // Ensure saveScriptSetting is also passed
+  getScriptSetting,
+  saveScriptSetting,
 ) {
   log(`Showing settings modal for script: ${script.name}`);
 
-  // Create modal if it doesn't exist
   let modal = document.getElementById("script-settings-modal");
   if (!modal) {
     modal = document.createElement("div");
@@ -26,14 +24,12 @@ export function showScriptSettings(
     document.body.appendChild(modal);
   }
 
-  // Determine if settings can be rendered
   const canRenderSettings =
     script.settings &&
     script.settings.length > 0 &&
     renderScriptSettingsContent &&
-    getScriptSetting; // Check if getScriptSetting is provided
+    getScriptSetting;
 
-  // Populate modal with script settings content
   modal.innerHTML = `
     <div class="settings-modal-content">
       <div class="settings-modal-header">
@@ -42,13 +38,12 @@ export function showScriptSettings(
       </div>
 
       ${
-        /* Conditionally render settings or empty state */
         canRenderSettings
-          ? renderScriptSettingsContent(script, getScriptSetting) // Pass getScriptSetting
+          ? renderScriptSettingsContent(script, getScriptSetting)
           : renderEmptyState(
               null,
               "This script doesn't have any configurable settings.",
-            ) // Use empty state component
+            )
       }
 
       <div
@@ -94,12 +89,8 @@ export function showScriptSettings(
     </div>
   `;
 
-  // Show the modal
   modal.style.display = "block";
 
-  // --- Event Listeners ---
-
-  // Close button listener
   const closeButton = modal.querySelector(".settings-modal-close");
   if (closeButton) {
     closeButton.addEventListener("click", () => {
@@ -107,16 +98,35 @@ export function showScriptSettings(
     });
   }
 
-  // Click outside listener
   modal.addEventListener("click", (e) => {
     if (e.target === modal) {
       modal.style.display = "none";
     }
   });
 
-  // Add event listeners for setting inputs ONLY if save function is provided
+  // Function to update visibility of dependent settings
+  function updateDependentSettingsVisibility(changedSettingId, newValue) {
+    const settingItems = modal.querySelectorAll(
+      ".setting-item[data-depends-on]",
+    );
+    settingItems.forEach((item) => {
+      const dependsOn = item.dataset.dependsOn;
+      if (dependsOn === changedSettingId) {
+        const requiredValue = JSON.parse(item.dataset.dependsValue);
+        const shouldBeVisible = newValue === requiredValue;
+        log(
+          `Checking dependency: ${item.dataset.settingId} depends on ${changedSettingId}. Value: ${newValue}, Required: ${requiredValue}. Visible: ${shouldBeVisible}`,
+        );
+        if (shouldBeVisible) {
+          item.classList.remove("setting-item-hidden");
+        } else {
+          item.classList.add("setting-item-hidden");
+        }
+      }
+    });
+  }
+
   if (canRenderSettings && saveScriptSetting) {
-    // Use a small delay to ensure DOM is ready after innerHTML assignment
     setTimeout(() => {
       const settingsInputs = modal.querySelectorAll(".setting-input");
       settingsInputs.forEach((input) => {
@@ -126,20 +136,25 @@ export function showScriptSettings(
           return;
         }
 
-        const eventType = input.type === "checkbox" ? "change" : "input";
+        const eventType =
+          input.type === "checkbox" ||
+          input.type === "radio" ||
+          input.tagName === "SELECT"
+            ? "change"
+            : "input";
 
-        // Clear previous listeners if any (simple approach)
-        const new_input = input.cloneNode(true);
-        input.parentNode.replaceChild(new_input, input);
-
-        // Add the new listener
-        new_input.addEventListener(eventType, (e) => {
+        // Use existing input, no need to clone
+        input.addEventListener(eventType, (e) => {
+          const target = e.target;
           const value =
-            e.target.type === "checkbox" ? e.target.checked : e.target.value;
+            target.type === "checkbox" ? target.checked : target.value;
           log(`Setting changed: ${script.id}.${settingId} = ${value}`);
           saveScriptSetting(script.id, settingId, value);
+
+          // Update visibility of dependent settings
+          updateDependentSettingsVisibility(settingId, value);
         });
       });
-    }, 150); // Slightly increased delay
+    }, 150);
   }
 }

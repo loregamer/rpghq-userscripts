@@ -74,6 +74,7 @@ export const SCRIPT_MANIFEST = [
         type: "color",
         defaultValue: "#3889ED",
         description: "Set the text color for quote notifications.",
+        dependsOn: { settingId: "enableNotificationColors", value: true },
       },
       {
         id: "replyColor",
@@ -81,6 +82,7 @@ export const SCRIPT_MANIFEST = [
         type: "color",
         defaultValue: "#2E8B57", // SeaGreen - Default Reply Color
         description: "Set the text color for reply notifications.",
+        dependsOn: { settingId: "enableNotificationColors", value: true },
       },
       {
         id: "reactionColor",
@@ -88,6 +90,7 @@ export const SCRIPT_MANIFEST = [
         type: "color",
         defaultValue: "#3889ED", // Default Reaction Color
         description: "Set the text color for reaction notifications.",
+        dependsOn: { settingId: "enableNotificationColors", value: true },
       },
       {
         id: "mentionColor",
@@ -95,6 +98,7 @@ export const SCRIPT_MANIFEST = [
         type: "color",
         defaultValue: "#FFC107",
         description: "Set the text color for mention notifications.",
+        dependsOn: { settingId: "enableNotificationColors", value: true },
       },
       {
         id: "editColor",
@@ -102,6 +106,7 @@ export const SCRIPT_MANIFEST = [
         type: "color",
         defaultValue: "#fafad2", // LightGoldenrodYellow
         description: "Set the background color for edit notifications.",
+        dependsOn: { settingId: "enableNotificationColors", value: true },
       },
       {
         id: "approvalColor",
@@ -109,6 +114,7 @@ export const SCRIPT_MANIFEST = [
         type: "color",
         defaultValue: "#00AA00",
         description: "Set the text color for approval notifications.",
+        dependsOn: { settingId: "enableNotificationColors", value: true },
       },
       {
         id: "reportColor",
@@ -116,6 +122,7 @@ export const SCRIPT_MANIFEST = [
         type: "color",
         defaultValue: "#f58c05",
         description: "Set the text color for report notifications.",
+        dependsOn: { settingId: "enableNotificationColors", value: true },
       },
       {
         id: "warningColor",
@@ -123,6 +130,7 @@ export const SCRIPT_MANIFEST = [
         type: "color",
         defaultValue: "#D31141",
         description: "Set the text color for warning notifications.",
+        dependsOn: { settingId: "enableNotificationColors", value: true },
       },
       {
         id: "timestampColor",
@@ -159,7 +167,7 @@ export const SCRIPT_MANIFEST = [
         type: "checkbox",
         defaultValue: true,
         description: "Shows image previews in 'Post replied to' notifications.",
-        previewImage: "https://f.rpghq.org/X4oQJRUQ0Avb.png?n=pasted-file.png", // Use the actual URL here
+        previewImage: "https://f.rpghq.org/X4oQJRUQ0Avb.png?n=pasted-file.png", // https://f.rpghq.org/DVH4QZTYWIZg.png?n=pasted-file.png
       },
       {
         id: "enableVideoPreviews",
@@ -176,6 +184,7 @@ export const SCRIPT_MANIFEST = [
         defaultValue: true,
         description:
           "Fetches and displays reaction smileys within reaction notifications.",
+        previewImage: "https://f.rpghq.org/DVH4QZTYWIZg.png?n=pasted-file.png", // https://f.rpghq.org/DVH4QZTYWIZg.png?n=pasted-file.png
       },
       {
         id: "resizeFillerWords",

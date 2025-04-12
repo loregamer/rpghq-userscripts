@@ -11,19 +11,13 @@ import { log } from "../utils/logger.js";
 export function renderScriptSettingsContent(script, getScriptSetting) {
   log(`Rendering settings content for script: ${script.name} (${script.id})`);
 
-  // Guard clauses for invalid input or no settings
   if (!script || !script.id) {
     log("Error: Invalid script object passed to renderScriptSettingsContent.");
     return "<p>Error loading settings.</p>";
   }
   if (!script.settings || script.settings.length === 0) {
     log(`No settings defined for script: ${script.name}`);
-    // Return an empty state message instead of just empty string
-    return `
-      <div class="empty-state">
-        <p>This script has no configurable settings.</p>
-      </div>
-    `;
+    return `<div class="empty-state"><p>This script has no configurable settings.</p></div>`;
   }
   if (typeof getScriptSetting !== "function") {
     log(
@@ -42,11 +36,33 @@ export function renderScriptSettingsContent(script, getScriptSetting) {
         );
         return ""; // Skip invalid setting definitions
       }
-      const controlId = `setting-${script.id}-${setting.id}`; // Unique ID for label
 
+      const controlId = `setting-${script.id}-${setting.id}`; // Unique ID for label
       const settingName = setting.name || setting.id; // Use name if available, else ID
       let controlHTML = "";
 
+      // Determine dependency attributes and initial visibility
+      let dependencyAttributes = "";
+      let initiallyHidden = false;
+      if (setting.dependsOn) {
+        const depSettingId = setting.dependsOn.settingId;
+        const depValue = setting.dependsOn.value;
+        // Get the current value of the setting this one depends on
+        const depCurrentValue = getScriptSetting(script.id, depSettingId);
+
+        dependencyAttributes = `
+          data-depends-on="${depSettingId}"
+          data-depends-value='${JSON.stringify(depValue)}'
+        `; // Use single quotes for JSON validity
+
+        // Hide if the dependency's current value doesn't match the required value
+        initiallyHidden = depCurrentValue !== depValue;
+        log(
+          `Setting ${setting.id} depends on ${depSettingId} (current: ${depCurrentValue}, required: ${depValue}). Initially hidden: ${initiallyHidden}`,
+        );
+      }
+
+      // Render the specific control (checkbox or other)
       if (setting.type === "checkbox") {
         const isChecked = getScriptSetting(
           script.id,
@@ -55,11 +71,12 @@ export function renderScriptSettingsContent(script, getScriptSetting) {
         );
         controlHTML = `
           <label class="toggle-switch">
-            <input 
-              type="checkbox" 
-              class="setting-input" 
-              data-setting-id="${setting.id}" 
-              name="${setting.id}" 
+            <input
+              type="checkbox"
+              class="setting-input"
+              id="${controlId}"
+              data-setting-id="${setting.id}"
+              name="${setting.id}"
               ${isChecked ? "checked" : ""}
             >
             <span class="toggle-slider"></span>
@@ -72,9 +89,14 @@ export function renderScriptSettingsContent(script, getScriptSetting) {
           getScriptSetting,
         );
       }
-      // New layout: Name/Description on left, Control on right
+
+      // Create the setting item container with dependency attributes and initial style
       return `
-        <div class="setting-item">
+        <div
+          class="setting-item ${initiallyHidden ? "setting-item-hidden" : ""}"
+          ${dependencyAttributes}
+          data-setting-id="${setting.id}"
+        >
           <div class="setting-details">
             <div class="setting-name">${settingName}</div>
             ${setting.description ? `<div class="setting-description">${setting.description}</div>` : ""}
@@ -86,12 +108,7 @@ export function renderScriptSettingsContent(script, getScriptSetting) {
         </div>
       `;
     })
-    .join("\n"); // Join with newline for readability in source
+    .join("\n");
 
-  // Return the group container with all settings HTML
-  return `
-    <div class="setting-group">
-      ${settingsHTML}
-    </div>
-  `;
+  return `<div class="setting-group">${settingsHTML}</div>`;
 }
