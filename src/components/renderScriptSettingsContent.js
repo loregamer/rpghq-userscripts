@@ -45,10 +45,14 @@ export function renderScriptSettingsContent(script, getScriptSetting) {
       const controlId = `setting-${script.id}-${setting.id}`; // Unique ID for label
 
       const settingName = setting.name || setting.id; // Use name if available, else ID
-      let controlHTML = '';
+      let controlHTML = "";
 
-      if (setting.type === 'checkbox') {
-        const isChecked = getScriptSetting(script.id, setting.id, setting.defaultValue);
+      if (setting.type === "checkbox") {
+        const isChecked = getScriptSetting(
+          script.id,
+          setting.id,
+          setting.defaultValue,
+        );
         controlHTML = `
           <label class="toggle-switch">
             <input 
@@ -56,7 +60,7 @@ export function renderScriptSettingsContent(script, getScriptSetting) {
               class="setting-input" 
               data-setting-id="${setting.id}" 
               name="${setting.id}" 
-              ${isChecked ? 'checked' : ''}
+              ${isChecked ? "checked" : ""}
             >
             <span class="toggle-slider"></span>
           </label>
@@ -73,7 +77,7 @@ export function renderScriptSettingsContent(script, getScriptSetting) {
         <div class="setting-item">
           <div class="setting-details">
             <div class="setting-name">${settingName}</div>
-            ${setting.description ? `<div class="setting-description">${setting.description}</div>` : ''}
+            ${setting.description ? `<div class="setting-description">${setting.description}</div>` : ""}
           </div>
           <div class="setting-control">
             ${controlHTML}
