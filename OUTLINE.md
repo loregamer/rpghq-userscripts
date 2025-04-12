@@ -2,8 +2,6 @@
 
 ```
 HQ-Userscripts
-├── build
-│   └── lsf_lsx_converter
 ├── docs
 │   ├── scripts
 │   │   ├── bbcode.md
@@ -1417,49 +1415,39 @@ HQ-Userscripts
 │   │        - log
 │   ├── manifest.js
 │   └── meta.js
-├── tools
-│   └── add-script.js
-│        └─> **createScript**
-│            - close
-│            - error
-│            - exit
-│            - isValidScriptId
-│            - log
-│            - prompt
-│            - toLowerCase
-│        └─> **isValidScriptId**
-│            - test
-│        └─> **processFiles**
-│            - error
-│            - existsSync
-│            - exit
-│            - includes
-│            - indexOf
-│            - join
-│            - lastIndexOf
-│            - localeCompare
-│            - log
-│            - match
-│            - mkdirSync
-│            - push
-│            - readFileSync
-│            - slice
-│            - sort
-│            - substring
-│            - trim
-│            - writeFileSync
-│        └─> **prompt**
-│            - question
-│            - resolve
-├── .gitattributes
-├── .gitignore
-├── load_order.json
-├── package-lock.json
-├── package.json
-├── README.md
-└── rollup.config.js
-     └─> **generateMetadata**
-         - join
-         - replace
+└── tools
+    └── add-script.js
+         └─> **createScript**
+             - close
+             - error
+             - exit
+             - isValidScriptId
+             - log
+             - prompt
+             - toLowerCase
+         └─> **isValidScriptId**
+             - test
+         └─> **processFiles**
+             - error
+             - existsSync
+             - exit
+             - includes
+             - indexOf
+             - join
+             - lastIndexOf
+             - localeCompare
+             - log
+             - match
+             - mkdirSync
+             - push
+             - readFileSync
+             - slice
+             - sort
+             - substring
+             - trim
+             - writeFileSync
+         └─> **prompt**
+             - question
+             - resolve
 
 ```

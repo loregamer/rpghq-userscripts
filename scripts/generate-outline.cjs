@@ -18,9 +18,12 @@ const ignorePatterns = [
   "OUTLINE.md", // Don't include the outline itself
 ];
 const functionDataCache = {}; // Cache for { absolutePath: { funcName: { calls: Set<string> } } }
+const allowedTopLevelDirs = ['docs', 'scripts', 'src', 'tools']; // ADDED
 
 // --- Phase 1: Pre-analyze all JS files ---
 console.log("Analyzing JavaScript files...");
+// Analyze JS files from allowed directories only? No, the current analysis is fine,
+// it just builds a cache. Filtering happens during tree generation.
 const jsFiles = glob.sync("**/*.js", {
   cwd: projectRoot,
   ignore: ignorePatterns,
@@ -30,132 +33,93 @@ const jsFiles = glob.sync("**/*.js", {
 
 jsFiles.forEach((filePath) => {
   const normalizedPath = path.normalize(filePath);
+  // Optimization: Only parse files within the allowed directories - Sticking with the original plan: analyze all, filter tree. Easier.
+
   try {
     const content = fs.readFileSync(filePath, "utf8");
     const ast = parser.parse(content, {
-      sourceType: "module", // Assuming ES Modules in src, adjust if needed
-      plugins: [], // Add necessary babel plugins for your syntax if any
-      errorRecovery: true, // Try to parse even with minor errors
+      sourceType: "module",
+      plugins: [],
+      errorRecovery: true,
     });
 
     const functionsInFile = {};
     traverse(ast, {
-      // Handles: function funcName() { ... }
       FunctionDeclaration(nodePath) {
-        // Use nodePath to avoid conflict with 'path' module
-        const functionName = nodePath.node.id
-          ? nodePath.node.id.name
-          : "[Anonymous FunctionDeclaration]";
-        if (!functionsInFile[functionName])
-          functionsInFile[functionName] = { calls: new Set() };
-        nodePath.traverse(
-          {
+        const functionName = nodePath.node.id ? nodePath.node.id.name : "[Anonymous FunctionDeclaration]";
+        if (!functionsInFile[functionName]) functionsInFile[functionName] = { calls: new Set() };
+        nodePath.traverse({
             CallExpression(innerPath) {
               let calledName = "";
               const callee = innerPath.node.callee;
-              if (callee.type === "Identifier") {
-                calledName = callee.name;
-              } else if (
-                callee.type === "MemberExpression" &&
-                callee.property.type === "Identifier"
-              ) {
-                calledName = callee.property.name; // Captures obj.method()
-              }
-              // Add more complex callee checks if needed (e.g., this.method())
-              if (calledName) {
-                functionsInFile[functionName].calls.add(calledName);
-              }
-            },
-          },
-          this
-        ); // Pass parent scope if needed, or manage scope explicitly
+              if (callee.type === "Identifier") calledName = callee.name;
+              else if (callee.type === "MemberExpression" && callee.property.type === "Identifier") calledName = callee.property.name;
+              if (calledName) functionsInFile[functionName].calls.add(calledName);
+            }
+        }, this);
       },
-      // Handles: const funcName = function() { ... }; const funcName = () => { ... }; etc.
       VariableDeclarator(nodePath) {
-        if (
-          nodePath.node.id.type === "Identifier" &&
-          (nodePath.node.init?.type === "FunctionExpression" ||
-            nodePath.node.init?.type === "ArrowFunctionExpression")
-        ) {
+        if (nodePath.node.id.type === "Identifier" && (nodePath.node.init?.type === "FunctionExpression" || nodePath.node.init?.type === "ArrowFunctionExpression")) {
           const functionName = nodePath.node.id.name;
-          if (!functionsInFile[functionName])
-            functionsInFile[functionName] = { calls: new Set() };
-
-          // Traverse within the function's body/scope
+          if (!functionsInFile[functionName]) functionsInFile[functionName] = { calls: new Set() };
           const functionBodyPath = nodePath.get("init.body");
           if (functionBodyPath) {
             functionBodyPath.traverse({
               CallExpression(innerPath) {
                 let calledName = "";
                 const callee = innerPath.node.callee;
-                if (callee.type === "Identifier") {
-                  calledName = callee.name;
-                } else if (
-                  callee.type === "MemberExpression" &&
-                  callee.property.type === "Identifier"
-                ) {
-                  calledName = callee.property.name;
-                }
-                if (calledName) {
-                  functionsInFile[functionName].calls.add(calledName);
-                }
-              },
+                if (callee.type === "Identifier") calledName = callee.name;
+                else if (callee.type === "MemberExpression" && callee.property.type === "Identifier") calledName = callee.property.name;
+                if (calledName) functionsInFile[functionName].calls.add(calledName);
+              }
             });
           }
         }
       },
-      // TODO: Add ClassMethod visitor if needed
     });
 
     if (Object.keys(functionsInFile).length > 0) {
       functionDataCache[normalizedPath] = functionsInFile;
     }
   } catch (err) {
-    // Log only syntax errors during parsing phase
     if (err instanceof SyntaxError) {
-      console.warn(
-        `Warning: Could not parse ${path.relative(projectRoot, filePath)}: ${err.message}`
-      );
-      functionDataCache[normalizedPath] = {
-        error: `Syntax Error: ${err.message.split("\\n")[0]}`,
-      }; // Store concise error
-    } else {
-      // Optionally log other errors if needed for debugging, but they can be noisy
-      // console.warn(`Warning: Problem processing ${path.relative(projectRoot, filePath)}: ${err.message}`);
+      console.warn(`Warning: Could not parse ${path.relative(projectRoot, filePath)}: ${err.message}`);
+      functionDataCache[normalizedPath] = { error: `Syntax Error: ${err.message.split("\\n")[0]}` };
     }
   }
 });
-console.log(
-  `Analyzed ${jsFiles.length} JS files. Found functions/data for ${Object.keys(functionDataCache).length}.`
-);
+console.log(`Analyzed ${jsFiles.length} JS files. Found functions/data for ${Object.keys(functionDataCache).length}.`);
 
 // --- Phase 2: Generate Directory Tree ---
 console.log("Generating file tree...");
-// Use path.basename for cleaner root display
 let markdownContent = `# Project Outline\n\n\`\`\`\n${path.basename(projectRoot)}\n`;
 
-function generateTree(directoryPath, prefix = "") {
+// MODIFIED FUNCTION
+function generateTree(directoryPath, prefix = "", isRootLevel = false) {
   let entries;
   try {
     entries = fs.readdirSync(directoryPath, { withFileTypes: true });
   } catch (error) {
-    // Silently ignore permission errors, log others
     if (error.code !== "EPERM" && error.code !== "EACCES") {
-      console.error(
-        `Error reading directory ${directoryPath}: ${error.message}`
-      );
+      console.error(`Error reading directory ${directoryPath}: ${error.message}`);
     }
     return;
   }
 
-  const filteredEntries = entries.filter((entry) => {
+  // Original filter based on ignorePatterns
+  let filteredEntries = entries.filter((entry) => {
     const fullPath = path.join(directoryPath, entry.name);
-    const relativePath = path
-      .relative(projectRoot, fullPath)
-      .replace(/\\/g, "/"); // Use forward slashes for matching
-    // Micromatch expects forward slashes
+    const relativePath = path.relative(projectRoot, fullPath).replace(/\\/g, "/");
     return !micromatch.isMatch(relativePath, ignorePatterns, { dot: true });
   });
+
+  // ADDED: Filter top-level directories if at root
+  if (isRootLevel) {
+      filteredEntries = filteredEntries.filter(entry =>
+          // Ensure it's a directory and its name is in the allowed list
+          entry.isDirectory() && allowedTopLevelDirs.includes(entry.name)
+      );
+  }
 
   // Sort: directories first, then files, alphabetically
   filteredEntries.sort((a, b) => {
@@ -167,23 +131,22 @@ function generateTree(directoryPath, prefix = "") {
   filteredEntries.forEach((entry, index) => {
     const isLast = index === filteredEntries.length - 1;
     const connector = isLast ? "└── " : "├── ";
-    const childPrefix = prefix + (isLast ? "    " : "│   "); // Spaces for indentation
+    const childPrefix = prefix + (isLast ? "    " : "│   ");
     const fullPath = path.join(directoryPath, entry.name);
-    const normalizedPath = path.normalize(fullPath); // Normalize for cache lookup
+    const normalizedPath = path.normalize(fullPath);
 
-    markdownContent += `${prefix}${connector}${entry.name}\n`; // Use actual newline
+    markdownContent += `${prefix}${connector}${entry.name}\n`;
 
     if (entry.isDirectory()) {
-      generateTree(fullPath, childPrefix);
+      // Pass isRootLevel as false for recursive calls
+      generateTree(fullPath, childPrefix, false);
     } else if (
       entry.isFile() &&
       entry.name.endsWith(".js") &&
       functionDataCache[normalizedPath]
     ) {
       const functionData = functionDataCache[normalizedPath];
-
-      // Indent function details using the childPrefix
-      const funcIndent = childPrefix + " ".repeat(1); // Add a space after the tree lines
+      const funcIndent = childPrefix + " ".repeat(1);
 
       if (functionData.error) {
         markdownContent += `${funcIndent}(Error parsing: ${functionData.error})\n`;
@@ -195,25 +158,18 @@ function generateTree(directoryPath, prefix = "") {
             const calls = Array.from(functionData[funcName].calls).sort();
             if (calls.length > 0) {
               calls.forEach((call) => {
-                // Indent calls further
                 markdownContent += `${funcIndent}    - ${call}\n`;
               });
             }
           });
         }
-        // Optionally add a note if a JS file was parsed but no functions found
-        // else { markdownContent += `${funcIndent}(No functions found)\n`; }
       }
     }
-    // Add a blank line after directories or JS files with details for spacing? Maybe not needed.
-    // if (entry.isDirectory() || (entry.isFile() && entry.name.endsWith('.js') && functionDataCache[normalizedPath])) {
-    //     markdownContent += `${childPrefix}\n`;
-    // }
   });
 }
 
-// Start tree generation from the root
-generateTree(projectRoot);
+// Start tree generation from the root, filtering top-level
+generateTree(projectRoot, "", true); // MODIFIED CALL
 
 markdownContent += "\n```\n"; // Close markdown code block
 
