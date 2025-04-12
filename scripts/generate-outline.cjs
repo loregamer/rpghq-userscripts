@@ -176,7 +176,7 @@ function generateTree(directoryPath, prefix = "", isRootLevel = false) {
                                             .sort(); // Sort relative paths for consistency
                   locationString = ` (from ${relativePaths.join(", ")})`;
                 }
-                markdownContent += `${funcIndent}    - ${call}${locationString}\n`; // MODIFIED Line
+                markdownContent += `${funcIndent}    └─> ${call}${locationString}\n`;
               });
             }
           });
