@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
 // @namespace    rpghq-userscripts
-// @version      0.3
+// @version      0.4
 // @description  RPGHQ Userscript Manager
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -24,748 +24,842 @@
   "use strict";
   // Inject styles
   GM_addStyle(`
-  :root {
-    --primary-color: #2196f3;
-    --primary-dark: #1976d2;
-    --accent-color: #ff9800;
-    --success-color: #4caf50;
-    --warning-color: #ffc107;
-    --danger-color: #f44336;
-    --text-primary: #ffffff;
-    --text-secondary: #b0bec5;
-    --bg-dark: #1e1e1e;
-    --bg-card: #2d2d2d;
-    --border-color: #444444;
-  }
-  
-  /* Modal overlay */
-  #rpghq-modal-overlay {
-    display: none;
-    position: fixed;
-    z-index: 1000000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    overflow: hidden;
-  }
-
-  /* Modal container */
-  .mod-manager-modal {
-    display: none;
-    position: fixed;
-    z-index: 1000000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    overflow: hidden; /* Prevent body scroll when modal is open */
-  }
-
-  /* Modal content box */
-  .mod-manager-modal-content {
-    background-color: var(--bg-dark);
-    margin: 2% auto;
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    width: 90%;
-    max-width: 1200px;
-    max-height: 90vh;
-    border-radius: 4px;
-    color: var(--text-primary);
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Header and close button */
-  .mod-manager-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-  }
-
-  .mod-manager-title {
-    margin: 0;
-    font-size: 1.8em;
-    color: var(--text-primary);
-  }
-
-  .mod-manager-close {
-    font-size: 1.8em;
-    cursor: pointer;
-  }
-
-  .mod-manager-close:hover {
-    color: var(--danger-color);
-  }
-
-  /* Tab system */
-  .mod-manager-tabs {
-    display: flex;
-    margin-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .mod-manager-tab {
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 1em;
-    color: var(--text-secondary);
-    position: relative;
-  }
-
-  .mod-manager-tab:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-
-  .mod-manager-tab.active {
-    color: var(--primary-color);
-    font-weight: bold;
-    border-bottom: 2px solid var(--primary-color);
-  }
-
-  /* Sub-tabs system */
-  .sub-tabs {
-    display: flex;
-    margin-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-    background-color: var(--bg-card);
-    border-radius: 4px 4px 0 0;
-  }
-
-  .sub-tab {
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 1em;
-    color: var(--text-secondary);
-    position: relative;
-  }
-
-  .sub-tab:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-
-  .sub-tab.active {
-    color: var(--primary-color);
-    font-weight: bold;
-    border-bottom: 2px solid var(--primary-color);
-    background-color: var(--bg-card);
-    border-radius: 4px 4px 0 0;
-  }
-
-  .sub-tab {
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 1em;
-    color: var(--text-secondary);
-    position: relative;
-  }
-
-  .sub-tab:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-
-  .sub-tab.active {
-    color: var(--primary-color);
-    font-weight: bold;
-    border-bottom: 2px solid var(--primary-color);
-  }
-
-  /* Content area */
-  .mod-manager-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-  }
-
-  /* Filter panel */
-  .filter-panel {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 15px;
-  }
-
-  .filter-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-
-  .filter-panel-title {
-    font-size: 1.1em;
-    font-weight: bold;
-    margin: 0;
-  }
-
-  .filter-panel-toggle {
-    background: none;
-    border: none;
-    color: var(--text-primary);
-    cursor: pointer;
-    font-size: 1.1em;
-  }
-
-  .filter-panel-body {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
-  }
-
-  .filter-panel-body.collapsed {
-    display: none;
-  }
-
-  .filter-group {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .filter-group label {
-    margin-bottom: 5px;
-    font-weight: bold;
-    font-size: 0.9em;
-  }
-
-  .filter-group select,
-  .filter-group input {
-    padding: 5px;
-    border: 1px solid var(--border-color);
-    border-radius: 3px;
-    background-color: var(--bg-dark);
-    color: var(--text-primary);
-  }
-
-  .filter-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 10px;
-    grid-column: 1 / -1;
-  }
-  
-  .filter-panel {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 15px;
-  }
-
-  .filter-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-
-  .filter-panel-title {
-    font-size: 1.1em;
-    font-weight: bold;
-    margin: 0;
-  }
-
-  .filter-panel-toggle {
-    background: none;
-    border: none;
-    color: var(--text-primary);
-    cursor: pointer;
-    font-size: 1.1em;
-  }
-
-  .filter-panel-body {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
-  }
-
-  .filter-panel-body.collapsed {
-    display: none;
-  }
-
-  .filter-group {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .filter-group label {
-    margin-bottom: 5px;
-    font-weight: bold;
-    font-size: 0.9em;
-  }
-
-  .filter-group select,
-  .filter-group input {
-    padding: 5px;
-    border: 1px solid var(--border-color);
-    border-radius: 3px;
-    background-color: var(--bg-dark);
-    color: var(--text-primary);
-  }
-
-  .filter-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 10px;
-    grid-column: 1 / -1;
-  }
-
-  /* Script grid */
-  .script-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 10px;
-  }
-
-  .script-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-  }
-  
-  .script-card.disabled {
-    opacity: 0.7;
-    filter: grayscale(0.8);
-  }
-
-  /* Style for enabled script card in Grid View */
-  .script-card:not(.disabled) {
-    border: 1px solid #C62D51; /* Added border */
-    /* Adjust margin slightly to compensate for border */
-    margin: -1px; /* Prevent layout shift due to border */
-  }
-
-  .script-card-image {
-    position: relative;
-    height: 130px;
-    overflow: hidden;
-    cursor: pointer;
-  }
-
-  .script-card-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  
-  .image-toggle {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 10;
-    border-radius: 3px;
-    padding: 3px;
-  }
-
-  /* Category display removed */
-
-  .script-card-content {
-    padding: 10px;
-  }
-
-  .script-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-
-  .script-card-actions-top {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-  }
-
-  .script-toggle-wrapper {
-    cursor: pointer;
-    font-size: 1.2em;
-    display: flex;
-    align-items: center;
-  }
-
-  /* Default checkboxes - no custom styling */
-  input[type="checkbox"] {
-    cursor: pointer;
-  }
-
-  /* Specific styling for the script toggle checkbox */
-  .script-toggle-checkbox {
-    margin: 2px;
-  }
-
-  .btn-icon {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 3px;
-  }
-
-  .btn-icon:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-  }
-
-  .script-card-title {
-    font-size: 1.1em;
-    font-weight: bold;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex: 1;
-    padding-right: 8px;
-  }
-
-  .script-card-version {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 0.8em;
-  }
-  
-  .script-card-version-inline {
-    font-size: 0.8em;
-    color: var(--text-secondary);
-    font-weight: normal;
-    display: none; /* Hide version for now */
-  }
-  
-  .script-version-inline {
-    font-size: 0.8em;
-    color: var(--text-secondary);
-    font-weight: normal;
-    display: none; /* Hide version for now */
-  }
-
-  .script-card-description {
-    margin: 0 0 10px 0;
-    color: var(--text-secondary);
-    font-size: 0.9em;
-    line-height: 1.3;
-    height: 3.6em; /* Approx 3 lines */
-    overflow: hidden;
-  }
-
-  .script-card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 8px;
-    margin-top: 8px;
-    border-top: 1px solid var(--border-color);
-  }
-
-  .script-card-version {
-    font-size: 0.8em;
-    color: var(--text-secondary);
-    display: none; /* Hide version for now */
-  }
-
-  .script-card-phase {
-    font-size: 0.85em;
-    color: var(--text-secondary);
-  }
-
-  /* Script list view */
-  .script-list {
-    /* Uses .data-table styling */
-  }
-
-  /* Forum preferences */
-  .preferences-section {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    margin-bottom: 15px;
-    overflow: hidden;
-  }
-
-  .preferences-section-header {
-    background-color: rgba(33, 150, 243, 0.1);
-    padding: 10px;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .preferences-section-title {
-    margin: 0;
-    font-size: 1.1em;
-    color: var(--text-primary);
-  }
-
-  .preferences-section-body {
-    padding: 10px;
-  }
-
-  .preference-item {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .preference-item:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-    border-bottom: none;
-  }
-
-  .preference-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 5px;
-  }
-
-  .preference-name {
-    font-weight: bold;
-    margin: 0;
-  }
-
-  .preference-control {
-    min-width: 150px;
-  }
-
-  .preference-description {
-    color: var(--text-secondary);
-    font-size: 0.9em;
-    margin: 0;
-  }
-
-  /* Settings modal */
-  .settings-modal {
-    display: none;
-    position: fixed;
-    z-index: 1100000; /* Above main modal */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-  }
-
-  .settings-modal-content {
-    background-color: var(--bg-dark);
-    margin: 5% auto;
-    padding: 15px;
-    border: 1px solid var(--border-color);
-    width: 60%;
-    max-width: 800px;
-    max-height: 85vh;
-    border-radius: 4px;
-    overflow-y: auto;
-  }
-
-  .settings-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .settings-modal-title {
-    font-size: 1.4em;
-    margin: 0;
-  }
-
-  .settings-modal-close {
-    font-size: 1.4em;
-    cursor: pointer;
-    color: var(--text-secondary);
-  }
-
-  .settings-modal-close:hover {
-    color: var(--danger-color);
-  }
-
-  .setting-group {
-    margin-bottom: 15px;
-  }
-
-  .setting-group-title {
-    font-size: 1.1em;
-    margin: 0 0 10px 0;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .setting-item {
-    margin-bottom: 12px;
-  }
-
-  .setting-label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 5px;
-  }
-
-  .setting-description {
-    display: block;
-    color: var(--text-secondary);
-    font-size: 0.9em;
-    margin-bottom: 5px;
-  }
-
-  .setting-control {
-    margin-top: 5px;
-  }
-
-  /* Buttons */
-  .btn {
-    padding: 5px 10px;
-    border-radius: 3px;
-    border: none;
-    cursor: pointer;
-    font-size: 0.9em;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .btn-icon {
-    font-size: 1em;
-  }
-
-  .btn-primary {
-    background-color: var(--primary-color);
-    color: white;
-  }
-
-  .btn-primary:hover {
-    background-color: var(--primary-dark);
-  }
-
-  .btn-secondary {
-    background-color: #555;
-    color: var(--text-primary);
-  }
-
-  .btn-secondary:hover {
-    background-color: #666;
-  }
-
-  .btn-small {
-    padding: 3px 8px;
-    font-size: 0.8em;
-  }
-
-  /* Toggle switch - replaced with font awesome icons */
-
-  /* Tables */
-  .data-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 15px;
-  }
-
-  .data-table th,
-  .data-table td {
-    padding: 8px 10px;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .data-table th {
-    background-color: rgba(255, 255, 255, 0.05);
-    font-weight: bold;
-  }
-
-  .data-table tr:hover {
-    background-color: rgba(255, 255, 255, 0.03);
-  }
-
-  /* Style for enabled script row in List View */
-  .data-table tr.enabled {
-    border-left: 1px solid #cce5ff; /* Make border thinner and lighter */
-    /* Optionally adjust padding if needed */
-    /* padding-left: 7px; /* Adjust padding */
-  }
-
-  /* Empty state */
-  .empty-state {
-    text-align: center;
-    padding: 30px 20px;
-    color: var(--text-secondary);
-  }
-
-  .empty-state-icon {
-    font-size: 2.5em;
-    margin-bottom: 15px;
-    opacity: 0.5;
-  }
-
-  .empty-state-message {
-    font-size: 1.1em;
-    margin-bottom: 10px;
-  }
-
-  /* Info note */
-  .info-note {
-    background-color: rgba(33, 150, 243, 0.1);
-    border-left: 4px solid var(--primary-color);
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 0 4px 4px 0;
-  }
-
-  /* Empty state */
-  .empty-state {
-    text-align: center;
-    padding: 30px 20px;
-    color: var(--text-secondary);
-  }
-
-  .empty-state-icon {
-    font-size: 2.5em;
-    margin-bottom: 15px;
-    opacity: 0.5;
-  }
-
-  .empty-state-message {
-    font-size: 1.1em;
-    margin-bottom: 10px;
-  }
-  
-  /* WIP Banner */
-  .wip-banner {
-    background-color: var(--warning-color);
-    color: #000;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-    text-align: center;
-    font-weight: bold;
-  }
-
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .script-grid {
-      grid-template-columns: 1fr;
+    :root {
+      --primary-color: #2196f3;
+      --primary-dark: #1976d2;
+      --accent-color: #ff9800;
+      --success-color: #4caf50;
+      --warning-color: #ffc107;
+      --danger-color: #f44336;
+      --text-primary: #ffffff;
+      --text-secondary: #b0bec5;
+      --bg-dark: #1e1e1e;
+      --bg-card: #2d2d2d;
+      --border-color: #444444;
     }
-
-    .filter-panel-body {
-      grid-template-columns: 1fr;
+    
+    /* Modal overlay */
+    #rpghq-modal-overlay {
+      display: none;
+      position: fixed;
+      z-index: 1000000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      overflow: hidden;
     }
-
-    .settings-modal-content {
+  
+    /* Modal container */
+    .mod-manager-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      overflow: hidden; /* Prevent body scroll when modal is open */
+    }
+  
+    /* Modal content box */
+    .mod-manager-modal-content {
+      background-color: var(--bg-dark);
+      margin: 2% auto;
+      padding: 10px;
+      border: 1px solid var(--border-color);
       width: 90%;
+      max-width: 1200px;
+      max-height: 90vh;
+      border-radius: 4px;
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
     }
-  }
-`);
+  
+    /* Header and close button */
+    .mod-manager-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+  
+    .mod-manager-title {
+      margin: 0;
+      font-size: 1.8em;
+      color: var(--text-primary);
+    }
+  
+    .mod-manager-close {
+      font-size: 1.8em;
+      cursor: pointer;
+    }
+  
+    .mod-manager-close:hover {
+      color: var(--danger-color);
+    }
+  
+    /* Tab system */
+    .mod-manager-tabs {
+      display: flex;
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+  
+    .mod-manager-tab {
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 1em;
+      color: var(--text-secondary);
+      position: relative;
+    }
+  
+    .mod-manager-tab:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  
+    .mod-manager-tab.active {
+      color: var(--primary-color);
+      font-weight: bold;
+      border-bottom: 2px solid var(--primary-color);
+    }
+  
+    /* Sub-tabs system */
+    .sub-tabs {
+      display: flex;
+      margin-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+      background-color: var(--bg-card);
+      border-radius: 4px 4px 0 0;
+    }
+  
+    .sub-tab {
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 1em;
+      color: var(--text-secondary);
+      position: relative;
+    }
+  
+    .sub-tab:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  
+    .sub-tab.active {
+      color: var(--primary-color);
+      font-weight: bold;
+      border-bottom: 2px solid var(--primary-color);
+      background-color: var(--bg-card);
+      border-radius: 4px 4px 0 0;
+    }
+  
+    .sub-tab {
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 1em;
+      color: var(--text-secondary);
+      position: relative;
+    }
+  
+    .sub-tab:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  
+    .sub-tab.active {
+      color: var(--primary-color);
+      font-weight: bold;
+      border-bottom: 2px solid var(--primary-color);
+    }
+  
+    /* Content area */
+    .mod-manager-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+  
+    /* Filter panel */
+    .filter-panel {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 15px;
+    }
+  
+    .filter-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+  
+    .filter-panel-title {
+      font-size: 1.1em;
+      font-weight: bold;
+      margin: 0;
+    }
+  
+    .filter-panel-toggle {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: 1.1em;
+    }
+  
+    .filter-panel-body {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+  
+    .filter-panel-body.collapsed {
+      display: none;
+    }
+  
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+    }
+  
+    .filter-group label {
+      margin-bottom: 5px;
+      font-weight: bold;
+      font-size: 0.9em;
+    }
+  
+    .filter-group select,
+    .filter-group input {
+      padding: 5px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+    }
+  
+    .filter-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+      grid-column: 1 / -1;
+    }
+    
+    .filter-panel {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 15px;
+    }
+  
+    .filter-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+  
+    .filter-panel-title {
+      font-size: 1.1em;
+      font-weight: bold;
+      margin: 0;
+    }
+  
+    .filter-panel-toggle {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: 1.1em;
+    }
+  
+    .filter-panel-body {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+  
+    .filter-panel-body.collapsed {
+      display: none;
+    }
+  
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+    }
+  
+    .filter-group label {
+      margin-bottom: 5px;
+      font-weight: bold;
+      font-size: 0.9em;
+    }
+  
+    .filter-group select,
+    .filter-group input {
+      padding: 5px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+    }
+  
+    .filter-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 10px;
+      grid-column: 1 / -1;
+    }
+  
+    /* Script grid */
+    .script-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 10px;
+    }
+  
+    .script-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .script-card.disabled {
+      opacity: 0.7;
+      filter: grayscale(0.8);
+    }
+  
+    /* Style for enabled script card in Grid View */
+    .script-card:not(.disabled) {
+      border: 1px solid #C62D51; /* Added border */
+      /* Adjust margin slightly to compensate for border */
+      margin: -1px; /* Prevent layout shift due to border */
+    }
+  
+    .script-card-image {
+      position: relative;
+      height: 130px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+  
+    .script-card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .image-toggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 10;
+      border-radius: 3px;
+      padding: 3px;
+    }
+  
+    /* Category display removed */
+  
+    .script-card-content {
+      padding: 10px;
+    }
+  
+    .script-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+  
+    .script-card-actions-top {
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+  
+    .script-toggle-wrapper {
+      cursor: pointer;
+      font-size: 1.2em;
+      display: flex;
+      align-items: center;
+    }
+  
+    /* Default checkboxes - no custom styling */
+    input[type="checkbox"] {
+      cursor: pointer;
+    }
+  
+    /* Specific styling for the script toggle checkbox */
+    .script-toggle-checkbox {
+      margin: 2px;
+    }
+  
+    .btn-icon {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 3px;
+    }
+  
+    .btn-icon:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+    }
+  
+    .script-card-title {
+      font-size: 1.1em;
+      font-weight: bold;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+      padding-right: 8px;
+    }
+  
+    .script-card-version {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.8em;
+    }
+    
+    .script-card-version-inline {
+      font-size: 0.8em;
+      color: var(--text-secondary);
+      font-weight: normal;
+      display: none; /* Hide version for now */
+    }
+    
+    .script-version-inline {
+      font-size: 0.8em;
+      color: var(--text-secondary);
+      font-weight: normal;
+      display: none; /* Hide version for now */
+    }
+  
+    .script-card-description {
+      margin: 0 0 10px 0;
+      color: var(--text-secondary);
+      font-size: 0.9em;
+      line-height: 1.3;
+      height: 3.6em; /* Approx 3 lines */
+      overflow: hidden;
+    }
+  
+    .script-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      margin-top: 8px;
+      border-top: 1px solid var(--border-color);
+    }
+  
+    .script-card-version {
+      font-size: 0.8em;
+      color: var(--text-secondary);
+      display: none; /* Hide version for now */
+    }
+  
+    .script-card-phase {
+      font-size: 0.85em;
+      color: var(--text-secondary);
+    }
+  
+    /* Script list view */
+    .script-list {
+      /* Uses .data-table styling */
+    }
+  
+    /* Forum preferences */
+    .preferences-section {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 15px;
+      overflow: hidden;
+    }
+  
+    .preferences-section-header {
+      background-color: rgba(33, 150, 243, 0.1);
+      padding: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+  
+    .preferences-section-title {
+      margin: 0;
+      font-size: 1.1em;
+      color: var(--text-primary);
+    }
+  
+    .preferences-section-body {
+      padding: 10px;
+    }
+  
+    .preference-item {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  
+    .preference-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+  
+    .preference-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+  
+    .preference-name {
+      font-weight: bold;
+      margin: 0;
+    }
+  
+    .preference-control {
+      min-width: 150px;
+    }
+  
+    .preference-description {
+      color: var(--text-secondary);
+      font-size: 0.9em;
+      margin: 0;
+    }
+  
+    /* Settings modal */
+    .settings-modal {
+      display: none;
+      position: fixed;
+      z-index: 1100000; /* Above main modal */
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+    }
+  
+    .settings-modal-content {
+      background-color: var(--bg-dark);
+      margin: 5% auto;
+      padding: 15px;
+      border: 1px solid var(--border-color);
+      width: 60%;
+      max-width: 800px;
+      max-height: 85vh;
+      border-radius: 4px;
+      overflow-y: auto;
+    }
+  
+    .settings-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+  
+    .settings-modal-title {
+      font-size: 1.4em;
+      margin: 0;
+    }
+  
+    .settings-modal-close {
+      font-size: 1.4em;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+  
+    .settings-modal-close:hover {
+      color: var(--danger-color);
+    }
+  
+    .setting-group {
+      margin-bottom: 15px;
+    }
+  
+    .setting-group-title {
+      font-size: 1.1em;
+      margin: 0 0 10px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  
+    .setting-item {
+      margin-bottom: 12px;
+    }
+  
+    .setting-label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+  
+    .setting-description {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 0.9em;
+      margin-bottom: 5px;
+    }
+  
+    .setting-control {
+      margin-top: 5px;
+    }
+  
+    /* Buttons */
+    .btn {
+      padding: 5px 10px;
+      border-radius: 3px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9em;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+  
+    .btn-icon {
+      font-size: 1em;
+    }
+  
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+  
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+  
+    .btn-secondary {
+      background-color: #555;
+      color: var(--text-primary);
+    }
+  
+    .btn-secondary:hover {
+      background-color: #666;
+    }
+  
+    .btn-small {
+      padding: 3px 8px;
+      font-size: 0.8em;
+    }
+  
+  
+    /* New Settings Item Layout */
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .setting-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .setting-details {
+      flex-grow: 1;
+      padding-right: 20px; /* Space between details and control */
+    }
+    .setting-name {
+      font-weight: bold;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+    .setting-description {
+      color: var(--text-secondary);
+      font-size: 0.9em;
+    }
+    .setting-control {
+      flex-shrink: 0; /* Prevent control from shrinking */
+    }
+    .setting-control .setting-input {
+      /* General styling for non-toggle inputs in the new layout */
+      padding: 6px 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      min-width: 150px; /* Ensure inputs have some minimum width */
+    }
+    .setting-control select.setting-input {
+      /* Specific styles for select if needed */
+      padding: 8px 10px; /* Adjust padding for select dropdown arrow */
+    }
+  
+  
+    /* Toggle Switch Styles */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 48px; /* Width of the toggle */
+      height: 24px; /* Height of the toggle */
+    }
+  
+    .toggle-switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+  
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #555; /* Off state background */
+      transition: .4s;
+      border-radius: 24px; /* Rounded slider */
+    }
+  
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px; /* Height of the knob */
+      width: 18px; /* Width of the knob */
+      left: 3px; /* Padding from left */
+      bottom: 3px; /* Padding from bottom */
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%; /* Circular knob */
+    }
+  
+    input:checked + .toggle-slider {
+      background-color: var(--primary-color); /* On state background */
+    }
+  
+    input:focus + .toggle-slider {
+      box-shadow: 0 0 1px var(--primary-color);
+    }
+  
+    input:checked + .toggle-slider:before {
+      transform: translateX(24px); /* Move knob to the right */
+    }
+    
+  
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+  
+    .data-table th,
+    .data-table td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+  
+    .data-table th {
+      background-color: rgba(255, 255, 255, 0.05);
+      font-weight: bold;
+    }
+  
+    .data-table tr:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+  
+    /* Style for enabled script row in List View */
+    .data-table tr.enabled {
+      border-left: 1px solid #cce5ff; /* Make border thinner and lighter */
+      /* Optionally adjust padding if needed */
+      /* padding-left: 7px; /* Adjust padding */
+    }
+  
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--text-secondary);
+    }
+  
+    .empty-state-icon {
+      font-size: 2.5em;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+  
+    .empty-state-message {
+      font-size: 1.1em;
+      margin-bottom: 10px;
+    }
+  
+    /* Info note */
+    .info-note {
+      background-color: rgba(33, 150, 243, 0.1);
+      border-left: 4px solid var(--primary-color);
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 0 4px 4px 0;
+    }
+  
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--text-secondary);
+    }
+  
+    .empty-state-icon {
+      font-size: 2.5em;
+      margin-bottom: 15px;
+      opacity: 0.5;
+    }
+  
+    .empty-state-message {
+      font-size: 1.1em;
+      margin-bottom: 10px;
+    }
+    
+    /* WIP Banner */
+    .wip-banner {
+      background-color: var(--warning-color);
+      color: #000;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      text-align: center;
+      font-weight: bold;
+    }
+  
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .script-grid {
+        grid-template-columns: 1fr;
+      }
+  
+      .filter-panel-body {
+        grid-template-columns: 1fr;
+      }
+  
+      .settings-modal-content {
+        width: 90%;
+      }
+    }
+  `);
   const SCRIPT_MANIFEST = [
     {
       id: "bbcode",
@@ -879,7 +973,32 @@
       // Add an image URL if available
       path: "./scripts/recentTopicsFormat.js",
       enabledByDefault: !1,
-      settings: [],
+      settings: [
+        {
+          id: "unboldParentheses",
+          label: "Unbold Text in Parentheses",
+          type: "checkbox",
+          defaultValue: !0,
+          description:
+            "Removes bold formatting from text within parentheses in recent topics titles.",
+        },
+        {
+          id: "wrapTitles",
+          label: "Wrap Long Titles",
+          type: "checkbox",
+          defaultValue: !0,
+          description:
+            "Allows long thread titles in recent topics to wrap instead of being cut off.",
+        },
+        {
+          id: "reformatAGThreads",
+          label: "Reformat AG Thread Titles",
+          type: "checkbox",
+          defaultValue: !0,
+          description:
+            "Reformats 'All Games' thread titles for better readability (e.g., moves chapter number).",
+        },
+      ],
       categories: ["UI"],
     },
     {
@@ -1181,7 +1300,14 @@
    * @param {HTMLElement} container - The container element to render into
    * @param {string} message - The message to display (optional)
    * @param {string} iconClass - The Font Awesome icon class to use (optional)
-   */
+   */ function renderEmptyState(
+    container,
+    message = "No scripts found.",
+    iconClass = "fa-search"
+  ) {
+    log("Rendering empty state..."),
+      (container.innerHTML = `\n    <div class="empty-state">\n      <div class="empty-state-icon">\n        <i class="fa ${iconClass}"></i>\n      </div>\n      <div class="empty-state-message">${message}</div>\n    </div>\n  `);
+  }
   /**
    * Renders scripts in a grid view with cards.
    *
@@ -1190,126 +1316,113 @@
    * @param {Object} scriptStates - Object containing enabled/disabled states for scripts
    * @param {Function} showScriptSettings - Function to show the settings modal for a script
    */
-  function renderScriptsGridView(
-    container,
-    scripts,
-    scriptStates = {},
-    showScriptSettings
-  ) {
+  /**
+   * Renders the settings content HTML for a script.
+   *
+   * @param {Object} script - The script object from the manifest.
+   * @param {Function} getScriptSetting - Function to retrieve a script setting value.
+   * @returns {string} - HTML string for the settings content, or empty string if no settings.
+   */
+  function renderScriptSettingsContent(script, getScriptSetting) {
+    // Guard clauses for invalid input or no settings
     if (
-      (log("Rendering scripts in Grid View..."),
-      !scripts || 0 === scripts.length)
+      (log(
+        `Rendering settings content for script: ${script.name} (${script.id})`
+      ),
+      !script || !script.id)
     )
-      return void (function (
-        container,
-        message = "No scripts found.",
-        iconClass = "fa-search"
-      ) {
-        log("Rendering empty state..."),
-          (container.innerHTML = `\n    <div class="empty-state">\n      <div class="empty-state-icon">\n        <i class="fa ${iconClass}"></i>\n      </div>\n      <div class="empty-state-message">${message}</div>\n    </div>\n  `);
-      })(
-        container,
-        "No scripts found. Try adjusting your filters to see more results."
+      return (
+        log(
+          "Error: Invalid script object passed to renderScriptSettingsContent."
+        ),
+        "<p>Error loading settings.</p>"
       );
-    const grid = document.createElement("div");
-    (grid.className = "script-grid"),
-      scripts.forEach((script) => {
-        const isEnabled =
-            void 0 !== scriptStates[script.id]
-              ? scriptStates[script.id]
-              : script.enabledByDefault,
-          card = document.createElement("div");
-        (card.className = isEnabled ? "script-card" : "script-card disabled"),
-          (card.dataset.scriptId = script.id),
-          (card.innerHTML = `\n      <div class="script-card-image">\n        \x3c!-- Removed toggle wrapper --\x3e\n        <img src="${script.image || "https://via.placeholder.com/240x130?text=No+Image"}" alt="${script.name}" class="script-image-toggle" data-script-id="${script.id}">\n      </div>\n      <div class="script-card-content">\n        <div class="script-card-header">\n          <h3 class="script-card-title">${script.name}</h3>\n          <div class="script-card-actions-top">\n            <button class="btn btn-icon view-settings" data-script-id="${script.id}">\n              <i class="fa fa-cog"></i>\n            </button>\n          </div>\n        </div>\n        <p class="script-card-description">${script.description || "No description available."}</p>\n        <div class="script-card-footer">\n          <span class="script-card-version">v${script.version}</span>\n        </div>\n      </div>\n    `),
-          grid.appendChild(card);
-      }),
-      (container.innerHTML = ""),
-      container.appendChild(grid),
-      // Add event listeners for settings buttons
-      document.querySelectorAll(".view-settings").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const scriptId = btn.dataset.scriptId,
-            script = scripts.find((s) => s.id === scriptId);
-          script && showScriptSettings && showScriptSettings(script);
-        });
-      }),
-      // Checkbox toggle event listener removed.
-      // Make the image clickable for toggling state
-      document.querySelectorAll(".script-image-toggle").forEach((img) => {
-        img.addEventListener("click", (e) => {
-          const scriptId = img.dataset.scriptId,
-            card = img.closest(".script-card");
-          // Find the parent card
-          if (card) {
-            // Determine the new state based on current class
-            const newState = !!card.classList.contains("disabled");
-            // true if enabled, false if disabled
-            // The desired new state
-            // Update the card's visual state
-            newState
-              ? card.classList.remove("disabled")
-              : card.classList.add("disabled");
-            // Dispatch the event to notify the application
-            const event = new CustomEvent("script-toggle", {
-              detail: {
-                scriptId: scriptId,
-                enabled: newState,
-              },
-            });
-            document.dispatchEvent(event);
-          }
-        });
-      });
-  }
-  /**
-   * Shows the settings modal for a script.
-   *
-   * @param {Object} script - The script object from the manifest
-   * @param {Function} renderScriptSettingsContent - Function to render the settings content
-   * @param {Function} saveScriptSetting - Function to save a script setting
-   */
-  /**
-   * Renders the settings content for a script.
-   *
-   * @param {Object} script - The script object from the manifest
-   * @param {Function} saveScriptSetting - Function to save a script setting
-   * @returns {string} - HTML string for the settings content
-   */
-  function renderScriptSettingsContent(script, saveScriptSetting = null) {
-    return (
-      log(`Rendering settings content for script: ${script.name}`),
-      script.settings && 0 !== script.settings.length
-        ? `\n    <div class="setting-group">\n      ${script.settings
-            .map(
-              (setting) =>
-                `\n        <div class="setting-item">\n          <label class="setting-label">${setting.label || setting.id}</label>\n          <span class="setting-description">${setting.description || ""}</span>\n          <div class="setting-control">\n            ${
-                  /**
-                   * Renders an appropriate HTML control element based on the setting type.
-                   *
-                   * @param {Object} setting - The setting object with type, options, etc.
-                   * @returns {string} - HTML string for the rendered control
-                   */
-                  (function (setting) {
-                    switch (setting.type) {
-                      case "boolean":
-                        return `\n          <input type="checkbox" name="${setting.id}" ${setting.default ? "checked" : ""}>\n        `;
+    if (!script.settings || 0 === script.settings.length)
+      // Return an empty state message instead of just empty string
+      return (
+        log(`No settings defined for script: ${script.name}`),
+        '\n      <div class="empty-state">\n        <p>This script has no configurable settings.</p>\n      </div>\n    '
+      );
+    if ("function" != typeof getScriptSetting)
+      return (
+        log(
+          `Error: getScriptSetting function not provided for script: ${script.name}`
+        ),
+        "<p>Error loading setting values.</p>"
+      );
+    // Map each setting definition to its HTML representation
+    // Join with newline for readability in source
+    // Return the group container with all settings HTML
+    return `\n    <div class="setting-group">\n      ${script.settings
+      .map((setting) => {
+        if (!setting || !setting.id)
+          return (
+            log(
+              `Warning: Invalid setting definition found in script ${script.id}`,
+              setting
+            ),
+            ""
+          );
+        // Skip invalid setting definitions
+        script.id, setting.id;
+        // Unique ID for label
+        const settingName = setting.name || setting.id;
+        // Use name if available, else ID
+        let controlHTML = "";
+        if ("checkbox" === setting.type) {
+          const isChecked = getScriptSetting(
+            script.id,
+            setting.id,
+            setting.defaultValue
+          );
+          controlHTML = `\n          <label class="toggle-switch">\n            <input \n              type="checkbox" \n              class="setting-input" \n              data-setting-id="${setting.id}" \n              name="${setting.id}" \n              ${isChecked ? "checked" : ""}\n            >\n            <span class="toggle-slider"></span>\n          </label>\n        `;
+        } else
+          controlHTML =
+            /**
+             * Renders an appropriate HTML control element based on the setting type,
+             * using the currently saved value.
+             *
+             * @param {Object} setting - The setting object from the manifest.
+             * @param {string} scriptId - The ID of the script these settings belong to.
+             * @param {Function} getScriptSetting - Function to retrieve the saved setting value.
+             * @returns {string} - HTML string for the rendered control.
+             */
+            (function (setting, scriptId, getScriptSetting) {
+              // Get the currently saved value, falling back to the manifest default
+              const currentValue = getScriptSetting(
+                  scriptId,
+                  setting.id,
+                  setting.defaultValue
+                ),
+                controlId = `setting-${scriptId}-${setting.id}`;
+              // Unique ID for label association
+              switch (setting.type) {
+                case "checkbox":
+                  return `\n        <input \n          type="checkbox" \n          class="setting-input" \n          id="${controlId}" \n          data-setting-id="${setting.id}" \n          name="${setting.id}" \n          ${currentValue ? "checked" : ""}\n        >`;
 
-                      case "select":
-                        return `\n          <select class="setting-input">\n            ${setting.options.map((option) => `\n              <option value="${option}" ${option === setting.default ? "selected" : ""}>${option}</option>\n            `).join("")}\n          </select>\n        `;
+                case "select":
+                  return `\n        <select \n          class="setting-input" \n          id="${controlId}" \n          data-setting-id="${setting.id}" \n          name="${setting.id}"\n        >\n          ${setting.options
+                    .map((option) => {
+                      const value =
+                          "object" == typeof option ? option.value : option,
+                        label =
+                          "object" == typeof option ? option.label : option;
+                      return `<option value="${value}" ${value === currentValue ? "selected" : ""}>${label}</option>`;
+                    })
+                    .join("")}\n        </select>`;
 
-                      case "number":
-                        return `\n          <input type="number" class="setting-input" value="${setting.default || 0}">\n        `;
+                case "number":
+                  return `\n        <input \n          type="number" \n          class="setting-input" \n          id="${controlId}" \n          data-setting-id="${setting.id}" \n          name="${setting.id}" \n          value="${currentValue ?? 0}"\n        >`;
 
-                      default:
-                        return `\n          <input type="text" class="setting-input" value="${setting.default || ""}">\n        `;
-                    }
-                  })(setting)
-                }\n          </div>\n        </div>\n      `
-            )
-            .join("")}\n    </div>\n  `
-        : ""
-    );
+                default:
+                  // Default to text
+                  return `\n        <input \n          type="text" \n          class="setting-input" \n          id="${controlId}" \n          data-setting-id="${setting.id}" \n          name="${setting.id}" \n          value="${currentValue ?? ""}"\n        >`;
+              }
+            })(setting, script.id, getScriptSetting);
+        // New layout: Name/Description on left, Control on right
+        return `\n        <div class="setting-item">\n          <div class="setting-details">\n            <div class="setting-name">${settingName}</div>\n            ${setting.description ? `<div class="setting-description">${setting.description}</div>` : ""}\n          </div>\n          <div class="setting-control">\n            ${controlHTML}\n          </div>\n        </div>\n      `;
+      })
+      .join("\n")}\n    </div>\n  `;
   }
   /**
    * Toggles a script's enabled state, saves the state, and loads/unloads the script.
@@ -1332,100 +1445,198 @@
        *
        * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/recentTopicsFormat.md for documentation
        */
-      function () {
+      // Note: Assumes getScriptSetting is provided to init by main.js
+      function ({ getScriptSetting: getScriptSetting }) {
+        const SCRIPT_ID = "recentTopicsFormat";
+        // Define script ID for settings
         /***************************************
-         * 1) Remove ellipses/truncation in titles
-         ***************************************/
-        const style = document.createElement("style");
+         * 1) Remove ellipses/truncation in titles (Conditional)
+         ***************************************/ if (
+          getScriptSetting(SCRIPT_ID, "wrapTitles", !0)
+        ) {
+          const style = document.createElement("style");
+          (style.textContent =
+            "\n           /* Ensure topic titles don't get truncated with ellipses */\n           .topictitle {\n               white-space: normal !important;\n               overflow: visible !important;\n               text-overflow: unset !important;\n               max-width: none !important;\n               display: inline-block;\n           }\n       "),
+            document.head.appendChild(style);
+        }
+        /*******************************************
+         * 2) Functions to style different elements
+         *******************************************/
         /**
-         * Process a single title element
+         * Make any text in (parentheses) smaller, non-bold
+         * e.g. "Title (Extra Info)" -> "Title (<span>Extra Info</span>)"
+         */
+        /**
+         * Process a single title element based on settings
          */
         function processTitle(titleElem) {
-          // Apply transformations in sequence
-          let newHTML = titleElem.textContent;
-          (newHTML = newHTML.replace(
-            /\([^()]*\)/g,
-            (match) =>
-              `<span style="font-size: 0.85em; font-weight: normal;">${match}</span>`
-          )),
-            (newHTML =
+          const shouldUnboldParens = getScriptSetting(
+              SCRIPT_ID,
+              "unboldParentheses",
+              !0
+            ),
+            shouldReformatAG = getScriptSetting(
+              SCRIPT_ID,
+              "reformatAGThreads",
+              !0
+            ),
+            originalHTML = titleElem.innerHTML;
+          // Work with HTML
+          let currentHTML = originalHTML,
+            agFormatted = !1;
+          // Apply AG formatting first if enabled
+          if (shouldReformatAG) {
+            const agResult =
+              /**
+               * Special formatting for Adventurer's Guild titles
+               * Format: "[x] Adventurer's Guild - Month: Games" or "Month: Games"
+               */
+              (function (str, elem) {
+                // Check if it's an Adventurer's Guild title or post
+                const plainText = elem.textContent,
+                  isGuildTitle = plainText.includes("Adventurer's Guild"),
+                  isGuildForum =
+                    null !==
+                    elem
+                      .closest(".row-item")
+                      ?.querySelector(
+                        '.forum-links a[href*="adventurer-s-guild"]'
+                      );
+                // Use textContent for matching patterns
+                if (!isGuildTitle && !isGuildForum) return str;
+                // Return original HTML if not relevant
+                let match;
+                if (isGuildTitle) {
+                  // Match the pattern: optional Junior, Month, Games
+                  const titleRegex =
+                    /^(?:(Junior)\s+)?Adventurer's Guild\s*-\s*([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
+                  match = plainText.match(titleRegex);
+                } else {
+                  // Match the pattern: Month, Games (when in AG forum)
+                  const forumRegex = /^([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
+                  match = plainText.match(forumRegex);
+                }
+                if (!match) return str;
+                // Return original HTML if no pattern match
+                if (isGuildTitle) {
+                  const [_, juniorPrefix, month, gamesList] = match,
+                    shortPrefix = juniorPrefix ? "Jr. AG - " : "AG - ";
+                  return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">${shortPrefix}${month}</span>`;
+                }
+                {
+                  const [_, month, gamesList] = match;
+                  return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">(AG - ${month})</span>`;
+                }
+              })(
+                /**
+                 * Make text after dash unbolded (but keep same size)
+                 * e.g. "Title - Game" -> "Title<span style="font-weight: normal"> - Game</span>"
+                 * Handles both regular dash and em dash
+                 */ currentHTML,
+                titleElem
+              );
+            agResult !== currentHTML &&
+              ((currentHTML = agResult), (agFormatted = !0));
+          }
+          // Apply parentheses styling if enabled
+          shouldUnboldParens &&
+            (currentHTML = currentHTML.replace(
+              /\(([^()]*)\)/g,
+              (match, innerText) =>
+                // Avoid double-wrapping
+                innerText.includes(
+                  '<span style="font-size: 0.85em; font-weight: normal;">'
+                )
+                  ? match
+                  : `(<span style="font-size: 0.85em; font-weight: normal;">${innerText}</span>)`
+            )),
+            // Apply version styling (always, for now)
+            (currentHTML =
               /**
                * Style version numbers by adding 'v' prefix and making them smaller
                * Matches patterns like: 1.0, 1.0.0, 1.0.0.1, etc.
                */
               (function (str) {
+                // Use HTML replace
                 return str.replace(
                   /\b(\d+(?:\.\d+)+)\b/g,
-                  (match) => `<span style="font-size: 0.75em;">v${match}</span>`
+                  (match, versionNumber) =>
+                    // Avoid double-wrapping
+                    str.includes(
+                      `<span style="font-size: 0.75em;">v${versionNumber}</span>`
+                    )
+                      ? match
+                      : `<span style="font-size: 0.75em;">v${versionNumber}</span>`
                 );
-              })(
-                /**
-                 * Special formatting for Adventurer's Guild titles
-                 * Format: "[x] Adventurer's Guild - Month: Games" or "Month: Games"
-                 */ newHTML
-              )),
-            (newHTML = (function (str, elem) {
-              // Check if it's an Adventurer's Guild title or post
-              const isGuildTitle = str.includes("Adventurer's Guild"),
-                isGuildForum =
-                  null !==
-                  elem
-                    .closest(".row-item")
-                    .querySelector(
-                      '.forum-links a[href*="adventurer-s-guild"]'
-                    );
-              if (!isGuildTitle && !isGuildForum) return str;
-              let match;
-              if (isGuildTitle) {
-                // Match the pattern: everything before the month, the month, and games list
-                const titleRegex =
-                  /^(?:(Junior)\s+)?Adventurer's Guild\s*-\s*([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
-                match = str.match(titleRegex);
-              } else {
-                // Match the pattern: month and games list
-                const forumRegex = /^([A-Za-z]+):(.+?)(?:\s+[A-Z][A-Z\s]+)*$/;
-                match = str.match(forumRegex);
-              }
-              if (!match) return str;
-              if (isGuildTitle) {
-                const [_, juniorPrefix, month, gamesList] = match,
-                  shortPrefix = juniorPrefix ? "Jr. AG - " : "AG - ";
-                return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">${shortPrefix}${month}</span>`;
-              }
-              {
-                const [_, month, gamesList] = match;
-                return `${gamesList.trim()} <span style="font-size: 0.8em; opacity: 0.8;">(AG - ${month})</span>`;
-              }
-            })(
-              /**
-               * Make text after dash unbolded (but keep same size)
-               * e.g. "Title - Game" -> "Title<span style="font-weight: normal"> - Game</span>"
-               * Handles both regular dash and em dash
-               */ newHTML,
-              titleElem
-            )),
-            (newHTML = (function (str, elem) {
-              // Don't process Adventurer's Guild titles or posts
-              const isGuildTitle = str.includes("Adventurer's Guild"),
-                isGuildForum =
-                  null !==
-                  elem
-                    .closest(".row-item")
-                    .querySelector(
-                      '.forum-links a[href*="adventurer-s-guild"]'
-                    );
-              if (isGuildTitle || isGuildForum) return str;
-              // Match both regular dash and em dash with optional spaces
-              const match = str.match(/\s+[-—]\s+/);
-              // If there is no dash, return unmodified
-              if (!match) return str;
-              const dashIndex = match.index;
-              // Part before the dash
-              // Wrap the dash + everything after it, only changing font-weight
-              return `${str.slice(0, dashIndex)}<span style="font-weight: normal;">${str.slice(dashIndex)}</span>`;
-            })(newHTML, titleElem)),
-            // Replace original text with our new HTML
-            (titleElem.innerHTML = newHTML);
+              })(currentHTML)),
+            // Apply dash styling ONLY if AG formatting didn't run
+            agFormatted ||
+              (currentHTML = (function (str, elem) {
+                // Context check needed here because AG formatting might not run if setting is off
+                const plainText = elem.textContent,
+                  isGuildTitle = plainText.includes("Adventurer's Guild"),
+                  isGuildForum =
+                    null !==
+                    elem
+                      .closest(".row-item")
+                      ?.querySelector(
+                        '.forum-links a[href*="adventurer-s-guild"]'
+                      );
+                if (isGuildTitle || isGuildForum) return str;
+                // Don't process AG titles/posts here
+                // Match both regular dash and em dash with optional spaces, ensuring it's not inside HTML tags
+                // This is tricky with regex on HTML, might need a simpler approach or DOM parsing
+                // Simple approach: find the first dash in text content, then reconstruct HTML
+                const dashMatch = plainText.match(/\s+[-—]\s+/);
+                if (!dashMatch) return str;
+                // Find the index of the first dash in the text content
+                const dashIndexInText = dashMatch.index;
+                // Reconstruct carefully - this might break existing spans across the dash
+                // A more robust solution would parse the DOM nodes within the title element
+                let charCount = 0;
+                for (let i = 0; i < elem.childNodes.length; i++) {
+                  const node = elem.childNodes[i];
+                  if (node.nodeType === Node.TEXT_NODE) {
+                    if (charCount + node.length >= dashIndexInText) {
+                      // Dash is in this text node
+                      const textBeforeDash = node.textContent.slice(
+                          0,
+                          dashIndexInText - charCount
+                        ),
+                        textAfterDash = node.textContent.slice(
+                          dashIndexInText - charCount
+                        ),
+                        beforeNode = document.createTextNode(textBeforeDash),
+                        spanNode = document.createElement("span");
+                      (spanNode.style.fontWeight = "normal"),
+                        (spanNode.textContent = textAfterDash), // Includes the dash itself
+                        // Replace the original text node
+                        elem.replaceChild(spanNode, node),
+                        elem.insertBefore(beforeNode, spanNode);
+                      // Wrap subsequent nodes
+                      for (let j = i + 1; j < elem.childNodes.length; j++)
+                        elem.childNodes[j] !== spanNode &&
+                          // Avoid re-wrapping the span we just added
+                          spanNode.appendChild(
+                            elem.childNodes[j].cloneNode(!0)
+                          );
+                      // Remove original subsequent nodes that were cloned
+                      for (; elem.childNodes.length > i + 2; )
+                        elem.removeChild(elem.childNodes[i + 2]);
+                      break;
+                      // Found and processed dash
+                    }
+                    charCount += node.length;
+                  } else
+                    node.nodeType === Node.ELEMENT_NODE &&
+                      // Could try to estimate length, but skip complex tags for now
+                      (charCount += node.textContent.length);
+                }
+                return elem.innerHTML;
+                // Return potentially modified HTML
+              })(currentHTML, titleElem)),
+            // Update DOM only if HTML actually changed
+            currentHTML !== originalHTML && (titleElem.innerHTML = currentHTML);
         }
         /**
          * Process all titles in a container element
@@ -1433,23 +1644,36 @@
           container.querySelectorAll(".topictitle").forEach(processTitle);
         }
         // Initial processing
-        (style.textContent =
-          "\n         /* Ensure topic titles don't get truncated with ellipses */\n         .topictitle {\n             white-space: normal !important;\n             overflow: visible !important;\n             text-overflow: unset !important;\n             max-width: none !important;\n             display: inline-block;\n         }\n     "),
-          document.head.appendChild(style),
-          processTitlesInContainer(document),
-          // Start observing the document with the configured parameters
-          new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-              "childList" === mutation.type &&
-                mutation.addedNodes.forEach((node) => {
-                  node.nodeType === Node.ELEMENT_NODE &&
-                    processTitlesInContainer(node);
-                });
+        processTitlesInContainer(document);
+        // Set up mutation observer for dynamic updates
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+              // Check if the added node is an element and contains titles or is a title itself
+              node.nodeType === Node.ELEMENT_NODE &&
+                (node.matches(".topictitle")
+                  ? processTitle(node)
+                  : node.querySelector(".topictitle") &&
+                    // If the added node contains titles, process them
+                    processTitlesInContainer(node));
             });
-          }).observe(document.body, {
+          });
+        });
+        // Start observing the document body for added nodes
+        // Return a cleanup function to disconnect the observer when the script is disabled
+        return (
+          observer.observe(document.body, {
             childList: !0,
             subtree: !0,
-          });
+          }),
+          {
+            cleanup: () => {
+              observer.disconnect(),
+                // Potentially add code here to revert styles if needed, though complex
+                console.log("Disconnected recentTopicsFormat observer.");
+            },
+          }
+        );
       },
   });
   // RPGHQ - Random Topic Button
@@ -5292,7 +5516,13 @@
    * License: MIT
    *
    * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/commaFormatter.md for documentation
-   */ function gmSetValue(key, value) {
+   */ // Prefix for GM_setValue/GM_getValue keys
+  // --- GM Wrappers ---
+  function gmGetValue(key, defaultValue) {
+    // eslint-disable-next-line no-undef
+    return GM_getValue("RPGHQ_Manager_" + key, defaultValue);
+  }
+  function gmSetValue(key, value) {
     // eslint-disable-next-line no-undef
     GM_setValue("RPGHQ_Manager_" + key, value);
   }
@@ -5301,25 +5531,6 @@
   const scriptStates = {},
     loadedScripts = {};
   // Object to hold loaded script modules and their cleanup functions
-  function initializeScriptStates() {
-    log("Initializing script states..."),
-      SCRIPT_MANIFEST.forEach((script) => {
-        const storageKey = `script_enabled_${script.id}`;
-        // Load state from GM storage, falling back to manifest default
-        // Prefix for GM_setValue/GM_getValue keys
-        // --- GM Wrappers ---
-        var key, defaultValue;
-        (scriptStates[script.id] =
-          ((key = storageKey),
-          (defaultValue = script.enabledByDefault),
-          GM_getValue("RPGHQ_Manager_" + key, defaultValue))),
-          log(
-            `Script '${script.name}' (${script.id}): ${scriptStates[script.id] ? "Enabled" : "Disabled"} (Default: ${script.enabledByDefault})`
-          );
-      }),
-      log("Script states initialized:", scriptStates);
-  }
-  // Find a script definition in the manifest by its ID
   // Execute functions and scripts based on the load order for a specific phase
   function executeLoadOrderForPhase(phase) {
     log(`Executing load order for phase: ${phase}`);
@@ -5352,6 +5563,7 @@
                   `-> Item "${item}" in load_order.json is not a known shared function or script ID.`
                 );
           }
+          // Find a script definition in the manifest by its ID
           var scriptId;
         }),
         log(`Finished executing load order for phase: ${phase}`))
@@ -5531,16 +5743,22 @@
         if (!module) return void error(`Script module ${script.id} not found`);
         // Check if the module has an init function
         if ("function" == typeof module.init) {
-          // Call init and store any returned cleanup function or object
-          const result = module.init();
-          // Store the loaded module and any cleanup function
-          (loadedScripts[script.id] = {
-            module: module,
-            cleanup:
-              result && "function" == typeof result.cleanup
-                ? result.cleanup
-                : null,
-          }),
+          let result;
+          // Pass dependencies if needed
+          (result =
+            "recentTopicsFormat" === script.id
+              ? module.init({
+                  getScriptSetting: getScriptSetting,
+                })
+              : module.init()),
+            // Store the loaded module and any cleanup function
+            (loadedScripts[script.id] = {
+              module: module,
+              cleanup:
+                result && "function" == typeof result.cleanup
+                  ? result.cleanup
+                  : null,
+            }),
             log(`Successfully loaded script: ${script.name}`);
         } else warn(`Script ${script.name} has no init function, skipping.`);
       } catch (err) {
@@ -5570,10 +5788,84 @@
   // --- Script Toggle Event Handler ---
   // --- UI Handlers ---
   function handleRenderScriptsGridView(container, scripts, states) {
-    renderScriptsGridView(container, scripts, states, handleShowScriptSettings);
+    !(function (container, scripts, scriptStates = {}, showScriptSettings) {
+      if (
+        (log("Rendering scripts in Grid View..."),
+        !scripts || 0 === scripts.length)
+      )
+        return void renderEmptyState(
+          container,
+          "No scripts found. Try adjusting your filters to see more results."
+        );
+      const grid = document.createElement("div");
+      (grid.className = "script-grid"),
+        scripts.forEach((script) => {
+          const isEnabled =
+              void 0 !== scriptStates[script.id]
+                ? scriptStates[script.id]
+                : script.enabledByDefault,
+            hasSettings = script.settings && script.settings.length > 0,
+            card = document.createElement("div");
+          (card.className = isEnabled ? "script-card" : "script-card disabled"),
+            (card.dataset.scriptId = script.id),
+            // Corrected innerHTML with single settings button + disabled logic
+            (card.innerHTML = `\n      <div class="script-card-image">\n        <img src="${script.image || "https://via.placeholder.com/240x130?text=No+Image"}" \n             alt="${script.name}" \n             class="script-image-toggle" \n             data-script-id="${script.id}">\n      </div>\n      <div class="script-card-content">\n        <div class="script-card-header">\n          <h3 class="script-card-title">${script.name}</h3>\n          <div class="script-card-actions-top">\n            ${hasSettings ? `\n            <button \n              class="btn btn-icon view-settings" \n              title="Settings" \n              data-script-id="${script.id}"\n            >\n              <i class="fa fa-cog"></i>\n            </button>\n            ` : ""}\n          </div>\n        </div>\n        <p class="script-card-description">${script.description || "No description available."}</p>\n        <div class="script-card-footer">\n          <span class="script-card-version">v${script.version}</span>\n        </div>\n      </div>\n    `),
+            grid.appendChild(card);
+        }),
+        (container.innerHTML = ""),
+        container.appendChild(grid),
+        // Add event listeners for settings buttons (only non-disabled ones)
+        document
+          .querySelectorAll(".view-settings:not([disabled])")
+          .forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const scriptId = btn.dataset.scriptId,
+                script = scripts.find((s) => s.id === scriptId);
+              script && showScriptSettings && showScriptSettings(script);
+            });
+          }),
+        // Make the image clickable for toggling state
+        document.querySelectorAll(".script-image-toggle").forEach((img) => {
+          img.addEventListener("click", (e) => {
+            const scriptId = img.dataset.scriptId,
+              card = img.closest(".script-card");
+            if (card) {
+              const newState = !!card.classList.contains("disabled");
+              newState
+                ? card.classList.remove("disabled")
+                : card.classList.add("disabled");
+              const event = new CustomEvent("script-toggle", {
+                detail: {
+                  scriptId: scriptId,
+                  enabled: newState,
+                },
+              });
+              document.dispatchEvent(event);
+            }
+          });
+        });
+    })(
+      /**
+       * Shows the settings modal for a script.
+       *
+       * @param {Object} script - The script object from the manifest.
+       * @param {Function} renderScriptSettingsContent - Function to render the settings content.
+       * @param {Function} getScriptSetting - Function to retrieve a script setting value.
+       * @param {Function} saveScriptSetting - Function to save a script setting value.
+       */ container,
+      scripts,
+      states,
+      handleShowScriptSettings
+    );
   }
   function handleShowScriptSettings(script) {
-    !(function (script, renderScriptSettingsContent, saveScriptSetting = null) {
+    // Pass getScriptSetting as the third argument now
+    !(function (
+      script,
+      renderScriptSettingsContent,
+      getScriptSetting, // Added getScriptSetting parameter
+      saveScriptSetting
+    ) {
       log(`Showing settings modal for script: ${script.name}`);
       // Create modal if it doesn't exist
       let modal = document.getElementById("script-settings-modal");
@@ -5581,41 +5873,77 @@
         ((modal = document.createElement("div")),
         (modal.id = "script-settings-modal"),
         (modal.className = "settings-modal"),
-        document.body.appendChild(modal)),
-        // Populate modal with script settings
-        (modal.innerHTML = `\n    <div class="settings-modal-content">\n      <div class="settings-modal-header">\n        <h2 class="settings-modal-title">${script.name} Settings</h2>\n        <span class="settings-modal-close">&times;</span>\n      </div>\n    \n      ${script.settings && script.settings.length > 0 && renderScriptSettingsContent ? renderScriptSettingsContent(script, saveScriptSetting) : '<div class="empty-state">\n              <div class="empty-state-icon">\n                <i class="fa fa-cog"></i>\n              </div>\n              <h3 class="empty-state-message">No Settings Available</h3>\n              <p>This script doesn\'t have any configurable settings.</p>\n            </div>'}\n    \n      <div class="script-info" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">\n        <h3>Script Information</h3>\n        <table class="data-table">\n          <tr>\n            <th>ID</th>\n            <td>${script.id}</td>\n          </tr>\n          <tr>\n            <th>Version</th>\n            <td>${script.version}</td>\n          </tr>\n          <tr>\n            <th>Category</th>\n            <td>${script.category || "Uncategorized"}</td>\n          </tr>\n          <tr>\n            <th>Execution Phase</th>\n            <td>${script.executionPhase || "Not specified"}</td>\n          </tr>\n          <tr>\n            <th>Matches</th>\n            <td>${script.matches ? script.matches.join("<br>") : "Not specified"}</td>\n          </tr>\n        </table>\n      </div>\n    \n      <div class="info-note" style="margin-top: 15px;">\n        <strong>Note:</strong> Changes to settings may require a page reload to take full effect.\n      </div>\n    </div>\n  `),
+        document.body.appendChild(modal));
+      // Determine if settings can be rendered
+      const canRenderSettings =
+        script.settings &&
+        script.settings.length > 0 &&
+        renderScriptSettingsContent &&
+        getScriptSetting;
+      // Check if getScriptSetting is provided
+      // Populate modal with script settings content
+      (modal.innerHTML = `\n    <div class="settings-modal-content">\n      <div class="settings-modal-header">\n        <h2 class="settings-modal-title">${script.name} Settings</h2>\n        <span class="settings-modal-close">&times;</span>\n      </div>\n\n      ${
+        /* Conditionally render settings or empty state */
+        canRenderSettings
+          ? renderScriptSettingsContent(script, getScriptSetting)
+          : renderEmptyState(
+              null,
+              "This script doesn't have any configurable settings."
+            )
+      }\n\n      <div\n        class="script-info"\n        style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;"\n      >\n        <h3>Script Information</h3>\n        <table class="data-table">\n          <tr>\n            <th>ID</th>\n            <td>${script.id}</td>\n          </tr>\n          <tr>\n            <th>Version</th>\n            <td>${script.version}</td>\n          </tr>\n          <tr>\n            <th>Category</th>\n            <td>${script.category || "Uncategorized"}</td>\n          </tr>\n          <tr>\n            <th>Author</th>\n            <td>${script.author || "Unknown"}</td>\n          </tr>\n          <tr>\n            <th>Description</th>\n            <td>${script.description || "-"}</td>\n          </tr>\n          ${script.urlPatterns && script.urlPatterns.length > 0 ? `\n          <tr><th>URL Patterns</th><td>${script.urlPatterns.join("<br>")}</td></tr>\n          ` : ""}\n        </table>\n      </div>\n\n      <div class="info-note" style="margin-top: 15px;">\n        <strong>Note:</strong> Changes to settings may require a page reload to\n        take full effect.\n      </div>\n    </div>\n  `),
         // Show the modal
-        (modal.style.display = "block"),
-        // Add event listeners
-        modal
-          .querySelector(".settings-modal-close")
-          .addEventListener("click", () => {
-            modal.style.display = "none";
-          }),
+        (modal.style.display = "block");
+      // --- Event Listeners ---
+      // Close button listener
+      const closeButton = modal.querySelector(".settings-modal-close");
+      closeButton &&
+        closeButton.addEventListener("click", () => {
+          modal.style.display = "none";
+        }),
+        // Click outside listener
         modal.addEventListener("click", (e) => {
           e.target === modal && (modal.style.display = "none");
         }),
-        // If we have settings, add event listeners for inputs
-        script.settings &&
-          script.settings.length > 0 &&
+        // Add event listeners for setting inputs ONLY if save function is provided
+        canRenderSettings &&
           saveScriptSetting &&
+          // Use a small delay to ensure DOM is ready after innerHTML assignment
           setTimeout(() => {
             modal.querySelectorAll(".setting-input").forEach((input) => {
               const settingId = input.dataset.settingId;
-              if (!settingId) return;
-              const eventType = "checkbox" === input.type ? "change" : "input";
-              input.addEventListener(eventType, (e) => {
-                const value =
-                  "checkbox" === input.type ? input.checked : input.value;
-                saveScriptSetting(script.id, settingId, value);
-              });
+              if (!settingId)
+                return void console.warn(
+                  "Setting input missing data-setting-id:",
+                  input
+                );
+              const eventType = "checkbox" === input.type ? "change" : "input",
+                new_input = input.cloneNode(!0);
+              // Clear previous listeners if any (simple approach)
+              input.parentNode.replaceChild(new_input, input),
+                // Add the new listener
+                new_input.addEventListener(eventType, (e) => {
+                  const value =
+                    "checkbox" === e.target.type
+                      ? e.target.checked
+                      : e.target.value;
+                  log(`Setting changed: ${script.id}.${settingId} = ${value}`),
+                    saveScriptSetting(script.id, settingId, value);
+                });
             });
-          }, 100);
-    })(script, renderScriptSettingsContent, saveScriptSetting);
+          }, 150);
+    })(
+      script,
+      renderScriptSettingsContent, // Renders the content area
+      getScriptSetting, // Function to get current setting value
+      saveScriptSetting
+    );
   }
   function saveScriptSetting(scriptId, settingId, value) {
     gmSetValue(`script_setting_${scriptId}_${settingId}`, value),
       log(`Saved setting: ${scriptId}.${settingId} = ${value}`);
+  }
+  function getScriptSetting(scriptId, settingId, defaultValue) {
+    return gmGetValue(`script_setting_${scriptId}_${settingId}`, defaultValue);
   }
   // --- Tab Content Handling ---
   function handleLoadTabContent(tabName) {
@@ -5782,8 +6110,19 @@
     );
   }),
     log("Initializing RPGHQ Userscript Manager..."),
-    // Initialize script states
-    initializeScriptStates(),
+    log("Initializing script states..."),
+    SCRIPT_MANIFEST.forEach((script) => {
+      const storageKey = `script_enabled_${script.id}`;
+      // Load state from GM storage, falling back to manifest default
+      (scriptStates[script.id] = gmGetValue(
+        storageKey,
+        script.enabledByDefault
+      )),
+        log(
+          `Script '${script.name}' (${script.id}): ${scriptStates[script.id] ? "Enabled" : "Disabled"} (Default: ${script.enabledByDefault})`
+        );
+    }),
+    log("Script states initialized:", scriptStates),
     // Execute load order for document-start phase immediately
     executeLoadOrderForPhase("document-start"),
     // Set up listeners for other execution phases
