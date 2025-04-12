@@ -159,6 +159,7 @@ export const SCRIPT_MANIFEST = [
         type: "checkbox",
         defaultValue: true,
         description: "Shows image previews in 'Post replied to' notifications.",
+        previewImage: "https://f.rpghq.org/X4oQJRUQ0Avb.png?n=pasted-file.png", // Use the actual URL here
       },
       {
         id: "enableVideoPreviews",

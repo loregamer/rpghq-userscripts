@@ -845,4 +845,14 @@ GM_addStyle(`
       width: 90%;
     }
   }
+
+  /* Preview image for settings */
+  .setting-preview-image {
+    display: block; /* Ensure it takes its own line */
+    max-width: 100px; /* Adjust size as needed */
+    height: auto; /* Maintain aspect ratio */
+    margin-top: 8px; /* Space above the image */
+    border: 1px solid var(--border-color); /* Optional border */
+    border-radius: 3px;
+  }
 `);

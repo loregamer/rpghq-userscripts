@@ -78,6 +78,7 @@ export function renderScriptSettingsContent(script, getScriptSetting) {
           <div class="setting-details">
             <div class="setting-name">${settingName}</div>
             ${setting.description ? `<div class="setting-description">${setting.description}</div>` : ""}
+            ${setting.previewImage ? `<img src="${setting.previewImage}" alt="Setting preview" class="setting-preview-image">` : ""}
           </div>
           <div class="setting-control">
             ${controlHTML}
