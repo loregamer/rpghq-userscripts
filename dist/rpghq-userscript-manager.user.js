@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
 // @namespace    rpghq-userscripts
-// @version      0.4
+// @version      0.5
 // @description  RPGHQ Userscript Manager
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -12,7 +12,7 @@
 // @grant        GM_listValues
 // @grant        GM_xmlhttpRequest
 // @grant        GM_registerMenuCommand
-// @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAMAAABg3Am1AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABUUExURfxKZ/9KZutQcjeM5/tLaP5KZokNEhggKnoQFYEPExgfKYYOEhkfKYgOEhsfKYgNEh8eKCIeJyYdJikdJqYJDCocJiodJiQdJyAeKBwfKToaIgAAAKuw7XoAAAAcdFJOU////////////////////////////////////wAXsuLXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAABEUlEQVRIS92S3VLCMBBG8YcsohhARDHv/55uczZbYBra6DjT8bvo7Lc95yJtFqkx/0JY3HWxllJu98wPl2EJfyU8MhtYwnJQWDIbWMLShCBCp65EgKSEWhWeZA1h+KjwLC8Qho8KG3mFUJS912EhytYJ9l6HhSA7J9h7rQl7J9h7rQlvTrD3asIhBF5Qg7w7wd6rCVf5gXB0YqIw4Qw5B+qkr5QTSv1wYpIQW39clE8n2HutCY13aSMnJ9h7rQn99dbnHwixXejPwEBuCP1XYiA3hP7HMZCqEOSks1ElSleFmKuBJSYsM9Eg6Au91l9F0JxXIBd00wlsM9DlvDL/WhgNgkbnmQgaDqOZj+CZnZDSN2ZJgWZx++q1AAAAAElFTkSuQmCC
+// @icon         data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAyRSURBVGhDzVkJdFTVGf5nn0kykxVCEkgICYSwRUxYRBIJQYlFjQQVOCKLylKXUsClogcVrQtH1IOtWsux6KmihQMqRqtiqwRlX6IYjeyEJaxZSSbLzOv337fMezMTqq2o3zlf5t173/L/9/73X27oImAEeBqUFHaAR8FTYDl4NWgFf3Uwg9eBjaAqfDj6wB3gJNAN/irQBVwBtoPhhA5HP3gcfAxMB3kCfnZYwCngSTCckHqywMxwY61gGZgG/ixgG84CPwHZJMIJFUKr2Swlu92S2WTqTJF68EEwCvzJYQJjwFLwS9ALhhNCZVghHRaL9ODlV0hFPXv5bWZzZ4ocAW8GHeD/h1sWrnEVlN5bGJuY/o7ZbKlDV2cfDSZ7H/XaoKzLapXW3DBZqph5pzRrcJ7kRFs/rpC/sxPMAf8nWFMyc69Kycw7Y7E6wn1A0GZ3SVabcbxH1jDJbAkIdXVGn1MxTqdBcbfdLr0/cYp0dsFCadP0WVJBak8JS6yN68he7VrwB4OXrRj8gjqxVZPJLEUndJfyxy+QuqUNMIwlJPeWpi9aJ5nMFq3v/hH50uYZs/0pbo/h3iibXVpVOkkocXr+A9LK8TdJGbFxPBb83WaQTTcEetfF19eDvGzsEUaQxJMSgM0RQQNH3khTH1pLtz32MZ2u/pZqDu9RRomckdE0/s6XsVtMeJRlkNElIpJ6x8WbVk2Y5I9zuZReoqb2Npqxbg19dbKGsLHpql6ZtHHaTFo2dpwJZtam3Mbgh14HC0RLB70CA8DXwH6gwSc7IzyUWzSN5jy9gX4zYwklpefQzk9fp+92fKjcgQcsViqe+iTFJ2VQW0sT5o0nTka0Q96LWfEJ5tUTJlNiZKRoM1iJW95dTQ2t7EmJ7BYL3Twghz6dcqs9wRUh+hTwQ2+A7Eg06AUdCIZERpc7jmY+8S+68uZHKdKTAPMxUc2hr6n8necMQuaNmUFZeZwlIJq1tYhfFTGOwKznJHYjrASUcio9yDMaG2hW2btSu489sgwoS2tunEweRXkF3cH7QM0y9ArwGw0mw2hpPEdflb+ttMjU3ualD/52P/k65BljpPcvoILSBbAc+XHveXbnATisHO8C6N8lkV4ZV0KIC0oPAsrBfaZ71v+zrcMfMD2+b+YleUpLwzwwU74MMhUd/GzHKr5Y9wLVnjxEjbUn6c0lk+hUdaUyIq/QdbOXkdUWmNHGOg7MMti2Y52BFVAxumcvunvIcKUl4+97KqzLd22X/MrKHqyrpeW7OW0ygD+0DBSz0pkCUrfU/pp9dGDWN773PK1YfA2dOLBb6ZWRXzKPXFEGs6TW5gblSkByG81AgBW7/7J8uiG7v9IjYF70+ae+L6oPezccOUTFb75G9a0cQkIwCuT8qxMF4CdHlswzWe2BWa3c/B6dr+csWQEEyCmYJPUbXkL1Z4/R6aNVdPrY99QMk/P7OjTlJbgjH8yCiWvx29rRQfVeL51oaqTf5g4V+0KFT5Ks41e9SRNWr6QzLew9ZSBqK1cCPCPsdAyYC/KHhZ+f8cgHEgKZaAeTx5N6XSII14mgZRN9TA5qdmek/n5/t8gof3ZCF2lYSncJwkrJUW4p0mYTuRFWorMAppEj9+IrRgffdydowLOgGOQgNPupz6VLR9+if+AXYaonWvpw0lRp5+13SBYoqxvjNFwzId6x2pKYzVZyOKMoOqGH0vPLIC8pmTZMu52GpnSnlvZ2Uje3ArE5VAVsYLZ8KQcuuyuS0rJHiAAVDJgKWax2crg8FJeY7sseeq238KaFNOSq26hrj37skfRRlOIRkDgosTfi6x4ejx/CSVMG5tADlxcQUopAAJBnV6CprZ1cVhaNaNuJY4EB+R7hClXpOICJXc3gaGqx2Klr9768Ualiw1u8McUYK1R61yuU1HMgWe0uCGu3YA9gdWW36/f76Mi3m2reWjqFg46YoIcLCqk0qx98s4QOE/t/swWbkn3+5LX/4GisBQq8pQXSiRC8v/YsHUOQS4uOoT2nAq4ZYIW/5gt1BQpBu3xJlJwxWHiZyi3raPfnKzXhGXz9JeKCI8KNFYgSK6EKz4Bo5IlPYdvTJuxIfR25bDaKtNnFrw3pArvR177aRZ8dPqjcJYT3XZ+VrcnRDgUXl/9bKFp5RucBZfPhQwKhAH+dMz1ZCry49+ArRaT9bPVTBCcouvU4fmAXfbjiD9TRHtZHs3ImvEcLqYfr64UL1eMcXOQzmzYqLQH/IwWjfY8WFFnhdZQuoo/276Xqhnqsxjn9C7guEfkKK8DLpxUNDqdb2HHFhrepSRdR2d5ZORXfbHqH3l9+D5QIpBQqOGvFPtEGDtYhNgQp8NyWTQY/PyY9w4yYYE/xeGhGTq7SCykRM1ZV7pFqvS18YKBiPyhmVlVAs//I6C5Czu3r+ZBBBtwqld79F5GR6vHdtveR1D2LVQrkLwyr2OBubXl4BtkcVGw+Wk2vVgRSBFRk9PioMcT7gjFzcC6h9BTXjJd2bm1s0yV6wAFQzAg/weFWy1ujoMA55D11p7kslZGY2p9S+wyjookPUfYwPvoJYOtHy6lq50dKSwZ7qaT0QfFKU6TK7AYZNU1NdHvZWvJiZlVM7DeQMmPjlBYRCh8aksw+QAae5yI/oBFRLagpwMLLvgrwxCfT7s/eMNh+TsFErIJZeKBrbltKfYeMU0bwFtxXvnapwZT43pguaZq98SZs7minZijBBcwJKKGCPczD+YUiTVfBKzF36GVioytgOeXlkaG5ae5k4bU7nRHRtHfXeqUFc7A5xKZWYYFfLp76BIJcYIbO1RwQ2aoedmegGOGp4lx/7sdltPU4nzLKYNNB9SVFOwM5l4rLu6cikKUoLYGAhjrotRLgmTzfEHBZiWkDKNKdoLRkcOk4suT3SgsConz8ZvO7Sis8Xt65jdZ+F0jDEThoSdFYGtlDrFSIcA4o98yYsULJCyFEgYZzxw1+n2tgNolgpA8owGoE0uSK8rfI22wsZFSwC30Veb3eD82+dChN7j9IaYVHdkJXuqGvId0OgSqZNgNnkBKrYJtP63uZ0jIiwh2Pzc3lswyu3MrgVjkSBwMpsqCKcZl9aFH+KL2NhwWPP144hgrT+OjUAG1Dh0xtY22NcgWPFJNInrgkpWUER9yC8QsMudLe3Z/Q5rIXQ4KWHkit2e5FNP4hcNsduP8aTj/0L+UCQmivKqAN6o9DsnKLRarQGTjZGzp2ltKSsfG9ZVRdtUVpheKxUUUUE6bEvBDcDsQVizhnUpEBCtn5T9jpgi/380nDhcB7Y2TJXKGICr+vndb8ebYhiqvg2S/O6CM8Ujg2tbXRyfNNVHX2DKGspPUH99MH+74XkbjVp9uYusNfXgaOIPvAWO7QwXvdnBeasQfiuGDvaGsh/Tt4pbhWZq/F9r/ur/MM3otNS+8MGDFwl5xWQ5iQ1IJLTY4VHPB4vwSPB4E3Km9ALZ14XGnwU8H08/knTEmcd+rJJSSWSlBch3/+YpCDjmETcYONmSNcuAd+bfwWFN4j2I/lg38Eh4Ch4fFHAMmcr7WlUZ0lf4zD2WE2m+xcYaECgxczfppdZgRqBU4tMmPjqSd+y/ZV0bq9VcodGliBpSCf0BkPbxVwH4feheBsMMRl8GFWVu7VyHdSyely440S1Z06TNV7t1NLUy1lDCrk40fv0b3bxCTghd7KOb+zRdkdFj4euZD/V8fertwjUg/9SR3Ae/V5kM9IuSYIWYFgcJq9CLwVNJy0YoapeNqTIrHTl5Pshfi1KxZf246gKJJEzGzzvjvmRXB60Bk4drCwp5rP0/Jd2+mlHVsNKTiwBuT/2hiqqP+mAIPv6Q2+CHLpqQU/rhPyxkynKybcJ5I+Fex9Xrx3ZEdTXY2QODEy0lsx8y6nPnixl+HUurz6EO08cVwcIx4Aj6MGZi8VhK1gERhIYxX8EAVUsDDTQT6XNJhVNyR8xdOfokRUchwbuNT80/zhPu/5OiFxr5jYhi23zvGwebC/P4QaecmmciqDfYcRNhhcvPOx9zHR+gnAx8VsiwbPwG623/ASac6Scmn+S5USTIyDgBhLjnJXHbp7gYTsUxrUNVHCPjA82wm53nwVDI5PPwk4Eq4EQ2IHHyvmXz8fv1GaAshjdsCraO0w5DE2D/7H9wZwAchH6Jq5XgywefA/uXlpQ4Uy/n+NyzXjuEw+xn4Z5D3GM82OIrBRfibwh58G2a2FEzKYvGrfgPNBLrl+zD68aGAhUGOa+J+DFzIVXombwM796S8MFmw8yJtcb0JMPoi6cHr7o0H0HzS6ilTHXLvBAAAAAElFTkSuQmCC
 // @grant        GM_addStyle
 // @run-at       document-start
 // @homepage     https://github.com/loregamer/rpghq-userscripts#readme
@@ -24,842 +24,862 @@
   "use strict";
   // Inject styles
   GM_addStyle(`
-    :root {
-      --primary-color: #2196f3;
-      --primary-dark: #1976d2;
-      --accent-color: #ff9800;
-      --success-color: #4caf50;
-      --warning-color: #ffc107;
-      --danger-color: #f44336;
-      --text-primary: #ffffff;
-      --text-secondary: #b0bec5;
-      --bg-dark: #1e1e1e;
-      --bg-card: #2d2d2d;
-      --border-color: #444444;
-    }
-    
-    /* Modal overlay */
-    #rpghq-modal-overlay {
-      display: none;
-      position: fixed;
-      z-index: 1000000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.8);
-      overflow: hidden;
-    }
+  :root {
+    --primary-color: #2196f3;
+    --primary-dark: #1976d2;
+    --accent-color: #ff9800;
+    --success-color: #4caf50;
+    --warning-color: #ffc107;
+    --danger-color: #f44336;
+    --text-primary: #ffffff;
+    --text-secondary: #b0bec5;
+    --bg-dark: #1e1e1e;
+    --bg-card: #2d2d2d;
+    --border-color: #444444;
+  }
   
-    /* Modal container */
-    .mod-manager-modal {
-      display: none;
-      position: fixed;
-      z-index: 1000000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.8);
-      overflow: hidden; /* Prevent body scroll when modal is open */
-    }
+  /* Modal overlay */
+  #rpghq-modal-overlay {
+    display: none;
+    position: fixed;
+    z-index: 1000000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    overflow: hidden;
+  }
+
+  /* Modal container */
+  .mod-manager-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    overflow: hidden; /* Prevent body scroll when modal is open */
+  }
+
+  /* Modal content box */
+  .mod-manager-modal-content {
+    background-color: var(--bg-dark);
+    margin: 2% auto;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    width: 90%;
+    max-width: 1200px;
+    max-height: 90vh;
+    border-radius: 4px;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header and close button */
+  .mod-manager-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+  }
+
+  .mod-manager-title {
+    margin: 0;
+    font-size: 1.8em;
+    color: var(--text-primary);
+  }
+
+  .mod-manager-close {
+    font-size: 1.8em;
+    cursor: pointer;
+  }
+
+  .mod-manager-close:hover {
+    color: var(--danger-color);
+  }
+
+  /* Tab system */
+  .mod-manager-tabs {
+    display: flex;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .mod-manager-tab {
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 1em;
+    color: var(--text-secondary);
+    position: relative;
+  }
+
+  .mod-manager-tab:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .mod-manager-tab.active {
+    color: var(--primary-color);
+    font-weight: bold;
+    border-bottom: 2px solid var(--primary-color);
+  }
+
+  /* Sub-tabs system */
+  .sub-tabs {
+    display: flex;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    border-radius: 4px 4px 0 0;
+  }
+
+  .sub-tab {
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 1em;
+    color: var(--text-secondary);
+    position: relative;
+  }
+
+  .sub-tab:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .sub-tab.active {
+    color: var(--primary-color);
+    font-weight: bold;
+    border-bottom: 2px solid var(--primary-color);
+    background-color: var(--bg-card);
+    border-radius: 4px 4px 0 0;
+  }
+
+  .sub-tab {
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 1em;
+    color: var(--text-secondary);
+    position: relative;
+  }
+
+  .sub-tab:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .sub-tab.active {
+    color: var(--primary-color);
+    font-weight: bold;
+    border-bottom: 2px solid var(--primary-color);
+  }
+
+  /* Content area */
+  .mod-manager-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  /* Filter panel */
+  .filter-panel {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+
+  .filter-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .filter-panel-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  .filter-panel-toggle {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 1.1em;
+  }
+
+  .filter-panel-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+
+  .filter-panel-body.collapsed {
+    display: none;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .filter-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 0.9em;
+  }
+
+  .filter-group select,
+  .filter-group input {
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+  }
+
+  .filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+    grid-column: 1 / -1;
+  }
   
-    /* Modal content box */
-    .mod-manager-modal-content {
-      background-color: var(--bg-dark);
-      margin: 2% auto;
-      padding: 10px;
-      border: 1px solid var(--border-color);
-      width: 90%;
-      max-width: 1200px;
-      max-height: 90vh;
-      border-radius: 4px;
-      color: var(--text-primary);
-      display: flex;
-      flex-direction: column;
-    }
+  .filter-panel {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 15px;
+  }
+
+  .filter-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .filter-panel-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: 0;
+  }
+
+  .filter-panel-toggle {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 1.1em;
+  }
+
+  .filter-panel-body {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+
+  .filter-panel-body.collapsed {
+    display: none;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .filter-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 0.9em;
+  }
+
+  .filter-group select,
+  .filter-group input {
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+  }
+
+  .filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+    grid-column: 1 / -1;
+  }
+
+  /* Script grid */
+  .script-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 10px;
+  }
+
+  .script-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
   
-    /* Header and close button */
-    .mod-manager-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 10px;
-    }
+  .script-card.disabled {
+    opacity: 0.7;
+    filter: grayscale(0.8);
+  }
+
+  /* Style for enabled script card in Grid View */
+  .script-card:not(.disabled) {
+    border: 1px solid #C62D51; /* Added border */
+    /* Adjust margin slightly to compensate for border */
+    margin: -1px; /* Prevent layout shift due to border */
+  }
+
+  .script-card-image {
+    position: relative;
+    height: 130px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .script-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
   
-    .mod-manager-title {
-      margin: 0;
-      font-size: 1.8em;
-      color: var(--text-primary);
-    }
+  .image-toggle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    border-radius: 3px;
+    padding: 3px;
+  }
+
+  /* Category display removed */
+
+  .script-card-content {
+    padding: 10px;
+  }
+
+  .script-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .script-card-actions-top {
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .script-toggle-wrapper {
+    cursor: pointer;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Default checkboxes - no custom styling */
+  input[type="checkbox"] {
+    cursor: pointer;
+  }
+
+  /* Specific styling for the script toggle checkbox */
+  .script-toggle-checkbox {
+    margin: 2px;
+  }
+
+  .btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 3px;
+  }
+
+  .btn-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+  }
+
+  .script-card-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    padding-right: 8px;
+  }
+
+  .script-card-version {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+  }
   
-    .mod-manager-close {
-      font-size: 1.8em;
-      cursor: pointer;
-    }
+  .script-card-version-inline {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    font-weight: normal;
+    display: none; /* Hide version for now */
+  }
   
-    .mod-manager-close:hover {
-      color: var(--danger-color);
-    }
+  .script-version-inline {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    font-weight: normal;
+    display: none; /* Hide version for now */
+  }
+
+  .script-card-description {
+    margin: 0 0 10px 0;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    line-height: 1.3;
+    height: 3.6em; /* Approx 3 lines */
+    overflow: hidden;
+  }
+
+  .script-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .script-card-version {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    display: none; /* Hide version for now */
+  }
+
+  .script-card-phase {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+  }
+
+  /* Script list view */
+  .script-list {
+    /* Uses .data-table styling */
+  }
+
+  /* Forum preferences */
+  .preferences-section {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    margin-bottom: 15px;
+    overflow: hidden;
+  }
+
+  .preferences-section-header {
+    background-color: rgba(33, 150, 243, 0.1);
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .preferences-section-title {
+    margin: 0;
+    font-size: 1.1em;
+    color: var(--text-primary);
+  }
+
+  .preferences-section-body {
+    padding: 10px;
+  }
+
+  .preference-item {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .preference-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .preference-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+
+  .preference-name {
+    font-weight: bold;
+    margin: 0;
+  }
+
+  .preference-control {
+    min-width: 150px;
+  }
+
+  .preference-description {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    margin: 0;
+  }
+
+  /* Settings modal */
+  .settings-modal {
+    display: none;
+    position: fixed;
+    z-index: 1100000; /* Above main modal */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+
+  .settings-modal-content {
+    background-color: var(--bg-dark);
+    margin: 5% auto;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    width: 60%;
+    max-width: 800px;
+    max-height: 85vh;
+    border-radius: 4px;
+    overflow-y: auto;
+  }
+
+  .settings-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .settings-modal-title {
+    font-size: 1.4em;
+    margin: 0;
+  }
+
+  .settings-modal-close {
+    font-size: 1.4em;
+    cursor: pointer;
+    color: var(--text-secondary);
+  }
+
+  .settings-modal-close:hover {
+    color: var(--danger-color);
+  }
+
+  .setting-group {
+    margin-bottom: 15px;
+  }
+
+  .setting-group-title {
+    font-size: 1.1em;
+    margin: 0 0 10px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .setting-item {
+    margin-bottom: 12px;
+  }
+
+  .setting-label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  .setting-description {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    margin-bottom: 5px;
+  }
+
+  .setting-control {
+    margin-top: 5px;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 5px 10px;
+    border-radius: 3px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .btn-icon {
+    font-size: 1em;
+  }
+
+  .btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-dark);
+  }
+
+  .btn-secondary {
+    background-color: #555;
+    color: var(--text-primary);
+  }
+
+  .btn-secondary:hover {
+    background-color: #666;
+  }
+
+  .btn-small {
+    padding: 3px 8px;
+    font-size: 0.8em;
+  }
+
+
+  /* New Settings Item Layout */
+  .setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    transition: opacity 0.3s ease, max-height 0.3s ease; /* Add transitions */
+    overflow: hidden; /* Hide content when collapsed */
+  }
+  .setting-item.setting-item-hidden {
+    opacity: 0;
+    max-height: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+    pointer-events: none; /* Prevent interaction when hidden */
+  }
+  .setting-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .setting-details {
+    flex-grow: 1;
+    padding-right: 20px; /* Space between details and control */
+  }
+  .setting-name {
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+  }
+  .setting-description {
+    color: var(--text-secondary);
+    font-size: 0.9em;
+  }
+  .setting-control {
+    flex-shrink: 0; /* Prevent control from shrinking */
+  }
+  .setting-control .setting-input {
+    /* General styling for non-toggle inputs in the new layout */
+    padding: 6px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    min-width: 150px; /* Ensure inputs have some minimum width */
+  }
+  .setting-control select.setting-input {
+    /* Specific styles for select if needed */
+    padding: 8px 10px; /* Adjust padding for select dropdown arrow */
+  }
+
+
+  /* Toggle Switch Styles */
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px; /* Width of the toggle */
+    height: 24px; /* Height of the toggle */
+  }
+
+  .toggle-switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #555; /* Off state background */
+    transition: .4s;
+    border-radius: 24px; /* Rounded slider */
+  }
+
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px; /* Height of the knob */
+    width: 18px; /* Width of the knob */
+    left: 3px; /* Padding from left */
+    bottom: 3px; /* Padding from bottom */
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%; /* Circular knob */
+  }
+
+  input:checked + .toggle-slider {
+    background-color: var(--primary-color); /* On state background */
+  }
+
+  input:focus + .toggle-slider {
+    box-shadow: 0 0 1px var(--primary-color);
+  }
+
+  input:checked + .toggle-slider:before {
+    transform: translateX(24px); /* Move knob to the right */
+  }
   
-    /* Tab system */
-    .mod-manager-tabs {
-      display: flex;
-      margin-bottom: 10px;
-      border-bottom: 1px solid var(--border-color);
-    }
+
+  /* Tables */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .data-table th {
+    background-color: rgba(255, 255, 255, 0.05);
+    font-weight: bold;
+  }
+
+  .data-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  /* Style for enabled script row in List View */
+  .data-table tr.enabled {
+    border-left: 1px solid #cce5ff; /* Make border thinner and lighter */
+    /* Optionally adjust padding if needed */
+    /* padding-left: 7px; /* Adjust padding */
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-secondary);
+  }
+
+  .empty-state-icon {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    opacity: 0.5;
+  }
+
+  .empty-state-message {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+  }
+
+  /* Info note */
+  .info-note {
+    background-color: rgba(33, 150, 243, 0.1);
+    border-left: 4px solid var(--primary-color);
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 0 4px 4px 0;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-secondary);
+  }
+
+  .empty-state-icon {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    opacity: 0.5;
+  }
+
+  .empty-state-message {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+  }
   
-    .mod-manager-tab {
-      padding: 8px 16px;
-      cursor: pointer;
-      font-size: 1em;
-      color: var(--text-secondary);
-      position: relative;
-    }
-  
-    .mod-manager-tab:hover {
-      background-color: rgba(255, 255, 255, 0.05);
-    }
-  
-    .mod-manager-tab.active {
-      color: var(--primary-color);
-      font-weight: bold;
-      border-bottom: 2px solid var(--primary-color);
-    }
-  
-    /* Sub-tabs system */
-    .sub-tabs {
-      display: flex;
-      margin-bottom: 10px;
-      border-bottom: 1px solid var(--border-color);
-      background-color: var(--bg-card);
-      border-radius: 4px 4px 0 0;
-    }
-  
-    .sub-tab {
-      padding: 8px 16px;
-      cursor: pointer;
-      font-size: 1em;
-      color: var(--text-secondary);
-      position: relative;
-    }
-  
-    .sub-tab:hover {
-      background-color: rgba(255, 255, 255, 0.05);
-    }
-  
-    .sub-tab.active {
-      color: var(--primary-color);
-      font-weight: bold;
-      border-bottom: 2px solid var(--primary-color);
-      background-color: var(--bg-card);
-      border-radius: 4px 4px 0 0;
-    }
-  
-    .sub-tab {
-      padding: 8px 16px;
-      cursor: pointer;
-      font-size: 1em;
-      color: var(--text-secondary);
-      position: relative;
-    }
-  
-    .sub-tab:hover {
-      background-color: rgba(255, 255, 255, 0.05);
-    }
-  
-    .sub-tab.active {
-      color: var(--primary-color);
-      font-weight: bold;
-      border-bottom: 2px solid var(--primary-color);
-    }
-  
-    /* Content area */
-    .mod-manager-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-    }
-  
-    /* Filter panel */
-    .filter-panel {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      padding: 10px;
-      margin-bottom: 15px;
-    }
-  
-    .filter-panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-  
-    .filter-panel-title {
-      font-size: 1.1em;
-      font-weight: bold;
-      margin: 0;
-    }
-  
-    .filter-panel-toggle {
-      background: none;
-      border: none;
-      color: var(--text-primary);
-      cursor: pointer;
-      font-size: 1.1em;
-    }
-  
-    .filter-panel-body {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 10px;
-    }
-  
-    .filter-panel-body.collapsed {
-      display: none;
-    }
-  
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-    }
-  
-    .filter-group label {
-      margin-bottom: 5px;
-      font-weight: bold;
-      font-size: 0.9em;
-    }
-  
-    .filter-group select,
-    .filter-group input {
-      padding: 5px;
-      border: 1px solid var(--border-color);
-      border-radius: 3px;
-      background-color: var(--bg-dark);
-      color: var(--text-primary);
-    }
-  
-    .filter-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 10px;
-      grid-column: 1 / -1;
-    }
-    
-    .filter-panel {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      padding: 10px;
-      margin-bottom: 15px;
-    }
-  
-    .filter-panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-  
-    .filter-panel-title {
-      font-size: 1.1em;
-      font-weight: bold;
-      margin: 0;
-    }
-  
-    .filter-panel-toggle {
-      background: none;
-      border: none;
-      color: var(--text-primary);
-      cursor: pointer;
-      font-size: 1.1em;
-    }
-  
-    .filter-panel-body {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 10px;
-    }
-  
-    .filter-panel-body.collapsed {
-      display: none;
-    }
-  
-    .filter-group {
-      display: flex;
-      flex-direction: column;
-    }
-  
-    .filter-group label {
-      margin-bottom: 5px;
-      font-weight: bold;
-      font-size: 0.9em;
-    }
-  
-    .filter-group select,
-    .filter-group input {
-      padding: 5px;
-      border: 1px solid var(--border-color);
-      border-radius: 3px;
-      background-color: var(--bg-dark);
-      color: var(--text-primary);
-    }
-  
-    .filter-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 10px;
-      grid-column: 1 / -1;
-    }
-  
-    /* Script grid */
+  /* WIP Banner */
+  .wip-banner {
+    background-color: var(--warning-color);
+    color: #000;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
     .script-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 10px;
+      grid-template-columns: 1fr;
     }
-  
-    .script-card {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      overflow: hidden;
-      transition: all 0.3s ease;
+
+    .filter-panel-body {
+      grid-template-columns: 1fr;
     }
-    
-    .script-card.disabled {
-      opacity: 0.7;
-      filter: grayscale(0.8);
-    }
-  
-    /* Style for enabled script card in Grid View */
-    .script-card:not(.disabled) {
-      border: 1px solid #C62D51; /* Added border */
-      /* Adjust margin slightly to compensate for border */
-      margin: -1px; /* Prevent layout shift due to border */
-    }
-  
-    .script-card-image {
-      position: relative;
-      height: 130px;
-      overflow: hidden;
-      cursor: pointer;
-    }
-  
-    .script-card-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
-    .image-toggle {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 10;
-      border-radius: 3px;
-      padding: 3px;
-    }
-  
-    /* Category display removed */
-  
-    .script-card-content {
-      padding: 10px;
-    }
-  
-    .script-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-  
-    .script-card-actions-top {
-      align-items: center;
-      gap: 8px;
-      white-space: nowrap;
-    }
-  
-    .script-toggle-wrapper {
-      cursor: pointer;
-      font-size: 1.2em;
-      display: flex;
-      align-items: center;
-    }
-  
-    /* Default checkboxes - no custom styling */
-    input[type="checkbox"] {
-      cursor: pointer;
-    }
-  
-    /* Specific styling for the script toggle checkbox */
-    .script-toggle-checkbox {
-      margin: 2px;
-    }
-  
-    .btn-icon {
-      background: transparent;
-      border: none;
-      color: var(--text-secondary);
-      cursor: pointer;
-      padding: 4px;
-      border-radius: 3px;
-    }
-  
-    .btn-icon:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-      color: var(--text-primary);
-    }
-  
-    .script-card-title {
-      font-size: 1.1em;
-      font-weight: bold;
-      margin: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1;
-      padding-right: 8px;
-    }
-  
-    .script-card-version {
-      background-color: var(--primary-color);
-      color: white;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-size: 0.8em;
-    }
-    
-    .script-card-version-inline {
-      font-size: 0.8em;
-      color: var(--text-secondary);
-      font-weight: normal;
-      display: none; /* Hide version for now */
-    }
-    
-    .script-version-inline {
-      font-size: 0.8em;
-      color: var(--text-secondary);
-      font-weight: normal;
-      display: none; /* Hide version for now */
-    }
-  
-    .script-card-description {
-      margin: 0 0 10px 0;
-      color: var(--text-secondary);
-      font-size: 0.9em;
-      line-height: 1.3;
-      height: 3.6em; /* Approx 3 lines */
-      overflow: hidden;
-    }
-  
-    .script-card-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 8px;
-      margin-top: 8px;
-      border-top: 1px solid var(--border-color);
-    }
-  
-    .script-card-version {
-      font-size: 0.8em;
-      color: var(--text-secondary);
-      display: none; /* Hide version for now */
-    }
-  
-    .script-card-phase {
-      font-size: 0.85em;
-      color: var(--text-secondary);
-    }
-  
-    /* Script list view */
-    .script-list {
-      /* Uses .data-table styling */
-    }
-  
-    /* Forum preferences */
-    .preferences-section {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      margin-bottom: 15px;
-      overflow: hidden;
-    }
-  
-    .preferences-section-header {
-      background-color: rgba(33, 150, 243, 0.1);
-      padding: 10px;
-      border-bottom: 1px solid var(--border-color);
-    }
-  
-    .preferences-section-title {
-      margin: 0;
-      font-size: 1.1em;
-      color: var(--text-primary);
-    }
-  
-    .preferences-section-body {
-      padding: 10px;
-    }
-  
-    .preference-item {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 10px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-  
-    .preference-item:last-child {
-      margin-bottom: 0;
-      padding-bottom: 0;
-      border-bottom: none;
-    }
-  
-    .preference-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 5px;
-    }
-  
-    .preference-name {
-      font-weight: bold;
-      margin: 0;
-    }
-  
-    .preference-control {
-      min-width: 150px;
-    }
-  
-    .preference-description {
-      color: var(--text-secondary);
-      font-size: 0.9em;
-      margin: 0;
-    }
-  
-    /* Settings modal */
-    .settings-modal {
-      display: none;
-      position: fixed;
-      z-index: 1100000; /* Above main modal */
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.8);
-    }
-  
+
     .settings-modal-content {
-      background-color: var(--bg-dark);
-      margin: 5% auto;
-      padding: 15px;
-      border: 1px solid var(--border-color);
-      width: 60%;
-      max-width: 800px;
-      max-height: 85vh;
-      border-radius: 4px;
-      overflow-y: auto;
+      width: 90%;
     }
-  
-    .settings-modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border-color);
-    }
-  
-    .settings-modal-title {
-      font-size: 1.4em;
-      margin: 0;
-    }
-  
-    .settings-modal-close {
-      font-size: 1.4em;
-      cursor: pointer;
-      color: var(--text-secondary);
-    }
-  
-    .settings-modal-close:hover {
-      color: var(--danger-color);
-    }
-  
-    .setting-group {
-      margin-bottom: 15px;
-    }
-  
-    .setting-group-title {
-      font-size: 1.1em;
-      margin: 0 0 10px 0;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-  
-    .setting-item {
-      margin-bottom: 12px;
-    }
-  
-    .setting-label {
-      display: block;
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-  
-    .setting-description {
-      display: block;
-      color: var(--text-secondary);
-      font-size: 0.9em;
-      margin-bottom: 5px;
-    }
-  
-    .setting-control {
-      margin-top: 5px;
-    }
-  
-    /* Buttons */
-    .btn {
-      padding: 5px 10px;
-      border-radius: 3px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9em;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-  
-    .btn-icon {
-      font-size: 1em;
-    }
-  
-    .btn-primary {
-      background-color: var(--primary-color);
-      color: white;
-    }
-  
-    .btn-primary:hover {
-      background-color: var(--primary-dark);
-    }
-  
-    .btn-secondary {
-      background-color: #555;
-      color: var(--text-primary);
-    }
-  
-    .btn-secondary:hover {
-      background-color: #666;
-    }
-  
-    .btn-small {
-      padding: 3px 8px;
-      font-size: 0.8em;
-    }
-  
-  
-    /* New Settings Item Layout */
-    .setting-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      padding-bottom: 15px;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .setting-item:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-      padding-bottom: 0;
-    }
-    .setting-details {
-      flex-grow: 1;
-      padding-right: 20px; /* Space between details and control */
-    }
-    .setting-name {
-      font-weight: bold;
-      margin-bottom: 4px;
-      color: var(--text-primary);
-    }
-    .setting-description {
-      color: var(--text-secondary);
-      font-size: 0.9em;
-    }
-    .setting-control {
-      flex-shrink: 0; /* Prevent control from shrinking */
-    }
-    .setting-control .setting-input {
-      /* General styling for non-toggle inputs in the new layout */
-      padding: 6px 10px;
-      border: 1px solid var(--border-color);
-      border-radius: 3px;
-      background-color: var(--bg-dark);
-      color: var(--text-primary);
-      min-width: 150px; /* Ensure inputs have some minimum width */
-    }
-    .setting-control select.setting-input {
-      /* Specific styles for select if needed */
-      padding: 8px 10px; /* Adjust padding for select dropdown arrow */
-    }
-  
-  
-    /* Toggle Switch Styles */
-    .toggle-switch {
-      position: relative;
-      display: inline-block;
-      width: 48px; /* Width of the toggle */
-      height: 24px; /* Height of the toggle */
-    }
-  
-    .toggle-switch input { 
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-  
-    .toggle-slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #555; /* Off state background */
-      transition: .4s;
-      border-radius: 24px; /* Rounded slider */
-    }
-  
-    .toggle-slider:before {
-      position: absolute;
-      content: "";
-      height: 18px; /* Height of the knob */
-      width: 18px; /* Width of the knob */
-      left: 3px; /* Padding from left */
-      bottom: 3px; /* Padding from bottom */
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%; /* Circular knob */
-    }
-  
-    input:checked + .toggle-slider {
-      background-color: var(--primary-color); /* On state background */
-    }
-  
-    input:focus + .toggle-slider {
-      box-shadow: 0 0 1px var(--primary-color);
-    }
-  
-    input:checked + .toggle-slider:before {
-      transform: translateX(24px); /* Move knob to the right */
-    }
-    
-  
-    /* Tables */
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 15px;
-    }
-  
-    .data-table th,
-    .data-table td {
-      padding: 8px 10px;
-      text-align: left;
-      border-bottom: 1px solid var(--border-color);
-    }
-  
-    .data-table th {
-      background-color: rgba(255, 255, 255, 0.05);
-      font-weight: bold;
-    }
-  
-    .data-table tr:hover {
-      background-color: rgba(255, 255, 255, 0.03);
-    }
-  
-    /* Style for enabled script row in List View */
-    .data-table tr.enabled {
-      border-left: 1px solid #cce5ff; /* Make border thinner and lighter */
-      /* Optionally adjust padding if needed */
-      /* padding-left: 7px; /* Adjust padding */
-    }
-  
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 30px 20px;
-      color: var(--text-secondary);
-    }
-  
-    .empty-state-icon {
-      font-size: 2.5em;
-      margin-bottom: 15px;
-      opacity: 0.5;
-    }
-  
-    .empty-state-message {
-      font-size: 1.1em;
-      margin-bottom: 10px;
-    }
-  
-    /* Info note */
-    .info-note {
-      background-color: rgba(33, 150, 243, 0.1);
-      border-left: 4px solid var(--primary-color);
-      padding: 10px;
-      margin-bottom: 15px;
-      border-radius: 0 4px 4px 0;
-    }
-  
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 30px 20px;
-      color: var(--text-secondary);
-    }
-  
-    .empty-state-icon {
-      font-size: 2.5em;
-      margin-bottom: 15px;
-      opacity: 0.5;
-    }
-  
-    .empty-state-message {
-      font-size: 1.1em;
-      margin-bottom: 10px;
-    }
-    
-    /* WIP Banner */
-    .wip-banner {
-      background-color: var(--warning-color);
-      color: #000;
-      padding: 10px;
-      margin-bottom: 15px;
-      border-radius: 4px;
-      text-align: center;
-      font-weight: bold;
-    }
-  
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-      .script-grid {
-        grid-template-columns: 1fr;
-      }
-  
-      .filter-panel-body {
-        grid-template-columns: 1fr;
-      }
-  
-      .settings-modal-content {
-        width: 90%;
-      }
-    }
-  `);
+  }
+
+  /* Preview image for settings */
+  .setting-preview-image {
+    display: block; /* Ensure it takes its own line */
+    max-width: 100px; /* Adjust size as needed */
+    height: auto; /* Maintain aspect ratio */
+    margin-top: 8px; /* Space above the image */
+    border: 1px solid var(--border-color); /* Optional border */
+    border-radius: 3px;
+  }
+`);
   const SCRIPT_MANIFEST = [
     {
       id: "bbcode",
@@ -918,7 +938,185 @@
       // Add an image URL if available
       path: "./scripts/notifications.js",
       enabledByDefault: !0,
-      settings: [],
+      settings: [
+        {
+          id: "enableNotificationColors",
+          label: "Enable Notification Type Colors",
+          type: "checkbox",
+          defaultValue: !0,
+          description:
+            "Define custom background colors for notification types using JSON format (hex codes). Requires 'Enable Notification Type Colors' to be active.",
+        },
+        {
+          id: "quoteColor",
+          label: "Quote Notification Color",
+          type: "color",
+          defaultValue: "#3889ED",
+          description: "Set the text color for quote notifications.",
+          dependsOn: {
+            settingId: "enableNotificationColors",
+            value: !0,
+          },
+        },
+        {
+          id: "replyColor",
+          label: "Reply Notification Color",
+          type: "color",
+          defaultValue: "#2E8B57",
+          // SeaGreen - Default Reply Color
+          description: "Set the text color for reply notifications.",
+          dependsOn: {
+            settingId: "enableNotificationColors",
+            value: !0,
+          },
+        },
+        {
+          id: "reactionColor",
+          label: "Reaction Notification Color",
+          type: "color",
+          defaultValue: "#3889ED",
+          // Default Reaction Color
+          description: "Set the text color for reaction notifications.",
+          dependsOn: {
+            settingId: "enableNotificationColors",
+            value: !0,
+          },
+        },
+        {
+          id: "mentionColor",
+          label: "Mention Notification Color",
+          type: "color",
+          defaultValue: "#FFC107",
+          description: "Set the text color for mention notifications.",
+          dependsOn: {
+            settingId: "enableNotificationColors",
+            value: !0,
+          },
+        },
+        {
+          id: "editColor",
+          label: "Edit Notification Color",
+          type: "color",
+          defaultValue: "#fafad2",
+          // LightGoldenrodYellow
+          description: "Set the background color for edit notifications.",
+          dependsOn: {
+            settingId: "enableNotificationColors",
+            value: !0,
+          },
+        },
+        {
+          id: "approvalColor",
+          label: "Approval Notification Color",
+          type: "color",
+          defaultValue: "#00AA00",
+          description: "Set the text color for approval notifications.",
+          dependsOn: {
+            settingId: "enableNotificationColors",
+            value: !0,
+          },
+        },
+        {
+          id: "reportColor",
+          label: "Report Notification Color",
+          type: "color",
+          defaultValue: "#f58c05",
+          description: "Set the text color for report notifications.",
+          dependsOn: {
+            settingId: "enableNotificationColors",
+            value: !0,
+          },
+        },
+        {
+          id: "warningColor",
+          label: "Warning Notification Color",
+          type: "color",
+          defaultValue: "#D31141",
+          description: "Set the text color for warning notifications.",
+          dependsOn: {
+            settingId: "enableNotificationColors",
+            value: !0,
+          },
+        },
+        {
+          id: "timestampColor",
+          label: "Timestamp Color",
+          type: "color",
+          defaultValue: "#888888",
+          description: "Set the text color for notification timestamps.",
+        },
+        {
+          id: "referenceBackgroundColor",
+          label: "Reference Background Color",
+          type: "color",
+          defaultValue: "rgba(23, 27, 36, 0.5)",
+          description:
+            "Set the background color for the post reference preview.",
+        },
+        {
+          id: "referenceTextColor",
+          label: "Reference Text Color",
+          type: "color",
+          defaultValue: "#ffffff",
+          description: "Set the text color for the post reference preview.",
+        },
+        {
+          id: "defaultColor",
+          label: "Default Notification Row Background",
+          type: "color",
+          defaultValue: "#ffffff",
+          description:
+            "Set the default background color for notification rows on the main page (used if type-specific colors are off or not set).",
+        },
+        {
+          id: "enableImagePreviews",
+          label: "Enable Image Previews",
+          type: "checkbox",
+          defaultValue: !0,
+          description:
+            "Shows image previews in 'Post replied to' notifications.",
+          previewImage:
+            "https://f.rpghq.org/X4oQJRUQ0Avb.png?n=pasted-file.png",
+        },
+        {
+          id: "enableVideoPreviews",
+          label: "Enable Video Previews",
+          type: "checkbox",
+          defaultValue: !1,
+          // Off by default
+          description:
+            "Shows video previews in 'Post replied to' notifications. Warning: This might impact performance.",
+        },
+        {
+          id: "enableReactionSmileys",
+          label: "Show Reaction Smileys",
+          type: "checkbox",
+          defaultValue: !0,
+          description:
+            "Fetches and displays reaction smileys within reaction notifications.",
+          previewImage:
+            "https://f.rpghq.org/DVH4QZTYWIZg.png?n=pasted-file.png",
+        },
+        {
+          id: "resizeFillerWords",
+          label: "Resize Filler Words",
+          type: "checkbox",
+          defaultValue: !0,
+          description:
+            "Makes common filler words like 'and', 'by', 'in' smaller in notification text for better readability.",
+          previewImage:
+            "https://f.rpghq.org/xDtPAZ1xQxLL.png?n=pasted-file.png",
+        },
+        // Keep existing unrelated settings if any, e.g., quote previews
+        {
+          id: "enableQuotePreviews",
+          label: "Enable Quote Previews",
+          type: "checkbox",
+          defaultValue: !0,
+          description:
+            "Shows a preview of the quoted text in 'Post quoted' notifications.",
+        },
+      ],
       categories: ["UI"],
     },
     {
@@ -1317,6 +1515,99 @@
    * @param {Function} showScriptSettings - Function to show the settings modal for a script
    */
   /**
+   * Shows the settings modal for a script.
+   *
+   * @param {Object} script - The script object from the manifest.
+   * @param {Function} renderScriptSettingsContent - Function to render the settings content.
+   * @param {Function} getScriptSetting - Function to retrieve a script setting value.
+   * @param {Function} saveScriptSetting - Function to save a script setting value.
+   */
+  function showScriptSettings(
+    script,
+    renderScriptSettingsContent,
+    getScriptSetting,
+    saveScriptSetting
+  ) {
+    log(`Showing settings modal for script: ${script.name}`);
+    let modal = document.getElementById("script-settings-modal");
+    modal ||
+      ((modal = document.createElement("div")),
+      (modal.id = "script-settings-modal"),
+      (modal.className = "settings-modal"),
+      document.body.appendChild(modal));
+    const canRenderSettings =
+      script.settings &&
+      script.settings.length > 0 &&
+      renderScriptSettingsContent &&
+      getScriptSetting;
+    (modal.innerHTML = `\n    <div class="settings-modal-content">\n      <div class="settings-modal-header">\n        <h2 class="settings-modal-title">${script.name} Settings</h2>\n        <span class="settings-modal-close">&times;</span>\n      </div>\n\n      ${canRenderSettings ? renderScriptSettingsContent(script, getScriptSetting) : renderEmptyState(null, "This script doesn't have any configurable settings.")}\n\n      <div\n        class="script-info"\n        style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;"\n      >\n        <h3>Script Information</h3>\n        <table class="data-table">\n          <tr>\n            <th>ID</th>\n            <td>${script.id}</td>\n          </tr>\n          <tr>\n            <th>Version</th>\n            <td>${script.version}</td>\n          </tr>\n          <tr>\n            <th>Category</th>\n            <td>${script.category || "Uncategorized"}</td>\n          </tr>\n          <tr>\n            <th>Author</th>\n            <td>${script.author || "Unknown"}</td>\n          </tr>\n          <tr>\n            <th>Description</th>\n            <td>${script.description || "-"}</td>\n          </tr>\n          ${script.urlPatterns && script.urlPatterns.length > 0 ? `\n          <tr><th>URL Patterns</th><td>${script.urlPatterns.join("<br>")}</td></tr>\n          ` : ""}\n        </table>\n      </div>\n\n      <div class="info-note" style="margin-top: 15px;">\n        <strong>Note:</strong> Changes to settings may require a page reload to\n        take full effect.\n      </div>\n    </div>\n  `),
+      (modal.style.display = "block");
+    const closeButton = modal.querySelector(".settings-modal-close");
+    closeButton &&
+      closeButton.addEventListener("click", () => {
+        modal.style.display = "none";
+      }),
+      modal.addEventListener("click", (e) => {
+        e.target === modal && (modal.style.display = "none");
+      }),
+      canRenderSettings &&
+        saveScriptSetting &&
+        setTimeout(() => {
+          modal.querySelectorAll(".setting-input").forEach((input) => {
+            const settingId = input.dataset.settingId;
+            if (!settingId)
+              return void console.warn(
+                "Setting input missing data-setting-id:",
+                input
+              );
+            const eventType =
+              "checkbox" === input.type ||
+              "radio" === input.type ||
+              "SELECT" === input.tagName
+                ? "change"
+                : "input";
+            // Use existing input, no need to clone
+            input.addEventListener(eventType, (e) => {
+              const target = e.target,
+                value =
+                  "checkbox" === target.type ? target.checked : target.value;
+              // Function to update visibility of dependent settings
+              var changedSettingId, newValue;
+              log(`Setting changed: ${script.id}.${settingId} = ${value}`),
+                saveScriptSetting(script.id, settingId, value),
+                // Update visibility of dependent settings
+                (changedSettingId = settingId),
+                (newValue = value),
+                modal
+                  .querySelectorAll(".setting-item[data-depends-on]")
+                  .forEach((item) => {
+                    if (item.dataset.dependsOn === changedSettingId) {
+                      const requiredValue = JSON.parse(
+                          item.dataset.dependsValue
+                        ),
+                        shouldBeVisible = newValue === requiredValue;
+                      log(
+                        `Checking dependency: ${item.dataset.settingId} depends on ${changedSettingId}. Value: ${newValue}, Required: ${requiredValue}. Visible: ${shouldBeVisible}`
+                      ),
+                        shouldBeVisible
+                          ? item.classList.remove("setting-item-hidden")
+                          : item.classList.add("setting-item-hidden");
+                    }
+                  });
+            });
+          });
+        }, 150);
+  }
+  /**
+   * Renders an appropriate HTML control element based on the setting type,
+   * using the currently saved value.
+   *
+   * @param {Object} setting - The setting object from the manifest.
+   * @param {string} scriptId - The ID of the script these settings belong to.
+   * @param {Function} getScriptSetting - Function to retrieve the saved setting value.
+   * @returns {string} - HTML string for the rendered control.
+   */
+  /**
    * Renders the settings content HTML for a script.
    *
    * @param {Object} script - The script object from the manifest.
@@ -1324,7 +1615,6 @@
    * @returns {string} - HTML string for the settings content, or empty string if no settings.
    */
   function renderScriptSettingsContent(script, getScriptSetting) {
-    // Guard clauses for invalid input or no settings
     if (
       (log(
         `Rendering settings content for script: ${script.name} (${script.id})`
@@ -1338,10 +1628,9 @@
         "<p>Error loading settings.</p>"
       );
     if (!script.settings || 0 === script.settings.length)
-      // Return an empty state message instead of just empty string
       return (
         log(`No settings defined for script: ${script.name}`),
-        '\n      <div class="empty-state">\n        <p>This script has no configurable settings.</p>\n      </div>\n    '
+        '<div class="empty-state"><p>This script has no configurable settings.</p></div>'
       );
     if ("function" != typeof getScriptSetting)
       return (
@@ -1351,9 +1640,7 @@
         "<p>Error loading setting values.</p>"
       );
     // Map each setting definition to its HTML representation
-    // Join with newline for readability in source
-    // Return the group container with all settings HTML
-    return `\n    <div class="setting-group">\n      ${script.settings
+    return `<div class="setting-group">${script.settings
       .map((setting) => {
         if (!setting || !setting.id)
           return (
@@ -1364,65 +1651,73 @@
             ""
           );
         // Skip invalid setting definitions
-        script.id, setting.id;
+        const controlId = `setting-${script.id}-${setting.id}`,
+          settingName = setting.name || setting.id;
         // Unique ID for label
-        const settingName = setting.name || setting.id;
         // Use name if available, else ID
-        let controlHTML = "";
+        let controlHTML = "",
+          dependencyAttributes = "",
+          initiallyHidden = !1;
+        // Determine dependency attributes and initial visibility
+        if (setting.dependsOn) {
+          const depSettingId = setting.dependsOn.settingId,
+            depValue = setting.dependsOn.value,
+            depCurrentValue = getScriptSetting(script.id, depSettingId);
+          (dependencyAttributes = `\n          data-depends-on="${depSettingId}"\n          data-depends-value='${JSON.stringify(depValue)}'\n        `),
+            // Use single quotes for JSON validity
+            // Hide if the dependency's current value doesn't match the required value
+            (initiallyHidden = depCurrentValue !== depValue),
+            log(
+              `Setting ${setting.id} depends on ${depSettingId} (current: ${depCurrentValue}, required: ${depValue}). Initially hidden: ${initiallyHidden}`
+            );
+        }
+        // Render the specific control (checkbox or other)
         if ("checkbox" === setting.type) {
           const isChecked = getScriptSetting(
             script.id,
             setting.id,
             setting.defaultValue
           );
-          controlHTML = `\n          <label class="toggle-switch">\n            <input \n              type="checkbox" \n              class="setting-input" \n              data-setting-id="${setting.id}" \n              name="${setting.id}" \n              ${isChecked ? "checked" : ""}\n            >\n            <span class="toggle-slider"></span>\n          </label>\n        `;
+          controlHTML = `\n          <label class="toggle-switch">\n            <input\n              type="checkbox"\n              class="setting-input"\n              id="${controlId}"\n              data-setting-id="${setting.id}"\n              name="${setting.id}"\n              ${isChecked ? "checked" : ""}\n            >\n            <span class="toggle-slider"></span>\n          </label>\n        `;
         } else
-          controlHTML =
-            /**
-             * Renders an appropriate HTML control element based on the setting type,
-             * using the currently saved value.
-             *
-             * @param {Object} setting - The setting object from the manifest.
-             * @param {string} scriptId - The ID of the script these settings belong to.
-             * @param {Function} getScriptSetting - Function to retrieve the saved setting value.
-             * @returns {string} - HTML string for the rendered control.
-             */
-            (function (setting, scriptId, getScriptSetting) {
-              // Get the currently saved value, falling back to the manifest default
-              const currentValue = getScriptSetting(
-                  scriptId,
-                  setting.id,
-                  setting.defaultValue
-                ),
-                controlId = `setting-${scriptId}-${setting.id}`;
-              // Unique ID for label association
-              switch (setting.type) {
-                case "checkbox":
-                  return `\n        <input \n          type="checkbox" \n          class="setting-input" \n          id="${controlId}" \n          data-setting-id="${setting.id}" \n          name="${setting.id}" \n          ${currentValue ? "checked" : ""}\n        >`;
+          controlHTML = (function (setting, scriptId, getScriptSetting) {
+            // Get the currently saved value, falling back to the manifest default
+            const currentValue = getScriptSetting(
+                scriptId,
+                setting.id,
+                setting.defaultValue
+              ),
+              controlId = `setting-${scriptId}-${setting.id}`;
+            // Unique ID for label association
+            switch (setting.type) {
+              case "checkbox":
+                return `\n        <input \n          type="checkbox" \n          class="setting-input" \n          id="${controlId}" \n          data-setting-id="${setting.id}" \n          name="${setting.id}" \n          ${currentValue ? "checked" : ""}\n        >`;
 
-                case "select":
-                  return `\n        <select \n          class="setting-input" \n          id="${controlId}" \n          data-setting-id="${setting.id}" \n          name="${setting.id}"\n        >\n          ${setting.options
-                    .map((option) => {
-                      const value =
-                          "object" == typeof option ? option.value : option,
-                        label =
-                          "object" == typeof option ? option.label : option;
-                      return `<option value="${value}" ${value === currentValue ? "selected" : ""}>${label}</option>`;
-                    })
-                    .join("")}\n        </select>`;
+              case "select":
+                return `\n        <select \n          class="setting-input" \n          id="${controlId}" \n          data-setting-id="${setting.id}" \n          name="${setting.id}"\n        >\n          ${setting.options
+                  .map((option) => {
+                    const value =
+                        "object" == typeof option ? option.value : option,
+                      label = "object" == typeof option ? option.label : option;
+                    return `<option value="${value}" ${value === currentValue ? "selected" : ""}>${label}</option>`;
+                  })
+                  .join("")}\n        </select>`;
 
-                case "number":
-                  return `\n        <input \n          type="number" \n          class="setting-input" \n          id="${controlId}" \n          data-setting-id="${setting.id}" \n          name="${setting.id}" \n          value="${currentValue ?? 0}"\n        >`;
+              case "number":
+                return `\n        <input \n          type="number" \n          class="setting-input" \n          id="${controlId}" \n          data-setting-id="${setting.id}" \n          name="${setting.id}" \n          value="${currentValue ?? 0}"\n        >`;
 
-                default:
-                  // Default to text
-                  return `\n        <input \n          type="text" \n          class="setting-input" \n          id="${controlId}" \n          data-setting-id="${setting.id}" \n          name="${setting.id}" \n          value="${currentValue ?? ""}"\n        >`;
-              }
-            })(setting, script.id, getScriptSetting);
-        // New layout: Name/Description on left, Control on right
-        return `\n        <div class="setting-item">\n          <div class="setting-details">\n            <div class="setting-name">${settingName}</div>\n            ${setting.description ? `<div class="setting-description">${setting.description}</div>` : ""}\n          </div>\n          <div class="setting-control">\n            ${controlHTML}\n          </div>\n        </div>\n      `;
+              case "color":
+                return `\n        <input\n          type="color"\n          class="setting-input setting-color-input" // Add specific class for styling\n          id="${controlId}"\n          data-setting-id="${setting.id}"\n          name="${setting.id}"\n          value="${currentValue ?? "#ffffff"}"\n        >`;
+
+              default:
+                // Default to text
+                return `\n        <input \n          type="text" \n          class="setting-input" \n          id="${controlId}" \n          data-setting-id="${setting.id}" \n          name="${setting.id}" \n          value="${currentValue ?? ""}"\n        >`;
+            }
+          })(setting, script.id, getScriptSetting);
+        // Create the setting item container with dependency attributes and initial style
+        return `\n        <div\n          class="setting-item ${initiallyHidden ? "setting-item-hidden" : ""}"\n          ${dependencyAttributes}\n          data-setting-id="${setting.id}"\n        >\n          <div class="setting-details">\n            <div class="setting-name">${settingName}</div>\n            ${setting.description ? `<div class="setting-description">${setting.description}</div>` : ""}\n            ${setting.previewImage ? `<img src="${setting.previewImage}" alt="Setting preview" class="setting-preview-image">` : ""}\n          </div>\n          <div class="setting-control">\n            ${controlHTML}\n          </div>\n        </div>\n      `;
       })
-      .join("\n")}\n    </div>\n  `;
+      .join("\n")}</div>`;
   }
   /**
    * Toggles a script's enabled state, saves the state, and loads/unloads the script.
@@ -3321,13 +3616,31 @@
    * License: MIT
    *
    * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/notifications.md for documentation
-   */ var notifications = Object.freeze({
+   */ let _getScriptSetting = () => {}; // Placeholder
+  var notifications = Object.freeze({
     __proto__: null,
-    init: function () {
-      const REFERENCE_STYLE = {
+    init: function ({ getScriptSetting: getScriptSetting }) {
+      _getScriptSetting = getScriptSetting;
+      // Store the passed function
+      const referenceBackgroundColor = _getScriptSetting(
+          "notifications",
+          "referenceBackgroundColor",
+          "rgba(23, 27, 36, 0.5)"
+        ),
+        referenceTextColor = _getScriptSetting(
+          "notifications",
+          "referenceTextColor",
+          "#ffffff"
+        ),
+        timestampColor = _getScriptSetting(
+          "notifications",
+          "timestampColor",
+          "#888888"
+        ),
+        REFERENCE_STYLE = {
           display: "inline-block",
-          background: "rgba(23, 27, 36, 0.5)",
-          color: "#ffffff",
+          background: referenceBackgroundColor,
+          color: referenceTextColor,
           padding: "2px 4px",
           borderRadius: "2px",
           zIndex: "-1",
@@ -3345,7 +3658,7 @@
           bottom: "2px",
           right: "2px",
           fontSize: "0.85em",
-          color: "#888",
+          color: timestampColor,
         },
         NOTIFICATIONS_TIME_STYLE = {
           position: "absolute",
@@ -3674,13 +3987,33 @@
         NotificationCustomizer = {
           async customizeReactionNotification(titleElement, block) {
             if ("true" === block.dataset.reactionCustomized) return;
-            // Apply container styling to the block
-            Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
-            // Move time element to bottom right
-            const timeElement = block.querySelector(".notification-time");
-            timeElement &&
-              Object.assign(timeElement.style, NOTIFICATION_TIME_STYLE);
-            const titleText = titleElement.innerHTML,
+            // Get settings
+            const enableColors = _getScriptSetting(
+                "notifications",
+                "enableNotificationColors",
+                !0
+              ),
+              enableSmileys = _getScriptSetting(
+                "notifications",
+                "enableReactionSmileys",
+                !0
+              ),
+              enableImagePreview = _getScriptSetting(
+                "notifications",
+                "enableImagePreviews",
+                !0
+              ),
+              enableVideoPreview = _getScriptSetting(
+                "notifications",
+                "enableVideoPreviews",
+                !1
+              ),
+              reactionColorSetting = _getScriptSetting(
+                "notifications",
+                "reactionColor",
+                "#3889ED"
+              ),
+              titleText = titleElement.innerHTML,
               isUnread = block.href && block.href.includes("mark_notification"),
               postId = Utils.extractPostId(
                 block.getAttribute("data-real-url") || block.href
@@ -3691,103 +4024,136 @@
               ),
               usernames = Array.from(usernameElements).map((el) =>
                 el.textContent.trim()
-              ),
-              filteredReactions = (
-                await ReactionHandler_fetchReactions(postId, isUnread)
-              ).filter((reaction) => usernames.includes(reaction.username)),
-              reactionHTML = Utils.formatReactions(filteredReactions);
-            if (titleText.includes("reacted to a message you posted")) {
-              titleElement.innerHTML = titleText.replace(
-                /(have|has)\s+reacted.*$/,
-                `<b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`
               );
-              const postContent =
-                await ReactionHandler_fetchPostContent(postId);
-              if (postContent) {
-                const trimmedContent = postContent.trim();
-                let referenceElement = block.querySelector(
-                  ".notification-reference"
-                );
-                referenceElement ||
-                  ((referenceElement = Utils.createElement("span", {
-                    className: "notification-reference",
-                  })),
-                  Utils.styleReference(referenceElement),
-                  titleElement.appendChild(document.createElement("br")),
-                  titleElement.appendChild(referenceElement));
-                // Always create the image/video preview div
-                const mediaPreview = Utils.createElement("div", {
-                  className: "notification-image-preview",
-                });
-                // Check for video content first - only if the entire content is just a video tag
-                if (
-                  (trimmedContent.startsWith("[webm]") &&
-                    trimmedContent.endsWith("[/webm]")) ||
-                  (trimmedContent.startsWith("[media]") &&
-                    trimmedContent.endsWith("[/media]"))
-                ) {
-                  const videoData = Utils.extractVideoUrl(trimmedContent);
-                  videoData &&
-                    // Create video element for preview
-                    ((mediaPreview.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay></video>`),
-                    // If we have a video, remove any existing reference element and don't create a new one
-                    referenceElement && referenceElement.remove(),
-                    titleElement.appendChild(mediaPreview));
-                }
-                // If no video, check for image tag before any BBCode removal
-                else if (
-                  (trimmedContent.startsWith("[img]") &&
-                    trimmedContent.endsWith("[/img]")) ||
-                  trimmedContent.match(
-                    /^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i
-                  )
-                ) {
-                  let imageUrl;
-                  if (trimmedContent.startsWith("[img]"))
-                    // Standard format
-                    imageUrl = trimmedContent.slice(5, -6).trim();
-                  else {
-                    imageUrl = trimmedContent
-                      .match(/^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i)[1]
-                      .trim();
+            let reactionHTML = "";
+            if (enableSmileys) {
+              const filteredReactions = (
+                await ReactionHandler_fetchReactions(postId, isUnread)
+              ).filter((reaction) => usernames.includes(reaction.username));
+              reactionHTML = Utils.formatReactions(filteredReactions);
+            }
+            let reactionVerb;
+            // Apply color only if enabled
+            if (
+              ((reactionVerb = enableColors
+                ? `<b style="color: ${reactionColorSetting};">reacted</b>`
+                : "<b>reacted</b>"),
+              titleText.includes("reacted to a message you posted"))
+            )
+              if (
+                // Update title with reaction info
+                ((titleElement.innerHTML = titleText.replace(
+                  /(have|has)\s+reacted.*$/,
+                  `${reactionVerb} ${reactionHTML} to:`
+                )),
+                enableImagePreview || enableVideoPreview)
+              ) {
+                // Fetch content for preview (only if a preview type is enabled)
+                const postContent =
+                  await ReactionHandler_fetchPostContent(postId);
+                if (postContent) {
+                  const trimmedContent = postContent.trim();
+                  let referenceElement = block.querySelector(
+                    ".notification-reference"
+                  );
+                  const mediaPreviewContainer = Utils.createElement("div", {
+                    className: "notification-media-preview",
+                  });
+                  let mediaFound = !1;
+                  // Check for video first
+                  if (
+                    enableVideoPreview &&
+                    ((trimmedContent.startsWith("[webm]") &&
+                      trimmedContent.endsWith("[/webm]")) ||
+                      (trimmedContent.startsWith("[media]") &&
+                        trimmedContent.endsWith("[/media]")))
+                  ) {
+                    const videoData = Utils.extractVideoUrl(trimmedContent);
+                    videoData &&
+                      ((mediaPreviewContainer.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay title="Video Preview (click to pause)"></video>`),
+                      (mediaFound = !0));
                   }
-                  (mediaPreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`),
-                    // If we have an image, remove any existing reference element and don't create a new one
-                    referenceElement && referenceElement.remove(),
-                    titleElement.appendChild(mediaPreview);
-                } else
-                  // Only create/update reference element if there's no image or video
-                  referenceElement
-                    ? ((referenceElement.textContent = Utils.removeURLs(
+                  // If no video or video preview disabled, check for image
+                  if (
+                    !mediaFound &&
+                    enableImagePreview &&
+                    ((trimmedContent.startsWith("[img]") &&
+                      trimmedContent.endsWith("[/img]")) ||
+                      trimmedContent.match(
+                        /^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i
+                      ))
+                  ) {
+                    let imageUrl;
+                    if (trimmedContent.startsWith("[img]"))
+                      imageUrl = trimmedContent.slice(5, -6).trim();
+                    else {
+                      const paramMatch = trimmedContent.match(
+                        /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i
+                      );
+                      imageUrl = paramMatch ? paramMatch[1].trim() : null;
+                    }
+                    imageUrl &&
+                      ((mediaPreviewContainer.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" title="Image Preview">`),
+                      (mediaFound = !0));
+                  }
+                  // Handle placement of preview/reference
+                  mediaFound
+                    ? // If media found, remove placeholder and add preview
+                      (referenceElement && referenceElement.remove(),
+                      titleElement.appendChild(mediaPreviewContainer))
+                    : // No media preview shown, ensure reference element exists and show text
+                      (referenceElement ||
+                        ((referenceElement = Utils.createElement("span", {
+                          className: "notification-reference",
+                        })),
+                        titleElement.appendChild(document.createElement("br")),
+                        titleElement.appendChild(referenceElement)),
+                      (referenceElement.textContent = Utils.removeURLs(
                         Utils.removeBBCode(postContent)
                       )),
                       Utils.styleReference(referenceElement),
-                      referenceElement.insertAdjacentElement(
-                        "afterend",
-                        mediaPreview
-                      ))
-                    : ((referenceElement = Utils.createElement("span", {
-                        className: "notification-reference",
-                        textContent: Utils.removeURLs(
-                          Utils.removeBBCode(postContent)
-                        ),
-                      })),
-                      Utils.styleReference(referenceElement),
-                      titleElement.appendChild(document.createElement("br")),
-                      titleElement.appendChild(referenceElement),
-                      referenceElement.insertAdjacentElement(
-                        "afterend",
-                        mediaPreview
-                      ));
+                      // Ensure media container isn't added if empty
+                      mediaPreviewContainer.remove());
+                }
               }
-            } else
+              // If no previews enabled, ensure reference element is handled if it exists
+              else {
+                const referenceElement = block.querySelector(
+                  ".notification-reference"
+                );
+                if (referenceElement) {
+                  // If previews disabled, just remove the loading placeholder?
+                  // Or fetch content anyway to show text? Let's fetch for text.
+                  const postContent =
+                    await ReactionHandler_fetchPostContent(postId);
+                  postContent
+                    ? ((referenceElement.textContent = Utils.removeURLs(
+                        Utils.removeBBCode(postContent)
+                      )),
+                      Utils.styleReference(referenceElement))
+                    : referenceElement.remove();
+                }
+              }
+            else
+              // Handle cases like "X, Y, and Z reacted to your post in Topic T"
               titleElement.innerHTML = titleText.replace(
                 /(have|has)\s+reacted.*$/,
-                `<b style="color: #3889ED;">reacted</b> ${reactionHTML}`
+                `${reactionVerb} ${reactionHTML}`
               );
             block.dataset.reactionCustomized = "true";
           },
           async customizeMentionNotification(notificationBlock) {
+            // Get settings
+            const enableColors = _getScriptSetting(
+                "notifications",
+                "enableNotificationColors",
+                !0
+              ),
+              mentionColorSetting = _getScriptSetting(
+                "notifications",
+                "mentionColor",
+                "#FFC107"
+              );
             // Apply container styling to the block
             Object.assign(notificationBlock.style, NOTIFICATION_BLOCK_STYLE);
             const notificationText =
@@ -3805,7 +4171,10 @@
               parts = originalHTML.split("<br>in ");
             let topicName =
               parts.length > 1 ? parts[1].trim() : "Unknown Topic";
-            titleElement.innerHTML = `\n          <b style="color: #FFC107;">Mentioned</b> by ${usernames} in <b>${topicName}</b>\n        `;
+            // Apply color only if enabled
+            titleElement.innerHTML = enableColors
+              ? `\n          <b style="color: ${mentionColorSetting};">Mentioned</b> by ${usernames} in <b>${topicName}</b>\n        `
+              : `\n          <b>Mentioned</b> by ${usernames} in <b>${topicName}</b>\n        `;
             // Create or update reference element for post content
             let referenceElement = notificationBlock.querySelector(
               ".notification-reference"
@@ -3831,106 +4200,266 @@
               Object.assign(timeElement.style, NOTIFICATION_TIME_STYLE);
           },
           customizePrivateMessageNotification(titleElement, block) {
+            // Get settings
+            const enableColors = _getScriptSetting(
+                "notifications",
+                "enableNotificationColors",
+                !0
+              ),
+              resizeFillers = _getScriptSetting(
+                "notifications",
+                "resizeFillerWords",
+                !0
+              ),
+              warningColorSetting = _getScriptSetting(
+                "notifications",
+                "warningColor",
+                "#D31141"
+              );
             // Apply container styling to the block
             Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
             // Move time element to bottom right
             const timeElement = block.querySelector(".notification-time");
             timeElement &&
               Object.assign(timeElement.style, NOTIFICATION_TIME_STYLE);
+            let currentHtml = titleElement.innerHTML;
             const subject = block
               .querySelector(".notification-reference")
               ?.textContent.trim()
               .replace(/^"(.*)"$/, "$1");
             "Board warning issued" === subject &&
-              ((titleElement.innerHTML = titleElement.innerHTML
-                .replace(
-                  /<strong>Private Message<\/strong>/,
-                  '<strong style="color: #D31141;">Board warning issued</strong>'
-                )
-                .replace(/from/, "by")
-                .replace(/:$/, "")),
-              block.querySelector(".notification-reference")?.remove());
+              ((currentHtml = enableColors
+                ? currentHtml
+                    .replace(
+                      /<strong>Private Message<\/strong>/,
+                      `<strong style="color: ${warningColorSetting};">Board warning issued</strong>`
+                    )
+                    .replace(/from/, "by")
+                    .replace(/:$/, "")
+                : currentHtml
+                    .replace(
+                      /<strong>Private Message<\/strong>/,
+                      "<strong>Board warning issued</strong>"
+                    )
+                    .replace(/from/, "by")
+                    .replace(/:$/, "")),
+              block.querySelector(".notification-reference")?.remove()),
+              // Apply filler word resizing if enabled
+              resizeFillers &&
+                (currentHtml = currentHtml.replace(
+                  /\b(by|and|in|from)\b(?!-)/g,
+                  '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>'
+                )),
+              // Update the title element's HTML
+              (titleElement.innerHTML = currentHtml);
           },
           async customizeNotificationBlock(block) {
             if ("true" === block.dataset.customized) return;
-            // Apply container styling to the block
-            Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
+            // Get settings
+            const enableColors = _getScriptSetting(
+                "notifications",
+                "enableNotificationColors",
+                !0
+              ),
+              resizeFillers = _getScriptSetting(
+                "notifications",
+                "resizeFillerWords",
+                !0
+              ),
+              quoteColorSetting = _getScriptSetting(
+                "notifications",
+                "quoteColor",
+                "#1E90FF"
+              ),
+              replyColorSetting = _getScriptSetting(
+                "notifications",
+                "replyColor",
+                "#FF69B4"
+              );
+            _getScriptSetting("notifications", "reactionColor", "#3889ED"),
+              _getScriptSetting("notifications", "mentionColor", "#FFC107");
+            const editColorSetting = _getScriptSetting(
+                "notifications",
+                "editColor",
+                "#8A2BE2"
+              ),
+              approvalColorSetting = _getScriptSetting(
+                "notifications",
+                "approvalColor",
+                "#00AA00"
+              ),
+              reportColorSetting = _getScriptSetting(
+                "notifications",
+                "reportColor",
+                "#f58c05"
+              );
+            _getScriptSetting("notifications", "warningColor", "#D31141"),
+              // Apply base container styling
+              Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
             const notificationText = block.querySelector(".notification_text");
             if (!notificationText) return;
             // Move time element to bottom right
             const timeElement = block.querySelector(".notification-time");
             timeElement &&
               Object.assign(timeElement.style, NOTIFICATION_TIME_STYLE);
-            const titleElement = notificationText.querySelector(
+            let titleElement = notificationText.querySelector(
               ".notification-title"
             );
-            if (titleElement) {
-              let titleText = titleElement.innerHTML;
-              titleText.includes("You were mentioned by")
-                ? await this.customizeMentionNotification(block)
-                : titleText.includes("reacted to a message you posted")
-                  ? await this.customizeReactionNotification(
+            if (!titleElement) return;
+            // Need a title element to proceed
+            let titleText = titleElement.innerHTML,
+              currentHtml = titleText,
+              notificationType = "default";
+            // Initialize titleText
+            // Determine type
+            // Determine notification type and potentially call specialized handlers
+            titleText.includes("You were mentioned by")
+              ? ((notificationType = "mention"),
+                await this.customizeMentionNotification(block),
+                (currentHtml = titleElement.innerHTML))
+              : titleText.includes("reacted to")
+                ? ((notificationType = "reaction"),
+                  await this.customizeReactionNotification(titleElement, block),
+                  (currentHtml = titleElement.innerHTML))
+                : titleText.includes("Private Message")
+                  ? ((notificationType = "pm"),
+                    this.customizePrivateMessageNotification(
                       titleElement,
                       block
-                    )
-                  : titleText.includes("Private Message")
-                    ? this.customizePrivateMessageNotification(
-                        titleElement,
-                        block
-                      )
-                    : titleText.includes("Report closed")
-                      ? (titleElement.innerHTML = titleText.replace(
+                    ),
+                    (currentHtml = titleElement.innerHTML),
+                    // Re-check currentHtml
+                    titleElement.innerHTML.includes("Board warning issued") &&
+                      // Use titleElement.innerHTML for check
+                      (notificationType = "warning"))
+                  : titleText.includes("Report closed")
+                    ? ((notificationType = "report"),
+                      enableColors &&
+                        (currentHtml = titleText.replace(
                           /Report closed/,
-                          '<strong style="color: #f58c05;">Report closed</strong>'
-                        ))
-                      : titleText.includes("Post approval") &&
-                        (titleElement.innerHTML = titleText.replace(
-                          /<strong>Post approval<\/strong>/,
-                          '<strong style="color: #00AA00;">Post approval</strong>'
-                        ));
-              const referenceElement = notificationText.querySelector(
-                ".notification-reference"
-              );
-              if (
-                referenceElement &&
-                (titleText.includes("<strong>Reply</strong>") ||
-                  titleText.includes("<strong>Quoted</strong>"))
-              ) {
-                const threadTitle = referenceElement.textContent
-                  .trim()
-                  .replace(/^"|"$/g, "");
-                (titleElement.innerHTML = titleElement.innerHTML.replace(
-                  /in(?:\stopic)?:/,
-                  `<span style="font-size: 0.85em; padding: 0 0.25px;">in</span> <strong>${threadTitle}</strong>:`
-                )),
-                  // Update the existing reference element with loading state
-                  (referenceElement.textContent = "Loading..."),
-                  Utils.styleReference(referenceElement),
-                  // Queue the content fetch
-                  this.queuePostContentFetch(
-                    block.getAttribute("data-real-url") || block.href,
-                    referenceElement
-                  );
-              }
-              // Apply text resizing to all notifications
-              titleElement.innerHTML = titleElement.innerHTML
-                .replace(
-                  /\b(by|and|in|from)\b(?!-)/g,
-                  '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>'
-                )
-                .replace(
-                  /<strong>Quoted<\/strong>/,
-                  '<strong style="color: #FF4A66;">Quoted</strong>'
-                )
-                .replace(
-                  /<strong>Reply<\/strong>/,
-                  '<strong style="color: #95DB00;">Reply</strong>'
-                );
-            }
-            const referenceElement = block.querySelector(
+                          `<strong style="color: ${reportColorSetting};">Report closed</strong>`
+                        )))
+                    : titleText.includes("Post approval")
+                      ? ((notificationType = "approval"),
+                        enableColors &&
+                          (currentHtml = titleText.replace(
+                            /<strong>Post approval<\/strong>/,
+                            `<strong style="color: ${approvalColorSetting};">Post approval</strong>`
+                          )))
+                      : titleText.includes("<strong>Quoted</strong>")
+                        ? (notificationType = "quote")
+                        : titleText.includes("<strong>Reply</strong>")
+                          ? (notificationType = "reply")
+                          : titleText.includes("edited a message") &&
+                            ((notificationType = "edit"),
+                            enableColors &&
+                              (currentHtml = titleText.replace(
+                                /edited a message you posted/,
+                                `<strong style="color: ${editColorSetting};">edited</strong> a message you posted`
+                              )));
+            // IMPORTANT: After this block, `currentHtml` holds the base HTML before reply/quote modifications
+            // Handle previews for Reply/Quote (this part modifies titleElement.innerHTML directly)
+            let referenceElement = notificationText.querySelector(
               ".notification-reference"
             );
-            referenceElement && Utils.styleReference(referenceElement),
+            if (
+              !referenceElement ||
+              ("reply" !== notificationType && "quote" !== notificationType)
+            )
+              // If not reply/quote, ensure titleElement reflects currentHtml before styling
+              titleElement.innerHTML = currentHtml;
+            else {
+              const threadTitle = referenceElement.textContent
+                .trim()
+                .replace(/^"|"$/g, "");
+              // Update title structure IN PLACE
+              // Start with the potentially colored/modified currentHtml
+              let updatedTitle = currentHtml.replace(
+                /in(?:\stopic)?:/,
+                `<span style="font-size: 0.85em; padding: 0 0.25px;">in</span> <strong>${threadTitle}</strong>:`
+              );
+              (titleElement.innerHTML = updatedTitle), // Apply this structural change
+                // Update the reference element
+                (referenceElement.textContent = "Loading..."),
+                Utils.styleReference(referenceElement),
+                // Apply reference style
+                // Queue fetch
+                this.queuePostContentFetch(
+                  block.getAttribute("data-real-url") || block.href,
+                  referenceElement
+                ),
+                // Re-fetch HTML after potential in-place modification for reply/quote
+                (currentHtml = titleElement.innerHTML);
+            }
+            // Apply text resizing *after* all structural changes
+            // Apply keyword coloring ONLY if enableColors is true
+            if (
+              (resizeFillers &&
+                (currentHtml = currentHtml.replace(
+                  /\b(by|and|in|from)\b(?!-)/g,
+                  '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>'
+                )),
+              enableColors)
+            ) {
+              const quoteColor = quoteColorSetting,
+                replyColor = replyColorSetting,
+                editColor = editColorSetting,
+                approvalColor = approvalColorSetting,
+                reportColor = reportColorSetting;
+              // Reaction, Mention, Warning handled earlier or within their functions
+              // Re-apply coloring systematically based on notificationType
+              // This ensures colors are applied correctly even after resizing/structural changes
+              switch (notificationType) {
+                case "quote":
+                  currentHtml = currentHtml.replace(
+                    /<strong>Quoted<\/strong>/,
+                    `<strong style="color: ${quoteColor};">Quoted</strong>`
+                  );
+                  break;
+
+                case "reply":
+                  currentHtml = currentHtml.replace(
+                    /<strong>Reply<\/strong>/,
+                    `<strong style="color: ${replyColor};">Reply</strong>`
+                  );
+                  break;
+
+                case "edit":
+                  // Make sure we're replacing the correct pattern, potentially already styled
+                  currentHtml = currentHtml.replace(
+                    /(<strong(?: style="color: [^;]+;")?>edited<\/strong>|edited) a message/,
+                    `<strong style="color: ${editColor};">edited</strong> a message`
+                  );
+                  break;
+
+                case "approval":
+                  currentHtml = currentHtml.replace(
+                    /(<strong(?: style="color: [^;]+;")?>Post approval<\/strong>|<strong>Post approval<\/strong>)/,
+                    `<strong style="color: ${approvalColor};">Post approval</strong>`
+                  );
+                  break;
+
+                case "report":
+                  currentHtml = currentHtml.replace(
+                    /(<strong(?: style="color: [^;]+;")?>Report closed<\/strong>|Report closed)/,
+                    `<strong style="color: ${reportColor};">Report closed</strong>`
+                  );
+                // Reaction, Mention, Warning colors should be handled by their respective functions
+                // or the initial assignment if `enableColors` was false initially.
+              }
+            } else
+              // If colors are disabled, remove any potentially pre-existing color styles
+              currentHtml = currentHtml
+                .replace(/<b style="color: [^;]+;">/g, "<b>")
+                .replace(/<strong style="color: [^;]+;">/g, "<strong>");
+            // Apply the final HTML
+            (titleElement.innerHTML = currentHtml),
+              // Ensure reference styling is applied (if element exists)
+              (referenceElement = block.querySelector(
+                ".notification-reference"
+              )), // Re-query in case it was added/removed
+              referenceElement && Utils.styleReference(referenceElement),
+              // Standardize username class and remove inline color
               block.querySelectorAll(".username-coloured").forEach((el) => {
                 el.classList.replace("username-coloured", "username"),
                   (el.style.color = "");
@@ -3947,70 +4476,186 @@
               );
           },
           customizeNotificationPage() {
+            // Get settings needed for this page
+            const enableColors = _getScriptSetting(
+                "notifications",
+                "enableNotificationColors",
+                !0
+              ),
+              rawColorsJson = _getScriptSetting(
+                "notifications",
+                "notificationColors",
+                "{}"
+              );
+            let notificationColors = {};
+            try {
+              notificationColors = JSON.parse(rawColorsJson);
+            } catch (e) {
+              console.error("Invalid JSON in notificationColors setting:", e),
+                (notificationColors = {
+                  default: "#ffffff",
+                });
+            }
+            const enableSmileys = _getScriptSetting(
+                "notifications",
+                "enableReactionSmileys"
+              ),
+              resizeFillers = _getScriptSetting(
+                "notifications",
+                "resizeFillerWords",
+                !0
+              ),
+              quoteColorSetting = _getScriptSetting(
+                "notifications",
+                "quoteColor"
+              ),
+              replyColorSetting = _getScriptSetting(
+                "notifications",
+                "replyColor"
+              ),
+              reactionColorSetting = _getScriptSetting(
+                "notifications",
+                "reactionColor"
+              ),
+              mentionColorSetting = _getScriptSetting(
+                "notifications",
+                "mentionColor"
+              ),
+              editColorSetting = _getScriptSetting(
+                "notifications",
+                "editColor",
+                "#8A2BE2"
+              ),
+              approvalColorSetting = _getScriptSetting(
+                "notifications",
+                "approvalColor",
+                "#00AA00"
+              ),
+              reportColorSetting = _getScriptSetting(
+                "notifications",
+                "reportColor",
+                "#f58c05"
+              ),
+              warningColorSetting = _getScriptSetting(
+                "notifications",
+                "warningColor",
+                "#D31141"
+              ),
+              defaultColorSetting = _getScriptSetting(
+                "notifications",
+                "defaultColor",
+                "#ffffff"
+              ),
+              referenceBackgroundColorSetting = _getScriptSetting(
+                "notifications",
+                "referenceBackgroundColor",
+                "rgba(23, 27, 36, 0.5)"
+              ),
+              referenceTextColorSetting = _getScriptSetting(
+                "notifications",
+                "referenceTextColor",
+                "#ffffff"
+              ),
+              quoteColor = quoteColorSetting,
+              replyColor = replyColorSetting,
+              reactionColor = reactionColorSetting,
+              mentionColor = mentionColorSetting,
+              editColor = editColorSetting,
+              approvalColor = approvalColorSetting,
+              reportColor = reportColorSetting,
+              warningColor = warningColorSetting,
+              defaultColor = defaultColorSetting,
+              referenceBackgroundColor = referenceBackgroundColorSetting,
+              referenceTextColor = referenceTextColorSetting;
             document.querySelectorAll(".cplist .row").forEach(async (row) => {
               if ("true" === row.dataset.customized) return;
-              // Ensure row has position relative for absolute positioning
               (row.style.position = "relative"),
                 (row.style.paddingBottom = "20px");
               // Make room for timestamp
-              // Handle the notifications_time elements
               const timeElement = row.querySelector(".notifications_time");
               timeElement &&
                 Object.assign(timeElement.style, NOTIFICATIONS_TIME_STYLE);
-              const anchorElement = row
-                .querySelector(".notifications")
-                .querySelector("a");
-              if (anchorElement) {
-                const titleElement = anchorElement.querySelector(
-                  ".notifications_title"
-                );
-                let titleText = titleElement.innerHTML;
-                // Handle mentioned notifications specially
-                if (titleText.includes("You were mentioned by")) {
-                  const parts = titleText.split("<br>");
-                  if (2 === parts.length) {
-                    titleText = parts[0] + " " + parts[1];
-                    // Create the new HTML structure for mentions
-                    const newHtml = `\n                  <div class="notification-block">\n                    <div class="notification-title">${titleText}</div>\n                    <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">\n                      Loading...\n                    </div>\n                  </div>\n                `;
-                    anchorElement.innerHTML = newHtml;
-                    // Queue the content fetch
-                    const referenceElement = anchorElement.querySelector(
+              const notificationBlock = row.querySelector(".notifications"),
+                anchorElement = notificationBlock?.querySelector("a");
+              if (!anchorElement)
+                // Mark as processed even if no anchor
+                return void (row.dataset.customized = "true");
+              const titleElement = anchorElement.querySelector(
+                ".notifications_title"
+              );
+              if (!titleElement)
+                // Mark as processed even if no title
+                return void (row.dataset.customized = "true");
+              let placeholderElement,
+                originalTitleHTML = titleElement.innerHTML,
+                notificationType = "default",
+                newHtmlContent = "";
+              // Store ref to placeholder for fetch later
+              // Helper for styling keywords
+              const styleKeyword = (keyword, color) =>
+                  enableColors
+                    ? `<strong style="color: ${color};">${keyword}</strong>`
+                    : `<strong>${keyword}</strong>`,
+                styleFiller = (word) =>
+                  `<span style="font-size: 0.85em; padding: 0 0.25px;">${word}</span>`;
+              // --- Mention Handling ---
+              if (originalTitleHTML.includes("You were mentioned by")) {
+                notificationType = "mention";
+                const parts = originalTitleHTML.split("<br>");
+                if (2 === parts.length) {
+                  let mentionText = parts[0] + " " + parts[1];
+                  // Apply filler styling first if enabled
+                  resizeFillers &&
+                    (mentionText = mentionText.replace(
+                      /\b(by|in)\b(?!-)/g,
+                      styleFiller("$1")
+                    ));
+                  const referenceStyle = `background: ${referenceBackgroundColor}; color: ${referenceTextColor}; padding: 2px 4px; border-radius: 2px; margin-top: 5px;`;
+                  (newHtmlContent = `\n              <div class="notification-block">\n                <div class="notification-title">${styleKeyword("Mentioned", mentionColor)} ${mentionText.substring(mentionText.indexOf(resizeFillers ? styleFiller("by") : "by"))}</div>\n                <div class="notification-reference" style="${referenceStyle}">\n                  Loading...\n                </div>\n              </div>\n            `),
+                    (anchorElement.innerHTML = newHtmlContent), // Update DOM to find placeholder
+                    (placeholderElement = anchorElement.querySelector(
                       ".notification-reference"
-                    );
-                    referenceElement &&
-                      NotificationCustomizer.queuePostContentFetch(
-                        anchorElement.href,
-                        referenceElement
-                      );
-                  }
-                }
-                // Handle reaction notifications
-                else if (titleText.includes("reacted to")) {
-                  const usernameElements = Array.from(
-                      titleElement.querySelectorAll(
-                        ".username, .username-coloured"
-                      )
-                    ),
-                    usernames = usernameElements.map((el) =>
-                      el.textContent.trim()
-                    ),
-                    postId = Utils.extractPostId(anchorElement.href);
-                  if (postId) {
+                    ));
+                } else
+                  // Fallback if format unexpected
+                  newHtmlContent = originalTitleHTML;
+                // Keep original if parsing fails
+              }
+              // --- Reaction Handling ---
+              else if (originalTitleHTML.includes("reacted to")) {
+                notificationType = "reaction";
+                const usernameElements = Array.from(
+                    titleElement.querySelectorAll(
+                      ".username, .username-coloured"
+                    )
+                  ),
+                  usernames = usernameElements.map((el) =>
+                    el.textContent.trim()
+                  ),
+                  postId = Utils.extractPostId(anchorElement.href);
+                if (postId) {
+                  let reactionHTML = "";
+                  if (enableSmileys) {
                     const filteredReactions = (
-                        await ReactionHandler_fetchReactions(postId, !1)
-                      ).filter((reaction) =>
-                        usernames.includes(reaction.username)
-                      ),
-                      reactionHTML = Utils.formatReactions(filteredReactions),
-                      firstPart = titleText.split(
-                        usernameElements[0].outerHTML
-                      )[0],
-                      smallAnd =
-                        '<span style="font-size: 0.85em; padding: 0 0.25px;">and</span>';
-                    // Format usernames based on count
-                    let formattedUsernames;
-                    (formattedUsernames =
-                      2 === usernameElements.length
+                      await ReactionHandler_fetchReactions(postId, !1)
+                    ).filter((r) => usernames.includes(r.username));
+                    reactionHTML = Utils.formatReactions(filteredReactions);
+                  }
+                  const firstUsernameHTML =
+                      usernameElements.length > 0
+                        ? usernameElements[0].outerHTML
+                        : "",
+                    firstPart = originalTitleHTML.substring(
+                      0,
+                      originalTitleHTML.indexOf(firstUsernameHTML)
+                    );
+                  // Format usernames with styled fillers
+                  let formattedUsernames;
+                  const smallAnd = resizeFillers ? styleFiller("and") : "and";
+                  formattedUsernames =
+                    1 === usernameElements.length
+                      ? usernameElements[0].outerHTML
+                      : 2 === usernameElements.length
                         ? `${usernameElements[0].outerHTML} ${smallAnd} ${usernameElements[1].outerHTML}`
                         : usernameElements.length > 2
                           ? usernameElements
@@ -4018,72 +4663,174 @@
                               .map((el) => el.outerHTML)
                               .join(", ") +
                             `, ${smallAnd} ${usernameElements[usernameElements.length - 1].outerHTML}`
-                          : usernameElements[0].outerHTML),
-                      (titleText =
-                        firstPart +
-                        formattedUsernames +
-                        ` <b style="color: #3889ED;">reacted</b> ${reactionHTML} to:`);
-                    // Create the new HTML structure
-                    const newHtml = `\n                  <div class="notification-block">\n                    <div class="notification-title">${titleText}</div>\n                    <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">\n                      Loading...\n                    </div>\n                  </div>\n                `;
-                    anchorElement.innerHTML = newHtml;
-                    // Queue the content fetch
-                    const referenceElement = anchorElement.querySelector(
+                          : "Someone";
+                  (newHtmlContent = `\n              <div class="notification-block">\n                <div class="notification-title">${`${firstPart}${formattedUsernames} ${styleKeyword("reacted", reactionColor)} ${reactionHTML} to:`}</div>\n                <div class="notification-reference" style="${`background: ${referenceBackgroundColor}; color: ${referenceTextColor}; padding: 2px 4px; border-radius: 2px; margin-top: 5px;`}">\n                  Loading...\n                </div>\n              </div>\n            `),
+                    (anchorElement.innerHTML = newHtmlContent), // Update DOM
+                    (placeholderElement = anchorElement.querySelector(
                       ".notification-reference"
-                    );
-                    referenceElement &&
-                      NotificationCustomizer.queuePostContentFetch(
-                        anchorElement.href,
-                        referenceElement
-                      );
-                  }
-                }
-                // Handle other notifications with quotes
-                else {
-                  if (titleText.match(/"([^"]*)"$/)) {
-                    // Only remove the quote from title if it's not a "Quoted" notification
-                    titleText.includes("<strong>Quoted</strong>") ||
-                      (titleText = titleText.replace(/"[^"]*"$/, "").trim()),
-                      // Apply text styling
-                      (titleText = titleText
-                        .replace(
-                          /\b(by|and|in|from)\b(?!-)/g,
-                          '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>'
-                        )
-                        .replace(
-                          /<strong>Quoted<\/strong>/,
-                          '<strong style="color: #FF4A66;">Quoted</strong>'
-                        )
-                        .replace(
-                          /<strong>Reply<\/strong>/,
-                          '<strong style="color: #95DB00;">Reply</strong>'
-                        ));
-                    // Create the new HTML structure
-                    const newHtml = `\n                  <div class="notification-block">\n                    <div class="notification-title">${titleText}</div>\n                    <div class="notification-reference" style="background: rgba(23, 27, 36, 0.5); color: #ffffff; padding: 2px 4px; border-radius: 2px; margin-top: 5px;">\n                      Loading...\n                    </div>\n                  </div>\n                `;
-                    anchorElement.innerHTML = newHtml;
-                    // Queue the content fetch
-                    const referenceElement = anchorElement.querySelector(
-                      ".notification-reference"
-                    );
-                    referenceElement &&
-                      NotificationCustomizer.queuePostContentFetch(
-                        anchorElement.href,
-                        referenceElement
-                      );
-                  }
-                }
-                // Convert username-coloured to username
-                anchorElement
-                  .querySelectorAll(".username-coloured")
-                  .forEach((el) => {
-                    el.classList.replace("username-coloured", "username"),
-                      (el.style.color = "");
-                  });
+                    ));
+                } else newHtmlContent = originalTitleHTML;
+                // Keep original if no postId
               }
-              row.dataset.customized = "true";
+              // --- Other Notification Types (Quote, Reply, Edit, Approval, Report) ---
+              else {
+                const lastQuoteMatch = originalTitleHTML.match(/"([^"]*)"$/);
+                let baseTitleText = originalTitleHTML,
+                  referenceText = "Loading...";
+                // Default for placeholder
+                // Determine type and adjust base title
+                if (originalTitleHTML.includes("<strong>Quoted</strong>"))
+                  (notificationType = "quote"),
+                    // Keep the quote in the title for 'Quoted' notifications
+                    (referenceText = lastQuoteMatch
+                      ? `"${lastQuoteMatch[1]}"`
+                      : "Loading...");
+                else if (
+                  // For other types, remove the trailing quote from the title if present
+                  (lastQuoteMatch &&
+                    ((baseTitleText = originalTitleHTML
+                      .replace(/"[^"]*"$/, "")
+                      .trim()),
+                    (referenceText = `"${lastQuoteMatch[1]}"`)),
+                  originalTitleHTML.includes("<strong>Reply</strong>"))
+                )
+                  notificationType = "reply";
+                else if (originalTitleHTML.includes("edited a message"))
+                  notificationType = "edit";
+                else if (originalTitleHTML.includes("Post approval"))
+                  notificationType = "approval";
+                else if (originalTitleHTML.includes("Report closed"))
+                  notificationType = "report";
+                else if (originalTitleHTML.includes("Private Message")) {
+                  // Basic PM handling, could be expanded like in customizeNotificationBlock
+                  notificationType = "pm";
+                  const subjectMatch = originalTitleHTML.match(
+                    /<strong>Private Message<\/strong>(?: from [^:]+):? "?([^"]*)"?/
+                  );
+                  subjectMatch && "Board warning issued" === subjectMatch[1]
+                    ? ((notificationType = "warning"),
+                      (baseTitleText = originalTitleHTML
+                        .replace(
+                          /<strong>Private Message<\/strong>/,
+                          styleKeyword("Board warning issued", warningColor)
+                        )
+                        .replace(/from/, "by")
+                        .replace(/:$/, "")
+                        .replace(/"[^"]*"$/, "")
+                        .trim()),
+                      (referenceText = null))
+                    : (baseTitleText = originalTitleHTML
+                        .replace(
+                          /<strong>Private Message<\/strong>/,
+                          styleKeyword("Private Message", defaultColor)
+                        )
+                        .replace(/"[^"]*"$/, "")
+                        .trim());
+                }
+                // Apply keyword styling based on determined type
+                let styledTitle = baseTitleText;
+                switch (notificationType) {
+                  case "quote":
+                    styledTitle = styledTitle.replace(
+                      /<strong>Quoted<\/strong>/,
+                      styleKeyword("Quoted", quoteColor)
+                    );
+                    break;
+
+                  case "reply":
+                    styledTitle = styledTitle.replace(
+                      /<strong>Reply<\/strong>/,
+                      styleKeyword("Reply", replyColor)
+                    );
+                    break;
+
+                  case "edit":
+                    styledTitle = styledTitle.replace(
+                      /edited a message/,
+                      `${styleKeyword("edited", editColor)} a message`
+                    );
+                    break;
+
+                  case "approval":
+                    styledTitle = styledTitle.replace(
+                      /<strong>Post approval<\/strong>/,
+                      styleKeyword("Post approval", approvalColor)
+                    );
+                    break;
+
+                  case "report":
+                    styledTitle = styledTitle.replace(
+                      /Report closed/,
+                      styleKeyword("Report closed", reportColor)
+                    );
+                  // Warning already styled if detected
+                  // PM default styling handled above
+                }
+                // Apply filler styling if enabled
+                resizeFillers &&
+                  (styledTitle = styledTitle.replace(
+                    /\b(by|and|in|from)\b(?!-)/g,
+                    styleFiller("$1")
+                  ));
+                // Construct HTML
+                (newHtmlContent = `\n            <div class="notification-block">\n              <div class="notification-title">${styledTitle}</div>\n              ${null !== referenceText ? `<div class="notification-reference" style="${`background: ${referenceBackgroundColor}; color: ${referenceTextColor}; padding: 2px 4px; border-radius: 2px; margin-top: 5px;`}">\n                ${referenceText}\n              </div>` : ""}\n            </div>\n          `),
+                  (anchorElement.innerHTML = newHtmlContent), // Update DOM
+                  null !== referenceText &&
+                    (placeholderElement = anchorElement.querySelector(
+                      ".notification-reference"
+                    ));
+              }
+              // --- Post-Processing ---
+              // Queue content fetch if a placeholder exists
+              if (
+                placeholderElement &&
+                placeholderElement.textContent.includes("Loading...")
+              ) {
+                !placeholderElement.textContent.includes("Loading...")
+                  ? // If it already has text content (like a quote), style it
+                    Utils.styleReference(placeholderElement)
+                  : NotificationCustomizer.queuePostContentFetch(
+                      anchorElement.href,
+                      placeholderElement
+                    );
+              }
+              // Apply background color to the row if enabled
+              if (enableColors) {
+                const color =
+                  notificationColors[notificationType] || defaultColor;
+                row.style.backgroundColor = color;
+              }
+              // Convert username-coloured to username and remove inline style
+              anchorElement.querySelectorAll(".username-coloured").forEach(
+                (el) => {
+                  el.classList.replace("username-coloured", "username"),
+                    (el.style.color = "");
+                } // Remove inline color style if any
+              ),
+                (row.dataset.customized = "true");
             });
           },
+          // End of customizeNotificationPage
           async queuePostContentFetch(url, placeholder) {
-            const postId = Utils.extractPostId(url);
+            // Get relevant settings
+            const enableImagePreview = _getScriptSetting(
+                "notifications",
+                "enableImagePreviews",
+                !0
+              ),
+              enableVideoPreview = _getScriptSetting(
+                "notifications",
+                "enableVideoPreviews",
+                !1
+              ),
+              wantsPreview = enableImagePreview || enableVideoPreview,
+              wantsTextQuote = _getScriptSetting(
+                // Need this for quote notifications
+                "notifications",
+                "enableQuotePreviews",
+                !0
+              ),
+              postId = Utils.extractPostId(url);
             if (postId) {
               // Check if we need to wait before next fetch
               if (this.lastFetchTime) {
@@ -4096,58 +4843,63 @@
                   await ReactionHandler_fetchPostContent(postId);
                 if (postContent && placeholder.parentNode) {
                   const trimmedContent = postContent.trim(),
-                    mediaPreview = Utils.createElement("div", {
-                      className: "notification-image-preview",
+                    mediaPreviewContainer = Utils.createElement("div", {
+                      className: "notification-media-preview",
                     });
-                  // Always create the image/video preview div
-                  // Check for video content first - only if the entire content is just a video tag
+                  // Always create the media preview container, but only add if needed
+                  let mediaFound = !1;
+                  // Check for video first
                   if (
-                    (trimmedContent.startsWith("[webm]") &&
+                    enableVideoPreview &&
+                    ((trimmedContent.startsWith("[webm]") &&
                       trimmedContent.endsWith("[/webm]")) ||
-                    (trimmedContent.startsWith("[media]") &&
-                      trimmedContent.endsWith("[/media]"))
+                      (trimmedContent.startsWith("[media]") &&
+                        trimmedContent.endsWith("[/media]")))
                   ) {
                     const videoData = Utils.extractVideoUrl(trimmedContent);
                     videoData &&
-                      // Create video element for preview
-                      ((mediaPreview.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay></video>`),
-                      // Remove the placeholder and add the video preview
-                      placeholder.parentNode.insertBefore(
-                        mediaPreview,
-                        placeholder
-                      ),
-                      placeholder.remove());
+                      ((mediaPreviewContainer.innerHTML = `<video src="${videoData.url}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" loop muted autoplay title="Video Preview"></video>`),
+                      (mediaFound = !0));
                   }
-                  // Only add image if content is just an image tag
-                  else if (
-                    (trimmedContent.startsWith("[img]") &&
+                  // If no video or video disabled, check for image
+                  if (
+                    !mediaFound &&
+                    enableImagePreview &&
+                    ((trimmedContent.startsWith("[img]") &&
                       trimmedContent.endsWith("[/img]")) ||
-                    trimmedContent.match(
-                      /^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i
-                    )
+                      trimmedContent.match(
+                        /^\[img\s+[^=\]]+=[^\]]+\].*?\[\/img\]$/i
+                      ))
                   ) {
                     let imageUrl;
                     if (trimmedContent.startsWith("[img]"))
-                      // Standard format
                       imageUrl = trimmedContent.slice(5, -6).trim();
                     else {
-                      imageUrl = trimmedContent
-                        .match(/^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i)[1]
-                        .trim();
+                      const paramMatch = trimmedContent.match(
+                        /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i
+                      );
+                      imageUrl = paramMatch ? paramMatch[1].trim() : null;
                     }
-                    (mediaPreview.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;">`),
-                      // Remove the placeholder and add the image preview
-                      placeholder.parentNode.insertBefore(
-                        mediaPreview,
+                    imageUrl &&
+                      ((mediaPreviewContainer.innerHTML = `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; border-radius: 3px; margin-top: 4px;" title="Image Preview">`),
+                      (mediaFound = !0));
+                  }
+                  // Decision time: Show media, text, or nothing?
+                  mediaFound && wantsPreview
+                    ? // Media found and previews enabled: Insert media, remove placeholder
+                      (placeholder.parentNode.insertBefore(
+                        mediaPreviewContainer,
                         placeholder
                       ),
-                      placeholder.remove();
-                  } else
-                    // If not an image or video, update the placeholder with the text content
-                    placeholder.insertAdjacentElement("afterend", mediaPreview),
-                      (placeholder.textContent =
-                        Utils.removeBBCode(postContent)),
-                      Utils.styleReference(placeholder);
+                      placeholder.remove())
+                    : wantsTextQuote
+                      ? // Show text content (for quotes or if media previews off/no media found)
+                        ((placeholder.textContent =
+                          Utils.removeBBCode(postContent)),
+                        Utils.styleReference(placeholder),
+                        mediaPreviewContainer.remove())
+                      : // No text quote wanted, no media preview shown -> remove placeholder
+                        (placeholder.remove(), mediaPreviewContainer.remove());
                 } else placeholder.remove();
               } catch (error) {
                 console.error("Error fetching post content:", error),
@@ -4199,7 +4951,7 @@
             "\n        .row .list-inner img {\n          max-width: 50px !important;\n        }\n      "),
             document.head.appendChild(styleElement),
             NotificationCustomizer.customizeNotificationPanel(),
-            NotificationMarker.checkAndMarkNotifications(),
+            NotificationMarker.checkAndMarkNotifications(), // Now unconditional
             window.location.href.includes("ucp.php?i=ucp_notifications") &&
               NotificationCustomizer.customizeNotificationPage();
           new MutationObserver((mutations) => {
@@ -5746,7 +6498,7 @@
           let result;
           // Pass dependencies if needed
           (result =
-            "recentTopicsFormat" === script.id
+            "recentTopicsFormat" === script.id || "notifications" === script.id
               ? module.init({
                   getScriptSetting: getScriptSetting,
                 })
@@ -5844,94 +6596,11 @@
             }
           });
         });
-    })(
-      /**
-       * Shows the settings modal for a script.
-       *
-       * @param {Object} script - The script object from the manifest.
-       * @param {Function} renderScriptSettingsContent - Function to render the settings content.
-       * @param {Function} getScriptSetting - Function to retrieve a script setting value.
-       * @param {Function} saveScriptSetting - Function to save a script setting value.
-       */ container,
-      scripts,
-      states,
-      handleShowScriptSettings
-    );
+    })(container, scripts, states, handleShowScriptSettings);
   }
   function handleShowScriptSettings(script) {
     // Pass getScriptSetting as the third argument now
-    !(function (
-      script,
-      renderScriptSettingsContent,
-      getScriptSetting, // Added getScriptSetting parameter
-      saveScriptSetting
-    ) {
-      log(`Showing settings modal for script: ${script.name}`);
-      // Create modal if it doesn't exist
-      let modal = document.getElementById("script-settings-modal");
-      modal ||
-        ((modal = document.createElement("div")),
-        (modal.id = "script-settings-modal"),
-        (modal.className = "settings-modal"),
-        document.body.appendChild(modal));
-      // Determine if settings can be rendered
-      const canRenderSettings =
-        script.settings &&
-        script.settings.length > 0 &&
-        renderScriptSettingsContent &&
-        getScriptSetting;
-      // Check if getScriptSetting is provided
-      // Populate modal with script settings content
-      (modal.innerHTML = `\n    <div class="settings-modal-content">\n      <div class="settings-modal-header">\n        <h2 class="settings-modal-title">${script.name} Settings</h2>\n        <span class="settings-modal-close">&times;</span>\n      </div>\n\n      ${
-        /* Conditionally render settings or empty state */
-        canRenderSettings
-          ? renderScriptSettingsContent(script, getScriptSetting)
-          : renderEmptyState(
-              null,
-              "This script doesn't have any configurable settings."
-            )
-      }\n\n      <div\n        class="script-info"\n        style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;"\n      >\n        <h3>Script Information</h3>\n        <table class="data-table">\n          <tr>\n            <th>ID</th>\n            <td>${script.id}</td>\n          </tr>\n          <tr>\n            <th>Version</th>\n            <td>${script.version}</td>\n          </tr>\n          <tr>\n            <th>Category</th>\n            <td>${script.category || "Uncategorized"}</td>\n          </tr>\n          <tr>\n            <th>Author</th>\n            <td>${script.author || "Unknown"}</td>\n          </tr>\n          <tr>\n            <th>Description</th>\n            <td>${script.description || "-"}</td>\n          </tr>\n          ${script.urlPatterns && script.urlPatterns.length > 0 ? `\n          <tr><th>URL Patterns</th><td>${script.urlPatterns.join("<br>")}</td></tr>\n          ` : ""}\n        </table>\n      </div>\n\n      <div class="info-note" style="margin-top: 15px;">\n        <strong>Note:</strong> Changes to settings may require a page reload to\n        take full effect.\n      </div>\n    </div>\n  `),
-        // Show the modal
-        (modal.style.display = "block");
-      // --- Event Listeners ---
-      // Close button listener
-      const closeButton = modal.querySelector(".settings-modal-close");
-      closeButton &&
-        closeButton.addEventListener("click", () => {
-          modal.style.display = "none";
-        }),
-        // Click outside listener
-        modal.addEventListener("click", (e) => {
-          e.target === modal && (modal.style.display = "none");
-        }),
-        // Add event listeners for setting inputs ONLY if save function is provided
-        canRenderSettings &&
-          saveScriptSetting &&
-          // Use a small delay to ensure DOM is ready after innerHTML assignment
-          setTimeout(() => {
-            modal.querySelectorAll(".setting-input").forEach((input) => {
-              const settingId = input.dataset.settingId;
-              if (!settingId)
-                return void console.warn(
-                  "Setting input missing data-setting-id:",
-                  input
-                );
-              const eventType = "checkbox" === input.type ? "change" : "input",
-                new_input = input.cloneNode(!0);
-              // Clear previous listeners if any (simple approach)
-              input.parentNode.replaceChild(new_input, input),
-                // Add the new listener
-                new_input.addEventListener(eventType, (e) => {
-                  const value =
-                    "checkbox" === e.target.type
-                      ? e.target.checked
-                      : e.target.value;
-                  log(`Setting changed: ${script.id}.${settingId} = ${value}`),
-                    saveScriptSetting(script.id, settingId, value);
-                });
-            });
-          }, 150);
-    })(
+    showScriptSettings(
       script,
       renderScriptSettingsContent, // Renders the content area
       getScriptSetting, // Function to get current setting value
@@ -5943,7 +6612,22 @@
       log(`Saved setting: ${scriptId}.${settingId} = ${value}`);
   }
   function getScriptSetting(scriptId, settingId, defaultValue) {
-    return gmGetValue(`script_setting_${scriptId}_${settingId}`, defaultValue);
+    const storageKey = `script_setting_${scriptId}_${settingId}`;
+    let value = gmGetValue(storageKey, defaultValue);
+    // If the value retrieved is the default (meaning it wasn't set),
+    // or explicitly undefined, set it in storage now.
+    // Tampermonkey might return the default value directly if the key doesn't exist.
+    // We check if the retrieved value *is* the default to cover this.
+    // Check actual stored value
+    return (
+      void 0 === gmGetValue(storageKey) &&
+        (gmSetValue(storageKey, defaultValue),
+        log(
+          `Setting default value for ${scriptId}.${settingId}: ${defaultValue}`
+        ),
+        (value = defaultValue)),
+      value
+    );
   }
   // --- Tab Content Handling ---
   function handleLoadTabContent(tabName) {
