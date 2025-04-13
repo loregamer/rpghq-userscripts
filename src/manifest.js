@@ -72,7 +72,7 @@ export const SCRIPT_MANIFEST = [
         id: "quoteColor",
         label: "Quote Notification Color",
         type: "color",
-        defaultValue: "#3889ED",
+        defaultValue: "#F5575D",
         description: "Set the text color for quote notifications.",
         dependsOn: { settingId: "enableNotificationColors", value: true },
       },
