@@ -193,6 +193,7 @@ export const SCRIPT_MANIFEST = [
         defaultValue: true,
         description:
           "Makes common filler words like 'and', 'by', 'in' smaller in notification text for better readability.",
+        previewImage: "https://f.rpghq.org/xDtPAZ1xQxLL.png?n=pasted-file.png",
       },
       // Keep existing unrelated settings if any, e.g., quote previews
       {

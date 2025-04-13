@@ -732,6 +732,11 @@ export function init({ getScriptSetting }) {
         "enableNotificationColors",
         true,
       );
+      const resizeFillers = _getScriptSetting(
+        "notifications",
+        "resizeFillerWords",
+        true,
+      );
       const warningColorSetting = _getScriptSetting(
         "notifications",
         "warningColor",
@@ -747,13 +752,15 @@ export function init({ getScriptSetting }) {
         Object.assign(timeElement.style, NOTIFICATION_TIME_STYLE);
       }
 
+      let currentHtml = titleElement.innerHTML;
       const subject = block
         .querySelector(".notification-reference")
         ?.textContent.trim()
         .replace(/^"(.*)"$/, "$1");
+
       if (subject === "Board warning issued") {
         if (enableColors) {
-          titleElement.innerHTML = titleElement.innerHTML
+          currentHtml = currentHtml
             .replace(
               /<strong>Private Message<\/strong>/,
               `<strong style="color: ${warningColorSetting};">Board warning issued</strong>`,
@@ -761,7 +768,7 @@ export function init({ getScriptSetting }) {
             .replace(/from/, "by")
             .replace(/:$/, "");
         } else {
-          titleElement.innerHTML = titleElement.innerHTML
+          currentHtml = currentHtml
             .replace(
               /<strong>Private Message<\/strong>/,
               `<strong>Board warning issued</strong>`,
@@ -771,6 +778,17 @@ export function init({ getScriptSetting }) {
         }
         block.querySelector(".notification-reference")?.remove();
       }
+
+      // Apply filler word resizing if enabled
+      if (resizeFillers) {
+        currentHtml = currentHtml.replace(
+          /\b(by|and|in|from)\b(?!-)/g,
+          '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>',
+        );
+      }
+
+      // Update the title element's HTML
+      titleElement.innerHTML = currentHtml;
     },
 
     async customizeNotificationBlock(block) {
@@ -843,62 +861,61 @@ export function init({ getScriptSetting }) {
       let titleElement = notificationText.querySelector(".notification-title");
       if (!titleElement) return; // Need a title element to proceed
 
-      let titleText = titleElement.innerHTML;
+      let titleText = titleElement.innerHTML; // Initialize titleText
+      let currentHtml = titleText; // Initialize currentHtml with the initial title text
       let notificationType = "default"; // Determine type
 
       // Determine notification type and potentially call specialized handlers
       if (titleText.includes("You were mentioned by")) {
         notificationType = "mention";
-        // CustomizeMentionNotification handles its own color setting internally now
         await this.customizeMentionNotification(block);
-        titleText = titleElement.innerHTML; // Update titleText after potential modification
+        currentHtml = titleElement.innerHTML; // Update currentHtml after potential modification
       } else if (titleText.includes("reacted to")) {
         notificationType = "reaction";
-        // CustomizeReactionNotification handles its own color setting internally now
         await this.customizeReactionNotification(titleElement, block);
-        titleText = titleElement.innerHTML; // Update titleText after potential modification
+        currentHtml = titleElement.innerHTML; // Update currentHtml after potential modification
       } else if (titleText.includes("Private Message")) {
         notificationType = "pm";
-        // CustomizePrivateMessageNotification handles its own color setting internally now
         this.customizePrivateMessageNotification(titleElement, block);
-        titleText = titleElement.innerHTML; // Re-check titleText
-        if (titleText.includes("Board warning issued")) {
+        currentHtml = titleElement.innerHTML; // Re-check currentHtml
+        if (titleElement.innerHTML.includes("Board warning issued")) {
+          // Use titleElement.innerHTML for check
           notificationType = "warning";
         }
       } else if (titleText.includes("Report closed")) {
         notificationType = "report";
-        // Apply color only if enabled
         if (enableColors) {
-          titleElement.innerHTML = titleText.replace(
+          currentHtml = titleText.replace(
             /Report closed/,
             `<strong style="color: ${reportColorSetting};">Report closed</strong>`,
           );
         }
       } else if (titleText.includes("Post approval")) {
         notificationType = "approval";
-        // Apply color only if enabled
         if (enableColors) {
-          titleElement.innerHTML = titleText.replace(
+          currentHtml = titleText.replace(
             /<strong>Post approval<\/strong>/,
             `<strong style="color: ${approvalColorSetting};">Post approval</strong>`,
           );
         }
       } else if (titleText.includes("<strong>Quoted</strong>")) {
         notificationType = "quote";
+        // currentHtml already holds the initial text, which is correct here
       } else if (titleText.includes("<strong>Reply</strong>")) {
         notificationType = "reply";
+        // currentHtml already holds the initial text, which is correct here
       } else if (titleText.includes("edited a message")) {
         notificationType = "edit";
-        // Apply color only if enabled
         if (enableColors) {
-          titleElement.innerHTML = titleText.replace(
+          currentHtml = titleText.replace(
             /edited a message you posted/,
             `<strong style="color: ${editColorSetting};">edited</strong> a message you posted`,
           );
         }
       }
+      // IMPORTANT: After this block, `currentHtml` holds the base HTML before reply/quote modifications
 
-      // Handle previews for Reply/Quote (this part remains largely the same)
+      // Handle previews for Reply/Quote (this part modifies titleElement.innerHTML directly)
       let referenceElement = notificationText.querySelector(
         ".notification-reference",
       );
@@ -910,27 +927,32 @@ export function init({ getScriptSetting }) {
           .trim()
           .replace(/^"|"$/g, "");
 
-        // Update title structure
-        titleElement.innerHTML = titleElement.innerHTML.replace(
+        // Update title structure IN PLACE
+        // Start with the potentially colored/modified currentHtml
+        let updatedTitle = currentHtml.replace(
           /in(?:\stopic)?:/,
           `<span style="font-size: 0.85em; padding: 0 0.25px;">in</span> <strong>${threadTitle}</strong>:`,
         );
+        titleElement.innerHTML = updatedTitle; // Apply this structural change
 
         // Update the reference element
         referenceElement.textContent = "Loading...";
-        Utils.styleReference(referenceElement); // Apply reference style regardless of color setting
+        Utils.styleReference(referenceElement); // Apply reference style
 
         // Queue fetch
         this.queuePostContentFetch(
           block.getAttribute("data-real-url") || block.href,
           referenceElement,
         );
+
+        // Re-fetch HTML after potential in-place modification for reply/quote
+        currentHtml = titleElement.innerHTML;
+      } else {
+        // If not reply/quote, ensure titleElement reflects currentHtml before styling
+        titleElement.innerHTML = currentHtml;
       }
 
-      // Re-fetch potentially modified HTML for styling
-      currentHtml = titleElement.innerHTML;
-
-      // Apply text resizing *after* structure changes
+      // Apply text resizing *after* all structural changes
       if (resizeFillers) {
         currentHtml = currentHtml.replace(
           /\b(by|and|in|from)\b(?!-)/g,
@@ -942,84 +964,60 @@ export function init({ getScriptSetting }) {
       if (enableColors) {
         const quoteColor = quoteColorSetting;
         const replyColor = replyColorSetting;
-        // Note: Reaction, Mention, Warning colors applied in their specific functions
         const editColor = editColorSetting;
         const approvalColor = approvalColorSetting;
         const reportColor = reportColorSetting;
+        // Reaction, Mention, Warning handled earlier or within their functions
 
-        currentHtml = currentHtml
-          .replace(
-            /<strong>Quoted<\/strong>/,
-            `<strong style="color: ${quoteColor};">Quoted</strong>`,
-          )
-          .replace(
-            /<strong>Reply<\/strong>/,
-            `<strong style="color: ${replyColor};">Reply</strong>`,
-          )
-          // The following might re-apply colors if already done by specialized
-          // functions, but ensures consistency if those functions were skipped
-          // or if the initial detection logic needs refinement.
-          .replace(
-            /<b style=\"color: [^;]+;\">reacted<\/b>/g, // Match existing style if present
-            `<b style="color: ${reactionColorSetting};">reacted</b>`,
-          )
-          .replace(
-            /<b>reacted<\/b>/g,
-            `<b style="color: ${reactionColorSetting};">reacted</b>`,
-          ) // Match if no style yet
-          .replace(
-            /<b style=\"color: [^;]+;\">Mentioned<\/b>/g,
-            `<b style="color: ${mentionColorSetting};">Mentioned</b>`,
-          )
-          .replace(
-            /<b>Mentioned<\/b>/g,
-            `<b style="color: ${mentionColorSetting};">Mentioned</b>`,
-          )
-          .replace(
-            /<strong style=\"color: [^;]+;\">edited<\/strong>/g,
-            `<strong style="color: ${editColor};">edited</strong>`,
-          )
-          .replace(
-            /<strong>edited<\/strong>/g,
-            `<strong style="color: ${editColor};">edited</strong>`,
-          )
-          .replace(
-            /<strong style=\"color: [^;]+;\">Post approval<\/strong>/g,
-            `<strong style="color: ${approvalColor};">Post approval</strong>`,
-          )
-          .replace(
-            /<strong>Post approval<\/strong>/g,
-            `<strong style="color: ${approvalColor};">Post approval</strong>`,
-          )
-          .replace(
-            /<strong style=\"color: [^;]+;\">Report closed<\/strong>/g,
-            `<strong style="color: ${reportColor};">Report closed</strong>`,
-          )
-          .replace(
-            /<strong>Report closed<\/strong>/g,
-            `<strong style="color: ${reportColor};">Report closed</strong>`,
-          )
-          .replace(
-            /<strong style=\"color: [^;]+;\">Board warning issued<\/strong>/g,
-            `<strong style="color: ${warningColorSetting};">Board warning issued</strong>`,
-          )
-          .replace(
-            /<strong>Board warning issued<\/strong>/g,
-            `<strong style="color: ${warningColorSetting};">Board warning issued</strong>`,
-          );
+        // Re-apply coloring systematically based on notificationType
+        // This ensures colors are applied correctly even after resizing/structural changes
+        switch (notificationType) {
+          case "quote":
+            currentHtml = currentHtml.replace(
+              /<strong>Quoted<\/strong>/,
+              `<strong style="color: ${quoteColor};">Quoted</strong>`,
+            );
+            break;
+          case "reply":
+            currentHtml = currentHtml.replace(
+              /<strong>Reply<\/strong>/,
+              `<strong style="color: ${replyColor};">Reply</strong>`,
+            );
+            break;
+          case "edit":
+            // Make sure we're replacing the correct pattern, potentially already styled
+            currentHtml = currentHtml.replace(
+              /(<strong(?: style="color: [^;]+;")?>edited<\/strong>|edited) a message/,
+              `<strong style="color: ${editColor};">edited</strong> a message`,
+            );
+            break;
+          case "approval":
+            currentHtml = currentHtml.replace(
+              /(<strong(?: style="color: [^;]+;")?>Post approval<\/strong>|<strong>Post approval<\/strong>)/,
+              `<strong style="color: ${approvalColor};">Post approval</strong>`,
+            );
+            break;
+          case "report":
+            currentHtml = currentHtml.replace(
+              /(<strong(?: style="color: [^;]+;")?>Report closed<\/strong>|Report closed)/,
+              `<strong style="color: ${reportColor};">Report closed</strong>`,
+            );
+            break;
+          // Reaction, Mention, Warning colors should be handled by their respective functions
+          // or the initial assignment if `enableColors` was false initially.
+        }
       } else {
         // If colors are disabled, remove any potentially pre-existing color styles
-        // added by specialized functions before this point.
         currentHtml = currentHtml
-          .replace(/<b style=\"color: [^;]+;\">/g, "<b>")
-          .replace(/<strong style=\"color: [^;]+;\">/g, "<strong>");
+          .replace(/<b style="color: [^;]+;">/g, "<b>")
+          .replace(/<strong style="color: [^;]+;">/g, "<strong>");
       }
 
       // Apply the final HTML
       titleElement.innerHTML = currentHtml;
 
       // Ensure reference styling is applied (if element exists)
-      referenceElement = block.querySelector(".notification-reference");
+      referenceElement = block.querySelector(".notification-reference"); // Re-query in case it was added/removed
       if (referenceElement) {
         Utils.styleReference(referenceElement);
       }
