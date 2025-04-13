@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
 // @namespace    rpghq-userscripts
-// @version      0.5
+// @version      0.5.1
 // @description  RPGHQ Userscript Manager
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -951,7 +951,7 @@
           id: "quoteColor",
           label: "Quote Notification Color",
           type: "color",
-          defaultValue: "#3889ED",
+          defaultValue: "#F5575D",
           description: "Set the text color for quote notifications.",
           dependsOn: {
             settingId: "enableNotificationColors",
