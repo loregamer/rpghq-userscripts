@@ -11,8 +11,9 @@
  * @param {Array} context.executionPhases - Array of execution phase objects from manifest schema
  */
 import { renderInstalledScriptsTab } from "./tabs/renderInstalledScriptsTab.js";
-import { renderForumPreferencesTab } from "./tabs/renderForumPreferencesTab.js";
+// import { renderForumPreferencesTab } from "./tabs/renderForumPreferencesTab.js"; // Replaced by user preferences management
 import { renderSettingsTab } from "./tabs/renderSettingsTab.js";
+import { renderUserPreferencesManagement } from "../components/userPreferences/renderUserPreferencesManagement.js"; // Added for user prefs
 import { log, error } from "../utils/logger.js";
 
 export function loadTabContent(tabName, context) {
@@ -42,7 +43,7 @@ export function loadTabContent(tabName, context) {
       );
       break;
     case "forum":
-      renderForumPreferencesTab(container);
+      renderUserPreferencesManagement(container);
       break;
     case "settings":
       renderSettingsTab(container);
