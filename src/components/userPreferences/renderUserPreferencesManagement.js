@@ -1,9 +1,74 @@
 // /docs/planning/user-preferences.md
 import { log, error } from "../../utils/logger.js";
-// import { GM_setValue, GM_getValue } from "../../utils/tampermonkey.js"; // Incorrect path - use global GM_* functions
-// import { showMemberSearch } from "../../scripts/memberSearch.js"; // This script doesn't export the required function
+// import { GM_setValue, GM_getValue } from "../../utils/tampermonkey.js"; // Incorrect path - use global GM_*
+// We rely on the global GM_xmlhttpRequest provided by the userscript manager via @grant
 
 const STORAGE_KEY = "RPGHQ_Manager_user_preferences";
+const DEFAULT_AVATAR_PLACEHOLDER = "https://via.placeholder.com/50"; // Consistent placeholder
+
+/**
+ * Fetches the user's current avatar URL from their profile page using GM_xmlhttpRequest.
+ * @param {string} userId - The user ID.
+ * @returns {Promise<string>} - Resolves with the avatar URL or rejects if not found/error occurs.
+ */
+function fetchUserAvatarUrl(userId) {
+  return new Promise((resolve, reject) => {
+    if (!userId) {
+      return reject(new Error("User ID is required for fetching avatar."));
+    }
+    const profileUrl = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
+    log(`Fetching avatar via GM_xmlhttpRequest from: ${profileUrl}`);
+
+    GM_xmlhttpRequest({
+      method: "GET",
+      url: profileUrl,
+      onload: function (response) {
+        if (response.status >= 200 && response.status < 300) {
+          try {
+            const html = response.responseText;
+            const match = html.match(
+              /<dt class="profile-avatar">.*?<img class="avatar" src="([^"]+)"/s,
+            );
+            if (match && match[1]) {
+              const rawSrc = match[1];
+              const absoluteSrc = new URL(
+                rawSrc.startsWith("//") ? `https:${rawSrc}` : rawSrc,
+                profileUrl,
+              ).href;
+              log(`Found avatar src for ${userId}: ${absoluteSrc}`);
+              resolve(absoluteSrc);
+            } else {
+              log(
+                `Could not find avatar img tag for ${userId} in profile HTML.`,
+              );
+              reject(new Error("Avatar image tag not found in profile HTML."));
+            }
+          } catch (parseError) {
+            error(
+              `Error parsing profile HTML for avatar (${userId}):`,
+              parseError,
+            );
+            reject(parseError);
+          }
+        } else {
+          error(
+            `HTTP error fetching profile for avatar (${userId}): ${response.status} ${response.statusText}`,
+          );
+          reject(
+            new Error(`HTTP error: ${response.status} ${response.statusText}`),
+          );
+        }
+      },
+      onerror: function (errorResponse) {
+        error(
+          `Network error fetching profile for avatar (${userId}):`,
+          errorResponse,
+        );
+        reject(new Error("Network error during fetch."));
+      },
+    });
+  });
+}
 
 /**
  * Renders the user preferences management UI.
@@ -14,11 +79,11 @@ export function renderUserPreferencesManagement(container) {
   container.innerHTML = `
         <div class="hq-usm-user-prefs-container">
             <h2>User Preferences Management</h2>
-            <div class="hq-usm-user-prefs-controls">
+            <div class="hq-usm-user-prefs-controls" style="margin-bottom: 15px;">
                 <input type="text" id="hq-usm-user-prefs-filter" placeholder="Filter users..." class="hq-usm-input">
                 <button id="hq-usm-user-prefs-add" class="hq-usm-button">Add User</button>
             </div>
-            <div id="hq-usm-user-prefs-grid" class="hq-usm-user-prefs-grid">
+            <div id="hq-usm-user-prefs-grid" class="hq-usm-user-prefs-grid-container">
                 <!-- User tiles will be rendered here -->
                 <p>Loading user preferences...</p>
             </div>
@@ -27,9 +92,31 @@ export function renderUserPreferencesManagement(container) {
 
   const filterInput = document.getElementById("hq-usm-user-prefs-filter");
   const addButton = document.getElementById("hq-usm-user-prefs-add");
-  const gridContainer = document.getElementById("hq-usm-user-prefs-grid");
+  const gridContainer = document.getElementById("hq-usm-user-prefs-grid"); // Now uses script-grid class
 
   let allUserPrefs = {}; // To store the loaded preferences
+
+  /**
+   * Saves the entire user preferences object to storage.
+   * @param {string} contextUsername - Username for logging context (optional).
+   */
+  async function savePreferences(contextUsername = null) {
+    try {
+      await GM_setValue(STORAGE_KEY, allUserPrefs);
+      if (contextUsername) {
+        log(`Preferences saved (context: ${contextUsername}).`);
+      } else {
+        log(`Preferences saved.`);
+      }
+      // Optionally, add global visual feedback if needed
+    } catch (err) {
+      error(
+        `Error saving preferences (context: ${contextUsername || "global"}):`,
+        err,
+      );
+      alert("Failed to save preferences.");
+    }
+  }
 
   /**
    * Renders the user tiles in the grid.
@@ -40,178 +127,178 @@ export function renderUserPreferencesManagement(container) {
 
     const usernames = Object.keys(prefsToShow);
 
-    if (usernames.length === 0) {
-      gridContainer.innerHTML =
-        "<p>No users added yet. Click 'Add User' to start.</p>";
-      return;
-    }
-
     usernames.forEach((username) => {
       const userPref = prefsToShow[username];
       const tile = document.createElement("div");
-      tile.className = "hq-usm-user-prefs-tile hq-usm-tile"; // Added base tile class
+      tile.className = "script-card hq-usm-user-card"; // Use script-card and a specific user-card class
+      // tile.style.cursor = "pointer"; // Remove pointer cursor, no longer opens modal
       tile.dataset.username = username; // Add username for reference
+
+      // --- Container for Avatar and Name (Flexbox) ---
+      const topRow = document.createElement("div");
+      topRow.style.display = "flex";
+      topRow.style.alignItems = "center";
+      topRow.style.marginBottom = "10px";
 
       // Avatar
       const avatar = document.createElement("img");
-      avatar.className = "hq-usm-user-tile-avatar";
-      // TODO: Implement proper avatar fetching/fallback
-      avatar.src = userPref.avatarUrl || "https://via.placeholder.com/50"; // Placeholder
+      avatar.className = "script-card-icon hq-usm-user-tile-avatar"; // Use specific avatar class
       avatar.alt = `${username}'s avatar`;
+      avatar.style.flexShrink = "0"; // Prevent avatar from shrinking
+      avatar.style.marginRight = "10px";
 
-      // Username
+      // --- Avatar Loading Logic ---
+      avatar.src = DEFAULT_AVATAR_PLACEHOLDER; // Start with placeholder
+      avatar.classList.add("loading"); // Indicate loading state
+
+      const setAvatarSrc = (url) => {
+        avatar.src = url;
+        avatar.onerror = () => {
+          log(
+            `Error loading avatar for ${username} from URL: ${url}. Falling back to placeholder.`,
+          );
+          avatar.src = DEFAULT_AVATAR_PLACEHOLDER;
+          avatar.classList.remove("loading");
+          avatar.onerror = null;
+        };
+        avatar.onload = () => {
+          avatar.classList.remove("loading");
+          avatar.onerror = null;
+          avatar.onload = null;
+        };
+      };
+
+      if (userPref.avatarUrl) {
+        log(`Using custom avatar URL for ${username}: ${userPref.avatarUrl}`);
+        setAvatarSrc(userPref.avatarUrl);
+      } else {
+        fetchUserAvatarUrl(userPref.user_id)
+          .then((fetchedUrl) => {
+            log(`Successfully fetched avatar for ${username}: ${fetchedUrl}`);
+            setAvatarSrc(fetchedUrl);
+          })
+          .catch((fetchError) => {
+            error(
+              `Failed to fetch avatar for ${username} (ID: ${userPref.user_id}):`,
+              fetchError,
+            );
+            avatar.classList.remove("loading"); // Keep placeholder
+          });
+      }
+      // --- End Avatar Loading Logic ---
+
+      // Username Span
       const nameSpan = document.createElement("span");
-      nameSpan.className = "hq-usm-user-tile-name";
+      nameSpan.className = "script-card-title hq-usm-user-tile-name"; // Use specific name class
       nameSpan.textContent = username;
-      // TODO: Apply usernameColor if set
-
-      // Settings Button
-      const settingsButton = document.createElement("button");
-      settingsButton.className = "hq-usm-button hq-usm-user-tile-settings";
-      settingsButton.textContent = "Settings";
-      settingsButton.dataset.username = username; // Link button to username
-      // TODO: Add event listener for settings button
-
-      tile.appendChild(avatar);
-      tile.appendChild(nameSpan);
-      tile.appendChild(settingsButton);
-
-      gridContainer.appendChild(tile);
-    });
-  }
-
-  /**
-   * Shows the settings popup/modal for a specific user.
-   * @param {string} username - The username of the user to configure.
-   */
-  function showUserSettingsPopup(username) {
-    log(`Showing settings for user: ${username}`);
-    const userPref = allUserPrefs[username];
-    if (!userPref) {
-      error(
-        `Cannot show settings: User "${username}" not found in preferences.`,
-      );
-      return;
-    }
-
-    // --- Modal Creation/Retrieval ---
-    const modalId = "hq-usm-user-settings-modal";
-    let modal = document.getElementById(modalId);
-    if (!modal) {
-      modal = document.createElement("div");
-      modal.id = modalId;
-      // Add classes similar to existing modals for potential styling reuse
-      modal.className = "mod-manager-modal settings-modal"; // Combine classes
-      document.body.appendChild(modal);
-    }
-
-    // --- Save Helper ---
-    const saveChanges = async () => {
-      try {
-        await GM_setValue(STORAGE_KEY, allUserPrefs);
-        log(`Preferences saved for ${username}.`);
-        // Optional: Add visual feedback
-        // Refresh the specific tile in the main grid if needed (e.g., avatar change)
-        displayUserTiles(allUserPrefs); // Simple refresh for now
-      } catch (err) {
-        error(`Error saving preferences for ${username}:`, err);
-        alert("Failed to save preferences.");
+      if (userPref.usernameColor) {
+        nameSpan.style.color = userPref.usernameColor;
       }
-    };
 
-    // --- Modal Content ---
-    modal.innerHTML = `
-            <div class="mod-manager-modal-content settings-modal-content">
-                <div class="mod-manager-header settings-modal-header">
-                    <h2 class="mod-manager-title settings-modal-title">Settings for ${username}</h2>
-                    <span class="mod-manager-close settings-modal-close">&times;</span>
-                </div>
-                <div class="mod-manager-content settings-modal-body">
-                    <div class="hq-usm-setting-item">
-                        <label for="user-prefs-hide-${username}">Hide Posts:</label>
-                        <input type="checkbox" id="user-prefs-hide-${username}" ${userPref.hidePosts ? "checked" : ""}>
-                    </div>
-                    <div class="hq-usm-setting-item">
-                        <label for="user-prefs-avatar-${username}">Custom Avatar URL:</label>
-                        <input type="text" id="user-prefs-avatar-${username}" class="hq-usm-input" value="${userPref.avatarUrl || ""}" placeholder="https://example.com/avatar.png">
-                    </div>
-                    <div class="hq-usm-setting-item">
-                        <label for="user-prefs-color-${username}">Username Color:</label>
-                        <input type="color" id="user-prefs-color-${username}" value="${userPref.usernameColor || "#000000"}">
-                        <button id="user-prefs-color-reset-${username}" class="hq-usm-button hq-usm-button-small" style="margin-left: 5px;" title="Reset to default">&#x21BA;</button> <!-- Reset arrow -->
-                    </div>
-                     <p style="font-size: 0.9em; color: grey;">User ID: ${userPref.user_id}</p>
-                </div>
-                <div class="settings-modal-footer" style="display: flex; justify-content: space-between; padding: 15px; border-top: 1px solid #ccc;">
-                    <button id="user-prefs-remove-${username}" class="hq-usm-button hq-usm-button-danger">Remove User</button>
-                    <button id="user-prefs-close-${username}" class="hq-usm-button">Close</button>
-                </div>
-            </div>
-        `;
+      topRow.appendChild(avatar);
+      topRow.appendChild(nameSpan);
+      tile.appendChild(topRow);
 
-    // --- Event Listeners ---
-    const closeModal = () => {
-      modal.style.display = "none";
-    };
+      // --- Settings Controls Container ---
+      const controlsContainer = document.createElement("div");
+      controlsContainer.className = "hq-usm-user-card-controls";
+      controlsContainer.style.marginTop = "auto"; // Push controls to the bottom if card height varies
+      controlsContainer.style.paddingTop = "10px";
+      controlsContainer.style.borderTop = "1px solid #444"; // Separator
 
-    modal
-      .querySelector(".settings-modal-close")
-      .addEventListener("click", closeModal);
-    modal
-      .querySelector(`#user-prefs-close-${username}`)
-      .addEventListener("click", closeModal);
-    modal.addEventListener("click", (e) => {
-      // Close if clicking on the modal background (overlay)
-      if (e.target === modal) {
-        closeModal();
-      }
-    });
+      // Hide Posts Checkbox
+      const hideDiv = document.createElement("div");
+      hideDiv.className = "hq-usm-setting-item-inline"; // For inline layout
+      const hideLabel = document.createElement("label");
+      hideLabel.textContent = "Hide Posts:";
+      hideLabel.htmlFor = `user-prefs-hide-${username}`;
+      const hideCheckbox = document.createElement("input");
+      hideCheckbox.type = "checkbox";
+      hideCheckbox.id = `user-prefs-hide-${username}`;
+      hideCheckbox.checked = userPref.hidePosts || false;
+      hideCheckbox.addEventListener("change", () => {
+        allUserPrefs[username].hidePosts = hideCheckbox.checked;
+        savePreferences(username);
+      });
+      hideDiv.appendChild(hideLabel);
+      hideDiv.appendChild(hideCheckbox);
+      controlsContainer.appendChild(hideDiv);
 
-    // --- Control Listeners ---
-    const hideCheckbox = modal.querySelector(`#user-prefs-hide-${username}`);
-    hideCheckbox.addEventListener("change", () => {
-      allUserPrefs[username].hidePosts = hideCheckbox.checked;
-      saveChanges();
-    });
+      // Custom Avatar URL Input
+      const avatarDiv = document.createElement("div");
+      avatarDiv.className = "hq-usm-setting-item";
+      const avatarLabel = document.createElement("label");
+      avatarLabel.textContent = "Avatar URL:";
+      avatarLabel.htmlFor = `user-prefs-avatar-${username}`;
+      const avatarInput = document.createElement("input");
+      avatarInput.type = "text";
+      avatarInput.id = `user-prefs-avatar-${username}`;
+      avatarInput.className = "hq-usm-input hq-usm-input-small"; // Smaller input
+      avatarInput.value = userPref.avatarUrl || "";
+      avatarInput.placeholder = "Optional custom URL";
+      avatarInput.addEventListener("input", () => {
+        const url = avatarInput.value.trim();
+        allUserPrefs[username].avatarUrl = url || null; // Store null if empty
+        setAvatarSrc(url || DEFAULT_AVATAR_PLACEHOLDER); // Update avatar preview
+        savePreferences(username);
+      });
+      avatarDiv.appendChild(avatarLabel);
+      avatarDiv.appendChild(avatarInput);
+      controlsContainer.appendChild(avatarDiv);
 
-    const avatarInput = modal.querySelector(`#user-prefs-avatar-${username}`);
-    avatarInput.addEventListener("input", () => {
-      // Use input for immediate feedback, or change/blur
-      const url = avatarInput.value.trim();
-      allUserPrefs[username].avatarUrl = url || null; // Store null if empty
-      saveChanges();
-    });
+      // Username Color Input
+      const colorDiv = document.createElement("div");
+      colorDiv.className = "hq-usm-setting-item-inline"; // Inline layout
+      const colorLabel = document.createElement("label");
+      colorLabel.textContent = "Color:";
+      colorLabel.htmlFor = `user-prefs-color-${username}`;
+      const colorInput = document.createElement("input");
+      colorInput.type = "color";
+      colorInput.id = `user-prefs-color-${username}`;
+      colorInput.value = userPref.usernameColor || "#ffffff"; // Default to white for picker
+      colorInput.style.marginLeft = "5px";
+      colorInput.addEventListener("input", () => {
+        allUserPrefs[username].usernameColor = colorInput.value;
+        nameSpan.style.color = colorInput.value;
+        savePreferences(username);
+      });
+      const colorResetButton = document.createElement("button");
+      colorResetButton.className = "hq-usm-button hq-usm-button-icon"; // Icon button style
+      colorResetButton.innerHTML = "&#x21BA;"; // Reset arrow
+      colorResetButton.title = "Reset color";
+      colorResetButton.style.marginLeft = "5px";
+      colorResetButton.addEventListener("click", () => {
+        allUserPrefs[username].usernameColor = null;
+        colorInput.value = "#ffffff"; // Reset visually
+        nameSpan.style.color = ""; // Reset name color to default
+        savePreferences(username);
+      });
+      colorDiv.appendChild(colorLabel);
+      colorDiv.appendChild(colorInput);
+      colorDiv.appendChild(colorResetButton);
+      controlsContainer.appendChild(colorDiv);
 
-    const colorInput = modal.querySelector(`#user-prefs-color-${username}`);
-    colorInput.addEventListener("input", () => {
-      // Use input for live update
-      allUserPrefs[username].usernameColor = colorInput.value;
-      saveChanges();
-    });
+      // User ID Display (subtle)
+      const userIdP = document.createElement("p");
+      userIdP.textContent = `ID: ${userPref.user_id}`;
+      userIdP.style.fontSize = "0.8em";
+      userIdP.style.color = "#888";
+      userIdP.style.marginTop = "8px";
+      userIdP.style.textAlign = "center";
+      controlsContainer.appendChild(userIdP);
 
-    const colorResetButton = modal.querySelector(
-      `#user-prefs-color-reset-${username}`,
-    );
-    colorResetButton.addEventListener("click", () => {
-      allUserPrefs[username].usernameColor = null;
-      colorInput.value = "#000000"; // Reset visually
-      saveChanges();
-    });
-
-    // --- Remove User Listener ---
-    const removeButton = modal.querySelector(`#user-prefs-remove-${username}`);
-    removeButton.addEventListener("click", async () => {
-      if (
-        confirm(
-          `Are you sure you want to remove user "${username}" from your preferences?`,
-        )
-      ) {
-        log(`Removing user: ${username}`);
-        delete allUserPrefs[username];
-        try {
-          await GM_setValue(STORAGE_KEY, allUserPrefs);
-          log(`User "${username}" removed successfully.`);
-          closeModal();
+      // Remove User Button
+      const removeButton = document.createElement("button");
+      removeButton.className =
+        "hq-usm-button hq-usm-button-danger hq-usm-button-small"; // Danger, small button
+      removeButton.textContent = "Remove";
+      removeButton.style.marginTop = "10px";
+      removeButton.style.width = "100%"; // Full width
+      removeButton.addEventListener("click", async () => {
+        if (confirm(`Are you sure you want to remove user "${username}"?`)) {
+          log(`Removing user: ${username}`);
+          delete allUserPrefs[username];
+          await savePreferences(); // Save the updated full list
           // Refresh grid - use current filter state if applicable
           const currentFilter = filterInput.value.toLowerCase();
           if (currentFilter) {
@@ -219,25 +306,18 @@ export function renderUserPreferencesManagement(container) {
           } else {
             displayUserTiles(allUserPrefs); // Refresh with all prefs
           }
-        } catch (err) {
-          error(
-            `Error saving preferences after removing user "${username}":`,
-            err,
-          );
-          alert("Failed to save preferences after removing user.");
-          // Optional: Re-add the user to memory if save fails?
-          // allUserPrefs[username] = userPref; // Might need deep copy
         }
-      }
+      });
+      controlsContainer.appendChild(removeButton);
+
+      // Append Controls
+      tile.appendChild(controlsContainer);
+
+      gridContainer.appendChild(tile);
     });
-
-    // --- Display Modal ---
-    modal.style.display = "block";
-    // Prevent body scrolling while modal is open
-    // document.body.style.overflow = "hidden"; // Re-enable scrolling on close
-
-    // TODO: Re-enable body scrolling when modal closes
   }
+
+  // --- showUserSettingsPopup function removed as settings are now inline ---
 
   // --- Member Search Modal Logic (Adapted from memberSearch.js) ---
 
@@ -336,7 +416,7 @@ export function renderUserPreferencesManagement(container) {
       };
 
       try {
-        await GM_setValue(STORAGE_KEY, allUserPrefs);
+        await savePreferences(username); // Use the standalone save function
         log(`User "${username}" (ID: ${user_id}) added successfully.`);
         _hideUserSearchModal();
         // Refresh grid - use current filter state if applicable
@@ -469,16 +549,7 @@ export function renderUserPreferencesManagement(container) {
       // Focus is handled by MutationObserver in _setupUserSearchFunctionality
     });
 
-    // Add event listener for settings buttons (using event delegation)
-    gridContainer.addEventListener("click", (event) => {
-      const target = event.target;
-      if (target.classList.contains("hq-usm-user-tile-settings")) {
-        const username = target.dataset.username;
-        if (username) {
-          showUserSettingsPopup(username);
-        }
-      }
-    });
+    // Modal related listeners removed
   }
 
   loadAndRender();

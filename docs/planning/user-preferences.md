@@ -46,15 +46,13 @@
     - **User Tile Grid:**
       - Display users from the `userPrefs` object in a responsive grid layout.
       - **Each Tile:**
-        - Shows the user's avatar. Prioritize `avatarUrl` from prefs if set, otherwise fetch/use their current forum avatar.
+        - Shows the user's avatar. **Prioritizes the `avatarUrl` preference if set.** Otherwise, fetches the current avatar from the user's profile page (`memberlist.php?mode=viewprofile&u=...`) each time the tile is displayed.
         - Shows the user's `username`.
-        - Includes a "Settings" button.
-          - Clicking "Settings" opens a modal/popup specific to that user (similar UI style to userscript settings).
-          - **Settings Popup Controls:**
-            - Toggle/Checkbox for `hidePosts`.
-            - Input field for `avatarUrl` (string, URL).
-            - Color picker for `usernameColor`.
-            - A "Remove User" button. Clicking this deletes the user's entry (by `username`) from the `userPrefs` object and closes the popup, refreshing the tile grid.
+        - Includes controls for preferences directly on the tile (updated from "Settings" button idea):
+          - Toggle/Checkbox for `hidePosts`.
+          - Input field for `avatarUrl` (string, URL). Setting this overrides the profile fetch.
+          - Color picker for `usernameColor`.
+          - A "Remove User" button. Clicking this deletes the user's entry (by `username`) from the `userPrefs` object and refreshes the tile grid.
     - **Saving:** Changes made within the settings popup (except removal) immediately update the corresponding user's data within the `userPrefs` object and save the entire `userPrefs` object using `gmSetValue`.
 
 **Phase 3: Applying Preferences on Forum Pages**

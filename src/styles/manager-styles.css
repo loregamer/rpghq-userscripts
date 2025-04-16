@@ -1,0 +1,177 @@
+/* User Preferences specific styles */
+.script-grid .hq-usm-user-card {
+  width: 128px;
+  /* Add other user-card specific styles if needed */
+} /* User Preferences Grid */
+.user-prefs-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(200px, 1fr)
+  ); /* Responsive grid */
+  gap: 0.05rem; /* Spacing between tiles */
+  list-style: none; /* Remove default list bullets */
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.user-prefs-tile {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* Spacing within the tile */
+  background-color: #f9f9f9;
+  position: relative; /* Needed for absolute positioning of search if used inside */
+}
+
+.user-prefs-tile .user-info {
+  display: flex; /* Align avatar and text */
+  align-items: center; /* Vertical alignment */
+  gap: 0.5rem; /* Space between avatar and text */
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+/* Style for the avatar image */
+.user-prefs-tile-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%; /* Make it round */
+  object-fit: cover; /* Scale image nicely */
+  border: 1px solid #ddd; /* Subtle border */
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.user-prefs-tile .user-prefs-controls label {
+  display: block; /* Stack labels vertically */
+  margin-bottom: 0.5rem;
+  font-size: 0.9em;
+}
+
+.user-prefs-tile .user-prefs-controls input[type="text"],
+.user-prefs-tile .user-prefs-controls input[type="color"] {
+  width: calc(100% - 10px); /* Adjust width slightly */
+  margin-left: 5px;
+  box-sizing: border-box;
+}
+
+.user-prefs-tile .user-prefs-controls input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+.user-prefs-tile .remove-user-button {
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  background-color: #f44336; /* Red */
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.8em;
+  align-self: flex-end; /* Position button to the right */
+}
+
+.user-prefs-tile .remove-user-button:hover {
+  background-color: #d32f2f;
+}
+
+/* Style the search results dropdown */
+.search-results-dropdown {
+  /* Removed #user-prefs-search-results ID selector for dynamic use */
+  position: absolute; /* Position relative to the tile or search container */
+  background-color: white;
+  border: 1px solid #ccc;
+  border-top: none;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000; /* Ensure it's above other elements */
+  width: 100%; /* Make it full width of its container */
+  left: 0;
+  top: 100%; /* Position below the input */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  margin-top: -1px; /* Align with bottom border of input */
+  box-sizing: border-box;
+}
+
+.search-results-dropdown ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.search-results-dropdown li {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.search-results-dropdown li:hover {
+  background-color: #f0f0f0;
+}
+
+.search-results-dropdown li:last-child {
+  border-bottom: none;
+}
+
+.search-results-dropdown li i {
+  /* Style loading/empty messages */
+  color: #888;
+}
+
+/* "Add User" Tile Specific Styles */
+.add-user-tile {
+  border-style: dashed; /* Make it look different */
+  border-color: #aaa;
+  background-color: #f0f0f0;
+  cursor: pointer;
+  min-height: 100px; /* Give it some minimum height */
+  align-items: center; /* Center content vertically */
+  justify-content: center; /* Center content horizontally */
+  transition: background-color 0.2s ease;
+}
+
+.add-user-tile:hover {
+  background-color: #e0e0e0;
+}
+
+.add-user-content {
+  text-align: center;
+  color: #666;
+}
+
+.add-user-plus {
+  display: block;
+  font-size: 2.5em; /* Large plus sign */
+  font-weight: bold;
+  line-height: 1;
+}
+
+.add-user-text {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.9em;
+}
+
+/* Temporary Search Input inside Add Tile */
+.add-user-search-input {
+  width: calc(100% - 1rem); /* Adjust width */
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+/* Reposition search dropdown when used in add-user-tile */
+.add-user-tile .search-results-dropdown {
+  /* Position below the tile itself */
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  width: auto;
+  max-width: 90%; /* Limit width */
+  margin: 0 auto; /* Center */
+}

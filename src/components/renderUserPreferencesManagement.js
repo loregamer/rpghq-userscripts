@@ -1,5 +1,10 @@
 // import { GM_setValue, GM_getValue } from "$common"; // Use global GM_ functions instead
 import { log, error } from "../utils/logger.js";
+// @ts-ignore
+// eslint-disable-next-line no-unused-vars
+import { GM_xmlhttpRequest } from "$common";
+
+const DEFAULT_AVATAR_PLACEHOLDER = "https://via.placeholder.com/40";
 
 // Storage key for user preferences
 const STORAGE_KEY = "RPGHQ_Manager_user_preferences";
@@ -88,6 +93,76 @@ function displaySearchResults(data, resultsContainer, listContainer) {
  *
  * @param {HTMLElement} container - The container element to render the UI into.
  */
+
+/**
+ * Fetches the user's current avatar URL from their profile page using GM_xmlhttpRequest.
+ * @param {string} userId - The user ID.
+ * @returns {Promise<string>} - Resolves with the avatar URL or rejects if not found/error occurs.
+ */
+function fetchUserAvatarUrl(userId) {
+  return new Promise((resolve, reject) => {
+    const profileUrl = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
+    log(`Fetching avatar via GM_xmlhttpRequest from: ${profileUrl}`);
+
+    GM_xmlhttpRequest({
+      method: "GET",
+      url: profileUrl,
+      onload: function (response) {
+        if (response.status >= 200 && response.status < 300) {
+          try {
+            const html = response.responseText;
+            // Simple parsing using regex (could be fragile)
+            const match = html.match(
+              /<dt class="profile-avatar">.*?<img class="avatar" src="([^"]+)"/s,
+            );
+            if (match && match[1]) {
+              // The src might be relative (e.g., './download/file.php?avatar=...'), resolve it
+              const rawSrc = match[1];
+              // Ensure the URL is absolute
+              const absoluteSrc = new URL(
+                rawSrc.startsWith("//") ? `https:${rawSrc}` : rawSrc,
+                profileUrl,
+              ).href;
+              log(`Found avatar src for ${userId}: ${absoluteSrc}`);
+              resolve(absoluteSrc);
+            } else {
+              log(
+                `Could not find avatar img tag for ${userId} in profile HTML.`,
+              );
+              reject(new Error("Avatar image tag not found in profile HTML."));
+            }
+          } catch (parseError) {
+            error(
+              `Error parsing profile HTML for avatar (${userId}):`,
+              parseError,
+            );
+            reject(parseError); // Reject promise on parsing error
+          }
+        } else {
+          error(
+            `HTTP error fetching profile for avatar (${userId}): ${response.status} ${response.statusText}`,
+          );
+          reject(
+            new Error(`HTTP error: ${response.status} ${response.statusText}`),
+          );
+        }
+      },
+      onerror: function (errorResponse) {
+        error(
+          `Network error fetching profile for avatar (${userId}):`,
+          errorResponse,
+        );
+        reject(new Error("Network error during fetch.")); // Reject promise on network error
+      },
+    });
+  });
+}
+
+/**
+ * Renders the UI for managing user-specific preferences.
+ *
+ * @param {HTMLElement} container - The container element to render the UI into.
+ */
 export function renderUserPreferencesManagement(container) {
   log("Rendering User Preferences Management UI");
   container.innerHTML = ""; // Clear previous content
@@ -97,17 +172,7 @@ export function renderUserPreferencesManagement(container) {
   wrapper.className = "user-prefs-management";
   wrapper.innerHTML = "<h3>User Preferences Management</h3>"; // Temporary title
 
-  // --- 1. Member Search Section ---
-  const searchSection = document.createElement("div");
-  searchSection.className = "user-prefs-search-section";
-  searchSection.innerHTML = `
-    <label for="user-prefs-member-search">Add/Find User:</label>
-    <input type="text" id="user-prefs-member-search" placeholder="Search username...">
-    <div id="user-prefs-search-results" class="search-results-dropdown"></div>
-  `;
-  wrapper.appendChild(searchSection);
-
-  // --- 2. Managed Users List Section ---
+  // --- Managed Users List Section ---
   const listSection = document.createElement("div");
   listSection.className = "user-prefs-list-section";
   listSection.innerHTML = "<h4>Managed Users</h4>";
@@ -121,8 +186,8 @@ export function renderUserPreferencesManagement(container) {
   // Initial rendering of the list
   renderManagedUsersList(userListContainer);
 
-  // Add event listeners (e.g., for search input)
-  setupEventListeners(searchSection, userListContainer);
+  // Add event listeners
+  setupEventListeners(null, userListContainer); // Pass null for searchContainer
 }
 
 /**
@@ -142,20 +207,74 @@ async function renderManagedUsersList(listContainer) {
   }
 
   const ul = document.createElement("ul");
-  ul.className = "managed-users-list";
+  ul.className = "managed-users-list user-prefs-grid"; // Add grid class
 
   for (const username in userPrefs) {
     if (Object.hasOwnProperty.call(userPrefs, username)) {
       const userData = userPrefs[username];
       const li = document.createElement("li");
+      li.className = "user-prefs-tile"; // Add tile class
       li.dataset.username = username; // Store username for easy access
 
       // User Info
       const userInfo = document.createElement("div");
       userInfo.className = "user-info";
-      userInfo.innerHTML = `<strong>${username}</strong> (ID: ${userData.user_id})`; // Display username and ID
 
-      // Preference Controls (Placeholders for now)
+      // Avatar Image
+      const avatarImg = document.createElement("img");
+      avatarImg.className = "user-prefs-tile-avatar"; // Class for styling
+      avatarImg.alt = `${username}'s avatar`;
+
+      // Set initial state
+      avatarImg.src = DEFAULT_AVATAR_PLACEHOLDER;
+      avatarImg.classList.add("loading"); // Add loading class
+
+      const setAvatarSrc = (url) => {
+        avatarImg.src = url;
+        avatarImg.onerror = () => {
+          log(
+            `Error loading avatar for ${username} from URL: ${url}. Falling back to placeholder.`,
+          );
+          avatarImg.src = DEFAULT_AVATAR_PLACEHOLDER;
+          avatarImg.classList.remove("loading");
+          avatarImg.onerror = null; // Prevent infinite error loops
+        };
+        avatarImg.onload = () => {
+          avatarImg.classList.remove("loading");
+          avatarImg.onerror = null; // Clear error handler on successful load
+          avatarImg.onload = null; // Clear onload handler
+        };
+      };
+
+      // Prioritize custom URL if available
+      if (userData.avatarUrl) {
+        log(`Using custom avatar URL for ${username}: ${userData.avatarUrl}`);
+        setAvatarSrc(userData.avatarUrl);
+      } else {
+        // Otherwise, try fetching from profile
+        fetchUserAvatarUrl(userData.user_id)
+          .then((fetchedUrl) => {
+            log(`Successfully fetched avatar for ${username}: ${fetchedUrl}`);
+            setAvatarSrc(fetchedUrl);
+          })
+          .catch((fetchError) => {
+            error(
+              `Failed to fetch avatar for ${username} (ID: ${userData.user_id}):`,
+              fetchError,
+            );
+            // Already showing placeholder, just remove loading state
+            avatarImg.classList.remove("loading");
+          });
+      }
+
+      userInfo.appendChild(avatarImg); // Add avatar first
+
+      // Username and ID
+      const userNameSpan = document.createElement("span");
+      userNameSpan.innerHTML = `<strong>${username}</strong> (ID: ${userData.user_id})`;
+      userInfo.appendChild(userNameSpan);
+
+      // Preference Controls
       const controls = document.createElement("div");
       controls.className = "user-prefs-controls";
       controls.innerHTML = `
@@ -179,6 +298,19 @@ async function renderManagedUsersList(listContainer) {
       ul.appendChild(li);
     }
   }
+
+  // --- Add "Add User" Tile ---
+  const addTile = document.createElement("li");
+  addTile.className = "user-prefs-tile add-user-tile"; // Add specific class
+  addTile.innerHTML = `
+    <div class="add-user-content">
+      <span class="add-user-plus">+</span>
+      <span class="add-user-text">Add User</span>
+    </div>
+  `;
+  ul.appendChild(addTile);
+  // --------------------------
+
   listContainer.appendChild(ul);
 }
 
@@ -188,72 +320,127 @@ async function renderManagedUsersList(listContainer) {
  * @param {HTMLElement} listContainer - The container for the managed users list.
  */
 function setupEventListeners(searchContainer, listContainer) {
-  const searchInput = searchContainer.querySelector(
-    "#user-prefs-member-search",
-  );
-  const searchResultsContainer = searchContainer.querySelector(
-    "#user-prefs-search-results",
-  );
-  const managedList = listContainer.querySelector("#user-prefs-managed-list");
+  // REMOVED: Old search input/results logic
+  // const searchInput = searchContainer?.querySelector(...)
+  // const searchResultsContainer = searchContainer?.querySelector(...)
 
-  // Debounce timer for search input
-  let searchDebounceTimer;
+  const managedList = listContainer.querySelector(".managed-users-list"); // Target the UL
 
-  // --- Search Input Listener ---
-  searchInput.addEventListener("input", (event) => {
-    clearTimeout(searchDebounceTimer);
-    const query = event.target.value.trim();
-    searchResultsContainer.innerHTML = ""; // Clear previous results
-    searchResultsContainer.style.display = "none";
+  // REMOVED: Old search input listener
+  // searchInput?.addEventListener("input", ...);
 
-    if (query.length < 3) {
-      // Minimum length for search
-      return;
-    }
+  // REMOVED: Old search results click listener
+  // searchResultsContainer?.addEventListener("click", ...);
 
-    searchResultsContainer.innerHTML = "<li><i>Searching...</i></li>"; // Show loading indicator
-    searchResultsContainer.style.display = "block";
+  // REMOVED: Old click-outside-to-hide listener
+  // document.addEventListener("click", ...);
 
-    log(`Debouncing member search for query: ${query}`);
-    searchDebounceTimer = setTimeout(() => {
-      // Use the new helper function
-      searchMembersAndDisplay(query, searchResultsContainer, listContainer);
-    }, 300); // 300ms debounce
-  });
-
-  // Add click listener to results container (event delegation)
-  searchResultsContainer.addEventListener("click", (event) => {
-    const target = event.target;
-    // Ensure the clicked element is one of our results
-    const resultItem = target.closest("li[data-user-id][data-username]");
-    if (resultItem) {
-      const userId = resultItem.dataset.userId;
-      const username = resultItem.dataset.username;
-      log(`Search result clicked: ${username} (ID: ${userId})`);
-      // Call the function to add/update the preference
-      addUserPreference(username, userId, listContainer);
-      // Clear search input and results after selection
-      searchInput.value = "";
-      searchResultsContainer.innerHTML = "";
-      searchResultsContainer.style.display = "none";
-    }
-  });
-
-  // Hide results when clicking outside the search input/results area
-  document.addEventListener("click", (event) => {
-    if (!searchContainer.contains(event.target)) {
-      searchResultsContainer.style.display = "none";
-    }
-  });
+  // Keep a reference to the dynamically created search elements
+  let dynamicSearchInput = null;
+  let dynamicResultsContainer = null;
+  let searchDebounceTimer = null; // Debounce for dynamic search
 
   // --- Managed List Event Listener (Delegation) ---
   if (managedList) {
     managedList.addEventListener("click", async (event) => {
       const target = event.target;
-      const li = target.closest("li[data-username]");
-      if (!li) return;
+      const tile = target.closest(".user-prefs-tile"); // Find the closest tile (user or add)
+      if (!tile) return;
 
-      const username = li.dataset.username;
+      // --- Handle "Add User" Tile Click ---
+      if (tile.classList.contains("add-user-tile")) {
+        log("Add User tile clicked");
+
+        // Prevent creating multiple search inputs if already clicked
+        if (tile.querySelector(".add-user-search-input")) {
+          tile.querySelector(".add-user-search-input").focus();
+          return;
+        }
+
+        // Clear previous results if any exist elsewhere
+        if (dynamicResultsContainer) {
+          dynamicResultsContainer.remove();
+          dynamicResultsContainer = null;
+        }
+        // Remove previous input if exists in another tile (unlikely but safe)
+        if (dynamicSearchInput && dynamicSearchInput.parentElement !== tile) {
+          dynamicSearchInput.remove();
+          dynamicSearchInput = null;
+        }
+
+        // Create search input dynamically inside the tile
+        tile.innerHTML = ""; // Clear the '+' content
+        dynamicSearchInput = document.createElement("input");
+        dynamicSearchInput.type = "text";
+        dynamicSearchInput.placeholder = "Search username...";
+        dynamicSearchInput.className = "add-user-search-input";
+        tile.appendChild(dynamicSearchInput);
+
+        // Create results container dynamically (positioned absolutely via CSS)
+        dynamicResultsContainer = document.createElement("div");
+        dynamicResultsContainer.className = "search-results-dropdown"; // Reuse styling
+        // Style needs to position it relative to the tile
+        dynamicResultsContainer.style.display = "none";
+        tile.appendChild(dynamicResultsContainer); // Append to tile for relative positioning
+
+        dynamicSearchInput.focus();
+
+        // Add input listener to the dynamic input
+        dynamicSearchInput.addEventListener("input", (e) => {
+          clearTimeout(searchDebounceTimer);
+          const query = e.target.value.trim();
+          dynamicResultsContainer.innerHTML = "";
+          dynamicResultsContainer.style.display = "none";
+
+          if (query.length < 3) return;
+
+          dynamicResultsContainer.innerHTML = "<li><i>Searching...</i></li>";
+          dynamicResultsContainer.style.display = "block";
+
+          searchDebounceTimer = setTimeout(() => {
+            searchMembersAndDisplay(
+              query,
+              dynamicResultsContainer,
+              listContainer,
+            );
+          }, 300);
+        });
+
+        // Add results click listener to the dynamic container
+        dynamicResultsContainer.addEventListener("click", (e) => {
+          const resultItem = e.target.closest(
+            "li[data-user-id][data-username]",
+          );
+          if (resultItem) {
+            const userId = resultItem.dataset.userId;
+            const username = resultItem.dataset.username;
+            addUserPreference(username, userId, listContainer); // Adds user and re-renders list
+            // The re-render will remove the dynamic input/results
+          }
+        });
+
+        // Add listener to hide results/remove input when clicking outside
+        // Use a temporary listener that removes itself
+        const clickOutsideHandler = (clickEvent) => {
+          if (
+            !tile.contains(clickEvent.target) &&
+            dynamicSearchInput // Check if the input still exists
+          ) {
+            log("Clicked outside add user search, reverting tile.");
+            // Re-render the list to reset the add tile cleanly
+            renderManagedUsersList(listContainer);
+            document.removeEventListener("click", clickOutsideHandler, true); // Clean up listener
+          }
+        };
+        // Use capture phase to catch clicks before they might be stopped
+        document.addEventListener("click", clickOutsideHandler, true);
+
+        return; // Stop further processing for this click
+      }
+
+      // --- Handle Regular User Tile Clicks (e.g., Remove Button) ---
+      const username = tile.dataset.username;
+      if (!username) return; // Should not happen on regular tiles, but safety check
 
       // Handle Remove Button
       if (target.classList.contains("remove-user-button")) {
@@ -270,25 +457,21 @@ function setupEventListeners(searchContainer, listContainer) {
       }
     });
 
+    // --- Managed List CHANGE Event Listener (for inputs/checkboxes/color) ---
     managedList.addEventListener("change", async (event) => {
       const target = event.target;
-      const li = target.closest("li[data-username]");
-      if (!li) return;
+      const tile = target.closest("li.user-prefs-tile[data-username]"); // Ensure it's a user tile
+      if (!tile) return;
 
-      const username = li.dataset.username;
+      const username = tile.dataset.username;
       const prefKey = target.dataset.pref;
 
       if (target.classList.contains("pref-toggle") && prefKey) {
-        updatePreference(username, prefKey, target.checked, listContainer);
+        updatePreference(username, prefKey, target.checked);
       } else if (target.classList.contains("pref-input") && prefKey) {
-        updatePreference(
-          username,
-          prefKey,
-          target.value || null,
-          listContainer,
-        ); // Store null if empty
+        updatePreference(username, prefKey, target.value || null); // Store null if empty
       } else if (target.classList.contains("pref-color") && prefKey) {
-        updatePreference(username, prefKey, target.value, listContainer);
+        updatePreference(username, prefKey, target.value);
       }
     });
   }
