@@ -4,7 +4,8 @@
  * @param {HTMLElement} container - The container element to render into
  */
 import { renderThreadsSubtab } from "./subtabs/renderThreadsSubtab.js";
-import { renderUsersSubtab } from "./subtabs/renderUsersSubtab.js";
+// import { renderUsersSubtab } from "./subtabs/renderUsersSubtab.js"; // Replace with the new management UI
+import { renderUserPreferencesManagement } from "../renderUserPreferencesManagement.js"; // Import the new component
 import { log } from "../../utils/logger.js";
 
 export function renderForumPreferencesTab(container) {
@@ -46,7 +47,8 @@ export function renderForumPreferencesTab(container) {
       if (tab.dataset.subtab === "threads") {
         renderThreadsSubtab(subTabContent);
       } else if (tab.dataset.subtab === "users") {
-        renderUsersSubtab(subTabContent);
+        // renderUsersSubtab(subTabContent); // Call the new function instead
+        renderUserPreferencesManagement(subTabContent);
       }
     });
   });
