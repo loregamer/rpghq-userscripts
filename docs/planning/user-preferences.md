@@ -31,24 +31,31 @@
       ```
     - Using `null` for a setting indicates that no specific preference is set for that user for that option. We store both `username` (as the key) and `user_id`.
 
-**Phase 2: User Interface (Management)**
+**Phase 2: User Interface (Management - Tile View)**
 
 2.  **Integrate into Forum Preferences Tab:** (No change)
-    - Leverage the existing, currently non-functional "Forum Preferences" tab in the manager modal.
-    - Modify `src/components/loadTabContent.js` to render a new UI section dedicated to user preference management within this tab.
-3.  **User Management UI Component:** (Minor change in data handling)
+    - Leverage the existing "Forum Preferences" tab in the manager modal.
+    - Modify `src/components/loadTabContent.js` to render the new tile-based UI within this tab.
+3.  **User Preference Tile Management UI:**
     - Create a new UI component (e.g., `renderUserPreferencesManagement.js`).
-    - **Member Search Integration:**
-      - Include an input field to search for members.
-      - Adapt the functionality from `src/scripts/memberSearch.js`.
-      - Modify the result click action: Clicking a user will add an entry to the `userPrefs` object using the fetched **`username` as the key**, storing the fetched **`user_id`** and default preference values (e.g., all `null`) within the nested object. Update the displayed list. Prevent adding duplicate usernames.
-    - **Managed Users List:**
-      - Display a list of all users currently present as keys in the `userPrefs` object (i.e., list by username).
-      - For each user listed:
-        - Show their `username`.
-        - Display controls (toggle, URL input, color picker) for their preferences (`hidePosts`, `avatarUrl`, `usernameColor`).
-        - Include a "Remove" button to delete the user's entry (keyed by their username) from the `userPrefs` object.
-    - **Saving:** All changes will immediately update the `userPrefs` object and save it using `gmSetValue`.
+    - **Top Controls:**
+      - Include an "Add User" button.
+        - Clicking this triggers a member search interface (adapt `src/scripts/memberSearch.js`).
+        - Selecting a user adds an entry to the `userPrefs` object (key: `username`, value: `{ user_id: '...', hidePosts: null, avatarUrl: null, usernameColor: null }`). Refresh the tile view. Prevent duplicate usernames.
+      - Include a "Filter users..." input field for filtering displayed tiles by `username`.
+    - **User Tile Grid:**
+      - Display users from the `userPrefs` object in a responsive grid layout.
+      - **Each Tile:**
+        - Shows the user's avatar. Prioritize `avatarUrl` from prefs if set, otherwise fetch/use their current forum avatar.
+        - Shows the user's `username`.
+        - Includes a "Settings" button.
+          - Clicking "Settings" opens a modal/popup specific to that user (similar UI style to userscript settings).
+          - **Settings Popup Controls:**
+            - Toggle/Checkbox for `hidePosts`.
+            - Input field for `avatarUrl` (string, URL).
+            - Color picker for `usernameColor`.
+            - A "Remove User" button. Clicking this deletes the user's entry (by `username`) from the `userPrefs` object and closes the popup, refreshing the tile grid.
+    - **Saving:** Changes made within the settings popup (except removal) immediately update the corresponding user's data within the `userPrefs` object and save the entire `userPrefs` object using `gmSetValue`.
 
 **Phase 3: Applying Preferences on Forum Pages**
 
