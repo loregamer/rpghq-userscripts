@@ -6,20 +6,8 @@
  * @param {Function} options.hideModal - Function to hide the modal
  */
 import { log } from "../utils/logger.js";
-import managerStyles from "../styles/manager-styles.css"; // Import the CSS as a string
-
 export function showModal({ loadTabContent, hideModal }) {
   log("Showing userscript manager modal...");
-
-  // Inject CSS if not already present
-  const styleId = "rpghq-manager-styles"; // Use a unique ID for the style tag
-  if (!document.getElementById(styleId)) {
-    const style = document.createElement("style");
-    style.id = styleId;
-    style.textContent = managerStyles;
-    document.head.appendChild(style);
-    log("Injected manager styles.");
-  }
 
   let modal = document.getElementById("mod-manager-modal");
   if (!modal) {
