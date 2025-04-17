@@ -19,6 +19,7 @@
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-terser": "^0.4.4",
     "glob": "^11.0.1",
+    "inquirer": "^12.5.2",
     "micromatch": "^4.0.8",
     "prettier": "^3.5.3",
     "rollup": "^4.39.0",

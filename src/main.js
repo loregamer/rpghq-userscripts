@@ -5,6 +5,7 @@ import { FORUM_PREFERENCES } from "./forumPreferences.js";
 import { shouldLoadScript } from "./utils/urlMatcher.js";
 import { log, warn, error, debug } from "./utils/logger.js";
 import { sharedUtils } from "./utils/sharedUtils.js"; // Import shared utilities
+import { checkForUpdates } from "./utils/updateChecker.js"; // Import update checker
 import loadOrder from "../load_order.json"; // Import the execution order
 
 // Import UI components
@@ -414,6 +415,7 @@ function init() {
     // Update current phase and execute load order
     currentExecutionPhase = "after_dom";
     executeLoadOrderForPhase("after_dom");
+    checkForUpdates(); // Check for updates after everything else
   }, 500); // Small delay to ensure everything is loaded
 
   // Add keyboard shortcut listener for Insert key

@@ -9,6 +9,7 @@ import json from "@rollup/plugin-json"; // Import the JSON plugin
 import terser from "@rollup/plugin-terser";
 import userscript from "rollup-plugin-userscript";
 import { string } from "rollup-plugin-string"; // Import the string plugin
+import inquirer from "inquirer"; // <-- Add inquirer import
 import { readFileSync } from "fs";
 import { resolve as pathResolve } from "path";
 
@@ -23,9 +24,11 @@ try {
 
 /**
  * Generates userscript metadata block
+ * @param {string} version - The version string to use
  * @returns {string} Formatted metadata block
  */
-const generateMetadata = () => {
+const generateMetadata = (version) => {
+  // <-- Add version parameter
   const baseUrl = (pkg.homepage || "").replace("#readme", "");
   const distPath = "/raw/main/dist/rpghq-userscript-manager.user.js";
 
@@ -33,7 +36,7 @@ const generateMetadata = () => {
     "// ==UserScript==",
     `// @name         RPGHQ Userscript Manager`,
     "// @namespace    rpghq-userscripts",
-    `// @version      VERSIONHERE`,
+    `// @version      ${version}`, // <-- Use the version parameter
     `// @description  ${pkg.description}`,
     `// @author       ${pkg.author}`,
     "// @match        https://rpghq.org/*",
@@ -54,39 +57,60 @@ const generateMetadata = () => {
   ].join("\n");
 };
 
-export default {
-  input: "src/main.js",
-  output: {
-    file: "dist/rpghq-userscript-manager.user.js",
-    format: "iife",
-  },
-  plugins: [
-    // Import CSS files as strings
-    string({
-      include: "**/*.css",
-    }),
-    // Import JSON files
-    json(),
-    // Resolve node modules
-    nodeResolve({
-      browser: true,
-      preferBuiltins: false,
-    }),
-
-    // Convert CommonJS modules to ES6
-    commonjs(),
-
-    // Minification with preserved userscript header
-    terser({
-      format: {
-        comments: true, // Keep comments in the output
-        beautify: true, // Format the output for better readability
+// Wrap export in an async function to use await for inquirer
+export default async () => {
+  const answers = await inquirer.prompt([
+    {
+      type: "input",
+      name: "version",
+      message: "Enter the userscript version:",
+      default: pkg.version, // Suggest current package.json version
+      validate: (input) => {
+        // Basic semver validation (adjust regex as needed)
+        if (/^\d+\.\d+\.\d+$/.test(input)) {
+          return true;
+        }
+        return "Please enter a valid version number (e.g., 1.2.3)";
       },
-      mangle: false,
-      compress: {}, // Re-enable compression, as CSS is handled separately
-    }),
+    },
+  ]);
 
-    // Generate userscript header
-    userscript(generateMetadata),
-  ],
+  const scriptVersion = answers.version;
+
+  return {
+    input: "src/main.js",
+    output: {
+      file: "dist/rpghq-userscript-manager.user.js",
+      format: "iife",
+    },
+    plugins: [
+      // Import CSS files as strings
+      string({
+        include: "**/*.css",
+      }),
+      // Import JSON files
+      json(),
+      // Resolve node modules
+      nodeResolve({
+        browser: true,
+        preferBuiltins: false,
+      }),
+
+      // Convert CommonJS modules to ES6
+      commonjs(),
+
+      // Minification with preserved userscript header
+      terser({
+        format: {
+          comments: true, // Keep comments in the output
+          beautify: true, // Format the output for better readability
+        },
+        mangle: false,
+        compress: {}, // Re-enable compression, as CSS is handled separately
+      }),
+
+      // Generate userscript header
+      userscript(() => generateMetadata(scriptVersion)), // <-- Pass version here
+    ],
+  };
 };
