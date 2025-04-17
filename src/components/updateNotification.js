@@ -11,7 +11,7 @@ function addNotificationStyles() {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      background-color: #4CAF50; /* Green */
+      background-color: #C62D51; /* Green */
       color: white;
       padding: 10px 15px;
       border-radius: 5px;
@@ -52,7 +52,7 @@ export function showUpdateNotification(newVersion, downloadUrl) {
   notification.id = "update-notification-bubble";
   notification.className = "update-notification";
   notification.innerHTML = `
-    RPGHQ Manager Update Available (v${newVersion})! 
+    Userscript Update (v${newVersion})
     <span class="update-notification-close" title="Dismiss">&times;</span>
   `;
 
