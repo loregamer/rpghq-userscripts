@@ -17,8 +17,7 @@ export function showModal({ loadTabContent, hideModal }) {
     modal.innerHTML = `
       <div class="mod-manager-modal-content">
         <div class="mod-manager-header">
-          <h2 class="mod-manager-title">RPGHQ Userscript Manager</h2>
-          <span class="mod-manager-version">Version: ${GM_info.script.version}</span>
+          <h2 class="mod-manager-title">RPGHQ Userscript Manager <span style="font-size: x-small;">v${GM_info.script.version}</span></h2>
           <span class="mod-manager-close">&times;</span>
         </div>
         <div class="mod-manager-tabs">
