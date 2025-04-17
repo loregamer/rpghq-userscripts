@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
 // @namespace    rpghq-userscripts
-// @version      0.5.1
+// @version      0.6.0
 // @description  RPGHQ Userscript Manager
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -1334,6 +1334,108 @@
     ),
     // Placeholder
   };
+  // G:/Modding/_Github/HQ-Userscripts/src/components/updateNotification.js
+  // Function to inject CSS for the notification
+  function showUpdateNotification(newVersion, downloadUrl) {
+    log(`Showing update notification for version ${newVersion}`),
+      (function () {
+        const styleId = "update-notification-style";
+        if (document.getElementById(styleId)) return;
+        // Style already added
+        const style = document.createElement("style");
+        (style.id = styleId),
+          (style.textContent =
+            "\n    .update-notification {\n      position: fixed;\n      bottom: 20px;\n      right: 20px;\n      background-color: #C62D51; /* Green */\n      color: white;\n      padding: 10px 15px;\n      border-radius: 5px;\n      cursor: pointer;\n      font-size: 14px;\n      z-index: 10001; /* Above modal */\n      box-shadow: 0 2px 5px rgba(0,0,0,0.2);\n      transition: opacity 0.3s ease-in-out;\n    }\n    .update-notification:hover {\n      opacity: 0.9;\n    }\n    .update-notification-close {\n      margin-left: 10px;\n      font-weight: bold;\n      cursor: pointer;\n    }\n  "),
+          document.head.appendChild(style);
+      })();
+    // Ensure styles are present
+    // Remove existing notification if any
+    const existingNotification = document.getElementById(
+      "update-notification-bubble"
+    );
+    existingNotification && existingNotification.remove();
+    const notification = document.createElement("div");
+    (notification.id = "update-notification-bubble"),
+      (notification.className = "update-notification"),
+      (notification.innerHTML = `\n    Userscript Update (v${newVersion})\n    <span class="update-notification-close" title="Dismiss">&times;</span>\n  `),
+      // Click on main body opens download link
+      notification.addEventListener("click", (event) => {
+        event.target !==
+          notification.querySelector(".update-notification-close") &&
+          (log(`Opening download URL: ${downloadUrl}`),
+          window.open(downloadUrl, "_blank"));
+      }),
+      // Click on close button dismisses
+      notification
+        .querySelector(".update-notification-close")
+        .addEventListener("click", (event) => {
+          event.stopPropagation(), // Prevent triggering the main click
+            log("Dismissing update notification."),
+            notification.remove();
+        }),
+      document.body.appendChild(notification);
+  }
+  // G:/Modding/_Github/HQ-Userscripts/src/utils/updateChecker.js
+  // Simple version comparison (e.g., "1.10.1" > "1.2.3")
+  async function checkForUpdates() {
+    log("Checking for userscript updates...");
+    const currentVersion = GM_info.script.version,
+      metaUrl = GM_info.script.updateURL || GM_info.script.downloadURL,
+      downloadUrl = GM_info.script.downloadURL || GM_info.script.updateURL;
+    // Prefer updateURL, fallback to downloadURL for fetching metadata
+    // URL to open on click
+    if (metaUrl)
+      try {
+        // eslint-disable-next-line no-undef
+        GM_xmlhttpRequest({
+          method: "GET",
+          url: metaUrl,
+          onload: function (response) {
+            if (response.status >= 200 && response.status < 300) {
+              const versionMatch =
+                response.responseText.match(/@version\s+([\d.]+)/);
+              // Extract version using regex
+              if (versionMatch && versionMatch[1]) {
+                const latestVersion = versionMatch[1];
+                log(
+                  `Current version: ${currentVersion}, Latest version: ${latestVersion}`
+                ),
+                  (function (v1, v2) {
+                    const parts1 = v1.split(".").map(Number),
+                      parts2 = v2.split(".").map(Number),
+                      len = Math.max(parts1.length, parts2.length);
+                    for (let i = 0; i < len; i++) {
+                      const n1 = parts1[i] || 0,
+                        n2 = parts2[i] || 0;
+                      if (n1 > n2) return 1;
+                      if (n1 < n2) return -1;
+                    }
+                    return 0;
+                  })(latestVersion, currentVersion) > 0
+                    ? (log(`Update available: ${latestVersion}`),
+                      // Call the notification function (currently commented out)
+                      showUpdateNotification(latestVersion, downloadUrl))
+                    : log("Script is up to date.");
+              } else
+                warn("Could not find @version tag in metadata file:", metaUrl);
+            } else
+              warn(
+                `Failed to fetch metadata. Status: ${response.status}`,
+                metaUrl
+              );
+          },
+          onerror: function (response) {
+            error("Error fetching metadata:", response);
+          },
+        });
+      } catch (err) {
+        error("Error during GM_xmlhttpRequest setup:", err);
+      }
+    else
+      warn(
+        "No updateURL or downloadURL found in script metadata. Cannot check for updates."
+      );
+  }
   var loadOrder = {
     "document-start": [
       "_applyThreadPreferences",
@@ -6663,8 +6765,7 @@
               ((modal = document.createElement("div")),
               (modal.id = "mod-manager-modal"),
               (modal.className = "mod-manager-modal"),
-              (modal.innerHTML =
-                '\n      <div class="mod-manager-modal-content">\n        <div class="mod-manager-header">\n          <h2 class="mod-manager-title">RPGHQ Userscript Manager</h2>\n          <span class="mod-manager-close">&times;</span>\n        </div>\n        <div class="mod-manager-tabs">\n          <div class="mod-manager-tab active" data-tab="installed">\n            <i class="fa fa-puzzle-piece"></i> Installed Scripts\n          </div>\n          <div class="mod-manager-tab" data-tab="forum">\n            <i class="fa fa-sliders"></i> Forum Preferences\n          </div>\n          \x3c!-- Settings tab completely hidden --\x3e\n        </div>\n        <div class="mod-manager-content" id="mod-manager-content">\n          \x3c!-- Content loaded dynamically --\x3e\n        </div>\n      </div>\n    '),
+              (modal.innerHTML = `\n      <div class="mod-manager-modal-content">\n        <div class="mod-manager-header">\n          <h2 class="mod-manager-title">RPGHQ Userscript Manager <span style="font-size: x-small;">v${GM_info.script.version}</span></h2>\n          <span class="mod-manager-close">&times;</span>\n        </div>\n        <div class="mod-manager-tabs">\n          <div class="mod-manager-tab active" data-tab="installed">\n            <i class="fa fa-puzzle-piece"></i> Installed Scripts\n          </div>\n          <div class="mod-manager-tab" data-tab="forum">\n            <i class="fa fa-sliders"></i> Forum Preferences\n          </div>\n          \x3c!-- Settings tab completely hidden --\x3e\n        </div>\n        <div class="mod-manager-content" id="mod-manager-content">\n          \x3c!-- Content loaded dynamically --\x3e\n        </div>\n      </div>\n    `),
               document.body.appendChild(modal),
               // Add event listeners
               modal
@@ -6742,7 +6843,7 @@
     // Create the new button
     const userscriptsButton = document.createElement("li");
     (userscriptsButton.innerHTML =
-      '\n    <a href="#" title="RPGHQ Userscript Manager">\n      <i class="fa fa-puzzle-piece"></i> View Userscripts\n    </a>\n  '),
+      '\n    <a href="#" title="RPGHQ Userscript Manager" role="menuitem">\n      <i class="icon fa-puzzle-piece fa-fw" aria-hidden="true"></i><span>Userscripts</span>\n    </a>\n  '),
       // Add click handler
       (userscriptsButton.querySelector("a").onclick = function (e) {
         e.preventDefault(), toggleVisibilityCallback();
@@ -6819,9 +6920,12 @@
       executeLoadOrderForPhase("document-idle");
     }),
     // Set up a phase for after DOM is fully ready and rendered
-    setTimeout(() => {
-      executeLoadOrderForPhase("after_dom");
-    }, 500), // Small delay to ensure everything is loaded
+    setTimeout(
+      () => {
+        executeLoadOrderForPhase("after_dom"), checkForUpdates();
+      }, // Check for updates after everything else
+      500
+    ), // Small delay to ensure everything is loaded
     // Add keyboard shortcut listener for Insert key
     document.addEventListener("keydown", (event) => {
       // Insert key = keyCode 45
