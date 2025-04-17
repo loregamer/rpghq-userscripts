@@ -367,8 +367,8 @@ function addMenuButton(toggleVisibilityCallback) {
   // Create the new button
   const userscriptsButton = document.createElement("li");
   userscriptsButton.innerHTML = `
-    <a href="#" title="RPGHQ Userscript Manager">
-      <i class="fa fa-puzzle-piece"></i> View Userscripts
+    <a href="#" title="RPGHQ Userscript Manager" role="menuitem">
+      <i class="icon fa-puzzle-piece fa-fw" aria-hidden="true"></i><span>Userscripts</span>
     </a>
   `;
 
