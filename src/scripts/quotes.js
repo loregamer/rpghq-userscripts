@@ -453,7 +453,17 @@ export function init() {
     },
 
     processNestedQuote(quoteBox) {
-      const citation = quoteBox.querySelector(":scope > cite");
+      // Find cite potentially deeper than direct child first
+      let citation = quoteBox.querySelector("cite");
+
+      // Ensure citation is a direct child if found
+      if (citation && citation.parentElement !== quoteBox) {
+        quoteBox.prepend(citation); // Move it to be a direct child, prepending is safe
+      } else if (!citation) {
+        // Fallback: Check for direct child cite if not found deeper (common case)
+        citation = quoteBox.querySelector(":scope > cite");
+      }
+
       let nestedContent = quoteBox.querySelector(
         ":scope > .nested-quote-content",
       );
@@ -461,16 +471,20 @@ export function init() {
       if (!nestedContent) {
         nestedContent = document.createElement("div");
         nestedContent.className = "nested-quote-content";
-        // Move nodes into the container
-        Array.from(quoteBox.childNodes).forEach((node) => {
-          // Keep citation as direct child of blockquote
-          if (node !== citation) {
+
+        // Move nodes into the container, carefully skipping the ensured citation
+        // Create a static copy for iteration as appending nodes modifies the live collection
+        const nodesToMove = [...quoteBox.childNodes];
+        nodesToMove.forEach((node) => {
+          // Keep the identified citation and the new container itself out
+          if (node !== citation && node !== nestedContent) {
             nestedContent.appendChild(node);
           }
         });
         quoteBox.appendChild(nestedContent);
       }
 
+      // Add toggle, passing the potentially found/moved citation
       this.addQuoteToggle(quoteBox, nestedContent, citation);
     },
 
@@ -658,12 +672,8 @@ export function init() {
         }, 50);
       };
 
-      // Insert toggle after citation or at the start if no citation
-      if (citation && citation.parentNode === quoteBox) {
-        citation.after(toggle);
-      } else {
-        quoteBox.prepend(toggle); // Prepend if no citation found within scope
-      }
+      // Insert toggle after the nested content div
+      nestedContent.after(toggle);
     },
 
     removeReadMoreButtons() {
