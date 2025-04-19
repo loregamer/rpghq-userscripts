@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
 // @namespace    rpghq-userscripts
-// @version      0.6.0
+// @version      0.6.1
 // @description  RPGHQ Userscript Manager
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -883,7 +883,7 @@
   const SCRIPT_MANIFEST = [
     {
       id: "bbcode",
-      name: "BBCode Highlighting",
+      name: "[BROKEN] BBCode Highlighting",
       version: "1.0.0",
       description:
         "Adds BBCode highlighting and other QOL improvements to the text editor",
