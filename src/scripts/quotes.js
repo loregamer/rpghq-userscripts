@@ -55,6 +55,18 @@ export function init() {
       max-height: none;
     }
 
+    /* Limit image height in collapsed quotes */
+    .quote-content.collapsed img {
+      max-height: 200px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    /* Allow full image size in expanded quotes */
+    .quote-content.expanded img {
+      max-height: none;
+    }
+
     blockquote cite a {
       display: inline-flex;
       align-items: center;
@@ -334,7 +346,13 @@ export function init() {
   function updateReadMoreToggle(quoteBox, quoteContent) {
     let readMoreToggle = quoteBox.querySelector(".quote-read-more");
 
-    if (quoteContent.scrollHeight > 400) {
+    // Check if there are images in the quote
+    const hasImages = quoteContent.querySelectorAll("img").length > 0;
+
+    // Use a lower threshold if the quote contains images
+    const heightThreshold = hasImages ? 350 : 400;
+
+    if (quoteContent.scrollHeight > heightThreshold) {
       if (!readMoreToggle) {
         readMoreToggle = createReadMoreToggle(quoteContent);
         quoteBox.appendChild(readMoreToggle);
