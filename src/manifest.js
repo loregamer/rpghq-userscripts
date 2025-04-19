@@ -21,6 +21,19 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
   },
   {
+    id: "quotes",
+    name: "Better Quotes",
+    version: "1.0.0",
+    description:
+      "Improves quote functionality with styling, avatars, read more/less, and nested quote toggles.",
+    author: "loregamer",
+    image: "https://f.rpghq.org/mqbRTIvY56fp.png?n=pasted-file.png", // Add an image URL if available
+    path: "./scripts/quotes.js",
+    enabledByDefault: true,
+    settings: [],
+    categories: ["UI"],
+  },
+  {
     id: "kalareact",
     name: "Kalarion Reaction Auto-Marker",
     version: "1.0.0",

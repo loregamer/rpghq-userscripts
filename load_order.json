@@ -13,7 +13,8 @@
     "kalareact",
     "notifications",
     "pinThreads",
-    "separateReactions"
+    "separateReactions",
+    "quotes"
   ],
   "document-idle": [],
   "after_dom": []

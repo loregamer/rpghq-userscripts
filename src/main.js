@@ -123,11 +123,13 @@ import * as notifications from "./scripts/notifications.js";
 import * as kalareact from "./scripts/kalareact.js";
 import * as bbcode from "./scripts/bbcode.js";
 import * as commaFormatter from "./scripts/commaFormatter.js";
-
+import * as quotes from "./scripts/quotes.js";
 // Map of script ids to their modules
 const scriptModules = {
   commaFormatter: commaFormatter,
   bbcode: bbcode,
+
+  quotes: quotes,
 
   kalareact: kalareact,
 
