@@ -394,10 +394,20 @@ SOFTWARE.
     let insideCodeBlock = false;
 
     // Define tags that affect indentation and require line breaks
-    const blockTags = ["list", "spoiler", "quote", "table", "indent", "tab"];
+    // Add tabmenu and tab to the blockTags array
+    const blockTags = [
+      "list",
+      "spoiler",
+      "quote",
+      "table",
+      "indent",
+      "tab",
+      "tabmenu",
+      "tabs",
+    ];
 
-    // Regex to find BBCode tags
-    const tagRegex = /\[(\/)?([a-zA-Z0-9*]+)(=[^]]*)?\]/g;
+    // Regex to find BBCode tags - improved to better handle attributes
+    const tagRegex = /\[(\/)?([a-zA-Z0-9*]+)(?:=([^]]*))?\]/g;
 
     // Process each line
     for (let i = 0; i < lines.length; i++) {
@@ -438,218 +448,90 @@ SOFTWARE.
         continue;
       }
 
-      // Process line into segments that need their own lines
+      // Process each tag found in the line
       let segments = [];
       let currentPosition = 0;
       let currentSegment = "";
-      let segmentIndentChange = 0;
 
-      // Process the segments of the line
-      while (currentPosition < trimmedLine.length) {
-        // Find the next block tag
-        let nextBlockTagMatch = null;
-        let nextBlockTagPos = trimmedLine.length;
-
-        for (const tag of blockTags) {
-          // Look for opening tags
-          const openTagRegex = new RegExp(`\\[${tag}(=[^\\]]*)?(\\s*)]`, "i");
-          const openMatch = openTagRegex.exec(
-            trimmedLine.substring(currentPosition)
-          );
-
-          if (
-            openMatch &&
-            currentPosition + openMatch.index < nextBlockTagPos
-          ) {
-            nextBlockTagMatch = {
-              tag: tag,
-              isClosing: false,
-              position: currentPosition + openMatch.index,
-              length: openMatch[0].length,
-            };
-            nextBlockTagPos = currentPosition + openMatch.index;
-          }
-
-          // Look for closing tags
-          const closeTagRegex = new RegExp(`\\[/${tag}\\]`, "i");
-          const closeMatch = closeTagRegex.exec(
-            trimmedLine.substring(currentPosition)
-          );
-
-          if (
-            closeMatch &&
-            currentPosition + closeMatch.index < nextBlockTagPos
-          ) {
-            nextBlockTagMatch = {
-              tag: tag,
-              isClosing: true,
-              position: currentPosition + closeMatch.index,
-              length: closeMatch[0].length,
-            };
-            nextBlockTagPos = currentPosition + closeMatch.index;
-          }
-        }
-
-        if (nextBlockTagMatch) {
-          // Add text before the tag to current segment
-          if (nextBlockTagMatch.position > currentPosition) {
-            currentSegment += trimmedLine.substring(
-              currentPosition,
-              nextBlockTagMatch.position
-            );
-          }
-
-          // If we have content in the current segment, add it to segments list
-          if (currentSegment.trim()) {
-            segments.push({
-              text: currentSegment.trim(),
-              indentChange: segmentIndentChange,
-            });
-          }
-
-          // Create a new segment for the block tag itself
-          segments.push({
-            text: trimmedLine.substring(
-              nextBlockTagMatch.position,
-              nextBlockTagMatch.position + nextBlockTagMatch.length
-            ),
-            indentChange: nextBlockTagMatch.isClosing ? -1 : 1,
-            isBlockTag: true,
-            isClosing: nextBlockTagMatch.isClosing,
-          });
-
-          // Reset for the next segment
-          currentPosition =
-            nextBlockTagMatch.position + nextBlockTagMatch.length;
-          currentSegment = "";
-          segmentIndentChange = 0;
-        } else {
-          // No more block tags, add the rest of the line
-          currentSegment += trimmedLine.substring(currentPosition);
-          currentPosition = trimmedLine.length;
-        }
-      }
-
-      // Add the final segment if there's anything left
-      if (currentSegment.trim()) {
-        segments.push({
-          text: currentSegment.trim(),
-          indentChange: segmentIndentChange,
-        });
-      }
-
-      // Process nested tags within the same line
-      let processedSegments = [];
-
-      for (let j = 0; j < segments.length; j++) {
-        const segment = segments[j];
-
-        // Handle nested block tags on the same line
-        if (segment.isBlockTag && !segment.isClosing) {
-          // Opening block tag
-          const tagText = segment.text;
-          const nestedTagMatch = tagText.match(/\[([a-zA-Z0-9*]+)(=[^\]]*)?\]/);
-
-          if (nestedTagMatch) {
-            const tagName = nestedTagMatch[1].toLowerCase();
-
-            // Check for inline tags after this block tag
-            if (j + 1 < segments.length && !segments[j + 1].isBlockTag) {
-              // Look for nested block tags in the next segment
-              const nextSegment = segments[j + 1].text;
-              const nestedBlockTagRegex = new RegExp(
-                `\\[(${blockTags.join("|")})(=[^\\]]*)?(\\s*)]`,
-                "i"
-              );
-              const nestedMatch = nestedBlockTagRegex.exec(nextSegment);
-
-              if (nestedMatch && nestedMatch.index === 0) {
-                // Combine this tag with the nested tag
-                segment.text =
-                  tagText + nextSegment.substring(0, nestedMatch[0].length);
-                segments[j + 1].text = nextSegment.substring(
-                  nestedMatch[0].length
-                );
-
-                // If next segment is now empty, remove it
-                if (!segments[j + 1].text.trim()) {
-                  segments.splice(j + 1, 1);
-                }
-              }
-            }
-          }
-        }
-
-        processedSegments.push(segment);
-      }
-
-      // Output the segments with proper indentation
-      let currentIndent = indentLevel;
-
-      for (const segment of processedSegments) {
-        if (segment.isClosing) {
-          // Closing tags get the indent level of their content -1
-          currentIndent = Math.max(0, currentIndent - 1);
-        }
-
-        formattedLines.push("\t".repeat(currentIndent) + segment.text);
-
-        if (!segment.isClosing && segment.indentChange !== 0) {
-          // Adjust indent for the next segment
-          currentIndent += segment.indentChange;
-        }
-      }
-
-      // Update the indent level for the next line
-      indentLevel = currentIndent;
-    }
-
-    // Post-processing: ensure block tags are on their own lines
-    let finalLines = [];
-    for (let i = 0; i < formattedLines.length; i++) {
-      const line = formattedLines[i];
-      let processedThisLine = false;
-
-      // Check for block tags that should be alone
+      // First, identify all block tags in the line
+      let blockTagPositions = [];
       for (const tag of blockTags) {
-        const openingRegex = new RegExp(
-          `^(\\s*)\\[${tag}(=[^\\]]*)?(\\s*)](.+)$`,
-          "i"
-        );
-        const openMatch = line.match(openingRegex);
-
-        if (openMatch) {
-          const indentation = openMatch[1];
-          const tagPart = line.substring(0, line.indexOf("]") + 1);
-          const restPart = line.substring(line.indexOf("]") + 1).trim();
-
-          finalLines.push(indentation + tagPart);
-          finalLines.push(indentation + "\t" + restPart);
-          processedThisLine = true;
-          break;
+        // Look for opening tags with or without attributes
+        const openTagRegex = new RegExp(`\\[${tag}(?:=([^\\]]*))?\\]`, "gi");
+        let openMatch;
+        while ((openMatch = openTagRegex.exec(trimmedLine)) !== null) {
+          blockTagPositions.push({
+            tag: tag,
+            isClosing: false,
+            position: openMatch.index,
+            length: openMatch[0].length,
+            fullTag: openMatch[0],
+          });
         }
 
-        const closingRegex = new RegExp(`^(\\s*)(.+)\\[/${tag}\\]$`, "i");
-        const closeMatch = line.match(closingRegex);
-
-        if (closeMatch) {
-          const indentation = closeMatch[1];
-          const contentPart = closeMatch[2].trim();
-          const tagPart = `[/${tag}]`;
-
-          finalLines.push(indentation + contentPart);
-          finalLines.push(indentation + tagPart);
-          processedThisLine = true;
-          break;
+        // Look for closing tags
+        const closeTagRegex = new RegExp(`\\[/${tag}\\]`, "gi");
+        let closeMatch;
+        while ((closeMatch = closeTagRegex.exec(trimmedLine)) !== null) {
+          blockTagPositions.push({
+            tag: tag,
+            isClosing: true,
+            position: closeMatch.index,
+            length: closeMatch[0].length,
+            fullTag: closeMatch[0],
+          });
         }
       }
 
-      if (!processedThisLine) {
-        finalLines.push(line);
+      // Sort by position
+      blockTagPositions.sort((a, b) => a.position - b.position);
+
+      // No block tags found, just add the line with current indentation
+      if (blockTagPositions.length === 0) {
+        formattedLines.push("\t".repeat(indentLevel) + trimmedLine);
+        continue;
+      }
+
+      // Process the line with block tags
+      let lastPosition = 0;
+      for (let j = 0; j < blockTagPositions.length; j++) {
+        const tagInfo = blockTagPositions[j];
+
+        // Add text before this tag
+        if (tagInfo.position > lastPosition) {
+          const textBefore = trimmedLine
+            .substring(lastPosition, tagInfo.position)
+            .trim();
+          if (textBefore) {
+            formattedLines.push("\t".repeat(indentLevel) + textBefore);
+          }
+        }
+
+        // Add the tag itself
+        if (tagInfo.isClosing) {
+          // Closing tags get the indent level of their content -1
+          indentLevel = Math.max(0, indentLevel - 1);
+          formattedLines.push("\t".repeat(indentLevel) + tagInfo.fullTag);
+        } else {
+          // Add the opening tag at current indent level
+          formattedLines.push("\t".repeat(indentLevel) + tagInfo.fullTag);
+          // Increase indent for the content that follows
+          indentLevel++;
+        }
+
+        lastPosition = tagInfo.position + tagInfo.length;
+      }
+
+      // Add any remaining text after the last tag
+      if (lastPosition < trimmedLine.length) {
+        const textAfter = trimmedLine.substring(lastPosition).trim();
+        if (textAfter) {
+          formattedLines.push("\t".repeat(indentLevel) + textAfter);
+        }
       }
     }
 
-    const formattedText = finalLines.join("\n");
+    const formattedText = formattedLines.join("\n");
 
     // Only update if text changed
     if (textarea.value !== formattedText) {
@@ -659,7 +541,7 @@ SOFTWARE.
 
       textarea.value = formattedText;
 
-      // Restore cursor position (simple approach)
+      // Try to restore cursor position approximately
       textarea.setSelectionRange(start, end);
 
       updateHighlight();
