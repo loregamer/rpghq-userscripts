@@ -389,6 +389,7 @@ SOFTWARE.
     let formattedLines = [];
     let indentLevel = 0;
     let insideCodeBlock = false;
+    let insideList = false;
 
     // Define tags that affect indentation and require line breaks
     const blockTags = [
@@ -471,6 +472,8 @@ SOFTWARE.
           isClosing: !!isClosing,
           tag: tag.toLowerCase(),
           isBlockTag: blockTags.includes(tag.toLowerCase()),
+          isList: tag.toLowerCase() === "list",
+          isListItem: tag === "*",
         });
 
         lastIndex = matchIndex + fullMatch.length;
@@ -506,6 +509,11 @@ SOFTWARE.
             indentLevel = Math.max(0, indentLevel - 1);
             formattedLines.push("\t".repeat(indentLevel) + segment.text);
 
+            // Track if we're leaving a list
+            if (segment.isList) {
+              insideList = false;
+            }
+
             // Track tag closing for potential spacing
             if (openTagStack.length > 0) {
               openTagStack.pop();
@@ -515,19 +523,26 @@ SOFTWARE.
             formattedLines.push("\t".repeat(indentLevel) + segment.text);
             indentLevel++;
 
+            // Track if we're entering a list
+            if (segment.isList) {
+              insideList = true;
+            }
+
             // Track tag opening
             openTagStack.push(segment.tag);
           }
-        } else if (segment.isTag && segment.tag === "*") {
-          // List items should start a new line with proper indentation
+        } else if (segment.isTag && segment.isListItem) {
+          // Handle list items specially for consistent formatting
           if (lineBuffer) {
             formattedLines.push("\t".repeat(indentLevel) + lineBuffer);
             lineBuffer = "";
           }
-          formattedLines.push("\t".repeat(indentLevel) + segment.text);
+
+          // Add list item with a space after it
+          lineBuffer = segment.text + " ";
         } else {
           // Regular tags and text get added to the current line buffer
-          if (lineBuffer) lineBuffer += " ";
+          if (lineBuffer && !segment.isListItem) lineBuffer += " ";
           lineBuffer += segment.text;
         }
       }
