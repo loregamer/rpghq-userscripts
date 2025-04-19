@@ -116,96 +116,8 @@ export function init() {
       citation.appendChild(container);
     },
 
-    getUserColor(username) {
-      const key = `userColor_${username.toLowerCase()}`;
-      try {
-        const storedColor = localStorage.getItem(key);
-        if (storedColor) {
-          const { color, timestamp } = JSON.parse(storedColor);
-          if (Date.now() - timestamp < 7 * 24 * 60 * 60 * 1000) {
-            return color;
-          }
-        }
-      } catch (e) {
-        console.error(
-          `Error reading color for ${username} from localStorage:`,
-          e,
-        );
-        localStorage.removeItem(key);
-      }
-      return null;
-    },
-
-    storeUserColor(username, color) {
-      const key = `userColor_${username.toLowerCase()}`;
-      try {
-        const data = JSON.stringify({ color, timestamp: Date.now() });
-        localStorage.setItem(key, data);
-      } catch (e) {
-        console.error(
-          `Error storing color for ${username} in localStorage:`,
-          e,
-        );
-      }
-    },
-
-    getUserAvatar(username) {
-      const key = `userAvatar_${username.toLowerCase()}`;
-      try {
-        const storedAvatar = localStorage.getItem(key);
-        if (storedAvatar) {
-          const { avatar, timestamp } = JSON.parse(storedAvatar);
-          if (Date.now() - timestamp < 7 * 24 * 60 * 60 * 1000) {
-            return avatar;
-          }
-        }
-      } catch (e) {
-        console.error(
-          `Error reading avatar for ${username} from localStorage:`,
-          e,
-        );
-        localStorage.removeItem(key);
-      }
-      return null;
-    },
-
-    storeUserAvatar(username, avatar) {
-      const key = `userAvatar_${username.toLowerCase()}`;
-      try {
-        const data = JSON.stringify({ avatar, timestamp: Date.now() });
-        localStorage.setItem(key, data);
-      } catch (e) {
-        console.error(
-          `Error storing avatar for ${username} in localStorage:`,
-          e,
-        );
-      }
-    },
-
     processAvatars() {
-      const avatarMap = new Map();
       const citationPromises = [];
-
-      // Collect avatars from post profiles
-      document
-        .querySelectorAll(".postprofile .avatar-container img.avatar")
-        .forEach((img) => {
-          const postprofile = img.closest(".postprofile");
-          if (postprofile) {
-            const usernameElement = postprofile.querySelector(
-              "a.username-coloured, a.username",
-            );
-            if (usernameElement) {
-              const username = usernameElement.textContent.trim();
-              if (username && img.src) {
-                // Use absolute URL
-                const absoluteSrc = new URL(img.src, document.baseURI).href;
-                avatarMap.set(username.toLowerCase(), absoluteSrc);
-                this.storeUserAvatar(username, absoluteSrc);
-              }
-            }
-          }
-        });
 
       // Apply avatars to blockquote citations
       document.querySelectorAll("blockquote cite").forEach((citation) => {
@@ -223,16 +135,11 @@ export function init() {
             !citationContainer.querySelector(".quote-avatar")
           ) {
             const promise = (async () => {
-              let avatar =
-                avatarMap.get(username.toLowerCase()) ||
-                this.getUserAvatar(username);
+              let avatar = null;
 
-              if (!avatar && link.href) {
+              if (link.href) {
                 try {
                   avatar = await this.fetchUserAvatar(link.href);
-                  if (avatar) {
-                    this.storeUserAvatar(username, avatar);
-                  }
                 } catch (fetchError) {
                   console.error(
                     `Failed to fetch avatar for ${username}:`,
@@ -299,20 +206,7 @@ export function init() {
     },
 
     colorizeUsernames() {
-      const colorMap = new Map();
       const colorPromises = [];
-
-      // Collect colors from post profiles
-      document
-        .querySelectorAll(".postprofile a.username-coloured")
-        .forEach((link) => {
-          const username = link.textContent.trim();
-          const color = link.style.color;
-          if (username && color) {
-            colorMap.set(username.toLowerCase(), color);
-            this.storeUserColor(username, color);
-          }
-        });
 
       // Apply colors to blockquote citations
       document.querySelectorAll("blockquote cite a").forEach((link) => {
@@ -324,16 +218,11 @@ export function init() {
           const username = link.textContent.trim();
           if (username) {
             const promise = (async () => {
-              let color =
-                colorMap.get(username.toLowerCase()) ||
-                this.getUserColor(username);
+              let color = null;
 
-              if (!color && link.href) {
+              if (link.href) {
                 try {
                   color = await this.fetchUserColor(link.href);
-                  if (color) {
-                    this.storeUserColor(username, color);
-                  }
                 } catch (fetchError) {
                   console.error(
                     `Failed to fetch color for ${username}:`,
@@ -377,12 +266,31 @@ export function init() {
         const text = await response.text();
         const parser = new DOMParser();
         const doc = parser.parseFromString(text, "text/html");
-        const coloredUsername = doc.querySelector(
-          '.profile-details span[style*="color"], #profile-advanced-right dd span[style*="color"], .username-coloured[style*="color"]',
-        );
-        if (coloredUsername && coloredUsername.style.color) {
-          return coloredUsername.style.color;
+
+        // Find the main page body container first
+        const pageBody = doc.querySelector("#page-body");
+        if (!pageBody) {
+          console.warn(
+            "Could not find #page-body in profile page:",
+            profileUrl,
+          );
+          return null;
         }
+
+        // Search for the colored username *within* the page body
+        const coloredUsername = pageBody.querySelector(
+          'dd span[style*="color"], span[style*="color"], .username-coloured[style*="color"]', // Keep existing selectors but scope to pageBody
+        );
+
+        if (coloredUsername && coloredUsername.style.color) {
+          // Ensure the found element is not within the logged-in user header (still a good check)
+          if (!coloredUsername.closest("#username_logged_in")) {
+            return coloredUsername.style.color;
+          }
+        }
+
+        // If no color found within page-body, return null
+        return null;
       } catch (error) {
         console.error("Error fetching user color from", profileUrl, ":", error);
       }
