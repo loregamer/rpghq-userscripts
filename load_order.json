@@ -3,18 +3,18 @@
     "_applyThreadPreferences",
     "_cachePostsOnPage",
     "_applyUserPreferences",
-    "bbcode",
-    "commaFormatter"
+    "bbcode"
   ],
   "document-end": [
-    "recentTopicsFormat",
     "memberSearch",
     "randomTopic",
     "kalareact",
     "notifications",
     "pinThreads",
     "separateReactions",
-    "quotes"
+    "quotes",
+    "recentTopicsFormat",
+    "commaFormatter"
   ],
   "document-idle": [],
   "after_dom": []
