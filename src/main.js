@@ -97,7 +97,7 @@ function initializeScriptStates() {
     log(
       `Script '${script.name}' (${script.id}): ${
         scriptStates[script.id] ? "Enabled" : "Disabled"
-      } (Default: ${script.enabledByDefault})`
+      } (Default: ${script.enabledByDefault})`,
     );
   });
   log("Script states initialized:", scriptStates);
@@ -135,7 +135,7 @@ function executeLoadOrderForPhase(phase) {
         // Check if script is enabled
         if (scriptStates[script.id]) {
           log(
-            `-> Loading script from load order: ${script.name} (${script.id}) for phase: ${phase}`
+            `-> Loading script from load order: ${script.name} (${script.id}) for phase: ${phase}`,
           );
           loadScript(script); // Use the existing loadScript function
         } else {
@@ -143,7 +143,7 @@ function executeLoadOrderForPhase(phase) {
         }
       } else {
         warn(
-          `-> Item "${item}" in load_order.json is not a known shared function or script ID.`
+          `-> Item "${item}" in load_order.json is not a known shared function or script ID.`,
         );
       }
     }
@@ -270,7 +270,7 @@ document.addEventListener("script-toggle", (event) => {
     gmSetValue,
     SCRIPT_MANIFEST,
     loadScript,
-    unloadScript
+    unloadScript,
   );
 });
 
@@ -289,7 +289,7 @@ function handleShowScriptSettings(script) {
     script,
     renderScriptSettingsContent, // Renders the content area
     getScriptSetting, // Function to get current setting value
-    saveScriptSetting // Function to save setting value
+    saveScriptSetting, // Function to save setting value
   );
 }
 
@@ -338,7 +338,7 @@ function toggleModalVisibility() {
   const isVisible = modal && modal.style.display === "block";
 
   log(
-    `Toggling modal visibility. Currently ${isVisible ? "visible" : "hidden"}.`
+    `Toggling modal visibility. Currently ${isVisible ? "visible" : "hidden"}.`,
   );
 
   if (isVisible) {
@@ -369,7 +369,7 @@ function addMenuButton(toggleVisibilityCallback) {
   ensureFontAwesome();
 
   const profileDropdown = document.querySelector(
-    '.header-profile.dropdown-container .dropdown-contents[role="menu"]'
+    '.header-profile.dropdown-container .dropdown-contents[role="menu"]',
   );
   if (!profileDropdown) {
     warn("RPGHQ Manager: Could not find profile dropdown menu.");
@@ -385,7 +385,7 @@ function addMenuButton(toggleVisibilityCallback) {
         (link.textContent.trim().includes("Logout") ||
           link.getAttribute("title") === "Logout")
       );
-    }
+    },
   );
 
   if (!logoutButton) {
@@ -395,7 +395,7 @@ function addMenuButton(toggleVisibilityCallback) {
 
   // Check if button already exists
   const existingButton = profileDropdown.querySelector(
-    'a[title="RPGHQ Userscript Manager"]'
+    'a[title="RPGHQ Userscript Manager"]',
   );
   if (existingButton) {
     log("RPGHQ Manager: Button already exists, updating listener.");
