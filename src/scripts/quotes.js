@@ -180,6 +180,14 @@ export function init() {
     async fetchUserAvatar(profileUrl) {
       // Avoid fetching if URL is invalid or points to javascript:void(0)
       if (!profileUrl || profileUrl.startsWith("javascript:")) return null;
+
+      const cacheKey = `bq_avatar_${profileUrl}`;
+      const cachedAvatar = await GM_getValue(cacheKey, null);
+      if (cachedAvatar) {
+        // console.log("Using cached avatar for", profileUrl);
+        return cachedAvatar;
+      }
+
       try {
         const response = await fetch(profileUrl);
         if (!response.ok) {
@@ -192,7 +200,10 @@ export function init() {
           "#profile-advanced-right img.avatar, .profile-avatar img.avatar, dt img.avatar",
         );
         if (avatarImg && avatarImg.src) {
-          return new URL(avatarImg.src, profileUrl).href;
+          const avatarUrl = new URL(avatarImg.src, profileUrl).href;
+          // console.log("Fetched avatar for", profileUrl, avatarUrl);
+          await GM_setValue(cacheKey, avatarUrl); // Store in GM
+          return avatarUrl;
         }
       } catch (error) {
         console.error(
@@ -258,6 +269,14 @@ export function init() {
 
     async fetchUserColor(profileUrl) {
       if (!profileUrl || profileUrl.startsWith("javascript:")) return null;
+
+      const cacheKey = `bq_color_${profileUrl}`;
+      const cachedColor = await GM_getValue(cacheKey, null);
+      if (cachedColor) {
+        // console.log("Using cached color for", profileUrl);
+        return cachedColor;
+      }
+
       try {
         const response = await fetch(profileUrl);
         if (!response.ok) {
@@ -285,11 +304,16 @@ export function init() {
         if (coloredUsername && coloredUsername.style.color) {
           // Ensure the found element is not within the logged-in user header (still a good check)
           if (!coloredUsername.closest("#username_logged_in")) {
-            return coloredUsername.style.color;
+            const userColor = coloredUsername.style.color;
+            // console.log("Fetched color for", profileUrl, userColor);
+            await GM_setValue(cacheKey, userColor); // Store in GM
+            return userColor;
           }
         }
 
-        // If no color found within page-body, return null
+        // If no color found within page-body, store null to avoid refetching if truly no color
+        // console.log("No color found for", profileUrl, ", caching null.");
+        await GM_setValue(cacheKey, "none"); // Store 'none' or similar marker for "not found"
         return null;
       } catch (error) {
         console.error("Error fetching user color from", profileUrl, ":", error);
