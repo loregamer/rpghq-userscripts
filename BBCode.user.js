@@ -386,169 +386,165 @@ SOFTWARE.
   const autoFormatBBCode = () => {
     const textarea = document.getElementById("message");
     if (!textarea) return;
-    // console.log("Starting autoFormatBBCode..."); // Uncomment for debugging
 
     const text = textarea.value;
     const lines = text.split("\n");
     const formattedLines = [];
     let indentLevel = 0;
-    // Define tags that typically contain other block content and should affect indentation
-    const blockTags = [
-      "list",
-      "spoiler",
-      "align",
-      "quote",
-      "table",
-      "indent",
-      "tab",
-    ];
-    // Regex to find BBCode tags (opening/closing, with/without attributes)
+    let insideCodeBlock = false;
+
+    // Define tags that affect indentation and require line breaks
+    const blockTags = ["list", "spoiler", "quote", "table", "indent", "tab"];
+
+    // Regex to find BBCode tags
     const tagRegex = /\[(\/)?([a-zA-Z0-9*]+)(=[^]]*)?\]/g;
-    let inCodeBlock = false; // State flag for handling [code] blocks
 
-    // console.log(`Formatting ${lines.length} lines.`); // Uncomment for debugging
+    // Process each line
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i];
 
-    lines.forEach((line) => {
-      if (inCodeBlock) {
-        // Inside a code block, preserve the line exactly as is
+      // Handle code blocks separately to preserve formatting
+      if (insideCodeBlock) {
         formattedLines.push(line);
-        // Check if this line contains the closing code tag (case-insensitive)
-        if (/[\/code]/i.test(line)) {
-          inCodeBlock = false;
-          // Indentation level after the closing code tag will be determined
-          // by the standard logic applied to the [/code] line itself if it were not inside a block.
-          // We need to re-evaluate the indent level based on the content *before* [/code] potentially.
-          // This simplified approach assumes the level resets correctly based on surrounding blocks.
+        if (line.toLowerCase().includes("[/code]")) {
+          insideCodeBlock = false;
         }
-      } else {
-        // Outside a code block, apply formatting logic
-        let trimmedLine = line.trim();
-        let currentLineIndent = indentLevel;
+        continue;
+      }
 
-        // Analyze tags on the current line
-        const tagsOnLine = [...trimmedLine.matchAll(tagRegex)];
-        let firstTagIsClosingBlock = false;
-        let lastTagIsOpeningBlock = false;
-        let lineContainsCodeOpen = false;
-        let lineContainsCodeClose = false;
-        let firstClosingBlockTagName = null;
-        let lastOpeningBlockTagName = null;
+      let trimmedLine = line.trim();
 
-        if (tagsOnLine.length > 0) {
-          const firstTagMatch = tagsOnLine[0];
-          const firstTagName = firstTagMatch[2].toLowerCase();
-          const firstTagIsClosing = firstTagMatch[1] === "/";
+      // Skip empty lines but preserve them
+      if (!trimmedLine) {
+        formattedLines.push("");
+        continue;
+      }
 
-          if (
-            firstTagIsClosing &&
-            blockTags.includes(firstTagName) &&
-            trimmedLine.startsWith(firstTagMatch[0])
-          ) {
-            firstTagIsClosingBlock = true;
-            firstClosingBlockTagName = firstTagName;
-          }
+      // Find all tags in the line
+      const tagsOnLine = [...trimmedLine.matchAll(tagRegex)];
 
-          const lastTagMatch = tagsOnLine[tagsOnLine.length - 1];
-          const lastTagName = lastTagMatch[2].toLowerCase();
-          const lastTagIsClosing = lastTagMatch[1] === "/";
+      // Check for opening/closing code blocks
+      const hasCodeOpen = tagsOnLine.some(
+        (match) => match[2].toLowerCase() === "code" && !match[1]
+      );
+      const hasCodeClose = tagsOnLine.some(
+        (match) => match[2].toLowerCase() === "code" && match[1] === "/"
+      );
 
-          if (
-            !lastTagIsClosing &&
-            blockTags.includes(lastTagName) &&
-            trimmedLine.endsWith(lastTagMatch[0])
-          ) {
-            lastTagIsOpeningBlock = true;
-            lastOpeningBlockTagName = lastTagName;
-          }
+      // Handle start of code block
+      if (hasCodeOpen && !hasCodeClose) {
+        insideCodeBlock = true;
+        formattedLines.push("\t".repeat(indentLevel) + trimmedLine);
+        continue;
+      }
 
-          // Check for [code] tags specifically
-          tagsOnLine.forEach((tagMatch) => {
-            const tagName = tagMatch[2].toLowerCase();
-            const isClosing = tagMatch[1] === "/";
-            if (tagName === "code") {
-              if (isClosing) {
-                lineContainsCodeClose = true;
-              } else {
-                lineContainsCodeOpen = true;
-              }
+      // Process the line for proper formatting
+      let currentLineIndent = indentLevel;
+      let nextIndentLevel = indentLevel;
+
+      // Check for block tags that need special handling
+      let processedLine = trimmedLine;
+      let lineSplit = false;
+
+      // Process opening block tags that need line breaks
+      for (const tag of blockTags) {
+        const openTagRegex = new RegExp(`\\[${tag}(=[^\\]]*)?(\\s*)\\]`, "i");
+        const match = processedLine.match(openTagRegex);
+
+        if (match && !processedLine.toLowerCase().includes(`[/${tag}]`)) {
+          // If tag is at start of line, just keep it there
+          if (match.index === 0) {
+            nextIndentLevel++;
+          } else {
+            // Split the line at the tag
+            const beforeTag = processedLine.substring(0, match.index).trim();
+            const tagAndAfter = processedLine.substring(match.index).trim();
+
+            if (beforeTag) {
+              formattedLines.push("\t".repeat(currentLineIndent) + beforeTag);
             }
-          });
-        }
 
-        // --- Determine Indentation for Current Line ---
-        // Decrease indent if line starts with a closing block tag
-        if (firstTagIsClosingBlock) {
-          currentLineIndent = Math.max(0, indentLevel - 1);
-        } else {
-          currentLineIndent = indentLevel;
-        }
-
-        // Add the indented line (if not empty)
-        if (trimmedLine) {
-          formattedLines.push("\t".repeat(currentLineIndent) + trimmedLine);
-        } else {
-          formattedLines.push(""); // Preserve empty lines
-        }
-
-        // --- Determine Indentation for the NEXT Line ---
-        let nextIndentLevel = currentLineIndent;
-
-        // Check if the last tag is an opening block tag THAT IS NOT closed on the same line
-        if (lastTagIsOpeningBlock) {
-          const closingTagPattern = new RegExp(`[\/code]`, "i");
-          const openTagIndex = trimmedLine.lastIndexOf(
-            tagsOnLine[tagsOnLine.length - 1][0]
-          );
-          const closeTagIndex = trimmedLine.search(closingTagPattern);
-
-          if (closeTagIndex === -1 || closeTagIndex < openTagIndex) {
-            nextIndentLevel = currentLineIndent + 1; // Increase indent for next line
-          }
-        }
-
-        // Update indentLevel for the next iteration
-        indentLevel = nextIndentLevel;
-
-        // --- Update [code] block state ---
-        // Enter code block if line contains [code] but not [/code]
-        if (lineContainsCodeOpen && !lineContainsCodeClose) {
-          // More precise check: does the *last* code tag on the line lack a closing tag *after* it?
-          let lastCodeOpenIndex = -1;
-          let lastCodeCloseIndex = -1;
-          trimmedLine.replace(/[code]/gi, (match, offset) => {
-            lastCodeOpenIndex = offset;
-          });
-          trimmedLine.replace(/[\/code]/gi, (match, offset) => {
-            lastCodeCloseIndex = offset;
-          });
-
-          if (lastCodeOpenIndex > lastCodeCloseIndex) {
-            // Includes case where close index is -1
-            inCodeBlock = true;
+            processedLine = tagAndAfter;
+            lineSplit = true;
+            nextIndentLevel++;
           }
         }
       }
-    });
+
+      // Process closing block tags
+      for (const tag of blockTags) {
+        const closeTagRegex = new RegExp(`\\[/${tag}\\](\\s*)(.*?)$`, "i");
+        const match = processedLine.match(closeTagRegex);
+
+        if (match) {
+          if (match.index === 0) {
+            // Closing tag at beginning of line - reduce indent for this line
+            currentLineIndent = Math.max(0, indentLevel - 1);
+            nextIndentLevel = currentLineIndent;
+          } else {
+            // Split the line at the closing tag
+            const beforeTag = processedLine.substring(0, match.index).trim();
+            const tagAndAfter = processedLine.substring(match.index).trim();
+            const afterTag = match[2] ? match[2].trim() : "";
+
+            if (beforeTag) {
+              formattedLines.push("\t".repeat(currentLineIndent) + beforeTag);
+            }
+
+            // Add the closing tag with reduced indent
+            const closingIndent = Math.max(0, currentLineIndent - 1);
+            formattedLines.push("\t".repeat(closingIndent) + `[/${tag}]`);
+
+            // If there's content after the closing tag, process it on a new line
+            if (afterTag) {
+              processedLine = afterTag;
+              lineSplit = true;
+            } else {
+              processedLine = "";
+              lineSplit = true;
+            }
+
+            nextIndentLevel = closingIndent;
+          }
+        }
+      }
+
+      // Add the processed line if it's not empty and hasn't been completely handled
+      if (processedLine) {
+        formattedLines.push("\t".repeat(currentLineIndent) + processedLine);
+      }
+
+      // Handle special case: first tag on line is a closing block tag
+      if (!lineSplit && tagsOnLine.length > 0) {
+        const firstTag = tagsOnLine[0];
+        if (
+          firstTag[1] === "/" &&
+          blockTags.includes(firstTag[2].toLowerCase()) &&
+          trimmedLine.startsWith(firstTag[0])
+        ) {
+          nextIndentLevel = Math.max(0, currentLineIndent - 1);
+        }
+      }
+
+      // Update indent level for next line
+      indentLevel = nextIndentLevel;
+    }
 
     const formattedText = formattedLines.join("\n");
-    // console.log("Formatting complete. Applying text."); // Uncomment for debugging
 
-    // Only update if the text actually changed to avoid unnecessary actions
+    // Only update if text changed
     if (textarea.value !== formattedText) {
-      // Basic cursor position saving (may be inaccurate after formatting)
+      // Save cursor position
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
 
       textarea.value = formattedText;
 
-      // Restore cursor position
+      // Restore cursor position (simple approach)
       textarea.setSelectionRange(start, end);
 
       updateHighlight();
       adjustTextareaAndHighlight();
-      // console.log("Textarea updated and highlight refreshed."); // Uncomment for debugging
-    } else {
-      // console.log("No changes detected after formatting."); // Uncomment for debugging
     }
   };
 
