@@ -2,10 +2,10 @@
   "document-start": [
     "_applyThreadPreferences",
     "_cachePostsOnPage",
-    "_applyUserPreferences",
-    "bbcode"
+    "_applyUserPreferences"
   ],
   "document-end": [
+    "bbcode",
     "memberSearch",
     "randomTopic",
     "kalareact",
