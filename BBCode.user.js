@@ -73,7 +73,7 @@ SOFTWARE.
           ">": "&gt;",
           '"': "&quot;",
           "'": "&#39;",
-        }[m])
+        })[m]
     );
 
   const getContrastColor = (hexColor) => {
@@ -1161,6 +1161,88 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
       if (e.altKey && e.key === "g") {
         e.preventDefault();
         wrapSelectedText(this, "color=#80BF00");
+        updateHighlight();
+        adjustTextareaAndHighlight();
+      }
+      // Handle Tab and Shift+Tab for indentation
+      if (e.key === "Tab") {
+        e.preventDefault(); // Prevent default tab behavior (changing focus)
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        const value = this.value;
+        const selectedLines = value.substring(start, end).split("\n");
+        const beforeSelection = value.substring(0, start);
+        const afterSelection = value.substring(end);
+
+        // Find the start of the line where selection begins
+        const lineStart = beforeSelection.lastIndexOf("\n") + 1;
+        const lineEnd = afterSelection.indexOf("\n");
+        const currentLineEnd = lineEnd === -1 ? value.length : end + lineEnd;
+
+        if (e.shiftKey) {
+          // Un-indent: Remove leading tab from the line(s)
+          const lines = value.substring(lineStart, currentLineEnd).split("\n");
+          let removedChars = 0;
+          const modifiedLines = lines.map((line, index) => {
+            // Only un-indent lines that are actually part of the selection or the cursor's line
+            if (
+              index === 0 ||
+              (selectedLines.length > 1 &&
+                lineStart + value.substring(lineStart).indexOf(line) < end)
+            ) {
+              if (line.startsWith("\t")) {
+                removedChars++;
+                return line.substring(1);
+              }
+            }
+            return line;
+          });
+          this.value =
+            value.substring(0, lineStart) +
+            modifiedLines.join("\n") +
+            value.substring(currentLineEnd);
+
+          // Adjust cursor position
+          const newStart = Math.max(lineStart, start - 1);
+          const newEnd = Math.max(newStart, end - removedChars);
+          this.setSelectionRange(newStart, newEnd);
+        } else {
+          // Indent: Add tab to the beginning of the line(s)
+          if (selectedLines.length > 1) {
+            // Multi-line selection: Indent each selected line
+            const linesToModify = value.substring(lineStart, end).split("\n");
+            let addedChars = 0;
+            const modifiedSelection = linesToModify
+              .map((line) => {
+                // Check if the line actually starts within the selection range to avoid indenting the line *after* the selection ends
+                const lineAbsoluteStart = value.indexOf(line, lineStart);
+                if (lineAbsoluteStart >= start) {
+                  addedChars++;
+                  return "\t" + line;
+                }
+                return line;
+              })
+              .join("\n");
+
+            // Find the actual start of the first selected line
+            const firstSelectedLineStart =
+              value.lastIndexOf("\n", start - 1) + 1;
+
+            this.value =
+              value.substring(0, firstSelectedLineStart) +
+              modifiedSelection +
+              value.substring(end);
+            this.setSelectionRange(start + 1, end + addedChars);
+          } else {
+            // Single line or no selection: Insert tab at cursor or indent current line
+            this.value =
+              beforeSelection.substring(0, lineStart) +
+              "\t" +
+              beforeSelection.substring(lineStart) +
+              value.substring(start);
+            this.setSelectionRange(start + 1, start + 1);
+          }
+        }
         updateHighlight();
         adjustTextareaAndHighlight();
       }
