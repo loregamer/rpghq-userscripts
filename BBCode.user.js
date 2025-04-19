@@ -383,12 +383,14 @@ SOFTWARE.
   const autoFormatBBCode = () => {
     const textarea = document.getElementById("message");
     if (!textarea) return;
+
     const text = textarea.value;
     const lines = text.split("\n");
     let formattedLines = [];
     let indentLevel = 0;
     let insideCodeBlock = false;
     let insideList = false;
+
     // Define tags that affect indentation and require line breaks
     const blockTags = [
       "list",
@@ -400,19 +402,25 @@ SOFTWARE.
       "tabmenu",
       "tabs",
     ];
+
     // Non-breaking space character
     const nbsp = "\u00A0";
+
     // Regex to find BBCode tags
     const tagRegex = /\[(\/)?([a-zA-Z0-9*]+)(?:=([^]]*))?\]/g;
+
     // Track the stack of open tags to handle proper closing
     const openTagStack = [];
+
     // Process each line
     for (let i = 0; i < lines.length; i++) {
       let line = lines[i].trim();
+
       // Skip completely empty lines
       if (!line) {
         continue;
       }
+
       // Handle code blocks separately to preserve formatting
       if (insideCodeBlock) {
         formattedLines.push(line);
@@ -421,6 +429,7 @@ SOFTWARE.
         }
         continue;
       }
+
       // Check for code block start
       if (
         line.toLowerCase().includes("[code]") &&
@@ -430,19 +439,24 @@ SOFTWARE.
         formattedLines.push("\t".repeat(indentLevel) + line);
         continue;
       }
+
       // Process the line to find all tags
       const matches = [...line.matchAll(tagRegex)];
+
       // If no tags, just add the line with current indentation
       if (matches.length === 0) {
         formattedLines.push("\t".repeat(indentLevel) + line);
         continue;
       }
+
       // Process each match to separate tags and content
       let segments = [];
       let lastIndex = 0;
+
       for (const match of matches) {
         const [fullMatch, isClosing, tag, attribute] = match;
         const matchIndex = match.index;
+
         // Add text before this tag if any
         if (matchIndex > lastIndex) {
           const textBefore = line.substring(lastIndex, matchIndex).trim();
@@ -453,6 +467,7 @@ SOFTWARE.
             });
           }
         }
+
         // Add the tag
         segments.push({
           text: fullMatch,
@@ -463,8 +478,10 @@ SOFTWARE.
           isList: tag.toLowerCase() === "list",
           isListItem: tag === "*",
         });
+
         lastIndex = matchIndex + fullMatch.length;
       }
+
       // Add any remaining text after the last tag
       if (lastIndex < line.length) {
         const textAfter = line.substring(lastIndex).trim();
@@ -475,25 +492,31 @@ SOFTWARE.
           });
         }
       }
+
       // Process segments and add to formatted lines
       let lineBuffer = "";
       let indentChange = 0;
+
       for (let j = 0; j < segments.length; j++) {
         const segment = segments[j];
+
         if (segment.isTag && segment.isBlockTag) {
           // For block tags, we want them on their own lines
           if (lineBuffer) {
             formattedLines.push("\t".repeat(indentLevel) + lineBuffer);
             lineBuffer = "";
           }
+
           if (segment.isClosing) {
             // Closing block tag decreases indent before adding
             indentLevel = Math.max(0, indentLevel - 1);
             formattedLines.push("\t".repeat(indentLevel) + segment.text);
+
             // Track if we're leaving a list
             if (segment.isList) {
               insideList = false;
             }
+
             // Track tag closing for potential spacing
             if (openTagStack.length > 0) {
               openTagStack.pop();
@@ -502,10 +525,12 @@ SOFTWARE.
             // Opening block tag gets added at current indent, then increases indent
             formattedLines.push("\t".repeat(indentLevel) + segment.text);
             indentLevel++;
+
             // Track if we're entering a list
             if (segment.isList) {
               insideList = true;
             }
+
             // Track tag opening
             openTagStack.push(segment.tag);
           }
@@ -515,6 +540,7 @@ SOFTWARE.
             formattedLines.push("\t".repeat(indentLevel) + lineBuffer);
             lineBuffer = "";
           }
+
           // Add list item with a non-breaking space after it
           lineBuffer = segment.text + nbsp;
         } else {
@@ -522,8 +548,10 @@ SOFTWARE.
           if (lineBuffer) {
             // If we already have content in the line buffer
             if (segment.isTag) {
-              // If this segment is a tag, we no longer add space before it
-              // No nbsp added before tags
+              // If this segment is a tag, add a space before it if needed
+              if (!lineBuffer.endsWith(nbsp) && !lineBuffer.endsWith(" ")) {
+                lineBuffer += nbsp;
+              }
             } else if (
               !lineBuffer.endsWith(nbsp) &&
               !lineBuffer.endsWith(" ") &&
@@ -533,35 +561,46 @@ SOFTWARE.
               lineBuffer += nbsp;
             }
           }
+
           lineBuffer += segment.text;
-          // We no longer add space after tags that aren't list items
-          // Only list items get nbsp after them (handled above)
+
+          // If this is a tag, add a space after it
+          if (segment.isTag && !segment.isListItem) {
+            lineBuffer += nbsp;
+          }
         }
       }
+
       // Add any remaining buffered content
       if (lineBuffer) {
         formattedLines.push("\t".repeat(indentLevel) + lineBuffer);
       }
     }
+
     // Clean up: remove consecutive empty lines and unnecessary blank lines at end of blocks
     let cleanedLines = [];
     let lastLineWasEmpty = false;
+
     for (let i = 0; i < formattedLines.length; i++) {
       const line = formattedLines[i];
       const lineContent = line.trim();
       const isEmptyLine = !lineContent;
+
       // Skip if this would create consecutive empty lines
       if (isEmptyLine && lastLineWasEmpty) {
         continue;
       }
+
       // Check if this is an empty line before a closing tag
       const isBeforeClosingTag =
         i < formattedLines.length - 1 &&
         formattedLines[i + 1].trim().match(/^\[\/[a-z0-9]+\]$/i);
+
       // Skip empty lines right before closing tags
       if (isEmptyLine && isBeforeClosingTag) {
         continue;
       }
+
       // Add spacing before new section headings (like color headings or anchors)
       const isHeadingLine =
         lineContent.match(/^\[color=#[0-9A-Fa-f]{6}\]/) ||
@@ -570,6 +609,7 @@ SOFTWARE.
         i > 0 &&
         (formattedLines[i - 1].trim().match(/^\[\/[a-z0-9]+\]$/i) ||
           formattedLines[i - 1].trim().match(/^\[\/list\]$/i));
+
       // Add blank line before headings when coming after a block
       if (
         isHeadingLine &&
@@ -579,16 +619,20 @@ SOFTWARE.
       ) {
         cleanedLines.push(""); // Add blank line for spacing
       }
+
       cleanedLines.push(line);
       lastLineWasEmpty = isEmptyLine;
     }
+
     // One final pass to ensure there's spacing between major sections
     formattedLines = [];
     for (let i = 0; i < cleanedLines.length; i++) {
       const line = cleanedLines[i];
       const lineContent = line.trim();
+
       // Add the current line
       formattedLines.push(line);
+
       // Check if we need to add spacing after certain elements
       const isClosingMajorBlock = lineContent.match(
         /^\[\/(?:list|tabmenu|tabs|table|quote|spoiler)\]$/i
@@ -597,20 +641,26 @@ SOFTWARE.
         i < cleanedLines.length - 1 &&
         !cleanedLines[i + 1].trim().startsWith("[/") &&
         cleanedLines[i + 1].trim() !== "";
+
       // Add blank line after major block closings when followed by new content
       if (isClosingMajorBlock && isFollowedByNewSection) {
         formattedLines.push(""); // Add blank line for spacing
       }
     }
+
     const formattedText = formattedLines.join("\n");
+
     // Only update if text changed
     if (textarea.value !== formattedText) {
       // Save cursor position
       const start = textarea.selectionStart;
       const end = textarea.selectionEnd;
+
       textarea.value = formattedText;
+
       // Try to restore cursor position approximately
       textarea.setSelectionRange(start, end);
+
       updateHighlight();
       adjustTextareaAndHighlight();
     }
