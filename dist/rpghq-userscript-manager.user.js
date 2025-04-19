@@ -21,7 +21,7 @@
 // @updateURL    https://github.com/loregamer/rpghq-userscripts/raw/main/dist/rpghq-userscript-manager.user.js
 // ==/UserScript==
 
-!(function () {
+!(function (exports) {
   "use strict";
   // Inject styles
   GM_addStyle(`
@@ -1492,42 +1492,95 @@
    * @param {Object} scriptStates - Object containing enabled/disabled states for scripts
    * @param {Function} renderScriptsGridView - Function to render scripts in grid view
    * @param {Function} renderScriptsListView - Function to render scripts in list view
-   */
-  /**
-   * Renders the "Threads" subtab content within the Forum Preferences tab.
-   *
-   * @param {HTMLElement} container - The container element to render into
-   */
-  function renderThreadsSubtab(container) {
-    log("Rendering Threads subtab..."),
-      (container.innerHTML =
-        '\n    <div class="wip-banner">\n      <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress\n    </div>\n  \n    <div class="preferences-section">\n      <div class="preferences-section-header">\n        <h3 class="preferences-section-title">Thread Display</h3>\n      </div>\n      <div class="preferences-section-body">\n        <div class="preference-item">\n          <div class="preference-header">\n            <h4 class="preference-name">Thread Layout</h4>\n            <div class="preference-control">\n              <select>\n                <option selected>Compact</option>\n                <option>Standard</option>\n                <option>Expanded</option>\n              </select>\n            </div>\n          </div>\n          <p class="preference-description">Choose how thread listings are displayed</p>\n        </div>\n      \n        <div class="preference-item">\n          <div class="preference-header">\n            <h4 class="preference-name">Threads Per Page</h4>\n            <div class="preference-control">\n              <select>\n                <option>10</option>\n                <option selected>20</option>\n                <option>30</option>\n                <option>50</option>\n              </select>\n            </div>\n          </div>\n          <p class="preference-description">Number of threads to display per page</p>\n        </div>\n      </div>\n    </div>\n  \n    <div class="info-note">\n      <strong>Note:</strong> This is a view-only display. Additional Thread preferences will be added in future updates.\n    </div>\n  ');
+   */ function renderThemeSubtab(container) {
+    log("Rendering Theme subtab..."),
+      // Clear previous content
+      (container.innerHTML = "");
+    // --- Theme Customizer Section ---
+    const themeSection = document.createElement("div");
+    (themeSection.className = "preferences-section"), // Use the same class for consistent styling
+      (themeSection.innerHTML =
+        '\n    <div class="preferences-section-header">\n      <h3 class="preferences-section-title">Theme Colors</h3>\n      <p class="preferences-section-description">\n        Customize the colors of links on the forum. Changes are applied live.\n      </p>\n    </div>\n    <div class="preferences-section-body"></div>\n  ');
+    const themeBody = themeSection.querySelector(".preferences-section-body"),
+      createColorInput = (label, key, defaultValue = "#000000") => {
+        const id = `theme-color-${key}`,
+          currentValue = gmGetValue(key, ""),
+          item = document.createElement("div");
+        (item.className = "preference-item theme-color-item"),
+          (item.innerHTML = `\n      <div class="preference-header">\n        <label for="${id}" class="preference-name">${label}</label>\n        <div class="preference-control">\n          <input type="color" id="${id}" value="${currentValue || defaultValue}">\n          <button class="btn btn-secondary btn-small reset-color-btn" title="Reset to default">Reset</button>\n        </div>\n      </div>\n      <p class="preference-description">Current: <code class="current-color-value">${currentValue || "(default)"}</code></p>\n    `);
+        const colorInput = item.querySelector("input[type='color']"),
+          resetButton = item.querySelector(".reset-color-btn"),
+          valueDisplay = item.querySelector(".current-color-value");
+        // Load initial value or set default appearance
+        return (
+          (colorInput.value = currentValue || defaultValue),
+          colorInput.addEventListener(
+            "input",
+            (event) => {
+              const newValue = event.target.value;
+              log(`Setting ${key} to ${newValue}`),
+                gmSetValue(key, newValue),
+                (valueDisplay.textContent = newValue),
+                applyCustomThemeStyles();
+            } // Apply styles live
+          ),
+          resetButton.addEventListener(
+            "click",
+            () => {
+              log(`Resetting ${key} to default`),
+                gmSetValue(key, ""), // Clear the setting
+                (colorInput.value = defaultValue), // Reset picker to visual default
+                (valueDisplay.textContent = "(default)"),
+                applyCustomThemeStyles();
+            } // Re-apply styles after reset
+          ),
+          item
+        );
+      };
+    // Helper function to create color input
+    // Add color inputs
+    themeBody.appendChild(
+      createColorInput(
+        "Link Color (Link, Active, Visited)",
+        "theme_linkColor",
+        "#2a8ff7"
+      )
+    ),
+      themeBody.appendChild(
+        createColorInput("Hover Link Color", "theme_hoverColor", "#399bff")
+      ),
+      container.appendChild(themeSection);
   }
-  /**
-   * Renders the "Users" subtab content within the Forum Preferences tab.
-   *
-   * @param {HTMLElement} container - The container element to render into
-   */
   /**
    * Renders the "Forum Preferences" tab content with subtabs.
    *
    * @param {HTMLElement} container - The container element to render into
    */
+  // Removed GM imports as they are handled in the subtab now
+  // import { gmGetValue, gmSetValue } from "../../main.js";
+  // Removed Theme keys as they are handled in the subtab now
+  // const THEME_LINK_COLOR_KEY = "theme_linkColor";
+  // const THEME_HOVER_COLOR_KEY = "theme_hoverColor";
   function renderForumPreferencesTab(container) {
-    log("Rendering Forum Preferences tab with subtabs..."),
-      (container.innerHTML = "<h2>Forum Preferences</h2>");
-    // Add sub-tabs for Threads and Users
+    log("Rendering Forum Preferences tab with subtabs...");
+    // container.innerHTML = `<h2>Forum Preferences</h2>`; // Removed title
+    // --- REMOVED Theme Customizer Section ---
+    // const themeSection = document.createElement("div");
+    // ... (entire theme section removed) ...
+    // container.appendChild(themeSection);
+    // --- Sub-Tabs Section ---
+    // Add sub-tabs for Theme, Threads, and Users
     const subTabsContainer = document.createElement("div");
     (subTabsContainer.className = "sub-tabs"),
       (subTabsContainer.innerHTML =
-        '\n    <div class="sub-tab active" data-subtab="threads">\n      <i class="fa fa-comments"></i> Threads\n    </div>\n    <div class="sub-tab" data-subtab="users">\n      <i class="fa fa-users"></i> Users\n    </div>\n  '),
+        '\n    <div class="sub-tab active" data-subtab="theme">\n      <i class="fa fa-paint-brush"></i> Theme\n    </div>\n    <div class="sub-tab" data-subtab="threads">\n      <i class="fa fa-comments"></i> Threads\n    </div>\n    <div class="sub-tab" data-subtab="users">\n      <i class="fa fa-users"></i> Users\n    </div>\n  '),
       container.appendChild(subTabsContainer);
     // Add container for sub-tab content
     const subTabContent = document.createElement("div");
     (subTabContent.id = "forum-subtab-content"),
       container.appendChild(subTabContent),
-      // Load initial sub-tab (Threads)
-      renderThreadsSubtab(subTabContent),
+      // Load initial sub-tab (Theme)
+      renderThemeSubtab(subTabContent), // Load Theme by default
       // Add event listeners for sub-tabs
       subTabsContainer.querySelectorAll(".sub-tab").forEach((tab) => {
         tab.addEventListener("click", () => {
@@ -1535,16 +1588,43 @@
           subTabsContainer.querySelectorAll(".sub-tab").forEach((t) => {
             t.classList.remove("active");
           }),
-            tab.classList.add("active"),
-            // Load content
-            "threads" === tab.dataset.subtab
-              ? renderThreadsSubtab(subTabContent)
-              : "users" === tab.dataset.subtab &&
-                (function (container) {
-                  log("Rendering Users subtab..."),
-                    (container.innerHTML =
-                      '\n    <div class="wip-banner">\n      <i class="fa fa-wrench"></i> User Preferences - Work In Progress\n    </div>\n  \n    <div class="preferences-section">\n      <div class="preferences-section-header">\n        <h3 class="preferences-section-title">User Display</h3>\n      </div>\n      <div class="preferences-section-body">\n        <div class="preference-item">\n          <div class="preference-header">\n            <h4 class="preference-name">Show User Signatures</h4>\n            <div class="preference-control">\n              <input type="checkbox" name="user.display.signatures" checked>\n            </div>\n          </div>\n          <p class="preference-description">Display user signatures in posts</p>\n        </div>\n      \n        <div class="preference-item">\n          <div class="preference-header">\n            <h4 class="preference-name">Show User Avatars</h4>\n            <div class="preference-control">\n              <input type="checkbox" name="user.display.avatars" checked>\n            </div>\n          </div>\n          <p class="preference-description">Display user avatars in posts and listings</p>\n        </div>\n      </div>\n    </div>\n  \n    <div class="info-note">\n      <strong>Note:</strong> This is a view-only display. Additional User preferences will be added in future updates.\n    </div>\n  ');
-                })(subTabContent);
+            tab.classList.add("active");
+          // Load content based on data-subtab attribute
+          const subtabName = tab.dataset.subtab;
+          log(`Switching to subtab: ${subtabName}`),
+            "theme" === subtabName
+              ? renderThemeSubtab(subTabContent)
+              : "threads" === subtabName
+                ? /**
+                   * Renders the "Threads" subtab content within the Forum Preferences tab.
+                   *
+                   * @param {HTMLElement} container - The container element to render into
+                   */
+                  (function (container) {
+                    log("Rendering Threads subtab..."),
+                      (container.innerHTML =
+                        '\n    <div class="wip-banner">\n      <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress\n    </div>\n  \n    <div class="preferences-section">\n      <div class="preferences-section-header">\n        <h3 class="preferences-section-title">Thread Display</h3>\n      </div>\n      <div class="preferences-section-body">\n        <div class="preference-item">\n          <div class="preference-header">\n            <h4 class="preference-name">Thread Layout</h4>\n            <div class="preference-control">\n              <select>\n                <option selected>Compact</option>\n                <option>Standard</option>\n                <option>Expanded</option>\n              </select>\n            </div>\n          </div>\n          <p class="preference-description">Choose how thread listings are displayed</p>\n        </div>\n      \n        <div class="preference-item">\n          <div class="preference-header">\n            <h4 class="preference-name">Threads Per Page</h4>\n            <div class="preference-control">\n              <select>\n                <option>10</option>\n                <option selected>20</option>\n                <option>30</option>\n                <option>50</option>\n              </select>\n            </div>\n          </div>\n          <p class="preference-description">Number of threads to display per page</p>\n        </div>\n      </div>\n    </div>\n  \n    <div class="info-note">\n      <strong>Note:</strong> This is a view-only display. Additional Thread preferences will be added in future updates.\n    </div>\n  ');
+                  })(
+                    /**
+                     * Renders the "Users" subtab content within the Forum Preferences tab.
+                     *
+                     * @param {HTMLElement} container - The container element to render into
+                     */ subTabContent
+                  )
+                : "users" === subtabName &&
+                  (function (container) {
+                    log("Rendering Users subtab..."),
+                      (container.innerHTML =
+                        '\n    <div class="wip-banner">\n      <i class="fa fa-wrench"></i> User Preferences - Work In Progress\n    </div>\n  \n    <div class="preferences-section">\n      <div class="preferences-section-header">\n        <h3 class="preferences-section-title">User Display</h3>\n      </div>\n      <div class="preferences-section-body">\n        <div class="preference-item">\n          <div class="preference-header">\n            <h4 class="preference-name">Show User Signatures</h4>\n            <div class="preference-control">\n              <input type="checkbox" name="user.display.signatures" checked>\n            </div>\n          </div>\n          <p class="preference-description">Display user signatures in posts</p>\n        </div>\n      \n        <div class="preference-item">\n          <div class="preference-header">\n            <h4 class="preference-name">Show User Avatars</h4>\n            <div class="preference-control">\n              <input type="checkbox" name="user.display.avatars" checked>\n            </div>\n          </div>\n          <p class="preference-description">Display user avatars in posts and listings</p>\n        </div>\n      </div>\n    </div>\n  \n    <div class="info-note">\n      <strong>Note:</strong> This is a view-only display. Additional User preferences will be added in future updates.\n    </div>\n  ');
+                  })(
+                    /**
+                     * Renders the "Theme" subtab content.
+                     *
+                     * @param {HTMLElement} container - The container element to render into
+                     */
+                    // Keys from main.js (redundant but good for clarity)
+                    subTabContent
+                  );
         });
       });
   }
@@ -6125,15 +6205,41 @@
   });
   // Main userscript entry point
   // --- Constants ---
+  const GM_PREFIX = "RPGHQ_Manager_",
+    THEME_LINK_COLOR_KEY = "theme_linkColor",
+    THEME_HOVER_COLOR_KEY = "theme_hoverColor";
   // Prefix for GM_setValue/GM_getValue keys
-  // --- GM Wrappers ---
+  // Keys for Theme Customization
+  // --- GM Wrappers (Exported) ---
+  // eslint-disable-next-line func-style
   function gmGetValue(key, defaultValue) {
     // eslint-disable-next-line no-undef
-    return GM_getValue("RPGHQ_Manager_" + key, defaultValue);
+    return GM_getValue(GM_PREFIX + key, defaultValue);
   }
+  // eslint-disable-next-line func-style
   function gmSetValue(key, value) {
     // eslint-disable-next-line no-undef
-    GM_setValue("RPGHQ_Manager_" + key, value);
+    GM_setValue(GM_PREFIX + key, value);
+  }
+  // --- Style Application ---
+  // eslint-disable-next-line func-style
+  function applyCustomThemeStyles() {
+    const linkColor = gmGetValue(THEME_LINK_COLOR_KEY, ""),
+      hoverColor = gmGetValue(THEME_HOVER_COLOR_KEY, "");
+    // const visitedColor = gmGetValue(THEME_VISITED_COLOR_KEY, ""); // Removed
+    // const activeColor = gmGetValue(THEME_ACTIVE_COLOR_KEY, ""); // Removed
+    let customCSS = "";
+    // Apply style for link, active, visited if linkColor is set
+    linkColor &&
+      (customCSS += `a:not(.username-coloured):not(.forum-link):link,\n       a:not(.username-coloured):not(.forum-link):active,\n       a:not(.username-coloured):not(.forum-link):visited { color: ${linkColor} !important; }\n`),
+      // Apply style for hover if hoverColor is set
+      hoverColor &&
+        (customCSS += `a:not(.username-coloured):not(.forum-link):hover { color: ${hoverColor} !important; }\n`),
+      customCSS
+        ? (log("Applying custom theme styles:", customCSS),
+          // eslint-disable-next-line no-undef
+          GM_addStyle(customCSS.trim()))
+        : log("No custom theme styles defined.");
   }
   // --- Core Logic ---
   // Object to hold the runtime state of scripts (enabled/disabled)
@@ -6343,65 +6449,86 @@
   function handleLoadTabContent(tabName) {
     const contentContainer = document.getElementById("mod-manager-content");
     contentContainer &&
-      loadTabContent(tabName, {
+      (loadTabContent(tabName, {
         container: contentContainer,
         scripts: SCRIPT_MANIFEST,
         scriptStates: scriptStates,
         renderScriptsGridView: handleRenderScriptsGridView,
-      });
+      }),
+      // Save the last selected tab
+      gmSetValue("last_selected_tab", tabName));
   }
   // --- Modal Visibility Logic ---
   function toggleModalVisibility() {
     const modal = document.getElementById("mod-manager-modal"),
       isVisible = modal && "block" === modal.style.display;
-    log(
-      `Toggling modal visibility. Currently ${isVisible ? "visible" : "hidden"}.`
-    ),
-      isVisible
-        ? hideModal()
-        : /**
-           * Shows the userscript manager modal and sets up tab functionality.
-           *
-           * @param {Object} options - Configuration options
-           * @param {Function} options.loadTabContent - Function to load tab content
-           * @param {Function} options.hideModal - Function to hide the modal
-           */
-          (function ({ loadTabContent: loadTabContent, hideModal: hideModal }) {
-            log("Showing userscript manager modal...");
-            let modal = document.getElementById("mod-manager-modal");
-            modal ||
-              ((modal = document.createElement("div")),
-              (modal.id = "mod-manager-modal"),
-              (modal.className = "mod-manager-modal"),
-              (modal.innerHTML = `\n      <div class="mod-manager-modal-content">\n        <div class="mod-manager-header">\n          <h2 class="mod-manager-title">RPGHQ Userscript Manager <span style="font-size: x-small;">v${GM_info.script.version}</span></h2>\n          <span class="mod-manager-close">&times;</span>\n        </div>\n        <div class="mod-manager-tabs">\n          <div class="mod-manager-tab active" data-tab="installed">\n            <i class="fa fa-puzzle-piece"></i> Installed Scripts\n          </div>\n          <div class="mod-manager-tab" data-tab="forum">\n            <i class="fa fa-sliders"></i> Forum Preferences\n          </div>\n          \x3c!-- Settings tab completely hidden --\x3e\n        </div>\n        <div class="mod-manager-content" id="mod-manager-content">\n          \x3c!-- Content loaded dynamically --\x3e\n        </div>\n      </div>\n    `),
-              document.body.appendChild(modal),
-              // Add event listeners
-              modal
-                .querySelector(".mod-manager-close")
-                .addEventListener("click", () => {
-                  hideModal();
-                }),
-              modal.addEventListener("click", (e) => {
-                e.target === modal && hideModal();
+    if (
+      (log(
+        `Toggling modal visibility. Currently ${isVisible ? "visible" : "hidden"}.`
+      ),
+      isVisible)
+    )
+      hideModal();
+    else {
+      // Retrieve the last selected tab, default to 'installed'
+      const lastTab = gmGetValue("last_selected_tab", "installed");
+      log(`Retrieved last selected tab: ${lastTab}`),
+        /**
+         * Shows the userscript manager modal and sets up tab functionality.
+         *
+         * @param {Object} options - Configuration options
+         * @param {Function} options.loadTabContent - Function to load tab content
+         * @param {Function} options.hideModal - Function to hide the modal
+         * @param {string} [options.initialTabName="installed"] - The name of the tab to show initially.
+         */
+        (function ({
+          loadTabContent: loadTabContent,
+          hideModal: hideModal,
+          initialTabName: initialTabName = "installed",
+        }) {
+          log("Showing userscript manager modal...");
+          let modal = document.getElementById("mod-manager-modal");
+          modal ||
+            ((modal = document.createElement("div")),
+            (modal.id = "mod-manager-modal"),
+            (modal.className = "mod-manager-modal"),
+            (modal.innerHTML = `\n      <div class="mod-manager-modal-content">\n        <div class="mod-manager-header">\n          <h2 class="mod-manager-title">RPGHQ Userscript Manager <span style="font-size: x-small;">v${GM_info.script.version}</span></h2>\n          <span class="mod-manager-close">&times;</span>\n        </div>\n        <div class="mod-manager-tabs">\n          <div class="mod-manager-tab active" data-tab="installed">\n            <i class="fa fa-puzzle-piece"></i> Installed Scripts\n          </div>\n          <div class="mod-manager-tab" data-tab="forum">\n            <i class="fa fa-sliders"></i> Forum Preferences\n          </div>\n          \x3c!-- Settings tab completely hidden --\x3e\n        </div>\n        <div class="mod-manager-content" id="mod-manager-content">\n          \x3c!-- Content loaded dynamically --\x3e\n        </div>\n      </div>\n    `),
+            document.body.appendChild(modal),
+            // Add event listeners
+            modal
+              .querySelector(".mod-manager-close")
+              .addEventListener("click", () => {
+                hideModal();
               }),
-              // Tab switching
-              modal.querySelectorAll(".mod-manager-tab").forEach((tab) => {
-                tab.addEventListener("click", () => {
-                  document.querySelectorAll(".mod-manager-tab").forEach((t) => {
-                    t.classList.remove("active");
-                  }),
-                    tab.classList.add("active"),
-                    loadTabContent(tab.dataset.tab);
-                });
-              })),
-              (modal.style.display = "block"),
-              (document.body.style.overflow = "hidden"),
-              // Initial view - load the first tab (Installed Scripts)
-              loadTabContent("installed");
-          })({
-            loadTabContent: handleLoadTabContent,
-            hideModal: hideModal,
-          });
+            modal.addEventListener("click", (e) => {
+              e.target === modal && hideModal();
+            }),
+            // Tab switching
+            modal.querySelectorAll(".mod-manager-tab").forEach((tab) => {
+              tab.addEventListener("click", () => {
+                document.querySelectorAll(".mod-manager-tab").forEach((t) => {
+                  t.classList.remove("active");
+                }),
+                  tab.classList.add("active"),
+                  loadTabContent(tab.dataset.tab);
+              });
+            })),
+            // Set the active tab visually
+            modal.querySelectorAll(".mod-manager-tab").forEach((tab) => {
+              tab.dataset.tab === initialTabName
+                ? tab.classList.add("active")
+                : tab.classList.remove("active");
+            }),
+            (modal.style.display = "block"),
+            (document.body.style.overflow = "hidden"),
+            // Load the initial or last selected tab content
+            loadTabContent(initialTabName);
+        })({
+          loadTabContent: handleLoadTabContent,
+          hideModal: hideModal,
+          initialTabName: lastTab,
+        });
+    }
   }
   // --- Add Button to Profile Dropdown ---
   // Add Font Awesome CSS if not already present
@@ -6549,5 +6676,10 @@
           );
         event.preventDefault(), toggleModalVisibility();
       }
-    });
-})();
+    }),
+    // Apply custom styles immediately at document-start
+    applyCustomThemeStyles(),
+    (exports.applyCustomThemeStyles = applyCustomThemeStyles),
+    (exports.gmGetValue = gmGetValue),
+    (exports.gmSetValue = gmSetValue);
+})({});
