@@ -518,24 +518,13 @@ SOFTWARE.
           // Add list item with a non-breaking space after it
           lineBuffer = segment.text + nbsp;
         } else {
-          // Regular tags and text get added to the current line buffer
-          if (lineBuffer) {
-            // If we already have content in the line buffer
-            if (segment.isTag) {
-              // If this segment is a tag, we no longer add space before it
-              // No nbsp added before tags
-            } else if (
-              !lineBuffer.endsWith(nbsp) &&
-              !lineBuffer.endsWith(" ") &&
-              !segment.isListItem
-            ) {
-              // If this segment is text and not a list item, add a space before it
-              lineBuffer += nbsp;
-            }
+          // Regular tags and text get added to the current line buffer without nbsp
+          if (lineBuffer && segment.text) {
+            // Don't add any nbsp between segments
+            lineBuffer += segment.text;
+          } else {
+            lineBuffer += segment.text;
           }
-          lineBuffer += segment.text;
-          // We no longer add space after tags that aren't list items
-          // Only list items get nbsp after them (handled above)
         }
       }
       // Add any remaining buffered content
