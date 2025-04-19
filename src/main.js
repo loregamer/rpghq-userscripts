@@ -20,6 +20,12 @@ import { toggleScriptEnabled } from "./components/toggleScriptEnabled.js";
 
 // --- Constants ---
 const GM_PREFIX = "RPGHQ_Manager_"; // Prefix for GM_setValue/GM_getValue keys
+// Keys for Theme Customization
+const THEME_LINK_COLOR_KEY = "theme_linkColor"; // Covers link, active, visited
+// const THEME_VISITED_COLOR_KEY = "theme_visitedColor"; // Removed
+// const THEME_ACTIVE_COLOR_KEY = "theme_activeColor"; // Removed
+const THEME_HOVER_COLOR_KEY = "theme_hoverColor";
+
 const EXECUTION_PHASES = [
   { id: "document-start", name: "Document Start" },
   { id: "document-end", name: "Document End" },
@@ -30,15 +36,46 @@ const EXECUTION_PHASES = [
 // The current execution phase the page is in
 let currentExecutionPhase = "document-start";
 
-// --- GM Wrappers ---
-function gmGetValue(key, defaultValue) {
+// --- GM Wrappers (Exported) ---
+// eslint-disable-next-line func-style
+export function gmGetValue(key, defaultValue) {
   // eslint-disable-next-line no-undef
   return GM_getValue(GM_PREFIX + key, defaultValue);
 }
 
-function gmSetValue(key, value) {
+// eslint-disable-next-line func-style
+export function gmSetValue(key, value) {
   // eslint-disable-next-line no-undef
   GM_setValue(GM_PREFIX + key, value);
+}
+
+// --- Style Application ---
+// eslint-disable-next-line func-style
+export function applyCustomThemeStyles() {
+  const linkColor = gmGetValue(THEME_LINK_COLOR_KEY, "");
+  // const visitedColor = gmGetValue(THEME_VISITED_COLOR_KEY, ""); // Removed
+  // const activeColor = gmGetValue(THEME_ACTIVE_COLOR_KEY, ""); // Removed
+  const hoverColor = gmGetValue(THEME_HOVER_COLOR_KEY, "");
+
+  let customCSS = "";
+
+  // Apply style for link, active, visited if linkColor is set
+  if (linkColor) {
+    customCSS += `a:link, a:active, a:visited { color: ${linkColor} !important; }\n`;
+  }
+
+  // Apply style for hover if hoverColor is set
+  if (hoverColor) {
+    customCSS += `a:hover { color: ${hoverColor} !important; }\n`;
+  }
+
+  if (customCSS) {
+    log("Applying custom theme styles:", customCSS);
+    // eslint-disable-next-line no-undef
+    GM_addStyle(customCSS.trim());
+  } else {
+    log("No custom theme styles defined.");
+  }
 }
 
 // --- Core Logic ---
@@ -438,6 +475,9 @@ function init() {
       toggleModalVisibility();
     }
   });
+
+  // Apply custom styles immediately at document-start
+  applyCustomThemeStyles();
 }
 
 // Run initialization
