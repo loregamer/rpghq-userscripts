@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ - BBCode Highlighter
 // @namespace    http://rpghq.org/
-// @version      5.5.1
+// @version      5.6
 // @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags, save/restore form content, and prevent accidental tab closing
 // @author       loregamer
 // @match        https://rpghq.org/forums/posting.php?mode=post*
@@ -378,6 +378,170 @@ SOFTWARE.
     textarea.focus();
     updateHighlight();
     adjustTextareaAndHighlight();
+  };
+
+  // =============================
+  // BBCode Auto-Formatting (F8)
+  // =============================
+  const autoFormatBBCode = () => {
+    const textarea = document.getElementById("message");
+    if (!textarea) return;
+    // console.log("Starting autoFormatBBCode..."); // Uncomment for debugging
+
+    const text = textarea.value;
+    const lines = text.split("\n");
+    const formattedLines = [];
+    let indentLevel = 0;
+    // Define tags that typically contain other block content and should affect indentation
+    const blockTags = ["list", "spoiler", "align", "quote", "table", "indent"];
+    // Regex to find BBCode tags (opening/closing, with/without attributes)
+    const tagRegex = /\[(\/)?([a-zA-Z0-9*]+)(=[^]]*)?\]/g;
+    let inCodeBlock = false; // State flag for handling [code] blocks
+
+    // console.log(`Formatting ${lines.length} lines.`); // Uncomment for debugging
+
+    lines.forEach((line) => {
+      if (inCodeBlock) {
+        // Inside a code block, preserve the line exactly as is
+        formattedLines.push(line);
+        // Check if this line contains the closing code tag (case-insensitive)
+        if (/[\/code]/i.test(line)) {
+          inCodeBlock = false;
+          // Indentation level after the closing code tag will be determined
+          // by the standard logic applied to the [/code] line itself if it were not inside a block.
+          // We need to re-evaluate the indent level based on the content *before* [/code] potentially.
+          // This simplified approach assumes the level resets correctly based on surrounding blocks.
+        }
+      } else {
+        // Outside a code block, apply formatting logic
+        let trimmedLine = line.trim();
+        let currentLineIndent = indentLevel;
+
+        // Analyze tags on the current line
+        const tagsOnLine = [...trimmedLine.matchAll(tagRegex)];
+        let firstTagIsClosingBlock = false;
+        let lastTagIsOpeningBlock = false;
+        let lineContainsCodeOpen = false;
+        let lineContainsCodeClose = false;
+        let firstClosingBlockTagName = null;
+        let lastOpeningBlockTagName = null;
+
+        if (tagsOnLine.length > 0) {
+          const firstTagMatch = tagsOnLine[0];
+          const firstTagName = firstTagMatch[2].toLowerCase();
+          const firstTagIsClosing = firstTagMatch[1] === "/";
+
+          if (
+            firstTagIsClosing &&
+            blockTags.includes(firstTagName) &&
+            trimmedLine.startsWith(firstTagMatch[0])
+          ) {
+            firstTagIsClosingBlock = true;
+            firstClosingBlockTagName = firstTagName;
+          }
+
+          const lastTagMatch = tagsOnLine[tagsOnLine.length - 1];
+          const lastTagName = lastTagMatch[2].toLowerCase();
+          const lastTagIsClosing = lastTagMatch[1] === "/";
+
+          if (
+            !lastTagIsClosing &&
+            blockTags.includes(lastTagName) &&
+            trimmedLine.endsWith(lastTagMatch[0])
+          ) {
+            lastTagIsOpeningBlock = true;
+            lastOpeningBlockTagName = lastTagName;
+          }
+
+          // Check for [code] tags specifically
+          tagsOnLine.forEach((tagMatch) => {
+            const tagName = tagMatch[2].toLowerCase();
+            const isClosing = tagMatch[1] === "/";
+            if (tagName === "code") {
+              if (isClosing) {
+                lineContainsCodeClose = true;
+              } else {
+                lineContainsCodeOpen = true;
+              }
+            }
+          });
+        }
+
+        // --- Determine Indentation for Current Line ---
+        // Decrease indent if line starts with a closing block tag
+        if (firstTagIsClosingBlock) {
+          currentLineIndent = Math.max(0, indentLevel - 1);
+        } else {
+          currentLineIndent = indentLevel;
+        }
+
+        // Add the indented line (if not empty)
+        if (trimmedLine) {
+          formattedLines.push("\t".repeat(currentLineIndent) + trimmedLine);
+        } else {
+          formattedLines.push(""); // Preserve empty lines
+        }
+
+        // --- Determine Indentation for the NEXT Line ---
+        let nextIndentLevel = currentLineIndent;
+
+        // Check if the last tag is an opening block tag THAT IS NOT closed on the same line
+        if (lastTagIsOpeningBlock) {
+          const closingTagPattern = new RegExp(`[\/code]`, "i");
+          const openTagIndex = trimmedLine.lastIndexOf(
+            tagsOnLine[tagsOnLine.length - 1][0]
+          );
+          const closeTagIndex = trimmedLine.search(closingTagPattern);
+
+          if (closeTagIndex === -1 || closeTagIndex < openTagIndex) {
+            nextIndentLevel = currentLineIndent + 1; // Increase indent for next line
+          }
+        }
+
+        // Update indentLevel for the next iteration
+        indentLevel = nextIndentLevel;
+
+        // --- Update [code] block state ---
+        // Enter code block if line contains [code] but not [/code]
+        if (lineContainsCodeOpen && !lineContainsCodeClose) {
+          // More precise check: does the *last* code tag on the line lack a closing tag *after* it?
+          let lastCodeOpenIndex = -1;
+          let lastCodeCloseIndex = -1;
+          trimmedLine.replace(/[code]/gi, (match, offset) => {
+            lastCodeOpenIndex = offset;
+          });
+          trimmedLine.replace(/[\/code]/gi, (match, offset) => {
+            lastCodeCloseIndex = offset;
+          });
+
+          if (lastCodeOpenIndex > lastCodeCloseIndex) {
+            // Includes case where close index is -1
+            inCodeBlock = true;
+          }
+        }
+      }
+    });
+
+    const formattedText = formattedLines.join("\n");
+    // console.log("Formatting complete. Applying text."); // Uncomment for debugging
+
+    // Only update if the text actually changed to avoid unnecessary actions
+    if (textarea.value !== formattedText) {
+      // Basic cursor position saving (may be inaccurate after formatting)
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+
+      textarea.value = formattedText;
+
+      // Restore cursor position
+      textarea.setSelectionRange(start, end);
+
+      updateHighlight();
+      adjustTextareaAndHighlight();
+      // console.log("Textarea updated and highlight refreshed."); // Uncomment for debugging
+    } else {
+      // console.log("No changes detected after formatting."); // Uncomment for debugging
+    }
   };
 
   // =============================
@@ -1245,6 +1409,16 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         }
         updateHighlight();
         adjustTextareaAndHighlight();
+      }
+
+      // Handle F8 for auto-formatting
+      if (e.key === "F8") {
+        e.preventDefault(); // Prevent any default F8 behavior
+        try {
+          autoFormatBBCode(); // Call the formatting function
+        } catch (error) {
+          console.error("Error during BBCode auto-formatting:", error);
+        }
       }
     });
     let lastContent = textArea.value,
