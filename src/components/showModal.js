@@ -4,9 +4,14 @@
  * @param {Object} options - Configuration options
  * @param {Function} options.loadTabContent - Function to load tab content
  * @param {Function} options.hideModal - Function to hide the modal
+ * @param {string} [options.initialTabName="installed"] - The name of the tab to show initially.
  */
 import { log } from "../utils/logger.js";
-export function showModal({ loadTabContent, hideModal }) {
+export function showModal({
+  loadTabContent,
+  hideModal,
+  initialTabName = "installed", // Default if not provided
+}) {
   log("Showing userscript manager modal...");
 
   let modal = document.getElementById("mod-manager-modal");
@@ -59,9 +64,18 @@ export function showModal({ loadTabContent, hideModal }) {
     });
   }
 
+  // Set the active tab visually
+  modal.querySelectorAll(".mod-manager-tab").forEach((tab) => {
+    if (tab.dataset.tab === initialTabName) {
+      tab.classList.add("active");
+    } else {
+      tab.classList.remove("active");
+    }
+  });
+
   modal.style.display = "block";
   document.body.style.overflow = "hidden";
 
-  // Initial view - load the first tab (Installed Scripts)
-  loadTabContent("installed");
+  // Load the initial or last selected tab content
+  loadTabContent(initialTabName);
 }

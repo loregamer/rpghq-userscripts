@@ -330,6 +330,9 @@ function handleLoadTabContent(tabName) {
     renderScriptsListView: handleRenderScriptsListView,
     executionPhases: EXECUTION_PHASES,
   });
+
+  // Save the last selected tab
+  gmSetValue("last_selected_tab", tabName);
 }
 
 // --- Modal Visibility Logic ---
@@ -344,9 +347,13 @@ function toggleModalVisibility() {
   if (isVisible) {
     hideModal();
   } else {
+    // Retrieve the last selected tab, default to 'installed'
+    const lastTab = gmGetValue("last_selected_tab", "installed");
+    log(`Retrieved last selected tab: ${lastTab}`);
     showModal({
       loadTabContent: handleLoadTabContent,
       hideModal,
+      initialTabName: lastTab, // Pass the initial tab name
     });
   }
 }
