@@ -403,6 +403,9 @@ SOFTWARE.
       "tabs",
     ];
 
+    // Non-breaking space character
+    const nbsp = "\u00A0";
+
     // Regex to find BBCode tags
     const tagRegex = /\[(\/)?([a-zA-Z0-9*]+)(?:=([^]]*))?\]/g;
 
@@ -538,12 +541,33 @@ SOFTWARE.
             lineBuffer = "";
           }
 
-          // Add list item with a space after it
-          lineBuffer = segment.text + " ";
+          // Add list item with a non-breaking space after it
+          lineBuffer = segment.text + nbsp;
         } else {
           // Regular tags and text get added to the current line buffer
-          if (lineBuffer && !segment.isListItem) lineBuffer += " ";
+          if (lineBuffer) {
+            // If we already have content in the line buffer
+            if (segment.isTag) {
+              // If this segment is a tag, add a space before it if needed
+              if (!lineBuffer.endsWith(nbsp) && !lineBuffer.endsWith(" ")) {
+                lineBuffer += nbsp;
+              }
+            } else if (
+              !lineBuffer.endsWith(nbsp) &&
+              !lineBuffer.endsWith(" ") &&
+              !segment.isListItem
+            ) {
+              // If this segment is text and not a list item, add a space before it
+              lineBuffer += nbsp;
+            }
+          }
+
           lineBuffer += segment.text;
+
+          // If this is a tag, add a space after it
+          if (segment.isTag && !segment.isListItem) {
+            lineBuffer += nbsp;
+          }
         }
       }
 
