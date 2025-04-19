@@ -493,6 +493,54 @@ SOFTWARE.
     loadSavedPreferences();
     loadStyles();
     loadScripts(0, function () {
+      // *** ADDED: Define the BBCode mode using the simple mode addon ***
+      CodeMirror.defineSimpleMode("bbcode", {
+        start: [
+          // Opening tag with value: [tag=value] or [tag="value"]
+          {
+            regex: /(\[)([a-zA-Z0-9_]+)\s*(=)\s*("?)([^"\]]+?)(\4)(\])/,
+            token: [
+              "bbcode-bracket",
+              "bbcode-tag",
+              "bbcode-equals",
+              null,
+              "bbcode-value",
+              null,
+              "bbcode-bracket",
+            ],
+            sol: false,
+          },
+          // Opening tag without value: [tag] or [*]
+          {
+            regex: /(\[)(\*|[a-zA-Z0-9_]+)(\])/,
+            token: ["bbcode-bracket", "bbcode-tag", "bbcode-bracket"],
+            sol: false,
+          },
+          // Closing tag: [/tag]
+          {
+            regex: /(\[\/)([a-zA-Z0-9_]+)(\])/,
+            token: ["bbcode-bracket", "bbcode-tag", "bbcode-bracket"],
+            sol: false,
+          },
+          // URLs outside tags
+          {
+            regex: /((?:https?|ftp):\/\/[^\s\[\]<]+)/,
+            token: "link", // Can be styled separately if needed
+            sol: false,
+          },
+          // Plain text content
+          {
+            regex: /[^\[]+/, // Match any character that is not '['
+            token: null,
+          },
+          // Single unmatched bracket (treat as plain text or error)
+          {
+            regex: /\[/,
+            token: null, // Or assign an 'error' token if desired
+          },
+        ],
+      });
+
       initializeCodeMirror();
       addCustomizationControls();
     });
