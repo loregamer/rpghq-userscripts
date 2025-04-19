@@ -18,7 +18,7 @@ import { log } from "../../utils/logger.js";
 export function renderForumPreferencesTab(container) {
   log("Rendering Forum Preferences tab with subtabs...");
 
-  container.innerHTML = `<h2>Forum Preferences</h2>`;
+  // container.innerHTML = `<h2>Forum Preferences</h2>`; // Removed title
 
   // --- REMOVED Theme Customizer Section ---
   // const themeSection = document.createElement("div");
