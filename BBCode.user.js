@@ -438,99 +438,218 @@ SOFTWARE.
         continue;
       }
 
-      // Process the line for proper formatting
-      let currentLineIndent = indentLevel;
-      let nextIndentLevel = indentLevel;
+      // Process line into segments that need their own lines
+      let segments = [];
+      let currentPosition = 0;
+      let currentSegment = "";
+      let segmentIndentChange = 0;
 
-      // Check for block tags that need special handling
-      let processedLine = trimmedLine;
-      let lineSplit = false;
+      // Process the segments of the line
+      while (currentPosition < trimmedLine.length) {
+        // Find the next block tag
+        let nextBlockTagMatch = null;
+        let nextBlockTagPos = trimmedLine.length;
 
-      // Process opening block tags that need line breaks
-      for (const tag of blockTags) {
-        const openTagRegex = new RegExp(`\\[${tag}(=[^\\]]*)?(\\s*)\\]`, "i");
-        const match = processedLine.match(openTagRegex);
+        for (const tag of blockTags) {
+          // Look for opening tags
+          const openTagRegex = new RegExp(`\\[${tag}(=[^\\]]*)?(\\s*)]`, "i");
+          const openMatch = openTagRegex.exec(
+            trimmedLine.substring(currentPosition)
+          );
 
-        if (match && !processedLine.toLowerCase().includes(`[/${tag}]`)) {
-          // If tag is at start of line, just keep it there
-          if (match.index === 0) {
-            nextIndentLevel++;
-          } else {
-            // Split the line at the tag
-            const beforeTag = processedLine.substring(0, match.index).trim();
-            const tagAndAfter = processedLine.substring(match.index).trim();
+          if (
+            openMatch &&
+            currentPosition + openMatch.index < nextBlockTagPos
+          ) {
+            nextBlockTagMatch = {
+              tag: tag,
+              isClosing: false,
+              position: currentPosition + openMatch.index,
+              length: openMatch[0].length,
+            };
+            nextBlockTagPos = currentPosition + openMatch.index;
+          }
 
-            if (beforeTag) {
-              formattedLines.push("\t".repeat(currentLineIndent) + beforeTag);
-            }
+          // Look for closing tags
+          const closeTagRegex = new RegExp(`\\[/${tag}\\]`, "i");
+          const closeMatch = closeTagRegex.exec(
+            trimmedLine.substring(currentPosition)
+          );
 
-            processedLine = tagAndAfter;
-            lineSplit = true;
-            nextIndentLevel++;
+          if (
+            closeMatch &&
+            currentPosition + closeMatch.index < nextBlockTagPos
+          ) {
+            nextBlockTagMatch = {
+              tag: tag,
+              isClosing: true,
+              position: currentPosition + closeMatch.index,
+              length: closeMatch[0].length,
+            };
+            nextBlockTagPos = currentPosition + closeMatch.index;
           }
         }
+
+        if (nextBlockTagMatch) {
+          // Add text before the tag to current segment
+          if (nextBlockTagMatch.position > currentPosition) {
+            currentSegment += trimmedLine.substring(
+              currentPosition,
+              nextBlockTagMatch.position
+            );
+          }
+
+          // If we have content in the current segment, add it to segments list
+          if (currentSegment.trim()) {
+            segments.push({
+              text: currentSegment.trim(),
+              indentChange: segmentIndentChange,
+            });
+          }
+
+          // Create a new segment for the block tag itself
+          segments.push({
+            text: trimmedLine.substring(
+              nextBlockTagMatch.position,
+              nextBlockTagMatch.position + nextBlockTagMatch.length
+            ),
+            indentChange: nextBlockTagMatch.isClosing ? -1 : 1,
+            isBlockTag: true,
+            isClosing: nextBlockTagMatch.isClosing,
+          });
+
+          // Reset for the next segment
+          currentPosition =
+            nextBlockTagMatch.position + nextBlockTagMatch.length;
+          currentSegment = "";
+          segmentIndentChange = 0;
+        } else {
+          // No more block tags, add the rest of the line
+          currentSegment += trimmedLine.substring(currentPosition);
+          currentPosition = trimmedLine.length;
+        }
       }
 
-      // Process closing block tags
-      for (const tag of blockTags) {
-        const closeTagRegex = new RegExp(`\\[/${tag}\\](\\s*)(.*?)$`, "i");
-        const match = processedLine.match(closeTagRegex);
+      // Add the final segment if there's anything left
+      if (currentSegment.trim()) {
+        segments.push({
+          text: currentSegment.trim(),
+          indentChange: segmentIndentChange,
+        });
+      }
 
-        if (match) {
-          if (match.index === 0) {
-            // Closing tag at beginning of line - reduce indent for this line
-            currentLineIndent = Math.max(0, indentLevel - 1);
-            nextIndentLevel = currentLineIndent;
-          } else {
-            // Split the line at the closing tag
-            const beforeTag = processedLine.substring(0, match.index).trim();
-            const tagAndAfter = processedLine.substring(match.index).trim();
-            const afterTag = match[2] ? match[2].trim() : "";
+      // Process nested tags within the same line
+      let processedSegments = [];
 
-            if (beforeTag) {
-              formattedLines.push("\t".repeat(currentLineIndent) + beforeTag);
+      for (let j = 0; j < segments.length; j++) {
+        const segment = segments[j];
+
+        // Handle nested block tags on the same line
+        if (segment.isBlockTag && !segment.isClosing) {
+          // Opening block tag
+          const tagText = segment.text;
+          const nestedTagMatch = tagText.match(/\[([a-zA-Z0-9*]+)(=[^\]]*)?\]/);
+
+          if (nestedTagMatch) {
+            const tagName = nestedTagMatch[1].toLowerCase();
+
+            // Check for inline tags after this block tag
+            if (j + 1 < segments.length && !segments[j + 1].isBlockTag) {
+              // Look for nested block tags in the next segment
+              const nextSegment = segments[j + 1].text;
+              const nestedBlockTagRegex = new RegExp(
+                `\\[(${blockTags.join("|")})(=[^\\]]*)?(\\s*)]`,
+                "i"
+              );
+              const nestedMatch = nestedBlockTagRegex.exec(nextSegment);
+
+              if (nestedMatch && nestedMatch.index === 0) {
+                // Combine this tag with the nested tag
+                segment.text =
+                  tagText + nextSegment.substring(0, nestedMatch[0].length);
+                segments[j + 1].text = nextSegment.substring(
+                  nestedMatch[0].length
+                );
+
+                // If next segment is now empty, remove it
+                if (!segments[j + 1].text.trim()) {
+                  segments.splice(j + 1, 1);
+                }
+              }
             }
-
-            // Add the closing tag with reduced indent
-            const closingIndent = Math.max(0, currentLineIndent - 1);
-            formattedLines.push("\t".repeat(closingIndent) + `[/${tag}]`);
-
-            // If there's content after the closing tag, process it on a new line
-            if (afterTag) {
-              processedLine = afterTag;
-              lineSplit = true;
-            } else {
-              processedLine = "";
-              lineSplit = true;
-            }
-
-            nextIndentLevel = closingIndent;
           }
         }
+
+        processedSegments.push(segment);
       }
 
-      // Add the processed line if it's not empty and hasn't been completely handled
-      if (processedLine) {
-        formattedLines.push("\t".repeat(currentLineIndent) + processedLine);
-      }
+      // Output the segments with proper indentation
+      let currentIndent = indentLevel;
 
-      // Handle special case: first tag on line is a closing block tag
-      if (!lineSplit && tagsOnLine.length > 0) {
-        const firstTag = tagsOnLine[0];
-        if (
-          firstTag[1] === "/" &&
-          blockTags.includes(firstTag[2].toLowerCase()) &&
-          trimmedLine.startsWith(firstTag[0])
-        ) {
-          nextIndentLevel = Math.max(0, currentLineIndent - 1);
+      for (const segment of processedSegments) {
+        if (segment.isClosing) {
+          // Closing tags get the indent level of their content -1
+          currentIndent = Math.max(0, currentIndent - 1);
+        }
+
+        formattedLines.push("\t".repeat(currentIndent) + segment.text);
+
+        if (!segment.isClosing && segment.indentChange !== 0) {
+          // Adjust indent for the next segment
+          currentIndent += segment.indentChange;
         }
       }
 
-      // Update indent level for next line
-      indentLevel = nextIndentLevel;
+      // Update the indent level for the next line
+      indentLevel = currentIndent;
     }
 
-    const formattedText = formattedLines.join("\n");
+    // Post-processing: ensure block tags are on their own lines
+    let finalLines = [];
+    for (let i = 0; i < formattedLines.length; i++) {
+      const line = formattedLines[i];
+      let processedThisLine = false;
+
+      // Check for block tags that should be alone
+      for (const tag of blockTags) {
+        const openingRegex = new RegExp(
+          `^(\\s*)\\[${tag}(=[^\\]]*)?(\\s*)](.+)$`,
+          "i"
+        );
+        const openMatch = line.match(openingRegex);
+
+        if (openMatch) {
+          const indentation = openMatch[1];
+          const tagPart = line.substring(0, line.indexOf("]") + 1);
+          const restPart = line.substring(line.indexOf("]") + 1).trim();
+
+          finalLines.push(indentation + tagPart);
+          finalLines.push(indentation + "\t" + restPart);
+          processedThisLine = true;
+          break;
+        }
+
+        const closingRegex = new RegExp(`^(\\s*)(.+)\\[/${tag}\\]$`, "i");
+        const closeMatch = line.match(closingRegex);
+
+        if (closeMatch) {
+          const indentation = closeMatch[1];
+          const contentPart = closeMatch[2].trim();
+          const tagPart = `[/${tag}]`;
+
+          finalLines.push(indentation + contentPart);
+          finalLines.push(indentation + tagPart);
+          processedThisLine = true;
+          break;
+        }
+      }
+
+      if (!processedThisLine) {
+        finalLines.push(line);
+      }
+    }
+
+    const formattedText = finalLines.join("\n");
 
     // Only update if text changed
     if (textarea.value !== formattedText) {
