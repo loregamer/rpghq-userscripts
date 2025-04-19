@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         RPGHQ - BBCode Highlighter
+// @name         RPGHQ - BBCode Editor
 // @namespace    http://rpghq.org/
-// @version      6.0
-// @description  Highlight BBCode tags in the text editor on RPGHQ forum with consistent colors for matching tags
-// @author       loregamer
+// @version      7.0
+// @description  Enhanced BBCode editor with real-time parsing and syntax highlighting for RPGHQ forums
+// @author       loregamer (modified by Claude)
 // @match        https://rpghq.org/forums/posting.php?mode=post*
 // @match        https://rpghq.org/forums/posting.php?mode=quote*
 // @match        https://rpghq.org/forums/posting.php?mode=reply*
@@ -17,7 +17,7 @@
 /*
 MIT License
 
-Copyright (c) 2024 loregamer
+Copyright (c) 2024 loregamer (modified by Claude)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -55,219 +55,158 @@ SOFTWARE.
   const DEBOUNCE_DELAY = 150; // Milliseconds to wait before processing input
   const URL_REGEX = /(https?:\/\/[^\s<]+)/g;
   const BBCODE_REGEX = /\[(\/?)([a-zA-Z0-9*]+)([^\]]*)\]/g;
+  const WHITESPACE_REGEX = /\s+/g;
 
   // =============================
-  // Tokenization & Highlighting
+  // BBCode Parsing & Rendering
   // =============================
-  // Cached token arrays to avoid re-tokenizing unchanged text sections
-  let cachedTokens = [];
-  let lastText = "";
 
-  /**
-   * Token types:
-   * - 'text': Regular text
-   * - 'tag-open': Opening BBCode tag
-   * - 'tag-close': Closing BBCode tag
-   * - 'url': URL
-   */
-
-  // Create tokens from text for more efficient highlighting
-  const tokenize = (text) => {
-    // Fast path: if text hasn't changed, return cached tokens
-    if (text === lastText && cachedTokens.length) {
-      return cachedTokens;
+  // Get color index for a tag
+  const getColorIndex = (tagName) => {
+    const lowerTagName = tagName.toLowerCase();
+    if (lowerTagName in TAG_COLORS) {
+      return TAG_COLORS[lowerTagName];
     }
 
-    const tokens = [];
+    // Add new tag to our color map
+    TAG_COLORS[lowerTagName] = Object.keys(TAG_COLORS).length % 5;
+    return TAG_COLORS[lowerTagName];
+  };
+
+  // Parse BBCode and convert it to HTML for the editor
+  const parseBBCode = (text) => {
+    if (!text) return "";
+
+    let html = "";
     let lastIndex = 0;
+    let match;
 
-    // First pass: Find all BBCode tags
-    const bbcodeMatches = [...text.matchAll(BBCODE_REGEX)];
+    // Reset regex lastIndex
+    BBCODE_REGEX.lastIndex = 0;
 
-    for (const match of bbcodeMatches) {
+    while ((match = BBCODE_REGEX.exec(text)) !== null) {
       const [fullMatch, slash, tagName, attributes] = match;
       const startIndex = match.index;
 
-      // Add text before the tag
+      // Process text before the tag
       if (startIndex > lastIndex) {
-        tokens.push({
-          type: "text",
-          content: text.substring(lastIndex, startIndex),
-        });
+        const textBefore = text.substring(lastIndex, startIndex);
+        html += processTextWithUrls(textBefore);
       }
 
-      // Add the tag
-      tokens.push({
-        type: slash ? "tag-close" : "tag-open",
-        tagName,
-        attributes,
-        fullMatch,
-        colorIndex: getColorIndex(tagName),
-      });
+      // Process the tag
+      const isClosingTag = slash === "/";
+      const colorIndex = getColorIndex(tagName);
 
-      lastIndex = startIndex + fullMatch.length;
-    }
+      // Start with the opening bracket
+      html += `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span>`;
 
-    // Add remaining text
-    if (lastIndex < text.length) {
-      tokens.push({
-        type: "text",
-        content: text.substring(lastIndex),
-      });
-    }
-
-    // Second pass: Find URLs in text tokens
-    const processedTokens = [];
-    for (const token of tokens) {
-      if (token.type === "text") {
-        let textContent = token.content;
-        let lastUrlIndex = 0;
-
-        const urlMatches = [...textContent.matchAll(URL_REGEX)];
-        if (urlMatches.length === 0) {
-          processedTokens.push(token);
-          continue;
-        }
-
-        for (const urlMatch of urlMatches) {
-          const urlText = urlMatch[0];
-          const urlStartIndex = urlMatch.index;
-
-          // Text before URL
-          if (urlStartIndex > lastUrlIndex) {
-            processedTokens.push({
-              type: "text",
-              content: textContent.substring(lastUrlIndex, urlStartIndex),
-            });
-          }
-
-          // URL token
-          processedTokens.push({
-            type: "url",
-            content: urlText,
-          });
-
-          lastUrlIndex = urlStartIndex + urlText.length;
-        }
-
-        // Remaining text after last URL
-        if (lastUrlIndex < textContent.length) {
-          processedTokens.push({
-            type: "text",
-            content: textContent.substring(lastUrlIndex),
-          });
-        }
+      // Add slash for closing tags and tag name
+      if (isClosingTag) {
+        html += `<span class="bbcode-tag-${colorIndex}">/`;
       } else {
-        processedTokens.push(token);
+        html += `<span class="bbcode-tag-${colorIndex}">`;
       }
-    }
 
-    // Cache the results
-    cachedTokens = processedTokens;
-    lastText = text;
+      // Special handling for list items
+      if (tagName === "*") {
+        html =
+          `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span>` +
+          `<span class="bbcode-list-item">*</span>` +
+          `<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>`;
+      } else {
+        html += `${escapeHTML(tagName)}</span>`;
 
-    return processedTokens;
-  };
+        // Process attributes if any
+        if (attributes) {
+          const leadingWs = attributes.match(/^\s*/)[0];
+          const params = attributes.slice(leadingWs.length);
 
-  // Convert tokens to HTML for display
-  const tokensToHTML = (tokens) => {
-    return tokens
-      .map((token) => {
-        switch (token.type) {
-          case "text":
-            return escapeHTML(token.content);
+          if (params) {
+            if (params.startsWith("=")) {
+              const paramValue = params.slice(1).trim();
 
-          case "url":
-            return `<span class="bbcode-link">${escapeHTML(token.content)}</span>`;
+              if (tagName.toLowerCase() === "color") {
+                const hexMatch = paramValue.match(/^(#[0-9A-Fa-f]{6})/);
+                if (hexMatch) {
+                  const hex = hexMatch[1];
+                  html +=
+                    leadingWs +
+                    `<span class="bbcode-attribute">=</span>` +
+                    `<span class="bbcode-color-preview" style="background-color:${hex}; color:${getContrastColor(hex)};">${escapeHTML(hex)}</span>`;
 
-          case "tag-open":
-          case "tag-close": {
-            const { tagName, attributes, colorIndex } = token;
-
-            // Special handling for list items
-            if (tagName === "*") {
-              return (
-                `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span>` +
-                `<span class="bbcode-list-item">*</span>` +
-                `<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>`
-              );
-            }
-
-            let html = `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span>`;
-
-            // Add slash for closing tags
-            if (token.type === "tag-close") {
-              html += `<span class="bbcode-tag-${colorIndex}">/`;
-            } else {
-              html += `<span class="bbcode-tag-${colorIndex}">`;
-            }
-
-            html += `${escapeHTML(tagName)}</span>`;
-
-            // Process attributes if any
-            if (attributes) {
-              const leadingWs = attributes.match(/^\s*/)[0];
-              const params = attributes.slice(leadingWs.length);
-
-              if (params) {
-                if (params.startsWith("=")) {
-                  const paramValue = params.slice(1).trim();
-
-                  if (tagName.toLowerCase() === "color") {
-                    const hexMatch = paramValue.match(/^(#[0-9A-Fa-f]{6})/);
-                    if (hexMatch) {
-                      const hex = hexMatch[1];
-                      html +=
-                        leadingWs +
-                        `<span class="bbcode-attribute">=</span>` +
-                        `<span class="bbcode-color-preview" style="background-color:${hex}; color:${getContrastColor(hex)};">${escapeHTML(hex)}</span>`;
-
-                      const extra = paramValue.slice(hex.length);
-                      if (extra) {
-                        html += `<span class="bbcode-attribute">${escapeHTML(extra)}</span>`;
-                      }
-                    } else {
-                      html +=
-                        leadingWs +
-                        `<span class="bbcode-attribute">=</span>` +
-                        `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
-                    }
-                  } else {
-                    html +=
-                      leadingWs +
-                      `<span class="bbcode-attribute">=</span>` +
-                      `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
+                  const extra = paramValue.slice(hex.length);
+                  if (extra) {
+                    html += `<span class="bbcode-attribute">${escapeHTML(extra)}</span>`;
                   }
                 } else {
                   html +=
                     leadingWs +
-                    `<span class="bbcode-attribute">${escapeHTML(params)}</span>`;
+                    `<span class="bbcode-attribute">=</span>` +
+                    `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
                 }
               } else {
-                html += leadingWs;
+                html +=
+                  leadingWs +
+                  `<span class="bbcode-attribute">=</span>` +
+                  `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
               }
+            } else {
+              html +=
+                leadingWs +
+                `<span class="bbcode-attribute">${escapeHTML(params)}</span>`;
             }
-
-            html += `<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>`;
-            return html;
+          } else {
+            html += leadingWs;
           }
-
-          default:
-            return "";
         }
-      })
-      .join("");
-  };
 
-  // Get color index for a tag
-  const getColorIndex = (tagName) => {
-    if (tagName in TAG_COLORS) {
-      return TAG_COLORS[tagName];
+        html += `<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>`;
+      }
+
+      lastIndex = startIndex + fullMatch.length;
     }
 
-    // Add new tag to our color map
-    TAG_COLORS[tagName] = Object.keys(TAG_COLORS).length % 5;
-    return TAG_COLORS[tagName];
+    // Process any remaining text
+    if (lastIndex < text.length) {
+      html += processTextWithUrls(text.substring(lastIndex));
+    }
+
+    return html;
+  };
+
+  // Process text and highlight URLs
+  const processTextWithUrls = (text) => {
+    if (!text) return "";
+
+    let result = "";
+    let lastIndex = 0;
+    let match;
+
+    // Reset regex lastIndex
+    URL_REGEX.lastIndex = 0;
+
+    while ((match = URL_REGEX.exec(text)) !== null) {
+      const url = match[0];
+      const startIndex = match.index;
+
+      // Add text before URL
+      if (startIndex > lastIndex) {
+        result += escapeHTML(text.substring(lastIndex, startIndex));
+      }
+
+      // Add highlighted URL
+      result += `<span class="bbcode-link">${escapeHTML(url)}</span>`;
+
+      lastIndex = startIndex + url.length;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      result += escapeHTML(text.substring(lastIndex));
+    }
+
+    return result;
   };
 
   // Escape HTML special characters
@@ -294,6 +233,300 @@ SOFTWARE.
   };
 
   // =============================
+  // Editor Implementation
+  // =============================
+
+  // Create a custom editor that preserves BBCode
+  class BBCodeEditor {
+    constructor(originalTextarea) {
+      this.textarea = originalTextarea;
+      this.container = null;
+      this.editor = null;
+      this.hiddenInput = null;
+      this.lastText = "";
+      this.isComposing = false;
+      this.undoStack = [];
+      this.redoStack = [];
+      this.maxStackSize = 100;
+
+      this.initialize();
+    }
+
+    initialize() {
+      // Create container
+      this.container = document.createElement("div");
+      this.container.className = "bbcode-editor-container";
+
+      // Create editor element
+      this.editor = document.createElement("div");
+      this.editor.className = "bbcode-editor";
+      this.editor.contentEditable = true;
+      this.editor.spellcheck = false;
+      this.editor.autocomplete = "off";
+      this.editor.autocorrect = "off";
+      this.editor.autocapitalize = "off";
+      this.editor.dataset.gramm = false; // Disable Grammarly
+
+      // Create hidden input to store raw BBCode
+      this.hiddenInput = document.createElement("textarea");
+      this.hiddenInput.name = this.textarea.name;
+      this.hiddenInput.id = this.textarea.id;
+      this.hiddenInput.style.display = "none";
+
+      // Replace textarea with our editor
+      this.textarea.parentNode.replaceChild(this.container, this.textarea);
+      this.container.appendChild(this.editor);
+      this.container.appendChild(this.hiddenInput);
+
+      // Initialize with existing content
+      this.setText(this.textarea.value || "");
+
+      // Set up event handlers
+      this.setupEventHandlers();
+
+      // Store initial state in undo stack
+      this.saveUndoState();
+    }
+
+    setupEventHandlers() {
+      // Input event - update content
+      this.editor.addEventListener("input", this.handleInput.bind(this));
+
+      // Key events for special handling
+      this.editor.addEventListener("keydown", this.handleKeyDown.bind(this));
+      this.editor.addEventListener("keyup", this.handleKeyUp.bind(this));
+
+      // Composition events (for IME input)
+      this.editor.addEventListener("compositionstart", () => {
+        this.isComposing = true;
+      });
+
+      this.editor.addEventListener("compositionend", () => {
+        this.isComposing = false;
+        this.handleInput();
+      });
+
+      // Paste event to handle BBCode pasting
+      this.editor.addEventListener("paste", this.handlePaste.bind(this));
+
+      // Focus/blur events
+      this.editor.addEventListener("focus", () => {
+        this.container.classList.add("focused");
+      });
+
+      this.editor.addEventListener("blur", () => {
+        this.container.classList.remove("focused");
+        this.updateTextarea();
+      });
+
+      // Form submission - ensure textarea is updated
+      const form = this.hiddenInput.form;
+      if (form) {
+        form.addEventListener("submit", () => {
+          this.updateTextarea();
+        });
+      }
+    }
+
+    handleInput() {
+      if (this.isComposing) return;
+
+      const currentContent = this.getRawContent();
+
+      // Only process if content has changed
+      if (currentContent !== this.lastText) {
+        this.lastText = currentContent;
+        this.updateHiddenInput(currentContent);
+
+        // Update the highlighting with debounce
+        clearTimeout(this.inputTimeout);
+        this.inputTimeout = setTimeout(() => {
+          this.renderHighlighting(currentContent);
+          this.saveUndoState();
+        }, DEBOUNCE_DELAY);
+      }
+    }
+
+    handleKeyDown(e) {
+      // Handle special keys
+      if (e.key === "Tab") {
+        e.preventDefault();
+        document.execCommand("insertText", false, "    "); // Insert 4 spaces
+      }
+
+      // Handle undo/redo
+      if (e.key === "z" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          this.redo();
+        } else {
+          this.undo();
+        }
+      }
+
+      // Handle line breaks
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.execCommand("insertText", false, "\n");
+      }
+    }
+
+    handleKeyUp(e) {
+      // For arrow keys, Enter, etc., update cursor position
+      if (
+        [
+          "ArrowUp",
+          "ArrowDown",
+          "ArrowLeft",
+          "ArrowRight",
+          "Home",
+          "End",
+          "Enter",
+        ].includes(e.key)
+      ) {
+        this.saveCursorPosition();
+      }
+    }
+
+    handlePaste(e) {
+      e.preventDefault();
+
+      // Get clipboard content as text
+      const clipboardData = e.clipboardData || window.clipboardData;
+      const text = clipboardData.getData("text/plain");
+
+      // Insert text at cursor position
+      document.execCommand("insertText", false, text);
+    }
+
+    // Get raw BBCode content from the editor
+    getRawContent() {
+      // Use textContent to get raw text (ignoring HTML)
+      return this.editor.textContent || "";
+    }
+
+    // Set content of the editor
+    setText(text) {
+      this.lastText = text;
+      this.updateHiddenInput(text);
+      this.renderHighlighting(text);
+    }
+
+    // Update the hidden input with raw BBCode
+    updateHiddenInput(text) {
+      this.hiddenInput.value = text;
+    }
+
+    // Update original textarea (for form submission)
+    updateTextarea() {
+      const content = this.getRawContent();
+      this.updateHiddenInput(content);
+    }
+
+    // Render syntax highlighting
+    renderHighlighting(text) {
+      // Save selection
+      const selection = this.saveSelection();
+
+      // Apply highlighting
+      this.editor.innerHTML = parseBBCode(text);
+
+      // Restore selection
+      if (selection) {
+        this.restoreSelection(selection);
+      }
+    }
+
+    // Save current selection range
+    saveSelection() {
+      const sel = window.getSelection();
+      if (sel.rangeCount > 0) {
+        return sel.getRangeAt(0);
+      }
+      return null;
+    }
+
+    // Restore selection range
+    restoreSelection(range) {
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+    // Save cursor position
+    saveCursorPosition() {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        this.cursorPosition = selection.getRangeAt(0).cloneRange();
+      }
+    }
+
+    // Restore cursor position
+    restoreCursorPosition() {
+      if (this.cursorPosition) {
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(this.cursorPosition);
+      }
+    }
+
+    // Save current state to undo stack
+    saveUndoState() {
+      const content = this.getRawContent();
+
+      // Don't save if content hasn't changed
+      if (
+        this.undoStack.length > 0 &&
+        this.undoStack[this.undoStack.length - 1] === content
+      ) {
+        return;
+      }
+
+      // Save state
+      this.undoStack.push(content);
+
+      // Clear redo stack when new changes are made
+      this.redoStack = [];
+
+      // Limit stack size
+      if (this.undoStack.length > this.maxStackSize) {
+        this.undoStack.shift();
+      }
+    }
+
+    // Undo last change
+    undo() {
+      if (this.undoStack.length <= 1) return; // Keep at least one state
+
+      // Move current state to redo stack
+      const currentState = this.undoStack.pop();
+      this.redoStack.push(currentState);
+
+      // Apply previous state
+      const previousState = this.undoStack[this.undoStack.length - 1];
+      this.setText(previousState);
+    }
+
+    // Redo previously undone change
+    redo() {
+      if (this.redoStack.length === 0) return;
+
+      // Get state from redo stack
+      const nextState = this.redoStack.pop();
+      this.undoStack.push(nextState);
+
+      // Apply the state
+      this.setText(nextState);
+    }
+
+    // Resize the editor to fit content
+    resize() {
+      this.editor.style.height = "auto";
+      this.editor.style.height = Math.max(this.editor.scrollHeight, 500) + "px";
+    }
+  }
+
+  // =============================
   // Debounce Implementation
   // =============================
   const debounce = (func, wait) => {
@@ -311,92 +544,72 @@ SOFTWARE.
   const addStyles = () => {
     const style = document.createElement("style");
     style.textContent = `
-        .bbcode-bracket { color: #D4D4D4; }
-        .bbcode-tag-0 { color: #569CD6; }
-        .bbcode-tag-1 { color: #CE9178; }
-        .bbcode-tag-2 { color: #DCDCAA; }
-        .bbcode-tag-3 { color: #C586C0; }
-        .bbcode-tag-4 { color: #4EC9B0; }
-        .bbcode-attribute { color: #9CDCFE; }
-        .bbcode-list-item { color: #FFD700; }
-        .bbcode-link { color: #5D8FBD; }
-        
-        #bbcode-highlight {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            position: absolute;
-            top: 0; left: 0;
-            z-index: 3;
-            width: 100%; height: 100%;
-            overflow: hidden;
-            pointer-events: none;
-            box-sizing: border-box;
-            padding: 3px;
-            font-family: Verdana, Helvetica, Arial, sans-serif;
-            font-size: 11px;
-            line-height: 15.4px;
-            background-color: transparent;
-            color: transparent;
-        }
-        
-        #message {
-            position: relative;
-            z-index: 2;
-            background: transparent;
-            color: rgb(204, 204, 204);
-            caret-color: white;
-            width: 100%;
-            height: 100%;
-            padding: 3px;
-            box-sizing: border-box;
-            resize: none;
-            overflow: auto;
-            font-family: Verdana, Helvetica, Arial, sans-serif;
-            font-size: 11px;
-            line-height: 15.4px;
-        }
-        
-        .editor-container { 
-            position: relative; 
-            width: 100%; 
-            height: auto; 
-        }
-        
-        #abbc3_buttons.fixed { 
-            position: fixed; 
-            top: 0; 
-            z-index: 1000; 
-            background-color: #3A404A !important; 
-        }
-        
-        .abbc3_buttons_row.fixed { 
-            background-color: #3A404A !important; 
-            position: fixed; 
-            top: 0; 
-            z-index: 1000; 
-        }
-      `;
+          .bbcode-bracket { color: #D4D4D4; }
+          .bbcode-tag-0 { color: #569CD6; }
+          .bbcode-tag-1 { color: #CE9178; }
+          .bbcode-tag-2 { color: #DCDCAA; }
+          .bbcode-tag-3 { color: #C586C0; }
+          .bbcode-tag-4 { color: #4EC9B0; }
+          .bbcode-attribute { color: #9CDCFE; }
+          .bbcode-list-item { color: #FFD700; }
+          .bbcode-link { color: #5D8FBD; }
+  
+          .bbcode-editor-container {
+              position: relative;
+              width: 100%;
+              height: auto;
+              border: 1px solid #525252;
+              border-radius: 2px;
+              background-color: #3A404A;
+          }
+  
+          .bbcode-editor-container.focused {
+              border-color: #8898aa;
+          }
+  
+          .bbcode-editor {
+              width: 100%;
+              min-height: 500px;
+              padding: 3px;
+              font-family: Verdana, Helvetica, Arial, sans-serif;
+              font-size: 11px;
+              line-height: 15.4px;
+              color: rgb(204, 204, 204);
+              background-color: #3A404A;
+              white-space: pre-wrap;
+              word-break: break-word;
+              overflow-wrap: break-word;
+              overflow-y: auto;
+              box-sizing: border-box;
+              outline: none;
+          }
+  
+          #abbc3_buttons.fixed {
+              position: fixed;
+              top: 0;
+              z-index: 1000;
+              background-color: #3A404A !important;
+          }
+  
+          .abbc3_buttons_row.fixed {
+              background-color: #3A404A !important;
+              position: fixed;
+              top: 0;
+              z-index: 1000;
+          }
+  
+          /* Match forum styling */
+          ::selection {
+              background-color: #525252;
+              color: white;
+          }
+        `;
     document.head.appendChild(style);
   };
 
   // =============================
   // Layout Adjustment Functions
   // =============================
-  // Observer for textarea size changes
-  let resizeObserver = null;
-
-  const setupResizeObserver = (textArea, highlightDiv) => {
-    if (resizeObserver) {
-      resizeObserver.disconnect();
-    }
-
-    resizeObserver = new ResizeObserver(() => {
-      adjustTextareaAndHighlight(textArea, highlightDiv);
-    });
-
-    resizeObserver.observe(textArea);
-  };
-
   // Update page title based on URL parameters
   const updatePageTitle = () => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -413,38 +626,12 @@ SOFTWARE.
     }
   };
 
-  const adjustTextareaAndHighlight = (textArea, highlightDiv) => {
-    if (!textArea || !highlightDiv) return;
-
-    // Use IntersectionObserver to optimize for when the textarea is actually visible
-    if (textArea.offsetHeight === 0) return;
-
-    textArea.style.height = "auto";
-    textArea.style.height = textArea.scrollHeight + "px";
-
-    const computed = window.getComputedStyle(textArea);
-    Object.assign(highlightDiv.style, {
-      width: textArea.offsetWidth + "px",
-      height: textArea.offsetHeight + "px",
-      padding: computed.padding,
-      borderWidth: computed.borderWidth,
-      borderStyle: computed.borderStyle,
-      borderColor: "transparent",
-      fontFamily: computed.fontFamily,
-      fontSize: computed.fontSize,
-      lineHeight: computed.lineHeight,
-    });
-
-    positionSmileyBox();
-    positionEditorHeader();
-  };
-
-  // Smiley box positioning
+  // Position smiley box
   const positionSmileyBox = () => {
-    const smileyBox = document.getElementById("smiley-box"),
-      textarea = document.getElementById("message");
+    const smileyBox = document.getElementById("smiley-box");
+    const editor = document.querySelector(".bbcode-editor");
 
-    if (!smileyBox || !textarea) return;
+    if (!smileyBox || !editor) return;
 
     if (window.innerWidth <= 768) {
       Object.assign(smileyBox.style, {
@@ -455,12 +642,13 @@ SOFTWARE.
         marginBottom: "10px",
       });
     } else {
-      const { top, right } = textarea.getBoundingClientRect(),
-        windowWidth = window.innerWidth,
-        scrollTop = window.pageYOffset || document.documentElement.scrollTop,
-        scrollStart = top + scrollTop,
-        smileyBoxWidth = 220,
-        leftPosition = Math.min(right + 10, windowWidth - smileyBoxWidth);
+      const { top, right } = editor.getBoundingClientRect();
+      const windowWidth = window.innerWidth;
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
+      const scrollStart = top + scrollTop;
+      const smileyBoxWidth = 220;
+      const leftPosition = Math.min(right + 10, windowWidth - smileyBoxWidth);
 
       Object.assign(smileyBox.style, {
         position: "absolute",
@@ -474,16 +662,16 @@ SOFTWARE.
 
   // Editor header positioning
   const positionEditorHeader = () => {
-    const editorHeader = document.getElementById("abbc3_buttons"),
-      textarea = document.getElementById("message");
+    const editorHeader = document.getElementById("abbc3_buttons");
+    const editor = document.querySelector(".bbcode-editor");
 
-    if (!editorHeader || !textarea) return;
+    if (!editorHeader || !editor) return;
 
-    const textareaRect = textarea.getBoundingClientRect(),
-      headerRect = editorHeader.getBoundingClientRect(),
-      scrollTop = window.pageYOffset || document.documentElement.scrollTop,
-      offset = headerRect.top - textareaRect.top,
-      scrollStart = textareaRect.top + scrollTop - offset;
+    const editorRect = editor.getBoundingClientRect();
+    const headerRect = editorHeader.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const offset = headerRect.top - editorRect.top;
+    const scrollStart = editorRect.top + scrollTop - offset;
 
     if (scrollTop >= scrollStart) {
       if (!editorHeader.classList.contains("fixed")) {
@@ -495,15 +683,15 @@ SOFTWARE.
       }
 
       Object.assign(editorHeader.style, {
-        width: textarea.offsetWidth + "px",
-        left: textareaRect.left + "px",
+        width: editor.offsetWidth + "px",
+        left: editorRect.left + "px",
         top: "0px",
       });
 
       let cumulative = 0;
       editorHeader.querySelectorAll(".abbc3_buttons_row").forEach((row) => {
         Object.assign(row.style, {
-          width: textarea.offsetWidth + "px",
+          width: editor.offsetWidth + "px",
           position: "fixed",
           top: cumulative + "px",
         });
@@ -538,6 +726,115 @@ SOFTWARE.
   };
 
   // =============================
+  // Forum BBCode Button Integration
+  // =============================
+
+  // Hook into forum's BBCode buttons to insert BBCode into our editor
+  const hookBBCodeButtons = () => {
+    // Find all BBCode buttons
+    const bbcodeButtons = document.querySelectorAll(".abbc3_button");
+    const editor = document.querySelector(".bbcode-editor");
+
+    if (!bbcodeButtons.length || !editor) return;
+
+    // Get original click handlers and replace them
+    for (const button of bbcodeButtons) {
+      // Skip certain buttons like "Add file" that have special behavior
+      if (
+        button.id === "abbc3_addfile" ||
+        button.classList.contains("special-button")
+      ) {
+        continue;
+      }
+
+      // Clone button to remove all event listeners
+      const newButton = button.cloneNode(true);
+      button.parentNode.replaceChild(newButton, button);
+
+      // Add our own click handler
+      newButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const bbcodeAttr = newButton.getAttribute("data-bbcode");
+        if (!bbcodeAttr) return;
+
+        // Get BBCode to insert
+        const bbcodeData = JSON.parse(bbcodeAttr);
+        let { open, close } = bbcodeData;
+
+        // Handle special case for URL button
+        if (open === "[url=]" && close === "[/url]") {
+          insertURL();
+          return;
+        }
+
+        // Focus editor and insert BBCode
+        editor.focus();
+        insertBBCode(open, close);
+      });
+    }
+
+    // Special handler for URL button
+    const insertURL = () => {
+      const editor = document.querySelector(".bbcode-editor");
+      const selection = window.getSelection();
+      const selectedText = selection.toString();
+
+      let url = prompt("Enter the URL:", "https://");
+
+      if (!url) return;
+
+      if (selectedText) {
+        // Selected text becomes the link text
+        insertBBCode(`[url=${url}]`, "[/url]");
+      } else {
+        // URL becomes both the URL and the link text
+        insertBBCode("[url]", "[/url]");
+        const range = selection.getRangeAt(0);
+        range.insertNode(document.createTextNode(url));
+      }
+    };
+
+    // Function to insert BBCode at cursor
+    const insertBBCode = (openTag, closeTag) => {
+      const selection = window.getSelection();
+
+      if (selection.rangeCount === 0) return;
+
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString();
+
+      // Delete selected text
+      range.deleteContents();
+
+      // Create text nodes for BBCode tags
+      const openNode = document.createTextNode(openTag);
+      const closeNode = document.createTextNode(closeTag);
+
+      // Insert the tags and selected text
+      range.insertNode(closeNode);
+
+      if (selectedText) {
+        range.insertNode(document.createTextNode(selectedText));
+      }
+
+      range.insertNode(openNode);
+
+      // Reposition cursor between tags if no text was selected
+      if (!selectedText) {
+        range.setStartAfter(openNode);
+        range.setEndAfter(openNode);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+
+      // Trigger input event to update highlighting
+      editor.dispatchEvent(new Event("input"));
+    };
+  };
+
+  // =============================
   // Initialization
   // =============================
   const initialize = () => {
@@ -548,57 +845,26 @@ SOFTWARE.
 
     removeInterferingEventListeners();
 
-    const container = document.createElement("div");
-    container.className = "editor-container";
+    // Create our custom editor
+    const bbcodeEditor = new BBCodeEditor(textArea);
 
-    const highlightDiv = document.createElement("div");
-    highlightDiv.id = "bbcode-highlight";
+    // Integrate with forum's BBCode buttons
+    hookBBCodeButtons();
 
-    textArea.parentNode.replaceChild(container, textArea);
-    container.append(highlightDiv, textArea);
-
-    Object.assign(textArea.style, {
-      overflow: "hidden",
-      resize: "none",
-      minHeight: "500px",
-      position: "relative",
-      zIndex: "2",
-      background: "transparent",
-      color: "rgb(204, 204, 204)",
-      caretColor: "white",
-      width: "100%",
-      height: "100%",
-      padding: "3px",
-      boxSizing: "border-box",
-      fontFamily: "Verdana, Helvetica, Arial, sans-serif",
-      fontSize: "11px",
-      lineHeight: "15.4px",
+    // Set up resize observer to handle window resizing
+    const resizeObserver = new ResizeObserver(() => {
+      bbcodeEditor.resize();
+      positionSmileyBox();
+      positionEditorHeader();
     });
 
-    // Setup resize observer for the textarea
-    setupResizeObserver(textArea, highlightDiv);
-
-    // Efficient update function using debounce
-    const updateHighlight = debounce(() => {
-      const currentText = textArea.value;
-      if (currentText === lastText) return;
-
-      const tokens = tokenize(currentText);
-      highlightDiv.innerHTML = tokensToHTML(tokens);
-
-      // Sync scrolling between textarea and highlight div
-      highlightDiv.scrollTop = textArea.scrollTop;
-    }, DEBOUNCE_DELAY);
-
-    // Event listeners
-    textArea.addEventListener("input", updateHighlight);
-    textArea.addEventListener("scroll", () => {
-      highlightDiv.scrollTop = textArea.scrollTop;
-    });
+    resizeObserver.observe(bbcodeEditor.editor);
 
     // Optimized event listeners for window events
     const throttledResize = debounce(() => {
-      adjustTextareaAndHighlight(textArea, highlightDiv);
+      bbcodeEditor.resize();
+      positionSmileyBox();
+      positionEditorHeader();
     }, 100);
 
     const throttledScroll = debounce(() => {
@@ -610,8 +876,9 @@ SOFTWARE.
     window.addEventListener("scroll", throttledScroll);
 
     // Initial rendering
-    updateHighlight();
-    adjustTextareaAndHighlight(textArea, highlightDiv);
+    bbcodeEditor.resize();
+    positionSmileyBox();
+    positionEditorHeader();
   };
 
   // =============================
