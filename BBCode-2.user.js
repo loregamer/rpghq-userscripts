@@ -42,22 +42,235 @@ SOFTWARE.
   "use strict";
 
   // =============================
-  // Global Utility Functions
+  // Constants & Configuration
   // =============================
-  const updatePageTitle = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const mode = urlParams.get("mode");
-    const postingTitleElement = document.querySelector(".posting-title a");
-    if (postingTitleElement) {
-      const threadTitle = postingTitleElement.textContent.trim();
-      if (mode === "reply" || mode === "quote") {
-        document.title = `RPGHQ - Replying to "${threadTitle}"`;
-      } else if (mode === "edit") {
-        document.title = `RPGHQ - Editing post in "${threadTitle}"`;
-      }
-    }
+  const TAG_COLORS = {
+    img: 1,
+    url: 4,
+    color: 3,
+    "*": "list-item",
   };
 
+  const DEFAULT_COLOR_INDEX = 2; // Default color for tags not in TAG_COLORS
+  const DEBOUNCE_DELAY = 150; // Milliseconds to wait before processing input
+  const URL_REGEX = /(https?:\/\/[^\s<]+)/g;
+  const BBCODE_REGEX = /\[(\/?)([a-zA-Z0-9*]+)([^\]]*)\]/g;
+
+  // =============================
+  // Tokenization & Highlighting
+  // =============================
+  // Cached token arrays to avoid re-tokenizing unchanged text sections
+  let cachedTokens = [];
+  let lastText = "";
+
+  /**
+   * Token types:
+   * - 'text': Regular text
+   * - 'tag-open': Opening BBCode tag
+   * - 'tag-close': Closing BBCode tag
+   * - 'url': URL
+   */
+
+  // Create tokens from text for more efficient highlighting
+  const tokenize = (text) => {
+    // Fast path: if text hasn't changed, return cached tokens
+    if (text === lastText && cachedTokens.length) {
+      return cachedTokens;
+    }
+
+    const tokens = [];
+    let lastIndex = 0;
+
+    // First pass: Find all BBCode tags
+    const bbcodeMatches = [...text.matchAll(BBCODE_REGEX)];
+
+    for (const match of bbcodeMatches) {
+      const [fullMatch, slash, tagName, attributes] = match;
+      const startIndex = match.index;
+
+      // Add text before the tag
+      if (startIndex > lastIndex) {
+        tokens.push({
+          type: "text",
+          content: text.substring(lastIndex, startIndex),
+        });
+      }
+
+      // Add the tag
+      tokens.push({
+        type: slash ? "tag-close" : "tag-open",
+        tagName,
+        attributes,
+        fullMatch,
+        colorIndex: getColorIndex(tagName),
+      });
+
+      lastIndex = startIndex + fullMatch.length;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      tokens.push({
+        type: "text",
+        content: text.substring(lastIndex),
+      });
+    }
+
+    // Second pass: Find URLs in text tokens
+    const processedTokens = [];
+    for (const token of tokens) {
+      if (token.type === "text") {
+        let textContent = token.content;
+        let lastUrlIndex = 0;
+
+        const urlMatches = [...textContent.matchAll(URL_REGEX)];
+        if (urlMatches.length === 0) {
+          processedTokens.push(token);
+          continue;
+        }
+
+        for (const urlMatch of urlMatches) {
+          const urlText = urlMatch[0];
+          const urlStartIndex = urlMatch.index;
+
+          // Text before URL
+          if (urlStartIndex > lastUrlIndex) {
+            processedTokens.push({
+              type: "text",
+              content: textContent.substring(lastUrlIndex, urlStartIndex),
+            });
+          }
+
+          // URL token
+          processedTokens.push({
+            type: "url",
+            content: urlText,
+          });
+
+          lastUrlIndex = urlStartIndex + urlText.length;
+        }
+
+        // Remaining text after last URL
+        if (lastUrlIndex < textContent.length) {
+          processedTokens.push({
+            type: "text",
+            content: textContent.substring(lastUrlIndex),
+          });
+        }
+      } else {
+        processedTokens.push(token);
+      }
+    }
+
+    // Cache the results
+    cachedTokens = processedTokens;
+    lastText = text;
+
+    return processedTokens;
+  };
+
+  // Convert tokens to HTML for display
+  const tokensToHTML = (tokens) => {
+    return tokens
+      .map((token) => {
+        switch (token.type) {
+          case "text":
+            return escapeHTML(token.content);
+
+          case "url":
+            return `<span class="bbcode-link">${escapeHTML(token.content)}</span>`;
+
+          case "tag-open":
+          case "tag-close": {
+            const { tagName, attributes, colorIndex } = token;
+
+            // Special handling for list items
+            if (tagName === "*") {
+              return (
+                `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span>` +
+                `<span class="bbcode-list-item">*</span>` +
+                `<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>`
+              );
+            }
+
+            let html = `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span>`;
+
+            // Add slash for closing tags
+            if (token.type === "tag-close") {
+              html += `<span class="bbcode-tag-${colorIndex}">/`;
+            } else {
+              html += `<span class="bbcode-tag-${colorIndex}">`;
+            }
+
+            html += `${escapeHTML(tagName)}</span>`;
+
+            // Process attributes if any
+            if (attributes) {
+              const leadingWs = attributes.match(/^\s*/)[0];
+              const params = attributes.slice(leadingWs.length);
+
+              if (params) {
+                if (params.startsWith("=")) {
+                  const paramValue = params.slice(1).trim();
+
+                  if (tagName.toLowerCase() === "color") {
+                    const hexMatch = paramValue.match(/^(#[0-9A-Fa-f]{6})/);
+                    if (hexMatch) {
+                      const hex = hexMatch[1];
+                      html +=
+                        leadingWs +
+                        `<span class="bbcode-attribute">=</span>` +
+                        `<span class="bbcode-color-preview" style="background-color:${hex}; color:${getContrastColor(hex)};">${escapeHTML(hex)}</span>`;
+
+                      const extra = paramValue.slice(hex.length);
+                      if (extra) {
+                        html += `<span class="bbcode-attribute">${escapeHTML(extra)}</span>`;
+                      }
+                    } else {
+                      html +=
+                        leadingWs +
+                        `<span class="bbcode-attribute">=</span>` +
+                        `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
+                    }
+                  } else {
+                    html +=
+                      leadingWs +
+                      `<span class="bbcode-attribute">=</span>` +
+                      `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
+                  }
+                } else {
+                  html +=
+                    leadingWs +
+                    `<span class="bbcode-attribute">${escapeHTML(params)}</span>`;
+                }
+              } else {
+                html += leadingWs;
+              }
+            }
+
+            html += `<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>`;
+            return html;
+          }
+
+          default:
+            return "";
+        }
+      })
+      .join("");
+  };
+
+  // Get color index for a tag
+  const getColorIndex = (tagName) => {
+    if (tagName in TAG_COLORS) {
+      return TAG_COLORS[tagName];
+    }
+
+    // Add new tag to our color map
+    TAG_COLORS[tagName] = Object.keys(TAG_COLORS).length % 5;
+    return TAG_COLORS[tagName];
+  };
+
+  // Escape HTML special characters
   const escapeHTML = (str) =>
     str.replace(
       /[&<>"']/g,
@@ -71,6 +284,7 @@ SOFTWARE.
         })[m]
     );
 
+  // Get contrast color (black or white) for a background color
   const getContrastColor = (hexColor) => {
     const r = parseInt(hexColor.slice(1, 3), 16),
       g = parseInt(hexColor.slice(3, 5), 16),
@@ -80,16 +294,15 @@ SOFTWARE.
   };
 
   // =============================
-  // BBCode Tag Color Management
+  // Debounce Implementation
   // =============================
-  const tagColorMap = { img: 1, url: 4, color: 3 };
-  const getColorIndex = (tagName) => {
-    if (tagName === "*") return "list-item";
-    if (!(tagName in tagColorMap)) {
-      const colorIndex = Object.keys(tagColorMap).length % 5;
-      tagColorMap[tagName] = colorIndex;
-    }
-    return tagColorMap[tagName];
+  const debounce = (func, wait) => {
+    let timeout;
+    return function (...args) {
+      const context = this;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), wait);
+    };
   };
 
   // =============================
@@ -98,153 +311,113 @@ SOFTWARE.
   const addStyles = () => {
     const style = document.createElement("style");
     style.textContent = `
-            .bbcode-bracket { color: #D4D4D4; }
-            .bbcode-tag-0 { color: #569CD6; }
-            .bbcode-tag-1 { color: #CE9178; }
-            .bbcode-tag-2 { color: #DCDCAA; }
-            .bbcode-tag-3 { color: #C586C0; }
-            .bbcode-tag-4 { color: #4EC9B0; }
-            .bbcode-attribute { color: #9CDCFE; }
-            .bbcode-list-item { color: #FFD700; }
-            .bbcode-link { color: #5D8FBD; }
-            
-            #bbcode-highlight {
-                white-space: pre-wrap;
-                word-wrap: break-word;
-                position: absolute;
-                top: 0; left: 0;
-                z-index: 3;
-                width: 100%; height: 100%;
-                overflow: hidden;
-                pointer-events: none;
-                box-sizing: border-box;
-                padding: 3px;
-                font-family: Verdana, Helvetica, Arial, sans-serif;
-                font-size: 11px;
-                line-height: 15.4px;
-                background-color: transparent;
-                color: transparent;
-                transition: all 0.5s ease, height 0.001s linear;
-            }
-            
-            #message {
-                position: relative;
-                z-index: 2;
-                background: transparent;
-                color: rgb(204, 204, 204);
-                caret-color: white;
-                width: 100%;
-                height: 100%;
-                padding: 3px;
-                box-sizing: border-box;
-                resize: none;
-                overflow: auto;
-                font-family: Verdana, Helvetica, Arial, sans-serif;
-                font-size: 11px;
-                line-height: 15.4px;
-            }
-            
-            .editor-container { 
-                position: relative; 
-                width: 100%; 
-                height: auto; 
-            }
-            
-            #abbc3_buttons.fixed { 
-                position: fixed; 
-                top: 0; 
-                z-index: 1000; 
-                background-color: #3A404A !important; 
-            }
-            
-            .abbc3_buttons_row.fixed { 
-                background-color: #3A404A !important; 
-                position: fixed; 
-                top: 0; 
-                z-index: 1000; 
-            }
-        `;
+        .bbcode-bracket { color: #D4D4D4; }
+        .bbcode-tag-0 { color: #569CD6; }
+        .bbcode-tag-1 { color: #CE9178; }
+        .bbcode-tag-2 { color: #DCDCAA; }
+        .bbcode-tag-3 { color: #C586C0; }
+        .bbcode-tag-4 { color: #4EC9B0; }
+        .bbcode-attribute { color: #9CDCFE; }
+        .bbcode-list-item { color: #FFD700; }
+        .bbcode-link { color: #5D8FBD; }
+        
+        #bbcode-highlight {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 3;
+            width: 100%; height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+            box-sizing: border-box;
+            padding: 3px;
+            font-family: Verdana, Helvetica, Arial, sans-serif;
+            font-size: 11px;
+            line-height: 15.4px;
+            background-color: transparent;
+            color: transparent;
+        }
+        
+        #message {
+            position: relative;
+            z-index: 2;
+            background: transparent;
+            color: rgb(204, 204, 204);
+            caret-color: white;
+            width: 100%;
+            height: 100%;
+            padding: 3px;
+            box-sizing: border-box;
+            resize: none;
+            overflow: auto;
+            font-family: Verdana, Helvetica, Arial, sans-serif;
+            font-size: 11px;
+            line-height: 15.4px;
+        }
+        
+        .editor-container { 
+            position: relative; 
+            width: 100%; 
+            height: auto; 
+        }
+        
+        #abbc3_buttons.fixed { 
+            position: fixed; 
+            top: 0; 
+            z-index: 1000; 
+            background-color: #3A404A !important; 
+        }
+        
+        .abbc3_buttons_row.fixed { 
+            background-color: #3A404A !important; 
+            position: fixed; 
+            top: 0; 
+            z-index: 1000; 
+        }
+      `;
     document.head.appendChild(style);
   };
 
   // =============================
-  // BBCode Highlighting
+  // Layout Adjustment Functions
   // =============================
-  const highlightBBCode = (text) => {
-    let output = text.replace(
-      /\[(\/?)([a-zA-Z0-9*]+)([^\]]*)\]/g,
-      (match, slash, keyword, rest) => {
-        // Special handling for list items ([*])
-        if (keyword === "*") {
-          return (
-            `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span>` +
-            `<span class="bbcode-list-item">*</span>` +
-            `<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>`
-          );
-        }
+  // Observer for textarea size changes
+  let resizeObserver = null;
 
-        const colorIndex = getColorIndex(keyword);
-        let out =
-          `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span>` +
-          `<span class="bbcode-tag-${colorIndex}">${escapeHTML(slash + keyword)}</span>`;
+  const setupResizeObserver = (textArea, highlightDiv) => {
+    if (resizeObserver) {
+      resizeObserver.disconnect();
+    }
 
-        if (rest) {
-          const leadingWs = rest.match(/^\s*/)[0];
-          const params = rest.slice(leadingWs.length);
-          if (params) {
-            if (params.startsWith("=")) {
-              const paramValue = params.slice(1).trim();
-              if (keyword.toLowerCase() === "color") {
-                const hexMatch = paramValue.match(/^(#[0-9A-Fa-f]{6})/);
-                if (hexMatch) {
-                  const hex = hexMatch[1];
-                  out +=
-                    leadingWs +
-                    `<span class="bbcode-attribute">=</span>` +
-                    `<span class="bbcode-color-preview" style="background-color:${hex}; color:${getContrastColor(hex)};">${escapeHTML(hex)}</span>`;
-                  const extra = paramValue.slice(hex.length);
-                  if (extra) {
-                    out += `<span class="bbcode-attribute">${escapeHTML(extra)}</span>`;
-                  }
-                } else {
-                  out +=
-                    leadingWs +
-                    `<span class="bbcode-attribute">=</span>` +
-                    `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
-                }
-              } else {
-                out +=
-                  leadingWs +
-                  `<span class="bbcode-attribute">=</span>` +
-                  `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
-              }
-            } else {
-              out +=
-                leadingWs +
-                `<span class="bbcode-attribute">${escapeHTML(params)}</span>`;
-            }
-          }
-        }
-        out += `<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>`;
-        return out;
-      }
-    );
-
-    // Second pass: Wrap URLs with a span using the "bbcode-link" class
-    output = output.replace(/(https?:\/\/[^\s<]+)/g, (match) => {
-      return `<span class="bbcode-link">${match}</span>`;
+    resizeObserver = new ResizeObserver(() => {
+      adjustTextareaAndHighlight(textArea, highlightDiv);
     });
 
-    return output;
+    resizeObserver.observe(textArea);
   };
 
-  // =============================
-  // Textarea & Highlight Adjustment
-  // =============================
-  const adjustTextareaAndHighlight = () => {
-    const textArea = document.getElementById("message"),
-      highlightDiv = document.getElementById("bbcode-highlight");
+  // Update page title based on URL parameters
+  const updatePageTitle = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get("mode");
+    const postingTitleElement = document.querySelector(".posting-title a");
+
+    if (postingTitleElement) {
+      const threadTitle = postingTitleElement.textContent.trim();
+      if (mode === "reply" || mode === "quote") {
+        document.title = `RPGHQ - Replying to "${threadTitle}"`;
+      } else if (mode === "edit") {
+        document.title = `RPGHQ - Editing post in "${threadTitle}"`;
+      }
+    }
+  };
+
+  const adjustTextareaAndHighlight = (textArea, highlightDiv) => {
     if (!textArea || !highlightDiv) return;
+
+    // Use IntersectionObserver to optimize for when the textarea is actually visible
+    if (textArea.offsetHeight === 0) return;
 
     textArea.style.height = "auto";
     textArea.style.height = textArea.scrollHeight + "px";
@@ -266,20 +439,11 @@ SOFTWARE.
     positionEditorHeader();
   };
 
-  const updateHighlight = () => {
-    const textarea = document.getElementById("message"),
-      highlightDiv = document.getElementById("bbcode-highlight");
-    if (textarea && highlightDiv) {
-      highlightDiv.innerHTML = highlightBBCode(textarea.value);
-    }
-  };
-
-  // =============================
-  // Positioning Functions
-  // =============================
+  // Smiley box positioning
   const positionSmileyBox = () => {
     const smileyBox = document.getElementById("smiley-box"),
       textarea = document.getElementById("message");
+
     if (!smileyBox || !textarea) return;
 
     if (window.innerWidth <= 768) {
@@ -308,9 +472,11 @@ SOFTWARE.
     }
   };
 
+  // Editor header positioning
   const positionEditorHeader = () => {
     const editorHeader = document.getElementById("abbc3_buttons"),
       textarea = document.getElementById("message");
+
     if (!editorHeader || !textarea) return;
 
     const textareaRect = textarea.getBoundingClientRect(),
@@ -327,11 +493,13 @@ SOFTWARE.
         placeholder.id = "abbc3_buttons_placeholder";
         editorHeader.parentNode.insertBefore(placeholder, editorHeader);
       }
+
       Object.assign(editorHeader.style, {
         width: textarea.offsetWidth + "px",
         left: textareaRect.left + "px",
         top: "0px",
       });
+
       let cumulative = 0;
       editorHeader.querySelectorAll(".abbc3_buttons_row").forEach((row) => {
         Object.assign(row.style, {
@@ -345,8 +513,10 @@ SOFTWARE.
     } else if (editorHeader.classList.contains("fixed")) {
       editorHeader.classList.remove("fixed");
       editorHeader.style = "";
+
       const placeholder = document.getElementById("abbc3_buttons_placeholder");
       if (placeholder) placeholder.remove();
+
       editorHeader.querySelectorAll(".abbc3_buttons_row").forEach((row) => {
         row.style = "";
         row.classList.remove("fixed");
@@ -405,32 +575,43 @@ SOFTWARE.
       lineHeight: "15.4px",
     });
 
-    let lastContent = textArea.value,
-      updateTimer = null;
+    // Setup resize observer for the textarea
+    setupResizeObserver(textArea, highlightDiv);
 
-    const checkForUpdates = () => {
-      if (textArea.value !== lastContent) {
-        updateHighlight();
-        adjustTextareaAndHighlight();
-        lastContent = textArea.value;
-      }
-      updateTimer = setTimeout(checkForUpdates, 100);
-    };
+    // Efficient update function using debounce
+    const updateHighlight = debounce(() => {
+      const currentText = textArea.value;
+      if (currentText === lastText) return;
 
-    textArea.addEventListener("input", () => {
-      clearTimeout(updateTimer);
-      checkForUpdates();
+      const tokens = tokenize(currentText);
+      highlightDiv.innerHTML = tokensToHTML(tokens);
+
+      // Sync scrolling between textarea and highlight div
+      highlightDiv.scrollTop = textArea.scrollTop;
+    }, DEBOUNCE_DELAY);
+
+    // Event listeners
+    textArea.addEventListener("input", updateHighlight);
+    textArea.addEventListener("scroll", () => {
+      highlightDiv.scrollTop = textArea.scrollTop;
     });
 
-    window.addEventListener("resize", adjustTextareaAndHighlight);
-    window.addEventListener("scroll", () => {
+    // Optimized event listeners for window events
+    const throttledResize = debounce(() => {
+      adjustTextareaAndHighlight(textArea, highlightDiv);
+    }, 100);
+
+    const throttledScroll = debounce(() => {
       positionSmileyBox();
       positionEditorHeader();
-    });
+    }, 100);
 
+    window.addEventListener("resize", throttledResize);
+    window.addEventListener("scroll", throttledScroll);
+
+    // Initial rendering
     updateHighlight();
-    adjustTextareaAndHighlight();
-    checkForUpdates();
+    adjustTextareaAndHighlight(textArea, highlightDiv);
   };
 
   // =============================
