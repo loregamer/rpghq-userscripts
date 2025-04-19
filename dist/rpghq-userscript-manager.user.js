@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
 // @namespace    rpghq-userscripts
-// @version      0.7.0
+// @version      0.8.0
 // @description  RPGHQ Userscript Manager
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -9,6 +9,7 @@
 // @match        *://*.rpghq.org/*
 // @grant        GM_getValue
 // @grant        GM_setValue
+// @grant        GM_deleteValue
 // @grant        GM_listValues
 // @grant        GM_xmlhttpRequest
 // @grant        GM_registerMenuCommand
@@ -901,6 +902,20 @@
       categories: ["UI"],
     },
     {
+      id: "quotes",
+      name: "Better Quotes",
+      version: "1.0.0",
+      description:
+        "Improves quote functionality with styling, avatars, read more/less, and nested quote toggles.",
+      author: "loregamer",
+      image: "https://f.rpghq.org/mqbRTIvY56fp.png?n=pasted-file.png",
+      // Add an image URL if available
+      path: "./scripts/quotes.js",
+      enabledByDefault: !0,
+      settings: [],
+      categories: ["UI"],
+    },
+    {
       id: "kalareact",
       name: "Kalarion Reaction Auto-Marker",
       version: "1.0.0",
@@ -1440,18 +1455,19 @@
     "document-start": [
       "_applyThreadPreferences",
       "_cachePostsOnPage",
-      "recentTopicsFormat",
       "_applyUserPreferences",
-      "bbcode",
-      "commaFormatter",
     ],
     "document-end": [
+      "bbcode",
       "memberSearch",
       "randomTopic",
       "kalareact",
       "notifications",
       "pinThreads",
       "separateReactions",
+      "quotes",
+      "recentTopicsFormat",
+      "commaFormatter",
     ],
     "document-idle": [],
     after_dom: [],
@@ -4007,24 +4023,9 @@
           const lastCleanup = GM_getValue("last_storage_cleanup", 0),
             now = Date.now();
           // Only cleanup if it's been more than 24 hours since last cleanup
-          if (now - lastCleanup >= 864e5) {
-            (GM_listValues ? GM_listValues() : []).forEach((key) => {
-              if ("last_storage_cleanup" === key) return;
-              const data = GM_getValue(key);
-              if (data)
-                try {
-                  const parsed = JSON.parse(data);
-                  parsed.timestamp &&
-                    now - parsed.timestamp >= 864e5 &&
-                    GM_deleteValue(key);
-                } catch (e) {
-                  // If we can't parse the data, it's probably corrupted, so delete it
-                  GM_deleteValue(key);
-                }
-            }),
-              // Update last cleanup timestamp
-              GM_setValue("last_storage_cleanup", now);
-          }
+          now - lastCleanup >= 864e5 &&
+            // Update last cleanup timestamp
+            GM_setValue("last_storage_cleanup", now);
         },
         ReactionHandler_fetchReactions = async (postId, isUnread) => {
           if (!isUnread) {
@@ -5553,7 +5554,578 @@
    * License: MIT
    *
    * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/commaFormatter.md for documentation
-   */ // Prefix for GM_setValue/GM_getValue keys
+   */ var commaFormatter = Object.freeze({
+    __proto__: null,
+    init: function () {
+      const numberRegex = GM_getValue("formatFourDigits", !1)
+        ? /\b\d{4,}\b/g
+        : /\b\d{5,}\b/g;
+      function formatNumberWithCommas(number) {
+        return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+      document
+        .querySelectorAll(
+          "dd.posts, dd.profile-posts, dd.views, span.responsive-show.left-box, .column2 .details dd"
+        )
+        .forEach((element) => {
+          if (
+            element.classList.contains("posts") ||
+            element.classList.contains("views") ||
+            (element.parentElement &&
+              element.parentElement.classList.contains("details"))
+          ) {
+            if (
+              element.previousElementSibling &&
+              "Joined:" === element.previousElementSibling.textContent.trim()
+            )
+              return;
+            element.childNodes.forEach((node) => {
+              node.nodeType === Node.TEXT_NODE &&
+                numberRegex.test(node.nodeValue) &&
+                (node.nodeValue = node.nodeValue.replace(numberRegex, (match) =>
+                  formatNumberWithCommas(match)
+                ));
+            });
+          } else if (element.classList.contains("profile-posts")) {
+            const anchor = element.querySelector("a");
+            anchor &&
+              numberRegex.test(anchor.textContent) &&
+              (anchor.textContent = anchor.textContent.replace(
+                numberRegex,
+                (match) => formatNumberWithCommas(match)
+              ));
+          } else if (element.classList.contains("responsive-show")) {
+            const strong = element.querySelector("strong");
+            strong &&
+              numberRegex.test(strong.textContent) &&
+              (strong.textContent = strong.textContent.replace(
+                numberRegex,
+                (match) => formatNumberWithCommas(match)
+              ));
+          }
+          element.querySelectorAll("strong").forEach((strong) => {
+            numberRegex.test(strong.textContent) &&
+              (strong.textContent = strong.textContent.replace(
+                numberRegex,
+                (match) => formatNumberWithCommas(match)
+              ));
+          });
+        }),
+        (function () {
+          // Only run on index.php
+          if (!window.location.pathname.endsWith("index.php")) return;
+          let totalTopics = 0,
+            totalPosts = 0;
+          // Get all posts and topics elements
+          const postsElements = document.querySelectorAll("dd.posts"),
+            topicsElements = document.querySelectorAll("dd.topics");
+          // Function to format numbers, only adding commas for 5+ digits
+          function formatStatNumber(num) {
+            return num.toString().length >= 5
+              ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+              : num.toString();
+          }
+          // Find and update the statistics block
+          // Sum up posts
+          postsElements.forEach((element, index) => {
+            const postsText = element.childNodes[0].textContent
+                .trim()
+                .replace(/,/g, ""),
+              posts = parseInt(postsText);
+            isNaN(posts) || (totalPosts += posts);
+          }),
+            // Sum up topics
+            topicsElements.forEach((element, index) => {
+              const topicsText = element.childNodes[0].textContent
+                  .trim()
+                  .replace(/,/g, ""),
+                topics = parseInt(topicsText);
+              isNaN(topics) || (totalTopics += topics);
+            });
+          const statsBlock = document.querySelector(".stat-block.statistics");
+          if (statsBlock) {
+            const statsText = statsBlock.querySelector("p");
+            if (statsText) {
+              const existingText = statsText.innerHTML,
+                membersMatch = existingText.match(
+                  /Total members <strong>(\d+)<\/strong>/
+                ),
+                newestMemberMatch = existingText.match(
+                  /(Our newest member <strong>.*?<\/strong>)/
+                );
+              // Keep the members count and newest member info, but update topics and posts
+              membersMatch &&
+                newestMemberMatch &&
+                (statsText.innerHTML = `Total posts <strong>${formatStatNumber(totalPosts)}</strong> • Total topics <strong>${formatStatNumber(totalTopics)}</strong> • Total members <strong>${membersMatch[1]}</strong> • ${newestMemberMatch[1]}`);
+            }
+          }
+        })();
+    },
+  });
+  var quotes = Object.freeze({
+    __proto__: null,
+    init: function () {
+      // Basic utility function for applying styles
+      const utils_applyStyles = function (styles) {
+          const styleSheet = document.createElement("style");
+          (styleSheet.type = "text/css"),
+            (styleSheet.innerText = styles),
+            document.head.appendChild(styleSheet);
+        },
+        betterQuotes = {
+          init() {
+            // Check if already initialized
+            document.body.classList.contains("better-quotes-initialized") ||
+              (this.applyStyles(),
+              this.processQuoteBoxes(),
+              this.removeReadMoreButtons(),
+              this.colorizeUsernames(),
+              this.processAvatars(),
+              document.body.classList.add("better-quotes-initialized"));
+          },
+          applyStyles() {
+            utils_applyStyles(
+              "\n                blockquote {\n                  background-color: #2a2e36;\n                  border-left: 3px solid #4a90e2;\n                  padding: 10px;\n                  margin: 10px 0;\n                  font-size: 0.9em;\n                  line-height: 1.4;\n                }\n                blockquote cite {\n                  display: flex;\n                  align-items: center;\n                }\n                .quote-divider {\n                  border: none;\n                  border-top: 1px solid #3a3f4c;\n                  margin: 10px 0;\n                }\n                .quote-toggle {\n                  cursor: pointer;\n                  color: #4a90e2;\n                  font-size: 0.8em;\n                  margin-top: 5px;\n                  display: block;\n                }\n\n                .quote-read-more {\n                  cursor: pointer;\n                  color: #4a90e2;\n                  font-size: 0.9em;\n                  text-align: center;\n                  padding: 5px;\n                  background-color: rgba(74, 144, 226, 0.1);\n                  border-top: 1px solid rgba(74, 144, 226, 0.3);\n                  margin-top: 10px;\n                }\n\n                .quote-read-more:hover {\n                  background-color: rgba(74, 144, 226, 0.2);\n                }\n\n                .quote-content {\n                  transition: max-height 0.3s ease-out;\n                }\n\n                .quote-content.collapsed {\n                  max-height: 300px;\n                  overflow: hidden;\n                }\n\n                .quote-content.expanded {\n                  max-height: none;\n                }\n\n                blockquote cite a {\n                  display: inline-flex;\n                  align-items: center;\n                  font-weight: bold;\n                }\n                .quote-avatar {\n                  width: 16px;\n                  height: 16px;\n                  margin-left: 4px;\n                  margin-right: 3px;\n                  border-radius: 50%;\n                  object-fit: cover;\n                  vertical-align: middle; /* Align avatar nicely */\n                }\n                blockquote cite {\n                  display: flex;\n                  align-items: center;\n                  margin-bottom: 8px;\n                }\n              "
+            );
+          },
+          restructureCitation(citation) {
+            // Avoid restructuring if already done
+            if (citation.querySelector(".quote-citation-container")) return;
+            const container = document.createElement("div");
+            // Move direct children (like username link and 'said:') into the container
+            for (
+              container.className = "quote-citation-container";
+              citation.firstChild;
+
+            )
+              container.appendChild(citation.firstChild);
+            citation.appendChild(container);
+          },
+          processAvatars() {
+            const citationPromises = [];
+            // Apply avatars to blockquote citations
+            document.querySelectorAll("blockquote cite").forEach((citation) => {
+              this.restructureCitation(citation);
+              // Ensure structure is ready
+              const link = citation.querySelector("a");
+              if (link) {
+                const username = link.textContent.trim(),
+                  citationContainer = citation.querySelector(
+                    ".quote-citation-container"
+                  );
+                if (
+                  username &&
+                  citationContainer &&
+                  !citationContainer.querySelector(".quote-avatar")
+                ) {
+                  const promise = (async () => {
+                    let avatar = null;
+                    if (link.href)
+                      try {
+                        avatar = await this.fetchUserAvatar(link.href);
+                      } catch (fetchError) {
+                        console.error(
+                          `Failed to fetch avatar for ${username}:`,
+                          fetchError
+                        );
+                      }
+                    if (avatar) {
+                      const avatarImg = document.createElement("img");
+                      (avatarImg.src = avatar),
+                        (avatarImg.className = "quote-avatar"),
+                        (avatarImg.alt = `${username}'s avatar`),
+                        citationContainer.insertBefore(
+                          avatarImg,
+                          citationContainer.firstChild
+                        );
+                    }
+                  })();
+                  citationPromises.push(promise);
+                }
+              }
+            }),
+              // Handle potential errors for all promises if needed
+              Promise.allSettled(citationPromises).then((results) => {
+                results.forEach((result) => {
+                  "rejected" === result.status &&
+                    console.error(
+                      "Error processing an avatar citation:",
+                      result.reason
+                    );
+                });
+              });
+          },
+          async fetchUserAvatar(profileUrl) {
+            // Avoid fetching if URL is invalid or points to javascript:void(0)
+            if (!profileUrl || profileUrl.startsWith("javascript:"))
+              return null;
+            try {
+              const response = await fetch(profileUrl);
+              if (!response.ok)
+                throw new Error(`HTTP error! status: ${response.status}`);
+              const text = await response.text(),
+                parser = new DOMParser(),
+                avatarImg = parser
+                  .parseFromString(text, "text/html")
+                  .querySelector(
+                    "#profile-advanced-right img.avatar, .profile-avatar img.avatar, dt img.avatar"
+                  );
+              if (avatarImg && avatarImg.src)
+                return new URL(avatarImg.src, profileUrl).href;
+            } catch (error) {
+              console.error(
+                "Error fetching user avatar from",
+                profileUrl,
+                ":",
+                error
+              );
+            }
+            return null;
+          },
+          colorizeUsernames() {
+            const colorPromises = [];
+            // Apply colors to blockquote citations
+            document.querySelectorAll("blockquote cite a").forEach((link) => {
+              // Only color the username link, not the 'go to post' link
+              if (
+                link.href &&
+                link.href.includes("memberlist.php?mode=viewprofile")
+              ) {
+                const username = link.textContent.trim();
+                if (username) {
+                  const promise = (async () => {
+                    let color = null;
+                    if (link.href)
+                      try {
+                        color = await this.fetchUserColor(link.href);
+                      } catch (fetchError) {
+                        console.error(
+                          `Failed to fetch color for ${username}:`,
+                          fetchError
+                        );
+                      }
+                    color &&
+                      ((link.style.color = color),
+                      link.classList.contains("username-coloured") ||
+                        link.classList.add("username-coloured"));
+                  })();
+                  colorPromises.push(promise);
+                }
+              }
+            }),
+              // Handle potential errors
+              Promise.allSettled(colorPromises).then((results) => {
+                results.forEach((result) => {
+                  "rejected" === result.status &&
+                    console.error(
+                      "Error processing a username color citation:",
+                      result.reason
+                    );
+                });
+              });
+          },
+          async fetchUserColor(profileUrl) {
+            if (!profileUrl || profileUrl.startsWith("javascript:"))
+              return null;
+            try {
+              const response = await fetch(profileUrl);
+              if (!response.ok)
+                throw new Error(`HTTP error! status: ${response.status}`);
+              const text = await response.text(),
+                parser = new DOMParser(),
+                pageBody = parser
+                  .parseFromString(text, "text/html")
+                  .querySelector("#page-body");
+              if (!pageBody)
+                return (
+                  console.warn(
+                    "Could not find #page-body in profile page:",
+                    profileUrl
+                  ),
+                  null
+                );
+              // Search for the colored username *within* the page body
+              const coloredUsername = pageBody.querySelector(
+                'dd span[style*="color"], span[style*="color"], .username-coloured[style*="color"]'
+              );
+              return coloredUsername &&
+                coloredUsername.style.color &&
+                !coloredUsername.closest("#username_logged_in")
+                ? coloredUsername.style.color
+                : null;
+              // If no color found within page-body, return null
+            } catch (error) {
+              console.error(
+                "Error fetching user color from",
+                profileUrl,
+                ":",
+                error
+              );
+            }
+            return null;
+          },
+          fixQuoteLinks() {
+            document.querySelectorAll("blockquote cite a").forEach((link) => {
+              // Target only the 'go to post' links (usually contain '↑' or href includes '#p')
+              if (
+                "CITE" === link.parentElement.tagName &&
+                (link.textContent.includes("↑") || link.href.includes("#p"))
+              ) {
+                const linkText = link.textContent.trim();
+                linkText.startsWith("↑") &&
+                  ("↑" === linkText
+                    ? (link.innerHTML = "&nbsp;↑&nbsp;")
+                    : linkText.startsWith("↑ ") ||
+                      linkText.startsWith("↑&nbsp;") ||
+                      // Add space only if it doesn't already have one
+                      (link.textContent = "↑ " + linkText.slice(1)));
+              }
+            });
+          },
+          processQuoteBoxes() {
+            const allQuotes = document.querySelectorAll(
+              "blockquote:not(.quote-processed)"
+            );
+            // Process from innermost to outermost
+            Array.from(allQuotes)
+              .sort((a, b) => {
+                // Compare depth by counting ancestor blockquotes
+                const depthA = Array.from(
+                  a.querySelectorAll("blockquote")
+                ).length;
+                return (
+                  Array.from(b.querySelectorAll("blockquote")).length - depthA
+                );
+                // Process deeper quotes first
+              })
+              .forEach((quoteBox) => {
+                // Check again if it was processed as part of a parent's inner loop
+                quoteBox.classList.contains("quote-processed") ||
+                  this.processQuote(quoteBox);
+              }),
+              this.fixQuoteLinks();
+          },
+          processQuote(quoteBox) {
+            if (quoteBox.classList.contains("quote-processed")) return;
+            null !== quoteBox.parentElement.closest("blockquote")
+              ? this.processNestedQuote(quoteBox)
+              : this.processOuterQuote(quoteBox),
+              quoteBox.classList.add("quote-processed");
+          },
+          processNestedQuote(quoteBox) {
+            // Find cite potentially deeper than direct child first
+            let citation = quoteBox.querySelector("cite");
+            // Ensure citation is a direct child if found
+            citation && citation.parentElement !== quoteBox
+              ? quoteBox.prepend(citation)
+              : citation ||
+                // Fallback: Check for direct child cite if not found deeper (common case)
+                (citation = quoteBox.querySelector(":scope > cite"));
+            let nestedContent = quoteBox.querySelector(
+              ":scope > .nested-quote-content"
+            );
+            if (!nestedContent) {
+              (nestedContent = document.createElement("div")),
+                (nestedContent.className = "nested-quote-content");
+              [...quoteBox.childNodes].forEach((node) => {
+                // Keep the identified citation and the new container itself out
+                node !== citation &&
+                  node !== nestedContent &&
+                  nestedContent.appendChild(node);
+              }),
+                quoteBox.appendChild(nestedContent);
+            }
+            // Add toggle, passing the potentially found/moved citation
+            this.addQuoteToggle(quoteBox, nestedContent, citation);
+          },
+          processOuterQuote(quoteBox) {
+            let quoteContent = quoteBox.querySelector(
+              ":scope > .quote-content"
+            );
+            if (!quoteContent) {
+              // Move all direct children into the content div
+              for (
+                quoteContent = document.createElement("div"),
+                  quoteContent.className = "quote-content";
+                quoteBox.firstChild;
+
+              )
+                quoteContent.appendChild(quoteBox.firstChild);
+              quoteBox.appendChild(quoteContent);
+            }
+            // Use ResizeObserver if available for more reliable height checks
+            if (
+              (this.updateReadMoreToggle(quoteBox, quoteContent),
+              "undefined" == typeof ResizeObserver ||
+                quoteBox.dataset.resizeObserverAttached)
+            ) {
+              if (!quoteBox.dataset.mutationObserverAttached) {
+                new MutationObserver(() => {
+                  this.updateReadMoreToggle(quoteBox, quoteContent);
+                  // Maybe disconnect after first trigger if only initial load matters?
+                  // observer.disconnect();
+                  // delete quoteBox.dataset.mutationObserverAttached;
+                }).observe(quoteContent, {
+                  childList: !0,
+                  subtree: !0,
+                }),
+                  (quoteBox.dataset.mutationObserverAttached = "true");
+              }
+            } else {
+              new ResizeObserver(() => {
+                this.updateReadMoreToggle(quoteBox, quoteContent);
+              }).observe(quoteContent),
+                (quoteBox.dataset.resizeObserverAttached = "true");
+            }
+            // Fallback or additional observer for dynamic content loading
+          },
+          updateReadMoreToggle(quoteBox, quoteContent) {
+            let readMoreToggle = quoteBox.querySelector(
+              ":scope > .quote-read-more"
+            );
+            const contentHeight = quoteContent.scrollHeight;
+            // Debounce this check slightly to avoid excessive calls during reflows
+            clearTimeout(quoteBox._readMoreTimeout),
+              (quoteBox._readMoreTimeout = setTimeout(() => {
+                contentHeight > 310
+                  ? // Overflow threshold
+                    (readMoreToggle ||
+                      ((readMoreToggle =
+                        this.createReadMoreToggle(quoteContent)),
+                      quoteBox.appendChild(readMoreToggle)),
+                    quoteContent.classList.contains("expanded")
+                      ? // Already expanded, ensure text is correct
+                        (readMoreToggle.textContent = "Show less...")
+                      : (quoteContent.classList.add("collapsed"),
+                        (quoteContent.style.maxHeight = "300px"),
+                        (readMoreToggle.textContent = "Read more...")),
+                    (readMoreToggle.style.display = ""))
+                  : (readMoreToggle && (readMoreToggle.style.display = "none"),
+                    quoteContent.classList.remove("collapsed", "expanded"),
+                    (quoteContent.style.maxHeight = ""));
+              }, 50));
+          },
+          createReadMoreToggle(quoteContent) {
+            const readMoreToggle = document.createElement("div");
+            return (
+              (readMoreToggle.className = "quote-read-more"),
+              (readMoreToggle.textContent = "Read more..."),
+              (readMoreToggle.style.cursor = "pointer"),
+              readMoreToggle.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const quoteBox = quoteContent.closest("blockquote");
+                if (quoteContent.classList.contains("expanded")) {
+                  quoteContent.classList.remove("expanded"),
+                    quoteContent.classList.add("collapsed"),
+                    (quoteContent.style.maxHeight = "300px"),
+                    (readMoreToggle.textContent = "Read more...");
+                  quoteContent
+                    .querySelectorAll("blockquote .nested-quote-content")
+                    .forEach((innerContent) => {
+                      if ("none" !== innerContent.style.display) {
+                        const innerToggle =
+                          innerContent.parentElement.querySelector(
+                            ":scope > .quote-toggle"
+                          );
+                        innerToggle &&
+                          "Collapse Quote" === innerToggle.textContent &&
+                          innerToggle.click();
+                      }
+                    }),
+                    quoteBox &&
+                      setTimeout(() => {
+                        quoteBox.getBoundingClientRect().top < 0 &&
+                          quoteBox.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                          });
+                      }, 50);
+                } else
+                  quoteContent.classList.remove("collapsed"),
+                    quoteContent.classList.add("expanded"),
+                    (quoteContent.style.maxHeight = ""),
+                    (readMoreToggle.textContent = "Show less...");
+              }),
+              readMoreToggle
+            );
+          },
+          addQuoteToggle(quoteBox, nestedContent, citation) {
+            let toggle = quoteBox.querySelector(":scope > .quote-toggle");
+            toggle ||
+              ((toggle = document.createElement("span")),
+              (toggle.className = "quote-toggle"),
+              (toggle.textContent = "Expand Quote"),
+              (toggle.style.cursor = "pointer"),
+              (nestedContent.style.display = "none"),
+              (toggle.onclick = function (e) {
+                if (
+                  (e.stopPropagation(), "none" === nestedContent.style.display)
+                ) {
+                  (nestedContent.style.display = "block"),
+                    (this.textContent = "Collapse Quote");
+                  // Expand necessary parent quotes
+                  let parentQuoteBox =
+                    quoteBox.parentElement.closest("blockquote");
+                  for (; parentQuoteBox; ) {
+                    const parentContent = parentQuoteBox.querySelector(
+                      ":scope > .quote-content, :scope > .nested-quote-content"
+                    );
+                    if (parentContent) {
+                      // Expand collapsed outer parent
+                      const parentReadMore = parentQuoteBox.querySelector(
+                        ":scope > .quote-read-more"
+                      );
+                      parentReadMore &&
+                        parentContent.classList.contains("collapsed") &&
+                        "none" !== parentReadMore.style.display &&
+                        parentReadMore.click();
+                      // Expand collapsed nested parent
+                      const parentToggle = parentQuoteBox.querySelector(
+                        ":scope > .quote-toggle"
+                      );
+                      parentToggle &&
+                        "none" === parentContent.style.display &&
+                        parentToggle.click();
+                    }
+                    parentQuoteBox =
+                      parentQuoteBox.parentElement.closest("blockquote");
+                  }
+                } else
+                  (nestedContent.style.display = "none"),
+                    (this.textContent = "Expand Quote");
+                setTimeout(() => {
+                  const quoteBoxRect = quoteBox.getBoundingClientRect();
+                  (quoteBoxRect.top < 0 ||
+                    quoteBoxRect.bottom > window.innerHeight) &&
+                    quoteBox.scrollIntoView({
+                      behavior: "smooth",
+                      block: "nearest",
+                    });
+                }, 50);
+              }),
+              // Insert toggle after the nested content div
+              nestedContent.after(toggle));
+          },
+          removeReadMoreButtons() {
+            // Compatibility cleanup for potential other scripts
+            document
+              .querySelectorAll(".imcger-quote-button, .imcger-quote-shadow")
+              .forEach((el) => el.remove()),
+              document
+                .querySelectorAll(".imcger-quote-text")
+                .forEach((text) => {
+                  // Avoid interfering if our script manages this element
+                  text.closest(".quote-content.collapsed") ||
+                    (text.style.maxHeight = "none");
+                });
+          },
+        };
+      betterQuotes.init();
+    },
+  });
+  // Main userscript entry point
+  // --- Constants ---
+  // Prefix for GM_setValue/GM_getValue keys
   // --- GM Wrappers ---
   function gmGetValue(key, defaultValue) {
     // eslint-disable-next-line no-undef
@@ -5608,156 +6180,9 @@
   }
   // Map of script ids to their modules
   const scriptModules = {
-    commaFormatter: Object.freeze({
-      __proto__: null,
-      init: function () {
-        log("Thousands Comma Formatter initialized!");
-        // Get user settings
-        const formatFourDigits = GM_getValue(
-            "RPGHQ_Manager_commaFormatter_formatFourDigits",
-            !1
-          ),
-          numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
-        // Create regex based on settings
-        // Core formatting function
-        function formatNumberWithCommas(number) {
-          return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
-        // Process forum statistics (only on index page)
-        // Process all elements with numbers that need commas
-        function processElements() {
-          document
-            .querySelectorAll(
-              "dd.posts, dd.profile-posts, dd.views, span.responsive-show.left-box, .column2 .details dd"
-            )
-            .forEach((element) => {
-              if (
-                element.classList.contains("posts") ||
-                element.classList.contains("views") ||
-                (element.parentElement &&
-                  element.parentElement.classList.contains("details"))
-              ) {
-                if (
-                  element.previousElementSibling &&
-                  "Joined:" ===
-                    element.previousElementSibling.textContent.trim()
-                )
-                  return;
-                element.childNodes.forEach((node) => {
-                  node.nodeType === Node.TEXT_NODE &&
-                    numberRegex.test(node.nodeValue) &&
-                    (node.nodeValue = node.nodeValue.replace(
-                      numberRegex,
-                      (match) => formatNumberWithCommas(match)
-                    ));
-                });
-              } else if (element.classList.contains("profile-posts")) {
-                const anchor = element.querySelector("a");
-                anchor &&
-                  numberRegex.test(anchor.textContent) &&
-                  (anchor.textContent = anchor.textContent.replace(
-                    numberRegex,
-                    (match) => formatNumberWithCommas(match)
-                  ));
-              } else if (element.classList.contains("responsive-show")) {
-                const strong = element.querySelector("strong");
-                strong &&
-                  numberRegex.test(strong.textContent) &&
-                  (strong.textContent = strong.textContent.replace(
-                    numberRegex,
-                    (match) => formatNumberWithCommas(match)
-                  ));
-              }
-              element.querySelectorAll("strong").forEach((strong) => {
-                numberRegex.test(strong.textContent) &&
-                  (strong.textContent = strong.textContent.replace(
-                    numberRegex,
-                    (match) => formatNumberWithCommas(match)
-                  ));
-              });
-            });
-        }
-        // Initial processing
-        processElements(),
-          (function () {
-            // Only run on index.php
-            if (!window.location.pathname.endsWith("index.php")) return;
-            let totalTopics = 0,
-              totalPosts = 0;
-            // Get all posts and topics elements
-            const postsElements = document.querySelectorAll("dd.posts"),
-              topicsElements = document.querySelectorAll("dd.topics");
-            // Function to format numbers, only adding commas for 5+ digits (or 4+ if enabled)
-            function formatStatNumber(num) {
-              return formatFourDigits
-                ? num.toString().length >= 4
-                  ? formatNumberWithCommas(num)
-                  : num.toString()
-                : num.toString().length >= 5
-                  ? formatNumberWithCommas(num)
-                  : num.toString();
-            }
-            // Find and update the statistics block
-            // Sum up posts
-            postsElements.forEach((element) => {
-              const postsText = element.childNodes[0].textContent
-                  .trim()
-                  .replace(/,/g, ""),
-                posts = parseInt(postsText);
-              isNaN(posts) || (totalPosts += posts);
-            }),
-              // Sum up topics
-              topicsElements.forEach((element) => {
-                const topicsText = element.childNodes[0].textContent
-                    .trim()
-                    .replace(/,/g, ""),
-                  topics = parseInt(topicsText);
-                isNaN(topics) || (totalTopics += topics);
-              });
-            const statsBlock = document.querySelector(".stat-block.statistics");
-            if (statsBlock) {
-              const statsText = statsBlock.querySelector("p");
-              if (statsText) {
-                const existingText = statsText.innerHTML,
-                  membersMatch = existingText.match(
-                    /Total members <strong>(\d+)<\/strong>/
-                  ),
-                  newestMemberMatch = existingText.match(
-                    /(Our newest member <strong>.*?<\/strong>)/
-                  );
-                // Keep the members count and newest member info, but update topics and posts
-                membersMatch &&
-                  newestMemberMatch &&
-                  (statsText.innerHTML = `Total posts <strong>${formatStatNumber(totalPosts)}</strong> • Total topics <strong>${formatStatNumber(totalTopics)}</strong> • Total members <strong>${membersMatch[1]}</strong> • ${newestMemberMatch[1]}`);
-              }
-            }
-          })();
-        // Set up observer to handle dynamic content
-        const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            "childList" === mutation.type && processElements();
-          });
-        });
-        // Start observing
-        // Return cleanup function
-        return (
-          observer.observe(document.body, {
-            childList: !0,
-            subtree: !0,
-          }),
-          {
-            cleanup: () => {
-              log("Thousands Comma Formatter cleanup"),
-                // Disconnect observer
-                observer.disconnect();
-            },
-            // We can't easily "undo" the formatting without a page reload
-            // since we directly modified text nodes
-          }
-        );
-      },
-    }),
+    commaFormatter: commaFormatter,
     bbcode: bbcode,
+    quotes: quotes,
     kalareact: kalareact,
     notifications: notifications,
     pinThreads: pinThreads,
