@@ -6,26 +6,16 @@
  *
  * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/commaFormatter.md for documentation
  */
-import { log } from "../utils/logger.js";
 
 export function init() {
-  log("Thousands Comma Formatter initialized!");
+  const formatFourDigits = GM_getValue("formatFourDigits", false);
 
-  // Get user settings
-  const formatFourDigits = GM_getValue(
-    "RPGHQ_Manager_commaFormatter_formatFourDigits",
-    false,
-  );
-
-  // Create regex based on settings
   const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
 
-  // Core formatting function
   function formatNumberWithCommas(number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
-  // Process forum statistics (only on index page)
   function calculateForumStatistics() {
     // Only run on index.php
     if (!window.location.pathname.endsWith("index.php")) {
@@ -40,7 +30,7 @@ export function init() {
     const topicsElements = document.querySelectorAll("dd.topics");
 
     // Sum up posts
-    postsElements.forEach((element) => {
+    postsElements.forEach((element, index) => {
       const postsText = element.childNodes[0].textContent
         .trim()
         .replace(/,/g, "");
@@ -51,7 +41,7 @@ export function init() {
     });
 
     // Sum up topics
-    topicsElements.forEach((element) => {
+    topicsElements.forEach((element, index) => {
       const topicsText = element.childNodes[0].textContent
         .trim()
         .replace(/,/g, "");
@@ -61,15 +51,11 @@ export function init() {
       }
     });
 
-    // Function to format numbers, only adding commas for 5+ digits (or 4+ if enabled)
+    // Function to format numbers, only adding commas for 5+ digits
     function formatStatNumber(num) {
-      return formatFourDigits
-        ? num.toString().length >= 4
-          ? formatNumberWithCommas(num)
-          : num.toString()
-        : num.toString().length >= 5
-          ? formatNumberWithCommas(num)
-          : num.toString();
+      return num.toString().length >= 5
+        ? num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        : num.toString();
     }
 
     // Find and update the statistics block
@@ -99,7 +85,6 @@ export function init() {
     }
   }
 
-  // Process all elements with numbers that need commas
   function processElements() {
     const elements = document.querySelectorAll(
       "dd.posts, dd.profile-posts, dd.views, span.responsive-show.left-box, .column2 .details dd",
@@ -159,30 +144,7 @@ export function init() {
     });
   }
 
-  // Initial processing
+  // Run initial processing
   processElements();
   calculateForumStatistics();
-
-  // Set up observer to handle dynamic content
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.type === "childList") {
-        processElements();
-      }
-    });
-  });
-
-  // Start observing
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  // Return cleanup function
-  return {
-    cleanup: () => {
-      log("Thousands Comma Formatter cleanup");
-      // Disconnect observer
-      observer.disconnect();
-      // We can't easily "undo" the formatting without a page reload
-      // since we directly modified text nodes
-    },
-  };
 }

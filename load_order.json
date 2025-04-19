@@ -2,12 +2,12 @@
   "document-start": [
     "_applyThreadPreferences",
     "_cachePostsOnPage",
-    "recentTopicsFormat",
     "_applyUserPreferences",
     "bbcode",
     "commaFormatter"
   ],
   "document-end": [
+    "recentTopicsFormat",
     "memberSearch",
     "randomTopic",
     "kalareact",
