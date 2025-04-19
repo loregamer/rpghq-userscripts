@@ -393,7 +393,15 @@ SOFTWARE.
     const formattedLines = [];
     let indentLevel = 0;
     // Define tags that typically contain other block content and should affect indentation
-    const blockTags = ["list", "spoiler", "align", "quote", "table", "indent"];
+    const blockTags = [
+      "list",
+      "spoiler",
+      "align",
+      "quote",
+      "table",
+      "indent",
+      "tab",
+    ];
     // Regex to find BBCode tags (opening/closing, with/without attributes)
     const tagRegex = /\[(\/)?([a-zA-Z0-9*]+)(=[^]]*)?\]/g;
     let inCodeBlock = false; // State flag for handling [code] blocks
