@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
 // @namespace    rpghq-userscripts
-// @version      0.6.1
+// @version      0.7.0
 // @description  RPGHQ Userscript Manager
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -883,7 +883,7 @@
   const SCRIPT_MANIFEST = [
     {
       id: "bbcode",
-      name: "[BROKEN] BBCode Highlighting",
+      name: "BBCode Highlighting",
       version: "1.0.0",
       description:
         "Adds BBCode highlighting and other QOL improvements to the text editor",
@@ -5133,141 +5133,75 @@
     __proto__: null,
     init: function () {
       // =============================
-      // Update Page Title
+      // Constants & Configuration
       // =============================
-      const escapeHTML = (str) =>
-        str.replace(
-          /[&<>"']/g,
-          (m) =>
-            ({
-              "&": "&amp;",
-              "<": "&lt;",
-              ">": "&gt;",
-              '"': "&quot;",
-              "'": "&#39;",
-            })[m]
-        );
-      // =============================
-      // Utility Functions
-      // =============================
-      // =============================
-      // Global Variables & Settings
-      // =============================
-      let customSmileys = [
-        "📥",
-        "https://f.rpghq.org/ZgRYx3ztDLyD.png?n=cancel_forum.png",
-        "https://f.rpghq.org/W5kvLDYCwg8G.png",
-      ];
-      const tagColorMap = {
+      const TAG_COLORS = {
           img: 1,
           url: 4,
           color: 3,
+          "*": "list-item",
         },
-        highlightBBCode = (text) => {
-          // First, process all BBCode tags.
-          let output = text.replace(
-            /\[(\/?)([a-zA-Z0-9*]+)([^\]]*)\]/g,
-            (match, slash, keyword, rest) => {
-              // Special handling for list items ([*])
-              if ("*" === keyword)
-                return '<span class="bbcode-bracket" style="color:#A0A0A0;">[</span><span class="bbcode-list-item">*</span><span class="bbcode-bracket" style="color:#A0A0A0;">]</span>';
-              // Special handling for smention: force a fixed color.
-              if ("smention" === keyword.toLowerCase()) {
-                let out = `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span><span class="bbcode-tag-smention" style="color:#FFC107;">${escapeHTML(slash + keyword)}</span>`;
-                if (rest) {
-                  const leadingWs = rest.match(/^\s*/)[0],
-                    params = rest.slice(leadingWs.length);
-                  if (params)
-                    if (params.startsWith("=")) {
-                      const paramValue = params.slice(1).trim();
-                      out +=
-                        leadingWs +
-                        '<span class="bbcode-attribute">=</span>' +
-                        `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
-                    } else
-                      out +=
-                        leadingWs +
-                        `<span class="bbcode-attribute">${escapeHTML(params)}</span>`;
-                }
-                return (
-                  (out +=
-                    '<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>'),
-                  out
-                );
-              }
-              // For all other tags, assign colors using the tagColorMap.
-              let out = `<span class="bbcode-bracket" style="color:#A0A0A0;">[</span><span class="bbcode-tag-${((
-                tagName
-              ) => {
-                if ("*" === tagName) return "list-item";
-                if (!(tagName in tagColorMap)) {
-                  const colorIndex = Object.keys(tagColorMap).length % 5;
-                  tagColorMap[tagName] = colorIndex;
-                }
-                return tagColorMap[tagName];
-              })(keyword)}">${escapeHTML(slash + keyword)}</span>`;
-              if (rest) {
-                const leadingWs = rest.match(/^\s*/)[0],
-                  params = rest.slice(leadingWs.length);
-                if (params)
-                  if (params.startsWith("=")) {
-                    const paramValue = params.slice(1).trim();
-                    if ("color" === keyword.toLowerCase()) {
-                      const hexMatch = paramValue.match(/^(#[0-9A-Fa-f]{6})/);
-                      if (hexMatch) {
-                        const hex = hexMatch[1];
-                        out +=
-                          leadingWs +
-                          '<span class="bbcode-attribute">=</span>' +
-                          `<span class="bbcode-color-preview" style="background-color:${hex}; color:${
-                            ((hexColor = hex),
-                            (299 * parseInt(hexColor.slice(1, 3), 16) +
-                              587 * parseInt(hexColor.slice(3, 5), 16) +
-                              114 * parseInt(hexColor.slice(5, 7), 16)) /
-                              1e3 >=
-                            128
-                              ? "black"
-                              : "white")
-                          };">${escapeHTML(hex)}</span>`;
-                        const extra = paramValue.slice(hex.length);
-                        extra &&
-                          (out += `<span class="bbcode-attribute">${escapeHTML(extra)}</span>`);
-                      } else
-                        out +=
-                          leadingWs +
-                          '<span class="bbcode-attribute">=</span>' +
-                          `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
-                    } else
-                      out +=
-                        leadingWs +
-                        '<span class="bbcode-attribute">=</span>' +
-                        `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
-                  } else
-                    out +=
-                      leadingWs +
-                      `<span class="bbcode-attribute">${escapeHTML(params)}</span>`;
-              }
-              var hexColor;
-              return (
-                (out +=
-                  '<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>'),
-                out
-              );
-            }
-          );
-          // Second pass: Wrap any URLs in the output with a span using the "bbcode-link" class.
-          return (
-            (output = output.replace(
-              /(https?:\/\/[^\s<]+)/g,
-              (match) => `<span class="bbcode-link">${match}</span>`
-            )),
-            output
-          );
-        },
-        adjustTextareaAndHighlight = () => {
-          const textArea = document.getElementById("message"),
-            highlightDiv = document.getElementById("bbcode-highlight");
+        URL_REGEX = /(https?:\/\/[^\s<]+)/g,
+        BBCODE_REGEX = /\[(\/?)([a-zA-Z0-9*]+)([^\]]*)\]/g;
+      // =============================
+      // Tokenization & Highlighting
+      // =============================
+      // Cached token arrays to avoid re-tokenizing unchanged text sections
+      let cachedTokens = [],
+        lastText = "";
+      /**
+       * Token types:
+       * - 'text': Regular text
+       * - 'tag-open': Opening BBCode tag
+       * - 'tag-close': Closing BBCode tag
+       * - 'url': URL
+       */
+      // Create tokens from text for more efficient highlighting
+      const getColorIndex = (tagName) => (
+          tagName in TAG_COLORS ||
+            // Add new tag to our color map
+            (TAG_COLORS[tagName] = Object.keys(TAG_COLORS).length % 5),
+          TAG_COLORS[tagName]
+        ),
+        escapeHTML = (str) =>
+          str.replace(
+            /[&<>"']/g,
+            (m) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              })[m]
+          ),
+        // Get contrast color (black or white) for a background color
+        getContrastColor = (hexColor) =>
+          (299 * parseInt(hexColor.slice(1, 3), 16) +
+            587 * parseInt(hexColor.slice(3, 5), 16) +
+            114 * parseInt(hexColor.slice(5, 7), 16)) /
+            1e3 >=
+          128
+            ? "black"
+            : "white",
+        debounce = (func, wait) => {
+          let timeout;
+          return function (...args) {
+            const context = this;
+            clearTimeout(timeout),
+              (timeout = setTimeout(() => func.apply(context, args), wait));
+          };
+        };
+      // Convert tokens to HTML for display
+      // =============================
+      // Layout Adjustment Functions
+      // =============================
+      // Observer for textarea size changes
+      let resizeObserver = null;
+      const adjustTextareaAndHighlight = (textArea, highlightDiv) => {
           if (!textArea || !highlightDiv) return;
+          // Use IntersectionObserver to optimize for when the textarea is actually visible
+          if (0 === textArea.offsetHeight) return;
           (textArea.style.height = "auto"),
             (textArea.style.height = textArea.scrollHeight + "px");
           const computed = window.getComputedStyle(textArea);
@@ -5285,48 +5219,6 @@
             positionSmileyBox(),
             positionEditorHeader();
         },
-        updateHighlight = () => {
-          const textarea = document.getElementById("message"),
-            highlightDiv = document.getElementById("bbcode-highlight");
-          textarea &&
-            highlightDiv &&
-            (highlightDiv.innerHTML = highlightBBCode(textarea.value));
-        },
-        wrapSelectedText = (textarea, tag) => {
-          const start = textarea.selectionStart,
-            end = textarea.selectionEnd,
-            selected = textarea.value.substring(start, end),
-            replacement = tag.includes("=")
-              ? `[${tag}]${selected}[/${tag.split("=")[0]}]`
-              : `[${tag}]${selected}[/${tag}]`;
-          (textarea.value =
-            textarea.value.substring(0, start) +
-            replacement +
-            textarea.value.substring(end)),
-            textarea.setSelectionRange(
-              start + tag.length + 2,
-              start + tag.length + 2
-            );
-        },
-        insertTextAtCursor = (text) => {
-          const textarea = document.getElementById("message");
-          if (!textarea) return;
-          const {
-              selectionStart: start,
-              selectionEnd: end,
-              value: value,
-            } = textarea,
-            before = value.substring(0, start),
-            after = value.substring(end);
-          (textarea.value = before + text + after),
-            textarea.setSelectionRange(
-              start + text.length,
-              start + text.length
-            ),
-            textarea.focus(),
-            updateHighlight(),
-            adjustTextareaAndHighlight();
-        },
         positionSmileyBox = () => {
           const smileyBox = document.getElementById("smiley-box"),
             textarea = document.getElementById("message");
@@ -5343,31 +5235,21 @@
               const { top: top, right: right } =
                   textarea.getBoundingClientRect(),
                 windowWidth = window.innerWidth,
-                scrollTop =
-                  window.pageYOffset || document.documentElement.scrollTop,
-                scrollStart = top + scrollTop,
+                scrollStart =
+                  top +
+                  (window.pageYOffset || document.documentElement.scrollTop),
                 smileyBoxWidth = 220,
                 leftPosition = Math.min(
                   right + 10,
                   windowWidth - smileyBoxWidth
                 );
-              if (scrollTop >= scrollStart) {
-                const scrollDistance = scrollTop - scrollStart,
-                  maxScroll = textarea.offsetHeight - smileyBox.offsetHeight,
-                  newTop = Math.min(scrollDistance, maxScroll);
-                Object.assign(smileyBox.style, {
-                  position: "absolute",
-                  top: scrollStart + newTop + "px",
-                  left: leftPosition + "px",
-                });
-              } else
-                Object.assign(smileyBox.style, {
-                  position: "absolute",
-                  top: scrollStart + "px",
-                  left: leftPosition + "px",
-                });
-              (smileyBox.style.maxHeight = "80vh"),
-                (smileyBox.style.overflowY = "auto");
+              Object.assign(smileyBox.style, {
+                position: "absolute",
+                top: scrollStart + "px",
+                left: leftPosition + "px",
+                maxHeight: "80vh",
+                overflowY: "auto",
+              });
             }
         },
         positionEditorHeader = () => {
@@ -5417,418 +5299,6 @@
                 });
           }
         },
-        addCustomSmileyButtons = () => {
-          const smileyBox = document.getElementById("smiley-box");
-          if (!smileyBox) return;
-          const topicReviewLink = smileyBox.querySelector('a[href="#review"]');
-          topicReviewLink &&
-            (topicReviewLink.parentElement.style.display = "none");
-          const viewMoreLink = smileyBox.querySelector(
-              'a[href*="mode=smilies"]'
-            ),
-            existing = Array.from(
-              smileyBox.querySelectorAll('a[onclick^="insert_text"]')
-            ),
-            groups = {};
-          existing.forEach((smiley) => {
-            const dir = (smiley.querySelector("img")?.src || "")
-              .split("/")
-              .slice(0, -1)
-              .join("/");
-            (groups[dir] = groups[dir] || []), groups[dir].push(smiley);
-          }),
-            existing.forEach((smiley) => smiley.remove());
-          let firstGroup = !0;
-          for (const group of Object.values(groups)) {
-            if (!firstGroup) {
-              const hr = document.createElement("hr");
-              (hr.className = "smiley-group-separator"),
-                smileyBox.insertBefore(hr, viewMoreLink);
-            }
-            firstGroup = !1;
-            const groupContainer = document.createElement("div");
-            (groupContainer.className = "smiley-group"),
-              group.forEach((smiley) => {
-                const btn = document.createElement("a");
-                (btn.href = "#"),
-                  (btn.className = "smiley-button"),
-                  (btn.onclick = smiley.onclick);
-                const img = smiley.querySelector("img");
-                (btn.innerHTML = `<img src="${img.src}" alt="${img.alt}" title="${img.title}">`),
-                  groupContainer.appendChild(btn);
-              }),
-              smileyBox.insertBefore(groupContainer, viewMoreLink);
-          }
-          let customContainer = smileyBox.querySelector(
-              ".custom-smiley-container"
-            ),
-            customHr = smileyBox.querySelector(".custom-smiley-separator");
-          customSmileys.length > 0
-            ? (customHr ||
-                ((customHr = document.createElement("hr")),
-                (customHr.className = "custom-smiley-separator"),
-                smileyBox.insertBefore(customHr, viewMoreLink)),
-              customContainer
-                ? (customContainer.innerHTML = "")
-                : ((customContainer = document.createElement("div")),
-                  (customContainer.className = "custom-smiley-container"),
-                  smileyBox.insertBefore(customContainer, viewMoreLink)),
-              customSmileys.forEach((smiley) => {
-                const btn = document.createElement("a");
-                (btn.href = "#"),
-                  (btn.className = "custom-smiley-button"),
-                  (btn.innerHTML = smiley.startsWith("http")
-                    ? `<img src="${smiley}" alt="Custom Smiley" title="Custom Smiley">`
-                    : `<span class="emoji-smiley">${smiley}</span>`),
-                  btn.addEventListener("click", (e) => {
-                    e.preventDefault(),
-                      ((smiley) => {
-                        const textarea = document.getElementById("message");
-                        if (!textarea) return;
-                        const start = textarea.selectionStart,
-                          end = textarea.selectionEnd,
-                          scrollTop = textarea.scrollTop,
-                          text = textarea.value,
-                          before = text.substring(0, start),
-                          after = text.substring(end),
-                          insert = smiley.startsWith("http")
-                            ? `[img]${smiley}[/img]`
-                            : smiley;
-                        (textarea.value = before + insert + after),
-                          textarea.setSelectionRange(
-                            start + insert.length,
-                            start + insert.length
-                          ),
-                          (textarea.scrollTop = scrollTop),
-                          textarea.focus(),
-                          updateHighlight(),
-                          adjustTextareaAndHighlight();
-                      })(smiley);
-                  }),
-                  customContainer.appendChild(btn);
-              }))
-            : (customContainer && customContainer.remove(),
-              customHr && customHr.remove());
-        },
-        insertModTemplate = () => {
-          insertTextAtCursor(
-            "[align=center][img] MOD IMAGE URL HERE [/img][/align]\n\n[hr]\n\n[size=150][b][color=#FE545D] Overview [/color][/b][/size]\nMOD DESCRIPTION HERE\n\n[hr]\n\n[size=150][b][color=#FE545D] Downloads [/color][/b][/size]\n| Files | Version | Type | Description |\n|-------|-----------|-------|---------------|\n|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |\n|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |\n|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |\n|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |\n\n[hr]\n\n[size=150][b][color=#FE545D] Installation Instructions [/color][/b][/size]\n[list=1]\n[*] Instruction Number 1\n[*] Instruction Number 2\n[*] Instruction Number 3\n[/list]\n\n[hr]\n\n[size=150][b][color=#FE545D] Changelog [/color][/b][/size]\n[spoiler]\n[b]VERSION NUMBER HERE[/b]\n[list]\n[*] CHANGE HERE\n[*] CHANGE HERE\n[*] CHANGE HERE\n[/list]\n\n[b]VERSION NUMBER HERE[/b]\n[list]\n[*] CHANGE HERE\n[*] CHANGE HERE\n[*] CHANGE HERE\n[/list]\n[/spoiler]\n\n[hr]\n\n[size=150][b][color=#FE545D] To Do [/color][/b][/size]\n[list]\n[*] TO DO\n[*] TO DO\n[*] TO DO\n[/list]\n\n[hr]\n\n[size=150][b][color=#FE545D] Reporting Bugs [/color][/b][/size]\nTo report any bugs, please submit a post in the [url=https://rpghq.org/forums/posting.php?mode=post&f=40]Mod Support section[/url] and mention my username.\n\n[hr]\n\n[size=150][b][color=#FE545D]Credits[/color][/b][/size]\n[list]\n[*] CREDIT\n[*] CREDIT\n[*] CREDIT\n[/list]\n\n[hr]\n\n[size=150][b][color=#FE545D] My Other Mods [/color][/b][/size]\n[list]\n[*] [url=MOD URL] MOD NAME [/url]\n[*] [url=MOD URL] MOD NAME [/url]\n[*] [url=MOD URL] MOD NAME [/url]\n[*] [url=MOD URL] MOD NAME [/url]\n[*] [url=MOD URL] MOD NAME [/url]\n[/list]\n\n[hr]\n"
-          );
-        },
-        insertTable = () => {
-          insertTextAtCursor(
-            "| Files | Version | Type | Description |\n|-------|-----------|-------|---------------|\n|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |\n|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |\n|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |\n|[url=URL HERE] 📥 HYPERLINK TEXT HERE [/url] | FILE VERSION HERE | Main/Optional/Add-on | FILE DESCRIPTION HERE |\n"
-          );
-        },
-        insertBloomeryPing = () => {
-          insertTextAtCursor(
-            "[smention]Bloomery[/smention]\n[size=1] [smention u=459][/smention] [smention u=510][/smention] [smention u=897][/smention] [smention u=515][/smention] [smention u=548][/smention] [smention u=555][/smention] [smention u=615][/smention] [smention u=753][/smention] [smention u=918][/smention] [smention u=919][/smention] [smention u=3114][/smention] [smention u=58][/smention] [smention u=256][/smention] [smention u=63][/smention]  [/size]"
-          );
-        },
-        showCustomSmileysPopup = (e) => {
-          e.preventDefault();
-          const popup = document.createElement("div");
-          (popup.id = "custom-smileys-popup"),
-            Object.assign(popup.style, {
-              position: "fixed",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              backgroundColor: "#2a2e36",
-              border: "1px solid #3a3f4b",
-              borderRadius: "5px",
-              width: "80%",
-              maxWidth: "600px",
-              height: "80%",
-              maxHeight: "600px",
-              display: "flex",
-              flexDirection: "column",
-              zIndex: "9999",
-              fontFamily:
-                "'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif",
-            });
-          const header = document.createElement("div");
-          Object.assign(header.style, {
-            padding: "20px",
-            backgroundColor: "#2a2e36",
-            borderBottom: "1px solid #3a3f4b",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            position: "sticky",
-            top: "0",
-            zIndex: "1",
-          });
-          const title = document.createElement("h2");
-          (title.textContent = "Manage Custom Smileys"),
-            (title.style.margin = "0"),
-            (title.style.color = "#c5d0db");
-          const closeButton = document.createElement("button");
-          (closeButton.textContent = "Close"),
-            Object.assign(closeButton.style, {
-              backgroundColor: "#4a5464",
-              color: "#c5d0db",
-              border: "none",
-              padding: "5px 10px",
-              borderRadius: "3px",
-              cursor: "pointer",
-            }),
-            (closeButton.onclick = (e) => {
-              e.preventDefault(), popup.remove();
-            }),
-            header.append(title, closeButton);
-          const content = document.createElement("div");
-          Object.assign(content.style, {
-            padding: "20px",
-            overflowY: "auto",
-            flexGrow: "1",
-          });
-          const smileyList = document.createElement("ul");
-          Object.assign(smileyList.style, {
-            listStyleType: "none",
-            padding: "0",
-            margin: "0",
-          });
-          const updateSmileyList = () => {
-            (smileyList.innerHTML = ""),
-              customSmileys.forEach((smiley, index) => {
-                const li = document.createElement("li");
-                if (
-                  (Object.assign(li.style, {
-                    marginBottom: "10px",
-                    display: "flex",
-                    alignItems: "center",
-                  }),
-                  isSingleEmoji(smiley))
-                ) {
-                  const emojiSpan = document.createElement("span");
-                  (emojiSpan.textContent = smiley),
-                    (emojiSpan.style.fontSize = "18px"),
-                    (emojiSpan.style.marginRight = "10px"),
-                    li.appendChild(emojiSpan);
-                } else {
-                  const img = document.createElement("img");
-                  (img.src = smiley),
-                    (img.alt = "Smiley"),
-                    Object.assign(img.style, {
-                      width: "20px",
-                      height: "20px",
-                      marginRight: "10px",
-                    }),
-                    li.appendChild(img);
-                }
-                const input = document.createElement("input");
-                (input.type = "text"),
-                  (input.value = smiley),
-                  (input.disabled = !0),
-                  Object.assign(input.style, {
-                    flexGrow: "1",
-                    marginRight: "10px",
-                    padding: "5px",
-                    backgroundColor: "#2a2e36",
-                    color: "#a0a0a0",
-                    border: "1px solid #3a3f4b",
-                    borderRadius: "3px",
-                    cursor: "default",
-                  });
-                const btnStyle =
-                    "\n          background-color: #4a5464;\n          color: #c5d0db;\n          border: none;\n          padding: 5px 10px;\n          margin-left: 5px;\n          border-radius: 3px;\n          cursor: pointer;\n        ",
-                  upBtn = document.createElement("button");
-                (upBtn.textContent = "↑"),
-                  (upBtn.style.cssText = btnStyle),
-                  (upBtn.onclick = () => {
-                    index > 0 &&
-                      (([customSmileys[index - 1], customSmileys[index]] = [
-                        customSmileys[index],
-                        customSmileys[index - 1],
-                      ]),
-                      saveCustomSmileys(),
-                      updateSmileyList());
-                  });
-                const downBtn = document.createElement("button");
-                (downBtn.textContent = "↓"),
-                  (downBtn.style.cssText = btnStyle),
-                  (downBtn.onclick = () => {
-                    index < customSmileys.length - 1 &&
-                      (([customSmileys[index], customSmileys[index + 1]] = [
-                        customSmileys[index + 1],
-                        customSmileys[index],
-                      ]),
-                      saveCustomSmileys(),
-                      updateSmileyList());
-                  });
-                const removeBtn = document.createElement("button");
-                (removeBtn.textContent = "Remove"),
-                  (removeBtn.style.cssText = btnStyle),
-                  (removeBtn.onclick = () => {
-                    customSmileys.splice(index, 1),
-                      saveCustomSmileys(),
-                      updateSmileyList();
-                  }),
-                  li.append(input, upBtn, downBtn, removeBtn),
-                  smileyList.appendChild(li);
-              });
-          };
-          content.appendChild(smileyList);
-          const newInput = document.createElement("input");
-          (newInput.type = "text"),
-            (newInput.placeholder =
-              "Enter new smiley or emoji and press Enter"),
-            Object.assign(newInput.style, {
-              marginTop: "15px",
-              padding: "5px",
-              backgroundColor: "#3a3f4b",
-              color: "#c5d0db",
-              border: "1px solid #4a5464",
-              borderRadius: "3px",
-            }),
-            newInput.addEventListener("keypress", (e) => {
-              "Enter" === e.key &&
-                newInput.value.trim() &&
-                (customSmileys.push(newInput.value.trim()),
-                saveCustomSmileys(),
-                (newInput.value = ""),
-                updateSmileyList());
-            }),
-            content.appendChild(newInput),
-            updateSmileyList(),
-            popup.append(header, content),
-            document.body.appendChild(popup);
-        },
-        isSingleEmoji = (str) =>
-          /^(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])$/.test(
-            str
-          ),
-        saveCustomSmileys = () => {
-          GM_setValue("customSmileys", JSON.stringify(customSmileys)),
-            addCustomSmileyButtons();
-        },
-        addCustomColorsToExistingPalette = (colorPalette) => {
-          // Check if we've already added our custom row to this palette
-          if ("true" === colorPalette.dataset.customColorsAdded) return;
-          // Also check if our custom colors are already present in the palette
-          const existingColors = Array.from(
-              colorPalette.querySelectorAll("a[data-color]")
-            ).map((a) => `#${a.getAttribute("data-color")}`.toUpperCase()),
-            customColors = [
-              "#F5575D", // Red
-              "#3889ED", // Blue
-              "#FFC107", // Yellow/Gold
-              "#00AA00", // Green
-              "#FC8A92",
-              "#F7E6E7",
-            ];
-          // Custom colors to add
-          // If all our custom colors are already present, mark as added and exit
-          if (
-            customColors.every((color) =>
-              existingColors.includes(color.toUpperCase())
-            )
-          )
-            return void (colorPalette.dataset.customColorsAdded = "true");
-          // Create a new row for custom colors
-          let tbody = colorPalette.querySelector("tbody");
-          // If there's no tbody, create one
-          tbody ||
-            ((tbody = document.createElement("tbody")),
-            colorPalette.appendChild(tbody));
-          // Get the first row to determine the number of cells
-          const firstRow = tbody.querySelector("tr");
-          if (!firstRow) {
-            // If there are no rows, we can't determine the cell count
-            // Create a default row with 25 cells (standard palette width)
-            const newRow = document.createElement("tr");
-            // Create cells for each custom color
-            return (
-              customColors.forEach((color) => {
-                const td = document.createElement("td");
-                (td.style.backgroundColor = color),
-                  (td.style.width = "15px"),
-                  (td.style.height = "12px");
-                const a = document.createElement("a");
-                (a.href = "#"),
-                  a.setAttribute("data-color", color.substring(1)), // Remove # from color code
-                  (a.style.display = "block"),
-                  (a.style.width = "15px"),
-                  (a.style.height = "12px"),
-                  a.setAttribute("alt", color),
-                  a.setAttribute("title", color),
-                  // Use the same click behavior as the original color cells
-                  (a.onclick = function (e) {
-                    e.preventDefault(), e.stopPropagation();
-                    // This is the standard behavior for color palette links
-                    const colorCode = this.getAttribute("data-color"),
-                      textarea = document.getElementById("message");
-                    return (
-                      textarea &&
-                        // Use the existing wrapSelectedText function
-                        (wrapSelectedText(textarea, `color=#${colorCode}`),
-                        updateHighlight(),
-                        adjustTextareaAndHighlight()),
-                      // Close the palette
-                      document.body.click(),
-                      !1
-                    );
-                  }),
-                  td.appendChild(a),
-                  newRow.appendChild(td);
-              }),
-              // Add the new row to the palette
-              tbody.appendChild(newRow),
-              void (
-                // Mark this palette as having custom colors added
-                (colorPalette.dataset.customColorsAdded = "true")
-              )
-            );
-          }
-          const newRow = document.createElement("tr");
-          // Create cells for each custom color
-          customColors.forEach((color) => {
-            const td = document.createElement("td");
-            (td.style.backgroundColor = color),
-              (td.style.width = "15px"),
-              (td.style.height = "12px");
-            const a = document.createElement("a");
-            (a.href = "#"),
-              a.setAttribute("data-color", color.substring(1)), // Remove # from color code
-              (a.style.display = "block"),
-              (a.style.width = "15px"),
-              (a.style.height = "12px"),
-              a.setAttribute("alt", color),
-              a.setAttribute("title", color),
-              // Use the same click behavior as the original color cells
-              (a.onclick = function (e) {
-                e.preventDefault(), e.stopPropagation();
-                // This is the standard behavior for color palette links
-                const colorCode = this.getAttribute("data-color"),
-                  textarea = document.getElementById("message");
-                return (
-                  textarea &&
-                    // Use the existing wrapSelectedText function
-                    (wrapSelectedText(textarea, `color=#${colorCode}`),
-                    updateHighlight(),
-                    adjustTextareaAndHighlight()),
-                  // Close the palette
-                  document.body.click(),
-                  !1
-                );
-              }),
-              td.appendChild(a),
-              newRow.appendChild(td);
-          });
-          // Add empty cells to fill the row
-          const totalCells = firstRow.childElementCount;
-          for (let i = customColors.length; i < totalCells; i++) {
-            const td = document.createElement("td");
-            (td.style.width = "15px"),
-              (td.style.height = "12px"),
-              newRow.appendChild(td);
-          }
-          // Add the new row to the palette
-          tbody.appendChild(newRow),
-            // Mark this palette as having custom colors added
-            (colorPalette.dataset.customColorsAdded = "true");
-        },
         initialize = () => {
           (() => {
             const mode = new URLSearchParams(window.location.search).get(
@@ -5876,491 +5346,204 @@
               fontSize: "11px",
               lineHeight: "15.4px",
             }),
-            textArea.addEventListener("keydown", function (e) {
-              e.ctrlKey &&
-                ["b", "i", "u"].includes(e.key) &&
-                (e.preventDefault(),
-                wrapSelectedText(this, e.key),
-                updateHighlight(),
-                adjustTextareaAndHighlight()),
-                e.altKey &&
-                  "g" === e.key &&
-                  (e.preventDefault(),
-                  wrapSelectedText(this, "color=#80BF00"),
-                  updateHighlight(),
-                  adjustTextareaAndHighlight());
-            });
-          let lastContent = textArea.value,
-            updateTimer = null;
-          const storedSmileys = GM_getValue("customSmileys");
-          storedSmileys && (customSmileys = JSON.parse(storedSmileys));
-          const smileyBox = document.getElementById("smiley-box");
-          if (smileyBox) {
-            const manageButton = document.createElement("button");
-            (manageButton.textContent = "Manage Custom Smileys"),
-              Object.assign(manageButton.style, {
-                marginTop: "10px",
-                backgroundColor: "#4a5464",
-                color: "#c5d0db",
-                border: "none",
-                padding: "5px 10px",
-                borderRadius: "3px",
-                cursor: "pointer",
-              }),
-              (manageButton.onclick = showCustomSmileysPopup),
-              smileyBox.appendChild(manageButton);
-          }
-          const checkForUpdates = () => {
-            textArea.value !== lastContent &&
-              (updateHighlight(),
-              adjustTextareaAndHighlight(),
-              (lastContent = textArea.value)),
-              (updateTimer = setTimeout(checkForUpdates, 100));
-          };
-          textArea.addEventListener("input", () => {
-            clearTimeout(updateTimer), checkForUpdates();
-          }),
-            window.addEventListener("resize", adjustTextareaAndHighlight),
-            updateHighlight(),
-            adjustTextareaAndHighlight(),
-            checkForUpdates(),
-            document.querySelectorAll("h3").forEach((heading) => {
-              if ("Submit a new mod" === heading.textContent.trim()) {
-                const headerContainer = document.createElement("div");
-                (headerContainer.style.display = "flex"),
-                  (headerContainer.style.alignItems = "center"),
-                  (headerContainer.style.marginBottom = "10px");
-                const headingClone = document.createElement("h3");
-                (headingClone.textContent = heading.textContent),
-                  (headingClone.style.margin = "0 10px 0 0"),
-                  heading.className &&
-                    (headingClone.className = heading.className),
-                  Array.from(heading.style).forEach((prop) => {
-                    "margin" !== prop &&
-                      (headingClone.style[prop] = heading.style[prop]);
-                  });
-                const copyButton = document.createElement("button");
-                (copyButton.innerHTML =
-                  '<i class="icon fa-copy fa-fw" aria-hidden="true"></i> Copy'),
-                  Object.assign(copyButton.style, {
-                    backgroundColor: "#4a5464",
-                    color: "#c5d0db",
-                    border: "none",
-                    padding: "5px 10px",
-                    marginRight: "5px",
-                    borderRadius: "3px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "5px",
-                  });
-                const pasteButton = document.createElement("button");
-                (pasteButton.innerHTML =
-                  '<i class="icon fa-paste fa-fw" aria-hidden="true"></i> Paste'),
-                  Object.assign(pasteButton.style, {
-                    backgroundColor: "#4a5464",
-                    color: "#c5d0db",
-                    border: "none",
-                    padding: "5px 10px",
-                    borderRadius: "3px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "5px",
+            // Setup resize observer for the textarea
+            ((textArea, highlightDiv) => {
+              resizeObserver && resizeObserver.disconnect(),
+                (resizeObserver = new ResizeObserver(() => {
+                  adjustTextareaAndHighlight(textArea, highlightDiv);
+                })),
+                resizeObserver.observe(textArea);
+            })(textArea, highlightDiv);
+          // Efficient update function using debounce
+          const updateHighlight = debounce(() => {
+            const currentText = textArea.value;
+            if (currentText === lastText) return;
+            const tokens = ((text) => {
+              // Fast path: if text hasn't changed, return cached tokens
+              if (text === lastText && cachedTokens.length) return cachedTokens;
+              const tokens = [];
+              let lastIndex = 0;
+              // First pass: Find all BBCode tags
+              const bbcodeMatches = [...text.matchAll(BBCODE_REGEX)];
+              for (const match of bbcodeMatches) {
+                const [fullMatch, slash, tagName, attributes] = match,
+                  startIndex = match.index;
+                // Add text before the tag
+                startIndex > lastIndex &&
+                  tokens.push({
+                    type: "text",
+                    content: text.substring(lastIndex, startIndex),
                   }),
-                  copyButton.addEventListener("click", (e) => {
-                    e.preventDefault(), e.stopPropagation();
-                    const existingData = GM_getValue("savedFormData", null);
-                    if (existingData) {
-                      const confirmDialog = document.createElement("div");
-                      Object.assign(confirmDialog.style, {
-                        position: "fixed",
-                        top: "0",
-                        left: "0",
-                        width: "100%",
-                        height: "100%",
-                        backgroundColor: "rgba(0, 0, 0, 0.7)",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        zIndex: "10000",
-                      });
-                      const dialogContent = document.createElement("div");
-                      Object.assign(dialogContent.style, {
-                        backgroundColor: "#3A404A",
-                        borderRadius: "5px",
-                        padding: "20px",
-                        maxWidth: "450px",
-                        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
-                      });
-                      const title = document.createElement("h3");
-                      (title.textContent = "Confirm Overwrite"),
-                        Object.assign(title.style, {
-                          color: "#c5d0db",
-                          marginTop: "0",
-                          marginBottom: "15px",
-                          fontSize: "16px",
-                          borderBottom: "1px solid #4a5464",
-                          paddingBottom: "10px",
-                        });
-                      const message = document.createElement("p");
-                      (message.textContent =
-                        "There's already saved form data in your clipboard. Do you want to overwrite it?"),
-                        Object.assign(message.style, {
-                          color: "#c5d0db",
-                          marginBottom: "15px",
-                          fontSize: "14px",
-                        });
-                      const parsedData = JSON.parse(existingData),
-                        previewContainer = document.createElement("div");
-                      Object.assign(previewContainer.style, {
-                        backgroundColor: "#2a2e36",
-                        borderRadius: "3px",
-                        padding: "10px",
-                        marginBottom: "15px",
-                        maxHeight: "150px",
-                        overflowY: "auto",
-                        fontSize: "12px",
-                        color: "#a0a0a0",
-                      });
-                      let previewHTML = "";
+                  // Add the tag
+                  tokens.push({
+                    type: slash ? "tag-close" : "tag-open",
+                    tagName: tagName,
+                    attributes: attributes,
+                    fullMatch: fullMatch,
+                    colorIndex: getColorIndex(tagName),
+                  }),
+                  (lastIndex = startIndex + fullMatch.length);
+              }
+              // Add remaining text
+              lastIndex < text.length &&
+                tokens.push({
+                  type: "text",
+                  content: text.substring(lastIndex),
+                });
+              // Second pass: Find URLs in text tokens
+              const processedTokens = [];
+              for (const token of tokens)
+                if ("text" === token.type) {
+                  let textContent = token.content,
+                    lastUrlIndex = 0;
+                  const urlMatches = [...textContent.matchAll(URL_REGEX)];
+                  if (0 === urlMatches.length) {
+                    processedTokens.push(token);
+                    continue;
+                  }
+                  for (const urlMatch of urlMatches) {
+                    const urlText = urlMatch[0],
+                      urlStartIndex = urlMatch.index;
+                    // Text before URL
+                    urlStartIndex > lastUrlIndex &&
+                      processedTokens.push({
+                        type: "text",
+                        content: textContent.substring(
+                          lastUrlIndex,
+                          urlStartIndex
+                        ),
+                      }),
+                      // URL token
+                      processedTokens.push({
+                        type: "url",
+                        content: urlText,
+                      }),
+                      (lastUrlIndex = urlStartIndex + urlText.length);
+                  }
+                  // Remaining text after last URL
+                  lastUrlIndex < textContent.length &&
+                    processedTokens.push({
+                      type: "text",
+                      content: textContent.substring(lastUrlIndex),
+                    });
+                } else processedTokens.push(token);
+              // Cache the results
+              return (
+                (cachedTokens = processedTokens),
+                (lastText = text),
+                processedTokens
+              );
+            })(currentText);
+            (highlightDiv.innerHTML = ((tokens) =>
+              tokens
+                .map((token) => {
+                  switch (token.type) {
+                    case "text":
+                      return escapeHTML(token.content);
+
+                    case "url":
+                      return `<span class="bbcode-link">${escapeHTML(token.content)}</span>`;
+
+                    case "tag-open":
+                    case "tag-close": {
+                      const {
+                        tagName: tagName,
+                        attributes: attributes,
+                        colorIndex: colorIndex,
+                      } = token;
+                      // Special handling for list items
+                      if ("*" === tagName)
+                        return '<span class="bbcode-bracket" style="color:#A0A0A0;">[</span><span class="bbcode-list-item">*</span><span class="bbcode-bracket" style="color:#A0A0A0;">]</span>';
+                      let html =
+                        '<span class="bbcode-bracket" style="color:#A0A0A0;">[</span>';
+                      // Add slash for closing tags
+                      // Process attributes if any
                       if (
-                        (parsedData.modName &&
-                          (previewHTML += `<strong>Mod Name:</strong> ${parsedData.modName}<br>`),
-                        parsedData.modVersion &&
-                          (previewHTML += `<strong>Version:</strong> ${parsedData.modVersion}<br>`),
-                        parsedData.modAuthorName &&
-                          (previewHTML += `<strong>Author:</strong> ${parsedData.modAuthorName}<br>`),
-                        parsedData.message)
+                        ("tag-close" === token.type
+                          ? (html += `<span class="bbcode-tag-${colorIndex}">/`)
+                          : (html += `<span class="bbcode-tag-${colorIndex}">`),
+                        (html += `${escapeHTML(tagName)}</span>`),
+                        attributes)
                       ) {
-                        previewHTML += `<strong>Message:</strong> ${parsedData.message.length > 100 ? parsedData.message.substring(0, 100) + "..." : parsedData.message}<br>`;
+                        const leadingWs = attributes.match(/^\s*/)[0],
+                          params = attributes.slice(leadingWs.length);
+                        if (params)
+                          if (params.startsWith("=")) {
+                            const paramValue = params.slice(1).trim();
+                            if ("color" === tagName.toLowerCase()) {
+                              const hexMatch =
+                                paramValue.match(/^(#[0-9A-Fa-f]{6})/);
+                              if (hexMatch) {
+                                const hex = hexMatch[1];
+                                html +=
+                                  leadingWs +
+                                  '<span class="bbcode-attribute">=</span>' +
+                                  `<span class="bbcode-color-preview" style="background-color:${hex}; color:${getContrastColor(hex)};">${escapeHTML(hex)}</span>`;
+                                const extra = paramValue.slice(hex.length);
+                                extra &&
+                                  (html += `<span class="bbcode-attribute">${escapeHTML(extra)}</span>`);
+                              } else
+                                html +=
+                                  leadingWs +
+                                  '<span class="bbcode-attribute">=</span>' +
+                                  `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
+                            } else
+                              html +=
+                                leadingWs +
+                                '<span class="bbcode-attribute">=</span>' +
+                                `<span class="bbcode-attribute">${escapeHTML(paramValue)}</span>`;
+                          } else
+                            html +=
+                              leadingWs +
+                              `<span class="bbcode-attribute">${escapeHTML(params)}</span>`;
+                        else html += leadingWs;
                       }
-                      parsedData.tags &&
-                        parsedData.tags.length > 0 &&
-                        (previewHTML += `<strong>Tags:</strong> ${parsedData.tags.join(", ")}<br>`),
-                        (previewContainer.innerHTML =
-                          previewHTML || "No preview available");
-                      const buttonContainer = document.createElement("div");
-                      Object.assign(buttonContainer.style, {
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        gap: "10px",
-                      });
-                      const cancelButton = document.createElement("button");
-                      (cancelButton.textContent = "Cancel"),
-                        Object.assign(cancelButton.style, {
-                          backgroundColor: "#4a5464",
-                          color: "#c5d0db",
-                          border: "none",
-                          padding: "8px 15px",
-                          borderRadius: "3px",
-                          cursor: "pointer",
-                        });
-                      const confirmButton = document.createElement("button");
                       return (
-                        (confirmButton.textContent = "Overwrite"),
-                        Object.assign(confirmButton.style, {
-                          backgroundColor: "#9C4343",
-                          color: "#c5d0db",
-                          border: "none",
-                          padding: "8px 15px",
-                          borderRadius: "3px",
-                          cursor: "pointer",
-                        }),
-                        cancelButton.addEventListener("click", () =>
-                          confirmDialog.remove()
-                        ),
-                        confirmButton.addEventListener("click", () => {
-                          confirmDialog.remove(), saveFormData();
-                        }),
-                        dialogContent.append(
-                          title,
-                          message,
-                          previewContainer,
-                          buttonContainer
-                        ),
-                        buttonContainer.append(cancelButton, confirmButton),
-                        confirmDialog.appendChild(dialogContent),
-                        void document.body.appendChild(confirmDialog)
+                        (html +=
+                          '<span class="bbcode-bracket" style="color:#A0A0A0;">]</span>'),
+                        html
                       );
                     }
-                    function saveFormData() {
-                      const formData = {
-                        message: document.getElementById("message").value,
-                      };
-                      document.getElementById("modwrangler-wrapper") &&
-                        (document.getElementById("gameSelect") &&
-                          (formData.gameSelect =
-                            document.getElementById("gameSelect").value),
-                        document.getElementById("modName") &&
-                          (formData.modName =
-                            document.getElementById("modName").value),
-                        document.getElementById("modVersion") &&
-                          (formData.modVersion =
-                            document.getElementById("modVersion").value),
-                        document.getElementById("modAuthorName") &&
-                          (formData.modAuthorName =
-                            document.getElementById("modAuthorName").value),
-                        (formData.tags = []),
-                        document
-                          .querySelectorAll(
-                            'input[type="checkbox"][id^="tag-"]'
-                          )
-                          .forEach((checkbox) => {
-                            checkbox.checked &&
-                              formData.tags.push(checkbox.value);
-                          }),
-                        document.getElementById("thumbnailURL") &&
-                          (formData.thumbnailURL =
-                            document.getElementById("thumbnailURL").value),
-                        document.getElementById("vaultFileName") &&
-                          (formData.vaultFileName =
-                            document.getElementById("vaultFileName").value),
-                        document.getElementById("modDescription") &&
-                          (formData.modDescription =
-                            document.getElementById("modDescription").value)),
-                        GM_setValue("savedFormData", JSON.stringify(formData));
-                      const notification = document.createElement("div");
-                      (notification.textContent = "Form data saved!"),
-                        Object.assign(notification.style, {
-                          position: "fixed",
-                          top: "20px",
-                          right: "20px",
-                          backgroundColor: "#4a5464",
-                          color: "#c5d0db",
-                          padding: "10px",
-                          borderRadius: "5px",
-                          zIndex: "9999",
-                          boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-                        }),
-                        document.body.appendChild(notification),
-                        setTimeout(() => notification.remove(), 2e3);
-                    }
-                    saveFormData();
-                  }),
-                  pasteButton.addEventListener("click", (e) => {
-                    e.preventDefault(), e.stopPropagation();
-                    const savedData = GM_getValue("savedFormData", "{}"),
-                      formData = JSON.parse(savedData);
-                    formData.message &&
-                      ((document.getElementById("message").value =
-                        formData.message),
-                      updateHighlight(),
-                      adjustTextareaAndHighlight()),
-                      document.getElementById("modwrangler-wrapper") &&
-                        (document.getElementById("gameSelect") &&
-                          formData.gameSelect &&
-                          (document.getElementById("gameSelect").value =
-                            formData.gameSelect),
-                        document.getElementById("modName") &&
-                          formData.modName &&
-                          (document.getElementById("modName").value =
-                            formData.modName),
-                        document.getElementById("modVersion") &&
-                          formData.modVersion &&
-                          (document.getElementById("modVersion").value =
-                            formData.modVersion),
-                        document.getElementById("modAuthorName") &&
-                          formData.modAuthorName &&
-                          (document.getElementById("modAuthorName").value =
-                            formData.modAuthorName),
-                        formData.tags &&
-                          Array.isArray(formData.tags) &&
-                          (document
-                            .querySelectorAll(
-                              'input[type="checkbox"][id^="tag-"]'
-                            )
-                            .forEach((checkbox) => (checkbox.checked = !1)),
-                          formData.tags.forEach((tag) => {
-                            const checkbox = document.querySelector(
-                              `input[type="checkbox"][value="${tag}"]`
-                            );
-                            checkbox && (checkbox.checked = !0);
-                          })),
-                        document.getElementById("thumbnailURL") &&
-                          formData.thumbnailURL &&
-                          (document.getElementById("thumbnailURL").value =
-                            formData.thumbnailURL),
-                        document.getElementById("vaultFileName") &&
-                          formData.vaultFileName &&
-                          (document.getElementById("vaultFileName").value =
-                            formData.vaultFileName),
-                        document.getElementById("modDescription") &&
-                          formData.modDescription &&
-                          (document.getElementById("modDescription").value =
-                            formData.modDescription));
-                    const notification = document.createElement("div");
-                    (notification.textContent = "Form data restored!"),
-                      Object.assign(notification.style, {
-                        position: "fixed",
-                        top: "20px",
-                        right: "20px",
-                        backgroundColor: "#4a5464",
-                        color: "#c5d0db",
-                        padding: "10px",
-                        borderRadius: "5px",
-                        zIndex: "9999",
-                        boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-                      }),
-                      document.body.appendChild(notification),
-                      setTimeout(() => notification.remove(), 2e3);
-                  }),
-                  headerContainer.append(headingClone, copyButton, pasteButton),
-                  heading.parentNode.replaceChild(headerContainer, heading);
-              }
-            }),
-            addCustomSmileyButtons(),
-            (() => {
-              const smileyBox = document.getElementById("smiley-box");
-              if (!smileyBox) return;
-              const bbcodeStatus = smileyBox.querySelector(".bbcode-status"),
-                usernameElement = document.querySelector(".username-coloured"),
-                isLoregamer =
-                  usernameElement &&
-                  "loregamer" === usernameElement.textContent.trim();
-              bbcodeStatus &&
-                ((bbcodeStatus.innerHTML = `\n        <hr />\n        <button type="button" class="button button-secondary custom-button" id="insert-mod-template">Insert Mod Template</button>\n        <button type="button" class="button button-secondary custom-button" id="insert-table">Insert Table</button>\n        <button type="button" class="button button-secondary custom-button" id="ping-bloomery" style="display: ${isLoregamer ? "inline-block" : "none"};">Ping Bloomery</button>\n      `),
-                document
-                  .getElementById("insert-mod-template")
-                  .addEventListener("click", (e) => {
-                    e.preventDefault(), insertModTemplate();
-                  }),
-                document
-                  .getElementById("insert-table")
-                  .addEventListener("click", (e) => {
-                    e.preventDefault(), insertTable();
-                  }),
-                document
-                  .getElementById("ping-bloomery")
-                  .addEventListener("click", (e) => {
-                    e.preventDefault(), insertBloomeryPing();
-                  }));
-            })(),
-            positionSmileyBox(),
-            positionEditorHeader();
-          const vaultContainer = document.createElement("div");
-          vaultContainer.style.marginTop = "10px";
-          const vaultLink = document.createElement("a");
-          (vaultLink.href = "javascript:void(0);"),
-            Object.assign(vaultLink.style, {
-              color: "rgb(58, 128, 234)",
-              fontSize: "1em",
-              display: "inline-flex",
-              alignItems: "center",
-              textDecoration: "none",
-            }),
-            (vaultLink.innerHTML =
-              '<img src="https://f.rpghq.org/V4gHDnvTTgpf.webp" width="16" height="16" style="margin-right: 5px;"> Open Vault'),
-            (vaultLink.onclick = (e) => {
-              e.preventDefault(),
-                window.open(
-                  "https://vault.rpghq.org/",
-                  "RPGHQVault",
-                  "width=800,height=800,resizable=yes,scrollbars=yes"
-                );
-            }),
-            vaultContainer.appendChild(vaultLink),
-            textArea.parentNode.insertBefore(
-              vaultContainer,
-              textArea.nextSibling
-            ),
-            window.addEventListener("resize", () => {
-              positionSmileyBox(), positionEditorHeader();
-            }),
-            window.addEventListener("scroll", () => {
-              positionSmileyBox(), positionEditorHeader();
-            });
-        };
-      // window.addEventListener("beforeunload", (e) => {
-      //   if (isFormSubmitting) return;
-      //   const msg = "You have unsaved changes. Are you sure you want to leave?";
-      //   e.returnValue = msg;
-      //   return msg;
-      // });
-      // =============================
-      // Run Initialization
-      // =============================
-      // Run immediately rather than waiting for window load
-      (() => {
-        const style = document.createElement("style");
-        (style.textContent =
-          "\n      .bbcode-bracket { color: #D4D4D4; }\n      .bbcode-tag-0 { color: #569CD6; }\n      .bbcode-tag-1 { color: #CE9178; }\n      .bbcode-tag-2 { color: #DCDCAA; }\n      .bbcode-tag-3 { color: #C586C0; }\n      .bbcode-tag-4 { color: #4EC9B0; }\n      .bbcode-attribute { color: #9CDCFE; }\n      .bbcode-list-item, .bbcode-smiley { color: #FFD700; }\n      #bbcode-highlight {\n        white-space: pre-wrap;\n        word-wrap: break-word;\n        position: absolute;\n        top: 0; left: 0;\n        z-index: 3;\n        width: 100%; height: 100%;\n        overflow: hidden;\n        pointer-events: none;\n        box-sizing: border-box;\n        padding: 3px;\n        font-family: Verdana, Helvetica, Arial, sans-serif;\n        font-size: 11px;\n        line-height: 15.4px;\n        background-color: transparent;\n        color: transparent;\n        transition: all 0.5s ease, height 0.001s linear;\n      }\n      #message {\n        position: relative;\n        z-index: 2;\n        background: transparent;\n        color: rgb(204, 204, 204);\n        caret-color: white;\n        width: 100%;\n        height: 100%;\n        padding: 3px;\n        box-sizing: border-box;\n        resize: none;\n        overflow: auto;\n        font-family: Verdana, Helvetica, Arial, sans-serif;\n        font-size: 11px;\n        line-height: 15.4px;\n      }\n      .editor-container { position: relative; width: 100%; height: auto; }\n      .bbcode-link { color: #5D8FBD; }\n      .smiley-button, .custom-smiley-button {\n        display: inline-flex; justify-content: center; align-items: center;\n        width: 22px; height: 22px; margin: 2px;\n        text-decoration: none; vertical-align: middle; overflow: hidden;\n      }\n      .smiley-button img, .custom-smiley-button img {\n        max-width: 80%; max-height: 80%; object-fit: contain;\n      }\n      .emoji-smiley { font-size: 18px; display: flex; justify-content: center; align-items: center; width: 80%; height: 80%; }\n      #smiley-box {\n        position: absolute; max-height: 80vh; width: 17%;\n        overflow-y: auto; border-radius: 5px; z-index: 1000;\n      }\n      .smiley-group { margin-bottom: 10px; }\n      #smiley-box a { color: #5D8FBD; text-decoration: none; }\n      #smiley-box a:hover { text-decoration: underline; }\n      #abbc3_buttons.fixed { position: fixed; top: 0; z-index: 1000; background-color: #3A404A !important; }\n      .abbc3_buttons_row.fixed { background-color: #3A404A !important; position: fixed; top: 0; z-index: 1000; }\n      .custom-buttons-container { margin-top: 10px; }\n      .custom-button { margin-bottom: 5px; margin-right: 5px; }\n      .smiley-group-separator { margin: 10px 0; }\n      @media (max-width: 768px) {\n        #smiley-box {\n          position: static !important; width: 100% !important;\n          max-height: none !important; overflow-y: visible !important; margin-bottom: 10px;\n        }\n        .smiley-button, .custom-smiley-button { width: 36px; height: 36px; }\n        .smiley-button img, .custom-smiley-button img { width: 30px; height: 30px; }\n        .emoji-smiley { font-size: 24px; }\n      }\n    "),
-          document.head.appendChild(style);
-      })(),
-        initialize(),
-        (() => {
-          const postForm = document.getElementById("postform");
-          postForm && postForm.addEventListener("submit", () => {});
-        })(),
-        (() => {
-          // Immediate check for existing palette
-          const colorPalette = document.querySelector(
-            ".colour-palette.horizontal-palette"
-          );
-          colorPalette && addCustomColorsToExistingPalette(colorPalette);
-          // Set up a mutation observer to watch for the palette being added to the DOM
-          // Start observing the document body for palette additions
-          new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-              "childList" === mutation.type &&
-                mutation.addedNodes.length > 0 &&
-                mutation.addedNodes.forEach((node) => {
-                  if (node.nodeType === Node.ELEMENT_NODE) {
-                    const palette =
-                      node.classList &&
-                      node.classList.contains("colour-palette")
-                        ? node
-                        : node.querySelector(
-                            ".colour-palette.horizontal-palette"
-                          );
-                    palette && addCustomColorsToExistingPalette(palette);
+
+                    default:
+                      return "";
                   }
-                });
+                })
+                .join(""))(tokens)),
+              // Sync scrolling between textarea and highlight div
+              (highlightDiv.scrollTop = textArea.scrollTop);
+          }, 150);
+          // Event listeners
+          textArea.addEventListener("input", updateHighlight),
+            textArea.addEventListener("scroll", () => {
+              highlightDiv.scrollTop = textArea.scrollTop;
             });
-          }).observe(document.body, {
-            childList: !0,
-            subtree: !0,
-          });
-          // Add direct event listeners to color buttons - but only once
-          const addColorButtonListeners = () => {
-            document
-              .querySelectorAll(
-                '.bbcode-palette-colour, .color-palette-trigger, [data-bbcode="color"], .colour-palette-trigger'
-              )
-              .forEach((button) => {
-                // Skip if we've already added a listener
-                "true" !== button.dataset.customListenerAdded &&
-                  // Add a click listener that will add our custom colors when the palette appears
-                  (button.addEventListener(
-                    "click",
-                    () => {
-                      // Wait a short time for the palette to be added to the DOM
-                      setTimeout(() => {
-                        const palette = document.querySelector(
-                          ".colour-palette.horizontal-palette"
-                        );
-                        palette && addCustomColorsToExistingPalette(palette);
-                      }, 50);
-                    },
-                    {
-                      once: !1,
-                    }
-                  ), // Allow multiple clicks
-                  // Mark this button as having a listener added
-                  (button.dataset.customListenerAdded = "true"));
-              });
-          };
-          // Initial call
-          addColorButtonListeners();
-          // Set up an interval to check for new color buttons, but limit it to run for 30 seconds
-          // after page load to avoid unnecessary processing
-          let checkCount = 0;
-          const intervalId = setInterval(() => {
-            addColorButtonListeners(),
-              checkCount++,
-              checkCount >= 30 && clearInterval(intervalId);
-          }, 1e3);
-        })();
+          // Optimized event listeners for window events
+          const throttledResize = debounce(() => {
+              adjustTextareaAndHighlight(textArea, highlightDiv);
+            }, 100),
+            throttledScroll = debounce(() => {
+              positionSmileyBox(), positionEditorHeader();
+            }, 100);
+          window.addEventListener("resize", throttledResize),
+            window.addEventListener("scroll", throttledScroll),
+            // Initial rendering
+            updateHighlight(),
+            adjustTextareaAndHighlight(textArea, highlightDiv);
+        };
+      // Update page title based on URL parameters
+      // =============================
+      // Run on Page Load
+      // =============================
+      window.addEventListener("load", () => {
+        (() => {
+          const style = document.createElement("style");
+          (style.textContent =
+            "\n        .bbcode-bracket { color: #D4D4D4; }\n        .bbcode-tag-0 { color: #569CD6; }\n        .bbcode-tag-1 { color: #CE9178; }\n        .bbcode-tag-2 { color: #DCDCAA; }\n        .bbcode-tag-3 { color: #C586C0; }\n        .bbcode-tag-4 { color: #4EC9B0; }\n        .bbcode-attribute { color: #9CDCFE; }\n        .bbcode-list-item { color: #FFD700; }\n        .bbcode-link { color: #5D8FBD; }\n\n        #bbcode-highlight {\n            white-space: pre-wrap;\n            word-wrap: break-word;\n            position: absolute;\n            top: 0; left: 0;\n            z-index: 3;\n            width: 100%; height: 100%;\n            overflow: hidden;\n            pointer-events: none;\n            box-sizing: border-box;\n            padding: 3px;\n            font-family: Verdana, Helvetica, Arial, sans-serif;\n            font-size: 11px;\n            line-height: 15.4px;\n            background-color: transparent;\n            color: transparent;\n        }\n\n        #message {\n            position: relative;\n            z-index: 2;\n            background: transparent;\n            color: rgb(204, 204, 204);\n            caret-color: white;\n            width: 100%;\n            height: 100%;\n            padding: 3px;\n            box-sizing: border-box;\n            resize: none;\n            overflow: auto;\n            font-family: Verdana, Helvetica, Arial, sans-serif;\n            font-size: 11px;\n            line-height: 15.4px;\n        }\n\n        .editor-container {\n            position: relative;\n            width: 100%;\n            height: auto;\n        }\n\n        #abbc3_buttons.fixed {\n            position: fixed;\n            top: 0;\n            z-index: 1000;\n            background-color: #3A404A !important;\n        }\n\n        .abbc3_buttons_row.fixed {\n            background-color: #3A404A !important;\n            position: fixed;\n            top: 0;\n            z-index: 1000;\n        }\n      "),
+            document.head.appendChild(style);
+        })(),
+          initialize();
+      });
     },
   });
   // RPGHQ - Thousands Comma Formatter
