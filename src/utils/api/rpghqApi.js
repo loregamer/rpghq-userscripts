@@ -18,7 +18,7 @@ export async function searchUsers(query) {
         Accept: "application/json, text/javascript, */*; q=0.01",
         "X-Requested-With": "XMLHttpRequest",
         // Referer might be important, adjust if needed based on where this is called
-        Referer: "https://rpghq.org/forums/posting.php?mode=post&f=26",
+        Referer: "https://rpghq.org/forums/",
       },
       responseType: "json", // Automatically parse JSON response
       onload: function (response) {
