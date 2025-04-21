@@ -15,6 +15,8 @@ import {
 const THEME_LINK_COLOR_KEY = "theme_linkColor";
 const THEME_HOVER_COLOR_KEY = "theme_hoverColor";
 const THEME_BACKGROUND_IMAGE_URL_KEY = "theme_backgroundImageUrl";
+const THEME_UNREAD_COLOR_KEY = "theme_unreadColor";
+const THEME_SUBTLE_TEXT_COLOR_KEY = "theme_subtleTextColor";
 
 export function renderThemeSubtab(container) {
   log("Rendering Theme subtab...");
@@ -136,6 +138,16 @@ export function renderThemeSubtab(container) {
       "Hover Link Color",
       THEME_HOVER_COLOR_KEY,
       "#399bff", // Example default, adjust if needed
+    ),
+  );
+  themeBody.appendChild(
+    createColorInput("Unread Icon Color", THEME_UNREAD_COLOR_KEY, "#BC2A4D"),
+  );
+  themeBody.appendChild(
+    createColorInput(
+      "Subtle Text Color",
+      THEME_SUBTLE_TEXT_COLOR_KEY,
+      "#bfc0c5",
     ),
   );
 

@@ -29,6 +29,8 @@ const THEME_LINK_COLOR_KEY = "theme_linkColor"; // Covers link, active, visited
 // const THEME_ACTIVE_COLOR_KEY = "theme_activeColor"; // Removed
 const THEME_HOVER_COLOR_KEY = "theme_hoverColor";
 const THEME_BACKGROUND_IMAGE_URL_KEY = "theme_backgroundImageUrl"; // New key
+const THEME_UNREAD_COLOR_KEY = "theme_unreadColor"; // New key for unread icon color
+const THEME_SUBTLE_TEXT_COLOR_KEY = "theme_subtleTextColor"; // New key for subtle text
 
 const EXECUTION_PHASES = [
   { id: "document-start", name: "Document Start" },
@@ -61,6 +63,8 @@ export function applyCustomThemeStyles() {
   // const activeColor = gmGetValue(THEME_ACTIVE_COLOR_KEY, ""); // Removed
   const hoverColor = gmGetValue(THEME_HOVER_COLOR_KEY, "");
   const backgroundImageUrl = gmGetValue(THEME_BACKGROUND_IMAGE_URL_KEY, ""); // Get background image URL
+  const unreadColor = gmGetValue(THEME_UNREAD_COLOR_KEY, ""); // Get unread icon color
+  const subtleTextColor = gmGetValue(THEME_SUBTLE_TEXT_COLOR_KEY, ""); // Get subtle text color
 
   let customCSS = "";
   const defaultBgColor = "#171b24"; // Define default background color
@@ -100,8 +104,33 @@ export function applyCustomThemeStyles() {
     `;
   }
 
+  // Apply style for unread icon if unreadColor is set
+  if (unreadColor) {
+    customCSS += `
+      .icon.icon-red,
+      a:hover .icon.icon-red {
+        color: ${unreadColor};
+      }
+    `;
+  }
+
+  // Apply style for subtle text if subtleTextColor is set
+  if (subtleTextColor) {
+    customCSS += `
+      html, body, .headerbar p, .copyright, ul.topiclist li, .panel, label, dd label, .signature, .postprofile, .postprofile strong, dl.details dd, dl.details dt, .content, .postbody, fieldset.polls dl, dl.file dd, table.table1 td, .dropdown-extended ul li:hover, .button {
+        color: ${subtleTextColor};
+      }
+    `;
+  }
+
   // Only add the style element if there are custom styles to apply
-  if (linkColor || hoverColor || backgroundImageUrl) {
+  if (
+    linkColor ||
+    hoverColor ||
+    backgroundImageUrl ||
+    unreadColor ||
+    subtleTextColor
+  ) {
     log("Applying custom theme styles:", customCSS);
     // eslint-disable-next-line no-undef
     GM_addStyle(customCSS.trim());
