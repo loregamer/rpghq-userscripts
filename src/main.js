@@ -28,6 +28,7 @@ const THEME_LINK_COLOR_KEY = "theme_linkColor"; // Covers link, active, visited
 // const THEME_VISITED_COLOR_KEY = "theme_visitedColor"; // Removed
 // const THEME_ACTIVE_COLOR_KEY = "theme_activeColor"; // Removed
 const THEME_HOVER_COLOR_KEY = "theme_hoverColor";
+const THEME_BACKGROUND_IMAGE_URL_KEY = "theme_backgroundImageUrl"; // New key
 
 const EXECUTION_PHASES = [
   { id: "document-start", name: "Document Start" },
@@ -59,9 +60,23 @@ export function applyCustomThemeStyles() {
   // const visitedColor = gmGetValue(THEME_VISITED_COLOR_KEY, ""); // Removed
   // const activeColor = gmGetValue(THEME_ACTIVE_COLOR_KEY, ""); // Removed
   const hoverColor = gmGetValue(THEME_HOVER_COLOR_KEY, "");
+  const backgroundImageUrl = gmGetValue(THEME_BACKGROUND_IMAGE_URL_KEY, ""); // Get background image URL
 
   let customCSS = "";
+  const defaultBgColor = "#171b24"; // Define default background color
 
+  // --- Background Style ---
+  // Apply background only if URL is explicitly set
+  if (backgroundImageUrl) {
+    const backgroundStyle = `background: ${defaultBgColor} url("${backgroundImageUrl}") repeat center center; background-attachment: fixed; color-scheme: dark;`;
+    customCSS += `
+      html, body {
+        ${backgroundStyle}
+      }
+    `;
+  }
+
+  // --- Link Styles ---
   // Apply style for link, active, visited if linkColor is set
   if (linkColor) {
     customCSS += `
@@ -85,7 +100,8 @@ export function applyCustomThemeStyles() {
     `;
   }
 
-  if (customCSS) {
+  // Only add the style element if there are custom styles to apply
+  if (linkColor || hoverColor || backgroundImageUrl) {
     log("Applying custom theme styles:", customCSS);
     // eslint-disable-next-line no-undef
     GM_addStyle(customCSS.trim());

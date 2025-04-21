@@ -14,6 +14,7 @@ import {
 // Keys from main.js (redundant but good for clarity)
 const THEME_LINK_COLOR_KEY = "theme_linkColor";
 const THEME_HOVER_COLOR_KEY = "theme_hoverColor";
+const THEME_BACKGROUND_IMAGE_URL_KEY = "theme_backgroundImageUrl";
 
 export function renderThemeSubtab(container) {
   log("Rendering Theme subtab...");
@@ -84,6 +85,44 @@ export function renderThemeSubtab(container) {
     return item;
   };
 
+  // Helper function to create text input
+  const createTextInput = (label, key, placeholder = "") => {
+    const id = `theme-text-${key}`;
+    const currentValue = gmGetValue(key, ""); // Get current value or empty string
+
+    const item = document.createElement("div");
+    item.className = "preference-item theme-text-item"; // Consistent class naming
+    item.innerHTML = `
+      <div class="preference-header">
+        <label for="${id}" class="preference-name">${label}</label>
+        <div class="preference-control">
+          <input type="text" id="${id}" value="${currentValue}" placeholder="${placeholder}" class="input-text">
+          <button class="btn btn-secondary btn-small reset-text-btn" title="Reset to default">Reset</button>
+        </div>
+      </div>
+      <p class="preference-description">Enter a valid URL for the background image.</p>
+    `;
+
+    const textInput = item.querySelector("input[type='text']");
+    const resetButton = item.querySelector(".reset-text-btn");
+
+    textInput.addEventListener("input", (event) => {
+      const newValue = event.target.value.trim();
+      log(`Setting ${key} to ${newValue}`);
+      gmSetValue(key, newValue);
+      applyCustomThemeStyles(); // Apply styles live
+    });
+
+    resetButton.addEventListener("click", () => {
+      log(`Resetting ${key} to default`);
+      gmSetValue(key, ""); // Clear the setting
+      textInput.value = ""; // Clear input field
+      applyCustomThemeStyles(); // Re-apply styles after reset
+    });
+
+    return item;
+  };
+
   // Add color inputs
   themeBody.appendChild(
     createColorInput(
@@ -97,6 +136,15 @@ export function renderThemeSubtab(container) {
       "Hover Link Color",
       THEME_HOVER_COLOR_KEY,
       "#399bff", // Example default, adjust if needed
+    ),
+  );
+
+  // Add background image input
+  themeBody.appendChild(
+    createTextInput(
+      "Background Image URL",
+      THEME_BACKGROUND_IMAGE_URL_KEY,
+      "e.g., https://example.com/image.png",
     ),
   );
 
