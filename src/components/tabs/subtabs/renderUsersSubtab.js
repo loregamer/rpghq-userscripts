@@ -230,12 +230,12 @@ function initInlineRuleEditing(userId, detailsContainer, mainContainer) {
   const deleteAllBtn = detailsContainer.querySelector(".delete-user-rules-btn");
   const ruleForm = detailsContainer.querySelector(".rule-editor-form");
   const cancelInlineBtn = detailsContainer.querySelector(
-    ".cancel-inline-rule-btn"
+    ".cancel-inline-rule-btn",
   );
   const saveInlineBtn = detailsContainer.querySelector(".save-inline-rule-btn");
   const ruleActionSelect = detailsContainer.querySelector(".rule-action");
   const paramsContainer = detailsContainer.querySelector(
-    ".rule-params-container"
+    ".rule-params-container",
   );
 
   // Username color handling
@@ -336,7 +336,7 @@ function initInlineRuleEditing(userId, detailsContainer, mainContainer) {
       let params = {};
       if (action === "HIGHLIGHT") {
         params.color = paramsContainer.querySelector(
-          ".highlight-color-inline"
+          ".highlight-color-inline",
         ).value;
       }
 
@@ -872,10 +872,10 @@ function initUserSearch(container) {
   // Handle when a user is found via search
   async function handleUserFound(userId, username) {
     const existingRulesContainer = container.querySelector(
-      "#existing-rules-container"
+      "#existing-rules-container",
     );
     let userCard = existingRulesContainer.querySelector(
-      `.user-card[data-user-id="${userId}"]`
+      `.user-card[data-user-id="${userId}"]`,
     );
 
     if (userCard) {
@@ -925,7 +925,7 @@ async function loadRulesForUser(userId, detailsContainer) {
     const rulesTableBody = detailsContainer.querySelector(".rules-tbody");
     if (!rulesTableBody) {
       error(
-        `Could not find .rules-tbody within provided container for user ${userId}`
+        `Could not find .rules-tbody within provided container for user ${userId}`,
       );
       return;
     }
@@ -991,7 +991,7 @@ async function loadRulesForUser(userId, detailsContainer) {
     // Add event listeners to edit and delete buttons within this specific table
     rulesTableBody.querySelectorAll(".edit-inline-rule-btn").forEach((btn) => {
       btn.addEventListener("click", () =>
-        editInlineRule(userId, btn.dataset.ruleId, detailsContainer)
+        editInlineRule(userId, btn.dataset.ruleId, detailsContainer),
       );
     });
 
@@ -999,7 +999,7 @@ async function loadRulesForUser(userId, detailsContainer) {
       .querySelectorAll(".delete-inline-rule-btn")
       .forEach((btn) => {
         btn.addEventListener("click", () =>
-          deleteInlineRule(userId, btn.dataset.ruleId, detailsContainer)
+          deleteInlineRule(userId, btn.dataset.ruleId, detailsContainer),
         );
       });
   } catch (err) {
@@ -1074,7 +1074,7 @@ async function deleteInlineRule(userId, ruleId, detailsContainer) {
 async function loadExistingUsers(container) {
   try {
     const existingRulesContainer = container.querySelector(
-      "#existing-rules-container"
+      "#existing-rules-container",
     );
     const allUserRules = await getAllUserRules();
 
@@ -1091,7 +1091,7 @@ async function loadExistingUsers(container) {
           userId,
           userData.username || `User #${userId}`,
           ruleCount,
-          userData.usernameColor
+          userData.usernameColor,
         );
         return cardElement.outerHTML;
       })
@@ -1115,7 +1115,7 @@ function createUserCardElement(
   userId,
   username,
   ruleCount = 0,
-  usernameColor = null
+  usernameColor = null,
 ) {
   const card = document.createElement("div");
   card.className = "user-card";
