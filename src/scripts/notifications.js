@@ -825,12 +825,29 @@ export function init({ getScriptSetting }) {
         "warningColor",
         "#D31141" // Default: Red
       );
+      const readNotificationOpacity = _getScriptSetting(
+        "notifications",
+        "readOpacity",
+        0.8 // Default: 80% opacity
+      );
+      const readTintColorSetting = _getScriptSetting(
+        "notifications",
+        "readTintColor",
+        "rgba(0, 0, 0, 0.05)" // Default: 5% opaque black
+      );
 
       // Apply base container styling
       Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
 
       const notificationText = block.querySelector(".notification_text");
       if (!notificationText) return;
+
+      // Determine if read (no mark_notification link)
+      const isRead = !(block.href && block.href.includes("mark_notification"));
+      if (isRead) {
+        block.style.opacity = readNotificationOpacity;
+        block.style.backgroundColor = readTintColorSetting; // Apply tint
+      }
 
       // Move time element to bottom right
       const timeElement = block.querySelector(".notification-time");
@@ -1104,6 +1121,16 @@ export function init({ getScriptSetting }) {
         "referenceTextColor",
         "#ffffff"
       );
+      const readNotificationOpacity = _getScriptSetting(
+        "notifications",
+        "readOpacity",
+        0.8 // Default: 80% opacity
+      );
+      const readTintColorSetting = _getScriptSetting(
+        "notifications",
+        "readTintColor",
+        "rgba(0, 0, 0, 0.05)" // Default: 5% opaque black
+      );
 
       // Define colors (get from settings or use defaults)
       const colors = enableColors ? notificationColors : {};
@@ -1144,6 +1171,15 @@ export function init({ getScriptSetting }) {
         if (!titleElement) {
           row.dataset.customized = "true"; // Mark as processed even if no title
           return;
+        }
+
+        // Determine if read (no mark_notification link)
+        const isRead = !(
+          anchorElement.href && anchorElement.href.includes("mark_notification")
+        );
+        if (isRead) {
+          row.style.opacity = readNotificationOpacity;
+          row.style.backgroundColor = readTintColorSetting; // Apply tint
         }
 
         let originalTitleHTML = titleElement.innerHTML;
@@ -1404,8 +1440,8 @@ export function init({ getScriptSetting }) {
           }
         }
 
-        // Apply background color to the row if enabled
-        if (enableColors) {
+        // Apply background color to the row if enabled and NOT already tinted as read
+        if (enableColors && !isRead) {
           const color = notificationColors[notificationType] || defaultColor;
           row.style.backgroundColor = color;
         }
