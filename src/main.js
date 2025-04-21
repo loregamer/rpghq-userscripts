@@ -8,6 +8,9 @@ import { sharedUtils } from "./utils/sharedUtils.js"; // Import shared utilities
 import { checkForUpdates } from "./utils/updateChecker.js"; // Import update checker
 import loadOrder from "../load_order.json"; // Import the execution order
 
+// Import user rules system
+import { initRuleApplication } from "./utils/userRules/ruleApplication.js";
+
 // Import UI components
 import { showModal } from "./components/showModal.js";
 import { hideModal } from "./components/hideModal.js";
@@ -452,6 +455,15 @@ function init() {
 
     // Add menu button (needs DOM ready)
     addMenuButton(toggleModalVisibility);
+
+    // Initialize user rules system
+    initRuleApplication().then((result) => {
+      if (result.success) {
+        log("User rules system initialized successfully");
+      } else {
+        warn("Failed to initialize user rules system:", result.error);
+      }
+    });
   });
 
   window.addEventListener("load", () => {
