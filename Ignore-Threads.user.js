@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Ignored Thread Enhancer
 // @namespace    http://tampermonkey.net/
-// @version      4.1
+// @version      4.2
 // @description  Export previously ignored threads from the old RPGHQ Thread Ignorer userscript.
 // @match        https://rpghq.org/forums/*
 // @grant        GM_getValue
@@ -69,11 +69,11 @@ SOFTWARE.
   }
   // --- End localStorage Wrapper Functions ---
 
-  let ignoredThreads = GM_getValue("ignoredThreads", {}); // Keep using GM for the export data
   let ignoreModeActive = false;
 
   function exportIgnoredThreadsJson() {
-    const exportData = JSON.stringify(ignoredThreads, null, 2); // Pretty print JSON
+    const currentIgnoredThreads = GM_getValue("ignoredThreads", {}); // Read fresh data
+    const exportData = JSON.stringify(currentIgnoredThreads, null, 2); // Pretty print JSON
     const jsonBlob = new Blob([exportData], { type: "application/json" });
     const jsonUrl = URL.createObjectURL(jsonBlob);
     const jsonLink = document.createElement("a");
@@ -87,6 +87,7 @@ SOFTWARE.
   }
 
   function showIgnoredThreadsPopup() {
+    const currentIgnoredThreads = GM_getValue("ignoredThreads", {}); // Read fresh data
     const popup = document.createElement("div");
     popup.id = "ignored-threads-export-popup";
     popup.style.cssText = `
@@ -115,7 +116,7 @@ SOFTWARE.
     threadList.style.cssText = `list-style-type: none; padding: 0; margin: 0;`;
     content.appendChild(threadList);
 
-    Object.entries(ignoredThreads)
+    Object.entries(currentIgnoredThreads) // Use fresh data
       .sort((a, b) => a[1].localeCompare(b[1])) // Sort by title
       .forEach(([threadId, threadTitle]) => {
         const listItem = document.createElement("li");
@@ -128,7 +129,8 @@ SOFTWARE.
         threadList.appendChild(listItem);
       });
 
-    if (Object.keys(ignoredThreads).length === 0) {
+    if (Object.keys(currentIgnoredThreads).length === 0) {
+      // Use fresh data
       threadList.innerHTML = "<p>No previously ignored threads found.</p>";
     }
 
@@ -312,7 +314,8 @@ SOFTWARE.
     currentIgnoredThreads[String(threadId)] = threadTitle.trim();
     // Write back to localStorage
     storageSetValue("ignoredThreads", currentIgnoredThreads);
-    // No need to update the global ignoredThreads used for export
+    // Also write back to GM_setValue to keep export data synced
+    GM_setValue("ignoredThreads", currentIgnoredThreads);
   }
 
   function removeIgnoredThreadsOnLoad() {
