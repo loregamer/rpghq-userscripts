@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
 // @namespace    rpghq-userscripts
-// @version      0.8.2
+// @version      0.9.0
 // @description  RPGHQ Userscript Manager
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -15,6 +15,7 @@
 // @grant        GM_registerMenuCommand
 // @icon         data:image/png;base64,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
 // @grant        GM_addStyle
+// @connect      rpghq.org
 // @run-at       document-start
 // @homepage     https://github.com/loregamer/rpghq-userscripts#readme
 // @downloadURL  https://github.com/loregamer/rpghq-userscripts/raw/main/dist/rpghq-userscript-manager.user.js
@@ -955,6 +956,24 @@
       enabledByDefault: !0,
       settings: [
         {
+          id: "readOpacity",
+          label: "Read Notification Opacity",
+          type: "number",
+          min: 0.1,
+          max: 1,
+          step: 0.05,
+          default: 0.8,
+          description:
+            "How transparent read notifications should be (1 = fully opaque).",
+        },
+        {
+          id: "readTintColor",
+          label: "Read Notification Tint Color",
+          type: "color",
+          default: "rgba(0, 0, 0, 0.05)",
+          description: "A subtle color tint applied to read notifications.",
+        },
+        {
           id: "enableNotificationColors",
           label: "Enable Notification Type Colors",
           type: "checkbox",
@@ -1473,6 +1492,616 @@
     after_dom: [],
   };
   /**
+   * Get all user rules from storage
+   * @returns {Object} Object containing user rules, keyed by user ID
+   */
+  async function getAllUserRules() {
+    try {
+      return gmGetValue("hqUserRules", {});
+    } catch (err) {
+      return error("Error retrieving user rules:", err), {};
+    }
+  }
+  /**
+   * Save the entire user rules object to storage
+   * @param {Object} rulesObject - The complete user rules object
+   * @returns {Boolean} Success indicator
+   */ async function saveUserRules(rulesObject) {
+    try {
+      return (
+        gmSetValue("hqUserRules", rulesObject),
+        log("User rules saved successfully"),
+        !0
+      );
+    } catch (err) {
+      return error("Error saving user rules:", err), !1;
+    }
+  }
+  /**
+   * Get rules for a specific user
+   * @param {String} userId - The user ID to retrieve rules for
+   * @returns {Object|null} User rules object or null if not found
+   */ async function getUserRules(userId) {
+    return (await getAllUserRules())[userId] || null;
+  }
+  /**
+   * Save rules for a specific user
+   * @param {String} userId - The user ID to save rules for
+   * @param {Object} userData - The user data object containing rules
+   * @returns {Boolean} Success indicator
+   */ async function saveUserRulesByUserId(userId, userData) {
+    try {
+      const allRules = await getAllUserRules();
+      return (allRules[userId] = userData), await saveUserRules(allRules);
+    } catch (err) {
+      return error(`Error saving rules for user ${userId}:`, err), !1;
+    }
+  }
+  /**
+   * Delete rules for a specific user
+   * @param {String} userId - The user ID to delete rules for
+   * @returns {Boolean} Success indicator
+   */
+  /**
+   * User Identification Utility
+   *
+   * Helps extract user IDs and usernames from DOM elements on the forum
+   */
+  // Common selectors for user elements
+  const SELECTORS_POST_AUTHOR = ".message-userDetails .message-username",
+    SELECTORS_POST_AUTHOR_LINK = ".message-userDetails .message-username a",
+    SELECTORS_POST_USERNAME_LINK = ".message-userDetails .username",
+    SELECTORS_PROFILE_USERNAME = ".p-title-value",
+    SELECTORS_MEMBER_CARD = ".memberCard",
+    SELECTORS_MEMBER_CARD_USERNAME = ".memberCard--username",
+    SELECTORS_CONVERSATION_USERNAME = ".username";
+  /**
+   * Extract user ID from a URL string
+   * @param {String} url - URL containing user ID
+   * @returns {String|null} - User ID or null if not found
+   */ function extractUserIdFromUrl(url) {
+    if (!url) return null;
+    try {
+      const urlObj = new URL(url, window.location.origin),
+        memberMatch = urlObj.pathname.match(/\/members\/.*\.(\d+)\/?/);
+      // Profile URLs: /members/username.12345/
+      if (memberMatch && memberMatch[1]) return memberMatch[1];
+      // Profile content URLs: /members/username.12345/content/
+      const profileContentMatch = urlObj.pathname.match(
+        /\/members\/.*\.(\d+)\/content\/?/
+      );
+      if (profileContentMatch && profileContentMatch[1])
+        return profileContentMatch[1];
+      // About URLs: /members/username.12345/about/
+      const aboutMatch = urlObj.pathname.match(
+        /\/members\/.*\.(\d+)\/about\/?/
+      );
+      if (aboutMatch && aboutMatch[1]) return aboutMatch[1];
+      // Thread URLs with specific post by user: /threads/thread-name.12345/post-98765
+      const postIdMatch = urlObj.pathname.match(/\/posts\/(\d+)\/?/);
+      return postIdMatch && postIdMatch[1], null;
+    } catch (err) {
+      return error("Error extracting user ID from URL:", err), null;
+    }
+  }
+  /**
+   * Extract user ID from a post element
+   * @param {Element} postElement - The post DOM element
+   * @returns {Object|null} - Object with userId and username, or null if not found
+   */
+  /**
+   * Get user from a DOM element based on context
+   * Attempts to detect what type of element this is and extract user info accordingly
+   * @param {Element} element - A DOM element that might contain user information
+   * @returns {Object|null} - Object with userId and username, or null if not found
+   */
+  function getUserFromElement(element) {
+    if (!element) return null;
+    try {
+      // Check if the element is a post or contains a post
+      const postElement =
+        element.closest(".message") || element.querySelector(".message");
+      if (postElement)
+        return (function (postElement) {
+          if (!postElement) return null;
+          try {
+            // Try to find the author link which contains the user ID in its href
+            const authorLink =
+              postElement.querySelector(SELECTORS_POST_AUTHOR_LINK) ||
+              postElement.querySelector(SELECTORS_POST_USERNAME_LINK);
+            if (authorLink) {
+              const userId = extractUserIdFromUrl(authorLink.href),
+                username = authorLink.textContent.trim();
+              if (userId && username)
+                return {
+                  userId: userId,
+                  username: username,
+                };
+            }
+            // If no author link with href, try to get just the username
+            const authorElement = postElement.querySelector(
+              SELECTORS_POST_AUTHOR
+            );
+            return authorElement
+              ? {
+                  userId: null,
+                  username: authorElement.textContent.trim(),
+                }
+              : null;
+          } catch (err) {
+            return error("Error extracting user from post:", err), null;
+          }
+        })(
+          /**
+           * Extract user ID from profile page
+           * @returns {Object|null} - Object with userId and username, or null if not found
+           */ postElement
+        );
+      // Check if the element is a member card or contains one
+      const cardElement =
+        element.closest(SELECTORS_MEMBER_CARD) ||
+        element.querySelector(SELECTORS_MEMBER_CARD);
+      if (cardElement)
+        /**
+         * Extract user from a member card element
+         * @param {Element} cardElement - The member card DOM element
+         * @returns {Object|null} - Object with userId and username, or null if not found
+         */
+        return (function (cardElement) {
+          if (!cardElement) return null;
+          try {
+            const usernameElement = cardElement.querySelector(
+              SELECTORS_MEMBER_CARD_USERNAME
+            );
+            if (!usernameElement) return null;
+            const usernameLink = usernameElement.querySelector("a");
+            if (!usernameLink) return null;
+            const userId = extractUserIdFromUrl(usernameLink.href),
+              username = usernameLink.textContent.trim();
+            return userId && username
+              ? {
+                  userId: userId,
+                  username: username,
+                }
+              : null;
+          } catch (err) {
+            return error("Error extracting user from member card:", err), null;
+          }
+        })(cardElement);
+      // Check if element has a username directly
+      const usernameElement = element.querySelector(
+        SELECTORS_CONVERSATION_USERNAME
+      );
+      if (usernameElement && "A" === usernameElement.tagName) {
+        const userId = extractUserIdFromUrl(usernameElement.href),
+          username = usernameElement.textContent.trim();
+        if (userId && username)
+          return {
+            userId: userId,
+            username: username,
+          };
+      }
+      // Last resort - check if the element itself is a link with a username class
+      if (
+        "A" === element.tagName &&
+        (element.classList.contains("username") ||
+          element.classList.contains("username--staff") ||
+          element.classList.contains("username--moderator") ||
+          element.classList.contains("username--admin"))
+      ) {
+        const userId = extractUserIdFromUrl(element.href),
+          username = element.textContent.trim();
+        if (userId && username)
+          return {
+            userId: userId,
+            username: username,
+          };
+      }
+      return null;
+    } catch (err) {
+      return error("Error getting user from element:", err), null;
+    }
+  }
+  /**
+   * Rule Application System
+   *
+   * Processes and applies stored user rules to DOM elements
+   */
+  // Page type detection
+  const PAGE_TYPES_TOPIC_VIEW = "TOPIC_VIEW",
+    PAGE_TYPES_PROFILE_VIEW = "PROFILE_VIEW",
+    PAGE_TYPES_RECENT_TOPICS = "RECENT_TOPICS_LIST",
+    PAGE_TYPES_SEARCH_RESULTS = "SEARCH_RESULTS",
+    PAGE_TYPES_MEMBER_LIST = "MEMBER_LIST",
+    PAGE_TYPES_OTHER = "OTHER";
+  /**
+   * Determine the current page type
+   * @returns {String} - One of PAGE_TYPES constants
+   */ function getPageType() {
+    const url = window.location.href;
+    return url.includes("/threads/") || url.includes("/posts/")
+      ? PAGE_TYPES_TOPIC_VIEW
+      : url.includes("/members/") && !url.includes("/list")
+        ? PAGE_TYPES_PROFILE_VIEW
+        : url.includes("/whats-new/") || url.includes("/latest-activity")
+          ? PAGE_TYPES_RECENT_TOPICS
+          : url.includes("/search/")
+            ? PAGE_TYPES_SEARCH_RESULTS
+            : url.includes("/members/list")
+              ? PAGE_TYPES_MEMBER_LIST
+              : PAGE_TYPES_OTHER;
+  }
+  /**
+   * Check if a rule should be applied based on page scope
+   * @param {Object} rule - The rule object
+   * @param {String} pageType - Current page type from PAGE_TYPES
+   * @returns {Boolean} - True if rule should be applied
+   */
+  /**
+   * Apply a single rule to an element
+   * @param {Element} element - The DOM element to apply the rule to
+   * @param {Object} rule - The rule to apply
+   * @returns {Boolean} - True if rule was applied successfully
+   */
+  function applyRule(element, rule) {
+    if (!element || !rule) return !1;
+    try {
+      switch (rule.action) {
+        case "HIDE":
+          /**
+           * Apply a HIDE action rule
+           * @param {Element} element - The DOM element to apply to
+           * @param {Object} rule - The rule to apply
+           * @returns {Boolean} - True if successful
+           */
+          return (function (element, rule) {
+            if (!element) return !1;
+            try {
+              switch (rule.subject) {
+                case "POST_BODY":
+                  const postBody =
+                    element.querySelector(".message-body") ||
+                    element.closest(".message-body");
+                  if (postBody) return (postBody.style.display = "none"), !0;
+                  break;
+
+                case "SIGNATURE":
+                  const signature =
+                    element.querySelector(".message-signature") ||
+                    element.closest(".message-signature");
+                  if (signature) return (signature.style.display = "none"), !0;
+                  break;
+
+                case "AVATAR":
+                  const avatar =
+                    element.querySelector(".message-avatar") ||
+                    element.closest(".message-avatar") ||
+                    element.querySelector(".avatar");
+                  if (avatar) return (avatar.style.display = "none"), !0;
+                  break;
+
+                case "USERNAME":
+                  // Don't actually hide username as it would break identification
+                  // Just make it very minimal (for safety)
+                  const username =
+                    element.querySelector(".message-username") ||
+                    element.closest(".message-username") ||
+                    element.querySelector(".username");
+                  if (username)
+                    return (
+                      (username.style.opacity = "0.5"),
+                      (username.style.fontSize = "0.8em"),
+                      !0
+                    );
+              }
+              return !1;
+            } catch (err) {
+              return error("Error applying HIDE rule:", err), !1;
+            }
+          })(
+            /**
+             * Apply a HIGHLIGHT action rule
+             * @param {Element} element - The DOM element to apply to
+             * @param {Object} rule - The rule to apply
+             * @returns {Boolean} - True if successful
+             */ element,
+            rule
+          );
+
+        case "HIGHLIGHT":
+          return (function (element, rule) {
+            if (!element) return !1;
+            try {
+              const color = rule.params?.color || "#FFFF99";
+              // Default yellow
+              switch (rule.subject) {
+                case "POST_BODY":
+                  const postBody =
+                    element.querySelector(".message-body") ||
+                    element.closest(".message-body");
+                  if (postBody)
+                    return (
+                      (postBody.style.backgroundColor = color),
+                      (postBody.style.borderRadius = "3px"),
+                      (postBody.style.padding = "3px"),
+                      !0
+                    );
+                  break;
+
+                case "SIGNATURE":
+                  const signature =
+                    element.querySelector(".message-signature") ||
+                    element.closest(".message-signature");
+                  if (signature)
+                    return (
+                      (signature.style.backgroundColor = color),
+                      (signature.style.borderRadius = "3px"),
+                      (signature.style.padding = "3px"),
+                      !0
+                    );
+                  break;
+
+                case "AVATAR":
+                  const avatar =
+                    element.querySelector(".message-avatar") ||
+                    element.closest(".message-avatar") ||
+                    element.querySelector(".avatar");
+                  if (avatar)
+                    return (
+                      (avatar.style.border = `2px solid ${color}`),
+                      (avatar.style.borderRadius = "3px"),
+                      !0
+                    );
+                  break;
+
+                case "USERNAME":
+                  const username =
+                    element.querySelector(".message-username") ||
+                    element.closest(".message-username") ||
+                    element.querySelector(".username");
+                  if (username)
+                    // This is redundant with usernameColor, but keeping for completeness
+                    return (
+                      (username.style.backgroundColor = color),
+                      (username.style.borderRadius = "3px"),
+                      (username.style.padding = "0 3px"),
+                      !0
+                    );
+              }
+              return !1;
+            } catch (err) {
+              return error("Error applying HIGHLIGHT rule:", err), !1;
+            }
+          })(element, rule);
+
+        default:
+          return warn(`Unknown rule action: ${rule.action}`), !1;
+      }
+    } catch (err) {
+      return error("Error applying rule:", err), !1;
+    }
+  }
+  /**
+   * Apply username color to an element
+   * @param {Element} element - The DOM element containing the username
+   * @param {String} color - Hex color code
+   * @returns {Boolean} - True if color was applied
+   */
+  /**
+   * Apply all rules for a user to a DOM element
+   * @param {Element} element - The DOM element to apply rules to
+   * @param {String} userId - User ID
+   * @param {Object} rulesData - Rules data for the user
+   * @returns {Number} - Number of rules applied
+   */
+  function applyUserRules(element, userId, rulesData) {
+    if (!element || !userId || !rulesData) return 0;
+    try {
+      const pageType = getPageType();
+      let appliedCount = 0;
+      // Apply username color if set
+      return (
+        rulesData.usernameColor &&
+          (function (element, color) {
+            if (!element || !color) return !1;
+            try {
+              const username =
+                element.querySelector(".message-username") ||
+                element.querySelector(".username");
+              if (username) {
+                const usernameLink = username.querySelector("a") || username;
+                return (
+                  (usernameLink.style.color = color),
+                  (usernameLink.dataset.originalColor =
+                    usernameLink.style.color || ""),
+                  (usernameLink.dataset.hqUserColor = color),
+                  !0
+                );
+              }
+              return !1;
+            } catch (err) {
+              return error("Error applying username color:", err), !1;
+            }
+          })(element, rulesData.usernameColor) &&
+          appliedCount++,
+        // Apply individual rules
+        rulesData.rules &&
+          Array.isArray(rulesData.rules) &&
+          rulesData.rules.forEach((rule) => {
+            (function (rule, pageType) {
+              if (!rule || !rule.scope) return !1;
+              if ("ALL" === rule.scope) return !0;
+              switch (rule.scope) {
+                case "TOPIC_VIEW":
+                  return pageType === PAGE_TYPES_TOPIC_VIEW;
+
+                case "PROFILE_VIEW":
+                  return pageType === PAGE_TYPES_PROFILE_VIEW;
+
+                case "RECENT_TOPICS_LIST":
+                  return pageType === PAGE_TYPES_RECENT_TOPICS;
+
+                case "SEARCH_RESULTS":
+                  return pageType === PAGE_TYPES_SEARCH_RESULTS;
+
+                default:
+                  return !1;
+              }
+            })(rule, pageType) &&
+              applyRule(element, rule) &&
+              appliedCount++;
+          }),
+        appliedCount
+      );
+    } catch (err) {
+      return error("Error applying user rules:", err), 0;
+    }
+  }
+  /**
+   * Process an element for user rules application
+   * @param {Element} element - DOM element to check and process
+   * @returns {Object} - Statistics about processing
+   */ async function processElement(element) {
+    if (!element)
+      return {
+        processed: !1,
+      };
+    try {
+      const userData = getUserFromElement(element);
+      if (!userData || !userData.userId)
+        return {
+          processed: !1,
+          reason: "no-user-id",
+        };
+      const userRules = await getUserRules(userData.userId);
+      if (!userRules)
+        return {
+          processed: !1,
+          reason: "no-rules",
+        };
+      const appliedCount = applyUserRules(element, userData.userId, userRules);
+      return {
+        processed: appliedCount > 0,
+        userId: userData.userId,
+        username: userData.username,
+        rulesApplied: appliedCount,
+      };
+    } catch (err) {
+      return (
+        error("Error processing element for user rules:", err),
+        {
+          processed: !1,
+          error: err.message,
+        }
+      );
+    }
+  }
+  /**
+   * Process all posts/users in the current page
+   * @returns {Promise<Object>} - Statistics about processing
+   */ async function processCurrentPage() {
+    const pageType = getPageType();
+    let stats = {
+      pageType: pageType,
+      elementsProcessed: 0,
+      usersWithRules: 0,
+      rulesApplied: 0,
+    };
+    try {
+      const allUserRules = await getAllUserRules();
+      if (!allUserRules || 0 === Object.keys(allUserRules).length)
+        return log("No user rules defined, skipping page processing"), stats;
+      // Get appropriate elements based on page type
+      let elements = [];
+      switch (pageType) {
+        case PAGE_TYPES_TOPIC_VIEW:
+          elements = Array.from(document.querySelectorAll(".message"));
+          break;
+
+        case PAGE_TYPES_PROFILE_VIEW:
+          // Process profile banner once
+          const profileUser = (function () {
+            try {
+              // Check if we're on a profile page
+              const profileUsername = document.querySelector(
+                SELECTORS_PROFILE_USERNAME
+              );
+              if (!profileUsername) return null;
+              // Get user ID from the URL
+              const userId = extractUserIdFromUrl(window.location.href),
+                username = profileUsername.textContent.trim();
+              return userId && username
+                ? {
+                    userId: userId,
+                    username: username,
+                  }
+                : null;
+            } catch (err) {
+              return (
+                error("Error extracting user from profile page:", err), null
+              );
+            }
+          })();
+          if (profileUser && profileUser.userId) {
+            const userRules = allUserRules[profileUser.userId];
+            if (userRules) {
+              const banner = document.querySelector(".memberHeader-main");
+              if (banner) {
+                const applied = applyUserRules(
+                  banner,
+                  profileUser.userId,
+                  userRules
+                );
+                applied > 0 &&
+                  (stats.usersWithRules++, (stats.rulesApplied += applied));
+              }
+            }
+          }
+          // Process user's posts if on their content page
+          elements = Array.from(document.querySelectorAll(".message"));
+          break;
+
+        case PAGE_TYPES_RECENT_TOPICS:
+        case PAGE_TYPES_SEARCH_RESULTS:
+          elements = Array.from(document.querySelectorAll(".structItem"));
+          break;
+
+        case PAGE_TYPES_MEMBER_LIST:
+          elements = Array.from(document.querySelectorAll(".memberCard"));
+      }
+      // Process found elements
+      stats.elementsProcessed = elements.length;
+      for (const element of elements) {
+        const userData = getUserFromElement(element);
+        if (userData && userData.userId) {
+          const userRules = allUserRules[userData.userId];
+          if (userRules) {
+            const applied = applyUserRules(element, userData.userId, userRules);
+            applied > 0 &&
+              (stats.usersWithRules++, (stats.rulesApplied += applied));
+          }
+        }
+      }
+      return (
+        log(
+          `User rules applied: ${stats.rulesApplied} rules for ${stats.usersWithRules} users on ${stats.elementsProcessed} elements`
+        ),
+        stats
+      );
+    } catch (err) {
+      return (
+        error("Error processing page for user rules:", err),
+        {
+          ...stats,
+          error: err.message,
+        }
+      );
+    }
+  }
+  /**
+   * Initialize rule application system and observe DOM for changes
+   */
+  /**
    * Hides the userscript manager modal.
    */
   function hideModal() {
@@ -1492,7 +2121,768 @@
    * @param {Object} scriptStates - Object containing enabled/disabled states for scripts
    * @param {Function} renderScriptsGridView - Function to render scripts in grid view
    * @param {Function} renderScriptsListView - Function to render scripts in list view
-   */ function renderThemeSubtab(container) {
+   */
+  /**
+   * Renders the "Users" subtab content within the Forum Preferences tab.
+   *
+   * @param {HTMLElement} container - The container element to render into
+   */
+  // Allowed rule actions and subjects
+  const RULE_ACTIONS = [
+      {
+        id: "HIDE",
+        name: "Hide",
+      },
+      {
+        id: "HIGHLIGHT",
+        name: "Highlight",
+      },
+    ],
+    RULE_SUBJECTS = [
+      {
+        id: "POST_BODY",
+        name: "Post Content",
+      },
+      {
+        id: "SIGNATURE",
+        name: "Signature",
+      },
+      {
+        id: "AVATAR",
+        name: "Avatar",
+      },
+      {
+        id: "USERNAME",
+        name: "Username",
+      },
+    ],
+    RULE_SCOPES = [
+      {
+        id: "ALL",
+        name: "Everywhere",
+      },
+      {
+        id: "TOPIC_VIEW",
+        name: "In Topics",
+      },
+      {
+        id: "PROFILE_VIEW",
+        name: "On Profile Pages",
+      },
+      {
+        id: "RECENT_TOPICS_LIST",
+        name: "In Recent Activity",
+      },
+      {
+        id: "SEARCH_RESULTS",
+        name: "In Search Results",
+      },
+    ];
+  function renderUsersSubtab(container) {
+    log("Rendering Users subtab..."),
+      // Create the main structure for the users subtab
+      (container.innerHTML =
+        '\n    <div class="preferences-section">\n      <div class="preferences-section-header">\n        <h3 class="preferences-section-title">User-Specific Rules</h3>\n      </div>\n      <div class="preferences-section-body">\n        <p class="preference-description">\n          Create rules for specific users that change how their content appears to you.\n          You can hide or highlight various elements of their posts.\n        </p>\n\n        \x3c!-- User Selection Section --\x3e\n        <div class="user-selection-area">\n          <div class="user-search-form">\n            <div class="input-group">\n              <label for="user-search">Find User:</label>\n              <input type="text" id="user-search" placeholder="Enter username, user ID, or profile URL" \n                     class="form-control">\n              <button id="find-user-btn" class="button button--primary">Find User</button>\n            </div>\n            <div class="input-help">\n              Enter a username, user ID, or paste a profile URL\n            </div>\n          </div>\n          \n          <div id="user-search-status" class="user-search-status"></div>\n        </div>\n\n        \x3c!-- User Rules List Section --\x3e\n        <div class="user-rules-list-section">\n          <div class="user-rules-list-header">\n            <h4>Existing User Rules</h4>\n          </div>\n          <div id="existing-rules-container" class="existing-rules-container">\n            <div class="loading-rules">Loading existing rules...</div>\n          </div>\n        </div>\n      </div>\n    </div>\n    \n  '),
+      // Add necessary styles
+      // Add CSS styles for the user rules UI
+      (function () {
+        const styleId = "user-rules-management-styles";
+        if (document.getElementById(styleId)) return;
+        const css =
+            "\n    .user-selection-area {\n      margin-bottom: 20px;\n      padding: 15px;\n      background: var(--bg-card);\n      border-radius: 4px;\n    }\n    \n    .user-search-form .input-group {\n      display: flex;\n      align-items: center;\n      gap: 10px;\n      margin-bottom: 5px;\n    }\n    \n    .user-search-form label {\n      min-width: 80px;\n      color: var(--text-secondary);\n    }\n    \n    .user-search-form .form-control {\n      flex: 1;\n      padding: 6px 10px;\n      border: 1px solid var(--border-color);\n      border-radius: 4px;\n      background-color: var(--bg-dark);\n      color: var(--text-primary);\n    }\n    \n    .user-search-status {\n      margin-top: 10px;\n      padding: 6px 0;\n      font-style: italic;\n      color: var(--text-secondary);\n    }\n    \n    .user-search-status.success {\n      color: var(--success-color);\n    }\n    \n    .user-search-status.error {\n      color: var(--danger-color);\n    }\n    \n    .user-rules-editor {\n      border: 1px solid var(--border-color);\n      padding: 15px;\n      border-radius: 4px;\n      margin-bottom: 20px;\n      background-color: var(--bg-card);\n    }\n    \n    .user-rules-header {\n      margin-bottom: 15px;\n      padding-bottom: 10px;\n      border-bottom: 1px solid var(--border-color);\n    }\n    \n    .user-rules-header h4,\n    .rules-list-header h4,\n    .user-rules-list-header h4 {\n      color: var(--text-primary);\n    }\n    \n    .username-color-section {\n      margin-bottom: 20px;\n      display: flex;\n      align-items: center;\n      gap: 10px;\n      flex-wrap: wrap;\n    }\n    \n    .username-color-section label {\n      color: var(--text-secondary);\n    }\n    \n    .color-input-group {\n      display: flex;\n      align-items: center;\n      gap: 10px;\n    }\n    \n    .color-picker {\n      width: 40px;\n      height: 30px;\n      padding: 0;\n      border: 1px solid var(--border-color);\n      cursor: pointer;\n    }\n    \n    .color-preview {\n      margin-left: 15px;\n      padding: 5px 10px;\n      border-radius: 3px;\n      background: var(--bg-dark);\n      border: 1px solid var(--border-color);\n      color: var(--text-secondary);\n    }\n    \n    .rules-list-header {\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      margin-bottom: 10px;\n    }\n    \n    .rules-table-wrapper {\n      overflow-x: auto;\n    }\n    \n    .rules-table {\n      width: 100%;\n      border-collapse: collapse;\n      margin-bottom: 20px;\n    }\n    \n    .rules-table th, .rules-table td {\n      padding: 8px 12px;\n      text-align: left;\n      border-bottom: 1px solid var(--border-color);\n      color: var(--text-secondary);\n    }\n    \n    .rules-table th {\n      background-color: rgba(255, 255, 255, 0.05);\n      color: var(--text-primary);\n      font-weight: bold;\n    }\n    \n    .rules-table tr:hover {\n      background-color: rgba(255, 255, 255, 0.03);\n    }\n    \n    .rules-actions {\n      display: flex;\n      gap: 5px;\n    }\n    \n    .user-rules-actions {\n      display: flex;\n      gap: 10px;\n      justify-content: space-between;\n      margin-top: 10px;\n    }\n    \n    .existing-rules-container {\n      margin-top: 20px;\n    }\n    \n    /* Modal styles - Inherit from global styles where possible */\n    .modal {\n      display: none;\n      position: fixed;\n      top: 0;\n      left: 0;\n      width: 100%;\n      height: 100%;\n      background-color: rgba(0, 0, 0, 0.7);\n      z-index: 1000001; /* Ensure it's above the main modal */\n      overflow-y: auto;\n    }\n    \n    .modal-content {\n      background-color: var(--bg-card);\n      color: var(--text-primary);\n      margin: 5% auto;\n      padding: 20px;\n      border: 1px solid var(--border-color);\n      border-radius: 4px;\n      width: 90%;\n      max-width: 600px;\n    }\n    \n    .modal-header {\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      border-bottom: 1px solid var(--border-color);\n      padding-bottom: 10px;\n      margin-bottom: 15px;\n    }\n    \n    .modal-header h3 {\n      color: var(--text-primary);\n      margin: 0;\n    }\n    \n    .modal-close {\n      font-size: 24px;\n      cursor: pointer;\n      color: var(--text-secondary);\n    }\n    .modal-close:hover {\n      color: var(--danger-color);\n    }\n    \n    .modal-body {\n      margin-bottom: 20px;\n    }\n    \n    .modal-footer {\n      display: flex;\n      justify-content: flex-end;\n      gap: 10px;\n      border-top: 1px solid var(--border-color);\n      padding-top: 15px;\n    }\n    \n    .form-group {\n      margin-bottom: 15px;\n    }\n    \n    .form-group label {\n      display: block;\n      margin-bottom: 5px;\n      color: var(--text-secondary);\n    }\n    \n    .form-control {\n      width: 100%;\n      padding: 8px 10px;\n      border: 1px solid var(--border-color);\n      border-radius: 4px;\n      background-color: var(--bg-dark);\n      color: var(--text-primary);\n    }\n    \n    select.form-control {\n      appearance: none;\n      background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23B0BEC5%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');\n      background-repeat: no-repeat;\n      background-position: right .7em top 50%;\n      background-size: .65em auto;\n      padding-right: 2.5em;\n    }\n    \n    .user-rules-list-section {\n      margin-top: 20px;\n    }\n\n    .user-card {\n      margin-bottom: 10px;\n      border: 1px solid var(--border-color);\n      border-radius: 4px;\n      background-color: var(--bg-card);\n      overflow: hidden; /* Contain children */\n    }\n\n    .user-card-header {\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      padding: 10px;\n      cursor: pointer;\n      background-color: rgba(255, 255, 255, 0.02); /* Slightly different bg */\n    }\n\n    .user-card-header:hover {\n      background-color: rgba(255, 255, 255, 0.05);\n    }\n    \n    .user-info {\n      display: flex;\n      flex-direction: column;\n    }\n    \n    .user-name {\n      font-weight: bold;\n      color: var(--text-primary);\n    }\n    \n    .user-stats {\n      font-size: 0.9em;\n      color: var(--text-secondary);\n    }\n    \n    .user-card-actions {\n      display: flex;\n      gap: 5px;\n    }\n\n    .expand-btn {\n      background: none;\n      border: none;\n      color: var(--text-secondary);\n      font-size: 1.2em;\n      cursor: pointer;\n      padding: 5px;\n      transition: transform 0.2s ease;\n    }\n\n    .user-card.expanded .expand-btn {\n      transform: rotate(90deg);\n    }\n\n    .user-card-details {\n      display: none; /* Hidden by default */\n      padding: 15px;\n      border-top: 1px solid var(--border-color);\n      background-color: var(--bg-card); /* Same as card bg */\n    }\n\n    .user-card.expanded .user-card-details {\n      display: block; /* Shown when expanded */\n    }\n\n    /* Reuse existing styles within the details section */\n    .user-card-details .username-color-section,\n    .user-card-details .rules-list-section,\n    .user-card-details .user-rules-actions {\n      margin-bottom: 15px; /* Adjust spacing */\n    }\n\n    .user-card-details .rules-list-header {\n      margin-bottom: 5px;\n    }\n\n    .user-card-details .rules-table-wrapper {\n      margin-bottom: 15px;\n    }\n\n    .user-card-details .user-rules-actions {\n      margin-top: 0; /* Remove extra top margin */\n      padding-top: 10px;\n      border-top: 1px solid var(--border-color);\n    }\n    \n    .empty-rules td {\n      text-align: center;\n      font-style: italic;\n      color: var(--text-secondary);\n      padding: 20px;\n    }\n    \n    .rule-params-container {\n      padding: 10px;\n      background-color: var(--bg-dark);\n      border: 1px solid var(--border-color);\n      border-radius: 4px;\n      margin-top: 10px;\n    }\n\n    .rule-params-container p {\n      color: var(--text-secondary);\n      margin: 0;\n    }\n\n    .loading-rules {\n      color: var(--text-secondary);\n      font-style: italic;\n    }\n\n    /* Use global button styles */\n    .button {\n      padding: 6px 12px;\n      border-radius: 3px;\n      border: none;\n      cursor: pointer;\n      font-size: 0.9em;\n      display: inline-flex;\n      align-items: center;\n      gap: 5px;\n      text-decoration: none;\n      color: var(--text-primary);\n      transition: background-color 0.2s ease;\n    }\n    .button i {\n      font-size: 1em;\n    }\n    .button--primary {\n      background-color: var(--primary-color);\n      color: white;\n    }\n    .button--primary:hover {\n      background-color: var(--primary-dark);\n    }\n    .button--normal {\n      background-color: #555;\n      color: var(--text-primary);\n    }\n    .button--normal:hover {\n      background-color: #666;\n    }\n    .button--link {\n      background: none;\n      color: var(--primary-color);\n      padding: 0;\n    }\n    .button--link:hover {\n      text-decoration: underline;\n    }\n  ",
+          style = document.createElement("style");
+        // Add styles to document head
+        (style.id = styleId),
+          (style.textContent = css),
+          document.head.appendChild(style);
+      })(),
+      // Initialize user search functionality
+      // Initialize the UI components
+      (function (container) {
+        const searchInput = container.querySelector("#user-search"),
+          findButton = container.querySelector("#find-user-btn"),
+          statusDiv = container.querySelector("#user-search-status");
+        // Handle when a user is found via search
+        async function handleUserFound(userId, username) {
+          const existingRulesContainer = container.querySelector(
+            "#existing-rules-container"
+          );
+          let userCard = existingRulesContainer.querySelector(
+            `.user-card[data-user-id="${userId}"]`
+          );
+          if (userCard)
+            // User card exists, scroll and expand
+            (statusDiv.innerHTML = `User found: <strong>${username}</strong> (ID: ${userId}). Expanding existing card.`),
+              (statusDiv.className = "user-search-status success"),
+              userCard.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              }),
+              userCard.classList.contains("expanded") ||
+                (await toggleUserCard(userCard, container));
+          else {
+            // User card doesn't exist, create and append it
+            (statusDiv.innerHTML = `User found: <strong>${username}</strong> (ID: ${userId}). Creating new card.`),
+              (statusDiv.className = "user-search-status success"),
+              log(`Creating new card for user ${userId} (${username})`);
+            // Remove the 'no rules' placeholder if it exists
+            const noRulesPlaceholder =
+              existingRulesContainer.querySelector("p");
+            noRulesPlaceholder &&
+              noRulesPlaceholder.textContent.includes(
+                "No user rules defined yet"
+              ) &&
+              (existingRulesContainer.innerHTML = ""),
+              // Create the new card element
+              (userCard = createUserCardElement(userId, username, 0, null)), // Start with 0 rules
+              // Attach event listeners
+              attachCardEventListeners(userCard, container),
+              // Append the new card to the container
+              existingRulesContainer.appendChild(userCard),
+              // Scroll to the new card and expand it
+              userCard.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+              }),
+              await toggleUserCard(userCard, container);
+          }
+          // Clear the search input
+          searchInput.value = "";
+        }
+        findButton.addEventListener("click", async () => {
+          const searchValue = searchInput.value.trim();
+          if (!searchValue)
+            return (
+              (statusDiv.innerHTML =
+                "Please enter a username, user ID, or profile URL"),
+              void (statusDiv.className = "user-search-status error")
+            );
+          (statusDiv.innerHTML = "Searching..."),
+            (statusDiv.className = "user-search-status");
+          try {
+            // Case 1: Search value is a URL, extract user ID
+            if (searchValue.includes("http")) {
+              const userId = extractUserIdFromUrl(searchValue);
+              if (userId) {
+                // Try to get user data from the URL
+                const username = searchValue
+                  .split("/")
+                  .filter(Boolean)
+                  .pop()
+                  .split(".")[0];
+                return void (await handleUserFound(userId, username));
+              }
+            }
+            // Case 2: Search value is a numeric user ID
+            if (/^\d+$/.test(searchValue))
+              // For now, we'll just use the ID. In the future, we could fetch the username from the server
+              return void (await handleUserFound(
+                searchValue,
+                `User #${searchValue}`
+              ));
+            // Case 3: Search value is a username
+            const users = /**
+             * Searches for users or groups on RPGHQ forums via the mention system.
+             * @param {string} query - The search term.
+             * @returns {Promise<Array<Object>>} A promise that resolves with an array of user/group objects or rejects on error.
+             */ (
+              await (async function (query) {
+                return new Promise((resolve, reject) => {
+                  if (!query || "string" != typeof query)
+                    return reject(new Error("Invalid query provided."));
+                  const url = `https://rpghq.org/forums/mentionloc?q=${encodeURIComponent(query)}`;
+                  GM_xmlhttpRequest({
+                    method: "GET",
+                    url: url,
+                    headers: {
+                      Accept: "application/json, text/javascript, */*; q=0.01",
+                      "X-Requested-With": "XMLHttpRequest",
+                      // Referer might be important, adjust if needed based on where this is called
+                      Referer: "https://rpghq.org/forums/",
+                    },
+                    responseType: "json",
+                    // Automatically parse JSON response
+                    onload: function (response) {
+                      response.status >= 200 && response.status < 300
+                        ? resolve(response.response)
+                        : reject(
+                            new Error(
+                              `HTTP error! status: ${response.status}, statusText: ${response.statusText}`
+                            )
+                          );
+                    },
+                    onerror: function (response) {
+                      reject(
+                        new Error(
+                          `Network error: ${response.statusText || "Unknown error"}`
+                        )
+                      );
+                    },
+                    ontimeout: function () {
+                      reject(new Error("Request timed out."));
+                    },
+                  });
+                });
+              })(searchValue)
+            ).filter((item) => "user" === item.type);
+            if (1 === users.length)
+              return void (await handleUserFound(
+                users[0].user_id,
+                users[0].value
+              ));
+            // Exit after handling the found user
+            0 === users.length
+              ? ((statusDiv.innerHTML = `No user found matching "${searchValue}". Try User ID or profile URL.`),
+                (statusDiv.className = "user-search-status error"))
+              : ((statusDiv.innerHTML = `Multiple users found matching "${searchValue}". Please be more specific or use User ID/URL.`),
+                (statusDiv.className = "user-search-status error"));
+          } catch (err) {
+            (statusDiv.innerHTML = `Error: ${err.message}`),
+              (statusDiv.className = "user-search-status error"),
+              error("Error searching for user:", err);
+          }
+        }),
+          // Also trigger search on Enter key
+          searchInput.addEventListener("keypress", (e) => {
+            "Enter" === e.key && findButton.click();
+          });
+      })(
+        // Load and display rules for a specific user within their card details
+        container
+      ),
+      // initRuleEditor(container); // Removed - modal is gone
+      // initUserRulesEditor(container); // Removed - editor is inline
+      // Load and display existing users with rules
+      (async function (container) {
+        try {
+          const existingRulesContainer = container.querySelector(
+              "#existing-rules-container"
+            ),
+            allUserRules = await getAllUserRules();
+          if (!allUserRules || 0 === Object.keys(allUserRules).length)
+            return void (existingRulesContainer.innerHTML =
+              "<p>No user rules defined yet.</p>");
+          // Create a card for each user
+          const userCards = Object.entries(allUserRules)
+            .map(([userId, userData]) => {
+              const ruleCount = userData.rules?.length || 0;
+              return createUserCardElement(
+                userId,
+                userData.username || `User #${userId}`,
+                ruleCount,
+                userData.usernameColor
+              ).outerHTML;
+            })
+            .join("");
+          (existingRulesContainer.innerHTML = userCards),
+            // Add event listeners to cards
+            existingRulesContainer
+              .querySelectorAll(".user-card")
+              .forEach((card) => {
+                attachCardEventListeners(card, container);
+              });
+        } catch (err) {
+          error("Error loading existing users:", err),
+            (container.querySelector("#existing-rules-container").innerHTML =
+              `<p>Error loading existing users: ${err.message}</p>`);
+        }
+      })(
+        // Helper function to create a user card element
+        container
+      );
+  }
+  // Toggle user card expansion and load details
+  async function toggleUserCard(userCard, container) {
+    const userId = userCard.dataset.userId,
+      detailsDiv = userCard.querySelector(".user-card-details"),
+      isLoading = detailsDiv.classList.contains("loading"),
+      isExpanded = userCard.classList.contains("expanded");
+    if (!isLoading)
+      if (isExpanded)
+        // Prevent multiple loads
+        userCard.classList.remove("expanded");
+      // Optional: Clear details on collapse to save memory?
+      // detailsDiv.innerHTML = '<div class="loading-placeholder">Loading details...</div>';
+      else if (
+        (userCard.classList.add("expanded"), !detailsDiv.dataset.loaded)
+      ) {
+        // Check if details are already loaded
+        (detailsDiv.innerHTML =
+          '<div class="loading-placeholder">Loading details...</div>'),
+          detailsDiv.classList.add("loading");
+        try {
+          await renderUserDetails(userId, detailsDiv, container),
+            (detailsDiv.dataset.loaded = "true");
+        } catch (err) {
+          (detailsDiv.innerHTML = `<p class="error">Error loading details: ${err.message}</p>`),
+            error(`Error rendering details for user ${userId}:`, err);
+        } finally {
+          detailsDiv.classList.remove("loading");
+        }
+      }
+  }
+  // Render the content inside an expanded user card
+  async function renderUserDetails(userId, detailsContainer, mainContainer) {
+    const userRules = await getUserRules(userId),
+      username =
+        detailsContainer.closest(".user-card").dataset.username ||
+        `User #${userId}`;
+    (detailsContainer.innerHTML = `\n    \x3c!-- Username Color Section --\x3e\n    <div class="username-color-section">\n      <label for="username-color-${userId}">Username Color:</label>\n      <div class="color-input-group">\n        <input type="color" id="username-color-${userId}" class="color-picker username-color-input" value="${userRules?.usernameColor || "#000000"}">\n        <button class="button button--link reset-color-btn">Reset</button>\n      </div>\n      <div class="color-preview">\n        Preview: <span class="username-preview" style="color: ${userRules?.usernameColor || "inherit"}">${username}</span>\n      </div>\n    </div>\n\n    \x3c!-- Rules List --\x3e\n    <div class="rules-list-section">\n      <div class="rules-list-header">\n        <h4>Rules</h4>\n        <button class="button button--primary add-rule-btn">\n          <i class="fa fa-plus"></i> Add Rule\n        </button>\n      </div>\n      <div class="rules-table-wrapper">\n        <table class="rules-table">\n          <thead>\n            <tr>\n              <th>Action</th>\n              <th>Subject</th>\n              <th>Scope</th>\n              <th>Parameters</th>\n              <th>Controls</th>\n            </tr>\n          </thead>\n          <tbody class="rules-tbody">\n            \x3c!-- Rules will be loaded here --\x3e\n          </tbody>\n        </table>\n      </div>\n      \x3c!-- Inline Rule Editor Form (hidden initially) --\x3e\n      <form class="rule-editor-form" style="display: none;">\n         <input type="hidden" class="rule-id">\n         <div class="form-group">\n           <label>Action:</label>\n           <select class="form-control rule-action">\n             ${RULE_ACTIONS.map((action) => `<option value="${action.id}">${action.name}</option>`).join("")}\n           </select>\n         </div>\n         <div class="form-group">\n           <label>Subject:</label>\n           <select class="form-control rule-subject">\n             ${RULE_SUBJECTS.map((subject) => `<option value="${subject.id}">${subject.name}</option>`).join("")}\n           </select>\n         </div>\n         <div class="form-group">\n           <label>Scope:</label>\n           <select class="form-control rule-scope">\n             ${RULE_SCOPES.map((scope) => `<option value="${scope.id}">${scope.name}</option>`).join("")}\n           </select>\n         </div>\n         <div class="rule-params-container form-group">\n           \x3c!-- Dynamic parameters will be rendered here --\x3e\n         </div>\n         <div class="modal-footer">\n           <button type="button" class="button button--primary save-inline-rule-btn">Save Rule</button>\n           <button type="button" class="button button--link cancel-inline-rule-btn">Cancel</button>\n         </div>\n      </form>\n    </div>\n\n    \x3c!-- Save/Delete Buttons --\x3e\n    <div class="user-rules-actions">\n      <button class="button button--primary save-user-changes-btn">Save Color</button>\n      <button class="button button--normal delete-user-rules-btn">Delete All Rules for This User</button>\n    </div>\n  `),
+      // Load rules into the table
+      await loadRulesForUser(userId, detailsContainer), // Pass detailsContainer as context
+      // Initialize event listeners within this specific details section
+      // Initialize event listeners for the inline editor and actions within a user card
+      (function (userId, detailsContainer, mainContainer) {
+        const colorInput = detailsContainer.querySelector(
+            ".username-color-input"
+          ),
+          usernamePreview = detailsContainer.querySelector(".username-preview"),
+          resetColorBtn = detailsContainer.querySelector(".reset-color-btn"),
+          addRuleBtn = detailsContainer.querySelector(".add-rule-btn"),
+          saveColorBtn = detailsContainer.querySelector(
+            ".save-user-changes-btn"
+          ),
+          deleteAllBtn = detailsContainer.querySelector(
+            ".delete-user-rules-btn"
+          ),
+          ruleForm = detailsContainer.querySelector(".rule-editor-form"),
+          cancelInlineBtn = detailsContainer.querySelector(
+            ".cancel-inline-rule-btn"
+          ),
+          saveInlineBtn = detailsContainer.querySelector(
+            ".save-inline-rule-btn"
+          ),
+          ruleActionSelect = detailsContainer.querySelector(".rule-action"),
+          paramsContainer = detailsContainer.querySelector(
+            ".rule-params-container"
+          );
+        // Username color handling
+        colorInput.addEventListener("input", () => {
+          usernamePreview.style.color =
+            "#000000" === colorInput.value ? "inherit" : colorInput.value;
+          // Update header preview immediately
+          const headerPreview = detailsContainer
+            .closest(".user-card")
+            .querySelector(".user-name");
+          headerPreview &&
+            (headerPreview.style.color =
+              "#000000" === colorInput.value ? "" : colorInput.value);
+        }),
+          resetColorBtn.addEventListener("click", () => {
+            (colorInput.value = "#000000"),
+              (usernamePreview.style.color = "inherit");
+            // Update header preview immediately
+            const headerPreview = detailsContainer
+              .closest(".user-card")
+              .querySelector(".user-name");
+            headerPreview && (headerPreview.style.color = "");
+          }),
+          saveColorBtn.addEventListener("click", async () => {
+            try {
+              const username =
+                  detailsContainer.closest(".user-card").dataset.username,
+                newColor =
+                  "#000000" !== colorInput.value ? colorInput.value : null;
+              /**
+               * Updates the username color for a specific user
+               * @param {String} userId - The user ID
+               * @param {String} username - The user's username
+               * @param {String|null} color - The color to set (hex code or null)
+               * @returns {Boolean} Success indicator
+               */
+              await (async function (userId, username, color) {
+                try {
+                  const userData = (await getUserRules(userId)) || {
+                    username: username,
+                    usernameColor: null,
+                    rules: [],
+                  };
+                  return (
+                    (userData.usernameColor = color),
+                    await saveUserRulesByUserId(userId, userData)
+                  );
+                } catch (err) {
+                  return (
+                    error(
+                      `Error updating username color for user ${userId}:`,
+                      err
+                    ),
+                    !1
+                  );
+                }
+              })(userId, username, newColor),
+                // Maybe add a temporary success indicator?
+                log(`Username color saved for user ${userId}`);
+            } catch (err) {
+              error(`Error saving color for user ${userId}:`, err),
+                alert(`Error saving color: ${err.message}`);
+            }
+          }),
+          // Delete all rules button
+          deleteAllBtn.addEventListener("click", async () => {
+            if (
+              confirm(
+                `Are you sure you want to delete all rules for user ${userId}?`
+              )
+            )
+              try {
+                await (async function (userId) {
+                  try {
+                    const allRules = await getAllUserRules();
+                    return (
+                      !allRules[userId] ||
+                      (delete allRules[userId], await saveUserRules(allRules))
+                    );
+                  } catch (err) {
+                    return (
+                      error(`Error deleting rules for user ${userId}:`, err), !1
+                    );
+                  }
+                })(
+                  /**
+                   * Add a new rule for a user
+                   * @param {String} userId - The user ID
+                   * @param {Object} rule - The rule object to add
+                   * @returns {Boolean} Success indicator
+                   */ userId
+                ),
+                  log(`Deleted all rules for user ${userId}`),
+                  // Reload the details section or collapse the card
+                  await renderUserDetails(
+                    userId,
+                    detailsContainer,
+                    mainContainer
+                  );
+                // Re-render details
+                // Update rule count in header
+                const headerStats = detailsContainer
+                  .closest(".user-card")
+                  .querySelector(".user-stats");
+                headerStats && (headerStats.textContent = "0 rules");
+                // Reload main list (optional, if needed elsewhere)
+                // await loadExistingUsers(mainContainer);
+              } catch (err) {
+                error(`Error deleting rules for user ${userId}:`, err),
+                  alert(`Error deleting rules: ${err.message}`);
+              }
+          }),
+          // --- Inline Rule Form Logic ---
+          // Show/Hide Form
+          addRuleBtn.addEventListener(
+            "click",
+            () => {
+              ruleForm.reset(),
+                (ruleForm.querySelector(".rule-id").value = ""), // Ensure ID is cleared for adding
+                updateInlineParamsUI(
+                  ruleActionSelect.value,
+                  {},
+                  paramsContainer
+                ), // Update params for default action
+                (ruleForm.style.display = "block"),
+                (addRuleBtn.style.display = "none");
+            } // Hide 'Add' button while form is open
+          ),
+          cancelInlineBtn.addEventListener(
+            "click",
+            () => {
+              (ruleForm.style.display = "none"),
+                (addRuleBtn.style.display = "inline-flex");
+            } // Show 'Add' button again
+          ),
+          // Update params on action change
+          ruleActionSelect.addEventListener("change", () => {
+            updateInlineParamsUI(ruleActionSelect.value, {}, paramsContainer);
+          }),
+          // Save Inline Rule
+          saveInlineBtn.addEventListener("click", async () => {
+            try {
+              const ruleId = ruleForm.querySelector(".rule-id").value,
+                action = ruleActionSelect.value,
+                subject = detailsContainer.querySelector(".rule-subject").value,
+                scope = detailsContainer.querySelector(".rule-scope").value;
+              let params = {};
+              "HIGHLIGHT" === action &&
+                (params.color = paramsContainer.querySelector(
+                  ".highlight-color-inline"
+                ).value);
+              const ruleData = {
+                id: ruleId || `rule_${Date.now()}`,
+                action: action,
+                subject: subject,
+                scope: scope,
+                params: params,
+              };
+              ruleId
+                ? /**
+                   * Update an existing rule for a user
+                   * @param {String} userId - The user ID
+                   * @param {String} ruleId - The rule ID to update
+                   * @param {Object} updatedRule - The updated rule data
+                   * @returns {Boolean} Success indicator
+                   */
+                  await (async function (userId, ruleId, updatedRule) {
+                    try {
+                      const userData = await getUserRules(userId);
+                      if (!userData) return !1;
+                      const index = userData.rules.findIndex(
+                        (rule) => rule.id === ruleId
+                      );
+                      return (
+                        !(index < 0) &&
+                        ((userData.rules[index] = updatedRule),
+                        await saveUserRulesByUserId(userId, userData))
+                      );
+                    } catch (err) {
+                      return (
+                        error(
+                          `Error updating rule ${ruleId} for user ${userId}:`,
+                          err
+                        ),
+                        !1
+                      );
+                    }
+                  })(
+                    /**
+                     * Deletes a rule for a specific user
+                     * @param {String} userId - The user ID
+                     * @param {String} ruleId - The rule ID to delete
+                     * @returns {Boolean} Success indicator
+                     */ userId,
+                    ruleId,
+                    ruleData
+                  )
+                : await (async function (userId, rule) {
+                    try {
+                      const userData = await getUserRules(userId);
+                      return (
+                        !!userData &&
+                        // Create new rule with ID if it doesn't have one
+                        (rule.id || (rule.id = `rule_${Date.now()}`),
+                        userData.rules.push(rule),
+                        await saveUserRulesByUserId(userId, userData))
+                      );
+                    } catch (err) {
+                      return (
+                        error(`Error adding rule for user ${userId}:`, err), !1
+                      );
+                    }
+                  })(userId, ruleData),
+                // Hide form, reload rules table, show add button
+                (ruleForm.style.display = "none"),
+                (addRuleBtn.style.display = "inline-flex"),
+                await loadRulesForUser(userId, detailsContainer);
+              // Reload rules in this card
+              // Update rule count in header
+              const userRules = await getUserRules(userId),
+                ruleCount = userRules?.rules?.length || 0,
+                headerStats = detailsContainer
+                  .closest(".user-card")
+                  .querySelector(".user-stats");
+              headerStats &&
+                (headerStats.textContent = `${ruleCount} rule${1 !== ruleCount ? "s" : ""}`);
+            } catch (err) {
+              error(`Error saving inline rule for user ${userId}:`, err),
+                alert(`Error saving rule: ${err.message}`);
+            }
+          });
+      })(
+        // Generate UI for parameters based on action for the inline editor
+        userId,
+        detailsContainer,
+        mainContainer
+      );
+  }
+  function updateInlineParamsUI(action, existingParams = {}, paramsContainer) {
+    // Clear previous params
+    switch (((paramsContainer.innerHTML = ""), action)) {
+      case "HIGHLIGHT":
+        paramsContainer.innerHTML = `\n        <label for="highlight-color-inline-${paramsContainer.closest(".user-card").dataset.userId}">Highlight Color:</label>\n        <input type="color" id="highlight-color-inline-${paramsContainer.closest(".user-card").dataset.userId}" class="form-control color-picker highlight-color-inline" \n               value="${existingParams.color || "#FFFF99"}">\n      `;
+        break;
+
+      case "HIDE":
+        paramsContainer.innerHTML = "<p>No additional parameters needed.</p>";
+        break;
+
+      default:
+        paramsContainer.innerHTML =
+          "<p>No parameters available for this action.</p>";
+    }
+  }
+  async function loadRulesForUser(userId, detailsContainer) {
+    try {
+      const rulesTableBody = detailsContainer.querySelector(".rules-tbody");
+      if (!rulesTableBody)
+        return void error(
+          `Could not find .rules-tbody within provided container for user ${userId}`
+        );
+      const userRules = await getUserRules(userId);
+      if (!userRules || !userRules.rules || 0 === userRules.rules.length)
+        return void (rulesTableBody.innerHTML =
+          '\n        <tr class="empty-rules">\n          <td colspan="5">No rules defined yet</td>\n        </tr>\n      ');
+      // Generate table rows for each rule
+      (rulesTableBody.innerHTML = userRules.rules
+        .map((rule) => {
+          // Format parameters for display
+          let paramsDisplay = "";
+          paramsDisplay =
+            "HIGHLIGHT" === rule.action && rule.params?.color
+              ? `\n          <div style="display: flex; align-items: center; gap: 5px;">\n            <span style="color: var(--text-secondary);">Color:</span>\n            <div style="width: 16px; height: 16px; background-color: ${rule.params.color}; border: 1px solid var(--border-color);"></div>\n            <span style="color: var(--text-secondary);">${rule.params.color}</span>\n          </div>\n        `
+              : '<span style="color: var(--text-secondary);">None</span>';
+          // Format action, subject, and scope with friendly names
+          const actionName =
+              RULE_ACTIONS.find((a) => a.id === rule.action)?.name ||
+              rule.action,
+            subjectName =
+              RULE_SUBJECTS.find((s) => s.id === rule.subject)?.name ||
+              rule.subject,
+            scopeName =
+              RULE_SCOPES.find((s) => s.id === rule.scope)?.name || rule.scope;
+          return `\n        <tr data-rule-id="${rule.id}">\n          <td>${actionName}</td>\n          <td>${subjectName}</td>\n          <td>${scopeName}</td>\n          <td>${paramsDisplay}</td>\n          <td>\n            <div class="rules-actions">\n              <button class="button button--normal edit-inline-rule-btn" data-rule-id="${rule.id}">\n                <i class="fa fa-pencil"></i>\n              </button>\n              <button class="button button--normal delete-inline-rule-btn" data-rule-id="${rule.id}">\n                <i class="fa fa-trash"></i>\n              </button>\n            </div>\n          </td>\n        </tr>\n      `;
+        })
+        .join("")),
+        // Add event listeners to edit and delete buttons within this specific table
+        rulesTableBody
+          .querySelectorAll(".edit-inline-rule-btn")
+          .forEach((btn) => {
+            btn.addEventListener("click", () =>
+              // Edit an inline rule: Populate the inline form
+              (async function (userId, ruleId, detailsContainer) {
+                try {
+                  const userRules = await getUserRules(userId);
+                  if (!userRules || !userRules.rules)
+                    throw new Error("User rules not found");
+                  const rule = userRules.rules.find((r) => r.id === ruleId);
+                  if (!rule) throw new Error("Rule not found");
+                  const ruleForm =
+                      detailsContainer.querySelector(".rule-editor-form"),
+                    addRuleBtn =
+                      detailsContainer.querySelector(".add-rule-btn"),
+                    paramsContainer = ruleForm.querySelector(
+                      ".rule-params-container"
+                    );
+                  // Populate form
+                  (ruleForm.querySelector(".rule-id").value = rule.id),
+                    (ruleForm.querySelector(".rule-action").value =
+                      rule.action),
+                    (ruleForm.querySelector(".rule-subject").value =
+                      rule.subject),
+                    (ruleForm.querySelector(".rule-scope").value = rule.scope),
+                    // Update and populate params UI
+                    updateInlineParamsUI(
+                      rule.action,
+                      rule.params,
+                      paramsContainer
+                    ),
+                    // Show form, hide add button
+                    (ruleForm.style.display = "block"),
+                    (addRuleBtn.style.display = "none");
+                } catch (err) {
+                  error(`Error preparing inline edit for rule ${ruleId}:`, err),
+                    alert(`Error editing rule: ${err.message}`);
+                }
+              })(
+                // Delete an inline rule
+                userId,
+                btn.dataset.ruleId,
+                detailsContainer
+              )
+            );
+          }),
+        rulesTableBody
+          .querySelectorAll(".delete-inline-rule-btn")
+          .forEach((btn) => {
+            btn.addEventListener("click", () =>
+              (async function (userId, ruleId, detailsContainer) {
+                if (!confirm("Are you sure you want to delete this rule?"))
+                  return;
+                try {
+                  await (async function (userId, ruleId) {
+                    try {
+                      const userData = await getUserRules(userId);
+                      if (!userData) return !1;
+                      const index = userData.rules.findIndex(
+                        (rule) => rule.id === ruleId
+                      );
+                      return (
+                        index >= 0 &&
+                        (userData.rules.splice(index, 1),
+                        await saveUserRulesByUserId(userId, userData))
+                      );
+                    } catch (err) {
+                      return (
+                        error(
+                          `Error deleting rule ${ruleId} for user ${userId}:`,
+                          err
+                        ),
+                        !1
+                      );
+                    }
+                  })(userId, ruleId),
+                    // Reload rules display within this card
+                    await loadRulesForUser(userId, detailsContainer);
+                  // Update rule count in header
+                  const userRules = await getUserRules(userId),
+                    ruleCount = userRules?.rules?.length || 0,
+                    headerStats = detailsContainer
+                      .closest(".user-card")
+                      .querySelector(".user-stats");
+                  headerStats &&
+                    (headerStats.textContent = `${ruleCount} rule${1 !== ruleCount ? "s" : ""}`);
+                } catch (err) {
+                  error(`Error deleting inline rule ${ruleId}:`, err),
+                    alert(`Error deleting rule: ${err.message}`);
+                }
+              })(userId, btn.dataset.ruleId, detailsContainer)
+            );
+          });
+    } catch (err) {
+      error(`Error loading rules for user ${userId}:`, err),
+        detailsContainer.querySelector(".rules-tbody") &&
+          (detailsContainer.querySelector(".rules-tbody").innerHTML =
+            `\n          <tr>\n            <td colspan="5">Error loading rules: ${err.message}</td>\n          </tr>\n        `);
+    }
+  }
+  function createUserCardElement(
+    userId,
+    username,
+    ruleCount = 0,
+    usernameColor = null
+  ) {
+    const card = document.createElement("div");
+    (card.className = "user-card"),
+      (card.dataset.userId = userId),
+      (card.dataset.username = username);
+    const usernameStyle = usernameColor
+      ? `style="color: ${usernameColor}"`
+      : "";
+    return (
+      (card.innerHTML = `\n    <div class="user-card-header">\n      <div class="user-info">\n        <span class="user-name" ${usernameStyle}>${username}</span>\n        <span class="user-stats">${ruleCount} rule${1 !== ruleCount ? "s" : ""}</span>\n      </div>\n      <div class="user-card-actions">\n        <button class="button button--icon expand-btn" title="Expand/Collapse">\n          <i class="fa fa-chevron-right"></i>\n        </button>\n      </div>\n    </div>\n    <div class="user-card-details">\n      <div class="loading-placeholder">Loading details...</div>\n    </div>\n  `),
+      card
+    );
+  }
+  // Helper function to attach event listeners to a card
+  function attachCardEventListeners(cardElement, container) {
+    const header = cardElement.querySelector(".user-card-header"),
+      expandBtn = cardElement.querySelector(".expand-btn");
+    header &&
+      header.addEventListener("click", (event) => {
+        // Prevent toggling if a button inside the header was clicked
+        event.target.closest("button") ||
+          toggleUserCard(cardElement, container);
+      }),
+      expandBtn &&
+        expandBtn.addEventListener("click", (event) => {
+          event.stopPropagation(), // Prevent header click listener
+            toggleUserCard(cardElement, container);
+        });
+  }
+  /**
+   * Renders the "Theme" subtab content.
+   *
+   * @param {HTMLElement} container - The container element to render into
+   */
+  // Keys from main.js (redundant but good for clarity)
+  function renderThemeSubtab(container) {
     log("Rendering Theme subtab..."),
       // Clear previous content
       (container.innerHTML = "");
@@ -1604,27 +2994,8 @@
                     log("Rendering Threads subtab..."),
                       (container.innerHTML =
                         '\n    <div class="wip-banner">\n      <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress\n    </div>\n  \n    <div class="preferences-section">\n      <div class="preferences-section-header">\n        <h3 class="preferences-section-title">Thread Display</h3>\n      </div>\n      <div class="preferences-section-body">\n        <div class="preference-item">\n          <div class="preference-header">\n            <h4 class="preference-name">Thread Layout</h4>\n            <div class="preference-control">\n              <select>\n                <option selected>Compact</option>\n                <option>Standard</option>\n                <option>Expanded</option>\n              </select>\n            </div>\n          </div>\n          <p class="preference-description">Choose how thread listings are displayed</p>\n        </div>\n      \n        <div class="preference-item">\n          <div class="preference-header">\n            <h4 class="preference-name">Threads Per Page</h4>\n            <div class="preference-control">\n              <select>\n                <option>10</option>\n                <option selected>20</option>\n                <option>30</option>\n                <option>50</option>\n              </select>\n            </div>\n          </div>\n          <p class="preference-description">Number of threads to display per page</p>\n        </div>\n      </div>\n    </div>\n  \n    <div class="info-note">\n      <strong>Note:</strong> This is a view-only display. Additional Thread preferences will be added in future updates.\n    </div>\n  ');
-                  })(
-                    /**
-                     * Renders the "Users" subtab content within the Forum Preferences tab.
-                     *
-                     * @param {HTMLElement} container - The container element to render into
-                     */ subTabContent
-                  )
-                : "users" === subtabName &&
-                  (function (container) {
-                    log("Rendering Users subtab..."),
-                      (container.innerHTML =
-                        '\n    <div class="wip-banner">\n      <i class="fa fa-wrench"></i> User Preferences - Work In Progress\n    </div>\n  \n    <div class="preferences-section">\n      <div class="preferences-section-header">\n        <h3 class="preferences-section-title">User Display</h3>\n      </div>\n      <div class="preferences-section-body">\n        <div class="preference-item">\n          <div class="preference-header">\n            <h4 class="preference-name">Show User Signatures</h4>\n            <div class="preference-control">\n              <input type="checkbox" name="user.display.signatures" checked>\n            </div>\n          </div>\n          <p class="preference-description">Display user signatures in posts</p>\n        </div>\n      \n        <div class="preference-item">\n          <div class="preference-header">\n            <h4 class="preference-name">Show User Avatars</h4>\n            <div class="preference-control">\n              <input type="checkbox" name="user.display.avatars" checked>\n            </div>\n          </div>\n          <p class="preference-description">Display user avatars in posts and listings</p>\n        </div>\n      </div>\n    </div>\n  \n    <div class="info-note">\n      <strong>Note:</strong> This is a view-only display. Additional User preferences will be added in future updates.\n    </div>\n  ');
-                  })(
-                    /**
-                     * Renders the "Theme" subtab content.
-                     *
-                     * @param {HTMLElement} container - The container element to render into
-                     */
-                    // Keys from main.js (redundant but good for clarity)
-                    subTabContent
-                  );
+                  })(subTabContent)
+                : "users" === subtabName && renderUsersSubtab(subTabContent);
         });
       });
   }
@@ -3818,8 +5189,10 @@
   var notifications = Object.freeze({
     __proto__: null,
     init: function ({ getScriptSetting: getScriptSetting }) {
-      _getScriptSetting = getScriptSetting;
-      // Store the passed function
+      (_getScriptSetting = getScriptSetting), // Store the passed function
+        GM_addStyle(
+          "\n    .dropdown-extended a.mark_read {\n      background-color: #18202A;\n    }\n  "
+        );
       const referenceBackgroundColor = _getScriptSetting(
           "notifications",
           "referenceBackgroundColor",
@@ -4197,7 +5570,8 @@
                 "#3889ED"
               ),
               titleText = titleElement.innerHTML,
-              isUnread = block.href && block.href.includes("mark_notification"),
+              parentLi = block.closest("li"),
+              isUnread = !parentLi || parentLi.classList.contains("bg2"),
               postId = Utils.extractPostId(
                 block.getAttribute("data-real-url") || block.href
               );
@@ -4437,7 +5811,6 @@
               (titleElement.innerHTML = currentHtml);
           },
           async customizeNotificationBlock(block) {
-            if ("true" === block.dataset.customized) return;
             // Get settings
             const enableColors = _getScriptSetting(
                 "notifications",
@@ -4452,12 +5825,12 @@
               quoteColorSetting = _getScriptSetting(
                 "notifications",
                 "quoteColor",
-                "#F5575D"
+                "#1E90FF"
               ),
               replyColorSetting = _getScriptSetting(
                 "notifications",
                 "replyColor",
-                "#2E8B57"
+                "#FF69B4"
               );
             _getScriptSetting("notifications", "reactionColor", "#3889ED"),
               _getScriptSetting("notifications", "mentionColor", "#FFC107");
@@ -4476,11 +5849,32 @@
                 "reportColor",
                 "#f58c05"
               );
-            _getScriptSetting("notifications", "warningColor", "#D31141"),
-              // Apply base container styling
-              Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
+            _getScriptSetting("notifications", "warningColor", "#D31141");
+            const readNotificationOpacity = _getScriptSetting(
+                "notifications",
+                "readOpacity",
+                0.8
+              ),
+              readTintColorSetting = _getScriptSetting(
+                "notifications",
+                "readTintColor",
+                "rgba(0, 0, 0, 0.05)"
+              );
+            // Apply base container styling
+            Object.assign(block.style, NOTIFICATION_BLOCK_STYLE);
             const notificationText = block.querySelector(".notification_text");
             if (!notificationText) return;
+            // --- Determine Read/Unread state based on parent li class ---
+            const parentLi = block.closest("li");
+            // Consider read if parent li doesn't have bg2
+            !!parentLi && !parentLi.classList.contains("bg2")
+              ? // Apply read styles directly
+                ((block.style.opacity = readNotificationOpacity),
+                (block.style.backgroundColor = readTintColorSetting))
+              : // Explicitly reset opacity and background for unread items
+                ((block.style.opacity = ""),
+                (block.style.backgroundColor = ""));
+            // --- End Read/Unread state check ---
             // Move time element to bottom right
             const timeElement = block.querySelector(".notification-time");
             timeElement &&
@@ -4690,19 +6084,23 @@
               ),
               quoteColorSetting = _getScriptSetting(
                 "notifications",
-                "quoteColor"
+                "quoteColor",
+                "#F5575D"
               ),
               replyColorSetting = _getScriptSetting(
                 "notifications",
-                "replyColor"
+                "replyColor",
+                "#2E8B57"
               ),
               reactionColorSetting = _getScriptSetting(
                 "notifications",
-                "reactionColor"
+                "reactionColor",
+                "#3889ED"
               ),
               mentionColorSetting = _getScriptSetting(
                 "notifications",
-                "mentionColor"
+                "mentionColor",
+                "#FFC107"
               ),
               editColorSetting = _getScriptSetting(
                 "notifications",
@@ -4739,6 +6137,16 @@
                 "referenceTextColor",
                 "#ffffff"
               ),
+              readNotificationOpacity = _getScriptSetting(
+                "notifications",
+                "readOpacity",
+                0.8
+              ),
+              readTintColorSetting = _getScriptSetting(
+                "notifications",
+                "readTintColor",
+                "rgba(0, 0, 0, 0.05)"
+              ),
               quoteColor = quoteColorSetting,
               replyColor = replyColorSetting,
               reactionColor = reactionColorSetting,
@@ -4769,6 +6177,14 @@
               if (!titleElement)
                 // Mark as processed even if no title
                 return void (row.dataset.customized = "true");
+              // Determine if read (no mark_notification link)
+              const isRead = !(
+                anchorElement.href &&
+                anchorElement.href.includes("mark_notification")
+              );
+              isRead &&
+                ((row.style.opacity = readNotificationOpacity),
+                (row.style.backgroundColor = readTintColorSetting));
               let placeholderElement,
                 originalTitleHTML = titleElement.innerHTML,
                 notificationType = "default",
@@ -4977,8 +6393,8 @@
                       placeholderElement
                     );
               }
-              // Apply background color to the row if enabled
-              if (enableColors) {
+              // Apply background color to the row if enabled and NOT already tinted as read
+              if (enableColors && !isRead) {
                 const color =
                   notificationColors[notificationType] || defaultColor;
                 row.style.backgroundColor = color;
@@ -5137,23 +6553,45 @@
             NotificationMarker.checkAndMarkNotifications(), // Now unconditional
             window.location.href.includes("ucp.php?i=ucp_notifications") &&
               NotificationCustomizer.customizeNotificationPage();
+          // Observe relevant DOM changes (attributes and childList)
           new MutationObserver((mutations) => {
             let shouldProcess = !1;
-            // Only process if new notification blocks are added
-            for (const mutation of mutations)
+            for (const mutation of mutations) {
+              // Check if class attribute changed on a relevant parent LI
+              if (
+                "attributes" === mutation.type &&
+                "class" === mutation.attributeName &&
+                mutation.target.nodeType === Node.ELEMENT_NODE &&
+                mutation.target.matches("li") && // Check if the target is an LI
+                mutation.target.querySelector(
+                  ".notification-block, a.notification-block"
+                )
+              ) {
+                console.log("Observer triggered: Parent LI class changed."),
+                  (shouldProcess = !0);
+                break;
+              }
+              // Check if new notification blocks were added
               if ("childList" === mutation.type) {
                 if (
                   Array.from(mutation.addedNodes).some(
                     (node) =>
                       node.nodeType === Node.ELEMENT_NODE &&
-                      (node.classList?.contains("notification-block") ||
-                        node.querySelector?.(".notification-block"))
+                      (node.matches?.(
+                        ".notification-block, a.notification-block"
+                      ) ||
+                        node.querySelector?.(
+                          ".notification-block, a.notification-block"
+                        ))
                   )
                 ) {
-                  shouldProcess = !0;
+                  console.log("Observer triggered: New notifications added."),
+                    (shouldProcess = !0);
                   break;
+                  // Found a relevant change
                 }
               }
+            }
             shouldProcess &&
               (clearTimeout(debounceTimer),
               (debounceTimer = setTimeout(() => {
@@ -5162,6 +6600,8 @@
           }).observe(document.body, {
             childList: !0,
             subtree: !0,
+            attributes: !0,
+            attributeFilter: ["class"],
           }),
             // Run storage cleanup last
             Storage_cleanupStorage();
@@ -6566,7 +8006,58 @@
     document.addEventListener("DOMContentLoaded", () => {
       executeLoadOrderForPhase("document-end"),
         // Add menu button (needs DOM ready)
-        addMenuButton(toggleModalVisibility);
+        addMenuButton(toggleModalVisibility),
+        // Initialize user rules system
+        (async function () {
+          try {
+            log(
+              "Initial user rules application complete:",
+              await processCurrentPage()
+            );
+            // Set up a mutation observer to process new elements
+            const observer = new MutationObserver((mutations) => {
+              mutations.forEach(async (mutation) => {
+                // Only process added nodes
+                if (
+                  "childList" === mutation.type &&
+                  mutation.addedNodes.length > 0
+                )
+                  for (const node of mutation.addedNodes)
+                    node.nodeType === Node.ELEMENT_NODE &&
+                      (node.classList.contains("message") ||
+                        node.classList.contains("structItem") ||
+                        node.classList.contains("memberCard") ||
+                        node.querySelector(".message") ||
+                        node.querySelector(".structItem") ||
+                        node.querySelector(".memberCard")) &&
+                      (await processElement(node));
+              });
+            });
+            // Start observing the document body for changes
+            return (
+              observer.observe(document.body, {
+                childList: !0,
+                subtree: !0,
+              }),
+              {
+                success: !0,
+                observer: observer,
+              }
+            );
+          } catch (err) {
+            return (
+              error("Error initializing rule application:", err),
+              {
+                success: !1,
+                error: err.message,
+              }
+            );
+          }
+        })().then((result) => {
+          result.success
+            ? log("User rules system initialized successfully")
+            : warn("Failed to initialize user rules system:", result.error);
+        });
     }),
     window.addEventListener("load", () => {
       executeLoadOrderForPhase("document-idle");
