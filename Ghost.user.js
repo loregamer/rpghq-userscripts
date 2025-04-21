@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.14.4
+// @version      5.15
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -59,7 +59,7 @@
     contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for ghosted-by-content
     hideEntireRow: false, // Default: only hide lastpost, not entire row
     hideTopicCreations: true, // Default: hide rows with ghosted username in row class,
-    whitelistedThreads: [] // Array of thread names that should never be hidden
+    whitelistedThreads: [], // Array of thread names that should never be hidden
   });
 
   // Set Oyster Sauce's username color
@@ -1155,24 +1155,28 @@
     );
   }
 
-  function hideTopicRow(element) {
-    // First, check if this thread is in the whitelist
+  function isThreadWhitelisted(element) {
+    // Check if this thread is in the whitelist
     const topicTitleElement = element.querySelector("a.topictitle");
-    if (topicTitleElement) {
+    if (
+      topicTitleElement &&
+      config.whitelistedThreads &&
+      config.whitelistedThreads.length > 0
+    ) {
       const topicTitle = topicTitleElement.textContent.trim();
-      
-      // Check if this thread is whitelisted
-      if (config.whitelistedThreads && config.whitelistedThreads.some(whitelistedTitle => 
-          topicTitle.includes(whitelistedTitle))) {
-        // This thread is whitelisted, add a show class but don't hide it
-        const rowToShow = element.closest("li.row");
-        if (rowToShow) {
-          rowToShow.classList.add("show");
-        }
-        return; // Skip the rest of the function
-      }
+
+      // Check if thread title contains any of the whitelisted terms (partial match, case insensitive)
+      return config.whitelistedThreads.some((whitelistedTitle) =>
+        topicTitle.toLowerCase().includes(whitelistedTitle.toLowerCase())
+      );
     }
-    
+    return false;
+  }
+
+  function hideTopicRow(element) {
+    // Check if this thread is whitelisted
+    const isWhitelisted = isThreadWhitelisted(element);
+
     // First, check if the element or its parent row has author-name-* class
     // which indicates it's authored by a ghosted user
     const rowItem = element.closest("li.row");
@@ -1195,14 +1199,24 @@
     if (hasGhostedClass) {
       // If it's authored by a ghosted user
       if (rowItem) {
-        // If hideTopicCreations is true, delete the entire row
-        if (config.hideTopicCreations) {
+        // If hideTopicCreations is true and not whitelisted, delete the entire row
+        if (config.hideTopicCreations && !isWhitelisted) {
           rowItem.remove();
           return;
         }
 
-        // Otherwise just add classes
-        rowItem.classList.add("ghosted-row", "ghosted-by-content");
+        // Otherwise just add classes - only hide entire row if it's not whitelisted
+        if (!isWhitelisted && config.hideEntireRow) {
+          rowItem.classList.add("ghosted-row", "ghosted-by-content");
+        } else {
+          // For whitelisted threads, only add the highlighting class
+          rowItem.classList.add("ghosted-by-content");
+          // If we have a lastpost cell, hide only that instead of the entire row
+          const lastpost = rowItem.querySelector("dd.lastpost");
+          if (lastpost) {
+            lastpost.classList.add("ghosted-row");
+          }
+        }
         // Add asterisk to topic title
         const topicTitle = rowItem.querySelector("a.topictitle");
         if (topicTitle && !topicTitle.textContent.startsWith("*")) {
@@ -1214,7 +1228,7 @@
         }
       } else {
         // If applied to a non-row element
-        if (config.hideTopicCreations) {
+        if (config.hideTopicCreations && !isWhitelisted) {
           // Try to find a parent row to remove
           const parentRow = element.closest("li.row");
           if (parentRow) {
@@ -1223,7 +1237,13 @@
           }
         }
 
-        element.classList.add("ghosted-row", "ghosted-by-content");
+        // Only add ghosted-row class if this thread is not whitelisted AND hideEntireRow is true
+        if (!isWhitelisted && config.hideEntireRow) {
+          element.classList.add("ghosted-row", "ghosted-by-content");
+        } else {
+          // Otherwise just add the highlighting class
+          element.classList.add("ghosted-by-content");
+        }
         // Add asterisk to topic title if it exists
         const topicTitle = element.querySelector("a.topictitle");
         if (topicTitle && !topicTitle.textContent.startsWith("*")) {
@@ -1267,9 +1287,9 @@
             isUserIgnored(authorLink.textContent.trim()) &&
             !isNonNotificationUCP()
           ) {
-            // Author is ghosted, check hideEntireRow setting
-            if (config.hideEntireRow) {
-              // Hide entire row
+            // Author is ghosted, check hideEntireRow setting and whitelist
+            if (config.hideEntireRow && !isWhitelisted) {
+              // Hide entire row if not whitelisted
               rowItem.classList.add("ghosted-row");
             } else {
               // Only hide lastpost
@@ -1291,9 +1311,9 @@
                 !isNonNotificationUCP()
             );
             if (hasGhostedUser) {
-              // Has ghosted user in content, check hideEntireRow setting
-              if (config.hideEntireRow) {
-                // Hide entire row
+              // Has ghosted user in content, check hideEntireRow setting and whitelist
+              if (config.hideEntireRow && !isWhitelisted) {
+                // Hide entire row if not whitelisted
                 rowItem.classList.add("ghosted-row", "ghosted-by-author");
               } else {
                 // Only hide lastpost
@@ -1302,7 +1322,7 @@
               }
             } else {
               // No ghosted author, but content might contain ghosted references
-              if (config.hideEntireRow) {
+              if (config.hideEntireRow && !isWhitelisted) {
                 // Hide entire row
                 rowItem.classList.add("ghosted-row", "ghosted-by-content");
               } else {
@@ -1328,19 +1348,21 @@
       );
 
       if (hasGhostedAuthor) {
-        if (config.hideEntireRow) {
-          // Hide entire row
+        if (config.hideEntireRow && !isWhitelisted) {
+          // Hide entire row if not whitelisted
           rowItem.classList.add("ghosted-row", "ghosted-by-author");
         } else {
+          // For whitelisted threads or if hideEntireRow is false, show the row but mark it
+          rowItem.classList.add("ghosted-by-author");
+
           // Only hide lastpost if available
           const lastpostCell = rowItem.querySelector("dd.lastpost");
           if (lastpostCell) {
             lastpostCell.classList.add("ghosted-row");
-          } else {
-            // Fallback to hiding the row if no lastpost cell
+          } else if (!isWhitelisted) {
+            // Fallback to hiding the row if no lastpost cell and not whitelisted
             rowItem.classList.add("ghosted-row");
           }
-          rowItem.classList.add("ghosted-by-author");
         }
         return;
       }
@@ -1361,8 +1383,8 @@
 
       // If we get here, it's content-based ghosting
       if (!isNonNotificationUCP()) {
-        if (config.hideEntireRow) {
-          // Hide entire row
+        if (config.hideEntireRow && !isWhitelisted) {
+          // Hide entire row if not whitelisted
           rowItem.classList.add("ghosted-row", "ghosted-by-content");
         } else {
           // Only hide lastpost if available
@@ -1370,8 +1392,10 @@
           if (lastpostCell) {
             lastpostCell.classList.add("ghosted-row");
           } else {
-            // Fallback to hiding the row if no lastpost cell
-            rowItem.classList.add("ghosted-row");
+            // Fallback to hiding the row if no lastpost cell and not whitelisted
+            if (!isWhitelisted) {
+              rowItem.classList.add("ghosted-row");
+            }
           }
           rowItem.classList.add("ghosted-by-content");
         }
@@ -1379,7 +1403,11 @@
     } else {
       if (!isNonNotificationUCP()) {
         // This is the non-row element case (like in recent topics)
-        element.classList.add("ghosted-row", "ghosted-by-author");
+        // Only add ghosted-row if not whitelisted
+        if (!isWhitelisted) {
+          element.classList.add("ghosted-row");
+        }
+        element.classList.add("ghosted-by-author");
       }
     }
   }
@@ -1490,8 +1518,11 @@
         // For topic and recent rows, check config to see if we should hide entire row or just lastpost
         // Check if the author is ignored
         if (isUserIgnored(authorName) && !isNonNotificationUCP()) {
-          if (config.hideEntireRow) {
-            // Hide entire row - Author is ghosted
+          // Check if this thread is whitelisted
+          const isWhitelisted = isThreadWhitelisted(row);
+
+          if (config.hideEntireRow && !isWhitelisted) {
+            // Hide entire row - Author is ghosted (if not whitelisted)
             row.classList.add("ghosted-row");
             // Add highlighting class to the row
             row.classList.add("ghosted-by-author");
@@ -1516,8 +1547,11 @@
               isUserIgnored(authorLink.textContent.trim()) &&
               !isNonNotificationUCP()
             ) {
-              if (config.hideEntireRow) {
-                // Hide entire row
+              // Check if this thread is whitelisted
+              const isWhitelisted = isThreadWhitelisted(row);
+
+              if (config.hideEntireRow && !isWhitelisted) {
+                // Hide entire row if not whitelisted
                 row.classList.add("ghosted-row");
                 // Add highlighting class to the row
                 row.classList.add("ghosted-by-author");
@@ -1534,8 +1568,11 @@
               !isNonNotificationUCP()
             ) {
               // Content contains ghosted references
-              if (config.hideEntireRow) {
-                // Hide entire row
+              // Check if this thread is whitelisted
+              const isWhitelisted = isThreadWhitelisted(row);
+
+              if (config.hideEntireRow && !isWhitelisted) {
+                // Hide entire row if not whitelisted
                 row.classList.add("ghosted-row");
                 // Add highlighting class to the row
                 row.classList.add("ghosted-by-content");
@@ -1591,9 +1628,12 @@
         // Add highlight class to the row
         if (row) row.classList.add("ghosted-by-author");
       } else if (row) {
+        // Check if this thread is whitelisted
+        const isWhitelisted = isThreadWhitelisted(row);
+
         // For other rows, apply to the row or lastpost based on config
-        if (config.hideEntireRow) {
-          // Hide entire row
+        if (config.hideEntireRow && !isWhitelisted) {
+          // Hide entire row if not whitelisted
           row.classList.add("ghosted-row", "ghosted-by-author");
         } else {
           // Only hide lastpost
@@ -1650,9 +1690,12 @@
               // Add highlight class to the row
               if (row) row.classList.add("ghosted-by-author");
             } else if (row) {
+              // Check if this thread is whitelisted
+              const isWhitelisted = isThreadWhitelisted(row);
+
               // For other rows, apply based on config
-              if (config.hideEntireRow) {
-                // Hide entire row
+              if (config.hideEntireRow && !isWhitelisted) {
+                // Hide entire row if not whitelisted
                 row.classList.add("ghosted-row", "ghosted-by-author");
               } else {
                 // Only hide lastpost
@@ -1671,9 +1714,12 @@
                   // Add highlight class to the row
                   if (row) row.classList.add("ghosted-by-content");
                 } else if (row) {
+                  // Check if this thread is whitelisted
+                  const isWhitelisted = isThreadWhitelisted(row);
+
                   // For other rows, apply based on config
-                  if (config.hideEntireRow) {
-                    // Hide entire row
+                  if (config.hideEntireRow && !isWhitelisted) {
+                    // Hide entire row if not whitelisted
                     row.classList.add("ghosted-row", "ghosted-by-content");
                   } else {
                     // Only hide lastpost
@@ -3065,12 +3111,15 @@
       <div class="ghost-settings-row">
         <label class="ghost-settings-label">Whitelisted Thread Names:</label>
         <div class="ghost-settings-whitelisted-threads">
-          ${(config.whitelistedThreads || []).map(thread => 
-            `<div class="ghost-whitelist-item">
+          ${(config.whitelistedThreads || [])
+            .map(
+              (thread) =>
+                `<div class="ghost-whitelist-item">
               <span>${thread}</span>
               <button class="ghost-remove-thread" data-thread="${thread}">×</button>
             </div>`
-          ).join('')}
+            )
+            .join("")}
           <div class="ghost-add-whitelist-container">
             <input type="text" class="ghost-whitelist-input" placeholder="Enter thread name...">
             <button class="ghost-add-whitelist-btn">Add</button>
@@ -3150,17 +3199,23 @@
     // Handle whitelisted thread functionality
     const addWhitelistBtn = popup.querySelector(".ghost-add-whitelist-btn");
     const whitelistInput = popup.querySelector(".ghost-whitelist-input");
-    
+
     // Function to refresh the whitelist display
     function refreshWhitelistDisplay() {
-      const container = popup.querySelector(".ghost-settings-whitelisted-threads");
-      const addContainer = container.querySelector(".ghost-add-whitelist-container");
-      
+      const container = popup.querySelector(
+        ".ghost-settings-whitelisted-threads"
+      );
+      const addContainer = container.querySelector(
+        ".ghost-add-whitelist-container"
+      );
+
       // Remove all existing items
-      Array.from(container.querySelectorAll(".ghost-whitelist-item")).forEach(item => item.remove());
-      
+      Array.from(container.querySelectorAll(".ghost-whitelist-item")).forEach(
+        (item) => item.remove()
+      );
+
       // Add current whitelist items
-      (config.whitelistedThreads || []).forEach(thread => {
+      (config.whitelistedThreads || []).forEach((thread) => {
         const item = document.createElement("div");
         item.className = "ghost-whitelist-item";
         item.innerHTML = `
@@ -3168,19 +3223,23 @@
           <button class="ghost-remove-thread" data-thread="${thread}">×</button>
         `;
         container.insertBefore(item, addContainer);
-        
+
         // Add remove handler
-        item.querySelector(".ghost-remove-thread").addEventListener("click", (e) => {
-          const threadToRemove = e.target.getAttribute("data-thread");
-          config.whitelistedThreads = config.whitelistedThreads.filter(t => t !== threadToRemove);
-          refreshWhitelistDisplay();
-        });
+        item
+          .querySelector(".ghost-remove-thread")
+          .addEventListener("click", (e) => {
+            const threadToRemove = e.target.getAttribute("data-thread");
+            config.whitelistedThreads = config.whitelistedThreads.filter(
+              (t) => t !== threadToRemove
+            );
+            refreshWhitelistDisplay();
+          });
       });
     }
-    
+
     // Initial setup of whitelist display
     refreshWhitelistDisplay();
-    
+
     // Add thread to whitelist
     addWhitelistBtn.addEventListener("click", () => {
       const threadName = whitelistInput.value.trim();
@@ -3188,17 +3247,17 @@
         if (!config.whitelistedThreads) {
           config.whitelistedThreads = [];
         }
-        
+
         // Don't add duplicates
         if (!config.whitelistedThreads.includes(threadName)) {
           config.whitelistedThreads.push(threadName);
           refreshWhitelistDisplay();
         }
-        
+
         whitelistInput.value = "";
       }
     });
-    
+
     // Add thread on Enter key
     whitelistInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
@@ -3206,7 +3265,7 @@
         addWhitelistBtn.click();
       }
     });
-    
+
     // Save settings
     const saveSettingsBtn = popup.querySelector(".ghost-settings-save");
     saveSettingsBtn.addEventListener("click", () => {
@@ -3215,7 +3274,8 @@
         topicHighlightColor: popup.querySelector(".ghost-topic-color").value,
         contentHighlightColor: contentColorInput.value,
         hideEntireRow: popup.querySelector(".ghost-hide-entire-row").checked,
-        hideTopicCreations: popup.querySelector(".ghost-hide-topic-creations").checked,
+        hideTopicCreations: popup.querySelector(".ghost-hide-topic-creations")
+          .checked,
         whitelistedThreads: config.whitelistedThreads || [], // Include whitelist in saved config
       };
 
@@ -3257,7 +3317,7 @@
           defaultConfig.authorHighlightColor;
         contentPreview.style.backgroundColor =
           defaultConfig.contentHighlightColor;
-          
+
         // Reset whitelist
         config.whitelistedThreads = [];
         refreshWhitelistDisplay();
