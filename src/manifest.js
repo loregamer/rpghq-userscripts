@@ -74,6 +74,25 @@ export const SCRIPT_MANIFEST = [
     enabledByDefault: true,
     settings: [
       {
+        id: "readOpacity",
+        label: "Read Notification Opacity",
+        type: "number",
+        min: 0.1,
+        max: 1,
+        step: 0.05,
+        default: 0.8,
+        description:
+          "How transparent read notifications should be (1 = fully opaque).",
+      },
+      {
+        id: "readTintColor",
+        label: "Read Notification Tint Color",
+        type: "color",
+        default: "rgba(0, 0, 0, 0.05)",
+        description: "A subtle color tint applied to read notifications.",
+      },
+
+      {
         id: "enableNotificationColors",
         label: "Enable Notification Type Colors",
         type: "checkbox",
