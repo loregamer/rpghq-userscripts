@@ -4039,18 +4039,22 @@
   });
 
   // ---------------------------------------------------------------------
-  // ALT KEY LISTENER FOR GHOST BUTTON VISIBILITY
+  // ALT KEY LISTENER FOR GHOST BUTTON VISIBILITY (TOGGLE)
   // ---------------------------------------------------------------------
 
+  let altKeyDownActive = false; // State variable for the toggle
+
   window.addEventListener("keydown", (event) => {
-    if (event.altKey) {
-      document.body.classList.add("alt-key-down");
+    // Check if the key pressed is Alt and we are not in an input field
+    if (
+      event.key === "Alt" &&
+      !["INPUT", "TEXTAREA"].includes(event.target.tagName)
+    ) {
+      event.preventDefault(); // Prevent default Alt key behavior (like focusing menu bar)
+      altKeyDownActive = !altKeyDownActive; // Toggle the state
+      document.body.classList.toggle("alt-key-down", altKeyDownActive); // Toggle the class based on state
     }
   });
 
-  window.addEventListener("keyup", (event) => {
-    if (event.key === "Alt") {
-      document.body.classList.remove("alt-key-down");
-    }
-  });
+  // The keyup listener is removed as it's handled by the toggle logic in keydown
 })();
