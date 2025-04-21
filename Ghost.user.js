@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.16
+// @version      5.16.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -53,6 +53,9 @@
   const postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
   const userColors = GM_getValue("userColors", {}); // username => color
   const ghostedManualPosts = GM_getValue("ghostedManualPosts", {}); // postId => true
+
+  // Whitelist for specific posts that should never be hidden
+  const POST_WHITELIST = ["238105"]; // Add post IDs (as strings) here
 
   // Custom configuration values with defaults
   const config = GM_getValue("ghostConfig", {
@@ -2046,6 +2049,12 @@
       post.classList.add("ghosted-post-manual");
       post.classList.add("content-processed");
       return; // Don't process further if manually hidden
+    }
+
+    // Check if the post is whitelisted
+    if (POST_WHITELIST.includes(postId)) {
+      post.classList.add("content-processed"); // Ensure it's marked processed
+      return; // Don't hide whitelisted posts
     }
 
     processBlockquotesInPost(post);
