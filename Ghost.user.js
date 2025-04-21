@@ -52,6 +52,7 @@
   const replacedAvatars = GM_getValue("replacedAvatars", {}); // userId => image URL
   const postCache = GM_getValue("postCache", {}); // postId => { content, timestamp }
   const userColors = GM_getValue("userColors", {}); // username => color
+  const ghostedManualPosts = GM_getValue("ghostedManualPosts", {}); // postId => true
 
   // Custom configuration values with defaults
   const config = GM_getValue("ghostConfig", {
@@ -773,6 +774,33 @@
       display: flex;
       gap: 5px;
       margin-top: 10px;
+    }
+
+    /* -----------------------------------------------------------------
+       7) Manual Post Ghosting Button
+       ----------------------------------------------------------------- */
+    .post-ghost-button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background-color: rgba(200, 0, 0, 0.6) !important; /* Make it visible */
+      color: #fff !important;
+      cursor: pointer;
+      z-index: 10; /* Ensure it's above post content */
+    }
+
+    /* Hide the list item containing the ghost button by default */
+    li.post-ghost-button-li {
+        display: none !important;
+    }
+
+    /* Show the list item when Alt key is down */
+    body.alt-key-down .post li.post-ghost-button-li {
+      display: inline-block !important; /* Or list-item, adjust if needed */
+    }
+
+    .ghosted-post-manual {
+        display: none !important;
     }
   `;
   document.documentElement.appendChild(mainStyle);
@@ -2011,6 +2039,15 @@
   }
 
   function processPost(post) {
+    const postId = post.id.replace("p", "");
+
+    // Check if post is manually ghosted
+    if (ghostedManualPosts[postId]) {
+      post.classList.add("ghosted-post-manual");
+      post.classList.add("content-processed");
+      return; // Don't process further if manually hidden
+    }
+
     processBlockquotesInPost(post);
     const usernameEl = post.querySelector(".username, .username-coloured");
     let hideIt = false;
@@ -2044,6 +2081,41 @@
 
     if (hideIt) {
       post.classList.add("ghosted-post");
+    }
+
+    // Add the manual ghost button
+    const ghostLi = document.createElement("li");
+    ghostLi.className = "post-ghost-button-li"; // Add class to the list item
+    const ghostButton = document.createElement("a");
+    ghostButton.className = "button button-icon-only post-ghost-button"; // Added relevant classes
+    ghostButton.innerHTML =
+      '<i class="icon fa-times fa-fw" aria-hidden="true"></i>'; // Use FontAwesome icon
+    ghostButton.href = "#"; // Make it behave like a link
+    ghostButton.title = "Ghost this post (Alt+Click)";
+    ghostButton.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Mark as manually ghosted
+      ghostedManualPosts[postId] = true;
+      GM_setValue("ghostedManualPosts", ghostedManualPosts);
+
+      // Hide the post immediately
+      post.classList.add("ghosted-post-manual");
+      post.classList.remove(
+        "ghosted-post",
+        "ghosted-by-author",
+        "ghosted-by-content"
+      ); // Ensure other ghosting is removed
+
+      console.log(`Manually ghosted post: ${postId}`);
+    });
+
+    // Append to the post buttons list
+    const postButtonsList = post.querySelector("ul.post-buttons");
+    if (postButtonsList) {
+      ghostLi.appendChild(ghostButton);
+      postButtonsList.appendChild(ghostLi);
     }
 
     post.classList.add("content-processed");
@@ -3964,5 +4036,21 @@
     setInterval(removeZeroBadges, 150);
 
     setInterval(cleanTitleNotifications, 150);
+  });
+
+  // ---------------------------------------------------------------------
+  // ALT KEY LISTENER FOR GHOST BUTTON VISIBILITY
+  // ---------------------------------------------------------------------
+
+  window.addEventListener("keydown", (event) => {
+    if (event.altKey) {
+      document.body.classList.add("alt-key-down");
+    }
+  });
+
+  window.addEventListener("keyup", (event) => {
+    if (event.key === "Alt") {
+      document.body.classList.remove("alt-key-down");
+    }
   });
 })();
