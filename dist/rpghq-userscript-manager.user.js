@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Userscript Manager
 // @namespace    rpghq-userscripts
-// @version      0.8.1
+// @version      0.8.2
 // @description  RPGHQ Userscript Manager
 // @author       loregamer
 // @match        https://rpghq.org/*
@@ -4452,12 +4452,12 @@
               quoteColorSetting = _getScriptSetting(
                 "notifications",
                 "quoteColor",
-                "#1E90FF"
+                "#F5575D"
               ),
               replyColorSetting = _getScriptSetting(
                 "notifications",
                 "replyColor",
-                "#FF69B4"
+                "#2E8B57"
               );
             _getScriptSetting("notifications", "reactionColor", "#3889ED"),
               _getScriptSetting("notifications", "mentionColor", "#FFC107");
