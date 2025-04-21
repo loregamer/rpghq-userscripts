@@ -1207,10 +1207,10 @@
 
         // Otherwise just add classes - only hide entire row if it's not whitelisted
         if (!isWhitelisted && config.hideEntireRow) {
-          rowItem.classList.add("ghosted-row", "ghosted-by-content");
+          rowItem.classList.add("ghosted-row", "ghosted-by-author");
         } else {
           // For whitelisted threads, only add the highlighting class
-          rowItem.classList.add("ghosted-by-content");
+          rowItem.classList.add("ghosted-by-author");
           // If we have a lastpost cell, hide only that instead of the entire row
           const lastpost = rowItem.querySelector("dd.lastpost");
           if (lastpost) {
@@ -1224,7 +1224,7 @@
         }
         const lastpost = rowItem.querySelector("dd.lastpost");
         if (lastpost) {
-          lastpost.classList.add("ghosted-by-content");
+          lastpost.classList.add("ghosted-by-author");
         }
       } else {
         // If applied to a non-row element
@@ -1239,10 +1239,10 @@
 
         // Only add ghosted-row class if this thread is not whitelisted AND hideEntireRow is true
         if (!isWhitelisted && config.hideEntireRow) {
-          element.classList.add("ghosted-row", "ghosted-by-content");
+          element.classList.add("ghosted-row", "ghosted-by-author");
         } else {
           // Otherwise just add the highlighting class
-          element.classList.add("ghosted-by-content");
+          element.classList.add("ghosted-by-author");
         }
         // Add asterisk to topic title if it exists
         const topicTitle = element.querySelector("a.topictitle");
@@ -1324,11 +1324,11 @@
               // No ghosted author, but content might contain ghosted references
               if (config.hideEntireRow && !isWhitelisted) {
                 // Hide entire row
-                rowItem.classList.add("ghosted-row", "ghosted-by-content");
+                rowItem.classList.add("ghosted-by-content");
               } else {
                 // Only hide lastpost
-                if (isViewForum) lastpostCell.classList.add("ghosted-row");
-                lastpostCell.classList.add("ghosted-by-content");
+                if (isViewForum)
+                  lastpostCell.classList.add("ghosted-by-content");
               }
             }
           }
@@ -1385,7 +1385,7 @@
       if (!isNonNotificationUCP()) {
         if (config.hideEntireRow && !isWhitelisted) {
           // Hide entire row if not whitelisted
-          rowItem.classList.add("ghosted-row", "ghosted-by-content");
+          rowItem.classList.add("ghosted-by-content");
         } else {
           // Only hide lastpost if available
           const lastpostCell = rowItem.querySelector("dd.lastpost");
@@ -1447,7 +1447,7 @@
       if (authorNameClass) {
         const username = authorNameClass.replace("author-name-", "");
         if (isUserIgnored(username) && !isNonNotificationUCP()) {
-          row.classList.add("ghosted-row", "ghosted-by-content");
+          row.classList.add("ghosted-by-content");
           const lastpost = row.querySelector("dd.lastpost");
           if (lastpost) {
             lastpost.classList.add("ghosted-by-content");
@@ -1507,9 +1507,6 @@
               postContentContainsGhosted(postContent) &&
               !isNonNotificationUCP()
             ) {
-              // Post content contains ghosted username, add ghosted-row class to lastpost
-              lastpostCell.classList.add("ghosted-row");
-              // Add highlighting class to the row
               row.classList.add("ghosted-by-content");
             }
           }
@@ -1572,13 +1569,9 @@
               const isWhitelisted = isThreadWhitelisted(row);
 
               if (config.hideEntireRow && !isWhitelisted) {
-                // Hide entire row if not whitelisted
-                row.classList.add("ghosted-row");
                 // Add highlighting class to the row
                 row.classList.add("ghosted-by-content");
               } else {
-                // Only hide lastpost
-                lastpostCell.classList.add("ghosted-row");
                 // Add highlighting class to the row
                 row.classList.add("ghosted-by-content");
               }
@@ -1709,9 +1702,6 @@
               const content = await fetchAndCachePost(pid);
               if (!content || postContentContainsGhosted(content)) {
                 if (isForumList) {
-                  // For forum rows, only hide the lastpost
-                  element.classList.add("ghosted-row");
-                  // Add highlight class to the row
                   if (row) row.classList.add("ghosted-by-content");
                 } else if (row) {
                   // Check if this thread is whitelisted
@@ -1720,10 +1710,8 @@
                   // For other rows, apply based on config
                   if (config.hideEntireRow && !isWhitelisted) {
                     // Hide entire row if not whitelisted
-                    row.classList.add("ghosted-row", "ghosted-by-content");
+                    row.classList.add("ghosted-by-content");
                   } else {
-                    // Only hide lastpost
-                    element.classList.add("ghosted-row");
                     // Add highlight class to the row
                     row.classList.add("ghosted-by-content");
                   }
@@ -1732,17 +1720,15 @@
             } catch (err) {
               if (isForumList) {
                 // For forum rows, only hide the lastpost
-                element.classList.add("ghosted-row");
                 // Add highlight class to the row
                 if (row) row.classList.add("ghosted-by-content");
               } else if (row) {
                 // For other rows, hide based on config
                 if (config.hideEntireRow) {
                   // Hide entire row
-                  row.classList.add("ghosted-row", "ghosted-by-content");
+                  row.classList.add("ghosted-by-content");
                 } else {
                   // Only hide lastpost
-                  element.classList.add("ghosted-row");
                   // Add highlight class to the row
                   row.classList.add("ghosted-by-content");
                 }
