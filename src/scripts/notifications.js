@@ -483,8 +483,7 @@ export function init({ getScriptSetting }) {
       // }
 
       const titleText = titleElement.innerHTML;
-      const parentLi = block.closest("li");
-      const isUnread = parentLi ? parentLi.classList.contains("bg2") : false;
+      const isUnread = block.href && block.href.includes("mark_notification");
       const postId = Utils.extractPostId(
         block.getAttribute("data-real-url") || block.href,
       );
@@ -843,20 +842,12 @@ export function init({ getScriptSetting }) {
       const notificationText = block.querySelector(".notification_text");
       if (!notificationText) return;
 
-      // --- Determine Read/Unread state based on parent li class ---
-      const parentLi = block.closest("li");
-      const isRead = parentLi ? !parentLi.classList.contains("bg2") : false; // Consider read if parent li doesn't have bg2
-
+      // Determine if read (no mark_notification link)
+      const isRead = !(block.href && block.href.includes("mark_notification"));
       if (isRead) {
-        // Apply read styles directly
         block.style.opacity = readNotificationOpacity;
         block.style.backgroundColor = readTintColorSetting; // Apply tint
-      } else {
-        // Explicitly reset opacity and background for unread items
-        block.style.opacity = "";
-        block.style.backgroundColor = "";
       }
-      // --- End Read/Unread state check ---
 
       // Move time element to bottom right
       const timeElement = block.querySelector(".notification-time");
@@ -1655,52 +1646,31 @@ export function init({ getScriptSetting }) {
       let shouldProcess = false;
 
       for (const mutation of mutations) {
-        // Check if class attribute changed on a relevant parent LI
-        if (
-          mutation.type === "attributes" &&
-          mutation.attributeName === "class" &&
-          mutation.target.nodeType === Node.ELEMENT_NODE &&
-          mutation.target.matches("li") && // Check if the target is an LI
-          mutation.target.querySelector(
-            ".notification-block, a.notification-block",
-          ) // Check if it contains a notification block
-        ) {
-          console.log("Observer triggered: Parent LI class changed.");
-          shouldProcess = true;
-          break;
-        }
-
-        // Check if new notification blocks were added
+        // Only process if new notification blocks are added
         if (mutation.type === "childList") {
-          const addedNotifications = Array.from(mutation.addedNodes).some(
-            (node) =>
-              node.nodeType === Node.ELEMENT_NODE &&
-              (node.matches?.(".notification-block, a.notification-block") ||
-                node.querySelector?.(
-                  ".notification-block, a.notification-block",
-                )),
+          const hasNewNotifications = Array.from(mutation.addedNodes).some(
+            (node) => {
+              return (
+                node.nodeType === Node.ELEMENT_NODE &&
+                (node.classList?.contains("notification-block") ||
+                  node.querySelector?.(".notification-block"))
+              );
+            },
           );
 
-          if (addedNotifications) {
-            console.log("Observer triggered: New notifications added.");
+          if (hasNewNotifications) {
             shouldProcess = true;
-            break; // Found a relevant change
+            break;
           }
         }
       }
 
       if (shouldProcess) {
-        debouncedCustomize(); // Use existing debounce
+        debouncedCustomize();
       }
     });
 
-    // Observe relevant DOM changes (attributes and childList)
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["class"], // Focus on class attribute changes
-    });
+    observer.observe(document.body, { childList: true, subtree: true });
 
     // Run storage cleanup last
     Storage.cleanupStorage();
