@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Ignored Thread Enhancer
 // @namespace    http://tampermonkey.net/
-// @version      4.0.4
+// @version      4.1
 // @description  Export previously ignored threads from the old RPGHQ Thread Ignorer userscript.
 // @match        https://rpghq.org/forums/*
 // @grant        GM_getValue
@@ -201,7 +201,6 @@ SOFTWARE.
   // --- Quick Ignore Mode ---
   function toggleIgnoreMode() {
     ignoreModeActive = !ignoreModeActive;
-    storageSetValue("ignoreModeActive", ignoreModeActive); // Use localStorage
     const toggleButton = document.getElementById("toggle-ignore-mode-button");
     if (toggleButton) {
       const icon = toggleButton.querySelector("i.icon");
