@@ -16,6 +16,7 @@ import {
   updateUsernameColor,
 } from "../../../utils/userRules/storage.js";
 import { extractUserIdFromUrl } from "../../../utils/userRules/userIdentification.js";
+import { searchUsers } from "../../../utils/api/rpghqApi.js"; // Import the search function
 
 // Allowed rule actions and subjects
 const RULE_ACTIONS = [
@@ -200,7 +201,7 @@ function addRuleManagementStyles() {
     .user-selection-area {
       margin-bottom: 20px;
       padding: 15px;
-      background: #f8f8f8;
+      background: var(--bg-card);
       border-radius: 4px;
     }
     
@@ -213,40 +214,51 @@ function addRuleManagementStyles() {
     
     .user-search-form label {
       min-width: 80px;
+      color: var(--text-secondary);
     }
     
     .user-search-form .form-control {
       flex: 1;
       padding: 6px 10px;
-      border: 1px solid #ccc;
+      border: 1px solid var(--border-color);
       border-radius: 4px;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
     }
     
     .user-search-status {
       margin-top: 10px;
       padding: 6px 0;
       font-style: italic;
+      color: var(--text-secondary);
     }
     
     .user-search-status.success {
-      color: #2ecc71;
+      color: var(--success-color);
     }
     
     .user-search-status.error {
-      color: #e74c3c;
+      color: var(--danger-color);
     }
     
     .user-rules-editor {
-      border: 1px solid #e0e0e0;
+      border: 1px solid var(--border-color);
       padding: 15px;
       border-radius: 4px;
       margin-bottom: 20px;
+      background-color: var(--bg-card);
     }
     
     .user-rules-header {
       margin-bottom: 15px;
       padding-bottom: 10px;
-      border-bottom: 1px solid #e0e0e0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .user-rules-header h4,
+    .rules-list-header h4,
+    .user-rules-list-header h4 {
+      color: var(--text-primary);
     }
     
     .username-color-section {
@@ -255,6 +267,10 @@ function addRuleManagementStyles() {
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
+    }
+    
+    .username-color-section label {
+      color: var(--text-secondary);
     }
     
     .color-input-group {
@@ -267,14 +283,17 @@ function addRuleManagementStyles() {
       width: 40px;
       height: 30px;
       padding: 0;
-      border: none;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
     }
     
     .color-preview {
       margin-left: 15px;
       padding: 5px 10px;
       border-radius: 3px;
-      background: #f8f8f8;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
     }
     
     .rules-list-header {
@@ -297,15 +316,18 @@ function addRuleManagementStyles() {
     .rules-table th, .rules-table td {
       padding: 8px 12px;
       text-align: left;
-      border-bottom: 1px solid #e0e0e0;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-secondary);
     }
     
     .rules-table th {
-      background-color: #f2f2f2;
+      background-color: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      font-weight: bold;
     }
     
     .rules-table tr:hover {
-      background-color: #f9f9f9;
+      background-color: rgba(255, 255, 255, 0.03);
     }
     
     .rules-actions {
@@ -317,29 +339,34 @@ function addRuleManagementStyles() {
       display: flex;
       gap: 10px;
       justify-content: space-between;
+      margin-top: 10px;
     }
     
     .existing-rules-container {
       margin-top: 20px;
     }
     
-    .rule-editor-modal {
+    /* Modal styles - Inherit from global styles where possible */
+    .modal {
       display: none;
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000001; /* Ensure it's above the main modal */
+      overflow-y: auto;
     }
     
     .modal-content {
-      background-color: #fff;
-      margin: 10% auto;
+      background-color: var(--bg-card);
+      color: var(--text-primary);
+      margin: 5% auto;
       padding: 20px;
+      border: 1px solid var(--border-color);
       border-radius: 4px;
-      width: 80%;
+      width: 90%;
       max-width: 600px;
     }
     
@@ -347,14 +374,23 @@ function addRuleManagementStyles() {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #e0e0e0;
+      border-bottom: 1px solid var(--border-color);
       padding-bottom: 10px;
       margin-bottom: 15px;
+    }
+    
+    .modal-header h3 {
+      color: var(--text-primary);
+      margin: 0;
     }
     
     .modal-close {
       font-size: 24px;
       cursor: pointer;
+      color: var(--text-secondary);
+    }
+    .modal-close:hover {
+      color: var(--danger-color);
     }
     
     .modal-body {
@@ -365,7 +401,7 @@ function addRuleManagementStyles() {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
-      border-top: 1px solid #e0e0e0;
+      border-top: 1px solid var(--border-color);
       padding-top: 15px;
     }
     
@@ -376,24 +412,40 @@ function addRuleManagementStyles() {
     .form-group label {
       display: block;
       margin-bottom: 5px;
+      color: var(--text-secondary);
     }
     
     .form-control {
       width: 100%;
       padding: 8px 10px;
-      border: 1px solid #ccc;
+      border: 1px solid var(--border-color);
       border-radius: 4px;
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
     }
     
+    select.form-control {
+      appearance: none;
+      background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23B0BEC5%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+      background-repeat: no-repeat;
+      background-position: right .7em top 50%;
+      background-size: .65em auto;
+      padding-right: 2.5em;
+    }
+    
+    .user-rules-list-section {
+      margin-top: 20px;
+    }
+
     .user-card {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 10px;
       margin-bottom: 10px;
-      border: 1px solid #e0e0e0;
+      border: 1px solid var(--border-color);
       border-radius: 4px;
-      background-color: #f9f9f9;
+      background-color: var(--bg-card);
     }
     
     .user-info {
@@ -403,11 +455,12 @@ function addRuleManagementStyles() {
     
     .user-name {
       font-weight: bold;
+      color: var(--text-primary);
     }
     
     .user-stats {
       font-size: 0.9em;
-      color: #666;
+      color: var(--text-secondary);
     }
     
     .user-card-actions {
@@ -415,17 +468,69 @@ function addRuleManagementStyles() {
       gap: 5px;
     }
     
-    .empty-rules {
+    .empty-rules td {
       text-align: center;
       font-style: italic;
-      color: #999;
+      color: var(--text-secondary);
+      padding: 20px;
     }
     
     .rule-params-container {
       padding: 10px;
-      background-color: #f8f8f8;
+      background-color: var(--bg-dark);
+      border: 1px solid var(--border-color);
       border-radius: 4px;
       margin-top: 10px;
+    }
+
+    .rule-params-container p {
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .loading-rules {
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* Use global button styles */
+    .button {
+      padding: 6px 12px;
+      border-radius: 3px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9em;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: background-color 0.2s ease;
+    }
+    .button i {
+      font-size: 1em;
+    }
+    .button--primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    .button--primary:hover {
+      background-color: var(--primary-dark);
+    }
+    .button--normal {
+      background-color: #555;
+      color: var(--text-primary);
+    }
+    .button--normal:hover {
+      background-color: #666;
+    }
+    .button--link {
+      background: none;
+      color: var(--primary-color);
+      padding: 0;
+    }
+    .button--link:hover {
+      text-decoration: underline;
     }
   `;
 
@@ -477,10 +582,19 @@ function initUserSearch(container) {
       }
 
       // Case 3: Search value is a username
-      // For now, just show not found. In the future, could add an API call to search for user
-      statusDiv.innerHTML =
-        "User search by name is not supported yet. Please use a profile URL or user ID.";
-      statusDiv.className = "user-search-status error";
+      const results = await searchUsers(searchValue);
+      const users = results.filter((item) => item.type === "user");
+
+      if (users.length === 1) {
+        await handleUserFound(users[0].user_id, users[0].value);
+        return; // Exit after handling the found user
+      } else if (users.length === 0) {
+        statusDiv.innerHTML = `No user found matching "${searchValue}". Try User ID or profile URL.`;
+        statusDiv.className = "user-search-status error";
+      } else {
+        statusDiv.innerHTML = `Multiple users found matching "${searchValue}". Please be more specific or use User ID/URL.`;
+        statusDiv.className = "user-search-status error";
+      }
     } catch (err) {
       statusDiv.innerHTML = `Error: ${err.message}`;
       statusDiv.className = "user-search-status error";
@@ -766,13 +880,14 @@ async function loadRulesForUser(userId, container) {
         if (rule.action === "HIGHLIGHT" && rule.params?.color) {
           paramsDisplay = `
           <div style="display: flex; align-items: center; gap: 5px;">
-            <span>Color:</span>
-            <div style="width: 16px; height: 16px; background-color: ${rule.params.color}; border: 1px solid #ccc;"></div>
-            <span>${rule.params.color}</span>
+            <span style="color: var(--text-secondary);">Color:</span>
+            <div style="width: 16px; height: 16px; background-color: ${rule.params.color}; border: 1px solid var(--border-color);"></div>
+            <span style="color: var(--text-secondary);">${rule.params.color}</span>
           </div>
         `;
         } else {
-          paramsDisplay = '<span class="text-muted">None</span>';
+          paramsDisplay =
+            '<span style="color: var(--text-secondary);">None</span>';
         }
 
         // Format action, subject, and scope with friendly names
