@@ -15,17 +15,17 @@ export function init({ getScriptSetting }) {
   const referenceBackgroundColor = _getScriptSetting(
     "notifications",
     "referenceBackgroundColor",
-    "rgba(23, 27, 36, 0.5)",
+    "rgba(23, 27, 36, 0.5)"
   );
   const referenceTextColor = _getScriptSetting(
     "notifications",
     "referenceTextColor",
-    "#ffffff",
+    "#ffffff"
   );
   const timestampColor = _getScriptSetting(
     "notifications",
     "timestampColor",
-    "#888888",
+    "#888888"
   );
 
   const REFERENCE_STYLE = {
@@ -83,7 +83,7 @@ export function init({ getScriptSetting }) {
             <img src="${reaction.image}" alt="${reaction.name}" title="${reaction.username}: ${reaction.name}" 
                  reaction-username="${reaction.username}"
                  style="height: 1em !important; width: auto !important; vertical-align: middle !important; margin-right: 2px !important;">
-          `,
+          `
             )
             .join("")}
         </span>`;
@@ -239,7 +239,7 @@ export function init({ getScriptSetting }) {
 
       // Handle [img size=X]url[/img] format with parameters
       const paramImgMatch = trimmedText.match(
-        /^\[img\s+([^=\]]+)=([^\]]+)\](.*?)\[\/img\]$/i,
+        /^\[img\s+([^=\]]+)=([^\]]+)\](.*?)\[\/img\]$/i
       );
       if (paramImgMatch) {
         console.log("Text is a single image tag with parameters");
@@ -250,7 +250,7 @@ export function init({ getScriptSetting }) {
 
       // Find all image tags (both with and without parameters)
       const imageUrls = text.match(
-        /\[img(?:\s+[^=\]]+=[^\]]+)?\](.*?)\[\/img\]/gi,
+        /\[img(?:\s+[^=\]]+=[^\]]+)?\](.*?)\[\/img\]/gi
       );
       console.log("Found image tags:", imageUrls);
 
@@ -334,7 +334,7 @@ export function init({ getScriptSetting }) {
     storeReactions: (postId, reactions) => {
       GM_setValue(
         `reactions_${postId}`,
-        JSON.stringify({ reactions, timestamp: Date.now() }),
+        JSON.stringify({ reactions, timestamp: Date.now() })
       );
     },
 
@@ -351,7 +351,7 @@ export function init({ getScriptSetting }) {
     storePostContent: (postId, content) => {
       GM_setValue(
         `post_content_${postId}`,
-        JSON.stringify({ content, timestamp: Date.now() }),
+        JSON.stringify({ content, timestamp: Date.now() })
       );
     },
 
@@ -384,15 +384,15 @@ export function init({ getScriptSetting }) {
               "x-requested-with": "XMLHttpRequest",
             },
             credentials: "include",
-          },
+          }
         );
         const data = await response.json();
         const doc = new DOMParser().parseFromString(
           data.htmlContent,
-          "text/html",
+          "text/html"
         );
         const reactions = Array.from(
-          doc.querySelectorAll('.tab-content[data-id="0"] li'),
+          doc.querySelectorAll('.tab-content[data-id="0"] li')
         ).map((li) => ({
           username: li.querySelector(".cbb-helper-text a").textContent,
           image: li.querySelector(".reaction-image").src,
@@ -417,7 +417,7 @@ export function init({ getScriptSetting }) {
           {
             headers: { "X-Requested-With": "XMLHttpRequest" },
             credentials: "include",
-          },
+          }
         );
 
         if (!response.ok) {
@@ -449,28 +449,28 @@ export function init({ getScriptSetting }) {
       const enableColors = _getScriptSetting(
         "notifications",
         "enableNotificationColors",
-        true,
+        true
       );
       const enableSmileys = _getScriptSetting(
         "notifications",
         "enableReactionSmileys",
-        true,
+        true
       );
       const enableImagePreview = _getScriptSetting(
         "notifications",
         "enableImagePreviews",
-        true,
+        true
       );
       const enableVideoPreview = _getScriptSetting(
         "notifications",
         "enableVideoPreviews",
-        false,
+        false
       );
 
       const reactionColorSetting = _getScriptSetting(
         "notifications",
         "reactionColor",
-        "#3889ED", // Default value if setting not found
+        "#3889ED" // Default value if setting not found
       );
 
       // Apply container styling (assuming base style already applied by caller)
@@ -484,27 +484,27 @@ export function init({ getScriptSetting }) {
 
       const titleText = titleElement.innerHTML;
       const parentLi = block.closest("li");
-      const isUnread = parentLi ? parentLi.classList.contains("bg2") : false;
+      const isUnread = parentLi ? parentLi.classList.contains("bg2") : true;
       const postId = Utils.extractPostId(
-        block.getAttribute("data-real-url") || block.href,
+        block.getAttribute("data-real-url") || block.href
       );
       if (!postId) return;
 
       const usernameElements = titleElement.querySelectorAll(
-        ".username, .username-coloured",
+        ".username, .username-coloured"
       );
       const usernames = Array.from(usernameElements).map((el) =>
-        el.textContent.trim(),
+        el.textContent.trim()
       );
 
       let reactionHTML = "";
       if (enableSmileys) {
         const reactions = await ReactionHandler.fetchReactions(
           postId,
-          isUnread,
+          isUnread
         );
         const filteredReactions = reactions.filter((reaction) =>
-          usernames.includes(reaction.username),
+          usernames.includes(reaction.username)
         );
         reactionHTML = Utils.formatReactions(filteredReactions);
       } else {
@@ -526,7 +526,7 @@ export function init({ getScriptSetting }) {
         // Update title with reaction info
         titleElement.innerHTML = titleText.replace(
           /(have|has)\s+reacted.*$/,
-          `${reactionVerb} ${reactionHTML} to:`,
+          `${reactionVerb} ${reactionHTML} to:`
         );
 
         // Fetch content for preview (only if a preview type is enabled)
@@ -535,7 +535,7 @@ export function init({ getScriptSetting }) {
           if (postContent) {
             const trimmedContent = postContent.trim();
             let referenceElement = block.querySelector(
-              ".notification-reference",
+              ".notification-reference"
             );
             const mediaPreviewContainer = Utils.createElement("div", {
               className: "notification-media-preview",
@@ -571,7 +571,7 @@ export function init({ getScriptSetting }) {
                 imageUrl = trimmedContent.slice(5, -6).trim();
               } else {
                 const paramMatch = trimmedContent.match(
-                  /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i,
+                  /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i
                 );
                 imageUrl = paramMatch ? paramMatch[1].trim() : null;
               }
@@ -598,7 +598,7 @@ export function init({ getScriptSetting }) {
                 titleElement.appendChild(referenceElement);
               }
               referenceElement.textContent = Utils.removeURLs(
-                Utils.removeBBCode(postContent),
+                Utils.removeBBCode(postContent)
               );
               Utils.styleReference(referenceElement);
               // Ensure media container isn't added if empty
@@ -609,7 +609,7 @@ export function init({ getScriptSetting }) {
         // If no previews enabled, ensure reference element is handled if it exists
         else {
           const referenceElement = block.querySelector(
-            ".notification-reference",
+            ".notification-reference"
           );
           if (referenceElement) {
             // If previews disabled, just remove the loading placeholder?
@@ -617,7 +617,7 @@ export function init({ getScriptSetting }) {
             const postContent = await ReactionHandler.fetchPostContent(postId);
             if (postContent) {
               referenceElement.textContent = Utils.removeURLs(
-                Utils.removeBBCode(postContent),
+                Utils.removeBBCode(postContent)
               );
               Utils.styleReference(referenceElement);
             } else {
@@ -629,7 +629,7 @@ export function init({ getScriptSetting }) {
         // Handle cases like "X, Y, and Z reacted to your post in Topic T"
         titleElement.innerHTML = titleText.replace(
           /(have|has)\s+reacted.*$/,
-          `${reactionVerb} ${reactionHTML}`,
+          `${reactionVerb} ${reactionHTML}`
         );
       }
       block.dataset.reactionCustomized = "true";
@@ -640,12 +640,12 @@ export function init({ getScriptSetting }) {
       const enableColors = _getScriptSetting(
         "notifications",
         "enableNotificationColors",
-        true,
+        true
       );
       const mentionColorSetting = _getScriptSetting(
         "notifications",
         "mentionColor",
-        "#FFC107", // Default value
+        "#FFC107" // Default value
       );
 
       // Apply container styling to the block
@@ -654,11 +654,11 @@ export function init({ getScriptSetting }) {
       const notificationText =
         notificationBlock.querySelector(".notification_text");
       const titleElement = notificationText.querySelector(
-        ".notification-title",
+        ".notification-title"
       );
       const originalHTML = titleElement.innerHTML;
       const usernameElements = titleElement.querySelectorAll(
-        ".username, .username-coloured",
+        ".username, .username-coloured"
       );
       const usernames = Array.from(usernameElements)
         .map((el) => el.outerHTML)
@@ -680,7 +680,7 @@ export function init({ getScriptSetting }) {
 
       // Create or update reference element for post content
       let referenceElement = notificationBlock.querySelector(
-        ".notification-reference",
+        ".notification-reference"
       );
       if (!referenceElement) {
         referenceElement = Utils.createElement("span", {
@@ -696,7 +696,7 @@ export function init({ getScriptSetting }) {
       this.queuePostContentFetch(
         notificationBlock.getAttribute("data-real-url") ||
           notificationBlock.href,
-        referenceElement,
+        referenceElement
       );
 
       // Move time element to bottom right
@@ -711,17 +711,17 @@ export function init({ getScriptSetting }) {
       const enableColors = _getScriptSetting(
         "notifications",
         "enableNotificationColors",
-        true,
+        true
       );
       const resizeFillers = _getScriptSetting(
         "notifications",
         "resizeFillerWords",
-        true,
+        true
       );
       const warningColorSetting = _getScriptSetting(
         "notifications",
         "warningColor",
-        "#D31141", // Default value
+        "#D31141" // Default value
       );
 
       // Apply container styling to the block
@@ -744,7 +744,7 @@ export function init({ getScriptSetting }) {
           currentHtml = currentHtml
             .replace(
               /<strong>Private Message<\/strong>/,
-              `<strong style="color: ${warningColorSetting};">Board warning issued</strong>`,
+              `<strong style="color: ${warningColorSetting};">Board warning issued</strong>`
             )
             .replace(/from/, "by")
             .replace(/:$/, "");
@@ -752,7 +752,7 @@ export function init({ getScriptSetting }) {
           currentHtml = currentHtml
             .replace(
               /<strong>Private Message<\/strong>/,
-              `<strong>Board warning issued</strong>`,
+              `<strong>Board warning issued</strong>`
             )
             .replace(/from/, "by")
             .replace(/:$/, "");
@@ -764,7 +764,7 @@ export function init({ getScriptSetting }) {
       if (resizeFillers) {
         currentHtml = currentHtml.replace(
           /\b(by|and|in|from)\b(?!-)/g,
-          '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>',
+          '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>'
         );
       }
 
@@ -779,62 +779,62 @@ export function init({ getScriptSetting }) {
       const enableColors = _getScriptSetting(
         "notifications",
         "enableNotificationColors",
-        true,
+        true
       );
       const resizeFillers = _getScriptSetting(
         "notifications",
         "resizeFillerWords",
-        true,
+        true
       );
       const quoteColorSetting = _getScriptSetting(
         "notifications",
         "quoteColor",
-        "#1E90FF", // Default: DodgerBlue
+        "#1E90FF" // Default: DodgerBlue
       );
       const replyColorSetting = _getScriptSetting(
         "notifications",
         "replyColor",
-        "#FF69B4", // Default: HotPink
+        "#FF69B4" // Default: HotPink
       );
       const reactionColorSetting = _getScriptSetting(
         "notifications",
         "reactionColor",
-        "#3889ED", // Default: phpBB blue
+        "#3889ED" // Default: phpBB blue
       );
       const mentionColorSetting = _getScriptSetting(
         "notifications",
         "mentionColor",
-        "#FFC107", // Default: Amber
+        "#FFC107" // Default: Amber
       );
       const editColorSetting = _getScriptSetting(
         "notifications",
         "editColor",
-        "#8A2BE2", // Default: BlueViolet
+        "#8A2BE2" // Default: BlueViolet
       );
       const approvalColorSetting = _getScriptSetting(
         "notifications",
         "approvalColor",
-        "#00AA00", // Default: Green
+        "#00AA00" // Default: Green
       );
       const reportColorSetting = _getScriptSetting(
         "notifications",
         "reportColor",
-        "#f58c05", // Default: Orange
+        "#f58c05" // Default: Orange
       );
       const warningColorSetting = _getScriptSetting(
         "notifications",
         "warningColor",
-        "#D31141", // Default: Red
+        "#D31141" // Default: Red
       );
       const readNotificationOpacity = _getScriptSetting(
         "notifications",
         "readOpacity",
-        0.8, // Default: 80% opacity
+        0.8 // Default: 80% opacity
       );
       const readTintColorSetting = _getScriptSetting(
         "notifications",
         "readTintColor",
-        "rgba(0, 0, 0, 0.05)", // Default: 5% opaque black
+        "rgba(0, 0, 0, 0.05)" // Default: 5% opaque black
       );
 
       // Apply base container styling
@@ -893,7 +893,7 @@ export function init({ getScriptSetting }) {
         if (enableColors) {
           currentHtml = titleText.replace(
             /Report closed/,
-            `<strong style="color: ${reportColorSetting};">Report closed</strong>`,
+            `<strong style="color: ${reportColorSetting};">Report closed</strong>`
           );
         }
       } else if (titleText.includes("Post approval")) {
@@ -901,7 +901,7 @@ export function init({ getScriptSetting }) {
         if (enableColors) {
           currentHtml = titleText.replace(
             /<strong>Post approval<\/strong>/,
-            `<strong style="color: ${approvalColorSetting};">Post approval</strong>`,
+            `<strong style="color: ${approvalColorSetting};">Post approval</strong>`
           );
         }
       } else if (titleText.includes("<strong>Quoted</strong>")) {
@@ -915,7 +915,7 @@ export function init({ getScriptSetting }) {
         if (enableColors) {
           currentHtml = titleText.replace(
             /edited a message you posted/,
-            `<strong style="color: ${editColorSetting};">edited</strong> a message you posted`,
+            `<strong style="color: ${editColorSetting};">edited</strong> a message you posted`
           );
         }
       }
@@ -923,7 +923,7 @@ export function init({ getScriptSetting }) {
 
       // Handle previews for Reply/Quote (this part modifies titleElement.innerHTML directly)
       let referenceElement = notificationText.querySelector(
-        ".notification-reference",
+        ".notification-reference"
       );
       if (
         referenceElement &&
@@ -937,7 +937,7 @@ export function init({ getScriptSetting }) {
         // Start with the potentially colored/modified currentHtml
         let updatedTitle = currentHtml.replace(
           /in(?:\stopic)?:/,
-          `<span style="font-size: 0.85em; padding: 0 0.25px;">in</span> <strong>${threadTitle}</strong>:`,
+          `<span style="font-size: 0.85em; padding: 0 0.25px;">in</span> <strong>${threadTitle}</strong>:`
         );
         titleElement.innerHTML = updatedTitle; // Apply this structural change
 
@@ -948,7 +948,7 @@ export function init({ getScriptSetting }) {
         // Queue fetch
         this.queuePostContentFetch(
           block.getAttribute("data-real-url") || block.href,
-          referenceElement,
+          referenceElement
         );
 
         // Re-fetch HTML after potential in-place modification for reply/quote
@@ -962,7 +962,7 @@ export function init({ getScriptSetting }) {
       if (resizeFillers) {
         currentHtml = currentHtml.replace(
           /\b(by|and|in|from)\b(?!-)/g,
-          '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>',
+          '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>'
         );
       }
 
@@ -981,32 +981,32 @@ export function init({ getScriptSetting }) {
           case "quote":
             currentHtml = currentHtml.replace(
               /<strong>Quoted<\/strong>/,
-              `<strong style="color: ${quoteColor};">Quoted</strong>`,
+              `<strong style="color: ${quoteColor};">Quoted</strong>`
             );
             break;
           case "reply":
             currentHtml = currentHtml.replace(
               /<strong>Reply<\/strong>/,
-              `<strong style="color: ${replyColor};">Reply</strong>`,
+              `<strong style="color: ${replyColor};">Reply</strong>`
             );
             break;
           case "edit":
             // Make sure we're replacing the correct pattern, potentially already styled
             currentHtml = currentHtml.replace(
               /(<strong(?: style="color: [^;]+;")?>edited<\/strong>|edited) a message/,
-              `<strong style="color: ${editColor};">edited</strong> a message`,
+              `<strong style="color: ${editColor};">edited</strong> a message`
             );
             break;
           case "approval":
             currentHtml = currentHtml.replace(
               /(<strong(?: style="color: [^;]+;")?>Post approval<\/strong>|<strong>Post approval<\/strong>)/,
-              `<strong style="color: ${approvalColor};">Post approval</strong>`,
+              `<strong style="color: ${approvalColor};">Post approval</strong>`
             );
             break;
           case "report":
             currentHtml = currentHtml.replace(
               /(<strong(?: style="color: [^;]+;")?>Report closed<\/strong>|Report closed)/,
-              `<strong style="color: ${reportColor};">Report closed</strong>`,
+              `<strong style="color: ${reportColor};">Report closed</strong>`
             );
             break;
           // Reaction, Mention, Warning colors should be handled by their respective functions
@@ -1042,8 +1042,8 @@ export function init({ getScriptSetting }) {
         .querySelectorAll(".notification-block, a.notification-block")
         .forEach(
           NotificationCustomizer.customizeNotificationBlock.bind(
-            NotificationCustomizer,
-          ),
+            NotificationCustomizer
+          )
         );
     },
 
@@ -1052,12 +1052,12 @@ export function init({ getScriptSetting }) {
       const enableColors = _getScriptSetting(
         "notifications",
         "enableNotificationColors",
-        true,
+        true
       );
       const rawColorsJson = _getScriptSetting(
         "notifications",
         "notificationColors",
-        "{}",
+        "{}"
       );
       let notificationColors = {};
       try {
@@ -1068,77 +1068,77 @@ export function init({ getScriptSetting }) {
       }
       const enableSmileys = _getScriptSetting(
         "notifications",
-        "enableReactionSmileys",
+        "enableReactionSmileys"
       );
       const resizeFillers = _getScriptSetting(
         "notifications",
         "resizeFillerWords",
-        true,
+        true
       );
       const quoteColorSetting = _getScriptSetting(
         "notifications",
         "quoteColor",
-        "#F5575D",
+        "#F5575D"
       );
       const replyColorSetting = _getScriptSetting(
         "notifications",
         "replyColor",
-        "#2E8B57",
+        "#2E8B57"
       );
       const reactionColorSetting = _getScriptSetting(
         "notifications",
         "reactionColor",
-        "#3889ED",
+        "#3889ED"
       );
       const mentionColorSetting = _getScriptSetting(
         "notifications",
         "mentionColor",
-        "#FFC107",
+        "#FFC107"
       );
       const editColorSetting = _getScriptSetting(
         "notifications",
         "editColor",
-        "#8A2BE2", // Default value
+        "#8A2BE2" // Default value
       );
       const approvalColorSetting = _getScriptSetting(
         "notifications",
         "approvalColor",
-        "#00AA00", // Default value
+        "#00AA00" // Default value
       );
       const reportColorSetting = _getScriptSetting(
         "notifications",
         "reportColor",
-        "#f58c05", // Default value
+        "#f58c05" // Default value
       );
       const warningColorSetting = _getScriptSetting(
         "notifications",
         "warningColor",
-        "#D31141", // Default value
+        "#D31141" // Default value
       );
       const defaultColorSetting = _getScriptSetting(
         "notifications",
         "defaultColor",
-        "#ffffff", // Default value
+        "#ffffff" // Default value
       );
       const referenceBackgroundColorSetting = _getScriptSetting(
         "notifications",
         "referenceBackgroundColor",
-        "rgba(23, 27, 36, 0.5)",
+        "rgba(23, 27, 36, 0.5)"
       );
       const referenceTextColorSetting = _getScriptSetting(
         "notifications",
         "referenceTextColor",
-        "#ffffff",
+        "#ffffff"
       );
       const readNotificationOpacity = _getScriptSetting(
         "notifications",
         "readOpacity",
-        0.8, // Default: 80% opacity
+        0.8 // Default: 80% opacity
       );
       const readTintColorSetting = _getScriptSetting(
         "notifications",
         "readTintColor",
-        "rgba(0, 0, 0, 0.05)", // Default: 5% opaque black
+        "rgba(0, 0, 0, 0.05)" // Default: 5% opaque black
       );
 
       // Define colors (get from settings or use defaults)
@@ -1175,7 +1175,7 @@ export function init({ getScriptSetting }) {
         }
 
         const titleElement = anchorElement.querySelector(
-          ".notifications_title",
+          ".notifications_title"
         );
         if (!titleElement) {
           row.dataset.customized = "true"; // Mark as processed even if no title
@@ -1214,7 +1214,7 @@ export function init({ getScriptSetting }) {
             if (resizeFillers) {
               mentionText = mentionText.replace(
                 /\b(by|in)\b(?!-)/g,
-                styleFiller("$1"),
+                styleFiller("$1")
               );
             }
 
@@ -1229,7 +1229,7 @@ export function init({ getScriptSetting }) {
             `;
             anchorElement.innerHTML = newHtmlContent; // Update DOM to find placeholder
             placeholderElement = anchorElement.querySelector(
-              ".notification-reference",
+              ".notification-reference"
             );
           } else {
             // Fallback if format unexpected
@@ -1240,7 +1240,7 @@ export function init({ getScriptSetting }) {
         else if (originalTitleHTML.includes("reacted to")) {
           notificationType = "reaction";
           const usernameElements = Array.from(
-            titleElement.querySelectorAll(".username, .username-coloured"),
+            titleElement.querySelectorAll(".username, .username-coloured")
           );
           const usernames = usernameElements.map((el) => el.textContent.trim());
           const postId = Utils.extractPostId(anchorElement.href);
@@ -1250,10 +1250,10 @@ export function init({ getScriptSetting }) {
             if (enableSmileys) {
               const reactions = await ReactionHandler.fetchReactions(
                 postId,
-                false,
+                false
               );
               const filteredReactions = reactions.filter((r) =>
-                usernames.includes(r.username),
+                usernames.includes(r.username)
               );
               reactionHTML = Utils.formatReactions(filteredReactions);
             }
@@ -1262,7 +1262,7 @@ export function init({ getScriptSetting }) {
               usernameElements.length > 0 ? usernameElements[0].outerHTML : "";
             const firstPart = originalTitleHTML.substring(
               0,
-              originalTitleHTML.indexOf(firstUsernameHTML),
+              originalTitleHTML.indexOf(firstUsernameHTML)
             );
 
             // Format usernames with styled fillers
@@ -1297,7 +1297,7 @@ export function init({ getScriptSetting }) {
             `;
             anchorElement.innerHTML = newHtmlContent; // Update DOM
             placeholderElement = anchorElement.querySelector(
-              ".notification-reference",
+              ".notification-reference"
             );
           } else {
             newHtmlContent = originalTitleHTML; // Keep original if no postId
@@ -1335,14 +1335,14 @@ export function init({ getScriptSetting }) {
               // Basic PM handling, could be expanded like in customizeNotificationBlock
               notificationType = "pm";
               const subjectMatch = originalTitleHTML.match(
-                /<strong>Private Message<\/strong>(?: from [^:]+):? "?([^"]*)"?/,
+                /<strong>Private Message<\/strong>(?: from [^:]+):? "?([^"]*)"?/
               );
               if (subjectMatch && subjectMatch[1] === "Board warning issued") {
                 notificationType = "warning";
                 baseTitleText = originalTitleHTML
                   .replace(
                     /<strong>Private Message<\/strong>/,
-                    styleKeyword("Board warning issued", warningColor),
+                    styleKeyword("Board warning issued", warningColor)
                   )
                   .replace(/from/, "by")
                   .replace(/:$/, "")
@@ -1353,7 +1353,7 @@ export function init({ getScriptSetting }) {
                 baseTitleText = originalTitleHTML
                   .replace(
                     /<strong>Private Message<\/strong>/,
-                    styleKeyword("Private Message", defaultColor),
+                    styleKeyword("Private Message", defaultColor)
                   )
                   .replace(/"[^"]*"$/, "")
                   .trim();
@@ -1367,31 +1367,31 @@ export function init({ getScriptSetting }) {
             case "quote":
               styledTitle = styledTitle.replace(
                 /<strong>Quoted<\/strong>/,
-                styleKeyword("Quoted", quoteColor),
+                styleKeyword("Quoted", quoteColor)
               );
               break;
             case "reply":
               styledTitle = styledTitle.replace(
                 /<strong>Reply<\/strong>/,
-                styleKeyword("Reply", replyColor),
+                styleKeyword("Reply", replyColor)
               );
               break;
             case "edit":
               styledTitle = styledTitle.replace(
                 /edited a message/,
-                `${styleKeyword("edited", editColor)} a message`,
+                `${styleKeyword("edited", editColor)} a message`
               );
               break;
             case "approval":
               styledTitle = styledTitle.replace(
                 /<strong>Post approval<\/strong>/,
-                styleKeyword("Post approval", approvalColor),
+                styleKeyword("Post approval", approvalColor)
               );
               break;
             case "report":
               styledTitle = styledTitle.replace(
                 /Report closed/,
-                styleKeyword("Report closed", reportColor),
+                styleKeyword("Report closed", reportColor)
               );
               break;
             // Warning already styled if detected
@@ -1402,7 +1402,7 @@ export function init({ getScriptSetting }) {
           if (resizeFillers) {
             styledTitle = styledTitle.replace(
               /\b(by|and|in|from)\b(?!-)/g,
-              styleFiller("$1"),
+              styleFiller("$1")
             );
           }
 
@@ -1423,7 +1423,7 @@ export function init({ getScriptSetting }) {
           anchorElement.innerHTML = newHtmlContent; // Update DOM
           if (referenceText !== null) {
             placeholderElement = anchorElement.querySelector(
-              ".notification-reference",
+              ".notification-reference"
             );
           }
         }
@@ -1441,7 +1441,7 @@ export function init({ getScriptSetting }) {
           if (!alreadyHasContent) {
             NotificationCustomizer.queuePostContentFetch(
               anchorElement.href,
-              placeholderElement,
+              placeholderElement
             );
           } else {
             // If it already has text content (like a quote), style it
@@ -1470,18 +1470,18 @@ export function init({ getScriptSetting }) {
       const enableImagePreview = _getScriptSetting(
         "notifications",
         "enableImagePreviews",
-        true,
+        true
       );
       const enableVideoPreview = _getScriptSetting(
         "notifications",
         "enableVideoPreviews",
-        false,
+        false
       );
       const enableQuotePreview = _getScriptSetting(
         // Need this for quote notifications
         "notifications",
         "enableQuotePreviews",
-        true,
+        true
       );
 
       // Determine notification type from URL or placeholder context if possible?
@@ -1542,7 +1542,7 @@ export function init({ getScriptSetting }) {
               imageUrl = trimmedContent.slice(5, -6).trim();
             } else {
               const paramMatch = trimmedContent.match(
-                /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i,
+                /^\[img\s+[^=\]]+=[^\]]+\](.*?)\[\/img\]$/i
               );
               imageUrl = paramMatch ? paramMatch[1].trim() : null;
             }
@@ -1557,7 +1557,7 @@ export function init({ getScriptSetting }) {
             // Media found and previews enabled: Insert media, remove placeholder
             placeholder.parentNode.insertBefore(
               mediaPreviewContainer,
-              placeholder,
+              placeholder
             );
             placeholder.remove();
           } else if (wantsTextQuote) {
@@ -1586,7 +1586,7 @@ export function init({ getScriptSetting }) {
   const NotificationMarker = {
     getDisplayedPostIds() {
       return Array.from(document.querySelectorAll('div[id^="p"]')).map((el) =>
-        el.id.substring(1),
+        el.id.substring(1)
       );
     },
 
@@ -1595,7 +1595,7 @@ export function init({ getScriptSetting }) {
         .map((link) => {
           const href = link.getAttribute("href");
           const postId = Utils.extractPostId(
-            link.getAttribute("data-real-url") || href,
+            link.getAttribute("data-real-url") || href
           );
           return { href, postId };
         })
@@ -1662,7 +1662,7 @@ export function init({ getScriptSetting }) {
           mutation.target.nodeType === Node.ELEMENT_NODE &&
           mutation.target.matches("li") && // Check if the target is an LI
           mutation.target.querySelector(
-            ".notification-block, a.notification-block",
+            ".notification-block, a.notification-block"
           ) // Check if it contains a notification block
         ) {
           console.log("Observer triggered: Parent LI class changed.");
@@ -1677,8 +1677,8 @@ export function init({ getScriptSetting }) {
               node.nodeType === Node.ELEMENT_NODE &&
               (node.matches?.(".notification-block, a.notification-block") ||
                 node.querySelector?.(
-                  ".notification-block, a.notification-block",
-                )),
+                  ".notification-block, a.notification-block"
+                ))
           );
 
           if (addedNotifications) {
