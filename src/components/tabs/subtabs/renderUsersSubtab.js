@@ -71,60 +71,6 @@ export function renderUsersSubtab(container) {
           <div id="user-search-status" class="user-search-status"></div>
         </div>
 
-        <!-- User Rules Section (hidden initially) -->
-        <div id="user-rules-editor" class="user-rules-editor" style="display: none;">
-          <div class="user-rules-header">
-            <h4>Editing Rules for: <span id="selected-username">Username</span></h4>
-          </div>
-          
-          <!-- Username Color Section -->
-          <div class="username-color-section">
-            <label for="username-color">Username Color:</label>
-            <div class="color-input-group">
-              <input type="color" id="username-color" class="color-picker">
-              <button id="reset-color-btn" class="button button--link">Reset</button>
-            </div>
-            <div class="color-preview">
-              Preview: <span id="username-preview">Username</span>
-            </div>
-          </div>
-          
-          <!-- Rules List -->
-          <div class="rules-list-section">
-            <div class="rules-list-header">
-              <h4>Rules</h4>
-              <button id="add-rule-btn" class="button button--primary">
-                <i class="fa fa-plus"></i> Add Rule
-              </button>
-            </div>
-            
-            <div class="rules-table-wrapper">
-              <table id="rules-table" class="rules-table">
-                <thead>
-                  <tr>
-                    <th>Action</th>
-                    <th>Subject</th>
-                    <th>Scope</th>
-                    <th>Parameters</th>
-                    <th>Controls</th>
-                  </tr>
-                </thead>
-                <tbody id="rules-tbody">
-                  <tr class="empty-rules">
-                    <td colspan="5">No rules defined yet</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-          
-          <!-- Save/Delete Buttons -->
-          <div class="user-rules-actions">
-            <button id="save-user-rules-btn" class="button button--primary">Save Changes</button>
-            <button id="delete-user-rules-btn" class="button button--normal">Delete All Rules for This User</button>
-          </div>
-        </div>
-        
         <!-- User Rules List Section -->
         <div class="user-rules-list-section">
           <div class="user-rules-list-header">
@@ -137,49 +83,6 @@ export function renderUsersSubtab(container) {
       </div>
     </div>
     
-    <!-- Rule Editor Modal -->
-    <div id="rule-editor-modal" class="modal" style="display: none;">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3 id="rule-editor-title">Add New Rule</h3>
-          <span class="modal-close">&times;</span>
-        </div>
-        <div class="modal-body">
-          <form id="rule-editor-form">
-            <input type="hidden" id="rule-id">
-            
-            <div class="form-group">
-              <label for="rule-action">Action:</label>
-              <select id="rule-action" class="form-control">
-                ${RULE_ACTIONS.map((action) => `<option value="${action.id}">${action.name}</option>`).join("")}
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label for="rule-subject">Subject:</label>
-              <select id="rule-subject" class="form-control">
-                ${RULE_SUBJECTS.map((subject) => `<option value="${subject.id}">${subject.name}</option>`).join("")}
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label for="rule-scope">Scope:</label>
-              <select id="rule-scope" class="form-control">
-                ${RULE_SCOPES.map((scope) => `<option value="${scope.id}">${scope.name}</option>`).join("")}
-              </select>
-            </div>
-            
-            <div id="rule-params-container" class="rule-params-container">
-              <!-- Dynamic parameters will be rendered here -->
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button id="save-rule-btn" class="button button--primary">Save Rule</button>
-          <button id="cancel-rule-btn" class="button button--link">Cancel</button>
-        </div>
-      </div>
-    </div>
   `;
 
   // Add necessary styles
@@ -187,9 +90,307 @@ export function renderUsersSubtab(container) {
 
   // Initialize the UI components
   initUserSearch(container);
-  initRuleEditor(container);
-  initUserRulesEditor(container);
+  // initRuleEditor(container); // Removed - modal is gone
+  // initUserRulesEditor(container); // Removed - editor is inline
   loadExistingUsers(container);
+}
+
+// Toggle user card expansion and load details
+async function toggleUserCard(userCard, container) {
+  const userId = userCard.dataset.userId;
+  const detailsDiv = userCard.querySelector(".user-card-details");
+  const isLoading = detailsDiv.classList.contains("loading");
+  const isExpanded = userCard.classList.contains("expanded");
+
+  if (isLoading) return; // Prevent multiple loads
+
+  if (isExpanded) {
+    userCard.classList.remove("expanded");
+    // Optional: Clear details on collapse to save memory?
+    // detailsDiv.innerHTML = '<div class="loading-placeholder">Loading details...</div>';
+  } else {
+    userCard.classList.add("expanded");
+    // Check if details are already loaded
+    if (!detailsDiv.dataset.loaded) {
+      detailsDiv.innerHTML =
+        '<div class="loading-placeholder">Loading details...</div>';
+      detailsDiv.classList.add("loading");
+      try {
+        await renderUserDetails(userId, detailsDiv, container);
+        detailsDiv.dataset.loaded = "true"; // Mark as loaded
+      } catch (err) {
+        detailsDiv.innerHTML = `<p class="error">Error loading details: ${err.message}</p>`;
+        error(`Error rendering details for user ${userId}:`, err);
+      } finally {
+        detailsDiv.classList.remove("loading");
+      }
+    }
+  }
+}
+
+// Render the content inside an expanded user card
+async function renderUserDetails(userId, detailsContainer, mainContainer) {
+  const userRules = await getUserRules(userId);
+  const username =
+    detailsContainer.closest(".user-card").dataset.username ||
+    `User #${userId}`;
+
+  detailsContainer.innerHTML = `
+    <!-- Username Color Section -->
+    <div class="username-color-section">
+      <label for="username-color-${userId}">Username Color:</label>
+      <div class="color-input-group">
+        <input type="color" id="username-color-${userId}" class="color-picker username-color-input" value="${userRules?.usernameColor || "#000000"}">
+        <button class="button button--link reset-color-btn">Reset</button>
+      </div>
+      <div class="color-preview">
+        Preview: <span class="username-preview" style="color: ${userRules?.usernameColor || "inherit"}">${username}</span>
+      </div>
+    </div>
+
+    <!-- Rules List -->
+    <div class="rules-list-section">
+      <div class="rules-list-header">
+        <h4>Rules</h4>
+        <button class="button button--primary add-rule-btn">
+          <i class="fa fa-plus"></i> Add Rule
+        </button>
+      </div>
+      <div class="rules-table-wrapper">
+        <table class="rules-table">
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Subject</th>
+              <th>Scope</th>
+              <th>Parameters</th>
+              <th>Controls</th>
+            </tr>
+          </thead>
+          <tbody class="rules-tbody">
+            <!-- Rules will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+      <!-- Inline Rule Editor Form (hidden initially) -->
+      <form class="rule-editor-form" style="display: none;">
+         <input type="hidden" class="rule-id">
+         <div class="form-group">
+           <label>Action:</label>
+           <select class="form-control rule-action">
+             ${RULE_ACTIONS.map((action) => `<option value="${action.id}">${action.name}</option>`).join("")}
+           </select>
+         </div>
+         <div class="form-group">
+           <label>Subject:</label>
+           <select class="form-control rule-subject">
+             ${RULE_SUBJECTS.map((subject) => `<option value="${subject.id}">${subject.name}</option>`).join("")}
+           </select>
+         </div>
+         <div class="form-group">
+           <label>Scope:</label>
+           <select class="form-control rule-scope">
+             ${RULE_SCOPES.map((scope) => `<option value="${scope.id}">${scope.name}</option>`).join("")}
+           </select>
+         </div>
+         <div class="rule-params-container form-group">
+           <!-- Dynamic parameters will be rendered here -->
+         </div>
+         <div class="modal-footer">
+           <button type="button" class="button button--primary save-inline-rule-btn">Save Rule</button>
+           <button type="button" class="button button--link cancel-inline-rule-btn">Cancel</button>
+         </div>
+      </form>
+    </div>
+
+    <!-- Save/Delete Buttons -->
+    <div class="user-rules-actions">
+      <button class="button button--primary save-user-changes-btn">Save Color</button>
+      <button class="button button--normal delete-user-rules-btn">Delete All Rules for This User</button>
+    </div>
+  `;
+
+  // Load rules into the table
+  await loadRulesForUser(userId, detailsContainer); // Pass detailsContainer as context
+
+  // Initialize event listeners within this specific details section
+  initInlineRuleEditing(userId, detailsContainer, mainContainer);
+}
+
+// Initialize event listeners for the inline editor and actions within a user card
+function initInlineRuleEditing(userId, detailsContainer, mainContainer) {
+  const colorInput = detailsContainer.querySelector(".username-color-input");
+  const usernamePreview = detailsContainer.querySelector(".username-preview");
+  const resetColorBtn = detailsContainer.querySelector(".reset-color-btn");
+  const addRuleBtn = detailsContainer.querySelector(".add-rule-btn");
+  const saveColorBtn = detailsContainer.querySelector(".save-user-changes-btn");
+  const deleteAllBtn = detailsContainer.querySelector(".delete-user-rules-btn");
+  const ruleForm = detailsContainer.querySelector(".rule-editor-form");
+  const cancelInlineBtn = detailsContainer.querySelector(
+    ".cancel-inline-rule-btn",
+  );
+  const saveInlineBtn = detailsContainer.querySelector(".save-inline-rule-btn");
+  const ruleActionSelect = detailsContainer.querySelector(".rule-action");
+  const paramsContainer = detailsContainer.querySelector(
+    ".rule-params-container",
+  );
+
+  // Username color handling
+  colorInput.addEventListener("input", () => {
+    usernamePreview.style.color =
+      colorInput.value === "#000000" ? "inherit" : colorInput.value;
+    // Update header preview immediately
+    const headerPreview = detailsContainer
+      .closest(".user-card")
+      .querySelector(".user-name");
+    if (headerPreview) {
+      headerPreview.style.color =
+        colorInput.value === "#000000" ? "" : colorInput.value;
+    }
+  });
+
+  resetColorBtn.addEventListener("click", () => {
+    colorInput.value = "#000000";
+    usernamePreview.style.color = "inherit";
+    // Update header preview immediately
+    const headerPreview = detailsContainer
+      .closest(".user-card")
+      .querySelector(".user-name");
+    if (headerPreview) {
+      headerPreview.style.color = "";
+    }
+  });
+
+  saveColorBtn.addEventListener("click", async () => {
+    try {
+      const username = detailsContainer.closest(".user-card").dataset.username;
+      const newColor = colorInput.value !== "#000000" ? colorInput.value : null;
+      await updateUsernameColor(userId, username, newColor);
+      // Maybe add a temporary success indicator?
+      log(`Username color saved for user ${userId}`);
+      // Reload the main list to reflect potential name color changes (could optimize)
+      // await loadExistingUsers(mainContainer);
+    } catch (err) {
+      error(`Error saving color for user ${userId}:`, err);
+      alert(`Error saving color: ${err.message}`);
+    }
+  });
+
+  // Delete all rules button
+  deleteAllBtn.addEventListener("click", async () => {
+    if (
+      !confirm(`Are you sure you want to delete all rules for user ${userId}?`)
+    ) {
+      return;
+    }
+    try {
+      await deleteUserRules(userId);
+      log(`Deleted all rules for user ${userId}`);
+      // Reload the details section or collapse the card
+      await renderUserDetails(userId, detailsContainer, mainContainer); // Re-render details
+      // Update rule count in header
+      const headerStats = detailsContainer
+        .closest(".user-card")
+        .querySelector(".user-stats");
+      if (headerStats) headerStats.textContent = "0 rules";
+      // Reload main list (optional, if needed elsewhere)
+      // await loadExistingUsers(mainContainer);
+    } catch (err) {
+      error(`Error deleting rules for user ${userId}:`, err);
+      alert(`Error deleting rules: ${err.message}`);
+    }
+  });
+
+  // --- Inline Rule Form Logic ---
+
+  // Show/Hide Form
+  addRuleBtn.addEventListener("click", () => {
+    ruleForm.reset();
+    ruleForm.querySelector(".rule-id").value = ""; // Ensure ID is cleared for adding
+    updateInlineParamsUI(ruleActionSelect.value, {}, paramsContainer); // Update params for default action
+    ruleForm.style.display = "block";
+    addRuleBtn.style.display = "none"; // Hide 'Add' button while form is open
+  });
+
+  cancelInlineBtn.addEventListener("click", () => {
+    ruleForm.style.display = "none";
+    addRuleBtn.style.display = "inline-flex"; // Show 'Add' button again
+  });
+
+  // Update params on action change
+  ruleActionSelect.addEventListener("change", () => {
+    updateInlineParamsUI(ruleActionSelect.value, {}, paramsContainer);
+  });
+
+  // Save Inline Rule
+  saveInlineBtn.addEventListener("click", async () => {
+    try {
+      const ruleId = ruleForm.querySelector(".rule-id").value;
+      const action = ruleActionSelect.value;
+      const subject = detailsContainer.querySelector(".rule-subject").value;
+      const scope = detailsContainer.querySelector(".rule-scope").value;
+
+      let params = {};
+      if (action === "HIGHLIGHT") {
+        params.color = paramsContainer.querySelector(
+          ".highlight-color-inline",
+        ).value;
+      }
+
+      const ruleData = {
+        id: ruleId || `rule_${Date.now()}`,
+        action,
+        subject,
+        scope,
+        params,
+      };
+
+      if (ruleId) {
+        await updateRuleForUser(userId, ruleId, ruleData);
+      } else {
+        await addRuleForUser(userId, ruleData);
+      }
+
+      // Hide form, reload rules table, show add button
+      ruleForm.style.display = "none";
+      addRuleBtn.style.display = "inline-flex";
+      await loadRulesForUser(userId, detailsContainer); // Reload rules in this card
+      // Update rule count in header
+      const userRules = await getUserRules(userId);
+      const ruleCount = userRules?.rules?.length || 0;
+      const headerStats = detailsContainer
+        .closest(".user-card")
+        .querySelector(".user-stats");
+      if (headerStats)
+        headerStats.textContent = `${ruleCount} rule${ruleCount !== 1 ? "s" : ""}`;
+    } catch (err) {
+      error(`Error saving inline rule for user ${userId}:`, err);
+      alert(`Error saving rule: ${err.message}`);
+    }
+  });
+
+  // Edit/Delete buttons within the rules table will be handled by loadRulesForUser
+}
+
+// Generate UI for parameters based on action for the inline editor
+function updateInlineParamsUI(action, existingParams = {}, paramsContainer) {
+  paramsContainer.innerHTML = ""; // Clear previous params
+
+  switch (action) {
+    case "HIGHLIGHT":
+      paramsContainer.innerHTML = `
+        <label for="highlight-color-inline-${paramsContainer.closest(".user-card").dataset.userId}">Highlight Color:</label>
+        <input type="color" id="highlight-color-inline-${paramsContainer.closest(".user-card").dataset.userId}" class="form-control color-picker highlight-color-inline" 
+               value="${existingParams.color || "#FFFF99"}">
+      `;
+      break;
+    case "HIDE":
+      paramsContainer.innerHTML = "<p>No additional parameters needed.</p>";
+      break;
+    default:
+      paramsContainer.innerHTML =
+        "<p>No parameters available for this action.</p>";
+  }
 }
 
 // Add CSS styles for the user rules UI
@@ -438,14 +639,24 @@ function addRuleManagementStyles() {
     }
 
     .user-card {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px;
       margin-bottom: 10px;
       border: 1px solid var(--border-color);
       border-radius: 4px;
       background-color: var(--bg-card);
+      overflow: hidden; /* Contain children */
+    }
+
+    .user-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      cursor: pointer;
+      background-color: rgba(255, 255, 255, 0.02); /* Slightly different bg */
+    }
+
+    .user-card-header:hover {
+      background-color: rgba(255, 255, 255, 0.05);
     }
     
     .user-info {
@@ -466,6 +677,52 @@ function addRuleManagementStyles() {
     .user-card-actions {
       display: flex;
       gap: 5px;
+    }
+
+    .expand-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.2em;
+      cursor: pointer;
+      padding: 5px;
+      transition: transform 0.2s ease;
+    }
+
+    .user-card.expanded .expand-btn {
+      transform: rotate(90deg);
+    }
+
+    .user-card-details {
+      display: none; /* Hidden by default */
+      padding: 15px;
+      border-top: 1px solid var(--border-color);
+      background-color: var(--bg-card); /* Same as card bg */
+    }
+
+    .user-card.expanded .user-card-details {
+      display: block; /* Shown when expanded */
+    }
+
+    /* Reuse existing styles within the details section */
+    .user-card-details .username-color-section,
+    .user-card-details .rules-list-section,
+    .user-card-details .user-rules-actions {
+      margin-bottom: 15px; /* Adjust spacing */
+    }
+
+    .user-card-details .rules-list-header {
+      margin-bottom: 5px;
+    }
+
+    .user-card-details .rules-table-wrapper {
+      margin-bottom: 15px;
+    }
+
+    .user-card-details .user-rules-actions {
+      margin-top: 0; /* Remove extra top margin */
+      padding-top: 10px;
+      border-top: 1px solid var(--border-color);
     }
     
     .empty-rules td {
@@ -609,262 +866,70 @@ function initUserSearch(container) {
     }
   });
 
-  // Handle when a user is found
+  // Handle when a user is found via search
   async function handleUserFound(userId, username) {
-    try {
-      // Check if we already have rules for this user
-      const userRules = await getUserRules(userId);
+    const existingRulesContainer = container.querySelector(
+      "#existing-rules-container",
+    );
+    let userCard = existingRulesContainer.querySelector(
+      `.user-card[data-user-id="${userId}"]`,
+    );
 
-      // Set up the UI with user data
-      container.querySelector("#user-rules-editor").style.display = "block";
-      container.querySelector("#selected-username").textContent = username;
-
-      // Store user data in data attributes for later use
-      const rulesEditor = container.querySelector("#user-rules-editor");
-      rulesEditor.dataset.userId = userId;
-      rulesEditor.dataset.username = username;
-
-      // Set up username color
-      const colorInput = container.querySelector("#username-color");
-      const usernamePreview = container.querySelector("#username-preview");
-      usernamePreview.textContent = username;
-
-      if (userRules && userRules.usernameColor) {
-        colorInput.value = userRules.usernameColor;
-        usernamePreview.style.color = userRules.usernameColor;
-      } else {
-        colorInput.value = "#000000";
-        usernamePreview.style.color = "";
-      }
-
-      // Load existing rules if any
-      loadRulesForUser(userId, container);
-
-      // Update status
-      statusDiv.innerHTML = `User found: <strong>${username}</strong> (ID: ${userId})`;
+    if (userCard) {
+      // User card exists, scroll and expand
+      statusDiv.innerHTML = `User found: <strong>${username}</strong> (ID: ${userId}). Expanding existing card.`;
       statusDiv.className = "user-search-status success";
-    } catch (err) {
-      statusDiv.innerHTML = `Error loading user data: ${err.message}`;
-      statusDiv.className = "user-search-status error";
-      error("Error handling found user:", err);
-    }
-  }
-}
-
-// Initialize rule editor modal functionality
-function initRuleEditor(container) {
-  const modal = container.querySelector("#rule-editor-modal");
-  const closeBtn = modal.querySelector(".modal-close");
-  const cancelBtn = modal.querySelector("#cancel-rule-btn");
-  const saveBtn = modal.querySelector("#save-rule-btn");
-  const form = modal.querySelector("#rule-editor-form");
-  const ruleAction = modal.querySelector("#rule-action");
-  const paramsContainer = modal.querySelector("#rule-params-container");
-
-  // Close modal handlers
-  closeBtn.addEventListener("click", closeModal);
-  cancelBtn.addEventListener("click", closeModal);
-
-  function closeModal() {
-    modal.style.display = "none";
-  }
-
-  // Open modal handler (will be called from other functions)
-  window.openRuleEditor = function (ruleData = null, userId) {
-    // Set modal title based on if we're editing or adding
-    modal.querySelector("#rule-editor-title").textContent = ruleData
-      ? "Edit Rule"
-      : "Add New Rule";
-
-    // Reset the form
-    form.reset();
-
-    // If editing, populate form with rule data
-    if (ruleData) {
-      modal.querySelector("#rule-id").value = ruleData.id;
-      modal.querySelector("#rule-action").value = ruleData.action;
-      modal.querySelector("#rule-subject").value = ruleData.subject;
-      modal.querySelector("#rule-scope").value = ruleData.scope;
-
-      // Update params UI based on action
-      updateParamsUI(ruleData.action, ruleData.params);
+      userCard.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (!userCard.classList.contains("expanded")) {
+        await toggleUserCard(userCard, container);
+      }
     } else {
-      modal.querySelector("#rule-id").value = "";
+      // User card doesn't exist, create and append it
+      statusDiv.innerHTML = `User found: <strong>${username}</strong> (ID: ${userId}). Creating new card.`;
+      statusDiv.className = "user-search-status success";
+      log(`Creating new card for user ${userId} (${username})`);
 
-      // Set default action and update params UI
-      const defaultAction = RULE_ACTIONS[0].id;
-      modal.querySelector("#rule-action").value = defaultAction;
-      updateParamsUI(defaultAction);
+      // Remove the 'no rules' placeholder if it exists
+      const noRulesPlaceholder = existingRulesContainer.querySelector("p");
+      if (
+        noRulesPlaceholder &&
+        noRulesPlaceholder.textContent.includes("No user rules defined yet")
+      ) {
+        existingRulesContainer.innerHTML = ""; // Clear the placeholder
+      }
+
+      // Create the new card element
+      userCard = createUserCardElement(userId, username, 0, null); // Start with 0 rules
+
+      // Attach event listeners
+      attachCardEventListeners(userCard, container);
+
+      // Append the new card to the container
+      existingRulesContainer.appendChild(userCard);
+
+      // Scroll to the new card and expand it
+      userCard.scrollIntoView({ behavior: "smooth", block: "center" });
+      await toggleUserCard(userCard, container); // Expand to load details
     }
-
-    // Store userId in data attribute
-    modal.dataset.userId = userId;
-
-    // Show the modal
-    modal.style.display = "block";
-  };
-
-  // Handle action change to update param fields
-  ruleAction.addEventListener("change", () => {
-    updateParamsUI(ruleAction.value);
-  });
-
-  // Generate UI for parameters based on action
-  function updateParamsUI(action, existingParams = {}) {
-    paramsContainer.innerHTML = "";
-
-    switch (action) {
-      case "HIGHLIGHT":
-        paramsContainer.innerHTML = `
-          <div class="form-group">
-            <label for="highlight-color">Highlight Color:</label>
-            <input type="color" id="highlight-color" class="form-control color-picker" 
-                   value="${existingParams.color || "#FFFF99"}">
-          </div>
-        `;
-        break;
-
-      case "HIDE":
-        // No params needed for HIDE
-        paramsContainer.innerHTML =
-          "<p>No additional parameters needed for this action.</p>";
-        break;
-
-      default:
-        paramsContainer.innerHTML =
-          "<p>No parameters available for this action.</p>";
-    }
+    // Clear the search input
+    searchInput.value = "";
   }
-
-  // Save rule handler
-  saveBtn.addEventListener("click", async () => {
-    try {
-      const userId = modal.dataset.userId;
-      const ruleId = modal.querySelector("#rule-id").value;
-      const action = modal.querySelector("#rule-action").value;
-      const subject = modal.querySelector("#rule-subject").value;
-      const scope = modal.querySelector("#rule-scope").value;
-
-      // Get params based on action
-      let params = {};
-      if (action === "HIGHLIGHT") {
-        params.color = modal.querySelector("#highlight-color").value;
-      }
-
-      // Create rule object
-      const ruleData = {
-        id: ruleId || `rule_${Date.now()}`, // Generate an ID if not editing
-        action,
-        subject,
-        scope,
-        params,
-      };
-
-      // Save the rule - call different functions for add vs update
-      if (ruleId) {
-        await updateRuleForUser(userId, ruleId, ruleData);
-      } else {
-        await addRuleForUser(userId, ruleData);
-      }
-
-      // Reload rules display
-      await loadRulesForUser(userId, container);
-
-      // Close the modal
-      closeModal();
-    } catch (err) {
-      error("Error saving rule:", err);
-      alert(`Error saving rule: ${err.message}`);
-    }
-  });
 }
 
-// Initialize the user rules editor section
-function initUserRulesEditor(container) {
-  const colorInput = container.querySelector("#username-color");
-  const usernamePreview = container.querySelector("#username-preview");
-  const resetColorBtn = container.querySelector("#reset-color-btn");
-  const addRuleBtn = container.querySelector("#add-rule-btn");
-  const saveBtn = container.querySelector("#save-user-rules-btn");
-  const deleteBtn = container.querySelector("#delete-user-rules-btn");
-
-  // Username color handling
-  colorInput.addEventListener("input", () => {
-    usernamePreview.style.color = colorInput.value;
-  });
-
-  resetColorBtn.addEventListener("click", () => {
-    colorInput.value = "#000000";
-    usernamePreview.style.color = "";
-  });
-
-  // Add rule button
-  addRuleBtn.addEventListener("click", () => {
-    const userId = container.querySelector("#user-rules-editor").dataset.userId;
-    window.openRuleEditor(null, userId);
-  });
-
-  // Save all changes button
-  saveBtn.addEventListener("click", async () => {
-    try {
-      const rulesEditor = container.querySelector("#user-rules-editor");
-      const userId = rulesEditor.dataset.userId;
-      const username = rulesEditor.dataset.username;
-      const usernameColor =
-        colorInput.value !== "#000000" ? colorInput.value : null;
-
-      // Just update the username color for now
-      await updateUsernameColor(userId, username, usernameColor);
-
-      // Show success message
-      const statusDiv = container.querySelector("#user-search-status");
-      statusDiv.innerHTML = "Changes saved successfully!";
-      statusDiv.className = "user-search-status success";
-
-      // Reload the existing users list
-      await loadExistingUsers(container);
-    } catch (err) {
-      error("Error saving user rules:", err);
-      alert(`Error saving changes: ${err.message}`);
-    }
-  });
-
-  // Delete all rules button
-  deleteBtn.addEventListener("click", async () => {
-    if (!confirm("Are you sure you want to delete all rules for this user?")) {
+// Load and display rules for a specific user within their card details
+async function loadRulesForUser(userId, detailsContainer) {
+  try {
+    const rulesTableBody = detailsContainer.querySelector(".rules-tbody");
+    if (!rulesTableBody) {
+      error(
+        `Could not find .rules-tbody within provided container for user ${userId}`,
+      );
       return;
     }
-
-    try {
-      const rulesEditor = container.querySelector("#user-rules-editor");
-      const userId = rulesEditor.dataset.userId;
-
-      await deleteUserRules(userId);
-
-      // Reset UI
-      rulesEditor.style.display = "none";
-      container.querySelector("#user-search-status").innerHTML =
-        "User rules deleted successfully.";
-      container.querySelector("#user-search-status").className =
-        "user-search-status success";
-
-      // Reload existing users list
-      await loadExistingUsers(container);
-    } catch (err) {
-      error("Error deleting user rules:", err);
-      alert(`Error deleting rules: ${err.message}`);
-    }
-  });
-}
-
-// Load and display rules for a specific user
-async function loadRulesForUser(userId, container) {
-  try {
-    const rulesTable = container.querySelector("#rules-tbody");
     const userRules = await getUserRules(userId);
 
     if (!userRules || !userRules.rules || userRules.rules.length === 0) {
-      rulesTable.innerHTML = `
+      rulesTableBody.innerHTML = `
         <tr class="empty-rules">
           <td colspan="5">No rules defined yet</td>
         </tr>
@@ -873,7 +938,7 @@ async function loadRulesForUser(userId, container) {
     }
 
     // Generate table rows for each rule
-    rulesTable.innerHTML = userRules.rules
+    rulesTableBody.innerHTML = userRules.rules
       .map((rule) => {
         // Format parameters for display
         let paramsDisplay = "";
@@ -907,10 +972,10 @@ async function loadRulesForUser(userId, container) {
           <td>${paramsDisplay}</td>
           <td>
             <div class="rules-actions">
-              <button class="button button--normal edit-rule-btn" data-rule-id="${rule.id}">
+              <button class="button button--normal edit-inline-rule-btn" data-rule-id="${rule.id}">
                 <i class="fa fa-pencil"></i>
               </button>
-              <button class="button button--normal delete-rule-btn" data-rule-id="${rule.id}">
+              <button class="button button--normal delete-inline-rule-btn" data-rule-id="${rule.id}">
                 <i class="fa fa-trash"></i>
               </button>
             </div>
@@ -920,30 +985,34 @@ async function loadRulesForUser(userId, container) {
       })
       .join("");
 
-    // Add event listeners to edit and delete buttons
-    rulesTable.querySelectorAll(".edit-rule-btn").forEach((btn) => {
+    // Add event listeners to edit and delete buttons within this specific table
+    rulesTableBody.querySelectorAll(".edit-inline-rule-btn").forEach((btn) => {
       btn.addEventListener("click", () =>
-        editRule(userId, btn.dataset.ruleId, container),
+        editInlineRule(userId, btn.dataset.ruleId, detailsContainer),
       );
     });
 
-    rulesTable.querySelectorAll(".delete-rule-btn").forEach((btn) => {
-      btn.addEventListener("click", () =>
-        deleteRule(userId, btn.dataset.ruleId, container),
-      );
-    });
+    rulesTableBody
+      .querySelectorAll(".delete-inline-rule-btn")
+      .forEach((btn) => {
+        btn.addEventListener("click", () =>
+          deleteInlineRule(userId, btn.dataset.ruleId, detailsContainer),
+        );
+      });
   } catch (err) {
-    error("Error loading rules for user:", err);
-    container.querySelector("#rules-tbody").innerHTML = `
-      <tr>
-        <td colspan="5">Error loading rules: ${err.message}</td>
-      </tr>
-    `;
+    error(`Error loading rules for user ${userId}:`, err);
+    if (detailsContainer.querySelector(".rules-tbody")) {
+      detailsContainer.querySelector(".rules-tbody").innerHTML = `
+          <tr>
+            <td colspan="5">Error loading rules: ${err.message}</td>
+          </tr>
+        `;
+    }
   }
 }
 
-// Edit a rule
-async function editRule(userId, ruleId, container) {
+// Edit an inline rule: Populate the inline form
+async function editInlineRule(userId, ruleId, detailsContainer) {
   try {
     const userRules = await getUserRules(userId);
     if (!userRules || !userRules.rules) throw new Error("User rules not found");
@@ -951,16 +1020,30 @@ async function editRule(userId, ruleId, container) {
     const rule = userRules.rules.find((r) => r.id === ruleId);
     if (!rule) throw new Error("Rule not found");
 
-    // Open the rule editor with existing data
-    window.openRuleEditor(rule, userId);
+    const ruleForm = detailsContainer.querySelector(".rule-editor-form");
+    const addRuleBtn = detailsContainer.querySelector(".add-rule-btn");
+    const paramsContainer = ruleForm.querySelector(".rule-params-container");
+
+    // Populate form
+    ruleForm.querySelector(".rule-id").value = rule.id;
+    ruleForm.querySelector(".rule-action").value = rule.action;
+    ruleForm.querySelector(".rule-subject").value = rule.subject;
+    ruleForm.querySelector(".rule-scope").value = rule.scope;
+
+    // Update and populate params UI
+    updateInlineParamsUI(rule.action, rule.params, paramsContainer);
+
+    // Show form, hide add button
+    ruleForm.style.display = "block";
+    addRuleBtn.style.display = "none";
   } catch (err) {
-    error("Error editing rule:", err);
+    error(`Error preparing inline edit for rule ${ruleId}:`, err);
     alert(`Error editing rule: ${err.message}`);
   }
 }
 
-// Delete a rule
-async function deleteRule(userId, ruleId, container) {
+// Delete an inline rule
+async function deleteInlineRule(userId, ruleId, detailsContainer) {
   if (!confirm("Are you sure you want to delete this rule?")) {
     return;
   }
@@ -968,10 +1051,18 @@ async function deleteRule(userId, ruleId, container) {
   try {
     await deleteRuleForUser(userId, ruleId);
 
-    // Reload rules display
-    await loadRulesForUser(userId, container);
+    // Reload rules display within this card
+    await loadRulesForUser(userId, detailsContainer);
+    // Update rule count in header
+    const userRules = await getUserRules(userId);
+    const ruleCount = userRules?.rules?.length || 0;
+    const headerStats = detailsContainer
+      .closest(".user-card")
+      .querySelector(".user-stats");
+    if (headerStats)
+      headerStats.textContent = `${ruleCount} rule${ruleCount !== 1 ? "s" : ""}`;
   } catch (err) {
-    error("Error deleting rule:", err);
+    error(`Error deleting inline rule ${ruleId}:`, err);
     alert(`Error deleting rule: ${err.message}`);
   }
 }
@@ -993,86 +1084,79 @@ async function loadExistingUsers(container) {
     const userCards = Object.entries(allUserRules)
       .map(([userId, userData]) => {
         const ruleCount = userData.rules?.length || 0;
-        const usernameStyle = userData.usernameColor
-          ? `style="color: ${userData.usernameColor}"`
-          : "";
-
-        return `
-        <div class="user-card" data-user-id="${userId}">
-          <div class="user-info">
-            <span class="user-name" ${usernameStyle}>${userData.username || `User #${userId}`}</span>
-            <span class="user-stats">${ruleCount} rule${ruleCount !== 1 ? "s" : ""}</span>
-          </div>
-          <div class="user-card-actions">
-            <button class="button button--normal edit-user-btn" data-user-id="${userId}" data-username="${userData.username || `User #${userId}`}">
-              <i class="fa fa-pencil"></i> Edit
-            </button>
-          </div>
-        </div>
-      `;
+        const cardElement = createUserCardElement(
+          userId,
+          userData.username || `User #${userId}`,
+          ruleCount,
+          userData.usernameColor,
+        );
+        return cardElement.outerHTML;
       })
       .join("");
 
     existingRulesContainer.innerHTML = userCards;
 
-    // Add event listeners to edit buttons
-    existingRulesContainer.querySelectorAll(".edit-user-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const userId = btn.dataset.userId;
-        const username = btn.dataset.username;
-
-        // Simulate finding the user
-        container.querySelector("#user-search").value = userId;
-        const statusDiv = container.querySelector("#user-search-status");
-
-        statusDiv.innerHTML = `Loading user: <strong>${username}</strong> (ID: ${userId})`;
-        statusDiv.className = "user-search-status";
-
-        try {
-          // Set up UI with user data
-          container.querySelector("#user-rules-editor").style.display = "block";
-          container.querySelector("#selected-username").textContent = username;
-
-          // Store user data in data attributes for later use
-          const rulesEditor = container.querySelector("#user-rules-editor");
-          rulesEditor.dataset.userId = userId;
-          rulesEditor.dataset.username = username;
-
-          // Get user rules
-          const userRules = await getUserRules(userId);
-
-          // Set up username color
-          const colorInput = container.querySelector("#username-color");
-          const usernamePreview = container.querySelector("#username-preview");
-          usernamePreview.textContent = username;
-
-          if (userRules && userRules.usernameColor) {
-            colorInput.value = userRules.usernameColor;
-            usernamePreview.style.color = userRules.usernameColor;
-          } else {
-            colorInput.value = "#000000";
-            usernamePreview.style.color = "";
-          }
-
-          // Load existing rules
-          await loadRulesForUser(userId, container);
-
-          // Scroll to the editor
-          rulesEditor.scrollIntoView({ behavior: "smooth" });
-
-          // Update status
-          statusDiv.innerHTML = `User loaded: <strong>${username}</strong> (ID: ${userId})`;
-          statusDiv.className = "user-search-status success";
-        } catch (err) {
-          statusDiv.innerHTML = `Error loading user: ${err.message}`;
-          statusDiv.className = "user-search-status error";
-          error("Error loading existing user:", err);
-        }
-      });
+    // Add event listeners to cards
+    existingRulesContainer.querySelectorAll(".user-card").forEach((card) => {
+      attachCardEventListeners(card, container);
     });
   } catch (err) {
     error("Error loading existing users:", err);
     container.querySelector("#existing-rules-container").innerHTML =
       `<p>Error loading existing users: ${err.message}</p>`;
+  }
+}
+
+// Helper function to create a user card element
+function createUserCardElement(
+  userId,
+  username,
+  ruleCount = 0,
+  usernameColor = null,
+) {
+  const card = document.createElement("div");
+  card.className = "user-card";
+  card.dataset.userId = userId;
+  card.dataset.username = username;
+
+  const usernameStyle = usernameColor ? `style="color: ${usernameColor}"` : "";
+
+  card.innerHTML = `
+    <div class="user-card-header">
+      <div class="user-info">
+        <span class="user-name" ${usernameStyle}>${username}</span>
+        <span class="user-stats">${ruleCount} rule${ruleCount !== 1 ? "s" : ""}</span>
+      </div>
+      <div class="user-card-actions">
+        <button class="button button--icon expand-btn" title="Expand/Collapse">
+          <i class="fa fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+    <div class="user-card-details">
+      <div class="loading-placeholder">Loading details...</div>
+    </div>
+  `;
+  return card;
+}
+
+// Helper function to attach event listeners to a card
+function attachCardEventListeners(cardElement, container) {
+  const header = cardElement.querySelector(".user-card-header");
+  const expandBtn = cardElement.querySelector(".expand-btn");
+
+  if (header) {
+    header.addEventListener("click", (event) => {
+      // Prevent toggling if a button inside the header was clicked
+      if (event.target.closest("button")) return;
+      toggleUserCard(cardElement, container);
+    });
+  }
+
+  if (expandBtn) {
+    expandBtn.addEventListener("click", (event) => {
+      event.stopPropagation(); // Prevent header click listener
+      toggleUserCard(cardElement, container);
+    });
   }
 }
