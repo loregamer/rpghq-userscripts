@@ -64,16 +64,25 @@ export function applyCustomThemeStyles() {
 
   // Apply style for link, active, visited if linkColor is set
   if (linkColor) {
-    customCSS += `a:not(.username-coloured):not(.forum-link):link,
-       a:not(.username-coloured):not(.forum-link):active,
-       a:not(.username-coloured):not(.forum-link):visited { color: ${linkColor} !important; }
-`;
+    customCSS += `
+      a:link,
+      a:active,
+      a:visited {
+        color: ${linkColor};
+      }
+    `;
   }
 
   // Apply style for hover if hoverColor is set
   if (hoverColor) {
-    customCSS += `a:not(.username-coloured):not(.forum-link):hover { color: ${hoverColor} !important; }
-`;
+    customCSS += `
+      a:hover,
+      a:focus,
+      a:active {
+        color: ${hoverColor};
+        text-decoration: underline;
+      }
+    `;
   }
 
   if (customCSS) {
