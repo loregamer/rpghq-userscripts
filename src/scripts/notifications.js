@@ -766,12 +766,13 @@ export function init({ getScriptSetting }) {
         block.querySelector(".notification-reference")?.remove();
       }
 
-      // Apply filler word resizing if enabled
-      if (resizeFillers) {
+      // Apply filler word resizing if enabled and not already done
+      if (!block.dataset.fillerResized && resizeFillers) {
         currentHtml = currentHtml.replace(
           /\b(by|and|in|from)\b(?!-)/g,
           '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>',
         );
+        block.dataset.fillerResized = true; // Mark as resized
       }
 
       // Update the title element's HTML
@@ -962,12 +963,13 @@ export function init({ getScriptSetting }) {
         titleElement.innerHTML = currentHtml;
       }
 
-      // Apply text resizing *after* all structural changes
-      if (resizeFillers) {
+      // Apply text resizing *first*, only if not already done
+      if (!block.dataset.fillerResized && resizeFillers) {
         currentHtml = currentHtml.replace(
           /\b(by|and|in|from)\b(?!-)/g,
           '<span style="font-size: 0.85em; padding: 0 0.25px;">$1</span>',
         );
+        block.dataset.fillerResized = true; // Mark as resized
       }
 
       // Apply keyword coloring ONLY if enableColors is true
