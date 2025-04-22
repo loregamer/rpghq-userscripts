@@ -17,6 +17,8 @@ const THEME_HOVER_COLOR_KEY = "theme_hoverColor";
 const THEME_BACKGROUND_IMAGE_URL_KEY = "theme_backgroundImageUrl";
 const THEME_UNREAD_COLOR_KEY = "theme_unreadColor";
 const THEME_SUBTLE_TEXT_COLOR_KEY = "theme_subtleTextColor";
+const THEME_LIGHT_BG_COLOR_KEY = "theme_lightBgColor";
+const THEME_DARK_BG_COLOR_KEY = "theme_darkBgColor";
 
 export function renderThemeSubtab(container) {
   log("Rendering Theme subtab...");
@@ -148,6 +150,20 @@ export function renderThemeSubtab(container) {
       "Subtle Text Color",
       THEME_SUBTLE_TEXT_COLOR_KEY,
       "#bfc0c5",
+    ),
+  );
+  themeBody.appendChild(
+    createColorInput(
+      "Light Background Color",
+      THEME_LIGHT_BG_COLOR_KEY,
+      "#242a36", // Default light bg
+    ),
+  );
+  themeBody.appendChild(
+    createColorInput(
+      "Dark Background Color",
+      THEME_DARK_BG_COLOR_KEY,
+      "#171b24", // Default dark bg
     ),
   );
 

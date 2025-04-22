@@ -31,6 +31,8 @@ const THEME_HOVER_COLOR_KEY = "theme_hoverColor";
 const THEME_BACKGROUND_IMAGE_URL_KEY = "theme_backgroundImageUrl"; // New key
 const THEME_UNREAD_COLOR_KEY = "theme_unreadColor"; // New key for unread icon color
 const THEME_SUBTLE_TEXT_COLOR_KEY = "theme_subtleTextColor"; // New key for subtle text
+const THEME_LIGHT_BG_COLOR_KEY = "theme_lightBgColor"; // New key
+const THEME_DARK_BG_COLOR_KEY = "theme_darkBgColor"; // New key
 
 const EXECUTION_PHASES = [
   { id: "document-start", name: "Document Start" },
@@ -65,6 +67,8 @@ export function applyCustomThemeStyles() {
   const backgroundImageUrl = gmGetValue(THEME_BACKGROUND_IMAGE_URL_KEY, ""); // Get background image URL
   const unreadColor = gmGetValue(THEME_UNREAD_COLOR_KEY, ""); // Get unread icon color
   const subtleTextColor = gmGetValue(THEME_SUBTLE_TEXT_COLOR_KEY, ""); // Get subtle text color
+  const lightBgColor = gmGetValue(THEME_LIGHT_BG_COLOR_KEY, ""); // Get light bg color
+  const darkBgColor = gmGetValue(THEME_DARK_BG_COLOR_KEY, ""); // Get dark bg color
 
   let customCSS = "";
   const defaultBgColor = "#171b24"; // Define default background color
@@ -76,6 +80,14 @@ export function applyCustomThemeStyles() {
     customCSS += `
       html, body {
         ${backgroundStyle}
+      }
+    `;
+  } else if (darkBgColor) {
+    // Apply dark background color if set and no image URL
+    customCSS += `
+      html, body {
+        background-color: ${darkBgColor};
+        color-scheme: dark; /* Assume dark scheme with custom bg */
       }
     `;
   }
@@ -123,13 +135,34 @@ export function applyCustomThemeStyles() {
     `;
   }
 
+  // --- Background Color Styles ---
+  // Apply light background color if set
+  if (lightBgColor) {
+    customCSS += `
+      .headerbar, .navbar, .forabg, .forumbg, li.row, .bg1, .bg2, .bg3, .tabs .activetab > a, .tabs a:hover, ul.cplist, .panel, blockquote blockquote, .panel blockquote, .panel blockquote blockquote blockquote, .panel .codebox, .dropdown .dropdown-contents, .jumpbox-cat-link, .jumpbox-sub-link, .jumpbox-forum-link, .cp-main .message-box textarea, fieldset.quick-login input.inputbox {
+        background: ${lightBgColor} !important;
+      }
+    `;
+  }
+
+  // Apply dark background color if set (overrides html/body if no image)
+  if (darkBgColor) {
+    customCSS += `
+      html, body, .wrap, .panel-container .panel, .navigation .active-subsection a, .navigation a:hover, .cp-mini, .codebox, blockquote, blockquote blockquote blockquote, .panel blockquote blockquote, .attachbox, .message-box textarea, .phpbb_alert, select, .minitabs a:hover, .minitabs .activetab > a, .minitabs .activetab > a:hover, .cp-main .pm, .bg3 .topicreview .bg2, .bg3 .topicreview .bg1 {
+        background-color: ${darkBgColor} !important;
+      }
+    `;
+  }
+
   // Only add the style element if there are custom styles to apply
   if (
     linkColor ||
     hoverColor ||
     backgroundImageUrl ||
     unreadColor ||
-    subtleTextColor
+    subtleTextColor ||
+    lightBgColor ||
+    darkBgColor
   ) {
     log("Applying custom theme styles:", customCSS);
     // eslint-disable-next-line no-undef
