@@ -104,10 +104,10 @@ export default async () => {
       // Minification with preserved userscript header
       terser({
         format: {
-          comments: true, // Keep comments in the output
-          beautify: true, // Format the output for better readability
+          comments: false, // Keep comments in the output
+          beautify: false, // Format the output for better readability
         },
-        mangle: false,
+        mangle: true,
         compress: {}, // Re-enable compression, as CSS is handled separately
       }),
 
