@@ -494,18 +494,23 @@ function addMenuButton(toggleVisibilityCallback) {
 // --- Initialization ---
 function init() {
   log("Initializing RPGHQ Userscript Manager...");
+  applyCustomThemeStyles();
 
   // Initialize script states
   initializeScriptStates();
 
   // Execute load order for document-start phase immediately
+  applyCustomThemeStyles();
   executeLoadOrderForPhase("document-start");
+  applyCustomThemeStyles();
 
   // Set up listeners for other execution phases
   document.addEventListener("DOMContentLoaded", () => {
     // Update current phase and execute load order
     currentExecutionPhase = "document-end";
+    applyCustomThemeStyles();
     executeLoadOrderForPhase("document-end");
+    applyCustomThemeStyles();
 
     // Add menu button (needs DOM ready)
     addMenuButton(toggleModalVisibility);
@@ -522,6 +527,7 @@ function init() {
 
   window.addEventListener("load", () => {
     // Update current phase and execute load order
+    applyCustomThemeStyles();
     currentExecutionPhase = "document-idle";
     executeLoadOrderForPhase("document-idle");
   });
