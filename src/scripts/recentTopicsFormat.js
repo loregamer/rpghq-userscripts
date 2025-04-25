@@ -37,8 +37,10 @@ export function init({ getScriptSetting }) {
 
   /**
    * Add hammer and pick symbol (⚒) to support threads
-   * Detects if the thread row contains "Support" text and adds the symbol to the title
-   * Or adds checkmark (✔) icon for solved threads
+   * Applies formatting to various thread types:
+   * - Strikethrough for solved threads
+   * - Italics + symbol for known issues
+   * - Hammer symbol for support threads
    */
   function addSupportSymbol(str, elem) {
     const shouldAddSupportSymbol = getScriptSetting(
@@ -49,30 +51,48 @@ export function init({ getScriptSetting }) {
 
     if (!shouldAddSupportSymbol) return str; // Skip if setting is disabled
 
-    // Check if title contains [Solved] tag
+    // Check if title contains special tags
     const plainText = elem.textContent;
     const isSolved = plainText.includes("[Solved]");
+    const isKnownIssue = plainText.includes("[Known Issue]");
 
-    // If it's solved, we'll replace [Solved] with checkmark instead of adding hammer
+    // Handle solved threads - apply strikethrough and remove the tag
     if (isSolved) {
-      // Only replace if not already replaced
-      if (!plainText.includes("✔") && plainText.includes("[Solved]")) {
-        return str.replace(/\[Solved\]/g, "✔");
+      // Only replace if not already processed
+      if (!str.includes("<s>") && str.includes("[Solved]")) {
+        return `<s>${str.replace(/\[Solved\]/g, "").trim()}</s>`;
       }
       return str;
     }
 
+    // Handle Known Issue - make italic and add a symbol (ǃ ), remove the tag
+    if (isKnownIssue) {
+      // Only replace if not already processed
+      if (!str.includes("<i>") && str.includes("[Known Issue]")) {
+        return `ǃ  <i>${str.replace(/\[Known Issue\]/g, "").trim()}</i>`;
+      }
+      return str;
+    }
+
+    // Check if current URL contains both "f=" and "support" (case insensitive)
+    const currentUrl = window.location.href.toLowerCase();
+    const isInSupportForum =
+      currentUrl.includes("f=") && currentUrl.includes("support");
+
     // Look for "Support" text in the thread row
     const rowItem = elem.closest("li.row");
-    if (!rowItem) return str;
+    let hasSupport = false;
 
-    // Check if thread is in a support category by looking for "Support" text
-    const hasSupport = rowItem.textContent.includes("Support");
-    if (!hasSupport) return str;
+    if (rowItem) {
+      hasSupport = rowItem.textContent.includes("Support");
+    }
 
-    // Add the symbol at the beginning if not already present
-    if (!elem.textContent.startsWith("⚒")) {
-      return `⚒ ${str}`;
+    // Apply the symbol if either condition is met
+    if (isInSupportForum || hasSupport) {
+      // Add the symbol at the beginning if not already present
+      if (!elem.textContent.startsWith("⚒")) {
+        return `⚒ ${str}`;
+      }
     }
 
     return str;
