@@ -36,11 +36,12 @@ export function init({ getScriptSetting }) {
    *******************************************/
 
   /**
-   * Add hammer and pick symbol (⚒) to support threads
+   * Add hammer and pick symbol (?) to support threads
    * Applies formatting to various thread types:
    * - Strikethrough for solved threads
    * - Italics + symbol for known issues
-   * - Hammer symbol for support threads
+   * - Hammer symbol for support threads (with normal font weight)
+   * - 🛈 symbol for suggestion threads
    */
   function addSupportSymbol(str, elem) {
     const shouldAddSupportSymbol = getScriptSetting(
@@ -55,6 +56,16 @@ export function init({ getScriptSetting }) {
     const plainText = elem.textContent;
     const isSolved = plainText.includes("[Solved]");
     const isKnownIssue = plainText.includes("[Known Issue]");
+    const isSuggestion = plainText.includes("[Suggestion]");
+
+    // Handle suggestion threads - replace [Suggestion] with 🛈 symbol
+    if (isSuggestion) {
+      // Only replace if not already processed
+      if (!plainText.startsWith("🛈") && str.includes("[Suggestion]")) {
+        return `🛈 ${str.replace(/\[Suggestion\]/g, "").trim()}`;
+      }
+      return str;
+    }
 
     // Handle solved threads - apply strikethrough and remove the tag
     if (isSolved) {
@@ -90,8 +101,9 @@ export function init({ getScriptSetting }) {
     // Apply the symbol if either condition is met
     if (isInSupportForum || hasSupport) {
       // Add the symbol at the beginning if not already present
-      if (!elem.textContent.startsWith("⚒")) {
-        return `⚒ ${str}`;
+      if (!elem.textContent.startsWith("?")) {
+        // Use span with normal font weight to unbold the text
+        return `? <span style="font-weight: normal;">${str}</span>`;
       }
     }
 
