@@ -38,6 +38,7 @@ export function init({ getScriptSetting }) {
   /**
    * Add hammer and pick symbol (⚒) to support threads
    * Detects if the thread row contains "Support" text and adds the symbol to the title
+   * Or adds checkmark (✔) icon for solved threads
    */
   function addSupportSymbol(str, elem) {
     const shouldAddSupportSymbol = getScriptSetting(
@@ -47,6 +48,19 @@ export function init({ getScriptSetting }) {
     );
 
     if (!shouldAddSupportSymbol) return str; // Skip if setting is disabled
+
+    // Check if title contains [Solved] tag
+    const plainText = elem.textContent;
+    const isSolved = plainText.includes("[Solved]");
+
+    // If it's solved, we'll replace [Solved] with checkmark instead of adding hammer
+    if (isSolved) {
+      // Only replace if not already replaced
+      if (!plainText.includes("✔") && plainText.includes("[Solved]")) {
+        return str.replace(/\[Solved\]/g, "✔");
+      }
+      return str;
+    }
 
     // Look for "Support" text in the thread row
     const rowItem = elem.closest("li.row");
