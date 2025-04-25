@@ -36,6 +36,35 @@ export function init({ getScriptSetting }) {
    *******************************************/
 
   /**
+   * Add hammer and pick symbol (⚒) to support threads
+   * Detects if the thread row contains "Support" text and adds the symbol to the title
+   */
+  function addSupportSymbol(str, elem) {
+    const shouldAddSupportSymbol = getScriptSetting(
+      SCRIPT_ID,
+      "addSupportSymbol",
+      true,
+    );
+
+    if (!shouldAddSupportSymbol) return str; // Skip if setting is disabled
+
+    // Look for "Support" text in the thread row
+    const rowItem = elem.closest("li.row");
+    if (!rowItem) return str;
+
+    // Check if thread is in a support category by looking for "Support" text
+    const hasSupport = rowItem.textContent.includes("Support");
+    if (!hasSupport) return str;
+
+    // Add the symbol at the beginning if not already present
+    if (!elem.textContent.startsWith("⚒")) {
+      return `⚒ ${str}`;
+    }
+
+    return str;
+  }
+
+  /**
    * Make any text in (parentheses) smaller, non-bold
    * e.g. "Title (Extra Info)" -> "Title (<span>Extra Info</span>)"
    */
@@ -203,6 +232,11 @@ export function init({ getScriptSetting }) {
       "reformatAGThreads",
       true,
     );
+    const shouldAddSupportSymbol = getScriptSetting(
+      SCRIPT_ID,
+      "addSupportSymbol",
+      true,
+    );
     // Add settings checks for other styles if needed in the future
 
     const originalHTML = titleElem.innerHTML; // Work with HTML
@@ -229,6 +263,11 @@ export function init({ getScriptSetting }) {
     // Apply dash styling ONLY if AG formatting didn't run
     if (!agFormatted) {
       currentHTML = styleEverythingAfterFirstDash(currentHTML, titleElem);
+    }
+
+    // Apply support symbol styling if enabled
+    if (shouldAddSupportSymbol) {
+      currentHTML = addSupportSymbol(currentHTML, titleElem);
     }
 
     // Update DOM only if HTML actually changed

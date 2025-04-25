@@ -318,6 +318,14 @@ export const SCRIPT_MANIFEST = [
         description:
           "Reformats 'All Games' thread titles for better readability (e.g., moves chapter number).",
       },
+      {
+        id: "addSupportSymbol",
+        label: "Mark Support Threads",
+        type: "checkbox",
+        defaultValue: true,
+        description:
+          "Adds ⚒ symbol to thread titles in support categories/forums.",
+      },
     ],
     categories: ["UI"],
   },
