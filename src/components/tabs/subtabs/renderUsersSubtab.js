@@ -146,6 +146,7 @@ async function renderUserDetails(userId, detailsContainer, mainContainer) {
         <label for="color-override-${userId}" class="user-setting-label">Color Override:</label>
         <input type="color" id="color-override-${userId}" class="form-control color-override-input" value="${userRules?.usernameColor || "#000000"}">
         <span class="color-preview username-preview" style="color: ${userRules?.usernameColor || "inherit"}">${username}</span>
+        <button type="button" class="button button--small clear-color-btn" title="Clear Color" style="margin-left:6px;">Clear</button>
       </div>
       <div class="user-setting-row">
         <i class="fa fa-comments user-setting-icon"></i>
@@ -183,10 +184,18 @@ async function renderUserDetails(userId, detailsContainer, mainContainer) {
   // Add event listeners for color preview and delete action
   const colorInput = detailsContainer.querySelector(".color-override-input");
   const usernamePreview = detailsContainer.querySelector(".username-preview");
+  const clearColorBtn = detailsContainer.querySelector(".clear-color-btn");
   colorInput.addEventListener("input", () => {
     usernamePreview.style.color =
       colorInput.value === "#000000" ? "inherit" : colorInput.value;
   });
+  if (clearColorBtn) {
+    clearColorBtn.addEventListener("click", () => {
+      colorInput.value = "#000000";
+      usernamePreview.style.color = "inherit";
+      colorInput.dispatchEvent(new Event("change"));
+    });
+  }
 
   // Auto-save on any input change
   const autoSave = async () => {
