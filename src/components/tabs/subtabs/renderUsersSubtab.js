@@ -93,8 +93,6 @@ export function renderUsersSubtab(container) {
 
   // Initialize the UI components
   initUserSearch(container);
-  // initRuleEditor(container); // Removed - modal is gone
-  // initUserRulesEditor(container); // Removed - editor is inline
   loadExistingUsers(container);
 }
 
@@ -109,8 +107,6 @@ async function toggleUserCard(userCard, container) {
 
   if (isExpanded) {
     userCard.classList.remove("expanded");
-    // Optional: Clear details on collapse to save memory?
-    // detailsDiv.innerHTML = '<div class="loading-placeholder">Loading details...</div>';
   } else {
     userCard.classList.add("expanded");
     // Check if details are already loaded
@@ -139,261 +135,112 @@ async function renderUserDetails(userId, detailsContainer, mainContainer) {
     `User #${userId}`;
 
   detailsContainer.innerHTML = `
-    <!-- Username Color Section -->
-    <div class="username-color-section">
-      <label for="username-color-${userId}">Username Color:</label>
-      <div class="color-input-group">
-        <input type="color" id="username-color-${userId}" class="color-picker username-color-input" value="${userRules?.usernameColor || "#000000"}">
-        <button class="button button--link reset-color-btn">Reset</button>
+    <div class="user-settings-list">
+      <div class="user-setting-row">
+        <i class="fa fa-user-circle user-setting-icon"></i>
+        <label for="avatar-override-${userId}" class="user-setting-label">Avatar Override:</label>
+        <input type="text" id="avatar-override-${userId}" class="form-control avatar-override-input" value="${userRules?.avatarOverride || ""}" placeholder="Image URL or leave blank">
       </div>
-      <div class="color-preview">
-        Preview: <span class="username-preview" style="color: ${userRules?.usernameColor || "inherit"}">${username}</span>
+      <div class="user-setting-row">
+        <i class="fa fa-paint-brush user-setting-icon"></i>
+        <label for="color-override-${userId}" class="user-setting-label">Color Override:</label>
+        <input type="color" id="color-override-${userId}" class="form-control color-override-input" value="${userRules?.usernameColor || "#000000"}">
+        <span class="color-preview username-preview" style="color: ${userRules?.usernameColor || "inherit"}">${username}</span>
       </div>
-    </div>
-
-    <!-- Rules List -->
-    <div class="rules-list-section">
-      <div class="rules-list-header">
-        <h4>Rules</h4>
-        <button class="button button--primary add-rule-btn">
-          <i class="fa fa-plus"></i> Add Rule
-        </button>
+      <div class="user-setting-row">
+        <i class="fa fa-comments user-setting-icon"></i>
+        <label for="threads-setting-${userId}" class="user-setting-label">Threads:</label>
+        <select id="threads-setting-${userId}" class="form-control threads-setting-input">
+          <option value="" ${!userRules?.threads ? "selected" : ""}></option>
+          <option value="HIGHLIGHT" ${userRules?.threads === "HIGHLIGHT" ? "selected" : ""}>Highlight</option>
+          <option value="HIDE" ${userRules?.threads === "HIDE" ? "selected" : ""}>Hide</option>
+        </select>
       </div>
-      <div class="rules-table-wrapper">
-        <table class="rules-table">
-          <thead>
-            <tr>
-              <th>Action</th>
-              <th>Subject</th>
-              <th>Scope</th>
-              <th>Parameters</th>
-              <th>Controls</th>
-            </tr>
-          </thead>
-          <tbody class="rules-tbody">
-            <!-- Rules will be loaded here -->
-          </tbody>
-        </table>
+      <div class="user-setting-row">
+        <i class="fa fa-file-text user-setting-icon"></i>
+        <label for="posts-setting-${userId}" class="user-setting-label">Posts:</label>
+        <select id="posts-setting-${userId}" class="form-control posts-setting-input">
+          <option value="" ${!userRules?.posts ? "selected" : ""}></option>
+          <option value="HIGHLIGHT" ${userRules?.posts === "HIGHLIGHT" ? "selected" : ""}>Highlight</option>
+          <option value="HIDE" ${userRules?.posts === "HIDE" ? "selected" : ""}>Hide</option>
+        </select>
       </div>
-      <!-- Inline Rule Editor Form (hidden initially) -->
-      <form class="rule-editor-form" style="display: none;">
-         <input type="hidden" class="rule-id">
-         <div class="form-group">
-           <label>Action:</label>
-           <select class="form-control rule-action">
-             ${RULE_ACTIONS.map((action) => `<option value="${action.id}">${action.name}</option>`).join("")}
-           </select>
-         </div>
-         <div class="form-group">
-           <label>Subject:</label>
-           <select class="form-control rule-subject">
-             ${RULE_SUBJECTS.map((subject) => `<option value="${subject.id}">${subject.name}</option>`).join("")}
-           </select>
-         </div>
-         <div class="form-group">
-           <label>Scope:</label>
-           <select class="form-control rule-scope">
-             ${RULE_SCOPES.map((scope) => `<option value="${scope.id}">${scope.name}</option>`).join("")}
-           </select>
-         </div>
-         <div class="rule-params-container form-group">
-           <!-- Dynamic parameters will be rendered here -->
-         </div>
-         <div class="modal-footer">
-           <button type="button" class="button button--primary save-inline-rule-btn">Save Rule</button>
-           <button type="button" class="button button--link cancel-inline-rule-btn">Cancel</button>
-         </div>
-      </form>
-    </div>
-
-    <!-- Save/Delete Buttons -->
-    <div class="user-rules-actions">
-      <button class="button button--primary save-user-changes-btn">Save Color</button>
-      <button class="button button--normal delete-user-rules-btn">Delete All Rules for This User</button>
+      <div class="user-setting-row">
+        <i class="fa fa-at user-setting-icon"></i>
+        <label for="mentions-setting-${userId}" class="user-setting-label">Mentions:</label>
+        <select id="mentions-setting-${userId}" class="form-control mentions-setting-input">
+          <option value="" ${!userRules?.mentions ? "selected" : ""}></option>
+          <option value="HIGHLIGHT" ${userRules?.mentions === "HIGHLIGHT" ? "selected" : ""}>Highlight</option>
+          <option value="HIDE" ${userRules?.mentions === "HIDE" ? "selected" : ""}>Hide</option>
+        </select>
+      </div>
+      <div class="user-settings-actions">
+        <button class="button button--primary save-user-settings-btn">Save Changes</button>
+        <button class="button button--normal delete-user-rules-btn">Delete All Rules for This User</button>
+      </div>
     </div>
   `;
 
-  // Load rules into the table
-  await loadRulesForUser(userId, detailsContainer); // Pass detailsContainer as context
-
-  // Initialize event listeners within this specific details section
-  initInlineRuleEditing(userId, detailsContainer, mainContainer);
-}
-
-// Initialize event listeners for the inline editor and actions within a user card
-function initInlineRuleEditing(userId, detailsContainer, mainContainer) {
-  const colorInput = detailsContainer.querySelector(".username-color-input");
+  // Add event listeners for color preview and save/delete actions
+  const colorInput = detailsContainer.querySelector(".color-override-input");
   const usernamePreview = detailsContainer.querySelector(".username-preview");
-  const resetColorBtn = detailsContainer.querySelector(".reset-color-btn");
-  const addRuleBtn = detailsContainer.querySelector(".add-rule-btn");
-  const saveColorBtn = detailsContainer.querySelector(".save-user-changes-btn");
-  const deleteAllBtn = detailsContainer.querySelector(".delete-user-rules-btn");
-  const ruleForm = detailsContainer.querySelector(".rule-editor-form");
-  const cancelInlineBtn = detailsContainer.querySelector(
-    ".cancel-inline-rule-btn",
-  );
-  const saveInlineBtn = detailsContainer.querySelector(".save-inline-rule-btn");
-  const ruleActionSelect = detailsContainer.querySelector(".rule-action");
-  const paramsContainer = detailsContainer.querySelector(
-    ".rule-params-container",
-  );
-
-  // Username color handling
   colorInput.addEventListener("input", () => {
     usernamePreview.style.color =
       colorInput.value === "#000000" ? "inherit" : colorInput.value;
-    // Update header preview immediately
-    const headerPreview = detailsContainer
-      .closest(".user-card")
-      .querySelector(".user-name");
-    if (headerPreview) {
-      headerPreview.style.color =
-        colorInput.value === "#000000" ? "" : colorInput.value;
-    }
   });
 
-  resetColorBtn.addEventListener("click", () => {
-    colorInput.value = "#000000";
-    usernamePreview.style.color = "inherit";
-    // Update header preview immediately
-    const headerPreview = detailsContainer
-      .closest(".user-card")
-      .querySelector(".user-name");
-    if (headerPreview) {
-      headerPreview.style.color = "";
-    }
-  });
-
-  saveColorBtn.addEventListener("click", async () => {
-    try {
-      const username = detailsContainer.closest(".user-card").dataset.username;
-      const newColor = colorInput.value !== "#000000" ? colorInput.value : null;
-      await updateUsernameColor(userId, username, newColor);
-      // Maybe add a temporary success indicator?
-      log(`Username color saved for user ${userId}`);
-      // Reload the main list to reflect potential name color changes (could optimize)
-      // await loadExistingUsers(mainContainer);
-    } catch (err) {
-      error(`Error saving color for user ${userId}:`, err);
-      alert(`Error saving color: ${err.message}`);
-    }
-  });
-
-  // Delete all rules button
-  deleteAllBtn.addEventListener("click", async () => {
-    if (
-      !confirm(`Are you sure you want to delete all rules for user ${userId}?`)
-    ) {
-      return;
-    }
-    try {
-      await deleteUserRules(userId);
-      log(`Deleted all rules for user ${userId}`);
-      // Reload the details section or collapse the card
-      await renderUserDetails(userId, detailsContainer, mainContainer); // Re-render details
-      // Update rule count in header
-      const headerStats = detailsContainer
-        .closest(".user-card")
-        .querySelector(".user-stats");
-      if (headerStats) headerStats.textContent = "0 rules";
-      // Reload main list (optional, if needed elsewhere)
-      // await loadExistingUsers(mainContainer);
-    } catch (err) {
-      error(`Error deleting rules for user ${userId}:`, err);
-      alert(`Error deleting rules: ${err.message}`);
-    }
-  });
-
-  // --- Inline Rule Form Logic ---
-
-  // Show/Hide Form
-  addRuleBtn.addEventListener("click", () => {
-    ruleForm.reset();
-    ruleForm.querySelector(".rule-id").value = ""; // Ensure ID is cleared for adding
-    updateInlineParamsUI(ruleActionSelect.value, {}, paramsContainer); // Update params for default action
-    ruleForm.style.display = "block";
-    addRuleBtn.style.display = "none"; // Hide 'Add' button while form is open
-  });
-
-  cancelInlineBtn.addEventListener("click", () => {
-    ruleForm.style.display = "none";
-    addRuleBtn.style.display = "inline-flex"; // Show 'Add' button again
-  });
-
-  // Update params on action change
-  ruleActionSelect.addEventListener("change", () => {
-    updateInlineParamsUI(ruleActionSelect.value, {}, paramsContainer);
-  });
-
-  // Save Inline Rule
-  saveInlineBtn.addEventListener("click", async () => {
-    try {
-      const ruleId = ruleForm.querySelector(".rule-id").value;
-      const action = ruleActionSelect.value;
-      const subject = detailsContainer.querySelector(".rule-subject").value;
-      const scope = detailsContainer.querySelector(".rule-scope").value;
-
-      let params = {};
-      if (action === "HIGHLIGHT") {
-        params.color = paramsContainer.querySelector(
-          ".highlight-color-inline",
+  detailsContainer
+    .querySelector(".save-user-settings-btn")
+    .addEventListener("click", async () => {
+      try {
+        const avatarOverride = detailsContainer.querySelector(
+          ".avatar-override-input",
         ).value;
+        const usernameColor =
+          colorInput.value !== "#000000" ? colorInput.value : null;
+        const threads = detailsContainer.querySelector(
+          ".threads-setting-input",
+        ).value;
+        const posts = detailsContainer.querySelector(
+          ".posts-setting-input",
+        ).value;
+        const mentions = detailsContainer.querySelector(
+          ".mentions-setting-input",
+        ).value;
+        const username =
+          detailsContainer.closest(".user-card").dataset.username;
+        // Save all settings in userRules object
+        await updateUserRules(userId, {
+          username,
+          avatarOverride,
+          usernameColor,
+          threads,
+          posts,
+          mentions,
+        });
+      } catch (err) {
+        error(`Error saving settings for user ${userId}:`, err);
+        alert(`Error saving settings: ${err.message}`);
       }
+    });
 
-      const ruleData = {
-        id: ruleId || `rule_${Date.now()}`,
-        action,
-        subject,
-        scope,
-        params,
-      };
-
-      if (ruleId) {
-        await updateRuleForUser(userId, ruleId, ruleData);
-      } else {
-        await addRuleForUser(userId, ruleData);
+  detailsContainer
+    .querySelector(".delete-user-rules-btn")
+    .addEventListener("click", async () => {
+      if (
+        !confirm(
+          `Are you sure you want to delete all rules for user ${userId}?`,
+        )
+      )
+        return;
+      try {
+        await deleteUserRules(userId);
+        await renderUserDetails(userId, detailsContainer, mainContainer);
+      } catch (err) {
+        error(`Error deleting rules for user ${userId}:`, err);
+        alert(`Error deleting rules: ${err.message}`);
       }
-
-      // Hide form, reload rules table, show add button
-      ruleForm.style.display = "none";
-      addRuleBtn.style.display = "inline-flex";
-      await loadRulesForUser(userId, detailsContainer); // Reload rules in this card
-      // Update rule count in header
-      const userRules = await getUserRules(userId);
-      const ruleCount = userRules?.rules?.length || 0;
-      const headerStats = detailsContainer
-        .closest(".user-card")
-        .querySelector(".user-stats");
-      if (headerStats)
-        headerStats.textContent = `${ruleCount} rule${ruleCount !== 1 ? "s" : ""}`;
-    } catch (err) {
-      error(`Error saving inline rule for user ${userId}:`, err);
-      alert(`Error saving rule: ${err.message}`);
-    }
-  });
-
-  // Edit/Delete buttons within the rules table will be handled by loadRulesForUser
-}
-
-// Generate UI for parameters based on action for the inline editor
-function updateInlineParamsUI(action, existingParams = {}, paramsContainer) {
-  paramsContainer.innerHTML = ""; // Clear previous params
-
-  switch (action) {
-    case "HIGHLIGHT":
-      paramsContainer.innerHTML = `
-        <label for="highlight-color-inline-${paramsContainer.closest(".user-card").dataset.userId}">Highlight Color:</label>
-        <input type="color" id="highlight-color-inline-${paramsContainer.closest(".user-card").dataset.userId}" class="form-control color-picker highlight-color-inline" 
-               value="${existingParams.color || "#FFFF99"}">
-      `;
-      break;
-    case "HIDE":
-      paramsContainer.innerHTML = "<p>No additional parameters needed.</p>";
-      break;
-    default:
-      paramsContainer.innerHTML =
-        "<p>No parameters available for this action.</p>";
-  }
+    });
 }
 
 // Add CSS styles for the user rules UI
@@ -402,6 +249,42 @@ function addRuleManagementStyles() {
   if (document.getElementById(styleId)) return;
 
   const css = `
+    .user-settings-list {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    .user-setting-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 0;
+    }
+    .user-setting-icon {
+      font-size: 1.3em;
+      color: var(--primary-color);
+      min-width: 24px;
+      text-align: center;
+    }
+    .user-setting-label {
+      min-width: 110px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .user-settings-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .color-preview.username-preview {
+      margin-left: 10px;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 3px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+    }
     .user-selection-area {
       margin-bottom: 20px;
       padding: 15px;
@@ -465,41 +348,6 @@ function addRuleManagementStyles() {
       color: var(--text-primary);
     }
     
-    .username-color-section {
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    
-    .username-color-section label {
-      color: var(--text-secondary);
-    }
-    
-    .color-input-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .color-picker {
-      width: 40px;
-      height: 30px;
-      padding: 0;
-      border: 1px solid var(--border-color);
-      cursor: pointer;
-    }
-    
-    .color-preview {
-      margin-left: 15px;
-      padding: 5px 10px;
-      border-radius: 3px;
-      background: var(--bg-dark);
-      border: 1px solid var(--border-color);
-      color: var(--text-secondary);
-    }
-    
     .rules-list-header {
       display: flex;
       justify-content: space-between;
@@ -548,93 +396,6 @@ function addRuleManagementStyles() {
     
     .existing-rules-container {
       margin-top: 20px;
-    }
-    
-    /* Modal styles - Inherit from global styles where possible */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      z-index: 1000001; /* Ensure it's above the main modal */
-      overflow-y: auto;
-    }
-    
-    .modal-content {
-      background-color: var(--bg-card);
-      color: var(--text-primary);
-      margin: 5% auto;
-      padding: 20px;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      width: 90%;
-      max-width: 600px;
-    }
-    
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 10px;
-      margin-bottom: 15px;
-    }
-    
-    .modal-header h3 {
-      color: var(--text-primary);
-      margin: 0;
-    }
-    
-    .modal-close {
-      font-size: 24px;
-      cursor: pointer;
-      color: var(--text-secondary);
-    }
-    .modal-close:hover {
-      color: var(--danger-color);
-    }
-    
-    .modal-body {
-      margin-bottom: 20px;
-    }
-    
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      border-top: 1px solid var(--border-color);
-      padding-top: 15px;
-    }
-    
-    .form-group {
-      margin-bottom: 15px;
-    }
-    
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      color: var(--text-secondary);
-    }
-    
-    .form-control {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      background-color: var(--bg-dark);
-      color: var(--text-primary);
-    }
-    
-    select.form-control {
-      appearance: none;
-      background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23B0BEC5%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
-      background-repeat: no-repeat;
-      background-position: right .7em top 50%;
-      background-size: .65em auto;
-      padding-right: 2.5em;
     }
     
     .user-rules-list-section {
@@ -705,92 +466,6 @@ function addRuleManagementStyles() {
 
     .user-card.expanded .user-card-details {
       display: block; /* Shown when expanded */
-    }
-
-    /* Reuse existing styles within the details section */
-    .user-card-details .username-color-section,
-    .user-card-details .rules-list-section,
-    .user-card-details .user-rules-actions {
-      margin-bottom: 15px; /* Adjust spacing */
-    }
-
-    .user-card-details .rules-list-header {
-      margin-bottom: 5px;
-    }
-
-    .user-card-details .rules-table-wrapper {
-      margin-bottom: 15px;
-    }
-
-    .user-card-details .user-rules-actions {
-      margin-top: 0; /* Remove extra top margin */
-      padding-top: 10px;
-      border-top: 1px solid var(--border-color);
-    }
-    
-    .empty-rules td {
-      text-align: center;
-      font-style: italic;
-      color: var(--text-secondary);
-      padding: 20px;
-    }
-    
-    .rule-params-container {
-      padding: 10px;
-      background-color: var(--bg-dark);
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      margin-top: 10px;
-    }
-
-    .rule-params-container p {
-      color: var(--text-secondary);
-      margin: 0;
-    }
-
-    .loading-rules {
-      color: var(--text-secondary);
-      font-style: italic;
-    }
-
-    /* Use global button styles */
-    .button {
-      padding: 6px 12px;
-      border-radius: 3px;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9em;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      text-decoration: none;
-      color: var(--text-primary);
-      transition: background-color 0.2s ease;
-    }
-    .button i {
-      font-size: 1em;
-    }
-    .button--primary {
-      background-color: var(--primary-color);
-      color: white;
-    }
-    .button--primary:hover {
-      background-color: var(--primary-dark);
-    }
-    .button--normal {
-      background-color: #555;
-      color: var(--text-primary);
-    }
-    .button--normal:hover {
-      background-color: #666;
-    }
-    .button--link {
-      background: none;
-      color: var(--primary-color);
-      padding: 0;
-    }
-    .button--link:hover {
-      text-decoration: underline;
     }
   `;
 
@@ -916,157 +591,6 @@ function initUserSearch(container) {
     }
     // Clear the search input
     searchInput.value = "";
-  }
-}
-
-// Load and display rules for a specific user within their card details
-async function loadRulesForUser(userId, detailsContainer) {
-  try {
-    const rulesTableBody = detailsContainer.querySelector(".rules-tbody");
-    if (!rulesTableBody) {
-      error(
-        `Could not find .rules-tbody within provided container for user ${userId}`,
-      );
-      return;
-    }
-    const userRules = await getUserRules(userId);
-
-    if (!userRules || !userRules.rules || userRules.rules.length === 0) {
-      rulesTableBody.innerHTML = `
-        <tr class="empty-rules">
-          <td colspan="5">No rules defined yet</td>
-        </tr>
-      `;
-      return;
-    }
-
-    // Generate table rows for each rule
-    rulesTableBody.innerHTML = userRules.rules
-      .map((rule) => {
-        // Format parameters for display
-        let paramsDisplay = "";
-        if (rule.action === "HIGHLIGHT" && rule.params?.color) {
-          paramsDisplay = `
-          <div style="display: flex; align-items: center; gap: 5px;">
-            <span style="color: var(--text-secondary);">Color:</span>
-            <div style="width: 16px; height: 16px; background-color: ${rule.params.color}; border: 1px solid var(--border-color);"></div>
-            <span style="color: var(--text-secondary);">${rule.params.color}</span>
-          </div>
-        `;
-        } else {
-          paramsDisplay =
-            '<span style="color: var(--text-secondary);">None</span>';
-        }
-
-        // Format action, subject, and scope with friendly names
-        const actionName =
-          RULE_ACTIONS.find((a) => a.id === rule.action)?.name || rule.action;
-        const subjectName =
-          RULE_SUBJECTS.find((s) => s.id === rule.subject)?.name ||
-          rule.subject;
-        const scopeName =
-          RULE_SCOPES.find((s) => s.id === rule.scope)?.name || rule.scope;
-
-        return `
-        <tr data-rule-id="${rule.id}">
-          <td>${actionName}</td>
-          <td>${subjectName}</td>
-          <td>${scopeName}</td>
-          <td>${paramsDisplay}</td>
-          <td>
-            <div class="rules-actions">
-              <button class="button button--normal edit-inline-rule-btn" data-rule-id="${rule.id}">
-                <i class="fa fa-pencil"></i>
-              </button>
-              <button class="button button--normal delete-inline-rule-btn" data-rule-id="${rule.id}">
-                <i class="fa fa-trash"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
-      })
-      .join("");
-
-    // Add event listeners to edit and delete buttons within this specific table
-    rulesTableBody.querySelectorAll(".edit-inline-rule-btn").forEach((btn) => {
-      btn.addEventListener("click", () =>
-        editInlineRule(userId, btn.dataset.ruleId, detailsContainer),
-      );
-    });
-
-    rulesTableBody
-      .querySelectorAll(".delete-inline-rule-btn")
-      .forEach((btn) => {
-        btn.addEventListener("click", () =>
-          deleteInlineRule(userId, btn.dataset.ruleId, detailsContainer),
-        );
-      });
-  } catch (err) {
-    error(`Error loading rules for user ${userId}:`, err);
-    if (detailsContainer.querySelector(".rules-tbody")) {
-      detailsContainer.querySelector(".rules-tbody").innerHTML = `
-          <tr>
-            <td colspan="5">Error loading rules: ${err.message}</td>
-          </tr>
-        `;
-    }
-  }
-}
-
-// Edit an inline rule: Populate the inline form
-async function editInlineRule(userId, ruleId, detailsContainer) {
-  try {
-    const userRules = await getUserRules(userId);
-    if (!userRules || !userRules.rules) throw new Error("User rules not found");
-
-    const rule = userRules.rules.find((r) => r.id === ruleId);
-    if (!rule) throw new Error("Rule not found");
-
-    const ruleForm = detailsContainer.querySelector(".rule-editor-form");
-    const addRuleBtn = detailsContainer.querySelector(".add-rule-btn");
-    const paramsContainer = ruleForm.querySelector(".rule-params-container");
-
-    // Populate form
-    ruleForm.querySelector(".rule-id").value = rule.id;
-    ruleForm.querySelector(".rule-action").value = rule.action;
-    ruleForm.querySelector(".rule-subject").value = rule.subject;
-    ruleForm.querySelector(".rule-scope").value = rule.scope;
-
-    // Update and populate params UI
-    updateInlineParamsUI(rule.action, rule.params, paramsContainer);
-
-    // Show form, hide add button
-    ruleForm.style.display = "block";
-    addRuleBtn.style.display = "none";
-  } catch (err) {
-    error(`Error preparing inline edit for rule ${ruleId}:`, err);
-    alert(`Error editing rule: ${err.message}`);
-  }
-}
-
-// Delete an inline rule
-async function deleteInlineRule(userId, ruleId, detailsContainer) {
-  if (!confirm("Are you sure you want to delete this rule?")) {
-    return;
-  }
-
-  try {
-    await deleteRuleForUser(userId, ruleId);
-
-    // Reload rules display within this card
-    await loadRulesForUser(userId, detailsContainer);
-    // Update rule count in header
-    const userRules = await getUserRules(userId);
-    const ruleCount = userRules?.rules?.length || 0;
-    const headerStats = detailsContainer
-      .closest(".user-card")
-      .querySelector(".user-stats");
-    if (headerStats)
-      headerStats.textContent = `${ruleCount} rule${ruleCount !== 1 ? "s" : ""}`;
-  } catch (err) {
-    error(`Error deleting inline rule ${ruleId}:`, err);
-    alert(`Error deleting rule: ${err.message}`);
   }
 }
 
