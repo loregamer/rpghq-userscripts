@@ -175,13 +175,12 @@ async function renderUserDetails(userId, detailsContainer, mainContainer) {
         </select>
       </div>
       <div class="user-settings-actions">
-        <button class="button button--primary save-user-settings-btn">Save Changes</button>
-        <button class="button button--normal delete-user-rules-btn">Delete All Rules for This User</button>
+        <button class="button button--normal delete-user-rules-btn">Delete User</button>
       </div>
     </div>
   `;
 
-  // Add event listeners for color preview and save/delete actions
+  // Add event listeners for color preview and delete action
   const colorInput = detailsContainer.querySelector(".color-override-input");
   const usernamePreview = detailsContainer.querySelector(".username-preview");
   colorInput.addEventListener("input", () => {
@@ -189,39 +188,45 @@ async function renderUserDetails(userId, detailsContainer, mainContainer) {
       colorInput.value === "#000000" ? "inherit" : colorInput.value;
   });
 
+  // Auto-save on any input change
+  const autoSave = async () => {
+    try {
+      const avatarOverride = detailsContainer.querySelector(
+        ".avatar-override-input",
+      ).value;
+      const usernameColor =
+        colorInput.value !== "#000000" ? colorInput.value : null;
+      const threads = detailsContainer.querySelector(
+        ".threads-setting-input",
+      ).value;
+      const posts = detailsContainer.querySelector(
+        ".posts-setting-input",
+      ).value;
+      const mentions = detailsContainer.querySelector(
+        ".mentions-setting-input",
+      ).value;
+      const username = detailsContainer.closest(".user-card").dataset.username;
+      await updateUserRules(userId, {
+        username,
+        avatarOverride,
+        usernameColor,
+        threads,
+        posts,
+        mentions,
+      });
+      updateUserRuleCount(detailsContainer.closest(".user-card"));
+    } catch (err) {
+      error(`Error auto-saving settings for user ${userId}:`, err);
+    }
+  };
+
   detailsContainer
-    .querySelector(".save-user-settings-btn")
-    .addEventListener("click", async () => {
-      try {
-        const avatarOverride = detailsContainer.querySelector(
-          ".avatar-override-input",
-        ).value;
-        const usernameColor =
-          colorInput.value !== "#000000" ? colorInput.value : null;
-        const threads = detailsContainer.querySelector(
-          ".threads-setting-input",
-        ).value;
-        const posts = detailsContainer.querySelector(
-          ".posts-setting-input",
-        ).value;
-        const mentions = detailsContainer.querySelector(
-          ".mentions-setting-input",
-        ).value;
-        const username =
-          detailsContainer.closest(".user-card").dataset.username;
-        // Save all settings in userRules object
-        await updateUserRules(userId, {
-          username,
-          avatarOverride,
-          usernameColor,
-          threads,
-          posts,
-          mentions,
-        });
-      } catch (err) {
-        error(`Error saving settings for user ${userId}:`, err);
-        alert(`Error saving settings: ${err.message}`);
-      }
+    .querySelectorAll(
+      ".avatar-override-input, .color-override-input, .threads-setting-input, .posts-setting-input, .mentions-setting-input",
+    )
+    .forEach((input) => {
+      input.addEventListener("change", autoSave);
+      input.addEventListener("input", autoSave);
     });
 
   detailsContainer
@@ -236,11 +241,17 @@ async function renderUserDetails(userId, detailsContainer, mainContainer) {
       try {
         await deleteUserRules(userId);
         await renderUserDetails(userId, detailsContainer, mainContainer);
+        updateUserRuleCount(detailsContainer.closest(".user-card"));
       } catch (err) {
         error(`Error deleting rules for user ${userId}:`, err);
         alert(`Error deleting rules: ${err.message}`);
       }
     });
+
+  // Set rule count on open
+  setTimeout(() => {
+    updateUserRuleCount(detailsContainer.closest(".user-card"));
+  }, 0);
 }
 
 // Add CSS styles for the user rules UI
@@ -577,7 +588,14 @@ function initUserSearch(container) {
       }
 
       // Create the new card element
-      userCard = createUserCardElement(userId, username, 0, null); // Start with 0 rules
+      const userData = await getUserRules(userId);
+      const ruleCount = getUserRuleCount(userData);
+      userCard = createUserCardElement(
+        userId,
+        username,
+        ruleCount,
+        userData?.usernameColor,
+      );
 
       // Attach event listeners
       attachCardEventListeners(userCard, container);
@@ -592,6 +610,18 @@ function initUserSearch(container) {
     // Clear the search input
     searchInput.value = "";
   }
+}
+
+// Helper to count all non-empty user settings as rules
+function getUserRuleCount(userData) {
+  if (!userData) return 0;
+  let count = 0;
+  if (userData.avatarOverride) count++;
+  if (userData.usernameColor && userData.usernameColor !== "#000000") count++;
+  if (userData.threads) count++;
+  if (userData.posts) count++;
+  if (userData.mentions) count++;
+  return count;
 }
 
 // Load and display existing users with rules
@@ -610,7 +640,7 @@ async function loadExistingUsers(container) {
     // Create a card for each user
     const userCards = Object.entries(allUserRules)
       .map(([userId, userData]) => {
-        const ruleCount = userData.rules?.length || 0;
+        const ruleCount = getUserRuleCount(userData);
         const cardElement = createUserCardElement(
           userId,
           userData.username || `User #${userId}`,
@@ -652,7 +682,7 @@ function createUserCardElement(
     <div class="user-card-header">
       <div class="user-info">
         <span class="user-name" ${usernameStyle}>${username}</span>
-        <span class="user-stats">${ruleCount} rule${ruleCount !== 1 ? "s" : ""}</span>
+        <span class="user-stats user-rule-count">${ruleCount} rule${ruleCount !== 1 ? "s" : ""}</span>
       </div>
       <div class="user-card-actions">
         <button class="button button--icon expand-btn" title="Expand/Collapse">
@@ -685,5 +715,28 @@ function attachCardEventListeners(cardElement, container) {
       event.stopPropagation(); // Prevent header click listener
       toggleUserCard(cardElement, container);
     });
+  }
+}
+
+// Helper to update the rule count display on the user card
+function updateUserRuleCount(userCard) {
+  if (!userCard) return;
+  // Count non-empty settings as rules
+  const details = userCard.querySelector(".user-card-details");
+  if (!details) return;
+  const avatar = details.querySelector(".avatar-override-input")?.value?.trim();
+  const color = details.querySelector(".color-override-input")?.value;
+  const threads = details.querySelector(".threads-setting-input")?.value;
+  const posts = details.querySelector(".posts-setting-input")?.value;
+  const mentions = details.querySelector(".mentions-setting-input")?.value;
+  let count = 0;
+  if (avatar) count++;
+  if (color && color !== "#000000") count++;
+  if (threads) count++;
+  if (posts) count++;
+  if (mentions) count++;
+  const countEl = userCard.querySelector(".user-rule-count");
+  if (countEl) {
+    countEl.textContent = `${count} rule${count !== 1 ? "s" : ""}`;
   }
 }
