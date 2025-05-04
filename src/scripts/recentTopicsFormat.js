@@ -36,81 +36,6 @@ export function init({ getScriptSetting }) {
    *******************************************/
 
   /**
-   * Add hammer and pick symbol (?) to support threads
-   * Applies formatting to various thread types:
-   * - Strikethrough for solved threads
-   * - Italics + symbol for known issues
-   * - Hammer symbol for support threads (with normal font weight)
-   * - 🛈 symbol for suggestion threads
-   */
-  function addSupportSymbol(str, elem) {
-    const shouldAddSupportSymbol = getScriptSetting(
-      SCRIPT_ID,
-      "addSupportSymbol",
-      true,
-    );
-
-    if (!shouldAddSupportSymbol) return str; // Skip if setting is disabled
-
-    // Check if title contains special tags
-    const plainText = elem.textContent;
-    const isSolved = plainText.includes("[Solved]");
-    const isKnownIssue = plainText.includes("[Known Issue]");
-    const isSuggestion = plainText.includes("[Suggestion]");
-
-    // Handle suggestion threads - replace [Suggestion] with 🛈 symbol
-    if (isSuggestion) {
-      // Only replace if not already processed
-      if (!plainText.startsWith("🛈") && str.includes("[Suggestion]")) {
-        return `🛈 ${str.replace(/\[Suggestion\]/g, "").trim()}`;
-      }
-      return str;
-    }
-
-    // Handle solved threads - apply strikethrough and remove the tag
-    if (isSolved) {
-      // Only replace if not already processed
-      if (!str.includes("<s>") && str.includes("[Solved]")) {
-        return `<s>${str.replace(/\[Solved\]/g, "").trim()}</s>`;
-      }
-      return str;
-    }
-
-    // Handle Known Issue - make italic and add a symbol (ǃ ), remove the tag
-    if (isKnownIssue) {
-      // Only replace if not already processed
-      if (!str.includes("<i>") && str.includes("[Known Issue]")) {
-        return `ǃ  <i>${str.replace(/\[Known Issue\]/g, "").trim()}</i>`;
-      }
-      return str;
-    }
-
-    // Check if current URL contains both "f=" and "support" (case insensitive)
-    const currentUrl = window.location.href.toLowerCase();
-    const isInSupportForum =
-      currentUrl.includes("f=") && currentUrl.includes("support");
-
-    // Look for "Support" text in the thread row
-    const rowItem = elem.closest("li.row");
-    let hasSupport = false;
-
-    if (rowItem) {
-      hasSupport = rowItem.textContent.includes("Support");
-    }
-
-    // Apply the symbol if either condition is met
-    if (isInSupportForum || hasSupport) {
-      // Add the symbol at the beginning if not already present
-      if (!elem.textContent.startsWith("?")) {
-        // Use span with normal font weight to unbold the text
-        return `? <span style="font-weight: normal;">${str}</span>`;
-      }
-    }
-
-    return str;
-  }
-
-  /**
    * Make any text in (parentheses) smaller, non-bold
    * e.g. "Title (Extra Info)" -> "Title (<span>Extra Info</span>)"
    */
@@ -278,11 +203,6 @@ export function init({ getScriptSetting }) {
       "reformatAGThreads",
       true,
     );
-    const shouldAddSupportSymbol = getScriptSetting(
-      SCRIPT_ID,
-      "addSupportSymbol",
-      true,
-    );
     // Add settings checks for other styles if needed in the future
 
     const originalHTML = titleElem.innerHTML; // Work with HTML
@@ -309,11 +229,6 @@ export function init({ getScriptSetting }) {
     // Apply dash styling ONLY if AG formatting didn't run
     if (!agFormatted) {
       currentHTML = styleEverythingAfterFirstDash(currentHTML, titleElem);
-    }
-
-    // Apply support symbol styling if enabled
-    if (shouldAddSupportSymbol) {
-      currentHTML = addSupportSymbol(currentHTML, titleElem);
     }
 
     // Update DOM only if HTML actually changed
