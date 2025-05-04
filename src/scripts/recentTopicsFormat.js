@@ -1,15 +1,15 @@
 // RPGHQ - Slightly Formatted Thread Titles
 /**
- * Adds some minor formatting to thread titles, like unbolding stuff in parantheses or reformatting the AG threads
+ * Adds some minor formatting to thread titles, fixing malformed AG entries
  * Original script by loregamer, adapted for the RPGHQ Userscript Manager.
  * License: MIT
  *
  * @see G:/Modding/_Github/HQ-Userscripts/docs/scripts/recentTopicsFormat.md for documentation
  */
 
-// Note: Assumes getScriptSetting is provided to init by main.js
 export function init({ getScriptSetting }) {
   const SCRIPT_ID = "recentTopicsFormat"; // Define script ID for settings
+  const addedElements = [];
 
   /***************************************
    * 1) Remove ellipses/truncation in titles (Conditional)
@@ -19,28 +19,54 @@ export function init({ getScriptSetting }) {
   if (shouldWrapTitles) {
     const style = document.createElement("style");
     style.textContent = `
-           /* Ensure topic titles don't get truncated with ellipses */
-           .topictitle {
-               white-space: normal !important;
-               overflow: visible !important;
-               text-overflow: unset !important;
-               max-width: none !important;
-               display: inline-block;
-           }
-       `;
+      /* Ensure topic titles don't get truncated with ellipses */
+      .topictitle {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: unset !important;
+        max-width: none !important;
+        display: inline-block;
+      }
+    `;
     document.head.appendChild(style);
+    addedElements.push(style);
   }
 
-  /*******************************************
-   * 2) Functions to style different elements
-   *******************************************/
+  /**
+   * Fix malformed AG titles with "> characters
+   */
+  function fixBrokenTitle(titleElem) {
+    // Get the original text
+    const originalText = titleElem.textContent;
+
+    // Find malformed Jr. AG titles with the broken HTML entities
+    const brokenTitleRegex =
+      /(.*?)v0\.8;?">\s*([Jj]r\.\s*)?AG\s*-\s*([A-Za-z]+)/;
+
+    if (brokenTitleRegex.test(originalText)) {
+      const match = originalText.match(brokenTitleRegex);
+      if (!match) return;
+
+      // Extract the components
+      const gameTitle = match[1].trim();
+      const juniorPrefix = match[2] || "";
+      const month = match[3];
+
+      // Create a properly formatted title
+      let fixedTitle = `${gameTitle} - ${juniorPrefix}AG - ${month}`;
+
+      // Replace the broken text
+      titleElem.textContent = fixedTitle;
+      return true;
+    }
+
+    return false;
+  }
 
   /**
    * Make any text in (parentheses) smaller, non-bold
-   * e.g. "Title (Extra Info)" -> "Title (<span>Extra Info</span>)"
    */
   function styleParentheses(str) {
-    // Use HTML replace to avoid breaking existing spans
     return str.replace(/\(([^()]*)\)/g, (match, innerText) => {
       // Avoid double-wrapping
       if (
@@ -55,38 +81,18 @@ export function init({ getScriptSetting }) {
   }
 
   /**
-   * Style version numbers by adding 'v' prefix and making them smaller
-   * Matches patterns like: 1.0, 1.0.0, 1.0.0.1, etc.
-   */
-  function styleVersionNumbers(str) {
-    // Use HTML replace
-    return str.replace(/\b(\d+(?:\.\d+)+)\b/g, (match, versionNumber) => {
-      // Avoid double-wrapping
-      if (
-        str.includes(
-          `<span style="font-size: 0.75em;">v${versionNumber}</span>`,
-        )
-      ) {
-        return match;
-      }
-      return `<span style="font-size: 0.75em;">v${versionNumber}</span>`;
-    });
-  }
-
-  /**
    * Special formatting for Adventurer's Guild titles
-   * Format: "[x] Adventurer's Guild - Month: Games" or "Month: Games"
    */
   function styleAdventurersGuildTitle(str, elem) {
     // Check if it's an Adventurer's Guild title or post
-    const plainText = elem.textContent; // Use textContent for matching patterns
+    const plainText = elem.textContent;
     const isGuildTitle = plainText.includes("Adventurer's Guild");
     const isGuildForum =
       elem
         .closest(".row-item")
         ?.querySelector('.forum-links a[href*="adventurer-s-guild"]') !== null;
 
-    if (!isGuildTitle && !isGuildForum) return str; // Return original HTML if not relevant
+    if (!isGuildTitle && !isGuildForum) return str;
 
     let match;
     if (isGuildTitle) {
@@ -100,7 +106,7 @@ export function init({ getScriptSetting }) {
       match = plainText.match(forumRegex);
     }
 
-    if (!match) return str; // Return original HTML if no pattern match
+    if (!match) return str;
 
     if (isGuildTitle) {
       const [_, juniorPrefix, month, gamesList] = match;
@@ -114,11 +120,8 @@ export function init({ getScriptSetting }) {
 
   /**
    * Make text after dash unbolded (but keep same size)
-   * e.g. "Title - Game" -> "Title<span style="font-weight: normal"> - Game</span>"
-   * Handles both regular dash and em dash
    */
   function styleEverythingAfterFirstDash(str, elem) {
-    // Context check needed here because AG formatting might not run if setting is off
     const plainText = elem.textContent;
     const isGuildTitle = plainText.includes("Adventurer's Guild");
     const isGuildForum =
@@ -126,19 +129,16 @@ export function init({ getScriptSetting }) {
         .closest(".row-item")
         ?.querySelector('.forum-links a[href*="adventurer-s-guild"]') !== null;
 
-    if (isGuildTitle || isGuildForum) return str; // Don't process AG titles/posts here
+    if (isGuildTitle || isGuildForum) return str;
 
-    // Match both regular dash and em dash with optional spaces, ensuring it's not inside HTML tags
-    // This is tricky with regex on HTML, might need a simpler approach or DOM parsing
-    // Simple approach: find the first dash in text content, then reconstruct HTML
+    // Match both regular dash and em dash with optional spaces
     const dashMatch = plainText.match(/\s+[-—]\s+/);
     if (!dashMatch) return str;
 
     // Find the index of the first dash in the text content
     const dashIndexInText = dashMatch.index;
 
-    // Reconstruct carefully - this might break existing spans across the dash
-    // A more robust solution would parse the DOM nodes within the title element
+    // Reconstruct carefully
     let charCount = 0;
     let splitIndex = -1;
     for (let i = 0; i < elem.childNodes.length; i++) {
@@ -193,6 +193,10 @@ export function init({ getScriptSetting }) {
    * Process a single title element based on settings
    */
   function processTitle(titleElem) {
+    // First try to fix any broken titles
+    const wasFixed = fixBrokenTitle(titleElem);
+    if (wasFixed) return; // Skip further processing if we fixed a broken title
+
     const shouldUnboldParens = getScriptSetting(
       SCRIPT_ID,
       "unboldParentheses",
@@ -203,9 +207,8 @@ export function init({ getScriptSetting }) {
       "reformatAGThreads",
       true,
     );
-    // Add settings checks for other styles if needed in the future
 
-    const originalHTML = titleElem.innerHTML; // Work with HTML
+    const originalHTML = titleElem.innerHTML;
     let currentHTML = originalHTML;
     let agFormatted = false;
 
@@ -214,7 +217,7 @@ export function init({ getScriptSetting }) {
       const agResult = styleAdventurersGuildTitle(currentHTML, titleElem);
       if (agResult !== currentHTML) {
         currentHTML = agResult;
-        agFormatted = true; // Mark that AG formatting was applied
+        agFormatted = true;
       }
     }
 
@@ -222,9 +225,6 @@ export function init({ getScriptSetting }) {
     if (shouldUnboldParens) {
       currentHTML = styleParentheses(currentHTML);
     }
-
-    // Apply version styling (always, for now)
-    currentHTML = styleVersionNumbers(currentHTML);
 
     // Apply dash styling ONLY if AG formatting didn't run
     if (!agFormatted) {
@@ -241,7 +241,6 @@ export function init({ getScriptSetting }) {
    * Process all titles in a container element
    */
   function processTitlesInContainer(container) {
-    // Query only for direct children or specific containers if performance is an issue
     const titles = container.querySelectorAll(".topictitle");
     titles.forEach(processTitle);
   }
@@ -273,7 +272,14 @@ export function init({ getScriptSetting }) {
   return {
     cleanup: () => {
       observer.disconnect();
-      // Potentially add code here to revert styles if needed, though complex
+
+      // Remove added elements
+      addedElements.forEach((el) => {
+        if (el && el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      });
+
       console.log("Disconnected recentTopicsFormat observer.");
     },
   };
