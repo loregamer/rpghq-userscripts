@@ -5,10 +5,124 @@
  */
 import { log, debug } from "../../utils/logger.js";
 import { gmGetValue, gmSetValue, gmDeleteValue } from "../../main.js";
-import { clearAllCachedPosts } from "../../utils/postCache.js";
+import {
+  clearAllCachedPosts,
+  getAllCachedPosts,
+} from "../../utils/postCache.js";
 
 // Key for the auto-update check setting
 const AUTO_UPDATE_CHECK_KEY = "auto_update_check";
+
+// Function to count cached items by type
+function countCachedItems() {
+  // Get all GM storage keys
+  // eslint-disable-next-line no-undef
+  const allKeys = GM_listValues ? GM_listValues() : [];
+
+  // Define the prefixes we want to count
+  const prefixCounts = {
+    post_cache: 0,
+    bq_avatar_: 0,
+    bq_color_: 0,
+    post_content_: 0,
+    userColor_: 0,
+    userAvatar_: 0,
+    reactions_: 0,
+  };
+
+  // Count regular posts from post cache
+  const cachedPosts = getAllCachedPosts();
+  let postCount = 0;
+
+  // Count regular posts
+  Object.keys(cachedPosts).forEach((key) => {
+    if (key !== "topics") {
+      postCount++;
+    }
+  });
+
+  // Count topics
+  let topicCount = 0;
+  if (cachedPosts.topics) {
+    topicCount = Object.keys(cachedPosts.topics).length;
+  }
+
+  prefixCounts["post_cache"] = postCount + topicCount;
+
+  // Process each key to count by prefix
+  allKeys.forEach((key) => {
+    // Check if this key includes any of our prefixes after the GM_PREFIX
+    for (const prefix of Object.keys(prefixCounts)) {
+      if (prefix !== "post_cache" && key.includes(prefix)) {
+        prefixCounts[prefix]++;
+        break; // No need to check other prefixes
+      }
+    }
+  });
+
+  return prefixCounts;
+}
+
+// Function to update the cache count display
+function updateCacheCountsDisplay() {
+  const countsContainer = document.getElementById("cache-counts-container");
+  if (!countsContainer) return;
+
+  const counts = countCachedItems();
+
+  // Clear previous content
+  countsContainer.innerHTML = "";
+
+  // Create list with counts
+  const list = document.createElement("ul");
+  list.style.listStyleType = "none";
+  list.style.padding = "0";
+  list.style.margin = "0";
+  list.style.fontSize = "0.9em";
+
+  // Add items to list with friendly labels
+  const items = [
+    { key: "post_content_", label: "Post content cache" },
+    { key: "bq_avatar_", label: "User avatars (Better Quotes)" },
+    { key: "bq_color_", label: "User colors (Better Quotes)" },
+    { key: "userColor_", label: "User colors" },
+    { key: "userAvatar_", label: "User avatars" },
+    { key: "reactions_", label: "Reaction data" },
+  ];
+
+  items.forEach((item) => {
+    // Only show items with counts > 0
+    if (counts[item.key] > 0) {
+      const li = document.createElement("li");
+      li.style.marginBottom = "4px";
+      li.style.display = "flex";
+      li.style.justifyContent = "space-between";
+
+      const label = document.createElement("span");
+      label.textContent = item.label + ":";
+      label.style.marginRight = "8px";
+
+      const count = document.createElement("span");
+      count.textContent = counts[item.key];
+      count.style.fontWeight = "bold";
+
+      li.appendChild(label);
+      li.appendChild(count);
+      list.appendChild(li);
+    }
+  });
+
+  // If the list is empty, show a message
+  if (list.children.length === 0) {
+    const emptyMessage = document.createElement("li");
+    emptyMessage.textContent = "No cached items found";
+    emptyMessage.style.fontStyle = "italic";
+    emptyMessage.style.color = "#666";
+    list.appendChild(emptyMessage);
+  }
+
+  countsContainer.appendChild(list);
+}
 
 export function renderSettingsTab(container) {
   log("Rendering Settings tab...");
@@ -24,12 +138,13 @@ export function renderSettingsTab(container) {
       <div class="preferences-section-body">
         <div class="preference-item">
           <div class="preference-header">
-            <h4 class="preference-name">Post Cache</h4>
+            <h4 class="preference-name">Cache Management</h4>
             <div class="preference-control">
               <button id="clear-post-cache-btn" class="button1">Clear Cache</button>
             </div>
           </div>
           <p class="preference-description">Clear all cached posts, topic data, avatars, user colors, reactions, and other cached items. The cache will rebuild as you browse.</p>
+          <div id="cache-counts-container" class="cache-counts" style="margin-top: 12px; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 5px;"></div>
           <p id="cache-status-message" class="preference-status" style="font-style: italic; margin-top: 8px;"></p>
         </div>
       </div>
@@ -56,6 +171,11 @@ export function renderSettingsTab(container) {
     </div>
   `;
 
+  // Initialize the cache counts display
+  setTimeout(() => {
+    updateCacheCountsDisplay();
+  }, 100);
+
   // Add event listener for the clear cache button
   const clearCacheBtn = container.querySelector("#clear-post-cache-btn");
   const statusMessage = container.querySelector("#cache-status-message");
@@ -70,43 +190,46 @@ export function renderSettingsTab(container) {
       try {
         // First clear post cache using existing function
         const removedCount = clearAllCachedPosts();
-        
+
         // Get all GM storage keys
         // eslint-disable-next-line no-undef
         const allKeys = GM_listValues ? GM_listValues() : [];
-        
+
         // Define prefixes to clear
         const prefixesToClear = [
-          'bq_avatar_',
-          'bq_color_',
-          'post_content_',
-          'userColor_',
-          'userAvatar_',
-          'reactions_'
+          "bq_avatar_",
+          "bq_color_",
+          "post_content_",
+          "userColor_",
+          "userAvatar_",
+          "reactions_",
         ];
-        
+
         let additionalRemoved = 0;
-        
+
         // Process each key
-        allKeys.forEach(key => {
-          // Remove the GM_PREFIX to get the actual key name
-          const actualKey = key.replace(/^RPGHQ_Manager_/, '');
-          
-          // Check if this key starts with any of the prefixes
+        for (const key of allKeys) {
+          // Check if this key includes any of the prefixes
           for (const prefix of prefixesToClear) {
-            if (actualKey.startsWith(prefix)) {
-              // Delete this key
-              gmDeleteValue(actualKey);
+            if (key.includes(prefix)) {
+              // Delete this key directly (with the GM_PREFIX)
+              // eslint-disable-next-line no-undef
+              GM_deleteValue(key);
               additionalRemoved++;
-              debug(`Deleted GM value: ${actualKey}`);
+              debug(`Deleted GM value: ${key}`);
               break; // No need to check other prefixes
             }
           }
-        });
-        
+        }
+
         statusMessage.textContent = `Successfully cleared ${removedCount} cached posts and ${additionalRemoved} additional cached items.`;
         statusMessage.style.color = "green";
-        log(`Cache cleared: ${removedCount} posts and ${additionalRemoved} additional items`);
+        log(
+          `Cache cleared: ${removedCount} posts and ${additionalRemoved} additional items`,
+        );
+
+        // Update the cache counts display
+        updateCacheCountsDisplay();
       } catch (error) {
         statusMessage.textContent = `Error clearing cache: ${error.message}`;
         statusMessage.style.color = "red";
