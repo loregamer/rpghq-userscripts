@@ -70,12 +70,10 @@ export function init() {
 
             // Add the links as a custom attribute to the content block
             if (links.length > 0) {
-              const linksHtml = links
-                .map(
-                  (link) =>
-                    `<a href="${link}" target="_blank" rel="noopener noreferrer" class="disabled-embed-link">${link}</a>`,
-                )
-                .join("<br>");
+              let linksHtml = "";
+              links.forEach((link) => {
+                linksHtml += `<div style="margin: 10px 0;"><a href="${link}" target="_blank" rel="noopener noreferrer" class="disabled-embed-link">${link}</a></div>`;
+              });
               contentBlock.setAttribute("data-youtube-links", "");
               contentBlock.innerHTML += linksHtml;
             }
@@ -118,6 +116,9 @@ export function init() {
             const redditUrl = extractRedditUrl(iframe.src);
             if (redditUrl) {
               // Create the replacement link
+              const linkContainer = document.createElement("div");
+              linkContainer.style.margin = "10px 0";
+
               const link = document.createElement("a");
               link.href = redditUrl;
               link.textContent = redditUrl;
@@ -125,8 +126,10 @@ export function init() {
               link.rel = "noopener noreferrer";
               link.className = "disabled-embed-link";
 
+              linkContainer.appendChild(link);
+
               // Insert the link after the iframe
-              iframe.parentNode.insertBefore(link, iframe.nextSibling);
+              iframe.parentNode.insertBefore(linkContainer, iframe.nextSibling);
             }
           }
         });
