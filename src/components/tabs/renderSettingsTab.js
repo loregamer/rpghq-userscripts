@@ -75,10 +75,11 @@ function updateCacheCountsDisplay() {
 
   // Create list with counts
   const list = document.createElement("ul");
-  list.style.listStyleType = "none";
-  list.style.padding = "0";
-  list.style.margin = "0";
+  // list.style.listStyleType = "none"; // Removed to show bullets
+  // list.style.padding = "0"; // Removed to allow default bullet padding
+  list.style.margin = "0"; // Keep margin 0 or adjust as needed
   list.style.fontSize = "0.9em";
+  list.style.paddingLeft = "20px"; // Add some padding for bullets
 
   // Add items to list with friendly labels
   const items = [
@@ -95,19 +96,20 @@ function updateCacheCountsDisplay() {
     if (counts[item.key] > 0) {
       const li = document.createElement("li");
       li.style.marginBottom = "4px";
-      li.style.display = "flex";
-      li.style.justifyContent = "space-between";
+      // li.style.display = "flex"; // Removed for standard list item flow
+      // li.style.justifyContent = "space-between"; // Removed
 
       const label = document.createElement("span");
-      label.textContent = item.label + ":";
-      label.style.marginRight = "8px";
+      label.textContent = item.label + ": "; // Added space for better readability
+      // label.style.marginRight = "8px"; // No longer needed with flex removed
 
       const count = document.createElement("span");
       count.textContent = counts[item.key];
       count.style.fontWeight = "bold";
 
-      li.appendChild(label);
-      li.appendChild(count);
+      // Append text directly or use textContent for the li
+      li.appendChild(label); // Label first
+      li.appendChild(count); // Then count
       list.appendChild(li);
     }
   });
@@ -137,10 +139,10 @@ export function renderSettingsTab(container) {
       </div>
       <div class="preferences-section-body">
         <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Cache Management</h4>
+          <div class="preference-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h4 class="preference-name" style="margin-right: auto;">Cache Management</h4>
             <div class="preference-control">
-              <button id="clear-post-cache-btn" class="button1">Clear Cache</button>
+              <button id="clear-post-cache-btn" class="button1" style="padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">Clear Cache</button>
             </div>
           </div>
           <p class="preference-description">Clear all cached posts, topic data, avatars, user colors, reactions, and other cached items. The cache will rebuild as you browse.</p>
