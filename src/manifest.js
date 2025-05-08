@@ -41,7 +41,7 @@ export const SCRIPT_MANIFEST = [
     author: "loregamer",
     image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png", // Placeholder image
     path: "./scripts/disableEmbeds.js",
-    enabledByDefault: false,
+    enabledByDefault: true,
     settings: [
       // Settings are controlled through Forum Preferences
     ],
