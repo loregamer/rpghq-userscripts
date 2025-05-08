@@ -1,11 +1,11 @@
 {
   "document-start": [
+    "disableEmbeds",
     "_applyThreadPreferences",
     "_cachePostsOnPage",
     "_applyUserPreferences"
   ],
   "document-end": [
-    "disableEmbeds",
     "bbcode",
     "memberSearch",
     "randomTopic",
