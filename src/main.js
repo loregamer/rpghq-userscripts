@@ -57,6 +57,12 @@ export function gmSetValue(key, value) {
   GM_setValue(GM_PREFIX + key, value);
 }
 
+// eslint-disable-next-line func-style
+export function gmDeleteValue(key) {
+  // eslint-disable-next-line no-undef
+  GM_deleteValue(GM_PREFIX + key);
+}
+
 // --- Style Application ---
 // eslint-disable-next-line func-style
 export function applyCustomThemeStyles() {

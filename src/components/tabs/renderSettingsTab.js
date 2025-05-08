@@ -3,8 +3,8 @@
  *
  * @param {HTMLElement} container - The container element to render into
  */
-import { log } from "../../utils/logger.js";
-import { gmGetValue, gmSetValue } from "../../main.js";
+import { log, debug } from "../../utils/logger.js";
+import { gmGetValue, gmSetValue, gmDeleteValue } from "../../main.js";
 import { clearAllCachedPosts } from "../../utils/postCache.js";
 
 // Key for the auto-update check setting
@@ -29,7 +29,7 @@ export function renderSettingsTab(container) {
               <button id="clear-post-cache-btn" class="button1">Clear Cache</button>
             </div>
           </div>
-          <p class="preference-description">Clear all cached posts and topic data. The cache will rebuild as you browse.</p>
+          <p class="preference-description">Clear all cached posts, topic data, avatars, user colors, reactions, and other cached items. The cache will rebuild as you browse.</p>
           <p id="cache-status-message" class="preference-status" style="font-style: italic; margin-top: 8px;"></p>
         </div>
       </div>
@@ -68,13 +68,49 @@ export function renderSettingsTab(container) {
     // Clear the cache
     setTimeout(() => {
       try {
+        // First clear post cache using existing function
         const removedCount = clearAllCachedPosts();
-        statusMessage.textContent = `Successfully cleared ${removedCount} cached items.`;
+        
+        // Get all GM storage keys
+        // eslint-disable-next-line no-undef
+        const allKeys = GM_listValues ? GM_listValues() : [];
+        
+        // Define prefixes to clear
+        const prefixesToClear = [
+          'bq_avatar_',
+          'bq_color_',
+          'post_content_',
+          'userColor_',
+          'userAvatar_',
+          'reactions_'
+        ];
+        
+        let additionalRemoved = 0;
+        
+        // Process each key
+        allKeys.forEach(key => {
+          // Remove the GM_PREFIX to get the actual key name
+          const actualKey = key.replace(/^RPGHQ_Manager_/, '');
+          
+          // Check if this key starts with any of the prefixes
+          for (const prefix of prefixesToClear) {
+            if (actualKey.startsWith(prefix)) {
+              // Delete this key
+              gmDeleteValue(actualKey);
+              additionalRemoved++;
+              debug(`Deleted GM value: ${actualKey}`);
+              break; // No need to check other prefixes
+            }
+          }
+        });
+        
+        statusMessage.textContent = `Successfully cleared ${removedCount} cached posts and ${additionalRemoved} additional cached items.`;
         statusMessage.style.color = "green";
+        log(`Cache cleared: ${removedCount} posts and ${additionalRemoved} additional items`);
       } catch (error) {
         statusMessage.textContent = `Error clearing cache: ${error.message}`;
         statusMessage.style.color = "red";
-        log(`Error clearing post cache: ${error}`);
+        log(`Error clearing cache: ${error}`);
       } finally {
         // Re-enable button
         clearCacheBtn.disabled = false;
