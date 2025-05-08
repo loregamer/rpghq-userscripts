@@ -572,7 +572,12 @@ function init() {
     // Update current phase and execute load order
     currentExecutionPhase = "after_dom";
     executeLoadOrderForPhase("after_dom");
-    checkForUpdates(); // Check for updates after everything else
+
+    // Check for updates if the setting is enabled
+    const autoUpdateCheck = gmGetValue("auto_update_check", true);
+    if (autoUpdateCheck) {
+      checkForUpdates();
+    }
   }, 500); // Small delay to ensure everything is loaded
 
   // Add keyboard shortcut listener for Insert key

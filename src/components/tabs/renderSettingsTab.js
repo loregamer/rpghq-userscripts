@@ -7,8 +7,14 @@ import { log } from "../../utils/logger.js";
 import { gmGetValue, gmSetValue } from "../../main.js";
 import { clearAllCachedPosts } from "../../utils/postCache.js";
 
+// Key for the auto-update check setting
+const AUTO_UPDATE_CHECK_KEY = "auto_update_check";
+
 export function renderSettingsTab(container) {
   log("Rendering Settings tab...");
+
+  // Get the current auto-update check setting
+  const autoUpdateCheck = gmGetValue(AUTO_UPDATE_CHECK_KEY, true); // Default to true
 
   container.innerHTML = `
     <div class="preferences-section">
@@ -36,23 +42,10 @@ export function renderSettingsTab(container) {
       <div class="preferences-section-body">
         <div class="preference-item">
           <div class="preference-header">
-            <h4 class="preference-name">Default View</h4>
-            <div class="preference-control">
-              <select class="setting-input">
-                <option value="grid" selected>Grid</option>
-                <option value="list">List</option>
-              </select>
-            </div>
-          </div>
-          <p class="preference-description">Choose the default view for displaying scripts</p>
-        </div>
-      
-        <div class="preference-item">
-          <div class="preference-header">
             <h4 class="preference-name">Auto-check for Updates</h4>
             <div class="preference-control">
               <label class="toggle-switch">
-                <input type="checkbox" checked>
+                <input type="checkbox" id="auto-update-check" ${autoUpdateCheck ? "checked" : ""}>
                 <span class="toggle-slider"></span>
               </label>
             </div>
@@ -88,5 +81,12 @@ export function renderSettingsTab(container) {
         clearCacheBtn.textContent = "Clear Cache";
       }
     }, 300); // Short delay for visual feedback
+  });
+
+  // Add event listener for the auto-update checkbox
+  const autoUpdateCheckbox = container.querySelector("#auto-update-check");
+  autoUpdateCheckbox.addEventListener("change", (e) => {
+    gmSetValue(AUTO_UPDATE_CHECK_KEY, e.target.checked);
+    log(`Auto-update check set to: ${e.target.checked}`);
   });
 }
