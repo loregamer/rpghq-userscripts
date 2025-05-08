@@ -4,43 +4,27 @@
  * @param {HTMLElement} container - The container element to render into
  */
 import { log } from "../../utils/logger.js";
+import { gmGetValue, gmSetValue } from "../../main.js";
+import { clearAllCachedPosts } from "../../utils/postCache.js";
+
 export function renderSettingsTab(container) {
   log("Rendering Settings tab...");
 
   container.innerHTML = `
-    <h2>Global Settings</h2>
-  
     <div class="preferences-section">
       <div class="preferences-section-header">
-        <h3 class="preferences-section-title">Appearance</h3>
+        <h3 class="preferences-section-title">Data Management</h3>
       </div>
       <div class="preferences-section-body">
         <div class="preference-item">
           <div class="preference-header">
-            <h4 class="preference-name">Theme</h4>
+            <h4 class="preference-name">Post Cache</h4>
             <div class="preference-control">
-              <select class="setting-input">
-                <option value="dark" selected>Dark</option>
-                <option value="light">Light</option>
-                <option value="system">System Default</option>
-              </select>
+              <button id="clear-post-cache-btn" class="button1">Clear Cache</button>
             </div>
           </div>
-          <p class="preference-description">Choose your preferred theme for the userscript manager</p>
-        </div>
-      
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Script Card Size</h4>
-            <div class="preference-control">
-              <select class="setting-input">
-                <option value="small">Small</option>
-                <option value="medium" selected>Medium</option>
-                <option value="large">Large</option>
-              </select>
-            </div>
-          </div>
-          <p class="preference-description">Adjust the size of script cards in the gallery view</p>
+          <p class="preference-description">Clear all cached posts and topic data. The cache will rebuild as you browse.</p>
+          <p id="cache-status-message" class="preference-status" style="font-style: italic; margin-top: 8px;"></p>
         </div>
       </div>
     </div>
@@ -77,43 +61,32 @@ export function renderSettingsTab(container) {
         </div>
       </div>
     </div>
-  
-    <div class="preferences-section">
-      <div class="preferences-section-header">
-        <h3 class="preferences-section-title">Advanced</h3>
-      </div>
-      <div class="preferences-section-body">
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Update Check Interval</h4>
-            <div class="preference-control">
-              <select class="setting-input">
-                <option value="daily">Daily</option>
-                <option value="weekly" selected>Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-            </div>
-          </div>
-          <p class="preference-description">How often to check for script updates</p>
-        </div>
-      
-        <div class="preference-item">
-          <div class="preference-header">
-            <h4 class="preference-name">Debug Mode</h4>
-            <div class="preference-control">
-              <label class="toggle-switch">
-                <input type="checkbox">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-          <p class="preference-description">Enable verbose console logging for troubleshooting</p>
-        </div>
-      </div>
-    </div>
-  
-    <div class="info-note">
-      <strong>Note:</strong> These are view-only representations of settings. Changes made here will not be saved.
-    </div>
   `;
+
+  // Add event listener for the clear cache button
+  const clearCacheBtn = container.querySelector("#clear-post-cache-btn");
+  const statusMessage = container.querySelector("#cache-status-message");
+
+  clearCacheBtn.addEventListener("click", () => {
+    // Disable button while processing
+    clearCacheBtn.disabled = true;
+    clearCacheBtn.textContent = "Clearing...";
+
+    // Clear the cache
+    setTimeout(() => {
+      try {
+        const removedCount = clearAllCachedPosts();
+        statusMessage.textContent = `Successfully cleared ${removedCount} cached items.`;
+        statusMessage.style.color = "green";
+      } catch (error) {
+        statusMessage.textContent = `Error clearing cache: ${error.message}`;
+        statusMessage.style.color = "red";
+        log(`Error clearing post cache: ${error}`);
+      } finally {
+        // Re-enable button
+        clearCacheBtn.disabled = false;
+        clearCacheBtn.textContent = "Clear Cache";
+      }
+    }, 300); // Short delay for visual feedback
+  });
 }

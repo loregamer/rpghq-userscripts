@@ -32,7 +32,9 @@ export function showModal({
           <div class="mod-manager-tab" data-tab="forum">
             <i class="fa fa-sliders"></i> Forum Preferences
           </div>
-          <!-- Settings tab completely hidden -->
+          <div class="mod-manager-tab" data-tab="settings">
+            <i class="fa fa-cog"></i> Settings
+          </div>
         </div>
         <div class="mod-manager-content" id="mod-manager-content">
           <!-- Content loaded dynamically -->

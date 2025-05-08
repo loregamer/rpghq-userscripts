@@ -189,6 +189,33 @@ export function cacheLastPosts() {
 }
 
 /**
+ * Clear all cached posts and topics
+ * @returns {number} Number of items that were removed
+ */
+export function clearAllCachedPosts() {
+  const cachedPosts = getAllCachedPosts();
+  let removedCount = 0;
+
+  // Count regular posts
+  Object.keys(cachedPosts).forEach((key) => {
+    if (key !== "topics") {
+      removedCount++;
+    }
+  });
+
+  // Count topics
+  if (cachedPosts.topics) {
+    removedCount += Object.keys(cachedPosts.topics).length;
+  }
+
+  // Clear all by setting to empty object
+  gmSetValue(CACHE_KEY, {});
+  log(`Cleared all cached posts: ${removedCount} items removed`);
+
+  return removedCount;
+}
+
+/**
  * Clear old cached posts (older than specified days)
  * @param {number} days - Number of days to keep posts (default 7)
  */
