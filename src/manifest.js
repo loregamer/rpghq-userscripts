@@ -34,6 +34,20 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
   },
   {
+    id: "disableEmbeds",
+    name: "Disable Media Embeds",
+    version: "1.0.0",
+    description: "Replaces YouTube and Reddit embeds with plain links",
+    author: "loregamer",
+    image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png", // Placeholder image
+    path: "./scripts/disableEmbeds.js",
+    enabledByDefault: false,
+    settings: [
+      // Settings are controlled through Forum Preferences
+    ],
+    categories: ["UI"],
+  },
+  {
     id: "kalareact",
     name: "Kalarion Reaction Auto-Marker",
     version: "1.0.0",

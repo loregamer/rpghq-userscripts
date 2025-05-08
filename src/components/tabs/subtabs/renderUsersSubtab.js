@@ -45,7 +45,7 @@ export function renderUsersSubtab(container) {
   // Create the main structure for the users subtab
   container.innerHTML = `
     <div class="wip-banner">
-      <i class="fa fa-wrench"></i> Thread Preferences - Work In Progress
+      <i class="fa fa-wrench"></i> Work In Progress
     </div>
     <div class="preferences-section">
       <div class="preferences-section-header">

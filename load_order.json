@@ -5,6 +5,7 @@
     "_applyUserPreferences"
   ],
   "document-end": [
+    "disableEmbeds",
     "bbcode",
     "memberSearch",
     "randomTopic",
@@ -14,7 +15,8 @@
     "separateReactions",
     "quotes",
     "recentTopicsFormat",
-    "commaFormatter"
+    "commaFormatter",
+    "disableEmbeds"
   ],
   "document-idle": [],
   "after_dom": []

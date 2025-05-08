@@ -255,12 +255,14 @@ import * as kalareact from "./scripts/kalareact.js";
 import * as bbcode from "./scripts/bbcode.js";
 import * as commaFormatter from "./scripts/commaFormatter.js";
 import * as quotes from "./scripts/quotes.js";
+import * as disableEmbeds from "./scripts/disableEmbeds.js";
 // Map of script ids to their modules
 const scriptModules = {
   commaFormatter: commaFormatter,
   bbcode: bbcode,
 
   quotes: quotes,
+  disableEmbeds: disableEmbeds,
 
   kalareact: kalareact,
 
