@@ -1,22 +1,50 @@
 // Shared utility functions for RPGHQ Userscripts
+import {
+  cachePostsFromTopicReview,
+  cachePostsFromViewTopic,
+  cacheLastPosts,
+  clearOldCachedPosts,
+  getCachedPost,
+  getCachedTopicInfo,
+} from "./postCache.js";
+import { log, debug } from "./logger.js";
 
 export const sharedUtils = {
   // Caching functions will go here
   _cachePostData: (postId, data) => {
-    console.log(`Caching data for post ${postId}`);
-    // GM_setValue(`post_${postId}`, JSON.stringify(data)); // Example structure
+    log(`Caching data for post ${postId}`);
+    // This functionality is now handled by the postCache.js module
   },
   _getCachedPostData: (postId) => {
-    console.log(`Getting cached data for post ${postId}`);
-    // const cached = GM_getValue(`post_${postId}`); // Example structure
-    // return cached ? JSON.parse(cached) : null;
-    return null; // Placeholder
+    debug(`Getting cached data for post ${postId}`);
+    return getCachedPost(postId);
   },
 
-  // Page-level Caching Logic (Placeholders)
+  // Page-level Caching Logic
   _cachePostsOnPage: () => {
-    console.log("Shared Logic: Caching posts on current page (stub).");
-    // Logic to find all posts on the page and call cachePostData for each
+    log("Caching posts on current page");
+
+    // Different caching depending on page type
+    if (window.location.href.includes("posting.php")) {
+      cachePostsFromTopicReview();
+    }
+
+    if (window.location.href.includes("viewtopic.php")) {
+      cachePostsFromViewTopic();
+    }
+
+    if (
+      window.location.href.includes("index.php") ||
+      window.location.href.includes("viewforum.php")
+    ) {
+      cacheLastPosts();
+    }
+
+    // Periodically clean up old cached posts (once per session)
+    if (!sharedUtils._cleanupRun) {
+      clearOldCachedPosts(7); // Keep posts for 7 days
+      sharedUtils._cleanupRun = true;
+    }
   },
 
   // Preference Application Logic (Placeholders)
@@ -29,13 +57,11 @@ export const sharedUtils = {
     // Logic to read stored thread preferences (pinning/hiding/highlighting topics) and apply them
   },
   _cacheTopicData: (topicId, data) => {
-    console.log(`Caching data for topic ${topicId}`);
-    // GM_setValue(`topic_${topicId}`, JSON.stringify(data)); // Example structure
+    log(`Caching data for topic ${topicId}`);
+    // This functionality is now handled by the postCache.js module
   },
   _getCachedTopicData: (topicId) => {
-    console.log(`Getting cached data for topic ${topicId}`);
-    // const cached = GM_getValue(`topic_${topicId}`); // Example structure
-    // return cached ? JSON.parse(cached) : null;
-    return null; // Placeholder
+    debug(`Getting cached data for topic ${topicId}`);
+    return getCachedTopicInfo(topicId);
   },
 };
