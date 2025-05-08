@@ -7,6 +7,8 @@
  * @param {string} [options.initialTabName="installed"] - The name of the tab to show initially.
  */
 import { log } from "../utils/logger.js";
+import { gmGetValue } from "../main.js";
+import { checkForUpdates } from "../utils/updateChecker.js";
 export function showModal({
   loadTabContent,
   hideModal,
@@ -22,7 +24,7 @@ export function showModal({
     modal.innerHTML = `
       <div class="mod-manager-modal-content">
         <div class="mod-manager-header">
-          <h2 class="mod-manager-title">RPGHQ Userscript Manager <span style="font-size: x-small;">v${GM_info.script.version}</span></h2>
+          <h2 class="mod-manager-title">RPGHQ Userscript Manager <span style="font-size: x-small;">v${GM_info.script.version}</span> ${!gmGetValue("auto_update_check", true) ? '<button id="check-update-btn" style="margin-left: 10px; cursor: pointer; background-color: #C62D51; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; padding: 0; position: relative; top: -1px;"><i class="fa fa-refresh" aria-hidden="true"></i></button>' : ""}</h2>
           <span class="mod-manager-close">&times;</span>
         </div>
         <div class="mod-manager-tabs">
@@ -47,6 +49,54 @@ export function showModal({
     modal.querySelector(".mod-manager-close").addEventListener("click", () => {
       hideModal();
     });
+
+    // Add event listener for the update check button if it exists
+    const updateButton = modal.querySelector("#check-update-btn");
+    if (updateButton) {
+      updateButton.addEventListener("click", () => {
+        log("Manual update check triggered");
+
+        // Save original button content
+        const originalContent = updateButton.innerHTML;
+
+        // Show checking state
+        updateButton.innerHTML =
+          '<i class="fa fa-spinner fa-spin" aria-hidden="true"></i>';
+        updateButton.title = "Checking...";
+        updateButton.disabled = true;
+
+        // Create a custom update checker that handles the button states
+        checkForUpdates({
+          onNoUpdate: () => {
+            // Show no update found state
+            updateButton.innerHTML =
+              '<i class="fa fa-check" aria-hidden="true"></i>';
+            updateButton.title = "No update found";
+            updateButton.disabled = false;
+
+            // Reset after 3 seconds
+            setTimeout(() => {
+              updateButton.innerHTML = originalContent;
+              updateButton.title = "Check for update";
+            }, 3000);
+          },
+          onError: () => {
+            // Show error state
+            updateButton.innerHTML =
+              '<i class="fa fa-exclamation" aria-hidden="true"></i>';
+            updateButton.title = "Check failed";
+            updateButton.disabled = false;
+
+            // Reset after 3 seconds
+            setTimeout(() => {
+              updateButton.innerHTML = originalContent;
+              updateButton.title = "Check for update";
+            }, 3000);
+          },
+          // For update found case, showUpdateNotification will handle it
+        });
+      });
+    }
 
     modal.addEventListener("click", (e) => {
       if (e.target === modal) {

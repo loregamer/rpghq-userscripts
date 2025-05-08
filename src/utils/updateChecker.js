@@ -17,7 +17,7 @@ function compareVersions(v1, v2) {
   return 0;
 }
 
-export async function checkForUpdates() {
+export async function checkForUpdates(options = {}) {
   log("Checking for userscript updates...");
 
   const currentVersion = GM_info.script.version;
@@ -51,18 +51,32 @@ export async function checkForUpdates() {
               log(`Update available: ${latestVersion}`);
               // Call the notification function (currently commented out)
               showUpdateNotification(latestVersion, downloadUrl);
+              // Open download link in new tab if triggered manually (through options parameter)
+              if (options && typeof options === "object") {
+                window.open(downloadUrl, "_blank");
+              }
             } else {
               log("Script is up to date.");
+              // Call onNoUpdate callback if provided
+              if (options && typeof options.onNoUpdate === "function") {
+                options.onNoUpdate();
+              }
             }
           } else {
             warn("Could not find @version tag in metadata file:", metaUrl);
           }
         } else {
           warn(`Failed to fetch metadata. Status: ${response.status}`, metaUrl);
+          if (options && typeof options.onError === "function") {
+            options.onError();
+          }
         }
       },
       onerror: function (response) {
         error("Error fetching metadata:", response);
+        if (options && typeof options.onError === "function") {
+          options.onError();
+        }
       },
     });
   } catch (err) {
