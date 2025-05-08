@@ -22,103 +22,146 @@ export function init() {
     return { cleanup: () => {} };
   }
 
-  // Create a stylesheet that will be injected
+  // Create stylesheet rules
   let styleRules = [];
 
   // Add rules for disabled YouTube embeds
   if (disableYouTube) {
     // Hide YouTube embeds completely
     styleRules.push(`
-      /* Hide YouTube embeds */
+      /* Hide YouTube embeds but keep them in the DOM */
       span[data-s9e-mediaembed="youtube"] {
-        display: none !important;
+        display: none !important; 
       }
     `);
 
-    // Add a CSS pattern that will replace the YouTube embeds with a custom attribute
-    const youtubeCSS = `
-      /* Replace YouTube embeds with links */
-      .content:after {
-        content: attr(data-youtube-links);
-        display: block;
-      }
-    `;
-    styleRules.push(youtubeCSS);
-
-    // Function to replace YouTube embeds with custom attribute
-    const replaceYouTubeEmbeds = () => {
+    // Function to add links after YouTube embeds
+    const processYouTubeEmbeds = () => {
       try {
-        // Process all content blocks with YouTube embeds
-        const contentBlocks = document.querySelectorAll(".content");
-        contentBlocks.forEach((contentBlock) => {
-          // Check if this content block has YouTube embeds
-          const youtubeEmbeds = contentBlock.querySelectorAll(
-            'span[data-s9e-mediaembed="youtube"]',
-          );
-          if (youtubeEmbeds.length > 0) {
-            // Extract links from all YouTube embeds in this content block
-            let links = [];
-            youtubeEmbeds.forEach((embed) => {
-              const iframe = embed.querySelector("iframe");
-              if (iframe && iframe.src) {
-                const videoId = extractYouTubeId(iframe.src);
-                if (videoId) {
-                  links.push(`https://www.youtube.com/watch?v=${videoId}`);
-                }
-              }
-            });
+        // Find all YouTube embeds
+        const youtubeEmbeds = document.querySelectorAll(
+          'span[data-s9e-mediaembed="youtube"]',
+        );
+        log(`Found ${youtubeEmbeds.length} YouTube embeds to process`);
 
-            // Add the links as a custom attribute to the content block
-            if (links.length > 0) {
-              let linksHtml = "";
-              links.forEach((link) => {
-                linksHtml += `<div style="margin: 10px 0;"><a href="${link}" target="_blank" rel="noopener noreferrer" class="disabled-embed-link">${link}</a></div>`;
-              });
-              contentBlock.setAttribute("data-youtube-links", "");
-              contentBlock.innerHTML += linksHtml;
+        youtubeEmbeds.forEach((embed, index) => {
+          try {
+            // Check if we already processed this embed (has a next sibling with our class)
+            if (
+              embed.nextSibling &&
+              embed.nextSibling.classList &&
+              embed.nextSibling.classList.contains("embed-replacement-link")
+            ) {
+              return; // Skip already processed embeds
             }
+
+            // Get the iframe to extract the video ID
+            const iframe = embed.querySelector("iframe");
+            if (iframe && iframe.src) {
+              const videoId = extractYouTubeId(iframe.src);
+              if (videoId) {
+                const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+                // Create a container for the link
+                const linkContainer = document.createElement("div");
+                linkContainer.className = "embed-replacement-link";
+                linkContainer.style.margin = "10px 0";
+
+                // Create the link
+                const link = document.createElement("a");
+                link.href = videoUrl;
+                link.textContent = videoUrl;
+                link.target = "_blank";
+                link.rel = "noopener noreferrer";
+                link.className = "disabled-embed-link";
+
+                linkContainer.appendChild(link);
+
+                // Insert after the embed
+                if (embed.nextSibling) {
+                  embed.parentNode.insertBefore(
+                    linkContainer,
+                    embed.nextSibling,
+                  );
+                } else {
+                  embed.parentNode.appendChild(linkContainer);
+                }
+
+                log(
+                  `Processed YouTube embed ${index + 1}: Added link for ${videoUrl}`,
+                );
+              }
+            }
+          } catch (error) {
+            log(
+              `Error processing YouTube embed ${index + 1}: ${error.message}`,
+            );
           }
         });
       } catch (error) {
-        log(`Error replacing YouTube embeds: ${error.message}`);
+        log(`Error processing YouTube embeds: ${error.message}`);
       }
     };
 
-    // Run the replacement as soon as possible
+    // Run once when DOM is ready
     if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", replaceYouTubeEmbeds, {
+      document.addEventListener("DOMContentLoaded", processYouTubeEmbeds, {
         once: true,
       });
     } else {
-      replaceYouTubeEmbeds();
+      processYouTubeEmbeds();
     }
   }
 
   // Add rules for disabled Reddit embeds
   if (disableReddit) {
-    // Hide Reddit embeds completely
+    // Hide Reddit embeds
     styleRules.push(`
-      /* Hide Reddit embeds */
+      /* Hide Reddit embeds but keep them in the DOM */
       iframe[data-s9e-mediaembed="reddit"] {
         display: none !important;
       }
     `);
 
-    // Function to replace Reddit embeds
-    const replaceRedditEmbeds = () => {
+    // Function to add links after Reddit embeds
+    const processRedditEmbeds = () => {
       try {
-        // Process all Reddit embeds
+        // Find all Reddit embeds
         const redditEmbeds = document.querySelectorAll(
           'iframe[data-s9e-mediaembed="reddit"]',
         );
-        redditEmbeds.forEach((iframe) => {
-          if (iframe && iframe.src) {
-            const redditUrl = extractRedditUrl(iframe.src);
-            if (redditUrl) {
-              // Create the replacement link
+        log(`Found ${redditEmbeds.length} Reddit embeds to process`);
+
+        redditEmbeds.forEach((iframe, index) => {
+          try {
+            // Check if we already processed this embed
+            if (
+              iframe.nextSibling &&
+              iframe.nextSibling.classList &&
+              iframe.nextSibling.classList.contains("embed-replacement-link")
+            ) {
+              return; // Skip already processed embeds
+            }
+
+            if (iframe.src) {
+              // Try to directly access the full URL from the iframe source
+              let redditUrl = extractRedditUrl(iframe.src);
+
+              // If we couldn't get a proper URL, use a generic Reddit link
+              if (!redditUrl) {
+                // Use a generic Reddit URL
+                redditUrl = "https://www.reddit.com";
+                log(
+                  `Could not extract specific Reddit URL for embed ${index + 1}, using generic URL`,
+                );
+              }
+
+              // Create a container for the link
               const linkContainer = document.createElement("div");
+              linkContainer.className = "embed-replacement-link";
               linkContainer.style.margin = "10px 0";
 
+              // Create the link
               const link = document.createElement("a");
               link.href = redditUrl;
               link.textContent = redditUrl;
@@ -128,29 +171,42 @@ export function init() {
 
               linkContainer.appendChild(link);
 
-              // Insert the link after the iframe
-              iframe.parentNode.insertBefore(linkContainer, iframe.nextSibling);
+              // Insert after the iframe
+              if (iframe.nextSibling) {
+                iframe.parentNode.insertBefore(
+                  linkContainer,
+                  iframe.nextSibling,
+                );
+              } else {
+                iframe.parentNode.appendChild(linkContainer);
+              }
+
+              log(
+                `Processed Reddit embed ${index + 1}: Added link for ${redditUrl}`,
+              );
             }
+          } catch (error) {
+            log(`Error processing Reddit embed ${index + 1}: ${error.message}`);
           }
         });
       } catch (error) {
-        log(`Error replacing Reddit embeds: ${error.message}`);
+        log(`Error processing Reddit embeds: ${error.message}`);
       }
     };
 
-    // Run the replacement as soon as possible
+    // Run once when DOM is ready
     if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", replaceRedditEmbeds, {
+      document.addEventListener("DOMContentLoaded", processRedditEmbeds, {
         once: true,
       });
     } else {
-      replaceRedditEmbeds();
+      processRedditEmbeds();
     }
   }
 
   // Add styles for the replacement links
   styleRules.push(`
-    /* Styles for embedded links */
+    /* Styles for disabled embed links */
     .disabled-embed-link {
       display: inline-block;
       padding: 8px 12px;
@@ -167,7 +223,6 @@ export function init() {
 
   // Inject the stylesheet
   if (styleRules.length > 0) {
-    // Use GM_addStyle to add the style rules
     try {
       // eslint-disable-next-line no-undef
       GM_addStyle(styleRules.join("\n"));
@@ -203,7 +258,19 @@ export function init() {
     const match = url.match(/reddit\.min\.html#(.+?)(?:#|$)/);
     if (match) {
       // Convert the path to a full Reddit URL
-      const path = match[1].replace(/\\/g, "/");
+      let path = match[1].replace(/\\/g, "/");
+
+      // Fix path format: if it's missing /r/ between reddit.com and subreddit name, add it
+      if (path.match(/^ClaudeAI\/comments\//)) {
+        path = "r/" + path; // Add the missing 'r/' prefix
+      } else if (!path.startsWith("r/") && path.includes("/comments/")) {
+        // Handle any other subreddit missing r/
+        const parts = path.split("/comments/");
+        if (parts.length === 2) {
+          path = "r/" + parts[0] + "/comments/" + parts[1];
+        }
+      }
+
       return `https://www.reddit.com/${path}`;
     }
     return null;
