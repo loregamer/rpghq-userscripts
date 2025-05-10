@@ -21,7 +21,8 @@ function countCachedItems() {
 
   // Define the prefixes we want to count
   const prefixCounts = {
-    post_cache: 0,
+    post_cache: 0, // For counting posts from getAllCachedPosts()
+    cached_posts: 0, // For counting from RPGHQ_Manager_cached_posts key
     bq_avatar_: 0,
     bq_color_: 0,
     post_content_: 0,
@@ -58,6 +59,11 @@ function countCachedItems() {
         break; // No need to check other prefixes
       }
     }
+
+    // Special case for RPGHQ_Manager_cached_posts key
+    if (key === "RPGHQ_Manager_cached_posts") {
+      prefixCounts["cached_posts"] = 1; // Count it as 1 item for the cached_posts category
+    }
   });
 
   return prefixCounts;
@@ -83,7 +89,11 @@ function updateCacheCountsDisplay() {
 
   // Add items to list with friendly labels
   const items = [
-    { key: "post_content_", label: "Post content cache" },
+    {
+      key: "post_content_",
+      label: "Post content cache",
+      includePostCache: true,
+    },
     { key: "bq_avatar_", label: "User avatars (Better Quotes)" },
     { key: "bq_color_", label: "User colors (Better Quotes)" },
     { key: "userColor_", label: "User colors" },
@@ -92,8 +102,21 @@ function updateCacheCountsDisplay() {
   ];
 
   items.forEach((item) => {
+    // Calculate the total count for this item
+    let totalCount = counts[item.key];
+
+    // For post content cache, include both post_cache and cached_posts counts if specified
+    if (item.includePostCache) {
+      if (counts["post_cache"]) {
+        totalCount += counts["post_cache"];
+      }
+      if (counts["cached_posts"]) {
+        totalCount += counts["cached_posts"];
+      }
+    }
+
     // Only show items with counts > 0
-    if (counts[item.key] > 0) {
+    if (totalCount > 0) {
       const li = document.createElement("li");
       li.style.marginBottom = "4px";
       // li.style.display = "flex"; // Removed for standard list item flow
@@ -104,7 +127,7 @@ function updateCacheCountsDisplay() {
       // label.style.marginRight = "8px"; // No longer needed with flex removed
 
       const count = document.createElement("span");
-      count.textContent = counts[item.key];
+      count.textContent = totalCount;
       count.style.fontWeight = "bold";
 
       // Append text directly or use textContent for the li
@@ -205,6 +228,7 @@ export function renderSettingsTab(container) {
           "userColor_",
           "userAvatar_",
           "reactions_",
+          "cached_posts", // For RPGHQ_Manager_cached_posts key
         ];
 
         let additionalRemoved = 0;
