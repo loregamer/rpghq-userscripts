@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         RPGHQ Ignored Thread Enhancer
 // @namespace    http://tampermonkey.net/
-// @version      4.2.1
+// @version      4.3
 // @description  Export previously ignored threads from the old RPGHQ Thread Ignorer userscript.
 // @match        https://rpghq.org/forums/*
 // @grant        GM_getValue
@@ -199,6 +199,35 @@ SOFTWARE.
       url.includes("newposts") ||
       url.includes("search.php")
     );
+  }
+
+  // Delete topic list and its header on CP/UCP main pages
+  function deleteAnnouncementsFromUCP() {
+    // Check if we're on a page with CP-main/UCP-main
+    const cpMain = document.getElementById('cp-main');
+    if (cpMain && cpMain.classList.contains('ucp-main')) {
+      // Find the heading for 'Important announcements'
+      const headings = document.querySelectorAll('h3');
+      let announcementsHeading = null;
+      
+      for (const heading of headings) {
+        if (heading.textContent.trim() === 'Important announcements') {
+          announcementsHeading = heading;
+          break;
+        }
+      }
+      
+      if (announcementsHeading) {
+        // Find the topiclist that follows this heading
+        let topicList = announcementsHeading.nextElementSibling;
+        if (topicList && topicList.classList.contains('topiclist')) {
+          // Remove both the heading and the topic list
+          announcementsHeading.remove();
+          topicList.remove();
+          console.log("RPGHQ Ignored Thread Enhancer: Removed announcements heading and topic list in CP/UCP main");
+        }
+      }
+    }
   }
 
   // --- Quick Ignore Mode ---
@@ -410,6 +439,7 @@ SOFTWARE.
   function initializeScript() {
     // Note: removeIgnoredThreadsOnLoad() is now handled by earlyObserver
     addShowExportButton();
+    deleteAnnouncementsFromUCP();
     if (I_Want_To_Devlishly_Ignore_Many_Many_Threads) {
       addToggleIgnoreModeButton(); // Add the toggle button
 
