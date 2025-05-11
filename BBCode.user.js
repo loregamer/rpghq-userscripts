@@ -87,13 +87,7 @@ SOFTWARE.
   // =============================
   // Global Variables & Settings
   // =============================
-  let customSmileys = [
-    "📥",
-    "https://f.rpghq.org/ZgRYx3ztDLyD.png?n=cancel_forum.png",
-    "https://f.rpghq.org/W5kvLDYCwg8G.png",
-  ];
-
-  const tagColorMap = { img: 1, url: 4, color: 3 };
+    const tagColorMap = { img: 1, url: 4, color: 3 };
   const getColorIndex = (tagName) => {
     if (tagName === "*") return "list-item";
     if (!(tagName in tagColorMap)) {
@@ -362,24 +356,6 @@ SOFTWARE.
     adjustTextareaAndHighlight();
   };
 
-  const insertSmiley = (smiley) => {
-    const textarea = document.getElementById("message");
-    if (!textarea) return;
-    const start = textarea.selectionStart,
-      end = textarea.selectionEnd,
-      scrollTop = textarea.scrollTop,
-      text = textarea.value,
-      before = text.substring(0, start),
-      after = text.substring(end),
-      insert = smiley.startsWith("http") ? `[img]${smiley}[/img]` : smiley;
-    textarea.value = before + insert + after;
-    textarea.setSelectionRange(start + insert.length, start + insert.length);
-    textarea.scrollTop = scrollTop;
-    textarea.focus();
-    updateHighlight();
-    adjustTextareaAndHighlight();
-  };
-
   // =============================
   // BBCode Auto-Formatting (F8)
   // =============================
@@ -637,80 +613,8 @@ SOFTWARE.
   };
 
   // =============================
-  // Custom Smileys & Buttons
+  // Custom Buttons
   // =============================
-  const addCustomSmileyButtons = () => {
-    const smileyBox = document.getElementById("smiley-box");
-    if (!smileyBox) return;
-    const topicReviewLink = smileyBox.querySelector('a[href="#review"]');
-    if (topicReviewLink) topicReviewLink.parentElement.style.display = "none";
-    const viewMoreLink = smileyBox.querySelector('a[href*="mode=smilies"]');
-    const existing = Array.from(
-      smileyBox.querySelectorAll('a[onclick^="insert_text"]')
-    );
-    const groups = {};
-    existing.forEach((smiley) => {
-      const imgSrc = smiley.querySelector("img")?.src || "";
-      const dir = imgSrc.split("/").slice(0, -1).join("/");
-      groups[dir] = groups[dir] || [];
-      groups[dir].push(smiley);
-    });
-    existing.forEach((smiley) => smiley.remove());
-    let firstGroup = true;
-    for (const group of Object.values(groups)) {
-      if (!firstGroup) {
-        const hr = document.createElement("hr");
-        hr.className = "smiley-group-separator";
-        smileyBox.insertBefore(hr, viewMoreLink);
-      }
-      firstGroup = false;
-      const groupContainer = document.createElement("div");
-      groupContainer.className = "smiley-group";
-      group.forEach((smiley) => {
-        const btn = document.createElement("a");
-        btn.href = "#";
-        btn.className = "smiley-button";
-        btn.onclick = smiley.onclick;
-        const img = smiley.querySelector("img");
-        btn.innerHTML = `<img src="${img.src}" alt="${img.alt}" title="${img.title}">`;
-        groupContainer.appendChild(btn);
-      });
-      smileyBox.insertBefore(groupContainer, viewMoreLink);
-    }
-    let customContainer = smileyBox.querySelector(".custom-smiley-container"),
-      customHr = smileyBox.querySelector(".custom-smiley-separator");
-    if (customSmileys.length > 0) {
-      if (!customHr) {
-        customHr = document.createElement("hr");
-        customHr.className = "custom-smiley-separator";
-        smileyBox.insertBefore(customHr, viewMoreLink);
-      }
-      if (!customContainer) {
-        customContainer = document.createElement("div");
-        customContainer.className = "custom-smiley-container";
-        smileyBox.insertBefore(customContainer, viewMoreLink);
-      } else {
-        customContainer.innerHTML = "";
-      }
-      customSmileys.forEach((smiley) => {
-        const btn = document.createElement("a");
-        btn.href = "#";
-        btn.className = "custom-smiley-button";
-        btn.innerHTML = smiley.startsWith("http")
-          ? `<img src="${smiley}" alt="Custom Smiley" title="Custom Smiley">`
-          : `<span class="emoji-smiley">${smiley}</span>`;
-        btn.addEventListener("click", (e) => {
-          e.preventDefault();
-          insertSmiley(smiley);
-        });
-        customContainer.appendChild(btn);
-      });
-    } else {
-      if (customContainer) customContainer.remove();
-      if (customHr) customHr.remove();
-    }
-  };
-
   const addCustomButtons = () => {
     const smileyBox = document.getElementById("smiley-box");
     if (!smileyBox) return;
@@ -846,197 +750,6 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     const pingText = `[smention]Bloomery[/smention]
 [size=1] [smention u=459][/smention] [smention u=510][/smention] [smention u=897][/smention] [smention u=515][/smention] [smention u=548][/smention] [smention u=555][/smention] [smention u=615][/smention] [smention u=753][/smention] [smention u=918][/smention] [smention u=919][/smention] [smention u=3114][/smention] [smention u=58][/smention] [smention u=256][/smention] [smention u=63][/smention]  [/size]`;
     insertTextAtCursor(pingText);
-  };
-
-  // =============================
-  // Custom Smileys Management Popup
-  // =============================
-  const showCustomSmileysPopup = (e) => {
-    e.preventDefault();
-    const popup = document.createElement("div");
-    popup.id = "custom-smileys-popup";
-    Object.assign(popup.style, {
-      position: "fixed",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      backgroundColor: "#2a2e36",
-      border: "1px solid #3a3f4b",
-      borderRadius: "5px",
-      width: "80%",
-      maxWidth: "600px",
-      height: "80%",
-      maxHeight: "600px",
-      display: "flex",
-      flexDirection: "column",
-      zIndex: "9999",
-      fontFamily: "'Open Sans', 'Droid Sans', Arial, Verdana, sans-serif",
-    });
-    const header = document.createElement("div");
-    Object.assign(header.style, {
-      padding: "20px",
-      backgroundColor: "#2a2e36",
-      borderBottom: "1px solid #3a3f4b",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      position: "sticky",
-      top: "0",
-      zIndex: "1",
-    });
-    const title = document.createElement("h2");
-    title.textContent = "Manage Custom Smileys";
-    title.style.margin = "0";
-    title.style.color = "#c5d0db";
-    const closeButton = document.createElement("button");
-    closeButton.textContent = "Close";
-    Object.assign(closeButton.style, {
-      backgroundColor: "#4a5464",
-      color: "#c5d0db",
-      border: "none",
-      padding: "5px 10px",
-      borderRadius: "3px",
-      cursor: "pointer",
-    });
-    closeButton.onclick = (e) => {
-      e.preventDefault();
-      popup.remove();
-    };
-    header.append(title, closeButton);
-    const content = document.createElement("div");
-    Object.assign(content.style, {
-      padding: "20px",
-      overflowY: "auto",
-      flexGrow: "1",
-    });
-    const smileyList = document.createElement("ul");
-    Object.assign(smileyList.style, {
-      listStyleType: "none",
-      padding: "0",
-      margin: "0",
-    });
-    const updateSmileyList = () => {
-      smileyList.innerHTML = "";
-      customSmileys.forEach((smiley, index) => {
-        const li = document.createElement("li");
-        Object.assign(li.style, {
-          marginBottom: "10px",
-          display: "flex",
-          alignItems: "center",
-        });
-        if (isSingleEmoji(smiley)) {
-          const emojiSpan = document.createElement("span");
-          emojiSpan.textContent = smiley;
-          emojiSpan.style.fontSize = "18px";
-          emojiSpan.style.marginRight = "10px";
-          li.appendChild(emojiSpan);
-        } else {
-          const img = document.createElement("img");
-          img.src = smiley;
-          img.alt = "Smiley";
-          Object.assign(img.style, {
-            width: "20px",
-            height: "20px",
-            marginRight: "10px",
-          });
-          li.appendChild(img);
-        }
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = smiley;
-        input.disabled = true;
-        Object.assign(input.style, {
-          flexGrow: "1",
-          marginRight: "10px",
-          padding: "5px",
-          backgroundColor: "#2a2e36",
-          color: "#a0a0a0",
-          border: "1px solid #3a3f4b",
-          borderRadius: "3px",
-          cursor: "default",
-        });
-        const btnStyle = `
-          background-color: #4a5464;
-          color: #c5d0db;
-          border: none;
-          padding: 5px 10px;
-          margin-left: 5px;
-          border-radius: 3px;
-          cursor: pointer;
-        `;
-        const upBtn = document.createElement("button");
-        upBtn.textContent = "↑";
-        upBtn.style.cssText = btnStyle;
-        upBtn.onclick = () => {
-          if (index > 0) {
-            [customSmileys[index - 1], customSmileys[index]] = [
-              customSmileys[index],
-              customSmileys[index - 1],
-            ];
-            saveCustomSmileys();
-            updateSmileyList();
-          }
-        };
-        const downBtn = document.createElement("button");
-        downBtn.textContent = "↓";
-        downBtn.style.cssText = btnStyle;
-        downBtn.onclick = () => {
-          if (index < customSmileys.length - 1) {
-            [customSmileys[index], customSmileys[index + 1]] = [
-              customSmileys[index + 1],
-              customSmileys[index],
-            ];
-            saveCustomSmileys();
-            updateSmileyList();
-          }
-        };
-        const removeBtn = document.createElement("button");
-        removeBtn.textContent = "Remove";
-        removeBtn.style.cssText = btnStyle;
-        removeBtn.onclick = () => {
-          customSmileys.splice(index, 1);
-          saveCustomSmileys();
-          updateSmileyList();
-        };
-        li.append(input, upBtn, downBtn, removeBtn);
-        smileyList.appendChild(li);
-      });
-    };
-    content.appendChild(smileyList);
-    const newInput = document.createElement("input");
-    newInput.type = "text";
-    newInput.placeholder = "Enter new smiley or emoji and press Enter";
-    Object.assign(newInput.style, {
-      marginTop: "15px",
-      padding: "5px",
-      backgroundColor: "#3a3f4b",
-      color: "#c5d0db",
-      border: "1px solid #4a5464",
-      borderRadius: "3px",
-    });
-    newInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter" && newInput.value.trim()) {
-        customSmileys.push(newInput.value.trim());
-        saveCustomSmileys();
-        newInput.value = "";
-        updateSmileyList();
-      }
-    });
-    content.appendChild(newInput);
-    updateSmileyList();
-    popup.append(header, content);
-    document.body.appendChild(popup);
-  };
-
-  const isSingleEmoji = (str) => {
-    const emojiRegex =
-      /^(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])$/;
-    return emojiRegex.test(str);
-  };
-
-  const saveCustomSmileys = () => {
-    GM_setValue("customSmileys", JSON.stringify(customSmileys));
-    addCustomSmileyButtons();
   };
 
   // =============================
@@ -1428,24 +1141,7 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
     });
     let lastContent = textArea.value,
       updateTimer = null;
-    const storedSmileys = GM_getValue("customSmileys");
-    if (storedSmileys) customSmileys = JSON.parse(storedSmileys);
     const smileyBox = document.getElementById("smiley-box");
-    if (smileyBox) {
-      const manageButton = document.createElement("button");
-      manageButton.textContent = "Manage Custom Smileys";
-      Object.assign(manageButton.style, {
-        marginTop: "10px",
-        backgroundColor: "#4a5464",
-        color: "#c5d0db",
-        border: "none",
-        padding: "5px 10px",
-        borderRadius: "3px",
-        cursor: "pointer",
-      });
-      manageButton.onclick = showCustomSmileysPopup;
-      smileyBox.appendChild(manageButton);
-    }
     const checkForUpdates = () => {
       if (textArea.value !== lastContent) {
         updateHighlight();
@@ -1747,7 +1443,6 @@ To report any bugs, please submit a post in the [url=https://rpghq.org/forums/po
         heading.parentNode.replaceChild(headerContainer, heading);
       }
     });
-    addCustomSmileyButtons();
     addCustomButtons();
     positionSmileyBox();
     positionEditorHeader();
