@@ -853,9 +853,21 @@ export function init({ getScriptSetting }) {
       const isRead = parentLi ? !parentLi.classList.contains("bg2") : false; // Consider read if parent li doesn't have bg2
 
       if (isRead) {
-        // Apply read styles directly
-        block.style.opacity = readNotificationOpacity;
-        block.style.backgroundColor = readTintColorSetting; // Apply tint
+        // Check if we should hide read notifications
+        const hideReadNotifications = _getScriptSetting(
+          "notifications", // Script ID as first parameter
+          "hideReadNotifications",
+          false,
+        );
+
+        if (hideReadNotifications && parentLi) {
+          // Hide read notifications if the setting is enabled
+          parentLi.style.display = "none";
+        } else {
+          // Otherwise apply the opacity/tint settings
+          block.style.opacity = readNotificationOpacity;
+          block.style.backgroundColor = readTintColorSetting;
+        }
       } else {
         // Explicitly reset opacity and background for unread items
         block.style.opacity = "";
@@ -1193,8 +1205,21 @@ export function init({ getScriptSetting }) {
           anchorElement.href && anchorElement.href.includes("mark_notification")
         );
         if (isRead) {
-          row.style.opacity = readNotificationOpacity;
-          row.style.backgroundColor = readTintColorSetting; // Apply tint
+          // Check if we should hide read notifications
+          const hideReadNotifications = _getScriptSetting(
+            "notifications", // Script ID as first parameter
+            "hideReadNotifications",
+            false,
+          );
+
+          if (hideReadNotifications) {
+            // Hide read notifications if the setting is enabled
+            row.style.display = "none";
+          } else {
+            // Otherwise apply the opacity/tint settings
+            row.style.opacity = readNotificationOpacity;
+            row.style.backgroundColor = readTintColorSetting; // Apply tint
+          }
         }
 
         let originalTitleHTML = titleElement.innerHTML;

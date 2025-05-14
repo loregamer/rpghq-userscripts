@@ -172,6 +172,17 @@ export function renderSettingsTab(container) {
           <div id="cache-counts-container" class="cache-counts" style="margin-top: 12px; background: rgba(0,0,0,0.03); padding: 10px; border-radius: 5px;"></div>
           <p id="cache-status-message" class="preference-status" style="font-style: italic; margin-top: 8px;"></p>
         </div>
+        
+        <div class="preference-item">
+          <div class="preference-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h4 class="preference-name" style="margin-right: auto;">Notifications Management</h4>
+            <div class="preference-control">
+              <button id="reset-notifications-btn" class="button1" style="padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;">Reset Notifications Script</button>
+            </div>
+          </div>
+          <p class="preference-description">Reset the notifications script to apply settings changes, such as hiding read notifications.</p>
+          <p id="notifications-status-message" class="preference-status" style="font-style: italic; margin-top: 8px;"></p>
+        </div>
       </div>
     </div>
   
@@ -273,5 +284,84 @@ export function renderSettingsTab(container) {
   autoUpdateCheckbox.addEventListener("change", (e) => {
     gmSetValue(AUTO_UPDATE_CHECK_KEY, e.target.checked);
     log(`Auto-update check set to: ${e.target.checked}`);
+  });
+
+  // Add event listener for the reset notifications button
+  const resetNotificationsBtn = container.querySelector(
+    "#reset-notifications-btn",
+  );
+  const notificationsStatusMessage = container.querySelector(
+    "#notifications-status-message",
+  );
+
+  resetNotificationsBtn.addEventListener("click", () => {
+    // Disable button while processing
+    resetNotificationsBtn.disabled = true;
+    resetNotificationsBtn.textContent = "Resetting...";
+
+    setTimeout(() => {
+      try {
+        // Get a reference to the main window object
+        // eslint-disable-next-line no-undef
+        const main = window;
+
+        // Find the notifications script in loadedScripts and unload/reload it
+        if (
+          typeof main.loadedScripts !== "undefined" &&
+          main.loadedScripts.notifications
+        ) {
+          // Unload the script
+          if (typeof main.unloadScript === "function") {
+            main.unloadScript("notifications");
+
+            // Find the script info
+            if (typeof main.findScriptById === "function") {
+              const scriptInfo = main.findScriptById("notifications");
+              if (scriptInfo && typeof main.loadScript === "function") {
+                // Reload the script
+                main.loadScript(scriptInfo);
+
+                notificationsStatusMessage.textContent =
+                  "Successfully reset notifications script. Setting changes should now take effect.";
+                notificationsStatusMessage.style.color = "green";
+                log("Reset notifications script successfully");
+              } else {
+                throw new Error("Could not find notifications script info");
+              }
+            } else {
+              throw new Error("Could not find script information functions");
+            }
+          } else {
+            throw new Error("Could not find script unload function");
+          }
+        } else {
+          throw new Error(
+            "Could not find notifications script in loaded scripts",
+          );
+        }
+      } catch (error) {
+        // If direct access fails, try using a custom event
+        try {
+          // Create and dispatch a custom event to reset the notifications script
+          const event = new CustomEvent("reset-notifications-script", {
+            detail: { scriptId: "notifications" },
+          });
+          document.dispatchEvent(event);
+
+          notificationsStatusMessage.textContent =
+            "Sent reset request for notifications script. Refresh the page to ensure changes take effect.";
+          notificationsStatusMessage.style.color = "green";
+          log("Sent reset notifications script event");
+        } catch (eventError) {
+          notificationsStatusMessage.textContent = `Error resetting notifications script: ${error.message}. Try refreshing the page.`;
+          notificationsStatusMessage.style.color = "red";
+          log(`Error resetting notifications script: ${error}`);
+        }
+      } finally {
+        // Re-enable button
+        resetNotificationsBtn.disabled = false;
+        resetNotificationsBtn.textContent = "Reset Notifications Script";
+      }
+    }, 300); // Short delay for visual feedback
   });
 }

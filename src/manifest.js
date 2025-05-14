@@ -88,6 +88,14 @@ export const SCRIPT_MANIFEST = [
     enabledByDefault: true,
     settings: [
       {
+        id: "hideReadNotifications",
+        label: "Hide Read Notifications",
+        type: "checkbox",
+        defaultValue: false,
+        description:
+          "Completely hide read notifications instead of making them transparent.",
+      },
+      {
         id: "readOpacity",
         label: "Read Notification Opacity",
         type: "number",
@@ -96,7 +104,7 @@ export const SCRIPT_MANIFEST = [
         step: 0.05,
         default: 0.8,
         description:
-          "How transparent read notifications should be (1 = fully opaque).",
+          "How transparent read notifications should be (1 = fully opaque). Only applies when 'Hide Read Notifications' is disabled.",
       },
       {
         id: "readTintColor",

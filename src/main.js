@@ -374,6 +374,26 @@ document.addEventListener("script-toggle", (event) => {
   );
 });
 
+// --- Script Reset Event Handler ---
+document.addEventListener("reset-notifications-script", (event) => {
+  const { scriptId } = event.detail;
+  if (scriptId === "notifications") {
+    log(`Received reset request for notifications script`);
+
+    // Unload the script if it's loaded
+    if (loadedScripts[scriptId]) {
+      unloadScript(scriptId);
+
+      // Reload the script
+      const scriptInfo = findScriptById(scriptId);
+      if (scriptInfo && scriptStates[scriptId]) {
+        loadScript(scriptInfo);
+        log(`Successfully reset notifications script`);
+      }
+    }
+  }
+});
+
 // --- UI Handlers ---
 function handleRenderScriptsGridView(container, scripts, states) {
   renderScriptsGridView(container, scripts, states, handleShowScriptSettings);
@@ -421,6 +441,18 @@ function getScriptSetting(scriptId, settingId, defaultValue) {
 function handleLoadTabContent(tabName) {
   const contentContainer = document.getElementById("mod-manager-content");
   if (!contentContainer) return;
+
+  // Force script reinitialization when settings are viewed
+  if (tabName === "settings") {
+    // This will cause scripts that might be affected by setting changes to reinitialize
+    Object.keys(loadedScripts).forEach((scriptId) => {
+      const scriptInfo = findScriptById(scriptId);
+      if (scriptInfo && scriptStates[scriptId]) {
+        unloadScript(scriptId);
+        loadScript(scriptInfo);
+      }
+    });
+  }
 
   loadTabContent(tabName, {
     container: contentContainer,
