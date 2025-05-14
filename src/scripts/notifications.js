@@ -1056,13 +1056,71 @@ export function init({ getScriptSetting }) {
     },
 
     customizeNotificationPanel() {
-      document
-        .querySelectorAll(".notification-block, a.notification-block")
-        .forEach(
-          NotificationCustomizer.customizeNotificationBlock.bind(
-            NotificationCustomizer,
-          ),
+      // Get the setting for hiding read notifications
+      const hideReadNotifications = _getScriptSetting(
+        "notifications",
+        "hideReadNotifications",
+        false,
+      );
+
+      // First customize all notification blocks
+      const notificationBlocks = document.querySelectorAll(
+        ".notification-block, a.notification-block",
+      );
+      notificationBlocks.forEach(
+        NotificationCustomizer.customizeNotificationBlock.bind(
+          NotificationCustomizer,
+        ),
+      );
+
+      // If hiding read notifications is enabled, check if all are hidden
+      if (hideReadNotifications) {
+        // Find the dropdown container
+        const dropdownContents = document.querySelector(
+          ".dropdown-extended .dropdown-contents",
         );
+
+        if (dropdownContents) {
+          // Wait a bit for any removals to be complete
+          setTimeout(() => {
+            // Get all notification items
+            const allLiElements = dropdownContents.querySelectorAll("li");
+            const visibleNotifications = Array.from(allLiElements).filter(
+              (li) =>
+                !li.classList.contains("no-notifications-message") &&
+                li.style.display !== "none",
+            );
+
+            // Remove any existing "no notifications" message
+            const existingMessage = dropdownContents.querySelector(
+              ".no-notifications-message",
+            );
+            if (existingMessage) {
+              existingMessage.remove();
+            }
+
+            // If all notifications are hidden or there are none, show the message
+            if (visibleNotifications.length === 0) {
+              const emptyUl = dropdownContents.querySelector("ul");
+
+              if (emptyUl) {
+                const messageElement = document.createElement("li");
+                messageElement.className = "no-notifications-message";
+                messageElement.style.textAlign = "center";
+                messageElement.style.padding = "10px";
+                messageElement.style.color = "#888";
+                messageElement.style.fontSize = "0.9em";
+                messageElement.style.fontStyle = "italic";
+                messageElement.style.display = ""; // Ensure it's visible
+                messageElement.textContent = "No new notifications";
+
+                // Insert at the top of the list
+                emptyUl.insertBefore(messageElement, emptyUl.firstChild);
+              }
+            }
+          }, 10); // Small delay to allow DOM changes to complete
+        }
+      }
     },
 
     customizeNotificationPage() {
@@ -1072,6 +1130,14 @@ export function init({ getScriptSetting }) {
         "enableNotificationColors",
         true,
       );
+
+      // Get the setting for hiding read notifications
+      const hideReadNotifications = _getScriptSetting(
+        "notifications",
+        "hideReadNotifications",
+        false,
+      );
+
       const rawColorsJson = _getScriptSetting(
         "notifications",
         "notificationColors",
@@ -1494,6 +1560,56 @@ export function init({ getScriptSetting }) {
 
         row.dataset.customized = "true";
       });
+
+      // If hiding read notifications is enabled, check if all are hidden
+      if (hideReadNotifications) {
+        // Wait a bit for any removals to be complete
+        setTimeout(() => {
+          // Check if we have a notification list
+          const notificationList = document.querySelector(".notification_list");
+
+          if (notificationList) {
+            // Get all notification rows that are not hidden or our message
+            const visibleRows = Array.from(
+              notificationList.querySelectorAll("div.row"),
+            ).filter(
+              (row) =>
+                !row.classList.contains("no-notifications-page-message") &&
+                row.style.display !== "none",
+            );
+
+            // Remove any existing "no notifications" message
+            const existingMessage = document.querySelector(
+              ".no-notifications-page-message",
+            );
+            if (existingMessage) {
+              existingMessage.remove();
+            }
+
+            // If all notifications are hidden or there are none, show the message
+            if (visibleRows.length === 0) {
+              const messageElement = document.createElement("div");
+              messageElement.className = "no-notifications-page-message row";
+              messageElement.style.textAlign = "center";
+              messageElement.style.padding = "20px";
+              messageElement.style.color = "#888";
+              messageElement.style.fontSize = "1.1em";
+              messageElement.style.fontStyle = "italic";
+              messageElement.style.background = "rgba(0,0,0,0.03)";
+              messageElement.style.margin = "10px 0";
+              messageElement.style.borderRadius = "5px";
+              messageElement.style.display = ""; // Ensure it's visible
+              messageElement.textContent = "No new notifications";
+
+              // Insert at the top of the notification list
+              notificationList.insertBefore(
+                messageElement,
+                notificationList.firstChild,
+              );
+            }
+          }
+        }, 10); // Small delay to allow DOM changes to complete
+      }
     }, // End of customizeNotificationPage
 
     async queuePostContentFetch(url, placeholder) {
