@@ -860,8 +860,14 @@ export function init({ getScriptSetting }) {
           false,
         );
 
-        if (hideReadNotifications && parentLi) {
-          // Hide read notifications if the setting is enabled
+        // Check if we're in the dropdown panel (not on the UCP page)
+        // UCP page notifications won't have a parent li, or we'll be within the UCP page
+        const isInDropdown =
+          parentLi &&
+          !window.location.href.includes("ucp.php?i=ucp_notifications");
+
+        if (hideReadNotifications && isInDropdown && parentLi) {
+          // Hide read notifications if the setting is enabled AND we're in the dropdown
           parentLi.style.display = "none";
         } else {
           // Otherwise apply the opacity/tint settings
@@ -1278,14 +1284,9 @@ export function init({ getScriptSetting }) {
             false,
           );
 
-          if (hideReadNotifications) {
-            // Hide read notifications if the setting is enabled
-            row.style.display = "none";
-          } else {
-            // Otherwise apply the opacity/tint settings
-            row.style.opacity = readNotificationOpacity;
-            row.style.backgroundColor = readTintColorSetting; // Apply tint
-          }
+          // On UCP page, we never hide notifications, only apply the opacity styling
+          row.style.opacity = readNotificationOpacity;
+          row.style.backgroundColor = readTintColorSetting; // Apply tint
         }
 
         let originalTitleHTML = titleElement.innerHTML;
@@ -1561,21 +1562,22 @@ export function init({ getScriptSetting }) {
         row.dataset.customized = "true";
       });
 
-      // If hiding read notifications is enabled, check if all are hidden
+      // Check if we need to show "No new notifications" message
       if (hideReadNotifications) {
-        // Wait a bit for any removals to be complete
+        // Wait a bit for any DOM changes to complete
         setTimeout(() => {
           // Check if we have a notification list
           const notificationList = document.querySelector(".notification_list");
 
           if (notificationList) {
-            // Get all notification rows that are not hidden or our message
-            const visibleRows = Array.from(
+            // Count unread notifications (on UCP page, we only apply opacity to read ones)
+            const unreadRows = Array.from(
               notificationList.querySelectorAll("div.row"),
             ).filter(
               (row) =>
                 !row.classList.contains("no-notifications-page-message") &&
-                row.style.display !== "none",
+                row.style.opacity !== readNotificationOpacity && // Check for opacity instead of display
+                row.style.opacity !== "" + readNotificationOpacity, // Check string version too
             );
 
             // Remove any existing "no notifications" message
@@ -1586,8 +1588,8 @@ export function init({ getScriptSetting }) {
               existingMessage.remove();
             }
 
-            // If all notifications are hidden or there are none, show the message
-            if (visibleRows.length === 0) {
+            // If there are no unread notifications, show the message
+            if (unreadRows.length === 0) {
               const messageElement = document.createElement("div");
               messageElement.className = "no-notifications-page-message row";
               messageElement.style.textAlign = "center";
