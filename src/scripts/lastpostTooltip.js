@@ -49,7 +49,7 @@ export function init() {
     console.log(`Processing link ${index}:`, postUrl);
 
     // Create mouseenter handler
-    const mouseenterHandler = async (e) => {
+    const mouseenterHandler = (e) => {
       console.log(`Mouse entered link ${index}`);
       // Extract post ID from URL
       const postIdMatch = postUrl.match(/p=(\d+)/);
@@ -117,7 +117,7 @@ export function init() {
         tooltip.style.opacity = "1";
       }, 10);
 
-      // Check cache first
+      // Only display content if it exists in cache
       const cacheKey = `post_content_${postId}`;
       let postContent = gmGetValue(cacheKey, null);
 
@@ -129,55 +129,14 @@ export function init() {
           </div>
         `;
       } else {
-        console.log(
-          `No cached content found for ID: ${postId}, fetching from server`,
-        );
-        try {
-          // Fetch post content
-          const response = await fetch(postUrl);
-          const html = await response.text();
-          console.log(`Received HTML response: ${html.substring(0, 100)}...`);
-
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, "text/html");
-
-          // Find the post content
-          const postContentElement = doc.querySelector(
-            `#post_content${postId}`,
-          );
-
-          if (postContentElement) {
-            console.log(`Post content found, updating tooltip and cache`);
-            postContent = postContentElement.innerHTML;
-
-            // Save to cache
-            gmSetValue(cacheKey, postContent);
-
-            // Add a wrapper div with padding and max-width
-            tooltip.innerHTML = `
-              <div style="max-width: 100%;">
-                ${postContent}
-              </div>
-            `;
-          } else {
-            console.log(`Post content not found for ID: ${postId}`);
-            tooltip.innerHTML = `
-              <div style="text-align: center; padding: 20px;">
-                <div style="font-size: 18px; margin-bottom: 10px;">⚠️</div>
-                <div>Post content not found</div>
-              </div>
-            `;
-          }
-        } catch (error) {
-          console.error("Error fetching post content:", error);
-          tooltip.innerHTML = `
-            <div style="text-align: center; padding: 20px;">
-              <div style="font-size: 18px; margin-bottom: 10px;">❌</div>
-              <div>Error loading post content</div>
-              <div style="font-size: 12px; color: #aaa; margin-top: 10px;">${error.message}</div>
-            </div>
-          `;
-        }
+        console.log(`No cached content found for ID: ${postId}`);
+        tooltip.innerHTML = `
+          <div style="text-align: center; padding: 20px;">
+            <div style="font-size: 18px; margin-bottom: 10px;">⚠️</div>
+            <div>Post content not available</div>
+            <div style="font-size: 12px; color: #aaa; margin-top: 10px;">This post has not been cached yet</div>
+          </div>
+        `;
       }
     };
 
