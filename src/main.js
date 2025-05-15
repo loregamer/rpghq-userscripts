@@ -251,6 +251,7 @@ function executeLoadOrderForPhase(phase) {
 }
 
 // Import scripts directly
+import * as lastpostTooltip from "./scripts/lastpostTooltip.js";
 import * as recentTopicsFormat from "./scripts/recentTopicsFormat.js";
 import * as randomTopic from "./scripts/randomTopic.js";
 import * as memberSearch from "./scripts/memberSearch.js";
@@ -264,6 +265,7 @@ import * as quotes from "./scripts/quotes.js";
 import * as disableEmbeds from "./scripts/disableEmbeds.js";
 // Map of script ids to their modules
 const scriptModules = {
+  lastpostTooltip: lastpostTooltip,
   commaFormatter: commaFormatter,
   bbcode: bbcode,
 

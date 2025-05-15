@@ -63,6 +63,21 @@ export const SCRIPT_MANIFEST = [
     categories: ["General"],
   },
   {
+    id: "lastpostTooltip",
+    name: "Last Post Tooltip",
+    version: "1.0.0",
+    description:
+      "Shows post HTML in a tooltip when hovering over 'dd lastpost' elements",
+    author: "loregamer",
+    path: "./scripts/lastpostTooltip.js",
+    enabledByDefault: true,
+    image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png", // Placeholder image
+    settings: [
+      // Add settings here
+    ],
+    categories: ["UI"],
+  },
+  {
     id: "memberSearch",
     name: "Member Search Button",
     version: "1.0.0",
