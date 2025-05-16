@@ -6,6 +6,7 @@
 import { gmGetValue, gmSetValue } from "../../main.js";
 import { log, debug, error } from "../logger.js";
 import { getCachedPost } from "../postCache.js";
+import { addGhostStyles } from "./ghost-styles.js";
 
 // Storage keys
 export const GHOST_CONFIG_KEY = "ghostConfig";
@@ -35,6 +36,9 @@ export function initGhost() {
 
   // Load the configuration
   const config = getGhostConfig();
+
+  // Add Ghost styles to the page
+  addGhostStyles();
 
   // Apply custom CSS variables for colors
   applyGhostColors(config);

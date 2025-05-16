@@ -7,6 +7,7 @@
 import { log, debug, error } from "../../../utils/logger.js";
 import { gmGetValue, gmSetValue } from "../../../main.js";
 import { searchUsers } from "../../../utils/api/rpghqApi.js"; // Import the search function
+import { showGhostUsersModal } from "../../../utils/ghost/ghost-modal.js";
 
 // Ghost configuration storage keys
 const GHOST_CONFIG_KEY = "ghostConfig";
@@ -663,8 +664,7 @@ function setupEventListeners(container) {
   // Management buttons
   const manageUsersBtn = container.querySelector("#manage-ghosted-users-btn");
   manageUsersBtn.addEventListener("click", function () {
-    alert("Ghost Users Management UI will be implemented in the next phase.");
-    // This will be implemented in the back-end logic phase
+    showGhostUsersModal();
   });
 
   const resetSettingsBtn = container.querySelector("#reset-ghost-settings-btn");
