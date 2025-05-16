@@ -7,23 +7,19 @@
 import { log, debug, error } from "../../../utils/logger.js";
 import { gmGetValue, gmSetValue } from "../../../main.js";
 import { searchUsers } from "../../../utils/api/rpghqApi.js"; // Import the search function
-import { showHideUsersModal } from "../../../utils/hide/hide-modal.js";
-
-// Hide configuration storage keys
-const HIDE_CONFIG_KEY = "hideConfig";
-const IGNORED_USERS_KEY = "ignoredUsers";
-const REPLACED_AVATARS_KEY = "replacedAvatars";
-const HIDDEN_MANUAL_POSTS_KEY = "hiddenManualPosts";
-const USER_COLORS_KEY = "userColors";
-
-// Default configuration values
-const DEFAULT_CONFIG = {
-  authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for hidden-by-author
-  contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for hidden-by-content
-  hideEntireRow: false, // Default: only hide lastpost, not entire row
-  hideTopicCreations: true, // Default: hide rows with hidden username in row class,
-  whitelistedThreads: [], // Array of thread names that should never be hidden
-};
+import {
+  HIDE_CONFIG_KEY,
+  IGNORED_USERS_KEY,
+  REPLACED_AVATARS_KEY,
+  HIDDEN_MANUAL_POSTS_KEY,
+  USER_COLORS_KEY,
+  DEFAULT_CONFIG,
+  toggleUserHide,
+  replaceUserAvatar,
+  resetUserAvatar,
+  getHiddenUsers,
+  getReplacedAvatars,
+} from "../../../utils/hide/hide.js";
 
 export function renderUsersSubtab(container) {
   log("Rendering Users subtab with Hide functionality...");
@@ -132,17 +128,16 @@ export function renderUsersSubtab(container) {
           </div>
         </div>
         
-        <!-- Hide Management Actions -->
+        <!-- Hide Management Section -->
         <div class="hide-settings-container">
           <h4 class="settings-group-title">Management</h4>
           
           <div class="hide-actions">
-            <button id="manage-hidden-users-btn" class="button button--primary">
-              <i class="fa fa-users"></i> Manage Hidden Users
-            </button>
-            
             <button id="reset-hide-settings-btn" class="button button--secondary">
               <i class="fa fa-refresh"></i> Reset to Defaults
+            </button>
+            <button id="reset-all-hidden-users-btn" class="button button--danger">
+              <i class="fa fa-trash"></i> Reset All Hidden Users
             </button>
           </div>
         </div>
@@ -157,6 +152,52 @@ export function renderUsersSubtab(container) {
               <div><strong>Hidden Users:</strong> <span id="hidden-users-count">0</span></div>
               <div><strong>Replaced Avatars:</strong> <span id="replaced-avatars-count">0</span></div>
               <div><strong>Hidden Posts:</strong> <span id="hidden-posts-count">0</span></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- User Search -->
+        <div class="hide-settings-container">
+          <h4 class="settings-group-title">
+            <i class="fa fa-search"></i> Search Users to Hide
+          </h4>
+          <div class="hide-user-search">
+            <div class="hide-user-search-form">
+              <input type="text" id="hide-search-input" placeholder="Search for users to hide...">
+              <button id="hide-search-btn" class="button button--primary">
+                <i class="fa fa-search"></i> Search
+              </button>
+            </div>
+            <div class="hide-user-search-results"></div>
+          </div>
+        </div>
+        
+        <!-- Currently Hidden Users -->
+        <div class="hide-settings-container">
+          <h4 class="settings-group-title">
+            <i class="fa fa-user-times"></i> Hidden Users 
+            <span class="hide-user-count"></span>
+          </h4>
+          <div class="hidden-users-grid" id="hidden-users-grid"></div>
+        </div>
+        
+        <!-- Avatar Replacement -->
+        <div class="hide-settings-container">
+          <h4 class="settings-group-title">
+            <i class="fa fa-image"></i> Avatar Replacement
+            <span class="hide-avatar-count"></span>
+          </h4>
+          
+          <div class="avatar-replacement-form">
+            <div class="avatar-input-row">
+              <input type="text" id="hide-user-id-input" placeholder="User ID" class="form-control">
+              <input type="text" id="hide-avatar-url-input" placeholder="Image URL (128x128 or smaller)" class="form-control">
+              <button id="hide-replace-avatar-btn" class="button button--primary">Replace</button>
+              <button id="hide-reset-avatar-btn" class="button button--secondary">Reset</button>
+            </div>
+            
+            <div class="avatar-preview">
+              <div class="avatar-preview-text">Enter a valid user ID and image URL above to replace a user's avatar</div>
             </div>
           </div>
         </div>
@@ -309,6 +350,202 @@ function addHideStyles() {
     .toggle-input:checked + .toggle-label:before {
       transform: translateX(20px);
       background-color: white;
+    }
+    
+    /* Hide styles from hide-styles.css */
+    .hidden-users-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .hidden-user-tile {
+      background-color: var(--bg-card);
+      border-radius: 5px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      border: 1px solid var(--border-color);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .hidden-user-tile:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .hidden-user-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      margin-bottom: 10px;
+      object-fit: cover;
+      border: 2px solid var(--border-color);
+    }
+    
+    .hidden-user-name {
+      color: var(--text-primary);
+      font-size: 14px;
+      text-align: center;
+      word-break: break-word;
+      margin-bottom: 8px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .hidden-user-actions {
+      display: flex;
+      gap: 5px;
+      margin-top: auto;
+    }
+    
+    .hidden-user-unhide {
+      background-color: var(--danger-color);
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .hidden-user-unhide:hover {
+      background-color: var(--danger-color-hover, darkred);
+    }
+    
+    .hidden-user-visit {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 4px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .hidden-user-visit:hover {
+      background-color: var(--primary-color-hover, darkblue);
+    }
+    
+    /* Hide user search */
+    .hide-user-search {
+      margin-bottom: 20px;
+    }
+    
+    .hide-user-search-form {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .hide-user-search-form input {
+      flex: 1;
+      padding: 8px 12px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-primary);
+    }
+    
+    .hide-user-search-results {
+      margin-top: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .hide-user-search-result {
+      display: flex;
+      align-items: center;
+      padding: 8px 10px;
+      margin-bottom: 5px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .hide-user-search-result:hover {
+      background-color: rgba(255,255,255,0.05);
+    }
+    
+    .hide-user-search-result img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    
+    /* Avatar replacement */
+    .avatar-replacement-form {
+      margin-top: 15px;
+    }
+    
+    .avatar-input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .avatar-input-row input {
+      flex: 1;
+      padding: 8px 12px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-primary);
+    }
+    
+    .avatar-preview {
+      margin-top: 10px;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    
+    .avatar-preview-image {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--border-color);
+    }
+    
+    .avatar-preview-text {
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+    
+    /* Button utility classes */
+    .button--danger {
+      background-color: var(--danger-color, #e74c3c) !important;
+    }
+    
+    .button--danger:hover {
+      background-color: var(--danger-color-hover, #c0392b) !important;
+    }
+    
+    /* Loading indicator */
+    .hide-loading {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-secondary);
+    }
+    
+    /* Empty state styling */
+    .hide-empty-state {
+      padding: 30px 15px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-style: italic;
+      background-color: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
     }
     
     /* Whitelisted threads */
@@ -662,15 +899,430 @@ function setupEventListeners(container) {
   });
 
   // Management buttons
-  const manageUsersBtn = container.querySelector("#manage-hidden-users-btn");
-  manageUsersBtn.addEventListener("click", function () {
-    showHideUsersModal();
-  });
-
   const resetSettingsBtn = container.querySelector("#reset-hide-settings-btn");
   resetSettingsBtn.addEventListener("click", function () {
     resetToDefaults(container);
   });
+
+  // Reset all hidden users button
+  const resetAllUsersBtn = container.querySelector(
+    "#reset-all-hidden-users-btn",
+  );
+  resetAllUsersBtn.addEventListener("click", function () {
+    resetAllHiddenUsers(container);
+  });
+
+  // Setup user search
+  const searchInput = container.querySelector("#hide-search-input");
+  const searchBtn = container.querySelector("#hide-search-btn");
+
+  searchBtn.addEventListener("click", function () {
+    performUserSearch(container, searchInput.value);
+  });
+
+  searchInput.addEventListener("keypress", function (e) {
+    if (e.key === "Enter") {
+      performUserSearch(container, this.value);
+    }
+  });
+
+  // Setup avatar replacement
+  const userIdInput = container.querySelector("#hide-user-id-input");
+  const avatarUrlInput = container.querySelector("#hide-avatar-url-input");
+  const replaceBtn = container.querySelector("#hide-replace-avatar-btn");
+  const resetBtn = container.querySelector("#hide-reset-avatar-btn");
+
+  replaceBtn.addEventListener("click", function () {
+    replaceAvatarAction(container, userIdInput.value, avatarUrlInput.value);
+  });
+
+  resetBtn.addEventListener("click", function () {
+    resetAvatarAction(container, userIdInput.value);
+  });
+
+  // Setup avatar preview on input
+  avatarUrlInput.addEventListener("input", function () {
+    updateAvatarPreview(container, userIdInput.value, avatarUrlInput.value);
+  });
+
+  userIdInput.addEventListener("input", function () {
+    updateAvatarPreview(container, userIdInput.value, avatarUrlInput.value);
+  });
+
+  // Populate hidden users grid
+  populateHiddenUsers(container);
+}
+
+// Default avatar URL for fallback
+const DEFAULT_AVATAR = "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
+
+/**
+ * Populate the hidden users grid
+ * @param {HTMLElement} container - The container element
+ */
+function populateHiddenUsers(container) {
+  const grid = container.querySelector("#hidden-users-grid");
+  if (!grid) return;
+
+  const ignoredUsers = getHiddenUsers();
+  const userCount = Object.keys(ignoredUsers).length;
+
+  // Update user count
+  const countElement = container.querySelector(".hide-user-count");
+  if (countElement) {
+    countElement.textContent = `(${userCount})`;
+  }
+
+  // Show empty state if no users are hidden
+  if (userCount === 0) {
+    grid.innerHTML = `
+      <div class="hide-empty-state">
+        <p>No users are currently hidden</p>
+        <p>Use the search above to find and hide users</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Generate hidden user tiles
+  const replacedAvatars = getReplacedAvatars();
+
+  let html = "";
+
+  // Convert to array and sort by username
+  const users = Object.entries(ignoredUsers)
+    .map(([userId, username]) => ({ userId, username }))
+    .sort((a, b) => a.username.localeCompare(b.username));
+
+  users.forEach(({ userId, username }) => {
+    // Get custom avatar if available
+    const avatarUrl =
+      replacedAvatars[userId] ||
+      `https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg`;
+
+    html += `
+      <div class="hidden-user-tile" data-user-id="${userId}">
+        <img
+          class="hidden-user-avatar"
+          src="${avatarUrl}"
+          alt="${username}'s avatar"
+          onerror="if(this.src.endsWith('.jpg')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.png';}else if(this.src.endsWith('.png')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.gif';}else{this.src='${DEFAULT_AVATAR}';}"
+        >
+        <div class="hidden-user-name" title="${username}">${username}</div>
+        <div class="hidden-user-actions">
+          <button class="hidden-user-unhide" title="Unhide User" data-user-id="${userId}">Unhide</button>
+          <button class="hidden-user-visit" title="Visit Profile" data-user-id="${userId}">Profile</button>
+        </div>
+      </div>
+    `;
+  });
+
+  // Update the grid
+  grid.innerHTML = html;
+
+  // Add event listeners to buttons
+  grid.querySelectorAll(".hidden-user-unhide").forEach((button) => {
+    button.addEventListener("click", () => {
+      const userId = button.dataset.userId;
+      const username = ignoredUsers[userId];
+      unhideUser(container, userId, username);
+    });
+  });
+
+  grid.querySelectorAll(".hidden-user-visit").forEach((button) => {
+    button.addEventListener("click", () => {
+      const userId = button.dataset.userId;
+      visitUserProfile(userId);
+    });
+  });
+
+  // Update avatar replacement count
+  const avatarCount = Object.keys(replacedAvatars).length;
+  const avatarCountElement = container.querySelector(".hide-avatar-count");
+  if (avatarCountElement) {
+    avatarCountElement.textContent = `(${avatarCount})`;
+  }
+}
+
+/**
+ * Unhide a user
+ * @param {HTMLElement} container - The container element
+ * @param {string} userId - The user ID
+ * @param {string} username - The username
+ */
+function unhideUser(container, userId, username) {
+  try {
+    toggleUserHide(userId, username);
+
+    // Update the UI
+    populateHiddenUsers(container);
+
+    // Show confirmation
+    showStatusMessage(`Unhidden user: ${username}`);
+  } catch (err) {
+    error(`Error unhiding user ${userId}:`, err);
+    showStatusMessage(`Error unhiding user: ${err.message}`, true);
+  }
+}
+
+/**
+ * Show a status message
+ * @param {string} message - The message to show
+ * @param {boolean} isError - Whether this is an error message
+ */
+function showStatusMessage(message, isError = false) {
+  // Remove any existing status message
+  const existing = document.querySelector(".hide-status-message");
+  if (existing) {
+    existing.remove();
+  }
+
+  // Create the message element
+  const statusElement = document.createElement("div");
+  statusElement.className = `hide-status-message ${isError ? "error" : "success"}`;
+  statusElement.textContent = message;
+  statusElement.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 15px;
+    border-radius: 4px;
+    background-color: ${isError ? "var(--danger-color, #e74c3c)" : "var(--success-color, #2ecc71)"};
+    color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 10000;
+    transition: opacity 0.3s;
+  `;
+
+  document.body.appendChild(statusElement);
+
+  // Remove after a delay
+  setTimeout(() => {
+    statusElement.style.opacity = "0";
+    setTimeout(() => {
+      statusElement.remove();
+    }, 300);
+  }, 3000);
+}
+
+/**
+ * Visit a user's profile
+ * @param {string} userId - The user ID
+ */
+function visitUserProfile(userId) {
+  window.location.href = `https://rpghq.org/forums/memberlist.php?mode=viewprofile&u=${userId}`;
+}
+
+/**
+ * Perform a user search
+ * @param {HTMLElement} container - The container element
+ * @param {string} query - The search query
+ */
+async function performUserSearch(container, query) {
+  const resultsContainer = container.querySelector(".hide-user-search-results");
+  if (!resultsContainer) return;
+
+  // Clear previous results
+  resultsContainer.innerHTML = '<div class="hide-loading">Searching...</div>';
+
+  if (!query.trim()) {
+    resultsContainer.innerHTML =
+      '<div class="hide-empty-state">Enter a username to search</div>';
+    return;
+  }
+
+  try {
+    // Perform the search
+    const results = await searchUsers(query);
+
+    // Filter to only include users
+    const users = results.filter((item) => item.type === "user");
+
+    if (users.length === 0) {
+      resultsContainer.innerHTML = `<div class="hide-empty-state">No users found matching "${query}"</div>`;
+      return;
+    }
+
+    // Generate search results HTML
+    let html = "";
+    users.forEach((user) => {
+      const userId = user.user_id;
+      const username = user.value || user.key || "Unknown User";
+
+      html += `
+        <div class="hide-user-search-result" data-user-id="${userId}" data-username="${username}">
+          <img 
+            src="https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg" 
+            alt="${username}'s avatar"
+            onerror="if(this.src.endsWith('.jpg')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.png';}else if(this.src.endsWith('.png')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.gif';}else{this.src='${DEFAULT_AVATAR}';}"
+          >
+          <span>${username}</span>
+        </div>
+      `;
+    });
+
+    // Update the results container
+    resultsContainer.innerHTML = html;
+
+    // Add event listeners to results
+    resultsContainer
+      .querySelectorAll(".hide-user-search-result")
+      .forEach((result) => {
+        result.addEventListener("click", () => {
+          const userId = result.dataset.userId;
+          const username = result.dataset.username;
+
+          // Check if user is already hidden
+          const ignoredUsers = getHiddenUsers();
+          if (ignoredUsers[userId]) {
+            showStatusMessage(`${username} is already hidden`, true);
+            return;
+          }
+
+          // Hide the user
+          hideUser(container, userId, username);
+        });
+      });
+  } catch (err) {
+    error("Error searching for users:", err);
+    resultsContainer.innerHTML = `<div class="hide-empty-state">Error searching for users: ${err.message}</div>`;
+  }
+}
+
+/**
+ * Hide a user
+ * @param {HTMLElement} container - The container element
+ * @param {string} userId - The user ID
+ * @param {string} username - The username
+ */
+function hideUser(container, userId, username) {
+  try {
+    toggleUserHide(userId, username);
+
+    // Update the UI
+    populateHiddenUsers(container);
+
+    // Show confirmation
+    showStatusMessage(`Hidden user: ${username}`);
+
+    // Clear search results
+    const resultsContainer = container.querySelector(
+      ".hide-user-search-results",
+    );
+    if (resultsContainer) {
+      resultsContainer.innerHTML = "";
+    }
+
+    // Clear search input
+    const searchInput = container.querySelector("#hide-search-input");
+    if (searchInput) {
+      searchInput.value = "";
+    }
+  } catch (err) {
+    error(`Error hiding user ${userId}:`, err);
+    showStatusMessage(`Error hiding user: ${err.message}`, true);
+  }
+}
+
+/**
+ * Update the avatar preview
+ * @param {HTMLElement} container - The container element
+ * @param {string} userId - The user ID
+ * @param {string} url - The avatar URL
+ */
+function updateAvatarPreview(container, userId, url) {
+  const previewElement = container.querySelector(".avatar-preview");
+  if (!previewElement) return;
+
+  // Check if we have both userId and URL
+  if (!userId || !url) {
+    previewElement.innerHTML = `
+      <div class="avatar-preview-text">Enter a valid user ID and image URL above to replace a user's avatar</div>
+    `;
+    return;
+  }
+
+  // Create preview image
+  previewElement.innerHTML = `
+    <img 
+      src="${url}" 
+      alt="Preview" 
+      class="avatar-preview-image"
+      onerror="this.src='${DEFAULT_AVATAR}'; this.onerror=null;"
+    >
+    <div class="avatar-preview-text">Preview for User ID: ${userId}</div>
+  `;
+}
+
+/**
+ * Replace a user's avatar
+ * @param {HTMLElement} container - The container element
+ * @param {string} userId - The user ID
+ * @param {string} url - The avatar URL
+ */
+async function replaceAvatarAction(container, userId, url) {
+  if (!userId || !url) {
+    showStatusMessage("Please enter both a User ID and Image URL", true);
+    return;
+  }
+
+  try {
+    await replaceUserAvatar(userId, url);
+
+    // Update the UI
+    populateHiddenUsers(container);
+
+    // Show confirmation
+    showStatusMessage(`Avatar replaced for user ID: ${userId}`);
+
+    // Clear inputs
+    const userIdInput = container.querySelector("#hide-user-id-input");
+    const avatarUrlInput = container.querySelector("#hide-avatar-url-input");
+
+    if (userIdInput) userIdInput.value = "";
+    if (avatarUrlInput) avatarUrlInput.value = "";
+
+    // Update preview
+    updateAvatarPreview(container, "", "");
+  } catch (err) {
+    error(`Error replacing avatar for user ${userId}:`, err);
+    showStatusMessage(`Error replacing avatar: ${err.message}`, true);
+  }
+}
+
+/**
+ * Reset a user's avatar to default
+ * @param {HTMLElement} container - The container element
+ * @param {string} userId - The user ID
+ */
+function resetAvatarAction(container, userId) {
+  if (!userId) {
+    showStatusMessage("Please enter a User ID", true);
+    return;
+  }
+
+  try {
+    resetUserAvatar(userId);
+
+    // Update the UI
+    populateHiddenUsers(container);
+
+    // Show confirmation
+    showStatusMessage(`Avatar reset for user ID: ${userId}`);
+
+    // Clear inputs
+    const userIdInput = container.querySelector("#hide-user-id-input");
+    const avatarUrlInput = container.querySelector("#hide-avatar-url-input");
+
+    if (userIdInput) userIdInput.value = "";
+    if (avatarUrlInput) avatarUrlInput.value = "";
+
+    // Update preview
+    updateAvatarPreview(container, "", "");
+  } catch (err) {
+    error(`Error resetting avatar for user ${userId}:`, err);
+    showStatusMessage(`Error resetting avatar: ${err.message}`, true);
+  }
 }
 
 // Save a single Hide setting
@@ -682,5 +1334,32 @@ function saveHideSetting(key, value) {
     debug(`Saved Hide setting: ${key} = ${value}`);
   } catch (err) {
     error(`Error saving Hide setting ${key}:`, err);
+  }
+}
+
+/**
+ * Reset all hidden users
+ * @param {HTMLElement} container - The container element
+ */
+function resetAllHiddenUsers(container) {
+  if (
+    !confirm(
+      "Are you sure you want to reset ALL hidden users? This cannot be undone!",
+    )
+  ) {
+    return;
+  }
+
+  try {
+    gmSetValue(IGNORED_USERS_KEY, {});
+
+    // Update the UI
+    populateHiddenUsers(container);
+
+    // Show confirmation
+    showStatusMessage("All hidden users have been reset");
+  } catch (err) {
+    error("Error resetting all hidden users:", err);
+    showStatusMessage(`Error resetting hidden users: ${err.message}`, true);
   }
 }
