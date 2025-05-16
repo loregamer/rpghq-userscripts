@@ -59,18 +59,18 @@ Settings are defined in the script's manifest entry:
 ```javascript
 settings: [
   {
-    id: "settingId",               // Unique identifier within the script
+    id: "settingId", // Unique identifier within the script
     label: "Setting Display Name", // Displayed to the user
-    type: "checkbox",              // Setting type (checkbox, color, etc.)
-    defaultValue: true,            // Default value
-    description: "Help text",      // Explanatory text for the user
-    min: 1,                        // For number type (optional)
-    max: 100,                      // For number type (optional)
-    step: 5,                       // For number type (optional)
+    type: "checkbox", // Setting type (checkbox, color, etc.)
+    defaultValue: true, // Default value
+    description: "Help text", // Explanatory text for the user
+    min: 1, // For number type (optional)
+    max: 100, // For number type (optional)
+    step: 5, // For number type (optional)
     options: ["Option1", "Option2"], // For select type (optional)
-    previewImage: "url"            // Optional image preview (optional)
-  }
-]
+    previewImage: "url", // Optional image preview (optional)
+  },
+];
 ```
 
 ### Accessing Settings in Scripts
@@ -84,7 +84,7 @@ export function init() {
   // Values are automatically prefixed with RPGHQ_Manager_
   const highlightColor = gmGetValue("yourScriptId_colorSetting", "#ffff00");
   const enableFeature = gmGetValue("yourScriptId_enableFeature", true);
-  
+
   // Use settings in your implementation...
 }
 ```
@@ -99,19 +99,19 @@ settings: [
     id: "enableHighlighting",
     label: "Enable Highlighting",
     type: "checkbox",
-    defaultValue: true
+    defaultValue: true,
   },
   {
     id: "highlightColor",
     label: "Highlight Color",
     type: "color",
     defaultValue: "#ffff00",
-    dependsOn: { 
-      settingId: "enableHighlighting", 
-      value: true 
-    }
-  }
-]
+    dependsOn: {
+      settingId: "enableHighlighting",
+      value: true,
+    },
+  },
+];
 ```
 
 In this example, "Highlight Color" is only shown when "Enable Highlighting" is checked.

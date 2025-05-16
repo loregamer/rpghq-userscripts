@@ -386,5 +386,25 @@ export const SCRIPT_MANIFEST = [
           "Enable to add commas to 4-digit numbers (1,000+). Disable to only format 5-digit numbers (10,000+).",
       },
     ],
+  },
+  {
+    id: "threadAuthorHighlight",
+    name: "Thread Author Highlighting",
+    version: "1.0.0",
+    description:
+      "Highlights or hides thread rows based on author according to user preferences",
+    author: "loregamer",
+    path: "./scripts/threadAuthorHighlight.js",
+    enabledByDefault: true,
+    image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png", // Placeholder image
+    urlPatterns: [
+      "https://rpghq.org/forums/viewforum.php*",
+      "https://rpghq.org/forums/search.php*",
+      "https://rpghq.org/forums/index.php*",
+    ],
+    settings: [
+      // Settings are controlled through Forum Preferences
+    ],
+    categories: ["UI"],
   }
 ];;

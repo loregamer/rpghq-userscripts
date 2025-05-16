@@ -263,26 +263,22 @@ import * as bbcode from "./scripts/bbcode.js";
 import * as commaFormatter from "./scripts/commaFormatter.js";
 import * as quotes from "./scripts/quotes.js";
 import * as disableEmbeds from "./scripts/disableEmbeds.js";
+import * as threadAuthorHighlight from "./scripts/threadAuthorHighlight.js";
 // Map of script ids to their modules
 const scriptModules = {
   lastpostTooltip: lastpostTooltip,
   commaFormatter: commaFormatter,
   bbcode: bbcode,
-
   quotes: quotes,
   disableEmbeds: disableEmbeds,
-
   kalareact: kalareact,
-
   notifications: notifications,
-
   pinThreads: pinThreads,
-
   separateReactions: separateReactions,
-
   memberSearch: memberSearch,
   randomTopic: randomTopic,
   recentTopicsFormat: recentTopicsFormat,
+  threadAuthorHighlight: threadAuthorHighlight,
 };
 
 // Load a single script by its manifest entry

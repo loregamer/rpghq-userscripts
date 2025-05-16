@@ -1,6 +1,7 @@
 {
   "document-start": [
     "disableEmbeds",
+    "threadAuthorHighlight",
     "_applyThreadPreferences",
     "_cachePostsOnPage",
     "_applyUserPreferences"
