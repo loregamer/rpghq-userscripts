@@ -1,82 +1,82 @@
 /**
- * Ghost functionality styles
- * CSS styling for the Ghost feature in the RPGHQ Userscript Manager
+ * Hide functionality styles
+ * CSS styling for the Hide feature in the RPGHQ Userscript Manager
  */
 
 import { log } from "../logger.js";
 
 /**
- * Add Ghost-specific styles to the page
+ * Add Hide-specific styles to the page
  */
-export function addGhostStyles() {
-  const styleId = "rpghq-ghost-styles";
+export function addHideStyles() {
+  const styleId = "rpghq-hide-styles";
 
   // If styles already exist, don't add them again
   if (document.getElementById(styleId)) {
     return;
   }
 
-  log("Adding Ghost styles to page");
+  log("Adding Hide styles to page");
 
   const css = `
-    /* Ghost Feature: Core styles for hiding and highlighting content */
-    .ghosted-post:not(.show),
-    .ghosted-post-manual:not(.show) {
+    /* Hide Feature: Core styles for hiding and highlighting content */
+    .hidden-post:not(.show),
+    .hidden-post-manual:not(.show) {
       position: relative;
       opacity: 0.25;
       pointer-events: none;
     }
 
-    .show-hidden-threads .ghosted-post,
-    .show-hidden-threads .ghosted-post-manual,
-    .ghosted-post.show,
-    .ghosted-post-manual.show {
+    .show-hidden-threads .hidden-post,
+    .show-hidden-threads .hidden-post-manual,
+    .hidden-post.show,
+    .hidden-post-manual.show {
       opacity: 1;
       pointer-events: auto;
     }
 
-    /* Ghost markers for highlighting */
-    .ghosted-by-author {
-      background-color: var(--ghost-author-highlight, rgba(255, 0, 0, 0.1)) !important;
+    /* Hide markers for highlighting */
+    .hidden-by-author {
+      background-color: var(--hide-author-highlight, rgba(255, 0, 0, 0.1)) !important;
     }
 
-    .ghosted-by-content {
-      background-color: var(--ghost-content-highlight, rgba(255, 128, 0, 0.1)) !important;
+    .hidden-by-content {
+      background-color: var(--hide-content-highlight, rgba(255, 128, 0, 0.1)) !important;
     }
 
     /* Hide content in rows */
-    .ghosted-row:not(.show) {
+    .hidden-row:not(.show) {
       display: none !important;
     }
 
-    .ghosted-row.show {
+    .hidden-row.show {
       display: inherit !important;
       opacity: 0.6;
     }
 
-    /* Quotes from ghosted users */
-    .ghosted-quote:not(.show) {
+    /* Quotes from hidden users */
+    .hidden-quote:not(.show) {
       display: none !important;
     }
 
-    .ghosted-quote.show {
+    .hidden-quote.show {
       display: inherit !important;
       opacity: 0.6;
-      border-left: 3px solid var(--ghost-author-highlight, rgba(255, 0, 0, 0.1)) !important;
+      border-left: 3px solid var(--hide-author-highlight, rgba(255, 0, 0, 0.1)) !important;
     }
 
-    /* Manual ghost buttons */
-    .post-ghost-button-li {
+    /* Manual hide buttons */
+    .post-hide-button-li {
       display: none;
     }
 
-    .alt-key-down .post-ghost-button-li,
-    body.show-ghost-buttons .post-ghost-button-li {
+    .alt-key-down .post-hide-button-li,
+    body.show-hide-buttons .post-hide-button-li {
       display: inline-block;
     }
 
-    /* Toggle button for showing/hiding ghosted content */
-    .show-ghosted-posts {
+    /* Toggle button for showing/hiding hidden content */
+    .show-hidden-posts {
       position: fixed;
       bottom: 20px;
       right: 20px;
@@ -95,17 +95,17 @@ export function addGhostStyles() {
       transition: transform 0.2s, background-color 0.2s;
     }
 
-    .show-ghosted-posts:hover {
+    .show-hidden-posts:hover {
       transform: scale(1.1);
       background-color: rgba(0, 0, 0, 0.8);
     }
 
-    .show-ghosted-posts.active {
+    .show-hidden-posts.active {
       background-color: #3889ED;
     }
 
-    /* Ghost toggle notification */
-    .ghost-toggle-notification {
+    /* Hide toggle notification */
+    .hide-toggle-notification {
       position: fixed;
       top: 20px;
       right: 20px;
@@ -117,8 +117,8 @@ export function addGhostStyles() {
       transition: opacity 0.3s;
     }
 
-    /* Ghost status message styles */
-    .ghost-status-message {
+    /* Hide status message styles */
+    .hide-status-message {
       position: fixed;
       bottom: 20px;
       right: 20px;
@@ -130,17 +130,17 @@ export function addGhostStyles() {
       transition: opacity 0.3s;
     }
 
-    .ghost-status-message.success {
+    .hide-status-message.success {
       background-color: var(--success-color, #2ecc71);
     }
 
-    .ghost-status-message.error {
+    .hide-status-message.error {
       background-color: var(--danger-color, #e74c3c);
     }
 
     /* Mobile optimizations */
     @media (max-width: 768px) {
-      .show-ghosted-posts {
+      .show-hidden-posts {
         bottom: 10px;
         right: 10px;
         width: 36px;

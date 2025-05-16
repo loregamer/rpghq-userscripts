@@ -1,51 +1,51 @@
 /**
- * Content processing for Ghost functionality
- * Handles processing of forum content to hide/highlight ghosted users
+ * Content processing for Hide functionality
+ * Handles processing of forum content to hide/highlight hidden users
  */
 
 import { log, debug, error } from "../logger.js";
 import { gmGetValue } from "../../main.js";
 import { getCachedPost } from "../postCache.js";
-import { addGhostStyles } from "./ghost-styles.js";
+import { addHideStyles } from "./hide-styles.js";
 import {
   IGNORED_USERS_KEY,
   REPLACED_AVATARS_KEY,
-  GHOSTED_MANUAL_POSTS_KEY,
+  HIDDEN_MANUAL_POSTS_KEY,
   USER_COLORS_KEY,
-  GHOST_CONFIG_KEY,
+  HIDE_CONFIG_KEY,
   DEFAULT_CONFIG,
-  isUserGhosted,
-  contentContainsGhosted,
-  ghostPost,
-  unghostPost,
-} from "./ghost.js";
+  isUserHidden,
+  contentContainsHidden,
+  hidePost,
+  unhidePost,
+} from "./hide.js";
 
-// Global state for tracking whether ghosted content is shown or hidden
-let showGhostedPosts = false;
+// Global state for tracking whether hidden content is shown or hidden
+let showHiddenPosts = false;
 
 // Elements that have been processed
 const processedElements = new Set();
 
 /**
- * Process all ghost-related content on the page
+ * Process all hide-related content on the page
  */
-export function processGhostContent() {
-  log("Processing Ghost content...");
+export function processHideContent() {
+  log("Processing Hide content...");
 
   try {
     // Get configuration
-    const config = gmGetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
+    const config = gmGetValue(HIDE_CONFIG_KEY, DEFAULT_CONFIG);
 
-    // Add Ghost styles to the page
-    addGhostStyles();
+    // Add Hide styles to the page
+    addHideStyles();
 
     // Apply CSS variables
     document.documentElement.style.setProperty(
-      "--ghost-author-highlight",
+      "--hide-author-highlight",
       config.authorHighlightColor,
     );
     document.documentElement.style.setProperty(
-      "--ghost-content-highlight",
+      "--hide-content-highlight",
       config.contentHighlightColor,
     );
 
@@ -60,31 +60,31 @@ export function processGhostContent() {
     processNotifications();
 
     // Add the toggle button
-    addGhostToggleButton();
+    addHideToggleButton();
 
     // Setup keyboard shortcuts
     setupKeyboardShortcuts();
 
-    // Add manual ghost buttons to posts
-    addManualGhostButtons();
+    // Add manual hide buttons to posts
+    addManualHideButtons();
 
     // Log success
-    log("Ghost content processing complete");
+    log("Hide content processing complete");
     return true;
   } catch (err) {
-    error("Error processing Ghost content:", err);
+    error("Error processing Hide content:", err);
     return false;
   }
 }
 
 /**
- * Process topic list rows to hide/highlight content from ghosted users
+ * Process topic list rows to hide/highlight content from hidden users
  */
 function processTopicListRows() {
   log("Processing topic list rows...");
 
   try {
-    const config = gmGetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
+    const config = gmGetValue(HIDE_CONFIG_KEY, DEFAULT_CONFIG);
 
     // Process forum list rows
     const forumRows = document.querySelectorAll("ul.topiclist.forums > li.row");
@@ -111,7 +111,7 @@ function processTopicListRows() {
 /**
  * Process a forum row
  * @param {HTMLElement} row - The forum row element
- * @param {Object} config - The Ghost configuration
+ * @param {Object} config - The Hide configuration
  */
 function processForumRow(row, config) {
   // Skip if already processed
@@ -130,24 +130,24 @@ function processForumRow(row, config) {
     const lastpost = row.querySelector("dd.lastpost");
     if (!lastpost) return;
 
-    // Check if the lastpost author is ghosted
+    // Check if the lastpost author is hidden
     const authorLink = lastpost.querySelector(
       "a.username, a.username-coloured",
     );
-    if (authorLink && isUserGhosted(authorLink.textContent.trim())) {
-      lastpost.classList.add("ghosted-row");
-      row.classList.add("ghosted-by-author");
+    if (authorLink && isUserHidden(authorLink.textContent.trim())) {
+      lastpost.classList.add("hidden-row");
+      row.classList.add("hidden-by-author");
       return;
     }
 
-    // Check for content references to ghosted users
+    // Check for content references to hidden users
     const postLink = lastpost.querySelector("a[href*='viewtopic.php']");
     if (postLink) {
       const postId = postLink.href.match(/p=(\d+)/)?.[1];
       if (postId) {
         const post = getCachedPost(postId);
-        if (post && post.html && contentContainsGhosted(post.html)) {
-          row.classList.add("ghosted-by-content");
+        if (post && post.html && contentContainsHidden(post.html)) {
+          row.classList.add("hidden-by-content");
         }
       }
     }
@@ -159,7 +159,7 @@ function processForumRow(row, config) {
 /**
  * Process a topic row
  * @param {HTMLElement} row - The topic row element
- * @param {Object} config - The Ghost configuration
+ * @param {Object} config - The Hide configuration
  */
 function processTopicRow(row, config) {
   // Skip if already processed
@@ -182,12 +182,12 @@ function processTopicRow(row, config) {
     if (authorClasses.length > 0) {
       for (const cls of authorClasses) {
         const username = cls.replace("author-name-", "").replace("row-by-", "");
-        if (isUserGhosted(username)) {
+        if (isUserHidden(username)) {
           // Check if we should hide topic creations
           if (config.hideTopicCreations && !isWhitelisted) {
-            row.classList.add("ghosted-row");
+            row.classList.add("hidden-row");
           }
-          row.classList.add("ghosted-by-author");
+          row.classList.add("hidden-by-author");
 
           // Add asterisk to topic title if not already there
           const topicTitle = row.querySelector("a.topictitle");
@@ -204,31 +204,31 @@ function processTopicRow(row, config) {
     const lastpost = row.querySelector("dd.lastpost");
     if (!lastpost) return;
 
-    // Check if the lastpost author is ghosted
+    // Check if the lastpost author is hidden
     const authorLink = lastpost.querySelector(
       "a.username, a.username-coloured",
     );
-    if (authorLink && isUserGhosted(authorLink.textContent.trim())) {
+    if (authorLink && isUserHidden(authorLink.textContent.trim())) {
       if (config.hideEntireRow && !isWhitelisted) {
-        row.classList.add("ghosted-row");
+        row.classList.add("hidden-row");
       } else {
-        lastpost.classList.add("ghosted-row");
+        lastpost.classList.add("hidden-row");
       }
-      row.classList.add("ghosted-by-author");
+      row.classList.add("hidden-by-author");
       return;
     }
 
-    // Check for content references to ghosted users
+    // Check for content references to hidden users
     const postLink = lastpost.querySelector("a[href*='viewtopic.php']");
     if (postLink) {
       const postId = postLink.href.match(/p=(\d+)/)?.[1];
       if (postId) {
         const post = getCachedPost(postId);
-        if (post && post.html && contentContainsGhosted(post.html)) {
+        if (post && post.html && contentContainsHidden(post.html)) {
           if (config.hideEntireRow && !isWhitelisted) {
-            row.classList.add("ghosted-row");
+            row.classList.add("hidden-row");
           }
-          row.classList.add("ghosted-by-content");
+          row.classList.add("hidden-by-content");
         }
       }
     }
@@ -240,7 +240,7 @@ function processTopicRow(row, config) {
 /**
  * Check if a thread is whitelisted
  * @param {HTMLElement} element - The element to check
- * @param {Object} config - The Ghost configuration
+ * @param {Object} config - The Hide configuration
  * @returns {boolean} Whether the thread is whitelisted
  */
 function isThreadWhitelisted(element, config) {
@@ -265,14 +265,14 @@ function isThreadWhitelisted(element, config) {
 }
 
 /**
- * Process forum posts to hide/highlight content from ghosted users
+ * Process forum posts to hide/highlight content from hidden users
  */
 function processForumPosts() {
   log("Processing forum posts...");
 
   try {
-    // Get manually ghosted posts
-    const ghostedManualPosts = gmGetValue(GHOSTED_MANUAL_POSTS_KEY, {});
+    // Get manually hidden posts
+    const hiddenManualPosts = gmGetValue(HIDDEN_MANUAL_POSTS_KEY, {});
 
     // Process all posts
     const posts = document.querySelectorAll(".post");
@@ -289,25 +289,25 @@ function processForumPosts() {
       const postId = post.id.replace("p", "");
       if (!postId) return;
 
-      // Check if manually ghosted
-      if (ghostedManualPosts[postId]) {
-        post.classList.add("ghosted-post-manual");
+      // Check if manually hidden
+      if (hiddenManualPosts[postId]) {
+        post.classList.add("hidden-post-manual");
         return;
       }
 
       // Check author
       const usernameEl = post.querySelector(".username, .username-coloured");
-      if (usernameEl && isUserGhosted(usernameEl.textContent.trim())) {
-        post.classList.add("ghosted-post");
-        post.classList.add("ghosted-by-author");
+      if (usernameEl && isUserHidden(usernameEl.textContent.trim())) {
+        post.classList.add("hidden-post");
+        post.classList.add("hidden-by-author");
         return;
       }
 
-      // Check for mentions of ghosted users in post content
+      // Check for mentions of hidden users in post content
       const contentDiv = post.querySelector(".content");
-      if (contentDiv && contentContainsGhosted(contentDiv.innerHTML)) {
-        post.classList.add("ghosted-post");
-        post.classList.add("ghosted-by-content");
+      if (contentDiv && contentContainsHidden(contentDiv.innerHTML)) {
+        post.classList.add("hidden-post");
+        post.classList.add("hidden-by-content");
       }
     });
 
@@ -340,15 +340,15 @@ function processPagination() {
         return;
       }
 
-      const visiblePosts = showGhostedPosts
+      const visiblePosts = showHiddenPosts
         ? document.querySelectorAll(".post").length
         : document.querySelectorAll(
-            ".post:not(.ghosted-post):not(.ghosted-post-manual)",
+            ".post:not(.hidden-post):not(.hidden-post-manual)",
           ).length;
 
-      const visibleMatches = showGhostedPosts
+      const visibleMatches = showHiddenPosts
         ? document.querySelectorAll("li.row").length
-        : document.querySelectorAll("li.row:not(.ghosted-row)").length;
+        : document.querySelectorAll("li.row:not(.hidden-row)").length;
 
       // Update post count if this is a post page
       const postCountMatch = paginationText.match(/(\d+) posts/);
@@ -378,7 +378,7 @@ function processPagination() {
 }
 
 /**
- * Process lastposts to hide/highlight content from ghosted users
+ * Process lastposts to hide/highlight content from hidden users
  */
 function processLastPosts() {
   log("Processing lastposts...");
@@ -399,9 +399,9 @@ function processLastPosts() {
       const authorLink = lastPost.querySelector(
         "a.username, a.username-coloured",
       );
-      if (authorLink && isUserGhosted(authorLink.textContent.trim())) {
-        lastPost.classList.add("ghosted-row");
-        lastPost.classList.add("ghosted-by-author");
+      if (authorLink && isUserHidden(authorLink.textContent.trim())) {
+        lastPost.classList.add("hidden-row");
+        lastPost.classList.add("hidden-by-author");
       }
     });
 
@@ -412,13 +412,13 @@ function processLastPosts() {
 }
 
 /**
- * Process quotes to hide/highlight quotes from ghosted users
+ * Process quotes to hide/highlight quotes from hidden users
  */
 function processQuotes() {
   log("Processing quotes...");
 
   try {
-    // Process blockquotes to hide quotes from ghosted users
+    // Process blockquotes to hide quotes from hidden users
     const quotes = document.querySelectorAll("blockquote");
 
     quotes.forEach((quote) => {
@@ -435,8 +435,8 @@ function processQuotes() {
       if (!citeElement) return;
 
       const authorLink = citeElement.querySelector("a");
-      if (authorLink && isUserGhosted(authorLink.textContent.trim())) {
-        quote.classList.add("ghosted-quote");
+      if (authorLink && isUserHidden(authorLink.textContent.trim())) {
+        quote.classList.add("hidden-quote");
       }
     });
 
@@ -447,7 +447,7 @@ function processQuotes() {
 }
 
 /**
- * Process avatars to replace avatars from ghosted users
+ * Process avatars to replace avatars from hidden users
  */
 function processAvatars() {
   log("Processing avatars...");
@@ -486,7 +486,7 @@ function processAvatars() {
 }
 
 /**
- * Process reaction lists to hide/highlight reactions from ghosted users
+ * Process reaction lists to hide/highlight reactions from hidden users
  */
 function processReactionList() {
   log("Processing reaction lists...");
@@ -521,7 +521,7 @@ function processReactionList() {
 
         userLinks.forEach((link) => {
           const uid = link.href.match(/u=(\d+)/)?.[1];
-          if (uid && isUserGhosted(uid)) {
+          if (uid && isUserHidden(uid)) {
             // Navigate up to find the complete user entry
             let userRow = link;
             let parent = link.parentElement;
@@ -564,7 +564,7 @@ function processReactionList() {
 }
 
 /**
- * Process notifications to hide/highlight notifications from ghosted users
+ * Process notifications to hide/highlight notifications from hidden users
  */
 function processNotifications() {
   log("Processing notifications...");
@@ -595,12 +595,12 @@ function processNotifications() {
         el.textContent.trim(),
       );
 
-      // Check if the first username is ghosted (most important for notifications)
-      if (isUserGhosted(usernames[0])) {
+      // Check if the first username is hidden (most important for notifications)
+      if (isUserHidden(usernames[0])) {
         const notificationItem = notification.closest("li");
         if (notificationItem) {
-          notificationItem.classList.add("ghosted-row");
-          notificationItem.classList.add("ghosted-by-author");
+          notificationItem.classList.add("hidden-row");
+          notificationItem.classList.add("hidden-by-author");
 
           // Try to mark as read
           markNotificationAsRead(notification);
@@ -608,21 +608,21 @@ function processNotifications() {
         return;
       }
 
-      // Check if any username is ghosted
-      const hasGhosted = usernames.some((username) => isUserGhosted(username));
+      // Check if any username is hidden
+      const hasHidden = usernames.some((username) => isUserHidden(username));
 
-      if (hasGhosted) {
-        // Filter out ghosted usernames
-        const nonGhosted = usernames.filter(
-          (username) => !isUserGhosted(username),
+      if (hasHidden) {
+        // Filter out hidden usernames
+        const nonHidden = usernames.filter(
+          (username) => !isUserHidden(username),
         );
 
-        // If no non-ghosted usernames, hide the notification
-        if (nonGhosted.length === 0) {
+        // If no non-hidden usernames, hide the notification
+        if (nonHidden.length === 0) {
           const notificationItem = notification.closest("li");
           if (notificationItem) {
-            notificationItem.classList.add("ghosted-row");
-            notificationItem.classList.add("ghosted-by-author");
+            notificationItem.classList.add("hidden-row");
+            notificationItem.classList.add("hidden-by-author");
 
             // Try to mark as read
             markNotificationAsRead(notification);
@@ -687,29 +687,29 @@ async function markNotificationAsRead(notification) {
 }
 
 /**
- * Add Ghost toggle button
+ * Add Hide toggle button
  */
-function addGhostToggleButton() {
+function addHideToggleButton() {
   // Check if the button already exists
-  if (document.querySelector(".show-ghosted-posts")) {
+  if (document.querySelector(".show-hidden-posts")) {
     return;
   }
 
   // Create the button
   const toggleButton = document.createElement("button");
-  toggleButton.className = "show-ghosted-posts";
+  toggleButton.className = "show-hidden-posts";
   toggleButton.innerHTML = '<i class="fa fa-eye"></i>';
-  toggleButton.title = "Show/hide ghosted content (Backslash key)";
+  toggleButton.title = "Show/hide hidden content (Backslash key)";
 
   // Add event listener
-  toggleButton.addEventListener("click", toggleGhostedPosts);
+  toggleButton.addEventListener("click", toggleHiddenPosts);
 
   // Append to body
   document.body.appendChild(toggleButton);
 }
 
 /**
- * Set up keyboard shortcuts for Ghost functionality
+ * Set up keyboard shortcuts for Hide functionality
  */
 function setupKeyboardShortcuts() {
   // Remove any existing listeners
@@ -729,13 +729,13 @@ function keydownHandler(e) {
     return;
   }
 
-  // Check for backslash key to toggle ghosted content
+  // Check for backslash key to toggle hidden content
   if (e.key === "\\") {
     e.preventDefault();
-    toggleGhostedPosts();
+    toggleHiddenPosts();
   }
 
-  // Check for Alt key to toggle manual ghost buttons
+  // Check for Alt key to toggle manual hide buttons
   if (e.key === "Alt") {
     e.preventDefault();
     document.body.classList.toggle("alt-key-down");
@@ -743,34 +743,34 @@ function keydownHandler(e) {
 }
 
 /**
- * Toggle visibility of ghosted content
+ * Toggle visibility of hidden content
  */
-function toggleGhostedPosts() {
-  showGhostedPosts = !showGhostedPosts;
+function toggleHiddenPosts() {
+  showHiddenPosts = !showHiddenPosts;
 
   // Update button state
-  const toggleButton = document.querySelector(".show-ghosted-posts");
+  const toggleButton = document.querySelector(".show-hidden-posts");
   if (toggleButton) {
-    toggleButton.classList.toggle("active", showGhostedPosts);
-    toggleButton.innerHTML = showGhostedPosts
+    toggleButton.classList.toggle("active", showHiddenPosts);
+    toggleButton.innerHTML = showHiddenPosts
       ? '<i class="fa fa-eye-slash"></i>'
       : '<i class="fa fa-eye"></i>';
   }
 
-  // Update ghosted elements
-  const ghostedPosts = document.querySelectorAll(".ghosted-post");
-  const ghostedQuotes = document.querySelectorAll(".ghosted-quote");
-  const ghostedRows = document.querySelectorAll(".ghosted-row");
-  const ghostedManual = document.querySelectorAll(".ghosted-post-manual");
+  // Update hidden elements
+  const hiddenPosts = document.querySelectorAll(".hidden-post");
+  const hiddenQuotes = document.querySelectorAll(".hidden-quote");
+  const hiddenRows = document.querySelectorAll(".hidden-row");
+  const hiddenManual = document.querySelectorAll(".hidden-post-manual");
 
   // Toggle visibility
-  ghostedPosts.forEach((p) => p.classList.toggle("show", showGhostedPosts));
-  ghostedQuotes.forEach((q) => q.classList.toggle("show", showGhostedPosts));
-  ghostedRows.forEach((r) => r.classList.toggle("show", showGhostedPosts));
-  ghostedManual.forEach((m) => m.classList.toggle("show", showGhostedPosts));
+  hiddenPosts.forEach((p) => p.classList.toggle("show", showHiddenPosts));
+  hiddenQuotes.forEach((q) => q.classList.toggle("show", showHiddenPosts));
+  hiddenRows.forEach((r) => r.classList.toggle("show", showHiddenPosts));
+  hiddenManual.forEach((m) => m.classList.toggle("show", showHiddenPosts));
 
   // Toggle body class
-  document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
+  document.body.classList.toggle("show-hidden-threads", showHiddenPosts);
 
   // Show notification
   showToggleNotification();
@@ -780,12 +780,12 @@ function toggleGhostedPosts() {
 }
 
 /**
- * Show a notification when toggling ghosted content
+ * Show a notification when toggling hidden content
  */
 function showToggleNotification() {
   // Remove any existing notification
   const existingNotification = document.querySelector(
-    ".ghost-toggle-notification",
+    ".hide-toggle-notification",
   );
   if (existingNotification) {
     existingNotification.remove();
@@ -793,7 +793,7 @@ function showToggleNotification() {
 
   // Create a new notification
   const notification = document.createElement("div");
-  notification.className = "ghost-toggle-notification";
+  notification.className = "hide-toggle-notification";
   notification.style.cssText = `
     position: fixed;
     top: 20px;
@@ -805,9 +805,9 @@ function showToggleNotification() {
     z-index: 9999;
     transition: opacity 0.3s;
   `;
-  notification.textContent = showGhostedPosts
-    ? "Showing Ghosted Content"
-    : "Hiding Ghosted Content";
+  notification.textContent = showHiddenPosts
+    ? "Showing Hidden Content"
+    : "Hiding Hidden Content";
 
   document.body.appendChild(notification);
 
@@ -819,68 +819,68 @@ function showToggleNotification() {
 }
 
 /**
- * Add manual ghost buttons to posts
+ * Add manual hide buttons to posts
  */
-function addManualGhostButtons() {
-  log("Adding manual ghost buttons to posts...");
+function addManualHideButtons() {
+  log("Adding manual hide buttons to posts...");
 
   try {
-    // Get manually ghosted posts
-    const ghostedManualPosts = gmGetValue(GHOSTED_MANUAL_POSTS_KEY, {});
+    // Get manually hidden posts
+    const hiddenManualPosts = gmGetValue(HIDDEN_MANUAL_POSTS_KEY, {});
 
-    // Process all posts that don't already have a ghost button
-    const posts = document.querySelectorAll(".post:not(.has-ghost-button)");
+    // Process all posts that don't already have a hide button
+    const posts = document.querySelectorAll(".post:not(.has-hide-button)");
 
     posts.forEach((post) => {
       // Extract post ID
       const postId = post.id.replace("p", "");
       if (!postId) return;
 
-      // Add the ghost button
+      // Add the hide button
       const postButtons = post.querySelector("ul.post-buttons");
       if (postButtons) {
-        const ghostLi = document.createElement("li");
-        ghostLi.className = "post-ghost-button-li";
+        const hideLi = document.createElement("li");
+        hideLi.className = "post-hide-button-li";
 
-        const ghostButton = document.createElement("a");
-        ghostButton.className = "button button-icon-only post-ghost-button";
-        ghostButton.innerHTML =
+        const hideButton = document.createElement("a");
+        hideButton.className = "button button-icon-only post-hide-button";
+        hideButton.innerHTML =
           '<i class="icon fa-times fa-fw" aria-hidden="true"></i>';
-        ghostButton.href = "#";
-        ghostButton.title = "Ghost this post (Alt+Click)";
+        hideButton.href = "#";
+        hideButton.title = "Hide this post (Alt+Click)";
 
-        ghostButton.addEventListener("click", (e) => {
+        hideButton.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
 
-          // Check if the post is already ghosted
-          if (ghostedManualPosts[postId]) {
-            // Unghost it
-            unghostPost(postId);
-            post.classList.remove("ghosted-post-manual");
-            alert("Post unghosted successfully.");
+          // Check if the post is already hidden
+          if (hiddenManualPosts[postId]) {
+            // Unhide it
+            unhidePost(postId);
+            post.classList.remove("hidden-post-manual");
+            alert("Post unhidden successfully.");
           } else {
-            // Ghost it
-            ghostPost(postId);
-            post.classList.add("ghosted-post-manual");
+            // Hide it
+            hidePost(postId);
+            post.classList.add("hidden-post-manual");
             post.classList.remove(
-              "ghosted-post",
-              "ghosted-by-author",
-              "ghosted-by-content",
+              "hidden-post",
+              "hidden-by-author",
+              "hidden-by-content",
             );
           }
         });
 
-        ghostLi.appendChild(ghostButton);
-        postButtons.appendChild(ghostLi);
+        hideLi.appendChild(hideButton);
+        postButtons.appendChild(hideLi);
 
-        // Mark post as having ghost button
-        post.classList.add("has-ghost-button");
+        // Mark post as having hide button
+        post.classList.add("has-hide-button");
       }
     });
 
-    log(`Added manual ghost buttons to ${posts.length} posts`);
+    log(`Added manual hide buttons to ${posts.length} posts`);
   } catch (err) {
-    error("Error adding manual ghost buttons:", err);
+    error("Error adding manual hide buttons:", err);
   }
 }

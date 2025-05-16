@@ -48,12 +48,12 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
   },
   {
-    id: "ghost",
-    name: "Ghost",
+    id: "hide",
+    name: "Hide",
     version: "1.0.0",
     description: "Hide posts, topics, and content from specific users",
     author: "loregamer",
-    path: "./scripts/ghost.js",
+    path: "./scripts/hide.js",
     enabledByDefault: true,
     image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png", // Placeholder image
     urlPatterns: ["https://rpghq.org/forums/*"],

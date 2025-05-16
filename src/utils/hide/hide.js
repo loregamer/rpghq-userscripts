@@ -1,108 +1,108 @@
 /**
- * Ghost functionality core utilities
- * Provides functions to manage the Ghost feature for RPGHQ Userscript Manager
+ * Hide functionality core utilities
+ * Provides functions to manage the Hide feature for RPGHQ Userscript Manager
  */
 
 import { gmGetValue, gmSetValue } from "../../main.js";
 import { log, debug, error } from "../logger.js";
 import { getCachedPost } from "../postCache.js";
-import { addGhostStyles } from "./ghost-styles.js";
+import { addHideStyles } from "./hide-styles.js";
 
 // Storage keys
-export const GHOST_CONFIG_KEY = "ghostConfig";
+export const HIDE_CONFIG_KEY = "hideConfig";
 export const IGNORED_USERS_KEY = "ignoredUsers";
 export const REPLACED_AVATARS_KEY = "replacedAvatars";
-export const GHOSTED_MANUAL_POSTS_KEY = "ghostedManualPosts";
+export const HIDDEN_MANUAL_POSTS_KEY = "hiddenManualPosts";
 export const USER_COLORS_KEY = "userColors";
 
 // Default configuration values
 export const DEFAULT_CONFIG = {
-  authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for ghosted-by-author
-  contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for ghosted-by-content
+  authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for hidden-by-author
+  contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for hidden-by-content
   hideEntireRow: false, // Default: only hide lastpost, not entire row
-  hideTopicCreations: true, // Default: hide rows with ghosted username in row class,
+  hideTopicCreations: true, // Default: hide rows with hidden username in row class,
   whitelistedThreads: [], // Array of thread names that should never be hidden
 };
 
 // Global state
-let showGhostedPosts = false; // Always start hidden
+let showHiddenPosts = false; // Always start hidden
 
 /**
- * Initialize Ghost functionality
- * This sets up the Ghost feature when the page loads
+ * Initialize Hide functionality
+ * This sets up the Hide feature when the page loads
  */
-export function initGhost() {
-  log("Initializing Ghost functionality");
+export function initHide() {
+  log("Initializing Hide functionality");
 
   // Load the configuration
-  const config = getGhostConfig();
+  const config = getHideConfig();
 
-  // Add Ghost styles to the page
-  addGhostStyles();
+  // Add Hide styles to the page
+  addHideStyles();
 
   // Apply custom CSS variables for colors
-  applyGhostColors(config);
+  applyHideColors(config);
 
   // Add global keyboard shortcut
   setupKeyboardShortcut();
 
   return {
-    cleanup: cleanupGhost,
+    cleanup: cleanupHide,
   };
 }
 
 /**
- * Clean up Ghost functionality when unloaded
+ * Clean up Hide functionality when unloaded
  */
-function cleanupGhost() {
-  log("Cleaning up Ghost functionality");
+function cleanupHide() {
+  log("Cleaning up Hide functionality");
   // Remove event listeners, etc.
 }
 
 /**
- * Get the current Ghost configuration
- * @returns {Object} The current Ghost configuration
+ * Get the current Hide configuration
+ * @returns {Object} The current Hide configuration
  */
-export function getGhostConfig() {
-  return gmGetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
+export function getHideConfig() {
+  return gmGetValue(HIDE_CONFIG_KEY, DEFAULT_CONFIG);
 }
 
 /**
- * Set a Ghost configuration value
+ * Set a Hide configuration value
  * @param {string} key - The configuration key to set
  * @param {any} value - The value to set
  */
-export function setGhostConfig(key, value) {
-  const config = getGhostConfig();
+export function setHideConfig(key, value) {
+  const config = getHideConfig();
   config[key] = value;
-  gmSetValue(GHOST_CONFIG_KEY, config);
+  gmSetValue(HIDE_CONFIG_KEY, config);
 
   // If it's a color setting, update the CSS variables
   if (key === "authorHighlightColor" || key === "contentHighlightColor") {
-    applyGhostColors(config);
+    applyHideColors(config);
   }
 
-  debug(`Updated Ghost config: ${key} = ${value}`);
+  debug(`Updated Hide config: ${key} = ${value}`);
   return config;
 }
 
 /**
- * Apply Ghost color settings as CSS variables
- * @param {Object} config - The Ghost configuration
+ * Apply Hide color settings as CSS variables
+ * @param {Object} config - The Hide configuration
  */
-function applyGhostColors(config) {
+function applyHideColors(config) {
   document.documentElement.style.setProperty(
-    "--ghost-author-highlight",
+    "--hide-author-highlight",
     config.authorHighlightColor || DEFAULT_CONFIG.authorHighlightColor,
   );
   document.documentElement.style.setProperty(
-    "--ghost-content-highlight",
+    "--hide-content-highlight",
     config.contentHighlightColor || DEFAULT_CONFIG.contentHighlightColor,
   );
 }
 
 /**
- * Set up keyboard shortcuts for Ghost functionality
+ * Set up keyboard shortcuts for Hide functionality
  */
 function setupKeyboardShortcut() {
   document.addEventListener("keydown", (e) => {
@@ -114,10 +114,10 @@ function setupKeyboardShortcut() {
     // Check for backslash key
     if (e.key === "\\") {
       e.preventDefault();
-      toggleGhostedPosts();
+      toggleHiddenPosts();
     }
 
-    // Check for Alt key to show/hide manual ghost buttons
+    // Check for Alt key to show/hide manual hide buttons
     if (e.key === "Alt") {
       e.preventDefault();
       document.body.classList.toggle("alt-key-down");
@@ -126,31 +126,31 @@ function setupKeyboardShortcut() {
 }
 
 /**
- * Toggle visibility of ghosted posts
+ * Toggle visibility of hidden posts
  */
-function toggleGhostedPosts() {
-  showGhostedPosts = !showGhostedPosts;
+function toggleHiddenPosts() {
+  showHiddenPosts = !showHiddenPosts;
 
-  const ghostedPosts = document.querySelectorAll(".ghosted-post");
-  const ghostedQuotes = document.querySelectorAll(".ghosted-quote");
-  const ghostedRows = document.querySelectorAll(".ghosted-row");
+  const hiddenPosts = document.querySelectorAll(".hidden-post");
+  const hiddenQuotes = document.querySelectorAll(".hidden-quote");
+  const hiddenRows = document.querySelectorAll(".hidden-row");
 
-  ghostedPosts.forEach((p) => p.classList.toggle("show", showGhostedPosts));
-  ghostedQuotes.forEach((q) => q.classList.toggle("show", showGhostedPosts));
-  ghostedRows.forEach((r) => r.classList.toggle("show", showGhostedPosts));
+  hiddenPosts.forEach((p) => p.classList.toggle("show", showHiddenPosts));
+  hiddenQuotes.forEach((q) => q.classList.toggle("show", showHiddenPosts));
+  hiddenRows.forEach((r) => r.classList.toggle("show", showHiddenPosts));
 
-  document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
+  document.body.classList.toggle("show-hidden-threads", showHiddenPosts);
 
   showToggleNotification();
 }
 
 /**
- * Show a notification when toggling ghosted posts
+ * Show a notification when toggling hidden posts
  */
 function showToggleNotification() {
   // Remove any existing notification
   const existingNotification = document.querySelector(
-    ".ghost-toggle-notification",
+    ".hide-toggle-notification",
   );
   if (existingNotification) {
     existingNotification.remove();
@@ -158,7 +158,7 @@ function showToggleNotification() {
 
   // Create a new notification
   const notification = document.createElement("div");
-  notification.className = "ghost-toggle-notification";
+  notification.className = "hide-toggle-notification";
   notification.style.cssText = `
     position: fixed;
     top: 20px;
@@ -170,9 +170,9 @@ function showToggleNotification() {
     z-index: 9999;
     transition: opacity 0.3s;
   `;
-  notification.textContent = showGhostedPosts
-    ? "Showing Ghosted Content"
-    : "Hiding Ghosted Content";
+  notification.textContent = showHiddenPosts
+    ? "Showing Hidden Content"
+    : "Hiding Hidden Content";
 
   document.body.appendChild(notification);
 
@@ -184,11 +184,11 @@ function showToggleNotification() {
 }
 
 /**
- * Check if a user is ghosted
+ * Check if a user is hidden
  * @param {string} userIdOrName - The user ID or username to check
- * @returns {boolean} True if the user is ghosted
+ * @returns {boolean} True if the user is hidden
  */
-export function isUserGhosted(userIdOrName) {
+export function isUserHidden(userIdOrName) {
   if (!userIdOrName) return false;
 
   const ignoredUsers = gmGetValue(IGNORED_USERS_KEY, {});
@@ -222,7 +222,7 @@ function cleanUsername(username) {
 
   // Remove "Never Iggy" and other button text that might be in the username
   cleaned = cleaned.replace(
-    /never iggy|unghost user|replace avatar|ghost user/gi,
+    /never iggy|unhide user|replace avatar|hide user/gi,
     "",
   );
 
@@ -233,34 +233,34 @@ function cleanUsername(username) {
 }
 
 /**
- * Ghost or unghost a user
+ * Hide or unhide a user
  * @param {string} userId - The user ID
  * @param {string} username - The username
- * @returns {boolean} True if the user is now ghosted, false if unghosted
+ * @returns {boolean} True if the user is now hidden, false if unhidden
  */
-export function toggleUserGhost(userId, username) {
+export function toggleUserHide(userId, username) {
   const cleanedUsername = cleanUsername(username);
   const ignoredUsers = gmGetValue(IGNORED_USERS_KEY, {});
 
   if (ignoredUsers.hasOwnProperty(userId)) {
     delete ignoredUsers[userId];
     gmSetValue(IGNORED_USERS_KEY, ignoredUsers);
-    debug(`Unghosted user: ${userId} (${cleanedUsername})`);
+    debug(`Unhidden user: ${userId} (${cleanedUsername})`);
     return false;
   } else {
     ignoredUsers[userId] = cleanedUsername;
     gmSetValue(IGNORED_USERS_KEY, ignoredUsers);
-    debug(`Ghosted user: ${userId} (${cleanedUsername})`);
+    debug(`Hidden user: ${userId} (${cleanedUsername})`);
     return true;
   }
 }
 
 /**
- * Check if post content contains references to ghosted users
+ * Check if post content contains references to hidden users
  * @param {string} content - The post content to check
- * @returns {boolean} True if the content contains ghosted user references
+ * @returns {boolean} True if the content contains hidden user references
  */
-export function contentContainsGhosted(content) {
+export function contentContainsHidden(content) {
   if (!content) return false;
 
   const ignoredUsers = gmGetValue(IGNORED_USERS_KEY, {});
@@ -324,10 +324,10 @@ export function resetUserAvatar(userId) {
 }
 
 /**
- * Get all ghosted users
- * @returns {Object} The ghosted users object (userId => username)
+ * Get all hidden users
+ * @returns {Object} The hidden users object (userId => username)
  */
-export function getGhostedUsers() {
+export function getHiddenUsers() {
   return gmGetValue(IGNORED_USERS_KEY, {});
 }
 
@@ -340,35 +340,35 @@ export function getReplacedAvatars() {
 }
 
 /**
- * Get all manually ghosted posts
- * @returns {Object} The manually ghosted posts object (postId => true)
+ * Get all manually hidden posts
+ * @returns {Object} The manually hidden posts object (postId => true)
  */
-export function getGhostedManualPosts() {
-  return gmGetValue(GHOSTED_MANUAL_POSTS_KEY, {});
+export function getHiddenManualPosts() {
+  return gmGetValue(HIDDEN_MANUAL_POSTS_KEY, {});
 }
 
 /**
- * Manually ghost a post
- * @param {string} postId - The post ID to ghost
+ * Manually hide a post
+ * @param {string} postId - The post ID to hide
  */
-export function ghostPost(postId) {
-  const ghostedManualPosts = gmGetValue(GHOSTED_MANUAL_POSTS_KEY, {});
-  ghostedManualPosts[postId] = true;
-  gmSetValue(GHOSTED_MANUAL_POSTS_KEY, ghostedManualPosts);
-  debug(`Manually ghosted post: ${postId}`);
+export function hidePost(postId) {
+  const hiddenManualPosts = gmGetValue(HIDDEN_MANUAL_POSTS_KEY, {});
+  hiddenManualPosts[postId] = true;
+  gmSetValue(HIDDEN_MANUAL_POSTS_KEY, hiddenManualPosts);
+  debug(`Manually hidden post: ${postId}`);
 }
 
 /**
- * Unghost a manually ghosted post
- * @param {string} postId - The post ID to unghost
+ * Unhide a manually hidden post
+ * @param {string} postId - The post ID to unhide
  */
-export function unghostPost(postId) {
-  const ghostedManualPosts = gmGetValue(GHOSTED_MANUAL_POSTS_KEY, {});
+export function unhidePost(postId) {
+  const hiddenManualPosts = gmGetValue(HIDDEN_MANUAL_POSTS_KEY, {});
 
-  if (ghostedManualPosts.hasOwnProperty(postId)) {
-    delete ghostedManualPosts[postId];
-    gmSetValue(GHOSTED_MANUAL_POSTS_KEY, ghostedManualPosts);
-    debug(`Unghosted manual post: ${postId}`);
+  if (hiddenManualPosts.hasOwnProperty(postId)) {
+    delete hiddenManualPosts[postId];
+    gmSetValue(HIDDEN_MANUAL_POSTS_KEY, hiddenManualPosts);
+    debug(`Unhidden manual post: ${postId}`);
     return true;
   }
 

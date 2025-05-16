@@ -1,6 +1,6 @@
 /**
- * Ghost Users Management Modal
- * Provides a UI for managing ghosted users, including search, unghosting, and avatar replacement
+ * Hide Users Management Modal
+ * Provides a UI for managing hidden users, including search, unhideing, and avatar replacement
  */
 
 import { log, debug, error } from "../logger.js";
@@ -8,77 +8,77 @@ import { gmGetValue, gmSetValue } from "../../main.js";
 import {
   IGNORED_USERS_KEY,
   REPLACED_AVATARS_KEY,
-  toggleUserGhost,
+  toggleUserHide,
   replaceUserAvatar,
   resetUserAvatar,
   cleanUsername,
-  getGhostedUsers,
+  getHiddenUsers,
   getReplacedAvatars,
-} from "./ghost.js";
+} from "./hide.js";
 import { searchUsers } from "../api/rpghqApi.js";
 
 // Default avatar URL for fallback
 const DEFAULT_AVATAR = "https://f.rpghq.org/OhUxAgzR9avp.png?n=pasted-file.png";
 
 /**
- * Show the Ghost users management modal
+ * Show the Hide users management modal
  */
-export function showGhostUsersModal() {
-  log("Showing Ghost users management modal");
+export function showHideUsersModal() {
+  log("Showing Hide users management modal");
 
   // Remove any existing modal
-  const existingModal = document.getElementById("ghost-users-modal");
+  const existingModal = document.getElementById("hide-users-modal");
   if (existingModal) {
     existingModal.remove();
   }
 
   // Create the modal element
   const modal = document.createElement("div");
-  modal.id = "ghost-users-modal";
-  modal.className = "ghost-modal";
+  modal.id = "hide-users-modal";
+  modal.className = "hide-modal";
 
   // Create the modal content
   modal.innerHTML = `
-    <div class="ghost-modal-dialog">
-      <div class="ghost-modal-header">
-        <h3 class="ghost-modal-title">Manage Ghosted Users</h3>
-        <button class="ghost-modal-close" aria-label="Close">&times;</button>
+    <div class="hide-modal-dialog">
+      <div class="hide-modal-header">
+        <h3 class="hide-modal-title">Manage Hidden Users</h3>
+        <button class="hide-modal-close" aria-label="Close">&times;</button>
       </div>
       
-      <div class="ghost-modal-body">
+      <div class="hide-modal-body">
         <!-- User Search -->
-        <div class="ghost-user-search">
-          <div class="ghost-user-search-form">
-            <input type="text" id="ghost-search-input" placeholder="Search for users to ghost...">
-            <button id="ghost-search-btn" class="button button--primary">
+        <div class="hide-user-search">
+          <div class="hide-user-search-form">
+            <input type="text" id="hide-search-input" placeholder="Search for users to hide...">
+            <button id="hide-search-btn" class="button button--primary">
               <i class="fa fa-search"></i> Search
             </button>
           </div>
-          <div class="ghost-user-search-results"></div>
+          <div class="hide-user-search-results"></div>
         </div>
         
-        <!-- Currently Ghosted Users -->
-        <div class="ghost-section">
-          <h4 class="ghost-section-title">
-            <i class="fa fa-user-times"></i> Ghosted Users 
-            <span class="ghost-user-count"></span>
+        <!-- Currently Hidden Users -->
+        <div class="hide-section">
+          <h4 class="hide-section-title">
+            <i class="fa fa-user-times"></i> Hidden Users 
+            <span class="hide-user-count"></span>
           </h4>
-          <div class="ghosted-users-grid" id="ghosted-users-grid"></div>
+          <div class="hidden-users-grid" id="hidden-users-grid"></div>
         </div>
         
         <!-- Avatar Replacement -->
-        <div class="ghost-section">
-          <h4 class="ghost-section-title">
+        <div class="hide-section">
+          <h4 class="hide-section-title">
             <i class="fa fa-image"></i> Avatar Replacement
-            <span class="ghost-avatar-count"></span>
+            <span class="hide-avatar-count"></span>
           </h4>
           
           <div class="avatar-replacement-form">
             <div class="avatar-input-row">
-              <input type="text" id="ghost-user-id-input" placeholder="User ID" class="form-control">
-              <input type="text" id="ghost-avatar-url-input" placeholder="Image URL (128x128 or smaller)" class="form-control">
-              <button id="ghost-replace-avatar-btn" class="button button--primary">Replace</button>
-              <button id="ghost-reset-avatar-btn" class="button button--secondary">Reset</button>
+              <input type="text" id="hide-user-id-input" placeholder="User ID" class="form-control">
+              <input type="text" id="hide-avatar-url-input" placeholder="Image URL (128x128 or smaller)" class="form-control">
+              <button id="hide-replace-avatar-btn" class="button button--primary">Replace</button>
+              <button id="hide-reset-avatar-btn" class="button button--secondary">Reset</button>
             </div>
             
             <div class="avatar-preview">
@@ -88,11 +88,11 @@ export function showGhostUsersModal() {
         </div>
       </div>
       
-      <div class="ghost-modal-footer">
-        <button id="ghost-reset-all-btn" class="button button--danger">
-          <i class="fa fa-trash"></i> Reset All Ghosted Users
+      <div class="hide-modal-footer">
+        <button id="hide-reset-all-btn" class="button button--danger">
+          <i class="fa fa-trash"></i> Reset All Hidden Users
         </button>
-        <button id="ghost-close-btn" class="button button--primary">
+        <button id="hide-close-btn" class="button button--primary">
           <i class="fa fa-check"></i> Close
         </button>
       </div>
@@ -103,10 +103,10 @@ export function showGhostUsersModal() {
   document.body.appendChild(modal);
 
   // Add the modal styles
-  addGhostModalStyles();
+  addHideModalStyles();
 
   // Initialize the modal
-  initGhostUsersModal(modal);
+  initHideUsersModal(modal);
 
   // Show the modal
   setTimeout(() => {
@@ -115,23 +115,23 @@ export function showGhostUsersModal() {
 }
 
 /**
- * Initialize the Ghost users management modal
+ * Initialize the Hide users management modal
  * @param {HTMLElement} modal - The modal element
  */
-function initGhostUsersModal(modal) {
-  // Load and display current ghosted users
-  populateGhostedUsers();
+function initHideUsersModal(modal) {
+  // Load and display current hidden users
+  populateHiddenUsers();
 
   // Set up event listeners
-  const closeBtn = modal.querySelector(".ghost-modal-close");
-  closeBtn.addEventListener("click", closeGhostUsersModal);
+  const closeBtn = modal.querySelector(".hide-modal-close");
+  closeBtn.addEventListener("click", closeHideUsersModal);
 
-  const closeBtn2 = modal.querySelector("#ghost-close-btn");
-  closeBtn2.addEventListener("click", closeGhostUsersModal);
+  const closeBtn2 = modal.querySelector("#hide-close-btn");
+  closeBtn2.addEventListener("click", closeHideUsersModal);
 
   // Setup user search
-  const searchInput = modal.querySelector("#ghost-search-input");
-  const searchBtn = modal.querySelector("#ghost-search-btn");
+  const searchInput = modal.querySelector("#hide-search-input");
+  const searchBtn = modal.querySelector("#hide-search-btn");
 
   searchBtn.addEventListener("click", () =>
     performUserSearch(searchInput.value),
@@ -143,10 +143,10 @@ function initGhostUsersModal(modal) {
   });
 
   // Setup avatar replacement
-  const userIdInput = modal.querySelector("#ghost-user-id-input");
-  const avatarUrlInput = modal.querySelector("#ghost-avatar-url-input");
-  const replaceBtn = modal.querySelector("#ghost-replace-avatar-btn");
-  const resetBtn = modal.querySelector("#ghost-reset-avatar-btn");
+  const userIdInput = modal.querySelector("#hide-user-id-input");
+  const avatarUrlInput = modal.querySelector("#hide-avatar-url-input");
+  const replaceBtn = modal.querySelector("#hide-replace-avatar-btn");
+  const resetBtn = modal.querySelector("#hide-reset-avatar-btn");
 
   replaceBtn.addEventListener("click", () => {
     replaceAvatarAction(userIdInput.value, avatarUrlInput.value);
@@ -166,22 +166,22 @@ function initGhostUsersModal(modal) {
   });
 
   // Setup reset all button
-  const resetAllBtn = modal.querySelector("#ghost-reset-all-btn");
-  resetAllBtn.addEventListener("click", resetAllGhostedUsers);
+  const resetAllBtn = modal.querySelector("#hide-reset-all-btn");
+  resetAllBtn.addEventListener("click", resetAllHiddenUsers);
 
   // Close modal when clicking outside
   modal.addEventListener("click", (e) => {
     if (e.target === modal) {
-      closeGhostUsersModal();
+      closeHideUsersModal();
     }
   });
 }
 
 /**
- * Close the Ghost users management modal
+ * Close the Hide users management modal
  */
-function closeGhostUsersModal() {
-  const modal = document.getElementById("ghost-users-modal");
+function closeHideUsersModal() {
+  const modal = document.getElementById("hide-users-modal");
   if (modal) {
     modal.classList.remove("active");
     setTimeout(() => {
@@ -191,14 +191,14 @@ function closeGhostUsersModal() {
 }
 
 /**
- * Add styles for the Ghost users management modal
+ * Add styles for the Hide users management modal
  */
-function addGhostModalStyles() {
-  const styleId = "ghost-modal-styles";
+function addHideModalStyles() {
+  const styleId = "hide-modal-styles";
   if (document.getElementById(styleId)) return;
 
   const css = `
-    .ghost-modal {
+    .hide-modal {
       position: fixed;
       top: 0;
       left: 0;
@@ -214,12 +214,12 @@ function addGhostModalStyles() {
       pointer-events: none;
     }
     
-    .ghost-modal.active {
+    .hide-modal.active {
       opacity: 1;
       pointer-events: auto;
     }
     
-    .ghost-modal-dialog {
+    .hide-modal-dialog {
       background-color: var(--bg-card);
       border-radius: 4px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -228,10 +228,10 @@ function addGhostModalStyles() {
       max-height: 90vh;
       display: flex;
       flex-direction: column;
-      animation: ghost-modal-in 0.3s ease-out;
+      animation: hide-modal-in 0.3s ease-out;
     }
     
-    @keyframes ghost-modal-in {
+    @keyframes hide-modal-in {
       from {
         transform: translateY(-20px);
         opacity: 0;
@@ -242,7 +242,7 @@ function addGhostModalStyles() {
       }
     }
     
-    .ghost-modal-header {
+    .hide-modal-header {
       padding: 15px 20px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
@@ -250,13 +250,13 @@ function addGhostModalStyles() {
       justify-content: space-between;
     }
     
-    .ghost-modal-title {
+    .hide-modal-title {
       margin: 0;
       color: var(--text-primary);
       font-size: 1.3em;
     }
     
-    .ghost-modal-close {
+    .hide-modal-close {
       background: none;
       border: none;
       color: var(--text-secondary);
@@ -266,18 +266,18 @@ function addGhostModalStyles() {
       transition: color 0.2s;
     }
     
-    .ghost-modal-close:hover {
+    .hide-modal-close:hover {
       color: var(--text-primary);
     }
     
-    .ghost-modal-body {
+    .hide-modal-body {
       padding: 20px;
       overflow-y: auto;
       flex-grow: 1;
       max-height: calc(90vh - 150px);
     }
     
-    .ghost-modal-footer {
+    .hide-modal-footer {
       padding: 15px 20px;
       border-top: 1px solid var(--border-color);
       display: flex;
@@ -286,7 +286,7 @@ function addGhostModalStyles() {
       background-color: rgba(0, 0, 0, 0.05);
     }
     
-    .ghost-section {
+    .hide-section {
       margin-bottom: 20px;
       padding: 15px;
       background-color: var(--bg-dark);
@@ -294,7 +294,7 @@ function addGhostModalStyles() {
       border: 1px solid var(--border-color);
     }
     
-    .ghost-section-title {
+    .hide-section-title {
       margin-top: 0;
       margin-bottom: 15px;
       padding-bottom: 8px;
@@ -305,21 +305,21 @@ function addGhostModalStyles() {
       gap: 10px;
     }
     
-    .ghost-user-count,
-    .ghost-avatar-count {
+    .hide-user-count,
+    .hide-avatar-count {
       font-size: 0.9em;
       color: var(--text-secondary);
       font-weight: normal;
       margin-left: 5px;
     }
     
-    .ghost-search-status {
+    .hide-search-status {
       margin-top: 10px;
       font-style: italic;
       color: var(--text-secondary);
     }
     
-    .ghost-user-item {
+    .hide-user-item {
       display: flex;
       align-items: center;
       padding: 10px;
@@ -330,29 +330,29 @@ function addGhostModalStyles() {
       transition: transform 0.2s;
     }
     
-    .ghost-user-item:hover {
+    .hide-user-item:hover {
       transform: translateY(-2px);
     }
     
-    .ghost-user-avatar {
+    .hide-user-avatar {
       width: 32px;
       height: 32px;
       border-radius: 50%;
       margin-right: 10px;
     }
     
-    .ghost-user-name {
+    .hide-user-name {
       flex: 1;
       color: var(--text-primary);
     }
     
-    .ghost-user-actions {
+    .hide-user-actions {
       display: flex;
       gap: 5px;
     }
     
     /* Empty state styling */
-    .ghost-empty-state {
+    .hide-empty-state {
       padding: 30px 15px;
       text-align: center;
       color: var(--text-secondary);
@@ -362,21 +362,21 @@ function addGhostModalStyles() {
     }
     
     /* Loading indicator */
-    .ghost-loading {
+    .hide-loading {
       text-align: center;
       padding: 20px;
       color: var(--text-secondary);
     }
     
-    /* Ghost styles from ghost-styles.css */
-    .ghosted-users-grid {
+    /* Hide styles from hide-styles.css */
+    .hidden-users-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
       gap: 15px;
       margin-top: 15px;
     }
     
-    .ghosted-user-tile {
+    .hidden-user-tile {
       background-color: var(--bg-card);
       border-radius: 5px;
       padding: 12px;
@@ -388,12 +388,12 @@ function addGhostModalStyles() {
       transition: transform 0.2s, box-shadow 0.2s;
     }
     
-    .ghosted-user-tile:hover {
+    .hidden-user-tile:hover {
       transform: translateY(-3px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
     
-    .ghosted-user-avatar {
+    .hidden-user-avatar {
       width: 64px;
       height: 64px;
       border-radius: 50%;
@@ -402,7 +402,7 @@ function addGhostModalStyles() {
       border: 2px solid var(--border-color);
     }
     
-    .ghosted-user-name {
+    .hidden-user-name {
       color: var(--text-primary);
       font-size: 14px;
       text-align: center;
@@ -414,13 +414,13 @@ function addGhostModalStyles() {
       white-space: nowrap;
     }
     
-    .ghosted-user-actions {
+    .hidden-user-actions {
       display: flex;
       gap: 5px;
       margin-top: auto;
     }
     
-    .ghosted-user-unghost {
+    .hidden-user-unhide {
       background-color: var(--danger-color);
       color: white;
       border: none;
@@ -431,11 +431,11 @@ function addGhostModalStyles() {
       transition: background-color 0.2s;
     }
     
-    .ghosted-user-unghost:hover {
+    .hidden-user-unhide:hover {
       background-color: var(--danger-color-hover, darkred);
     }
     
-    .ghosted-user-visit {
+    .hidden-user-visit {
       background-color: var(--primary-color);
       color: white;
       border: none;
@@ -446,21 +446,21 @@ function addGhostModalStyles() {
       transition: background-color 0.2s;
     }
     
-    .ghosted-user-visit:hover {
+    .hidden-user-visit:hover {
       background-color: var(--primary-color-hover, darkblue);
     }
     
-    /* Ghost user search */
-    .ghost-user-search {
+    /* Hide user search */
+    .hide-user-search {
       margin-bottom: 20px;
     }
     
-    .ghost-user-search-form {
+    .hide-user-search-form {
       display: flex;
       gap: 10px;
     }
     
-    .ghost-user-search-form input {
+    .hide-user-search-form input {
       flex: 1;
       padding: 8px 12px;
       background: var(--bg-dark);
@@ -469,13 +469,13 @@ function addGhostModalStyles() {
       color: var(--text-primary);
     }
     
-    .ghost-user-search-results {
+    .hide-user-search-results {
       margin-top: 15px;
       max-height: 300px;
       overflow-y: auto;
     }
     
-    .ghost-user-search-result {
+    .hide-user-search-result {
       display: flex;
       align-items: center;
       padding: 8px 10px;
@@ -487,11 +487,11 @@ function addGhostModalStyles() {
       transition: background-color 0.2s;
     }
     
-    .ghost-user-search-result:hover {
+    .hide-user-search-result:hover {
       background-color: rgba(255,255,255,0.05);
     }
     
-    .ghost-user-search-result img {
+    .hide-user-search-result img {
       width: 32px;
       height: 32px;
       border-radius: 50%;
@@ -549,11 +549,11 @@ function addGhostModalStyles() {
     
     /* Mobile responsiveness */
     @media (max-width: 768px) {
-      .ghosted-users-grid {
+      .hidden-users-grid {
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
       }
       
-      .ghost-user-search-form {
+      .hide-user-search-form {
         flex-direction: column;
       }
       
@@ -561,12 +561,12 @@ function addGhostModalStyles() {
         flex-direction: column;
       }
       
-      .ghost-modal-footer {
+      .hide-modal-footer {
         flex-direction: column;
         gap: 10px;
       }
       
-      .ghost-modal-footer button {
+      .hide-modal-footer button {
         width: 100%;
       }
     }
@@ -579,33 +579,33 @@ function addGhostModalStyles() {
 }
 
 /**
- * Populate the ghosted users grid
+ * Populate the hidden users grid
  */
-function populateGhostedUsers() {
-  const grid = document.getElementById("ghosted-users-grid");
+function populateHiddenUsers() {
+  const grid = document.getElementById("hidden-users-grid");
   if (!grid) return;
 
-  const ignoredUsers = getGhostedUsers();
+  const ignoredUsers = getHiddenUsers();
   const userCount = Object.keys(ignoredUsers).length;
 
   // Update user count
-  const countElement = document.querySelector(".ghost-user-count");
+  const countElement = document.querySelector(".hide-user-count");
   if (countElement) {
     countElement.textContent = `(${userCount})`;
   }
 
-  // Show empty state if no users are ghosted
+  // Show empty state if no users are hidden
   if (userCount === 0) {
     grid.innerHTML = `
-      <div class="ghost-empty-state">
-        <p>No users are currently ghosted</p>
-        <p>Use the search above to find and ghost users</p>
+      <div class="hide-empty-state">
+        <p>No users are currently hidden</p>
+        <p>Use the search above to find and hide users</p>
       </div>
     `;
     return;
   }
 
-  // Generate ghosted user tiles
+  // Generate hidden user tiles
   const replacedAvatars = getReplacedAvatars();
 
   let html = "";
@@ -622,17 +622,17 @@ function populateGhostedUsers() {
       `https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg`;
 
     html += `
-      <div class="ghosted-user-tile" data-user-id="${userId}">
+      <div class="hidden-user-tile" data-user-id="${userId}">
         <img
-          class="ghosted-user-avatar"
+          class="hidden-user-avatar"
           src="${avatarUrl}"
           alt="${username}'s avatar"
           onerror="if(this.src.endsWith('.jpg')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.png';}else if(this.src.endsWith('.png')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.gif';}else{this.src='${DEFAULT_AVATAR}';}"
         >
-        <div class="ghosted-user-name" title="${username}">${username}</div>
-        <div class="ghosted-user-actions">
-          <button class="ghosted-user-unghost" title="Unghost User" data-user-id="${userId}">Unghost</button>
-          <button class="ghosted-user-visit" title="Visit Profile" data-user-id="${userId}">Profile</button>
+        <div class="hidden-user-name" title="${username}">${username}</div>
+        <div class="hidden-user-actions">
+          <button class="hidden-user-unhide" title="Unhide User" data-user-id="${userId}">Unhide</button>
+          <button class="hidden-user-visit" title="Visit Profile" data-user-id="${userId}">Profile</button>
         </div>
       </div>
     `;
@@ -642,15 +642,15 @@ function populateGhostedUsers() {
   grid.innerHTML = html;
 
   // Add event listeners to buttons
-  grid.querySelectorAll(".ghosted-user-unghost").forEach((button) => {
+  grid.querySelectorAll(".hidden-user-unhide").forEach((button) => {
     button.addEventListener("click", () => {
       const userId = button.dataset.userId;
       const username = ignoredUsers[userId];
-      unghostUser(userId, username);
+      unhideUser(userId, username);
     });
   });
 
-  grid.querySelectorAll(".ghosted-user-visit").forEach((button) => {
+  grid.querySelectorAll(".hidden-user-visit").forEach((button) => {
     button.addEventListener("click", () => {
       const userId = button.dataset.userId;
       visitUserProfile(userId);
@@ -659,29 +659,29 @@ function populateGhostedUsers() {
 
   // Update avatar replacement count
   const avatarCount = Object.keys(replacedAvatars).length;
-  const avatarCountElement = document.querySelector(".ghost-avatar-count");
+  const avatarCountElement = document.querySelector(".hide-avatar-count");
   if (avatarCountElement) {
     avatarCountElement.textContent = `(${avatarCount})`;
   }
 }
 
 /**
- * Unghost a user
+ * Unhide a user
  * @param {string} userId - The user ID
  * @param {string} username - The username
  */
-function unghostUser(userId, username) {
+function unhideUser(userId, username) {
   try {
-    toggleUserGhost(userId, username);
+    toggleUserHide(userId, username);
 
     // Update the UI
-    populateGhostedUsers();
+    populateHiddenUsers();
 
     // Show confirmation
-    showStatusMessage(`Unghosted user: ${username}`);
+    showStatusMessage(`Unhidden user: ${username}`);
   } catch (err) {
-    error(`Error unghosting user ${userId}:`, err);
-    showStatusMessage(`Error unghosting user: ${err.message}`, true);
+    error(`Error unhideing user ${userId}:`, err);
+    showStatusMessage(`Error unhideing user: ${err.message}`, true);
   }
 }
 
@@ -692,14 +692,14 @@ function unghostUser(userId, username) {
  */
 function showStatusMessage(message, isError = false) {
   // Remove any existing status message
-  const existing = document.querySelector(".ghost-status-message");
+  const existing = document.querySelector(".hide-status-message");
   if (existing) {
     existing.remove();
   }
 
   // Create the message element
   const statusElement = document.createElement("div");
-  statusElement.className = `ghost-status-message ${isError ? "error" : "success"}`;
+  statusElement.className = `hide-status-message ${isError ? "error" : "success"}`;
   statusElement.textContent = message;
   statusElement.style.cssText = `
     position: fixed;
@@ -738,15 +738,15 @@ function visitUserProfile(userId) {
  * @param {string} query - The search query
  */
 async function performUserSearch(query) {
-  const resultsContainer = document.querySelector(".ghost-user-search-results");
+  const resultsContainer = document.querySelector(".hide-user-search-results");
   if (!resultsContainer) return;
 
   // Clear previous results
-  resultsContainer.innerHTML = '<div class="ghost-loading">Searching...</div>';
+  resultsContainer.innerHTML = '<div class="hide-loading">Searching...</div>';
 
   if (!query.trim()) {
     resultsContainer.innerHTML =
-      '<div class="ghost-empty-state">Enter a username to search</div>';
+      '<div class="hide-empty-state">Enter a username to search</div>';
     return;
   }
 
@@ -758,7 +758,7 @@ async function performUserSearch(query) {
     const users = results.filter((item) => item.type === "user");
 
     if (users.length === 0) {
-      resultsContainer.innerHTML = `<div class="ghost-empty-state">No users found matching "${query}"</div>`;
+      resultsContainer.innerHTML = `<div class="hide-empty-state">No users found matching "${query}"</div>`;
       return;
     }
 
@@ -769,7 +769,7 @@ async function performUserSearch(query) {
       const username = user.value || user.key || "Unknown User";
 
       html += `
-        <div class="ghost-user-search-result" data-user-id="${userId}" data-username="${username}">
+        <div class="hide-user-search-result" data-user-id="${userId}" data-username="${username}">
           <img 
             src="https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg" 
             alt="${username}'s avatar"
@@ -785,60 +785,60 @@ async function performUserSearch(query) {
 
     // Add event listeners to results
     resultsContainer
-      .querySelectorAll(".ghost-user-search-result")
+      .querySelectorAll(".hide-user-search-result")
       .forEach((result) => {
         result.addEventListener("click", () => {
           const userId = result.dataset.userId;
           const username = result.dataset.username;
 
-          // Check if user is already ghosted
-          const ignoredUsers = getGhostedUsers();
+          // Check if user is already hidden
+          const ignoredUsers = getHiddenUsers();
           if (ignoredUsers[userId]) {
-            showStatusMessage(`${username} is already ghosted`, true);
+            showStatusMessage(`${username} is already hidden`, true);
             return;
           }
 
-          // Ghost the user
-          ghostUser(userId, username);
+          // Hide the user
+          hideUser(userId, username);
         });
       });
   } catch (err) {
     error("Error searching for users:", err);
-    resultsContainer.innerHTML = `<div class="ghost-empty-state">Error searching for users: ${err.message}</div>`;
+    resultsContainer.innerHTML = `<div class="hide-empty-state">Error searching for users: ${err.message}</div>`;
   }
 }
 
 /**
- * Ghost a user
+ * Hide a user
  * @param {string} userId - The user ID
  * @param {string} username - The username
  */
-function ghostUser(userId, username) {
+function hideUser(userId, username) {
   try {
-    toggleUserGhost(userId, username);
+    toggleUserHide(userId, username);
 
     // Update the UI
-    populateGhostedUsers();
+    populateHiddenUsers();
 
     // Show confirmation
-    showStatusMessage(`Ghosted user: ${username}`);
+    showStatusMessage(`Hidden user: ${username}`);
 
     // Clear search results
     const resultsContainer = document.querySelector(
-      ".ghost-user-search-results",
+      ".hide-user-search-results",
     );
     if (resultsContainer) {
       resultsContainer.innerHTML = "";
     }
 
     // Clear search input
-    const searchInput = document.querySelector("#ghost-search-input");
+    const searchInput = document.querySelector("#hide-search-input");
     if (searchInput) {
       searchInput.value = "";
     }
   } catch (err) {
-    error(`Error ghosting user ${userId}:`, err);
-    showStatusMessage(`Error ghosting user: ${err.message}`, true);
+    error(`Error hideing user ${userId}:`, err);
+    showStatusMessage(`Error hideing user: ${err.message}`, true);
   }
 }
 
@@ -886,14 +886,14 @@ async function replaceAvatarAction(userId, url) {
     await replaceUserAvatar(userId, url);
 
     // Update the UI
-    populateGhostedUsers();
+    populateHiddenUsers();
 
     // Show confirmation
     showStatusMessage(`Avatar replaced for user ID: ${userId}`);
 
     // Clear inputs
-    const userIdInput = document.querySelector("#ghost-user-id-input");
-    const avatarUrlInput = document.querySelector("#ghost-avatar-url-input");
+    const userIdInput = document.querySelector("#hide-user-id-input");
+    const avatarUrlInput = document.querySelector("#hide-avatar-url-input");
 
     if (userIdInput) userIdInput.value = "";
     if (avatarUrlInput) avatarUrlInput.value = "";
@@ -920,14 +920,14 @@ function resetAvatarAction(userId) {
     resetUserAvatar(userId);
 
     // Update the UI
-    populateGhostedUsers();
+    populateHiddenUsers();
 
     // Show confirmation
     showStatusMessage(`Avatar reset for user ID: ${userId}`);
 
     // Clear inputs
-    const userIdInput = document.querySelector("#ghost-user-id-input");
-    const avatarUrlInput = document.querySelector("#ghost-avatar-url-input");
+    const userIdInput = document.querySelector("#hide-user-id-input");
+    const avatarUrlInput = document.querySelector("#hide-avatar-url-input");
 
     if (userIdInput) userIdInput.value = "";
     if (avatarUrlInput) avatarUrlInput.value = "";
@@ -941,12 +941,12 @@ function resetAvatarAction(userId) {
 }
 
 /**
- * Reset all ghosted users
+ * Reset all hidden users
  */
-function resetAllGhostedUsers() {
+function resetAllHiddenUsers() {
   if (
     !confirm(
-      "Are you sure you want to reset ALL ghosted users? This cannot be undone!",
+      "Are you sure you want to reset ALL hidden users? This cannot be undone!",
     )
   ) {
     return;
@@ -956,12 +956,12 @@ function resetAllGhostedUsers() {
     gmSetValue(IGNORED_USERS_KEY, {});
 
     // Update the UI
-    populateGhostedUsers();
+    populateHiddenUsers();
 
     // Show confirmation
-    showStatusMessage("All ghosted users have been reset");
+    showStatusMessage("All hidden users have been reset");
   } catch (err) {
-    error("Error resetting all ghosted users:", err);
-    showStatusMessage(`Error resetting ghosted users: ${err.message}`, true);
+    error("Error resetting all hidden users:", err);
+    showStatusMessage(`Error resetting hidden users: ${err.message}`, true);
   }
 }

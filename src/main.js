@@ -264,7 +264,7 @@ import * as commaFormatter from "./scripts/commaFormatter.js";
 import * as quotes from "./scripts/quotes.js";
 import * as disableEmbeds from "./scripts/disableEmbeds.js";
 import * as threadAuthorHighlight from "./scripts/threadAuthorHighlight.js";
-import * as ghost from "./scripts/ghost.js";
+import * as hide from "./scripts/hide.js";
 
 // Map of script ids to their modules
 const scriptModules = {
@@ -281,7 +281,7 @@ const scriptModules = {
   randomTopic: randomTopic,
   recentTopicsFormat: recentTopicsFormat,
   threadAuthorHighlight: threadAuthorHighlight,
-  ghost: ghost,
+  hide: hide,
 };
 
 // Load a single script by its manifest entry

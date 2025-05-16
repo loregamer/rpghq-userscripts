@@ -1,5 +1,5 @@
 /**
- * Renders the "Users" subtab content with Ghost functionality
+ * Renders the "Users" subtab content with Hide functionality
  * Replaces the previous work-in-progress implementation
  *
  * @param {HTMLElement} container - The container element to render into
@@ -7,50 +7,50 @@
 import { log, debug, error } from "../../../utils/logger.js";
 import { gmGetValue, gmSetValue } from "../../../main.js";
 import { searchUsers } from "../../../utils/api/rpghqApi.js"; // Import the search function
-import { showGhostUsersModal } from "../../../utils/ghost/ghost-modal.js";
+import { showHideUsersModal } from "../../../utils/hide/hide-modal.js";
 
-// Ghost configuration storage keys
-const GHOST_CONFIG_KEY = "ghostConfig";
+// Hide configuration storage keys
+const HIDE_CONFIG_KEY = "hideConfig";
 const IGNORED_USERS_KEY = "ignoredUsers";
 const REPLACED_AVATARS_KEY = "replacedAvatars";
-const GHOSTED_MANUAL_POSTS_KEY = "ghostedManualPosts";
+const HIDDEN_MANUAL_POSTS_KEY = "hiddenManualPosts";
 const USER_COLORS_KEY = "userColors";
 
 // Default configuration values
 const DEFAULT_CONFIG = {
-  authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for ghosted-by-author
-  contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for ghosted-by-content
+  authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for hidden-by-author
+  contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for hidden-by-content
   hideEntireRow: false, // Default: only hide lastpost, not entire row
-  hideTopicCreations: true, // Default: hide rows with ghosted username in row class,
+  hideTopicCreations: true, // Default: hide rows with hidden username in row class,
   whitelistedThreads: [], // Array of thread names that should never be hidden
 };
 
 export function renderUsersSubtab(container) {
-  log("Rendering Users subtab with Ghost functionality...");
+  log("Rendering Users subtab with Hide functionality...");
 
-  // Create the main structure for the Ghost subtab
+  // Create the main structure for the Hide subtab
   container.innerHTML = `
     <div class="preferences-section">
       <div class="preferences-section-header">
-        <h3 class="preferences-section-title">Ghost Settings</h3>
+        <h3 class="preferences-section-title">Hide Settings</h3>
       </div>
       <div class="preferences-section-body">
         <p class="preference-description">
-          Configure how Ghost hides and highlights content from users you've chosen to ghost.
-          Ghost allows you to hide posts, topics, and mentions from specific users.
+          Configure how Hide hides and highlights content from users you've chosen to hide.
+          Hide allows you to hide posts, topics, and mentions from specific users.
         </p>
 
-        <!-- Ghost Appearance Settings -->
-        <div class="ghost-settings-container">
+        <!-- Hide Appearance Settings -->
+        <div class="hide-settings-container">
           <h4 class="settings-group-title">Appearance</h4>
           
           <div class="setting-row">
             <div class="setting-label">
-              <label for="ghost-author-color">Author Highlight Color:</label>
-              <div class="setting-description">Color for content by ghosted authors</div>
+              <label for="hide-author-color">Author Highlight Color:</label>
+              <div class="setting-description">Color for content by hidden authors</div>
             </div>
             <div class="setting-control">
-              <input type="text" id="ghost-author-color" class="color-input" 
+              <input type="text" id="hide-author-color" class="color-input" 
                      placeholder="rgba(255, 0, 0, 0.1)">
               <div class="color-preview" id="author-color-preview"></div>
             </div>
@@ -58,53 +58,53 @@ export function renderUsersSubtab(container) {
           
           <div class="setting-row">
             <div class="setting-label">
-              <label for="ghost-content-color">Content Highlight Color:</label>
-              <div class="setting-description">Color for content mentioning ghosted users</div>
+              <label for="hide-content-color">Content Highlight Color:</label>
+              <div class="setting-description">Color for content mentioning hidden users</div>
             </div>
             <div class="setting-control">
-              <input type="text" id="ghost-content-color" class="color-input"
+              <input type="text" id="hide-content-color" class="color-input"
                      placeholder="rgba(255, 128, 0, 0.1)">
               <div class="color-preview" id="content-color-preview"></div>
             </div>
           </div>
         </div>
 
-        <!-- Ghost Behavior Settings -->
-        <div class="ghost-settings-container">
+        <!-- Hide Behavior Settings -->
+        <div class="hide-settings-container">
           <h4 class="settings-group-title">Behavior</h4>
           
           <div class="setting-row">
             <div class="setting-label">
-              <label for="ghost-hide-entire-row">Hide Entire Row:</label>
+              <label for="hide-hide-entire-row">Hide Entire Row:</label>
               <div class="setting-description">When enabled, hides the entire topic row instead of just the lastpost</div>
             </div>
             <div class="setting-control">
               <div class="toggle-switch">
-                <input type="checkbox" id="ghost-hide-entire-row" class="toggle-input">
-                <label for="ghost-hide-entire-row" class="toggle-label"></label>
+                <input type="checkbox" id="hide-hide-entire-row" class="toggle-input">
+                <label for="hide-hide-entire-row" class="toggle-label"></label>
               </div>
             </div>
           </div>
           
           <div class="setting-row">
             <div class="setting-label">
-              <label for="ghost-hide-topic-creations">Hide Topic Creations:</label>
-              <div class="setting-description">When enabled, hides topics created by ghosted users</div>
+              <label for="hide-hide-topic-creations">Hide Topic Creations:</label>
+              <div class="setting-description">When enabled, hides topics created by hidden users</div>
             </div>
             <div class="setting-control">
               <div class="toggle-switch">
-                <input type="checkbox" id="ghost-hide-topic-creations" class="toggle-input">
-                <label for="ghost-hide-topic-creations" class="toggle-label"></label>
+                <input type="checkbox" id="hide-hide-topic-creations" class="toggle-input">
+                <label for="hide-hide-topic-creations" class="toggle-label"></label>
               </div>
             </div>
           </div>
         </div>
         
         <!-- Whitelisted Threads -->
-        <div class="ghost-settings-container">
+        <div class="hide-settings-container">
           <h4 class="settings-group-title">Whitelisted Threads</h4>
           <p class="setting-description">
-            Threads containing these terms will never be completely hidden, even if they have ghosted content
+            Threads containing these terms will never be completely hidden, even if they have hidden content
           </p>
           
           <div class="whitelisted-threads-container">
@@ -118,43 +118,43 @@ export function renderUsersSubtab(container) {
         </div>
 
         <!-- Keyboard Shortcuts Info -->
-        <div class="ghost-settings-container">
+        <div class="hide-settings-container">
           <h4 class="settings-group-title">Keyboard Shortcuts</h4>
           
           <div class="keyboard-shortcut-row">
             <div class="shortcut-key"><span>\\</span></div>
-            <div class="shortcut-description">Show/hide all ghosted content</div>
+            <div class="shortcut-description">Show/hide all hidden content</div>
           </div>
           
           <div class="keyboard-shortcut-row">
             <div class="shortcut-key"><span>Alt</span></div>
-            <div class="shortcut-description">Toggle visibility of manual ghost buttons on posts</div>
+            <div class="shortcut-description">Toggle visibility of manual hide buttons on posts</div>
           </div>
         </div>
         
-        <!-- Ghost Management Actions -->
-        <div class="ghost-settings-container">
+        <!-- Hide Management Actions -->
+        <div class="hide-settings-container">
           <h4 class="settings-group-title">Management</h4>
           
-          <div class="ghost-actions">
-            <button id="manage-ghosted-users-btn" class="button button--primary">
-              <i class="fa fa-users"></i> Manage Ghosted Users
+          <div class="hide-actions">
+            <button id="manage-hidden-users-btn" class="button button--primary">
+              <i class="fa fa-users"></i> Manage Hidden Users
             </button>
             
-            <button id="reset-ghost-settings-btn" class="button button--secondary">
+            <button id="reset-hide-settings-btn" class="button button--secondary">
               <i class="fa fa-refresh"></i> Reset to Defaults
             </button>
           </div>
         </div>
         
-        <!-- Ghost Status Info -->
-        <div class="ghost-settings-container">
-          <div class="ghost-status-info">
-            <div id="ghost-status">
-              <strong>Status:</strong> <span id="ghost-active-status">Active</span>
+        <!-- Hide Status Info -->
+        <div class="hide-settings-container">
+          <div class="hide-status-info">
+            <div id="hide-status">
+              <strong>Status:</strong> <span id="hide-active-status">Active</span>
             </div>
-            <div id="ghost-counts">
-              <div><strong>Ghosted Users:</strong> <span id="ghosted-users-count">0</span></div>
+            <div id="hide-counts">
+              <div><strong>Hidden Users:</strong> <span id="hidden-users-count">0</span></div>
               <div><strong>Replaced Avatars:</strong> <span id="replaced-avatars-count">0</span></div>
               <div><strong>Hidden Posts:</strong> <span id="hidden-posts-count">0</span></div>
             </div>
@@ -165,18 +165,18 @@ export function renderUsersSubtab(container) {
   `;
 
   // Add the necessary styles
-  addGhostStyles();
+  addHideStyles();
 
   // Initialize the settings
-  initializeGhostSettings(container);
+  initializeHideSettings(container);
 
   // Set up event listeners
   setupEventListeners(container);
 }
 
-// Add Ghost-specific styles
-function addGhostStyles() {
-  const styleId = "ghost-settings-styles";
+// Add Hide-specific styles
+function addHideStyles() {
+  const styleId = "hide-settings-styles";
   if (document.getElementById(styleId)) return;
 
   const css = `
@@ -193,7 +193,7 @@ function addGhostStyles() {
       margin-bottom: 15px;
     }
     
-    .ghost-settings-container {
+    .hide-settings-container {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: 4px;
@@ -401,32 +401,32 @@ function addGhostStyles() {
       color: var(--text-secondary);
     }
     
-    /* Ghost actions */
-    .ghost-actions {
+    /* Hide actions */
+    .hide-actions {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
     }
     
-    /* Ghost status info */
-    .ghost-status-info {
+    /* Hide status info */
+    .hide-status-info {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
     
-    #ghost-active-status {
+    #hide-active-status {
       color: var(--success-color);
       font-weight: 500;
     }
     
-    #ghost-counts {
+    #hide-counts {
       display: flex;
       flex-wrap: wrap;
       gap: 15px;
     }
     
-    #ghost-counts > div {
+    #hide-counts > div {
       min-width: 150px;
     }
   `;
@@ -438,45 +438,45 @@ function addGhostStyles() {
 }
 
 // Initialize settings from stored values
-function initializeGhostSettings(container) {
+function initializeHideSettings(container) {
   try {
-    // Load Ghost config
-    const ghostConfig = gmGetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
-    debug("Loaded Ghost config:", ghostConfig);
+    // Load Hide config
+    const hideConfig = gmGetValue(HIDE_CONFIG_KEY, DEFAULT_CONFIG);
+    debug("Loaded Hide config:", hideConfig);
 
     // Set color inputs and previews
-    const authorColorInput = container.querySelector("#ghost-author-color");
+    const authorColorInput = container.querySelector("#hide-author-color");
     const authorColorPreview = container.querySelector("#author-color-preview");
     authorColorInput.value =
-      ghostConfig.authorHighlightColor || DEFAULT_CONFIG.authorHighlightColor;
+      hideConfig.authorHighlightColor || DEFAULT_CONFIG.authorHighlightColor;
     authorColorPreview.style.backgroundColor = authorColorInput.value;
 
-    const contentColorInput = container.querySelector("#ghost-content-color");
+    const contentColorInput = container.querySelector("#hide-content-color");
     const contentColorPreview = container.querySelector(
       "#content-color-preview",
     );
     contentColorInput.value =
-      ghostConfig.contentHighlightColor || DEFAULT_CONFIG.contentHighlightColor;
+      hideConfig.contentHighlightColor || DEFAULT_CONFIG.contentHighlightColor;
     contentColorPreview.style.backgroundColor = contentColorInput.value;
 
     // Set toggle switches
-    const hideRowToggle = container.querySelector("#ghost-hide-entire-row");
+    const hideRowToggle = container.querySelector("#hide-hide-entire-row");
     hideRowToggle.checked =
-      ghostConfig.hideEntireRow || DEFAULT_CONFIG.hideEntireRow;
+      hideConfig.hideEntireRow || DEFAULT_CONFIG.hideEntireRow;
 
     const hideTopicsToggle = container.querySelector(
-      "#ghost-hide-topic-creations",
+      "#hide-hide-topic-creations",
     );
     hideTopicsToggle.checked =
-      ghostConfig.hideTopicCreations || DEFAULT_CONFIG.hideTopicCreations;
+      hideConfig.hideTopicCreations || DEFAULT_CONFIG.hideTopicCreations;
 
     // Populate whitelisted threads
-    populateWhitelistedThreads(container, ghostConfig.whitelistedThreads || []);
+    populateWhitelistedThreads(container, hideConfig.whitelistedThreads || []);
 
     // Update status counts
-    updateGhostStatusCounts(container);
+    updateHideStatusCounts(container);
   } catch (err) {
-    error("Error initializing Ghost settings:", err);
+    error("Error initializing Hide settings:", err);
     // Use defaults if there's an error
     resetToDefaults(container);
   }
@@ -520,13 +520,13 @@ function populateWhitelistedThreads(container, threads) {
 // Remove a thread from the whitelist
 function removeWhitelistedThread(container, index) {
   try {
-    const ghostConfig = gmGetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
-    const threads = ghostConfig.whitelistedThreads || [];
+    const hideConfig = gmGetValue(HIDE_CONFIG_KEY, DEFAULT_CONFIG);
+    const threads = hideConfig.whitelistedThreads || [];
 
     if (index >= 0 && index < threads.length) {
       threads.splice(index, 1);
-      ghostConfig.whitelistedThreads = threads;
-      gmSetValue(GHOST_CONFIG_KEY, ghostConfig);
+      hideConfig.whitelistedThreads = threads;
+      gmSetValue(HIDE_CONFIG_KEY, hideConfig);
 
       // Update the UI
       populateWhitelistedThreads(container, threads);
@@ -541,8 +541,8 @@ function addWhitelistedThread(container, threadName) {
   if (!threadName.trim()) return;
 
   try {
-    const ghostConfig = gmGetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
-    const threads = ghostConfig.whitelistedThreads || [];
+    const hideConfig = gmGetValue(HIDE_CONFIG_KEY, DEFAULT_CONFIG);
+    const threads = hideConfig.whitelistedThreads || [];
 
     // Check for duplicates
     if (threads.includes(threadName)) {
@@ -551,8 +551,8 @@ function addWhitelistedThread(container, threadName) {
     }
 
     threads.push(threadName);
-    ghostConfig.whitelistedThreads = threads;
-    gmSetValue(GHOST_CONFIG_KEY, ghostConfig);
+    hideConfig.whitelistedThreads = threads;
+    gmSetValue(HIDE_CONFIG_KEY, hideConfig);
 
     // Update the UI
     populateWhitelistedThreads(container, threads);
@@ -564,25 +564,25 @@ function addWhitelistedThread(container, threadName) {
   }
 }
 
-// Update the Ghost status counts
-function updateGhostStatusCounts(container) {
+// Update the Hide status counts
+function updateHideStatusCounts(container) {
   try {
     const ignoredUsers = gmGetValue(IGNORED_USERS_KEY, {});
     const replacedAvatars = gmGetValue(REPLACED_AVATARS_KEY, {});
-    const ghostedManualPosts = gmGetValue(GHOSTED_MANUAL_POSTS_KEY, {});
+    const hiddenManualPosts = gmGetValue(HIDDEN_MANUAL_POSTS_KEY, {});
 
     const ignoredUserCount = Object.keys(ignoredUsers).length;
     const replacedAvatarCount = Object.keys(replacedAvatars).length;
-    const ghostedPostCount = Object.keys(ghostedManualPosts).length;
+    const hiddenPostCount = Object.keys(hiddenManualPosts).length;
 
-    container.querySelector("#ghosted-users-count").textContent =
+    container.querySelector("#hidden-users-count").textContent =
       ignoredUserCount;
     container.querySelector("#replaced-avatars-count").textContent =
       replacedAvatarCount;
     container.querySelector("#hidden-posts-count").textContent =
-      ghostedPostCount;
+      hiddenPostCount;
   } catch (err) {
-    error("Error updating Ghost status counts:", err);
+    error("Error updating Hide status counts:", err);
   }
 }
 
@@ -590,21 +590,21 @@ function updateGhostStatusCounts(container) {
 function resetToDefaults(container) {
   if (
     !confirm(
-      "Are you sure you want to reset all Ghost settings to defaults? This will not affect your ghosted users list.",
+      "Are you sure you want to reset all Hide settings to defaults? This will not affect your hidden users list.",
     )
   ) {
     return;
   }
 
   try {
-    gmSetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
+    gmSetValue(HIDE_CONFIG_KEY, DEFAULT_CONFIG);
 
     // Update the UI
-    initializeGhostSettings(container);
+    initializeHideSettings(container);
 
-    alert("Ghost settings have been reset to defaults.");
+    alert("Hide settings have been reset to defaults.");
   } catch (err) {
-    error("Error resetting Ghost settings:", err);
+    error("Error resetting Hide settings:", err);
     alert("An error occurred while resetting settings.");
   }
 }
@@ -612,7 +612,7 @@ function resetToDefaults(container) {
 // Set up event listeners for the settings UI
 function setupEventListeners(container) {
   // Color input change events
-  const authorColorInput = container.querySelector("#ghost-author-color");
+  const authorColorInput = container.querySelector("#hide-author-color");
   const authorColorPreview = container.querySelector("#author-color-preview");
 
   authorColorInput.addEventListener("input", function () {
@@ -620,10 +620,10 @@ function setupEventListeners(container) {
   });
 
   authorColorInput.addEventListener("change", function () {
-    saveGhostSetting("authorHighlightColor", this.value);
+    saveHideSetting("authorHighlightColor", this.value);
   });
 
-  const contentColorInput = container.querySelector("#ghost-content-color");
+  const contentColorInput = container.querySelector("#hide-content-color");
   const contentColorPreview = container.querySelector("#content-color-preview");
 
   contentColorInput.addEventListener("input", function () {
@@ -631,20 +631,20 @@ function setupEventListeners(container) {
   });
 
   contentColorInput.addEventListener("change", function () {
-    saveGhostSetting("contentHighlightColor", this.value);
+    saveHideSetting("contentHighlightColor", this.value);
   });
 
   // Toggle switch change events
-  const hideRowToggle = container.querySelector("#ghost-hide-entire-row");
+  const hideRowToggle = container.querySelector("#hide-hide-entire-row");
   hideRowToggle.addEventListener("change", function () {
-    saveGhostSetting("hideEntireRow", this.checked);
+    saveHideSetting("hideEntireRow", this.checked);
   });
 
   const hideTopicsToggle = container.querySelector(
-    "#ghost-hide-topic-creations",
+    "#hide-hide-topic-creations",
   );
   hideTopicsToggle.addEventListener("change", function () {
-    saveGhostSetting("hideTopicCreations", this.checked);
+    saveHideSetting("hideTopicCreations", this.checked);
   });
 
   // Whitelist functions
@@ -662,25 +662,25 @@ function setupEventListeners(container) {
   });
 
   // Management buttons
-  const manageUsersBtn = container.querySelector("#manage-ghosted-users-btn");
+  const manageUsersBtn = container.querySelector("#manage-hidden-users-btn");
   manageUsersBtn.addEventListener("click", function () {
-    showGhostUsersModal();
+    showHideUsersModal();
   });
 
-  const resetSettingsBtn = container.querySelector("#reset-ghost-settings-btn");
+  const resetSettingsBtn = container.querySelector("#reset-hide-settings-btn");
   resetSettingsBtn.addEventListener("click", function () {
     resetToDefaults(container);
   });
 }
 
-// Save a single Ghost setting
-function saveGhostSetting(key, value) {
+// Save a single Hide setting
+function saveHideSetting(key, value) {
   try {
-    const ghostConfig = gmGetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
-    ghostConfig[key] = value;
-    gmSetValue(GHOST_CONFIG_KEY, ghostConfig);
-    debug(`Saved Ghost setting: ${key} = ${value}`);
+    const hideConfig = gmGetValue(HIDE_CONFIG_KEY, DEFAULT_CONFIG);
+    hideConfig[key] = value;
+    gmSetValue(HIDE_CONFIG_KEY, hideConfig);
+    debug(`Saved Hide setting: ${key} = ${value}`);
   } catch (err) {
-    error(`Error saving Ghost setting ${key}:`, err);
+    error(`Error saving Hide setting ${key}:`, err);
   }
 }
