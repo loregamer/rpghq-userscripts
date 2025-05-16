@@ -1,0 +1,294 @@
+/**
+ * Ghost functionality styles
+ * This file contains styles specific to the Ghost functionality
+ */
+
+/* Ghost Appearance Preview */
+.ghost-preview-container {
+  margin: 15px 0;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ghost-preview-title {
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 500;
+}
+
+.ghost-preview-content {
+  padding: 15px;
+}
+
+.ghost-preview-row {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+.ghost-preview-author {
+  background-color: var(--ghost-author-highlight, rgba(255, 0, 0, 0.1));
+}
+
+.ghost-preview-content-match {
+  background-color: var(--ghost-content-highlight, rgba(255, 128, 0, 0.1));
+}
+
+/* Ghosted Users Management */
+.ghosted-users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.ghosted-user-tile {
+  background-color: var(--bg-dark);
+  border-radius: 5px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  border: 1px solid var(--border-color);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.ghosted-user-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ghosted-user-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+  object-fit: cover;
+  border: 2px solid var(--border-color);
+}
+
+.ghosted-user-name {
+  color: var(--text-primary);
+  font-size: 14px;
+  text-align: center;
+  word-break: break-word;
+  margin-bottom: 8px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ghosted-user-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: auto;
+}
+
+.ghosted-user-unghost {
+  background-color: var(--danger-color);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.ghosted-user-unghost:hover {
+  background-color: var(--danger-color-hover);
+}
+
+.ghosted-user-visit {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.ghosted-user-visit:hover {
+  background-color: var(--primary-color-hover);
+}
+
+/* Ghost User Search */
+.ghost-user-search {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: var(--bg-card);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.ghost-user-search-form {
+  display: flex;
+  gap: 10px;
+}
+
+.ghost-user-search-form input {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+}
+
+.ghost-user-search-results {
+  margin-top: 15px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ghost-user-search-result {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  margin-bottom: 5px;
+  background: var(--bg-dark);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.ghost-user-search-result:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.ghost-user-search-result img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+/* Avatar Replacement UI */
+.avatar-replacement-form {
+  margin-top: 15px;
+  padding: 15px;
+  background: var(--bg-card);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.avatar-input-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.avatar-input-row input {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+}
+
+.avatar-preview {
+  margin-top: 10px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.avatar-preview-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-color);
+}
+
+.avatar-preview-text {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Ghost Status Indicator */
+.ghost-status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.ghost-status-indicator.active {
+  background-color: var(--success-color);
+}
+
+.ghost-status-indicator.inactive {
+  background-color: var(--danger-color);
+}
+
+/* Show/Hide Ghosted Content Button */
+.show-ghosted-posts {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  transition:
+    background-color 0.2s,
+    transform 0.2s;
+}
+
+.show-ghosted-posts:hover {
+  background-color: var(--primary-color-hover);
+  transform: scale(1.05);
+}
+
+.show-ghosted-posts.active {
+  background-color: var(--danger-color);
+}
+
+.show-ghosted-posts.active:hover {
+  background-color: var(--danger-color-hover);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .ghosted-users-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .setting-row {
+    flex-direction: column;
+  }
+
+  .setting-label {
+    margin-bottom: 10px;
+  }
+
+  .ghost-user-search-form {
+    flex-direction: column;
+  }
+
+  .show-ghosted-posts {
+    width: 40px;
+    height: 40px;
+    bottom: 15px;
+    right: 15px;
+  }
+}

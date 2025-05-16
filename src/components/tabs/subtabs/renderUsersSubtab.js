@@ -1,751 +1,686 @@
 /**
- * Renders the "Users" subtab content within the Forum Preferences tab.
+ * Renders the "Users" subtab content with Ghost functionality
+ * Replaces the previous work-in-progress implementation
  *
  * @param {HTMLElement} container - The container element to render into
  */
-import { log, error } from "../../../utils/logger.js";
-import {
-  getAllUserRules,
-  getUserRules,
-  saveUserRules,
-  updateUserRules,
-  deleteUserRules,
-  addRuleForUser,
-  updateRuleForUser,
-  deleteRuleForUser,
-  updateUsernameColor,
-} from "../../../utils/userRules/storage.js";
-import { extractUserIdFromUrl } from "../../../utils/userRules/userIdentification.js";
+import { log, debug, error } from "../../../utils/logger.js";
+import { gmGetValue, gmSetValue } from "../../../main.js";
 import { searchUsers } from "../../../utils/api/rpghqApi.js"; // Import the search function
 
-// Allowed rule actions and subjects
-const RULE_ACTIONS = [
-  { id: "HIDE", name: "Hide" },
-  { id: "HIGHLIGHT", name: "Highlight" },
-];
+// Ghost configuration storage keys
+const GHOST_CONFIG_KEY = "ghostConfig";
+const IGNORED_USERS_KEY = "ignoredUsers";
+const REPLACED_AVATARS_KEY = "replacedAvatars";
+const GHOSTED_MANUAL_POSTS_KEY = "ghostedManualPosts";
+const USER_COLORS_KEY = "userColors";
 
-const RULE_SUBJECTS = [
-  { id: "POST_BODY", name: "Post Content" },
-  { id: "SIGNATURE", name: "Signature" },
-  { id: "AVATAR", name: "Avatar" },
-  { id: "USERNAME", name: "Username" },
-];
-
-const RULE_SCOPES = [
-  { id: "ALL", name: "Everywhere" },
-  { id: "TOPIC_VIEW", name: "In Topics" },
-  { id: "PROFILE_VIEW", name: "On Profile Pages" },
-  { id: "RECENT_TOPICS_LIST", name: "In Recent Activity" },
-  { id: "SEARCH_RESULTS", name: "In Search Results" },
-];
+// Default configuration values
+const DEFAULT_CONFIG = {
+  authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for ghosted-by-author
+  contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for ghosted-by-content
+  hideEntireRow: false, // Default: only hide lastpost, not entire row
+  hideTopicCreations: true, // Default: hide rows with ghosted username in row class,
+  whitelistedThreads: [], // Array of thread names that should never be hidden
+};
 
 export function renderUsersSubtab(container) {
-  log("Rendering Users subtab...");
+  log("Rendering Users subtab with Ghost functionality...");
 
-  // Create the main structure for the users subtab
+  // Create the main structure for the Ghost subtab
   container.innerHTML = `
-    <div class="wip-banner">
-      <i class="fa fa-wrench"></i> Work In Progress
-    </div>
     <div class="preferences-section">
       <div class="preferences-section-header">
-        <h3 class="preferences-section-title">User-Specific Rules</h3>
+        <h3 class="preferences-section-title">Ghost Settings</h3>
       </div>
       <div class="preferences-section-body">
         <p class="preference-description">
-          Create rules for specific users that change how their content appears to you.
-          You can hide or highlight various elements of their posts.
+          Configure how Ghost hides and highlights content from users you've chosen to ghost.
+          Ghost allows you to hide posts, topics, and mentions from specific users.
         </p>
 
-        <!-- User Selection Section -->
-        <div class="user-selection-area">
-          <div class="user-search-form">
-            <div class="input-group">
-              <label for="user-search">Find User:</label>
-              <input type="text" id="user-search" placeholder="Enter username, user ID, or profile URL" 
-                     class="form-control">
-              <button id="find-user-btn" class="button button--primary">Find User</button>
+        <!-- Ghost Appearance Settings -->
+        <div class="ghost-settings-container">
+          <h4 class="settings-group-title">Appearance</h4>
+          
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="ghost-author-color">Author Highlight Color:</label>
+              <div class="setting-description">Color for content by ghosted authors</div>
             </div>
-            <div class="input-help">
-              Enter a username, user ID, or paste a profile URL
+            <div class="setting-control">
+              <input type="text" id="ghost-author-color" class="color-input" 
+                     placeholder="rgba(255, 0, 0, 0.1)">
+              <div class="color-preview" id="author-color-preview"></div>
             </div>
           </div>
           
-          <div id="user-search-status" class="user-search-status"></div>
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="ghost-content-color">Content Highlight Color:</label>
+              <div class="setting-description">Color for content mentioning ghosted users</div>
+            </div>
+            <div class="setting-control">
+              <input type="text" id="ghost-content-color" class="color-input"
+                     placeholder="rgba(255, 128, 0, 0.1)">
+              <div class="color-preview" id="content-color-preview"></div>
+            </div>
+          </div>
         </div>
 
-        <!-- User Rules List Section -->
-        <div class="user-rules-list-section">
-          <div class="user-rules-list-header">
-            <h4>Existing User Rules</h4>
+        <!-- Ghost Behavior Settings -->
+        <div class="ghost-settings-container">
+          <h4 class="settings-group-title">Behavior</h4>
+          
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="ghost-hide-entire-row">Hide Entire Row:</label>
+              <div class="setting-description">When enabled, hides the entire topic row instead of just the lastpost</div>
+            </div>
+            <div class="setting-control">
+              <div class="toggle-switch">
+                <input type="checkbox" id="ghost-hide-entire-row" class="toggle-input">
+                <label for="ghost-hide-entire-row" class="toggle-label"></label>
+              </div>
+            </div>
           </div>
-          <div id="existing-rules-container" class="existing-rules-container">
-            <div class="loading-rules">Loading existing rules...</div>
+          
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="ghost-hide-topic-creations">Hide Topic Creations:</label>
+              <div class="setting-description">When enabled, hides topics created by ghosted users</div>
+            </div>
+            <div class="setting-control">
+              <div class="toggle-switch">
+                <input type="checkbox" id="ghost-hide-topic-creations" class="toggle-input">
+                <label for="ghost-hide-topic-creations" class="toggle-label"></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Whitelisted Threads -->
+        <div class="ghost-settings-container">
+          <h4 class="settings-group-title">Whitelisted Threads</h4>
+          <p class="setting-description">
+            Threads containing these terms will never be completely hidden, even if they have ghosted content
+          </p>
+          
+          <div class="whitelisted-threads-container">
+            <div id="whitelist-items" class="whitelist-items"></div>
+            
+            <div class="whitelist-add-row">
+              <input type="text" id="whitelist-input" placeholder="Enter thread name/keyword" class="form-control">
+              <button id="add-whitelist-btn" class="button button--primary">Add</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Keyboard Shortcuts Info -->
+        <div class="ghost-settings-container">
+          <h4 class="settings-group-title">Keyboard Shortcuts</h4>
+          
+          <div class="keyboard-shortcut-row">
+            <div class="shortcut-key"><span>\\</span></div>
+            <div class="shortcut-description">Show/hide all ghosted content</div>
+          </div>
+          
+          <div class="keyboard-shortcut-row">
+            <div class="shortcut-key"><span>Alt</span></div>
+            <div class="shortcut-description">Toggle visibility of manual ghost buttons on posts</div>
+          </div>
+        </div>
+        
+        <!-- Ghost Management Actions -->
+        <div class="ghost-settings-container">
+          <h4 class="settings-group-title">Management</h4>
+          
+          <div class="ghost-actions">
+            <button id="manage-ghosted-users-btn" class="button button--primary">
+              <i class="fa fa-users"></i> Manage Ghosted Users
+            </button>
+            
+            <button id="reset-ghost-settings-btn" class="button button--secondary">
+              <i class="fa fa-refresh"></i> Reset to Defaults
+            </button>
+          </div>
+        </div>
+        
+        <!-- Ghost Status Info -->
+        <div class="ghost-settings-container">
+          <div class="ghost-status-info">
+            <div id="ghost-status">
+              <strong>Status:</strong> <span id="ghost-active-status">Active</span>
+            </div>
+            <div id="ghost-counts">
+              <div><strong>Ghosted Users:</strong> <span id="ghosted-users-count">0</span></div>
+              <div><strong>Replaced Avatars:</strong> <span id="replaced-avatars-count">0</span></div>
+              <div><strong>Hidden Posts:</strong> <span id="hidden-posts-count">0</span></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    
   `;
 
-  // Add necessary styles
-  addRuleManagementStyles();
+  // Add the necessary styles
+  addGhostStyles();
 
-  // Initialize the UI components
-  initUserSearch(container);
-  loadExistingUsers(container);
+  // Initialize the settings
+  initializeGhostSettings(container);
+
+  // Set up event listeners
+  setupEventListeners(container);
 }
 
-// Toggle user card expansion and load details
-async function toggleUserCard(userCard, container) {
-  const userId = userCard.dataset.userId;
-  const detailsDiv = userCard.querySelector(".user-card-details");
-  const isLoading = detailsDiv.classList.contains("loading");
-  const isExpanded = userCard.classList.contains("expanded");
-
-  if (isLoading) return; // Prevent multiple loads
-
-  if (isExpanded) {
-    userCard.classList.remove("expanded");
-  } else {
-    userCard.classList.add("expanded");
-    // Check if details are already loaded
-    if (!detailsDiv.dataset.loaded) {
-      detailsDiv.innerHTML =
-        '<div class="loading-placeholder">Loading details...</div>';
-      detailsDiv.classList.add("loading");
-      try {
-        await renderUserDetails(userId, detailsDiv, container);
-        detailsDiv.dataset.loaded = "true"; // Mark as loaded
-      } catch (err) {
-        detailsDiv.innerHTML = `<p class="error">Error loading details: ${err.message}</p>`;
-        error(`Error rendering details for user ${userId}:`, err);
-      } finally {
-        detailsDiv.classList.remove("loading");
-      }
-    }
-  }
-}
-
-// Render the content inside an expanded user card
-async function renderUserDetails(userId, detailsContainer, mainContainer) {
-  const userRules = await getUserRules(userId);
-  const username =
-    detailsContainer.closest(".user-card").dataset.username ||
-    `User #${userId}`;
-
-  detailsContainer.innerHTML = `
-    <div class="user-settings-list">
-      <div class="user-setting-row">
-        <i class="fa fa-user-circle user-setting-icon"></i>
-        <label for="avatar-override-${userId}" class="user-setting-label">Avatar Override:</label>
-        <input type="text" id="avatar-override-${userId}" class="form-control avatar-override-input" value="${userRules?.avatarOverride || ""}" placeholder="Image URL or leave blank">
-      </div>
-      <div class="user-setting-row">
-        <i class="fa fa-paint-brush user-setting-icon"></i>
-        <label for="color-override-${userId}" class="user-setting-label">Color Override:</label>
-        <input type="color" id="color-override-${userId}" class="form-control color-override-input" value="${userRules?.usernameColor || "#000000"}">
-        <span class="color-preview username-preview" style="color: ${userRules?.usernameColor || "inherit"}">${username}</span>
-        <button type="button" class="button button--small clear-color-btn" title="Clear Color" style="margin-left:6px;">Clear</button>
-      </div>
-      <div class="user-setting-row">
-        <i class="fa fa-comments user-setting-icon"></i>
-        <label for="threads-setting-${userId}" class="user-setting-label">Threads:</label>
-        <select id="threads-setting-${userId}" class="form-control threads-setting-input">
-          <option value="" ${!userRules?.threads ? "selected" : ""}></option>
-          <option value="HIGHLIGHT" ${userRules?.threads === "HIGHLIGHT" ? "selected" : ""}>Highlight</option>
-          <option value="HIDE" ${userRules?.threads === "HIDE" ? "selected" : ""}>Hide</option>
-        </select>
-      </div>
-      <div class="user-setting-row">
-        <i class="fa fa-file-text user-setting-icon"></i>
-        <label for="posts-setting-${userId}" class="user-setting-label">Posts:</label>
-        <select id="posts-setting-${userId}" class="form-control posts-setting-input">
-          <option value="" ${!userRules?.posts ? "selected" : ""}></option>
-          <option value="HIGHLIGHT" ${userRules?.posts === "HIGHLIGHT" ? "selected" : ""}>Highlight</option>
-          <option value="HIDE" ${userRules?.posts === "HIDE" ? "selected" : ""}>Hide</option>
-        </select>
-      </div>
-      <div class="user-setting-row">
-        <i class="fa fa-at user-setting-icon"></i>
-        <label for="mentions-setting-${userId}" class="user-setting-label">Mentions:</label>
-        <select id="mentions-setting-${userId}" class="form-control mentions-setting-input">
-          <option value="" ${!userRules?.mentions ? "selected" : ""}></option>
-          <option value="HIGHLIGHT" ${userRules?.mentions === "HIGHLIGHT" ? "selected" : ""}>Highlight</option>
-          <option value="HIDE" ${userRules?.mentions === "HIDE" ? "selected" : ""}>Hide</option>
-        </select>
-      </div>
-      <div class="user-settings-actions">
-        <button class="button button--normal delete-user-rules-btn">Delete User</button>
-      </div>
-    </div>
-  `;
-
-  // Add event listeners for color preview and delete action
-  const colorInput = detailsContainer.querySelector(".color-override-input");
-  const usernamePreview = detailsContainer.querySelector(".username-preview");
-  const clearColorBtn = detailsContainer.querySelector(".clear-color-btn");
-  colorInput.addEventListener("input", () => {
-    usernamePreview.style.color =
-      colorInput.value === "#000000" ? "inherit" : colorInput.value;
-  });
-  if (clearColorBtn) {
-    clearColorBtn.addEventListener("click", () => {
-      colorInput.value = "#000000";
-      usernamePreview.style.color = "inherit";
-      colorInput.dispatchEvent(new Event("change"));
-    });
-  }
-
-  // Auto-save on any input change
-  const autoSave = async () => {
-    try {
-      const avatarOverride = detailsContainer.querySelector(
-        ".avatar-override-input",
-      ).value;
-      const usernameColor =
-        colorInput.value !== "#000000" ? colorInput.value : null;
-      const threads = detailsContainer.querySelector(
-        ".threads-setting-input",
-      ).value;
-      const posts = detailsContainer.querySelector(
-        ".posts-setting-input",
-      ).value;
-      const mentions = detailsContainer.querySelector(
-        ".mentions-setting-input",
-      ).value;
-      const username = detailsContainer.closest(".user-card").dataset.username;
-      await updateUserRules(userId, {
-        username,
-        avatarOverride,
-        usernameColor,
-        threads,
-        posts,
-        mentions,
-      });
-      updateUserRuleCount(detailsContainer.closest(".user-card"));
-    } catch (err) {
-      error(`Error auto-saving settings for user ${userId}:`, err);
-    }
-  };
-
-  detailsContainer
-    .querySelectorAll(
-      ".avatar-override-input, .color-override-input, .threads-setting-input, .posts-setting-input, .mentions-setting-input",
-    )
-    .forEach((input) => {
-      input.addEventListener("change", autoSave);
-      input.addEventListener("input", autoSave);
-    });
-
-  detailsContainer
-    .querySelector(".delete-user-rules-btn")
-    .addEventListener("click", async () => {
-      if (
-        !confirm(
-          `Are you sure you want to delete all rules for user ${userId}?`,
-        )
-      )
-        return;
-      try {
-        await deleteUserRules(userId);
-        await renderUserDetails(userId, detailsContainer, mainContainer);
-        updateUserRuleCount(detailsContainer.closest(".user-card"));
-      } catch (err) {
-        error(`Error deleting rules for user ${userId}:`, err);
-        alert(`Error deleting rules: ${err.message}`);
-      }
-    });
-
-  // Set rule count on open
-  setTimeout(() => {
-    updateUserRuleCount(detailsContainer.closest(".user-card"));
-  }, 0);
-}
-
-// Add CSS styles for the user rules UI
-function addRuleManagementStyles() {
-  const styleId = "user-rules-management-styles";
+// Add Ghost-specific styles
+function addGhostStyles() {
+  const styleId = "ghost-settings-styles";
   if (document.getElementById(styleId)) return;
 
   const css = `
-    .user-settings-list {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
+    .preferences-section {
       margin-bottom: 20px;
     }
-    .user-setting-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 6px 0;
+    
+    .preferences-section-title {
+      margin-bottom: 10px;
     }
-    .user-setting-icon {
-      font-size: 1.3em;
-      color: var(--primary-color);
-      min-width: 24px;
-      text-align: center;
-    }
-    .user-setting-label {
-      min-width: 110px;
+    
+    .preference-description {
       color: var(--text-secondary);
+      margin-bottom: 15px;
+    }
+    
+    .ghost-settings-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .settings-group-title {
+      margin-top: 0;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+    
+    .setting-row {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .setting-row:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    
+    .setting-label {
+      flex: 1;
+    }
+    
+    .setting-label label {
+      display: block;
+      margin-bottom: 5px;
       font-weight: 500;
     }
-    .user-settings-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .color-preview.username-preview {
-      margin-left: 10px;
-      font-weight: bold;
-      padding: 2px 8px;
-      border-radius: 3px;
-      background: var(--bg-dark);
-      border: 1px solid var(--border-color);
-    }
-    .user-selection-area {
-      margin-bottom: 20px;
-      padding: 15px;
-      background: var(--bg-card);
-      border-radius: 4px;
-    }
     
-    .user-search-form .input-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 5px;
-    }
-    
-    .user-search-form label {
-      min-width: 80px;
-      color: var(--text-secondary);
-    }
-    
-    .user-search-form .form-control {
-      flex: 1;
-      padding: 6px 10px;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      background-color: var(--bg-dark);
-      color: var(--text-primary);
-    }
-    
-    .user-search-status {
-      margin-top: 10px;
-      padding: 6px 0;
-      font-style: italic;
-      color: var(--text-secondary);
-    }
-    
-    .user-search-status.success {
-      color: var(--success-color);
-    }
-    
-    .user-search-status.error {
-      color: var(--danger-color);
-    }
-    
-    .user-rules-editor {
-      border: 1px solid var(--border-color);
-      padding: 15px;
-      border-radius: 4px;
-      margin-bottom: 20px;
-      background-color: var(--bg-card);
-    }
-    
-    .user-rules-header {
-      margin-bottom: 15px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border-color);
-    }
-    
-    .user-rules-header h4,
-    .rules-list-header h4,
-    .user-rules-list-header h4 {
-      color: var(--text-primary);
-    }
-    
-    .rules-list-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    
-    .rules-table-wrapper {
-      overflow-x: auto;
-    }
-    
-    .rules-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
-    }
-    
-    .rules-table th, .rules-table td {
-      padding: 8px 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--border-color);
-      color: var(--text-secondary);
-    }
-    
-    .rules-table th {
-      background-color: rgba(255, 255, 255, 0.05);
-      color: var(--text-primary);
-      font-weight: bold;
-    }
-    
-    .rules-table tr:hover {
-      background-color: rgba(255, 255, 255, 0.03);
-    }
-    
-    .rules-actions {
-      display: flex;
-      gap: 5px;
-    }
-    
-    .user-rules-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: space-between;
-      margin-top: 10px;
-    }
-    
-    .existing-rules-container {
-      margin-top: 20px;
-    }
-    
-    .user-rules-list-section {
-      margin-top: 20px;
-    }
-
-    .user-card {
-      margin-bottom: 10px;
-      border: 1px solid var(--border-color);
-      border-radius: 4px;
-      background-color: var(--bg-card);
-      overflow: hidden; /* Contain children */
-    }
-
-    .user-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px;
-      cursor: pointer;
-      background-color: rgba(255, 255, 255, 0.02); /* Slightly different bg */
-    }
-
-    .user-card-header:hover {
-      background-color: rgba(255, 255, 255, 0.05);
-    }
-    
-    .user-info {
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .user-name {
-      font-weight: bold;
-      color: var(--text-primary);
-    }
-    
-    .user-stats {
+    .setting-description {
       font-size: 0.9em;
       color: var(--text-secondary);
     }
     
-    .user-card-actions {
+    .setting-control {
+      min-width: 120px;
       display: flex;
-      gap: 5px;
+      align-items: center;
+      gap: 10px;
     }
-
-    .expand-btn {
+    
+    /* Color inputs */
+    .color-input {
+      width: 150px;
+      padding: 8px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-primary);
+    }
+    
+    .color-preview {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background-color: rgba(255, 0, 0, 0.1);
+    }
+    
+    /* Toggle switches */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 22px;
+    }
+    
+    .toggle-input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-label {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .toggle-label:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 2px;
+      background-color: var(--text-secondary);
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    .toggle-input:checked + .toggle-label {
+      background-color: var(--primary-color);
+    }
+    
+    .toggle-input:checked + .toggle-label:before {
+      transform: translateX(20px);
+      background-color: white;
+    }
+    
+    /* Whitelisted threads */
+    .whitelisted-threads-container {
+      margin-top: 10px;
+    }
+    
+    .whitelist-items {
+      max-height: 150px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 5px;
+    }
+    
+    .whitelist-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      margin-bottom: 5px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+    }
+    
+    .whitelist-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .whitelist-item-text {
+      flex: 1;
+    }
+    
+    .whitelist-remove-btn {
       background: none;
       border: none;
-      color: var(--text-secondary);
-      font-size: 1.2em;
+      color: var(--danger-color);
       cursor: pointer;
-      padding: 5px;
-      transition: transform 0.2s ease;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-
-    .user-card.expanded .expand-btn {
-      transform: rotate(90deg);
+    
+    .whitelist-add-row {
+      display: flex;
+      gap: 10px;
     }
-
-    .user-card-details {
-      display: none; /* Hidden by default */
-      padding: 15px;
-      border-top: 1px solid var(--border-color);
-      background-color: var(--bg-card); /* Same as card bg */
+    
+    .whitelist-add-row input {
+      flex: 1;
+      padding: 8px 10px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      color: var(--text-primary);
     }
-
-    .user-card.expanded .user-card-details {
-      display: block; /* Shown when expanded */
+    
+    /* Keyboard shortcuts */
+    .keyboard-shortcut-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .keyboard-shortcut-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .shortcut-key {
+      margin-right: 15px;
+      min-width: 80px;
+    }
+    
+    .shortcut-key span {
+      display: inline-block;
+      padding: 5px 10px;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 14px;
+      text-align: center;
+      min-width: 30px;
+    }
+    
+    .shortcut-description {
+      color: var(--text-secondary);
+    }
+    
+    /* Ghost actions */
+    .ghost-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    /* Ghost status info */
+    .ghost-status-info {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    #ghost-active-status {
+      color: var(--success-color);
+      font-weight: 500;
+    }
+    
+    #ghost-counts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    
+    #ghost-counts > div {
+      min-width: 150px;
     }
   `;
 
-  // Add styles to document head
   const style = document.createElement("style");
   style.id = styleId;
   style.textContent = css;
   document.head.appendChild(style);
 }
 
-// Initialize user search functionality
-function initUserSearch(container) {
-  const searchInput = container.querySelector("#user-search");
-  const findButton = container.querySelector("#find-user-btn");
-  const statusDiv = container.querySelector("#user-search-status");
-
-  findButton.addEventListener("click", async () => {
-    const searchValue = searchInput.value.trim();
-    if (!searchValue) {
-      statusDiv.innerHTML = "Please enter a username, user ID, or profile URL";
-      statusDiv.className = "user-search-status error";
-      return;
-    }
-
-    statusDiv.innerHTML = "Searching...";
-    statusDiv.className = "user-search-status";
-
-    try {
-      // Case 1: Search value is a URL, extract user ID
-      if (searchValue.includes("http")) {
-        const userId = extractUserIdFromUrl(searchValue);
-        if (userId) {
-          // Try to get user data from the URL
-          const username = searchValue
-            .split("/")
-            .filter(Boolean)
-            .pop()
-            .split(".")[0];
-          await handleUserFound(userId, username);
-          return;
-        }
-      }
-
-      // Case 2: Search value is a numeric user ID
-      if (/^\d+$/.test(searchValue)) {
-        // For now, we'll just use the ID. In the future, we could fetch the username from the server
-        await handleUserFound(searchValue, `User #${searchValue}`);
-        return;
-      }
-
-      // Case 3: Search value is a username
-      const results = await searchUsers(searchValue);
-      const users = results.filter((item) => item.type === "user");
-
-      if (users.length === 1) {
-        await handleUserFound(users[0].user_id, users[0].value);
-        return; // Exit after handling the found user
-      } else if (users.length === 0) {
-        statusDiv.innerHTML = `No user found matching "${searchValue}". Try User ID or profile URL.`;
-        statusDiv.className = "user-search-status error";
-      } else {
-        statusDiv.innerHTML = `Multiple users found matching "${searchValue}". Please be more specific or use User ID/URL.`;
-        statusDiv.className = "user-search-status error";
-      }
-    } catch (err) {
-      statusDiv.innerHTML = `Error: ${err.message}`;
-      statusDiv.className = "user-search-status error";
-      error("Error searching for user:", err);
-    }
-  });
-
-  // Also trigger search on Enter key
-  searchInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      findButton.click();
-    }
-  });
-
-  // Handle when a user is found via search
-  async function handleUserFound(userId, username) {
-    const existingRulesContainer = container.querySelector(
-      "#existing-rules-container",
-    );
-    let userCard = existingRulesContainer.querySelector(
-      `.user-card[data-user-id="${userId}"]`,
-    );
-
-    if (userCard) {
-      // User card exists, scroll and expand
-      statusDiv.innerHTML = `User found: <strong>${username}</strong> (ID: ${userId}). Expanding existing card.`;
-      statusDiv.className = "user-search-status success";
-      userCard.scrollIntoView({ behavior: "smooth", block: "center" });
-      if (!userCard.classList.contains("expanded")) {
-        await toggleUserCard(userCard, container);
-      }
-    } else {
-      // User card doesn't exist, create and append it
-      statusDiv.innerHTML = `User found: <strong>${username}</strong> (ID: ${userId}). Creating new card.`;
-      statusDiv.className = "user-search-status success";
-      log(`Creating new card for user ${userId} (${username})`);
-
-      // Remove the 'no rules' placeholder if it exists
-      const noRulesPlaceholder = existingRulesContainer.querySelector("p");
-      if (
-        noRulesPlaceholder &&
-        noRulesPlaceholder.textContent.includes("No user rules defined yet")
-      ) {
-        existingRulesContainer.innerHTML = ""; // Clear the placeholder
-      }
-
-      // Create the new card element
-      const userData = await getUserRules(userId);
-      const ruleCount = getUserRuleCount(userData);
-      userCard = createUserCardElement(
-        userId,
-        username,
-        ruleCount,
-        userData?.usernameColor,
-      );
-
-      // Attach event listeners
-      attachCardEventListeners(userCard, container);
-
-      // Append the new card to the container
-      existingRulesContainer.appendChild(userCard);
-
-      // Scroll to the new card and expand it
-      userCard.scrollIntoView({ behavior: "smooth", block: "center" });
-      await toggleUserCard(userCard, container); // Expand to load details
-    }
-    // Clear the search input
-    searchInput.value = "";
-  }
-}
-
-// Helper to count all non-empty user settings as rules
-function getUserRuleCount(userData) {
-  if (!userData) return 0;
-  let count = 0;
-  if (userData.avatarOverride) count++;
-  if (userData.usernameColor && userData.usernameColor !== "#000000") count++;
-  if (userData.threads) count++;
-  if (userData.posts) count++;
-  if (userData.mentions) count++;
-  return count;
-}
-
-// Load and display existing users with rules
-async function loadExistingUsers(container) {
+// Initialize settings from stored values
+function initializeGhostSettings(container) {
   try {
-    const existingRulesContainer = container.querySelector(
-      "#existing-rules-container",
-    );
-    const allUserRules = await getAllUserRules();
+    // Load Ghost config
+    const ghostConfig = gmGetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
+    debug("Loaded Ghost config:", ghostConfig);
 
-    if (!allUserRules || Object.keys(allUserRules).length === 0) {
-      existingRulesContainer.innerHTML = "<p>No user rules defined yet.</p>";
+    // Set color inputs and previews
+    const authorColorInput = container.querySelector("#ghost-author-color");
+    const authorColorPreview = container.querySelector("#author-color-preview");
+    authorColorInput.value =
+      ghostConfig.authorHighlightColor || DEFAULT_CONFIG.authorHighlightColor;
+    authorColorPreview.style.backgroundColor = authorColorInput.value;
+
+    const contentColorInput = container.querySelector("#ghost-content-color");
+    const contentColorPreview = container.querySelector(
+      "#content-color-preview",
+    );
+    contentColorInput.value =
+      ghostConfig.contentHighlightColor || DEFAULT_CONFIG.contentHighlightColor;
+    contentColorPreview.style.backgroundColor = contentColorInput.value;
+
+    // Set toggle switches
+    const hideRowToggle = container.querySelector("#ghost-hide-entire-row");
+    hideRowToggle.checked =
+      ghostConfig.hideEntireRow || DEFAULT_CONFIG.hideEntireRow;
+
+    const hideTopicsToggle = container.querySelector(
+      "#ghost-hide-topic-creations",
+    );
+    hideTopicsToggle.checked =
+      ghostConfig.hideTopicCreations || DEFAULT_CONFIG.hideTopicCreations;
+
+    // Populate whitelisted threads
+    populateWhitelistedThreads(container, ghostConfig.whitelistedThreads || []);
+
+    // Update status counts
+    updateGhostStatusCounts(container);
+  } catch (err) {
+    error("Error initializing Ghost settings:", err);
+    // Use defaults if there's an error
+    resetToDefaults(container);
+  }
+}
+
+// Populate the whitelisted threads list
+function populateWhitelistedThreads(container, threads) {
+  const whitelistContainer = container.querySelector("#whitelist-items");
+
+  if (!threads || threads.length === 0) {
+    whitelistContainer.innerHTML =
+      '<div class="empty-whitelist">No whitelisted threads. Add threads that should never be hidden.</div>';
+    return;
+  }
+
+  const threadsHtml = threads
+    .map(
+      (thread, index) => `
+    <div class="whitelist-item" data-index="${index}">
+      <div class="whitelist-item-text">${thread}</div>
+      <button class="whitelist-remove-btn" title="Remove from whitelist">×</button>
+    </div>
+  `,
+    )
+    .join("");
+
+  whitelistContainer.innerHTML = threadsHtml;
+
+  // Add event listeners to remove buttons
+  whitelistContainer
+    .querySelectorAll(".whitelist-remove-btn")
+    .forEach((btn) => {
+      btn.addEventListener("click", function () {
+        const item = this.closest(".whitelist-item");
+        const index = parseInt(item.dataset.index);
+        removeWhitelistedThread(container, index);
+      });
+    });
+}
+
+// Remove a thread from the whitelist
+function removeWhitelistedThread(container, index) {
+  try {
+    const ghostConfig = gmGetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
+    const threads = ghostConfig.whitelistedThreads || [];
+
+    if (index >= 0 && index < threads.length) {
+      threads.splice(index, 1);
+      ghostConfig.whitelistedThreads = threads;
+      gmSetValue(GHOST_CONFIG_KEY, ghostConfig);
+
+      // Update the UI
+      populateWhitelistedThreads(container, threads);
+    }
+  } catch (err) {
+    error("Error removing whitelisted thread:", err);
+  }
+}
+
+// Add a thread to the whitelist
+function addWhitelistedThread(container, threadName) {
+  if (!threadName.trim()) return;
+
+  try {
+    const ghostConfig = gmGetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
+    const threads = ghostConfig.whitelistedThreads || [];
+
+    // Check for duplicates
+    if (threads.includes(threadName)) {
+      alert("This thread is already whitelisted.");
       return;
     }
 
-    // Create a card for each user
-    const userCards = Object.entries(allUserRules)
-      .map(([userId, userData]) => {
-        const ruleCount = getUserRuleCount(userData);
-        const cardElement = createUserCardElement(
-          userId,
-          userData.username || `User #${userId}`,
-          ruleCount,
-          userData.usernameColor,
-        );
-        return cardElement.outerHTML;
-      })
-      .join("");
+    threads.push(threadName);
+    ghostConfig.whitelistedThreads = threads;
+    gmSetValue(GHOST_CONFIG_KEY, ghostConfig);
 
-    existingRulesContainer.innerHTML = userCards;
+    // Update the UI
+    populateWhitelistedThreads(container, threads);
 
-    // Add event listeners to cards
-    existingRulesContainer.querySelectorAll(".user-card").forEach((card) => {
-      attachCardEventListeners(card, container);
-    });
+    // Clear the input
+    container.querySelector("#whitelist-input").value = "";
   } catch (err) {
-    error("Error loading existing users:", err);
-    container.querySelector("#existing-rules-container").innerHTML =
-      `<p>Error loading existing users: ${err.message}</p>`;
+    error("Error adding whitelisted thread:", err);
   }
 }
 
-// Helper function to create a user card element
-function createUserCardElement(
-  userId,
-  username,
-  ruleCount = 0,
-  usernameColor = null,
-) {
-  const card = document.createElement("div");
-  card.className = "user-card";
-  card.dataset.userId = userId;
-  card.dataset.username = username;
+// Update the Ghost status counts
+function updateGhostStatusCounts(container) {
+  try {
+    const ignoredUsers = gmGetValue(IGNORED_USERS_KEY, {});
+    const replacedAvatars = gmGetValue(REPLACED_AVATARS_KEY, {});
+    const ghostedManualPosts = gmGetValue(GHOSTED_MANUAL_POSTS_KEY, {});
 
-  const usernameStyle = usernameColor ? `style="color: ${usernameColor}"` : "";
+    const ignoredUserCount = Object.keys(ignoredUsers).length;
+    const replacedAvatarCount = Object.keys(replacedAvatars).length;
+    const ghostedPostCount = Object.keys(ghostedManualPosts).length;
 
-  card.innerHTML = `
-    <div class="user-card-header">
-      <div class="user-info">
-        <span class="user-name" ${usernameStyle}>${username}</span>
-        <span class="user-stats user-rule-count">${ruleCount} rule${ruleCount !== 1 ? "s" : ""}</span>
-      </div>
-      <div class="user-card-actions">
-        <button class="button button--icon expand-btn" title="Expand/Collapse">
-          <i class="fa fa-chevron-right"></i>
-        </button>
-      </div>
-    </div>
-    <div class="user-card-details">
-      <div class="loading-placeholder">Loading details...</div>
-    </div>
-  `;
-  return card;
-}
-
-// Helper function to attach event listeners to a card
-function attachCardEventListeners(cardElement, container) {
-  const header = cardElement.querySelector(".user-card-header");
-  const expandBtn = cardElement.querySelector(".expand-btn");
-
-  if (header) {
-    header.addEventListener("click", (event) => {
-      // Prevent toggling if a button inside the header was clicked
-      if (event.target.closest("button")) return;
-      toggleUserCard(cardElement, container);
-    });
-  }
-
-  if (expandBtn) {
-    expandBtn.addEventListener("click", (event) => {
-      event.stopPropagation(); // Prevent header click listener
-      toggleUserCard(cardElement, container);
-    });
+    container.querySelector("#ghosted-users-count").textContent =
+      ignoredUserCount;
+    container.querySelector("#replaced-avatars-count").textContent =
+      replacedAvatarCount;
+    container.querySelector("#hidden-posts-count").textContent =
+      ghostedPostCount;
+  } catch (err) {
+    error("Error updating Ghost status counts:", err);
   }
 }
 
-// Helper to update the rule count display on the user card
-function updateUserRuleCount(userCard) {
-  if (!userCard) return;
-  // Count non-empty settings as rules
-  const details = userCard.querySelector(".user-card-details");
-  if (!details) return;
-  const avatar = details.querySelector(".avatar-override-input")?.value?.trim();
-  const color = details.querySelector(".color-override-input")?.value;
-  const threads = details.querySelector(".threads-setting-input")?.value;
-  const posts = details.querySelector(".posts-setting-input")?.value;
-  const mentions = details.querySelector(".mentions-setting-input")?.value;
-  let count = 0;
-  if (avatar) count++;
-  if (color && color !== "#000000") count++;
-  if (threads) count++;
-  if (posts) count++;
-  if (mentions) count++;
-  const countEl = userCard.querySelector(".user-rule-count");
-  if (countEl) {
-    countEl.textContent = `${count} rule${count !== 1 ? "s" : ""}`;
+// Reset all settings to defaults
+function resetToDefaults(container) {
+  if (
+    !confirm(
+      "Are you sure you want to reset all Ghost settings to defaults? This will not affect your ghosted users list.",
+    )
+  ) {
+    return;
+  }
+
+  try {
+    gmSetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
+
+    // Update the UI
+    initializeGhostSettings(container);
+
+    alert("Ghost settings have been reset to defaults.");
+  } catch (err) {
+    error("Error resetting Ghost settings:", err);
+    alert("An error occurred while resetting settings.");
+  }
+}
+
+// Set up event listeners for the settings UI
+function setupEventListeners(container) {
+  // Color input change events
+  const authorColorInput = container.querySelector("#ghost-author-color");
+  const authorColorPreview = container.querySelector("#author-color-preview");
+
+  authorColorInput.addEventListener("input", function () {
+    authorColorPreview.style.backgroundColor = this.value;
+  });
+
+  authorColorInput.addEventListener("change", function () {
+    saveGhostSetting("authorHighlightColor", this.value);
+  });
+
+  const contentColorInput = container.querySelector("#ghost-content-color");
+  const contentColorPreview = container.querySelector("#content-color-preview");
+
+  contentColorInput.addEventListener("input", function () {
+    contentColorPreview.style.backgroundColor = this.value;
+  });
+
+  contentColorInput.addEventListener("change", function () {
+    saveGhostSetting("contentHighlightColor", this.value);
+  });
+
+  // Toggle switch change events
+  const hideRowToggle = container.querySelector("#ghost-hide-entire-row");
+  hideRowToggle.addEventListener("change", function () {
+    saveGhostSetting("hideEntireRow", this.checked);
+  });
+
+  const hideTopicsToggle = container.querySelector(
+    "#ghost-hide-topic-creations",
+  );
+  hideTopicsToggle.addEventListener("change", function () {
+    saveGhostSetting("hideTopicCreations", this.checked);
+  });
+
+  // Whitelist functions
+  const addWhitelistBtn = container.querySelector("#add-whitelist-btn");
+  const whitelistInput = container.querySelector("#whitelist-input");
+
+  addWhitelistBtn.addEventListener("click", function () {
+    addWhitelistedThread(container, whitelistInput.value);
+  });
+
+  whitelistInput.addEventListener("keypress", function (e) {
+    if (e.key === "Enter") {
+      addWhitelistedThread(container, this.value);
+    }
+  });
+
+  // Management buttons
+  const manageUsersBtn = container.querySelector("#manage-ghosted-users-btn");
+  manageUsersBtn.addEventListener("click", function () {
+    alert("Ghost Users Management UI will be implemented in the next phase.");
+    // This will be implemented in the back-end logic phase
+  });
+
+  const resetSettingsBtn = container.querySelector("#reset-ghost-settings-btn");
+  resetSettingsBtn.addEventListener("click", function () {
+    resetToDefaults(container);
+  });
+}
+
+// Save a single Ghost setting
+function saveGhostSetting(key, value) {
+  try {
+    const ghostConfig = gmGetValue(GHOST_CONFIG_KEY, DEFAULT_CONFIG);
+    ghostConfig[key] = value;
+    gmSetValue(GHOST_CONFIG_KEY, ghostConfig);
+    debug(`Saved Ghost setting: ${key} = ${value}`);
+  } catch (err) {
+    error(`Error saving Ghost setting ${key}:`, err);
   }
 }

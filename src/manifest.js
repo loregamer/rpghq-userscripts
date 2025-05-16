@@ -48,6 +48,22 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
   },
   {
+    id: "ghost",
+    name: "Ghost",
+    version: "1.0.0",
+    description: "Hide posts, topics, and content from specific users",
+    author: "loregamer",
+    path: "./scripts/ghost.js",
+    enabledByDefault: true,
+    image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png", // Placeholder image
+    urlPatterns: ["https://rpghq.org/forums/*"],
+    settings: [
+      // Settings are managed through Forum Preferences
+    ],
+    categories: ["User Interaction"],
+    executionPhase: "document-end",
+  },
+  {
     id: "kalareact",
     name: "Kalarion Reaction Auto-Marker",
     version: "1.0.0",
