@@ -1,10 +1,10 @@
 {
   "document-start": [
+    "_applyUserPreferences",
     "disableEmbeds",
     "threadAuthorHighlight",
     "_applyThreadPreferences",
-    "_cachePostsOnPage",
-    "_applyUserPreferences"
+    "_cachePostsOnPage"
   ],
   "document-end": [
     "lastpostTooltip",
