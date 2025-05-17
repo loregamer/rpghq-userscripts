@@ -186,7 +186,7 @@ function showToggleNotification() {
 /**
  * Check if a user is hidden
  * @param {string} userIdOrName - The user ID or username to check
- * @returns {boolean} True if the user is hidden
+ * @returns {Object|false} User object with settings if hidden, false otherwise
  */
 export function isUserHidden(userIdOrName) {
   if (!userIdOrName) return false;
@@ -194,19 +194,37 @@ export function isUserHidden(userIdOrName) {
   const ignoredUsers = gmGetValue(IGNORED_USERS_KEY, {});
 
   // If it's a direct match for a user ID
-  if (ignoredUsers.hasOwnProperty(userIdOrName)) return true;
+  if (ignoredUsers.hasOwnProperty(userIdOrName)) {
+    return ignoredUsers[userIdOrName];
+  }
 
   // Clean the username if it's not a user ID
   const cleanedUsername = cleanUsername(userIdOrName);
 
   // Check for exact matches (case-sensitive)
-  if (Object.values(ignoredUsers).includes(cleanedUsername)) return true;
+  for (const userId in ignoredUsers) {
+    const userData = ignoredUsers[userId];
+    const username =
+      typeof userData === "string" ? userData : userData.username;
+
+    if (username === cleanedUsername) {
+      return ignoredUsers[userId];
+    }
+  }
 
   // Check for case-insensitive matches
   const lower = cleanedUsername.toLowerCase();
-  return Object.values(ignoredUsers).some(
-    (name) => name.toLowerCase() === lower,
-  );
+  for (const userId in ignoredUsers) {
+    const userData = ignoredUsers[userId];
+    const username =
+      typeof userData === "string" ? userData : userData.username;
+
+    if (username.toLowerCase() === lower) {
+      return ignoredUsers[userId];
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -236,9 +254,10 @@ function cleanUsername(username) {
  * Hide or unhide a user
  * @param {string} userId - The user ID
  * @param {string} username - The username
+ * @param {Object} userSettings - Optional user-specific settings
  * @returns {boolean} True if the user is now hidden, false if unhidden
  */
-export function toggleUserHide(userId, username) {
+export function toggleUserHide(userId, username, userSettings = null) {
   const cleanedUsername = cleanUsername(username);
   const ignoredUsers = gmGetValue(IGNORED_USERS_KEY, {});
 
@@ -248,9 +267,19 @@ export function toggleUserHide(userId, username) {
     debug(`Unhidden user: ${userId} (${cleanedUsername})`);
     return false;
   } else {
-    ignoredUsers[userId] = cleanedUsername;
+    // Create new user entry with default or provided settings
+    ignoredUsers[userId] = {
+      username: cleanedUsername,
+      settings: userSettings || {
+        hideEntireRow: getHideConfig().hideEntireRow,
+        hideTopicCreations: getHideConfig().hideTopicCreations,
+      },
+    };
     gmSetValue(IGNORED_USERS_KEY, ignoredUsers);
-    debug(`Hidden user: ${userId} (${cleanedUsername})`);
+    debug(
+      `Hidden user: ${userId} (${cleanedUsername}) with custom settings`,
+      ignoredUsers[userId],
+    );
     return true;
   }
 }
@@ -263,10 +292,13 @@ export function toggleUserHide(userId, username) {
 export function contentContainsHidden(content) {
   if (!content) return false;
 
-  const ignoredUsers = gmGetValue(IGNORED_USERS_KEY, {});
+  const ignoredUsers = getHiddenUsers();
 
   for (const userId in ignoredUsers) {
-    const username = ignoredUsers[userId];
+    const userData = ignoredUsers[userId];
+    const username =
+      typeof userData === "string" ? userData : userData.username;
+
     if (content.toLowerCase().includes(username.toLowerCase())) {
       return true;
     }
@@ -325,10 +357,45 @@ export function resetUserAvatar(userId) {
 
 /**
  * Get all hidden users
- * @returns {Object} The hidden users object (userId => username)
+ * @param {boolean} compatibilityMode - If true, returns the old format (userId => username)
+ * @returns {Object} The hidden users object (userId => {username, settings})
  */
-export function getHiddenUsers() {
-  return gmGetValue(IGNORED_USERS_KEY, {});
+export function getHiddenUsers(compatibilityMode = false) {
+  const ignoredUsers = gmGetValue(IGNORED_USERS_KEY, {});
+
+  if (compatibilityMode) {
+    // Convert to old format for backward compatibility
+    const oldFormat = {};
+    for (const userId in ignoredUsers) {
+      // Handle both old and new formats
+      if (typeof ignoredUsers[userId] === "string") {
+        oldFormat[userId] = ignoredUsers[userId];
+      } else {
+        oldFormat[userId] = ignoredUsers[userId].username;
+      }
+    }
+    return oldFormat;
+  }
+
+  // Make sure all entries are in the new format
+  const convertedUsers = {};
+  for (const userId in ignoredUsers) {
+    if (typeof ignoredUsers[userId] === "string") {
+      // Convert old format to new format
+      convertedUsers[userId] = {
+        username: ignoredUsers[userId],
+        settings: {
+          hideEntireRow: getHideConfig().hideEntireRow,
+          hideTopicCreations: getHideConfig().hideTopicCreations,
+        },
+      };
+    } else {
+      // Already in new format
+      convertedUsers[userId] = ignoredUsers[userId];
+    }
+  }
+
+  return convertedUsers;
 }
 
 /**

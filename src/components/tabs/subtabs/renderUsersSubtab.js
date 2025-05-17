@@ -19,6 +19,7 @@ import {
   resetUserAvatar,
   getHiddenUsers,
   getReplacedAvatars,
+  getHideConfig,
 } from "../../../utils/hide/hide.js";
 
 export function renderUsersSubtab(container) {
@@ -35,6 +36,31 @@ export function renderUsersSubtab(container) {
           Configure how Hide hides and highlights content from users you've chosen to hide.
           Hide allows you to hide posts, topics, and mentions from specific users.
         </p>
+
+        <!-- Currently Hidden Users -->
+        <div class="hide-settings-container">
+          <h4 class="settings-group-title">
+            <i class="fa fa-user-times"></i> Hidden Users 
+            <span class="hide-user-count"></span>
+          </h4>
+          <div class="hidden-users-grid" id="hidden-users-grid"></div>
+        </div>
+        
+        <!-- User Search -->
+        <div class="hide-settings-container">
+          <h4 class="settings-group-title">
+            <i class="fa fa-search"></i> Search Users to Hide
+          </h4>
+          <div class="hide-user-search">
+            <div class="hide-user-search-form">
+              <input type="text" id="hide-search-input" placeholder="Search for users to hide...">
+              <button id="hide-search-btn" class="button button--primary">
+                <i class="fa fa-search"></i> Search
+              </button>
+            </div>
+            <div class="hide-user-search-results"></div>
+          </div>
+        </div>
 
         <!-- Hide Appearance Settings -->
         <div class="hide-settings-container">
@@ -112,6 +138,27 @@ export function renderUsersSubtab(container) {
             </div>
           </div>
         </div>
+        
+        <!-- Avatar Replacement -->
+        <div class="hide-settings-container">
+          <h4 class="settings-group-title">
+            <i class="fa fa-image"></i> Avatar Replacement
+            <span class="hide-avatar-count"></span>
+          </h4>
+          
+          <div class="avatar-replacement-form">
+            <div class="avatar-input-row">
+              <input type="text" id="hide-user-id-input" placeholder="User ID" class="form-control">
+              <input type="text" id="hide-avatar-url-input" placeholder="Image URL (128x128 or smaller)" class="form-control">
+              <button id="hide-replace-avatar-btn" class="button button--primary">Replace</button>
+              <button id="hide-reset-avatar-btn" class="button button--secondary">Reset</button>
+            </div>
+            
+            <div class="avatar-preview">
+              <div class="avatar-preview-text">Enter a valid user ID and image URL above to replace a user's avatar</div>
+            </div>
+          </div>
+        </div>
 
         <!-- Keyboard Shortcuts Info -->
         <div class="hide-settings-container">
@@ -152,52 +199,6 @@ export function renderUsersSubtab(container) {
               <div><strong>Hidden Users:</strong> <span id="hidden-users-count">0</span></div>
               <div><strong>Replaced Avatars:</strong> <span id="replaced-avatars-count">0</span></div>
               <div><strong>Hidden Posts:</strong> <span id="hidden-posts-count">0</span></div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- User Search -->
-        <div class="hide-settings-container">
-          <h4 class="settings-group-title">
-            <i class="fa fa-search"></i> Search Users to Hide
-          </h4>
-          <div class="hide-user-search">
-            <div class="hide-user-search-form">
-              <input type="text" id="hide-search-input" placeholder="Search for users to hide...">
-              <button id="hide-search-btn" class="button button--primary">
-                <i class="fa fa-search"></i> Search
-              </button>
-            </div>
-            <div class="hide-user-search-results"></div>
-          </div>
-        </div>
-        
-        <!-- Currently Hidden Users -->
-        <div class="hide-settings-container">
-          <h4 class="settings-group-title">
-            <i class="fa fa-user-times"></i> Hidden Users 
-            <span class="hide-user-count"></span>
-          </h4>
-          <div class="hidden-users-grid" id="hidden-users-grid"></div>
-        </div>
-        
-        <!-- Avatar Replacement -->
-        <div class="hide-settings-container">
-          <h4 class="settings-group-title">
-            <i class="fa fa-image"></i> Avatar Replacement
-            <span class="hide-avatar-count"></span>
-          </h4>
-          
-          <div class="avatar-replacement-form">
-            <div class="avatar-input-row">
-              <input type="text" id="hide-user-id-input" placeholder="User ID" class="form-control">
-              <input type="text" id="hide-avatar-url-input" placeholder="Image URL (128x128 or smaller)" class="form-control">
-              <button id="hide-replace-avatar-btn" class="button button--primary">Replace</button>
-              <button id="hide-reset-avatar-btn" class="button button--secondary">Reset</button>
-            </div>
-            
-            <div class="avatar-preview">
-              <div class="avatar-preview-text">Enter a valid user ID and image URL above to replace a user's avatar</div>
             </div>
           </div>
         </div>
@@ -355,7 +356,7 @@ function addHideStyles() {
     /* Hide styles from hide-styles.css */
     .hidden-users-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 15px;
       margin-top: 15px;
     }
@@ -396,6 +397,34 @@ function addHideStyles() {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    
+    .hidden-user-settings {
+      width: 100%;
+      margin: 10px 0;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 8px 0;
+    }
+    
+    .user-setting-row {
+      margin-bottom: 8px;
+    }
+    
+    .user-setting-row:last-child {
+      margin-bottom: 0;
+    }
+    
+    .user-setting-label {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    
+    .user-setting-label input[type="checkbox"] {
+      margin-right: 6px;
     }
     
     .hidden-user-actions {
@@ -991,14 +1020,25 @@ function populateHiddenUsers(container) {
 
   // Convert to array and sort by username
   const users = Object.entries(ignoredUsers)
-    .map(([userId, username]) => ({ userId, username }))
+    .map(([userId, userData]) => {
+      const username =
+        typeof userData === "string" ? userData : userData.username;
+      const settings = typeof userData === "string" ? null : userData.settings;
+      return { userId, username, settings };
+    })
     .sort((a, b) => a.username.localeCompare(b.username));
 
-  users.forEach(({ userId, username }) => {
+  users.forEach(({ userId, username, settings }) => {
     // Get custom avatar if available
     const avatarUrl =
       replacedAvatars[userId] ||
       `https://rpghq.org/forums/download/file.php?avatar=${userId}.jpg`;
+
+    // Get user-specific settings or use defaults
+    const userSettings = settings || {
+      hideEntireRow: getHideConfig().hideEntireRow,
+      hideTopicCreations: getHideConfig().hideTopicCreations,
+    };
 
     html += `
       <div class="hidden-user-tile" data-user-id="${userId}">
@@ -1009,6 +1049,20 @@ function populateHiddenUsers(container) {
           onerror="if(this.src.endsWith('.jpg')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.png';}else if(this.src.endsWith('.png')){this.src='https://rpghq.org/forums/download/file.php?avatar=${userId}.gif';}else{this.src='${DEFAULT_AVATAR}';}"
         >
         <div class="hidden-user-name" title="${username}">${username}</div>
+        <div class="hidden-user-settings">
+          <div class="user-setting-row">
+            <label class="user-setting-label" title="When enabled, hides the entire topic row instead of just the lastpost">
+              <input type="checkbox" class="user-setting-checkbox" data-setting="hideEntireRow" ${userSettings.hideEntireRow ? "checked" : ""}>
+              Hide Entire Row
+            </label>
+          </div>
+          <div class="user-setting-row">
+            <label class="user-setting-label" title="When enabled, hides topics created by this user">
+              <input type="checkbox" class="user-setting-checkbox" data-setting="hideTopicCreations" ${userSettings.hideTopicCreations ? "checked" : ""}>
+              Hide Topic Creations
+            </label>
+          </div>
+        </div>
         <div class="hidden-user-actions">
           <button class="hidden-user-unhide" title="Unhide User" data-user-id="${userId}">Unhide</button>
           <button class="hidden-user-visit" title="Visit Profile" data-user-id="${userId}">Profile</button>
@@ -1024,7 +1078,8 @@ function populateHiddenUsers(container) {
   grid.querySelectorAll(".hidden-user-unhide").forEach((button) => {
     button.addEventListener("click", () => {
       const userId = button.dataset.userId;
-      const username = ignoredUsers[userId];
+      const userObj = ignoredUsers[userId];
+      const username = typeof userObj === "string" ? userObj : userObj.username;
       unhideUser(container, userId, username);
     });
   });
@@ -1033,6 +1088,17 @@ function populateHiddenUsers(container) {
     button.addEventListener("click", () => {
       const userId = button.dataset.userId;
       visitUserProfile(userId);
+    });
+  });
+
+  // Add event listeners to checkboxes
+  grid.querySelectorAll(".user-setting-checkbox").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      const userId = checkbox.closest(".hidden-user-tile").dataset.userId;
+      const setting = checkbox.dataset.setting;
+      const value = checkbox.checked;
+
+      updateUserSetting(userId, setting, value);
     });
   });
 
@@ -1062,6 +1128,49 @@ function unhideUser(container, userId, username) {
   } catch (err) {
     error(`Error unhiding user ${userId}:`, err);
     showStatusMessage(`Error unhiding user: ${err.message}`, true);
+  }
+}
+
+/**
+ * Update a setting for a specific hidden user
+ * @param {string} userId - The user ID to update settings for
+ * @param {string} setting - The setting key to update
+ * @param {any} value - The new value
+ */
+function updateUserSetting(userId, setting, value) {
+  try {
+    const ignoredUsers = getHiddenUsers();
+    if (!ignoredUsers[userId]) return;
+
+    // Make sure we're dealing with the new format
+    let userData = ignoredUsers[userId];
+    if (typeof userData === "string") {
+      userData = {
+        username: userData,
+        settings: {
+          hideEntireRow: getHideConfig().hideEntireRow,
+          hideTopicCreations: getHideConfig().hideTopicCreations,
+        },
+      };
+    }
+
+    // Update the setting
+    if (!userData.settings) {
+      userData.settings = {};
+    }
+    userData.settings[setting] = value;
+    ignoredUsers[userId] = userData;
+
+    // Save back to storage
+    gmSetValue(IGNORED_USERS_KEY, ignoredUsers);
+
+    // Show confirmation
+    showStatusMessage(`Updated setting for ${userData.username}`);
+
+    debug(`Updated user setting ${setting}=${value} for user ${userId}`);
+  } catch (err) {
+    error(`Error updating setting for user ${userId}:`, err);
+    showStatusMessage(`Error updating setting: ${err.message}`, true);
   }
 }
 
@@ -1194,10 +1303,20 @@ async function performUserSearch(container, query) {
  * @param {HTMLElement} container - The container element
  * @param {string} userId - The user ID
  * @param {string} username - The username
+ * @param {Object} userSettings - Optional custom settings for this user
  */
-function hideUser(container, userId, username) {
+function hideUser(container, userId, username, userSettings = null) {
   try {
-    toggleUserHide(userId, username);
+    // If no custom settings provided, use global defaults from Hide config
+    if (!userSettings) {
+      const hideConfig = getHideConfig();
+      userSettings = {
+        hideEntireRow: hideConfig.hideEntireRow,
+        hideTopicCreations: hideConfig.hideTopicCreations,
+      };
+    }
+
+    toggleUserHide(userId, username, userSettings);
 
     // Update the UI
     populateHiddenUsers(container);

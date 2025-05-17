@@ -182,9 +182,18 @@ function processTopicRow(row, config) {
     if (authorClasses.length > 0) {
       for (const cls of authorClasses) {
         const username = cls.replace("author-name-", "").replace("row-by-", "");
-        if (isUserHidden(username)) {
-          // Check if we should hide topic creations
-          if (config.hideTopicCreations && !isWhitelisted) {
+        const userData = isUserHidden(username);
+        if (userData) {
+          // Use per-user settings if available, otherwise fall back to global settings
+          const userSettings =
+            typeof userData === "string"
+              ? { hideTopicCreations: config.hideTopicCreations }
+              : userData.settings || {
+                  hideTopicCreations: config.hideTopicCreations,
+                };
+
+          // Check if we should hide topic creations based on user-specific settings
+          if (userSettings.hideTopicCreations && !isWhitelisted) {
             row.classList.add("hidden-row");
           }
           row.classList.add("hidden-by-author");
@@ -208,14 +217,24 @@ function processTopicRow(row, config) {
     const authorLink = lastpost.querySelector(
       "a.username, a.username-coloured",
     );
-    if (authorLink && isUserHidden(authorLink.textContent.trim())) {
-      if (config.hideEntireRow && !isWhitelisted) {
-        row.classList.add("hidden-row");
-      } else {
-        lastpost.classList.add("hidden-row");
+    if (authorLink) {
+      const username = authorLink.textContent.trim();
+      const userData = isUserHidden(username);
+      if (userData) {
+        // Use per-user settings if available, otherwise fall back to global settings
+        const userSettings =
+          typeof userData === "string"
+            ? { hideEntireRow: config.hideEntireRow }
+            : userData.settings || { hideEntireRow: config.hideEntireRow };
+
+        if (userSettings.hideEntireRow && !isWhitelisted) {
+          row.classList.add("hidden-row");
+        } else {
+          lastpost.classList.add("hidden-row");
+        }
+        row.classList.add("hidden-by-author");
+        return;
       }
-      row.classList.add("hidden-by-author");
-      return;
     }
 
     // Check for content references to hidden users
