@@ -29,6 +29,7 @@ function countCachedItems() {
     userColor_: 0,
     userAvatar_: 0,
     reactions_: 0,
+    hide_postCache: 0,
   };
 
   // Count regular posts from post cache
@@ -112,6 +113,13 @@ function updateCacheCountsDisplay() {
       }
       if (counts["cached_posts"]) {
         totalCount += counts["cached_posts"];
+      }
+
+      // Count posts in hide_postCache
+      const hidePostCache = gmGetValue("hide_postCache", {});
+      if (hidePostCache && typeof hidePostCache === "object") {
+        const hidePostCount = Object.keys(hidePostCache).length;
+        totalCount += hidePostCount;
       }
     }
 
@@ -240,6 +248,7 @@ export function renderSettingsTab(container) {
           "userAvatar_",
           "reactions_",
           "cached_posts", // For RPGHQ_Manager_cached_posts key
+          "hide_postCache", // For RPGHQ_Manager_hide_postCache
         ];
 
         let additionalRemoved = 0;

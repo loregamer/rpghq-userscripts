@@ -3,7 +3,8 @@ export const SCRIPT_MANIFEST = [
     id: "hide",
     name: "⭐Unofficial RPGHQ Patch",
     version: "1.0.0",
-    description: "Overhauls the forum. When on, press backslash to play Vanilla.",
+    description:
+      "Overhauls the forum. When on, press backslash to play Vanilla.",
     author: "",
     image: "https://f.rpghq.org/4i2uFRZJS3Xc.png?n=pasted-file.png",
     path: "./scripts/hide.js",
