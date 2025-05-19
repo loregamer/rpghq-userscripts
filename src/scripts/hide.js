@@ -91,21 +91,27 @@ export function init() {
     }
 
     /* Background colors for highlighting with higher specificity to override site defaults */
-    html body .vergil-by-author,
-    html body li.row.vergil-by-author,
-    html body .bg1.vergil-by-author,
-    html body .bg2.vergil-by-author {
+    html body .vergil-by-author:not(.topiclist.forums li.row):not(li.row:has(.topiclist.forums)),
+    html body li.row.vergil-by-author:not(.topiclist.forums li.row):not(li.row:has(.topiclist.forums)),
+    html body .bg1.vergil-by-author:not(.topiclist.forums li.row):not(li.row:has(.topiclist.forums)),
+    html body .bg2.vergil-by-author:not(.topiclist.forums li.row):not(li.row:has(.topiclist.forums)) {
       background-color: var(--vergil-author-highlight, rgba(255, 0, 0, 0.1)) !important;
     }
 
     /* vergil-by-content is always visible, just highlighted */
-    html body .vergil-by-content,
-    html body li.row.vergil-by-content,
-    html body .bg1.vergil-by-content,
-    html body .bg2.vergil-by-content {
+    html body .vergil-by-content:not(.topiclist.forums li.row):not(li.row:has(.topiclist.forums)),
+    html body li.row.vergil-by-content:not(.topiclist.forums li.row):not(li.row:has(.topiclist.forums)),
+    html body .bg1.vergil-by-content:not(.topiclist.forums li.row):not(li.row:has(.topiclist.forums)),
+    html body .bg2.vergil-by-content:not(.topiclist.forums li.row):not(li.row:has(.topiclist.forums)) {
       background-color: var(--vergil-content-highlight, rgba(255, 128, 0, 0.1)) !important;
       display: block !important; /* Ensure visibility */
       visibility: visible !important;
+    }
+    
+    /* For forum topiclist, only highlight the lastpost cell, not the entire row */
+    .topiclist.forums li.row.vergil-by-author dd.lastpost,
+    .topiclist.forums li.row.vergil-by-content dd.lastpost {
+      background-color: var(--vergil-content-highlight, rgba(255, 128, 0, 0.1)) !important;
     }
     
     /* Only hide vergil-by-author lastpost */
@@ -719,22 +725,41 @@ export function init() {
     if (hasVergilClass) {
       // If it's authored by a vergil user
       if (rowItem) {
+        // Check if this is in a forum topiclist
+        const isForumTopicList = rowItem.closest(".topiclist.forums");
+
         // If hideTopicCreations is true and not whitelisted, delete the entire row
         if (config.hideTopicCreations && !isWhitelisted) {
           rowItem.remove();
           return;
         }
 
-        // Otherwise just add classes - only hide entire row if it's not whitelisted
-        if (!isWhitelisted && config.hideEntireRow) {
-          rowItem.classList.add("vergil-row", "vergil-by-author");
-        } else {
-          // For whitelisted threads, only add the highlighting class
+        // For forum topiclist, only highlight the lastpost cell, not the entire row
+        if (isForumTopicList) {
+          // Add the class to the row for identification, but styling will be controlled by CSS
           rowItem.classList.add("vergil-by-author");
-          // If we have a lastpost cell, hide only that instead of the entire row
+
+          // Target the lastpost cell specifically
           const lastpost = rowItem.querySelector("dd.lastpost");
           if (lastpost) {
-            lastpost.classList.add("vergil-row");
+            if (!isWhitelisted && config.hideEntireRow) {
+              lastpost.classList.add("vergil-row");
+            }
+            lastpost.classList.add("vergil-by-author");
+          }
+        } else {
+          // For non-forum topiclist rows, follow the original behavior
+          // Otherwise just add classes - only hide entire row if it's not whitelisted
+          if (!isWhitelisted && config.hideEntireRow) {
+            rowItem.classList.add("vergil-row", "vergil-by-author");
+          } else {
+            // For whitelisted threads, only add the highlighting class
+            rowItem.classList.add("vergil-by-author");
+            // If we have a lastpost cell, hide only that instead of the entire row
+            const lastpost = rowItem.querySelector("dd.lastpost");
+            if (lastpost) {
+              lastpost.classList.add("vergil-row");
+            }
           }
         }
         // Add asterisk to topic title
@@ -904,8 +929,20 @@ export function init() {
 
       // If we get here, it's content-based vergiling
       if (!isNonNotificationUCP()) {
-        if (config.hideEntireRow && !isWhitelisted) {
-          // Hide entire row if not whitelisted
+        // Check if this is in a forum topiclist
+        const isForumTopicList = rowItem.closest(".topiclist.forums");
+
+        if (isForumTopicList) {
+          // For forum topiclist, only highlight the lastpost cell, not the entire row
+          rowItem.classList.add("vergil-by-content");
+
+          // Apply highlight to lastpost cell
+          const lastpostCell = rowItem.querySelector("dd.lastpost");
+          if (lastpostCell) {
+            lastpostCell.classList.add("vergil-by-content");
+          }
+        } else if (config.hideEntireRow && !isWhitelisted) {
+          // Hide entire row if not whitelisted and not a forum topiclist
           rowItem.classList.add("vergil-by-content");
         } else {
           // Only hide lastpost if available
