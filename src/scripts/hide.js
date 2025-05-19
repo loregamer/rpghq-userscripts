@@ -45,21 +45,21 @@ export function init() {
   );
 
   const userColors = {}; // username => color
-  const vergiledManualPosts = {}; // postId => true
+  const vergilManualPosts = {}; // postId => true
 
   // Whitelist for specific posts that should never be hidden
   const POST_WHITELIST = ["238105"]; // Add post IDs (as strings) here
 
   // Hard-coded configuration values (settings removed)
   const config = {
-    authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for vergiled-by-author
-    contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for vergiled-by-content
+    authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for vergil-by-author
+    contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for vergil-by-content
     hideEntireRow: true, // Default: only hide lastpost, not entire row
-    hideTopicCreations: true, // Default: hide rows with vergiled username in row class,
+    hideTopicCreations: true, // Default: hide rows with vergil username in row class,
     whitelistedThreads: [], // Array of thread names that should never be hidden
   };
 
-  let showVergiledPosts = false; // Always start hidden
+  let showVergilPosts = false; // Always start hidden
 
   // Clear expired cache entries (older than 24h)
   const now = Date.now();
@@ -134,59 +134,59 @@ export function init() {
     li.row.content-processed,
     .notification-block,
     .pagination.content-processed,
-    .content-processed:not(.vergiled-post):not(.vergiled-row):not(.vergiled-quote) {
+    .content-processed:not(.vergil-post):not(.vergil-row):not(.vergil-quote) {
       visibility: visible !important;
     }
 
     /* -----------------------------------------------------------------
-      4) Vergiled element styling - with increased specificity
+      4) Vergil element styling - with increased specificity
       ----------------------------------------------------------------- */
-    /* Simple hiding for vergiled-row */
-    .vergiled-row {
+    /* Simple hiding for vergil-row */
+    .vergil-row {
       display: none !important;
     }
 
-    .vergiled-row.show {
+    .vergil-row.show {
       display: block !important;
     }
 
     /* Background colors for highlighting with higher specificity to override site defaults */
-    html body .vergiled-by-author,
-    html body li.row.vergiled-by-author,
-    html body .bg1.vergiled-by-author,
-    html body .bg2.vergiled-by-author {
+    html body .vergil-by-author,
+    html body li.row.vergil-by-author,
+    html body .bg1.vergil-by-author,
+    html body .bg2.vergil-by-author {
       background-color: var(--vergil-author-highlight, rgba(255, 0, 0, 0.1)) !important;
     }
 
-    html body .vergiled-by-content,
-    html body li.row.vergiled-by-content,
-    html body .bg1.vergiled-by-content,
-    html body .bg2.vergiled-by-content {
+    html body .vergil-by-content,
+    html body li.row.vergil-by-content,
+    html body .bg1.vergil-by-content,
+    html body .bg2.vergil-by-content {
       background-color: var(--vergil-content-highlight, rgba(255, 128, 0, 0.1)) !important;
     }
-    .topiclist.forums .vergiled-row:not(.show) dd.lastpost,
-    body[class*="viewforum-"] .vergiled-row:not(.show) dd.lastpost,
-    .topiclist.topics .vergiled-row:not(.show) dd.lastpost,
-    #recent-topics .vergiled-row:not(.show) dd.lastpost {
+    .topiclist.forums .vergil-row:not(.show) dd.lastpost,
+    body[class*="viewforum-"] .vergil-row:not(.show) dd.lastpost,
+    .topiclist.topics .vergil-row:not(.show) dd.lastpost,
+    #recent-topics .vergil-row:not(.show) dd.lastpost {
       display: none !important;
     }
-    .vergiled-row.show::before {
+    .vergil-row.show::before {
       display: block;
     }
-    .topiclist.forums .vergiled-row.show dd.lastpost,
-    body[class*="viewforum-"] .vergiled-row.show dd.lastpost {
+    .topiclist.forums .vergil-row.show dd.lastpost,
+    body[class*="viewforum-"] .vergil-row.show dd.lastpost {
       display: block !important;
     }
-    .topiclist.forums .vergiled-row.show dd.lastpost,
-    body[class*="viewforum-"] .vergiled-row.show dd.lastpost {
+    .topiclist.forums .vergil-row.show dd.lastpost,
+    body[class*="viewforum-"] .vergil-row.show dd.lastpost {
       display: block !important;
     }
-    .vergiled-post,
-    .vergiled-quote {
+    .vergil-post,
+    .vergil-quote {
       display: none !important;
     }
-    .vergiled-post.show,
-    .vergiled-quote.show {
+    .vergil-post.show,
+    .vergil-quote.show {
       display: block !important;
       border: 3px solid;
       border-image: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet) 1;
@@ -288,7 +288,7 @@ export function init() {
       color: #ffa85e;
     }
     @media (max-width: 700px) {
-      .show-vergiled-posts span:not(.icon) {
+      .show-vergil-posts span:not(.icon) {
         display: none;
       }
     }
@@ -316,7 +316,7 @@ export function init() {
       display: inline-block !important; /* Or list-item, adjust if needed */
     }
 
-    .vergiled-post-manual {
+    .vergil-post-manual {
         display: none !important;
     }
   `;
@@ -672,7 +672,7 @@ export function init() {
   // 5) CONTENT PROCESSING / HIDING LOGIC
   // ---------------------------------------------------------------------
 
-  function postContentContainsVergiled(content) {
+  function postContentContainsVergil(content) {
     if (!content) return false;
 
     for (const userId in ignoredUsers) {
@@ -685,8 +685,8 @@ export function init() {
     return false;
   }
 
-  // Check if post content contains @mentions of vergiled users
-  function postContentContainsMentionedVergiled(post) {
+  // Check if post content contains @mentions of vergil users
+  function postContentContainsMentionedVergil(post) {
     // Get the post content div
     const contentDiv = post.querySelector(".content");
     if (!contentDiv) return false;
@@ -695,7 +695,7 @@ export function init() {
     const postText = contentDiv.textContent;
     if (!postText) return false;
 
-    // Check for @username mentions of vergiled users
+    // Check for @username mentions of vergil users
     for (const userId in ignoredUsers) {
       const username = ignoredUsers[userId];
       if (postText.toLowerCase().includes(username.toLowerCase())) {
@@ -740,9 +740,9 @@ export function init() {
     const isWhitelisted = isThreadWhitelisted(element);
 
     // First, check if the element or its parent row has author-name-* class
-    // which indicates it's authored by a vergiled user
+    // which indicates it's authored by a vergil user
     const rowItem = element.closest("li.row");
-    const hasVergiledClass =
+    const hasVergilClass =
       rowItem &&
       Array.from(rowItem.classList).some((cls) => {
         // Check for author-name-* class
@@ -758,8 +758,8 @@ export function init() {
         return false;
       });
 
-    if (hasVergiledClass) {
-      // If it's authored by a vergiled user
+    if (hasVergilClass) {
+      // If it's authored by a vergil user
       if (rowItem) {
         // If hideTopicCreations is true and not whitelisted, delete the entire row
         if (config.hideTopicCreations && !isWhitelisted) {
@@ -769,14 +769,14 @@ export function init() {
 
         // Otherwise just add classes - only hide entire row if it's not whitelisted
         if (!isWhitelisted && config.hideEntireRow) {
-          rowItem.classList.add("vergiled-row", "vergiled-by-author");
+          rowItem.classList.add("vergil-row", "vergil-by-author");
         } else {
           // For whitelisted threads, only add the highlighting class
-          rowItem.classList.add("vergiled-by-author");
+          rowItem.classList.add("vergil-by-author");
           // If we have a lastpost cell, hide only that instead of the entire row
           const lastpost = rowItem.querySelector("dd.lastpost");
           if (lastpost) {
-            lastpost.classList.add("vergiled-row");
+            lastpost.classList.add("vergil-row");
           }
         }
         // Add asterisk to topic title
@@ -786,7 +786,7 @@ export function init() {
         }
         const lastpost = rowItem.querySelector("dd.lastpost");
         if (lastpost) {
-          lastpost.classList.add("vergiled-by-author");
+          lastpost.classList.add("vergil-by-author");
         }
       } else {
         // If applied to a non-row element
@@ -799,12 +799,12 @@ export function init() {
           }
         }
 
-        // Only add vergiled-row class if this thread is not whitelisted AND hideEntireRow is true
+        // Only add vergil-row class if this thread is not whitelisted AND hideEntireRow is true
         if (!isWhitelisted && config.hideEntireRow) {
-          element.classList.add("vergiled-row", "vergiled-by-author");
+          element.classList.add("vergil-row", "vergil-by-author");
         } else {
           // Otherwise just add the highlighting class
-          element.classList.add("vergiled-by-author");
+          element.classList.add("vergil-by-author");
         }
         // Add asterisk to topic title if it exists
         const topicTitle = element.querySelector("a.topictitle");
@@ -817,7 +817,7 @@ export function init() {
 
     const recentTopicLi = element.closest("#recent-topics li");
     if (recentTopicLi) {
-      recentTopicLi.classList.add("vergiled-row", "vergiled-by-author");
+      recentTopicLi.classList.add("vergil-row", "vergil-by-author");
       return;
     }
 
@@ -849,16 +849,16 @@ export function init() {
             isUserIgnored(authorLink.textContent.trim()) &&
             !isNonNotificationUCP()
           ) {
-            // Author is vergiled, check hideEntireRow setting and whitelist
+            // Author is vergil, check hideEntireRow setting and whitelist
             if (config.hideEntireRow && !isWhitelisted) {
               // Hide entire row if not whitelisted
-              rowItem.classList.add("vergiled-row");
+              rowItem.classList.add("vergil-row");
             } else {
               // Only hide lastpost
-              if (isViewForum) lastpostCell.classList.add("vergiled-row");
+              if (isViewForum) lastpostCell.classList.add("vergil-row");
             }
             // Always add the highlighting class
-            lastpostCell.classList.add("vergiled-by-author");
+            lastpostCell.classList.add("vergil-by-author");
             return;
           } else {
             const allLinks = rowItem.querySelectorAll(
@@ -867,30 +867,30 @@ export function init() {
             const nonAuthorLinks = Array.from(allLinks).filter(
               (link) => !link.closest(".responsive-hide.left-box"),
             );
-            const hasVergiledUser = nonAuthorLinks.some(
+            const hasVergilUser = nonAuthorLinks.some(
               (link) =>
                 isUserIgnored(link.textContent.trim()) &&
                 !isNonNotificationUCP(),
             );
-            if (hasVergiledUser) {
-              // Has vergiled user in content, check hideEntireRow setting and whitelist
+            if (hasVergilUser) {
+              // Has vergil user in content, check hideEntireRow setting and whitelist
               if (config.hideEntireRow && !isWhitelisted) {
                 // Hide entire row if not whitelisted
-                rowItem.classList.add("vergiled-row", "vergiled-by-author");
+                rowItem.classList.add("vergil-row", "vergil-by-author");
               } else {
                 // Only hide lastpost
-                if (isViewForum) lastpostCell.classList.add("vergiled-row");
-                rowItem.classList.add("vergiled-by-author");
+                if (isViewForum) lastpostCell.classList.add("vergil-row");
+                rowItem.classList.add("vergil-by-author");
               }
             } else {
-              // No vergiled author, but content might contain vergiled references
+              // No vergil author, but content might contain vergil references
               if (config.hideEntireRow && !isWhitelisted) {
                 // Hide entire row
-                rowItem.classList.add("vergiled-by-content");
+                rowItem.classList.add("vergil-by-content");
               } else {
                 // Only hide lastpost
                 if (isViewForum)
-                  lastpostCell.classList.add("vergiled-by-content");
+                  lastpostCell.classList.add("vergil-by-content");
               }
             }
           }
@@ -898,32 +898,32 @@ export function init() {
         }
       }
 
-      // Check for vergiled authors in the row
+      // Check for vergil authors in the row
       const authorLinks = rowItem.querySelectorAll(
         "a.username, a.username-coloured",
       );
       const authorNames = Array.from(authorLinks).map((link) =>
         link.textContent.trim(),
       );
-      const hasVergiledAuthor = authorNames.some(
+      const hasVergilAuthor = authorNames.some(
         (name) => isUserIgnored(name) && !isNonNotificationUCP(),
       );
 
-      if (hasVergiledAuthor) {
+      if (hasVergilAuthor) {
         if (config.hideEntireRow && !isWhitelisted) {
           // Hide entire row if not whitelisted
-          rowItem.classList.add("vergiled-row", "vergiled-by-author");
+          rowItem.classList.add("vergil-row", "vergil-by-author");
         } else {
           // For whitelisted threads or if hideEntireRow is false, show the row but mark it
-          rowItem.classList.add("vergiled-by-author");
+          rowItem.classList.add("vergil-by-author");
 
           // Only hide lastpost if available
           const lastpostCell = rowItem.querySelector("dd.lastpost");
           if (lastpostCell) {
-            lastpostCell.classList.add("vergiled-row");
+            lastpostCell.classList.add("vergil-row");
           } else if (!isWhitelisted) {
             // Fallback to hiding the row if no lastpost cell and not whitelisted
-            rowItem.classList.add("vergiled-row");
+            rowItem.classList.add("vergil-row");
           }
         }
         return;
@@ -932,13 +932,13 @@ export function init() {
       const innerDiv = rowItem.querySelector(".list-inner");
       if (innerDiv) {
         const byText = innerDiv.textContent.toLowerCase();
-        const hasVergiledInBy = Object.values(ignoredUsers).some(
+        const hasVergilInBy = Object.values(ignoredUsers).some(
           (username) =>
             byText.includes(`by ${username.toLowerCase()}`) &&
             !isNonNotificationUCP(),
         );
-        if (hasVergiledInBy) {
-          rowItem.classList.add("vergiled-row", "vergiled-by-author");
+        if (hasVergilInBy) {
+          rowItem.classList.add("vergil-row", "vergil-by-author");
           return;
         }
       }
@@ -947,29 +947,29 @@ export function init() {
       if (!isNonNotificationUCP()) {
         if (config.hideEntireRow && !isWhitelisted) {
           // Hide entire row if not whitelisted
-          rowItem.classList.add("vergiled-by-content");
+          rowItem.classList.add("vergil-by-content");
         } else {
           // Only hide lastpost if available
           const lastpostCell = rowItem.querySelector("dd.lastpost");
           if (lastpostCell) {
-            lastpostCell.classList.add("vergiled-row");
+            lastpostCell.classList.add("vergil-row");
           } else {
             // Fallback to hiding the row if no lastpost cell and not whitelisted
             if (!isWhitelisted) {
-              rowItem.classList.add("vergiled-row");
+              rowItem.classList.add("vergil-row");
             }
           }
-          rowItem.classList.add("vergiled-by-content");
+          rowItem.classList.add("vergil-by-content");
         }
       }
     } else {
       if (!isNonNotificationUCP()) {
         // This is the non-row element case (like in recent topics)
-        // Only add vergiled-row if not whitelisted
+        // Only add vergil-row if not whitelisted
         if (!isWhitelisted) {
-          element.classList.add("vergiled-row");
+          element.classList.add("vergil-row");
         }
-        element.classList.add("vergiled-by-author");
+        element.classList.add("vergil-by-author");
       }
     }
   }
@@ -1009,10 +1009,10 @@ export function init() {
       if (authorNameClass) {
         const username = authorNameClass.replace("author-name-", "");
         if (isUserIgnored(username) && !isNonNotificationUCP()) {
-          row.classList.add("vergiled-by-content");
+          row.classList.add("vergil-by-content");
           const lastpost = row.querySelector("dd.lastpost");
           if (lastpost) {
-            lastpost.classList.add("vergiled-by-content");
+            lastpost.classList.add("vergil-by-content");
           }
           return;
         }
@@ -1051,10 +1051,10 @@ export function init() {
       if (rowType === "forum") {
         // Check if the author is ignored
         if (isUserIgnored(authorName) && !isNonNotificationUCP()) {
-          // Author is vergiled, add vergiled-row class to lastpost
-          lastpostCell.classList.add("vergiled-row");
+          // Author is vergil, add vergil-row class to lastpost
+          lastpostCell.classList.add("vergil-row");
           // Add highlighting class to the row
-          row.classList.add("vergiled-by-author");
+          row.classList.add("vergil-by-author");
           return;
         }
 
@@ -1066,10 +1066,10 @@ export function init() {
             const postContent = postCache[postId].content;
             if (
               postContent &&
-              postContentContainsVergiled(postContent) &&
+              postContentContainsVergil(postContent) &&
               !isNonNotificationUCP()
             ) {
-              row.classList.add("vergiled-by-content");
+              row.classList.add("vergil-by-content");
             }
           }
         }
@@ -1081,26 +1081,26 @@ export function init() {
           const isWhitelisted = isThreadWhitelisted(row);
 
           if (config.hideEntireRow && !isWhitelisted) {
-            // Hide entire row - Author is vergiled (if not whitelisted)
-            row.classList.add("vergiled-row");
+            // Hide entire row - Author is vergil (if not whitelisted)
+            row.classList.add("vergil-row");
             // Add highlighting class to the row
-            row.classList.add("vergiled-by-author");
+            row.classList.add("vergil-by-author");
           } else {
             // Only hide lastpost
-            lastpostCell.classList.add("vergiled-row");
+            lastpostCell.classList.add("vergil-row");
             // Add highlighting class to the row
-            row.classList.add("vergiled-by-author");
+            row.classList.add("vergil-by-author");
           }
           return;
         }
 
-        // Check for post content with vergiled mentions
+        // Check for post content with vergil mentions
         const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
         if (postLink) {
           const postId = postLink.href.match(/p=(\d+)/)?.[1];
           if (postId && postCache[postId]) {
             const postContent = postCache[postId].content;
-            // Check if the lastPostCell contains the username of a vergiled user
+            // Check if the lastPostCell contains the username of a vergil user
             if (
               authorLink &&
               isUserIgnored(authorLink.textContent.trim()) &&
@@ -1111,31 +1111,31 @@ export function init() {
 
               if (config.hideEntireRow && !isWhitelisted) {
                 // Hide entire row if not whitelisted
-                row.classList.add("vergiled-row");
+                row.classList.add("vergil-row");
                 // Add highlighting class to the row
-                row.classList.add("vergiled-by-author");
+                row.classList.add("vergil-by-author");
               } else {
                 // Only hide lastpost
-                lastpostCell.classList.add("vergiled-row");
+                lastpostCell.classList.add("vergil-row");
                 // Add highlighting class to the row
-                row.classList.add("vergiled-by-author");
+                row.classList.add("vergil-by-author");
               }
               return; // Stop here, don't check content
             } else if (
               postContent &&
-              postContentContainsVergiled(postContent) &&
+              postContentContainsVergil(postContent) &&
               !isNonNotificationUCP()
             ) {
-              // Content contains vergiled references
+              // Content contains vergil references
               // Check if this thread is whitelisted
               const isWhitelisted = isThreadWhitelisted(row);
 
               if (config.hideEntireRow && !isWhitelisted) {
                 // Add highlighting class to the row
-                row.classList.add("vergiled-by-content");
+                row.classList.add("vergil-by-content");
               } else {
                 // Add highlighting class to the row
-                row.classList.add("vergiled-by-content");
+                row.classList.add("vergil-by-content");
               }
             }
           }
@@ -1191,9 +1191,9 @@ export function init() {
     ) {
       if (isForumList) {
         // For forum rows, only hide the lastpost
-        element.classList.add("vergiled-row");
+        element.classList.add("vergil-row");
         // Add highlight class to the row
-        if (row) row.classList.add("vergiled-by-author");
+        if (row) row.classList.add("vergil-by-author");
       } else if (row) {
         // Check if this thread is whitelisted
         const isWhitelisted = isThreadWhitelisted(row);
@@ -1201,12 +1201,12 @@ export function init() {
         // For other rows, apply to the row or lastpost based on config
         if (config.hideEntireRow && !isWhitelisted) {
           // Hide entire row if not whitelisted
-          row.classList.add("vergiled-row", "vergiled-by-author");
+          row.classList.add("vergil-row", "vergil-by-author");
         } else {
           // Only hide lastpost
-          element.classList.add("vergiled-row");
+          element.classList.add("vergil-row");
           // Add highlight class to the row
-          row.classList.add("vergiled-by-author");
+          row.classList.add("vergil-by-author");
         }
       }
       element.classList.add("content-processed");
@@ -1253,9 +1253,9 @@ export function init() {
           if (userEl && isUserIgnored(userEl.textContent.trim())) {
             if (isForumList) {
               // For forum rows, only hide the lastpost
-              element.classList.add("vergiled-row");
+              element.classList.add("vergil-row");
               // Add highlight class to the row
-              if (row) row.classList.add("vergiled-by-author");
+              if (row) row.classList.add("vergil-by-author");
             } else if (row) {
               // Check if this thread is whitelisted
               const isWhitelisted = isThreadWhitelisted(row);
@@ -1263,20 +1263,20 @@ export function init() {
               // For other rows, apply based on config
               if (config.hideEntireRow && !isWhitelisted) {
                 // Hide entire row if not whitelisted
-                row.classList.add("vergiled-row", "vergiled-by-author");
+                row.classList.add("vergil-row", "vergil-by-author");
               } else {
                 // Only hide lastpost
-                element.classList.add("vergiled-row");
+                element.classList.add("vergil-row");
                 // Add highlight class to the row
-                row.classList.add("vergiled-by-author");
+                row.classList.add("vergil-by-author");
               }
             }
           } else {
             try {
               const content = await fetchAndCachePost(pid);
-              if (!content || postContentContainsVergiled(content)) {
+              if (!content || postContentContainsVergil(content)) {
                 if (isForumList) {
-                  if (row) row.classList.add("vergiled-by-content");
+                  if (row) row.classList.add("vergil-by-content");
                 } else if (row) {
                   // Check if this thread is whitelisted
                   const isWhitelisted = isThreadWhitelisted(row);
@@ -1284,10 +1284,10 @@ export function init() {
                   // For other rows, apply based on config
                   if (config.hideEntireRow && !isWhitelisted) {
                     // Hide entire row if not whitelisted
-                    row.classList.add("vergiled-by-content");
+                    row.classList.add("vergil-by-content");
                   } else {
                     // Add highlight class to the row
-                    row.classList.add("vergiled-by-content");
+                    row.classList.add("vergil-by-content");
                   }
                 }
               }
@@ -1295,16 +1295,16 @@ export function init() {
               if (isForumList) {
                 // For forum rows, only hide the lastpost
                 // Add highlight class to the row
-                if (row) row.classList.add("vergiled-by-content");
+                if (row) row.classList.add("vergil-by-content");
               } else if (row) {
                 // For other rows, hide based on config
                 if (config.hideEntireRow) {
                   // Hide entire row
-                  row.classList.add("vergiled-by-content");
+                  row.classList.add("vergil-by-content");
                 } else {
                   // Only hide lastpost
                   // Add highlight class to the row
-                  row.classList.add("vergiled-by-content");
+                  row.classList.add("vergil-by-content");
                 }
               }
             }
@@ -1396,7 +1396,7 @@ export function init() {
     if (isQuoteOrMention && isUserIgnored(firstUsername)) {
       const row = item.closest("li.row");
       if (row) {
-        row.classList.add("vergiled-row", "vergiled-by-author");
+        row.classList.add("vergil-row", "vergil-by-author");
         await markNotificationAsRead(item);
       }
       item.classList.add("content-processed");
@@ -1404,8 +1404,8 @@ export function init() {
     }
 
     const nonIgnored = usernames.filter((u) => !isUserIgnored(u));
-    const vergiled = usernames.filter((u) => isUserIgnored(u));
-    const hasIgnored = vergiled.length > 0;
+    const vergil = usernames.filter((u) => isUserIgnored(u));
+    const hasIgnored = vergil.length > 0;
 
     if (!hasIgnored) {
       item.classList.add("content-processed");
@@ -1415,14 +1415,14 @@ export function init() {
     if (nonIgnored.length === 0) {
       const row = item.closest("li.row");
       if (row) {
-        row.classList.add("vergiled-row", "vergiled-by-author");
+        row.classList.add("vergil-row", "vergil-by-author");
         await markNotificationAsRead(item);
       }
       item.classList.add("content-processed");
       return;
     }
 
-    // Create the non-vergiled notification first
+    // Create the non-vergil notification first
     // Find the last username element to get text after it
     const lastIgnoredEl = usernameEls[usernameEls.length - 1];
     const nodesAfter = [];
@@ -1456,40 +1456,36 @@ export function init() {
     // Add "have reacted" or other trailing text
     nodesAfter.forEach((node) => titleEl.appendChild(node));
 
-    // Now create vergiled notifications for each vergiled user
+    // Now create vergil notifications for each vergil user
     const row = item.closest("li.row");
     if (row) {
-      vergiled.forEach((vergiledUsername) => {
-        const vergiledRow = row.cloneNode(true);
-        vergiledRow.classList.add("vergiled-row", "vergiled-by-author");
+      vergil.forEach((vergilUsername) => {
+        const vergilRow = row.cloneNode(true);
+        vergilRow.classList.add("vergil-row", "vergil-by-author");
 
-        // Update the notification text for this vergiled user
-        const vergiledTitleEl = vergiledRow.querySelector(
-          ".notifications_title",
-        );
-        if (vergiledTitleEl) {
-          vergiledTitleEl.textContent = "";
+        // Update the notification text for this vergil user
+        const vergilTitleEl = vergilRow.querySelector(".notifications_title");
+        if (vergilTitleEl) {
+          vergilTitleEl.textContent = "";
           const matchEl = Array.from(usernameEls).find(
             (el) =>
               el.textContent.trim().toLowerCase() ===
-              vergiledUsername.toLowerCase(),
+              vergilUsername.toLowerCase(),
           );
           if (matchEl) {
-            vergiledTitleEl.appendChild(matchEl.cloneNode(true));
+            vergilTitleEl.appendChild(matchEl.cloneNode(true));
           } else {
-            vergiledTitleEl.appendChild(
-              document.createTextNode(vergiledUsername),
-            );
+            vergilTitleEl.appendChild(document.createTextNode(vergilUsername));
           }
 
           // Add the trailing text
           nodesAfter.forEach((node) =>
-            vergiledTitleEl.appendChild(node.cloneNode(true)),
+            vergilTitleEl.appendChild(node.cloneNode(true)),
           );
         }
 
-        // Insert the vergiled row after the original
-        row.parentNode.insertBefore(vergiledRow, row.nextSibling);
+        // Insert the vergil row after the original
+        row.parentNode.insertBefore(vergilRow, row.nextSibling);
       });
     }
 
@@ -1581,7 +1577,7 @@ export function init() {
       const anchor = bq.querySelector("cite a");
       if (!anchor) return;
       if (isUserIgnored(anchor.textContent.trim()) && !isNonNotificationUCP()) {
-        bq.classList.add("vergiled-quote");
+        bq.classList.add("vergil-quote");
       }
     });
   }
@@ -1589,9 +1585,9 @@ export function init() {
   function processPost(post) {
     const postId = post.id.replace("p", "");
 
-    // Check if post is manually vergiled
-    if (vergiledManualPosts[postId]) {
-      post.classList.add("vergiled-post-manual");
+    // Check if post is manually vergil
+    if (vergilManualPosts[postId]) {
+      post.classList.add("vergil-post-manual");
       post.classList.add("content-processed");
       return; // Don't process further if manually hidden
     }
@@ -1622,19 +1618,19 @@ export function init() {
       hideIt = true;
     }
 
-    // Check for @mentions of vergiled users
+    // Check for @mentions of vergil users
     if (
       !hideIt &&
-      postContentContainsMentionedVergiled(post) &&
+      postContentContainsMentionedVergil(post) &&
       !isNonNotificationUCP()
     ) {
       hideIt = true;
-      // Use the existing vergiled-by-content class
-      post.classList.add("vergiled-by-content");
+      // Use the existing vergil-by-content class
+      post.classList.add("vergil-by-content");
     }
 
     if (hideIt) {
-      post.classList.add("vergiled-post");
+      post.classList.add("vergil-post");
     }
 
     // Add the manual vergil button
@@ -1650,18 +1646,18 @@ export function init() {
       e.preventDefault();
       e.stopPropagation();
 
-      // Mark as manually vergiled
-      vergiledManualPosts[postId] = true;
+      // Mark as manually vergil
+      vergilManualPosts[postId] = true;
 
       // Hide the post immediately
-      post.classList.add("vergiled-post-manual");
+      post.classList.add("vergil-post-manual");
       post.classList.remove(
-        "vergiled-post",
-        "vergiled-by-author",
-        "vergiled-by-content",
+        "vergil-post",
+        "vergil-by-author",
+        "vergil-by-content",
       ); // Ensure other vergiling is removed
 
-      console.log(`Manually vergiled post: ${postId}`);
+      console.log(`Manually vergil post: ${postId}`);
     });
 
     // Append to the post buttons list
@@ -1686,16 +1682,16 @@ export function init() {
       masWrapElements.forEach((element) => {
         // Check if the element contains any ignored username
         const elementText = element.textContent || "";
-        let containsVergiledUser = false;
+        let containsVergilUser = false;
 
         // Check for any ignored username in the text
         Object.values(ignoredUsers).forEach((username) => {
           if (elementText.toLowerCase().includes(username.toLowerCase())) {
-            containsVergiledUser = true;
+            containsVergilUser = true;
           }
         });
 
-        if (containsVergiledUser) {
+        if (containsVergilUser) {
           if (config.hideTopicCreations) {
             // If hideTopicCreations is true, remove the entire row
             row.remove();
@@ -1932,8 +1928,8 @@ export function init() {
 
     processTopicPosters();
 
-    // Remove elements with vergiled author names
-    removeVergiledAuthorElements();
+    // Remove elements with vergil author names
+    removeVergilAuthorElements();
 
     // Check for topic list rows: Process ALL responsive-hide left-box elements
     const leftBoxes = document.querySelectorAll(".left-box");
@@ -1973,12 +1969,12 @@ export function init() {
       }
     });
 
-    function removeVergiledAuthorElements() {
-      // Get all unique vergiled usernames
-      const vergiledUsernames = new Set(Object.values(ignoredUsers));
+    function removeVergilAuthorElements() {
+      // Get all unique vergil usernames
+      const vergilUsernames = new Set(Object.values(ignoredUsers));
 
-      // Process each vergiled username
-      vergiledUsernames.forEach((username) => {
+      // Process each vergil username
+      vergilUsernames.forEach((username) => {
         // Find and remove all elements with this class
         const selector = `.author-name-${username}`;
         document.querySelectorAll(selector).forEach((element) => {
@@ -2100,9 +2096,9 @@ export function init() {
       z-index: 9999;
       transition: opacity 0.3s;
     `;
-    notification.textContent = showVergiledPosts
-      ? "Showing Vergiled Posts"
-      : "Hiding Vergiled Posts";
+    notification.textContent = showVergilPosts
+      ? "Showing Vergil Posts"
+      : "Hiding Vergil Posts";
     document.body.appendChild(notification);
     setTimeout(() => {
       notification.style.opacity = "0";
@@ -2110,18 +2106,18 @@ export function init() {
     }, 1500);
   }
 
-  function toggleVergiledPosts() {
-    const vergiledPosts = document.querySelectorAll(".post.vergiled-post");
-    const vergiledQuotes = document.querySelectorAll(".vergiled-quote");
-    const vergiledRows = document.querySelectorAll(".vergiled-row");
+  function toggleVergilPosts() {
+    const vergilPosts = document.querySelectorAll(".post.vergil-post");
+    const vergilQuotes = document.querySelectorAll(".vergil-quote");
+    const vergilRows = document.querySelectorAll(".vergil-row");
 
-    const hasVergiledContent =
-      vergiledPosts.length > 0 ||
-      vergiledQuotes.length > 0 ||
-      vergiledRows.length > 0;
+    const hasVergilContent =
+      vergilPosts.length > 0 ||
+      vergilQuotes.length > 0 ||
+      vergilRows.length > 0;
 
-    if (!hasVergiledContent) {
-      console.log("No vergiled content found on this page");
+    if (!hasVergilContent) {
+      console.log("No Vergil content found on this page");
       const notification = document.createElement("div");
       notification.style.cssText = `
         position: fixed;
@@ -2134,7 +2130,7 @@ export function init() {
         z-index: 9999;
         transition: opacity 0.3s;
       `;
-      notification.textContent = "No vergiled content found on this page";
+      notification.textContent = "No Vergil content found on this page";
       document.body.appendChild(notification);
       setTimeout(() => {
         notification.style.opacity = "0";
@@ -2143,19 +2139,17 @@ export function init() {
       return;
     }
 
-    showVergiledPosts = !showVergiledPosts;
+    showVergilPosts = !showVergilPosts;
 
-    vergiledPosts.forEach((p) => p.classList.toggle("show", showVergiledPosts));
-    vergiledQuotes.forEach((q) =>
-      q.classList.toggle("show", showVergiledPosts),
-    );
+    vergilPosts.forEach((p) => p.classList.toggle("show", showVergilPosts));
+    vergilQuotes.forEach((q) => q.classList.toggle("show", showVergilPosts));
 
-    // For vergiled rows (which are now only lastpost cells), toggle visibility
-    vergiledRows.forEach((r) => {
-      r.classList.toggle("show", showVergiledPosts);
+    // For vergil rows (which are now only lastpost cells), toggle visibility
+    vergilRows.forEach((r) => {
+      r.classList.toggle("show", showVergilPosts);
     });
 
-    document.body.classList.toggle("show-hidden-threads", showVergiledPosts);
+    document.body.classList.toggle("show-hidden-threads", showVergilPosts);
 
     showToggleNotification();
     updatePaginationPostCount();
@@ -2171,7 +2165,7 @@ export function init() {
     // Check for backslash key
     if (e.key === "\\") {
       e.preventDefault();
-      toggleVergiledPosts();
+      toggleVergilPosts();
     }
   });
 
@@ -2195,7 +2189,7 @@ export function init() {
     });
   }
 
-  function cleanVergiledQuotesInTextarea() {
+  function cleanVergilQuotesInTextarea() {
     const textarea = document.querySelector("textarea#message");
     if (!textarea || !textarea.value.includes("[quote")) return;
     let text = textarea.value;
@@ -2217,19 +2211,19 @@ export function init() {
     const userLinks = Array.from(
       onlineList.querySelectorAll("a.username, a.username-coloured"),
     );
-    const nonVergiledUsers = userLinks.filter((link) => {
+    const nonVergilUsers = userLinks.filter((link) => {
       const userId = link.href.match(/u=(\d+)/)?.[1];
       const username = link.textContent.trim();
       return !(userId && isUserIgnored(userId)) && !isUserIgnored(username);
     });
-    if (nonVergiledUsers.length === 0) {
+    if (nonVergilUsers.length === 0) {
       const guestsMatch = onlineList.textContent.match(/and (\d+) guests/);
       const guestCount = guestsMatch ? guestsMatch[1] : "0";
       onlineList.innerHTML = `Users browsing this forum: ${guestCount} guests`;
       return;
     }
     let newText = "Users browsing this forum: ";
-    nonVergiledUsers.forEach((link, index) => {
+    nonVergilUsers.forEach((link, index) => {
       if (index > 0) newText += ", ";
       newText += link.outerHTML;
     });
@@ -2373,13 +2367,13 @@ export function init() {
         return;
       }
 
-      const visiblePosts = showVergiledPosts
+      const visiblePosts = showVergilPosts
         ? document.querySelectorAll(".post").length
-        : document.querySelectorAll(".post:not(.vergiled-post)").length;
+        : document.querySelectorAll(".post:not(.vergil-post)").length;
 
-      const visibleMatches = showVergiledPosts
+      const visibleMatches = showVergilPosts
         ? document.querySelectorAll("li.row").length
-        : document.querySelectorAll("li.row:not(.vergiled-row)").length;
+        : document.querySelectorAll("li.row:not(.vergil-row)").length;
 
       const originalText = pagination.innerHTML;
       let newText = originalText;
@@ -2420,16 +2414,16 @@ export function init() {
     setInterval(processReactionImages, 2000);
   }
 
-  // Function to clean up any elements that have both vergiled-by-author and vergiled-by-content classes
-  function cleanupVergiledClasses() {
+  // Function to clean up any elements that have both vergil-by-author and vergil-by-content classes
+  function cleanupVergilClasses() {
     // Find all elements with both classes
     const elementsWithBothClasses = document.querySelectorAll(
-      ".vergiled-by-author.vergiled-by-content",
+      ".vergil-by-author.vergil-by-content",
     );
 
-    // Remove vergiled-by-content from these elements
+    // Remove vergil-by-content from these elements
     elementsWithBothClasses.forEach((element) => {
-      element.classList.remove("vergiled-by-content");
+      element.classList.remove("vergil-by-content");
     });
   }
 
@@ -2446,8 +2440,8 @@ export function init() {
   }
 
   /**
-   * Process mas-wrap elements that may contain vergiled users
-   * Hides the entire element if it contains a user who is vergiled
+   * Process mas-wrap elements that may contain vergil users
+   * Hides the entire element if it contains a user who is vergil
    */
   function processMasWrapElements() {
     // First, find all responsive-hide containers that contain mas-wrap elements
@@ -2685,14 +2679,14 @@ export function init() {
     replaceUserAvatars();
     processOnlineList();
     moveExternalLinkIcon();
-    cleanVergiledQuotesInTextarea();
+    cleanVergilQuotesInTextarea();
     updatePaginationPostCount();
 
     // Process mas-wrap elements
     processMasWrapElements();
 
-    // Clean up any elements that have both vergiled-by-author and vergiled-by-content classes
-    cleanupVergiledClasses();
+    // Clean up any elements that have both vergil-by-author and vergil-by-content classes
+    cleanupVergilClasses();
 
     // Make sure all containers have the content-processed class
     document
@@ -2709,20 +2703,20 @@ export function init() {
       .forEach((el) => el.classList.add("content-processed"));
 
     // Set up a MutationObserver to clean up any elements that get both classes in the future
-    const vergiledClassesObserver = new MutationObserver((mutations) => {
+    const vergilClassesObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (
           mutation.type === "attributes" &&
           mutation.attributeName === "class" &&
-          mutation.target.classList.contains("vergiled-by-author") &&
-          mutation.target.classList.contains("vergiled-by-content")
+          mutation.target.classList.contains("vergil-by-author") &&
+          mutation.target.classList.contains("vergil-by-content")
         ) {
-          mutation.target.classList.remove("vergiled-by-content");
+          mutation.target.classList.remove("vergil-by-content");
         }
       });
     });
 
-    vergiledClassesObserver.observe(document.body, {
+    vergilClassesObserver.observe(document.body, {
       subtree: true,
       attributes: true,
       attributeFilter: ["class"],
@@ -2734,7 +2728,7 @@ export function init() {
     cleanup: () => {
       console.log("Forum Plausibility Fix cleanup");
       // Remove event listeners and clean up any changes made
-      document.removeEventListener("keydown", toggleVergiledPosts);
+      document.removeEventListener("keydown", toggleVergilPosts);
 
       // No need to save cache on cleanup as it's already saved
       // when it's modified during regular operation
