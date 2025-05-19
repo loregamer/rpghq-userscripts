@@ -46,7 +46,7 @@ export function init() {
   const config = {
     authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for vergiled-by-author
     contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for vergiled-by-content
-    hideEntireRow: false, // Default: only hide lastpost, not entire row
+    hideEntireRow: true, // Default: only hide lastpost, not entire row
     hideTopicCreations: true, // Default: hide rows with vergiled username in row class,
     whitelistedThreads: [], // Array of thread names that should never be hidden
   };
