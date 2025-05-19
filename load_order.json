@@ -16,7 +16,8 @@
     "quotes",
     "recentTopicsFormat",
     "commaFormatter",
-    "disableEmbeds"
+    "disableEmbeds",
+    "hide"
   ],
   "document-idle": [],
   "after_dom": []

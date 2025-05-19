@@ -48,6 +48,21 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
   },
   {
+    id: "hide",
+    name: "Forum Plausibility Fix",
+    version: "1.0.0",
+    description: "Overhauls the forum",
+    author: "",
+    image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png",
+    path: "./scripts/hide.js",
+    enabledByDefault: false,
+    settings: [
+      // Add settings here
+    ],
+    categories: ["Fun"],
+    executionPhase: "document-end",
+  },
+  {
     id: "kalareact",
     name: "Kalarion Reaction Auto-Marker",
     version: "1.0.0",

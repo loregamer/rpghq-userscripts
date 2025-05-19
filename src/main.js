@@ -251,6 +251,7 @@ function executeLoadOrderForPhase(phase) {
 }
 
 // Import scripts directly
+import * as hide from "./scripts/hide.js";
 import * as recentTopicsFormat from "./scripts/recentTopicsFormat.js";
 import * as randomTopic from "./scripts/randomTopic.js";
 import * as memberSearch from "./scripts/memberSearch.js";
@@ -281,6 +282,8 @@ const scriptModules = {
   memberSearch: memberSearch,
   randomTopic: randomTopic,
   recentTopicsFormat: recentTopicsFormat,
+
+  hide: hide,
 };
 
 // Load a single script by its manifest entry

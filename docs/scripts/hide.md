@@ -1,0 +1,22 @@
+# Forum Plausibility Fix
+
+## Description
+
+Overhauls the forum
+
+## Author
+
+## Features
+
+- Feature 1
+- Feature 2
+
+## Settings
+
+| Setting  | Type     | Default | Description              |
+| -------- | -------- | ------- | ------------------------ |
+| setting1 | checkbox | false   | Description of setting 1 |
+
+## Implementation Details
+
+Details about how the script works and any important implementation notes.
