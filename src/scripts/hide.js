@@ -75,65 +75,8 @@ export function init() {
   const mainStyle = document.createElement("style");
   mainStyle.textContent = `
     /* -----------------------------------------------------------------
-       Processing message for containers that are not yet processed
+       Show all content by default, no processing message needed
        ----------------------------------------------------------------- */
-    #recent-topics:not(.content-processed)::before,
-    .topiclist.forums:not(.content-processed)::before,
-    fieldset.polls:not(.content-processed)::before,
-    .topiclist.topics:not(.content-processed)::before {
-      content: "Processing posts...";
-      display: block;
-      text-align: center;
-      padding: 20px;
-      font-weight: bold;
-      color: #777;
-      pointer-events: none;
-    }
-
-    /* -----------------------------------------------------------------
-       Hide unprocessed content
-       ----------------------------------------------------------------- */
-    /* Hide child elements in these containers until processed */
-    #recent-topics:not(.content-processed) > *:not(style),
-    .topiclist.forums:not(.content-processed) > *:not(style),
-    .topiclist.topics:not(.content-processed) > *:not(style),
-    fieldset.polls:not(.content-processed) > *:not(style) {
-      visibility: hidden;
-    }
-    /* Hide badges until processed */
-    strong.badge:not(.content-processed) {
-      display: none !important;
-    }
-    /* Hide main post containers until processed */
-    .post.bg1:not(.content-processed),
-    .post.bg2:not(.content-processed),
-    dd.lastpost:not(.content-processed),
-    .reaction-score-list:not(.content-processed),
-    .pagination:not(.content-processed) {
-      visibility: hidden !important;
-    }
-    /* Hide list rows until they are processed */
-    li.row:not(.content-processed) {
-      display: none !important;
-    }
-    .loading_indicator:not(.content-processed) {
-      display: none !important;
-    }
-
-    /* -----------------------------------------------------------------
-       3) Reveal content once processing is complete
-       ----------------------------------------------------------------- */
-    #recent-topics.content-processed > *,
-    .topiclist.forums.content-processed > *,
-    fieldset.polls.content-processed > *,
-    strong.badge.content-processed,
-    .reaction-score-list.content-processed,
-    li.row.content-processed,
-    .notification-block,
-    .pagination.content-processed,
-    .content-processed:not(.vergil-post):not(.vergil-row):not(.vergil-quote) {
-      visibility: visible !important;
-    }
 
     /* -----------------------------------------------------------------
       4) Vergil element styling - with increased specificity
@@ -155,16 +98,21 @@ export function init() {
       background-color: var(--vergil-author-highlight, rgba(255, 0, 0, 0.1)) !important;
     }
 
+    /* vergil-by-content is always visible, just highlighted */
     html body .vergil-by-content,
     html body li.row.vergil-by-content,
     html body .bg1.vergil-by-content,
     html body .bg2.vergil-by-content {
       background-color: var(--vergil-content-highlight, rgba(255, 128, 0, 0.1)) !important;
+      display: block !important; /* Ensure visibility */
+      visibility: visible !important;
     }
-    .topiclist.forums .vergil-row:not(.show) dd.lastpost,
-    body[class*="viewforum-"] .vergil-row:not(.show) dd.lastpost,
-    .topiclist.topics .vergil-row:not(.show) dd.lastpost,
-    #recent-topics .vergil-row:not(.show) dd.lastpost {
+    
+    /* Only hide vergil-by-author lastpost */
+    .topiclist.forums .vergil-row.vergil-by-author:not(.show) dd.lastpost,
+    body[class*="viewforum-"] .vergil-row.vergil-by-author:not(.show) dd.lastpost,
+    .topiclist.topics .vergil-row.vergil-by-author:not(.show) dd.lastpost,
+    #recent-topics .vergil-row.vergil-by-author:not(.show) dd.lastpost {
       display: none !important;
     }
     .vergil-row.show::before {
@@ -190,6 +138,12 @@ export function init() {
       border-image-slice: 1;
       border-radius: 4px;
       padding: 6px;
+    }
+    
+    /* Posts with vergil-by-content class should always be visible */
+    .post.vergil-by-content {
+      display: block !important;
+      visibility: visible !important;
     }
 
     /* -----------------------------------------------------------------
@@ -821,7 +775,8 @@ export function init() {
 
     const recentTopicLi = element.closest("#recent-topics li");
     if (recentTopicLi) {
-      recentTopicLi.classList.add("vergil-row", "vergil-by-author");
+      // Only add vergil-by-content class for references, not vergil-row
+      recentTopicLi.classList.add("vergil-by-content");
       return;
     }
 
@@ -1215,13 +1170,11 @@ export function init() {
           row.classList.add("vergil-by-author");
         }
       }
-      element.classList.add("content-processed");
       return;
     }
 
     const spanEl = element.querySelector("span");
     if (!spanEl) {
-      element.classList.add("content-processed");
       return;
     }
 
@@ -1232,7 +1185,6 @@ export function init() {
     );
 
     if (!byTextNode) {
-      element.classList.add("content-processed");
       return;
     }
 
@@ -1318,8 +1270,6 @@ export function init() {
         }
       }
     }
-
-    element.classList.add("content-processed");
   }
 
   function processReactionList(list) {
@@ -1594,13 +1544,11 @@ export function init() {
     // Check if post is manually vergil
     if (vergilManualPosts[postId]) {
       post.classList.add("vergil-post-manual");
-      post.classList.add("content-processed");
       return; // Don't process further if manually hidden
     }
 
     // Check if the post is whitelisted
     if (POST_WHITELIST.includes(postId)) {
-      post.classList.add("content-processed"); // Ensure it's marked processed
       return; // Don't hide whitelisted posts
     }
 
@@ -1616,12 +1564,14 @@ export function init() {
       delete post.dataset.hideForSingleIgnoredQuote;
     }
 
+    // Check if post is by a vergil author
     if (
       usernameEl &&
       isUserIgnored(usernameEl.textContent.trim()) &&
       !isNonNotificationUCP()
     ) {
       hideIt = true;
+      post.classList.add("vergil-by-author");
     }
 
     // Check for @mentions of vergil users
@@ -1630,11 +1580,11 @@ export function init() {
       postContentContainsMentionedVergil(post) &&
       !isNonNotificationUCP()
     ) {
-      hideIt = true;
-      // Use the existing vergil-by-content class
+      // Only highlight posts that mention vergil users, don't hide them
       post.classList.add("vergil-by-content");
     }
 
+    // Only add vergil-post class to hide posts by vergil authors
     if (hideIt) {
       post.classList.add("vergil-post");
     }
@@ -1672,8 +1622,6 @@ export function init() {
       vergilLi.appendChild(vergilButton);
       postButtonsList.appendChild(vergilLi);
     }
-
-    post.classList.add("content-processed");
   }
 
   function processTopicPosters() {
@@ -1902,19 +1850,15 @@ export function init() {
 
   async function processIgnoredContentOnce() {
     await Promise.all(
-      Array.from(
-        document.querySelectorAll(
-          ".notification-block:not(.content-processed)",
-        ),
-      ).map(processNotification),
+      Array.from(document.querySelectorAll(".notification-block")).map(
+        processNotification,
+      ),
     );
 
     // Process reaction notification blocks
     await Promise.all(
       Array.from(
-        document.querySelectorAll(
-          "a.notification-block[data-real-url]:not(.content-processed)",
-        ),
+        document.querySelectorAll("a.notification-block[data-real-url]"),
       ).map(processReactionNotificationBlock),
     );
 
@@ -1989,9 +1933,8 @@ export function init() {
       });
     }
 
-    document
-      .querySelectorAll(".post:not(.content-processed)")
-      .forEach(processPost);
+    // Process all posts
+    document.querySelectorAll(".post").forEach(processPost);
 
     document
       .querySelectorAll(".reaction-score-list")
@@ -2024,23 +1967,12 @@ export function init() {
     reactionObserver.observe(document.body, { childList: true, subtree: true });
     await new Promise((resolve) => setTimeout(resolve, 150));
 
-    document
-      .querySelectorAll("strong.badge:not(.content-processed)")
-      .forEach((badge) => badge.classList.add("content-processed"));
-
+    // Process all lastposts
     const lastPosts = document.querySelectorAll(
-      "dd.lastpost:not(.content-processed), #recent-topics li dd.lastpost:not(.content-processed)",
+      "dd.lastpost, #recent-topics li dd.lastpost",
     );
 
     await Promise.all(Array.from(lastPosts).map(processLastPost));
-
-    document
-      .querySelectorAll("li.row:not(.content-processed)")
-      .forEach((row) => {
-        const lp = row.querySelector("dd.lastpost");
-        if (lp && !lp.classList.contains("content-processed")) return;
-        row.classList.add("content-processed");
-      });
   }
 
   // ---------------------------------------------------------------------
@@ -2103,8 +2035,8 @@ export function init() {
       transition: opacity 0.3s;
     `;
     notification.textContent = showVergilPosts
-      ? "Showing Vergil Posts"
-      : "Hiding Vergil Posts";
+      ? "Showing Vergil-Authored Posts"
+      : "Hiding Vergil-Authored Posts";
     document.body.appendChild(notification);
     setTimeout(() => {
       notification.style.opacity = "0";
@@ -2113,9 +2045,13 @@ export function init() {
   }
 
   function toggleVergilPosts() {
+    // Only get posts/elements with vergil-post class (vergil-by-author)
+    // vergil-by-content posts should always be visible
     const vergilPosts = document.querySelectorAll(".post.vergil-post");
     const vergilQuotes = document.querySelectorAll(".vergil-quote");
-    const vergilRows = document.querySelectorAll(".vergil-row");
+    const vergilRows = document.querySelectorAll(
+      ".vergil-row.vergil-by-author",
+    );
 
     const hasVergilContent =
       vergilPosts.length > 0 ||
@@ -2693,20 +2629,6 @@ export function init() {
 
     // Clean up any elements that have both vergil-by-author and vergil-by-content classes
     cleanupVergilClasses();
-
-    // Make sure all containers have the content-processed class
-    document
-      .querySelectorAll("#recent-topics:not(.content-processed)")
-      .forEach((el) => el.classList.add("content-processed"));
-    document
-      .querySelectorAll(".topiclist.forums:not(.content-processed)")
-      .forEach((el) => el.classList.add("content-processed"));
-    document
-      .querySelectorAll(".topiclist.topics:not(.content-processed)")
-      .forEach((el) => el.classList.add("content-processed"));
-    document
-      .querySelectorAll("fieldset.polls:not(.content-processed)")
-      .forEach((el) => el.classList.add("content-processed"));
 
     // Set up a MutationObserver to clean up any elements that get both classes in the future
     const vergilClassesObserver = new MutationObserver((mutations) => {
