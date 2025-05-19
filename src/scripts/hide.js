@@ -78,23 +78,33 @@ export function init() {
   const mainStyle = document.createElement("style");
   mainStyle.textContent = `
     /* -----------------------------------------------------------------
-       Processing message for containers that are not yet processed
+       1) Spinner styling for containers that are not yet processed
        ----------------------------------------------------------------- */
-    #recent-topics:not(.content-processed)::before,
-    .topiclist.forums:not(.content-processed)::before,
-    fieldset.polls:not(.content-processed)::before,
-    .topiclist.topics:not(.content-processed)::before {
-      content: "Processing posts...";
-      display: block;
-      text-align: center;
-      padding: 20px;
-      font-weight: bold;
-      color: #777;
+    #recent-topics:not(.content-processed)::after,
+    .topiclist.forums:not(.content-processed)::after,
+    fieldset.polls:not(.content-processed)::after,
+    .topiclist.topics:not(.content-processed)::after {
+      content: "";
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      margin-top: 0;
+      margin-left: -12px;
+      width: 24px;
+      height: 24px;
+      border: 3px solid #999;
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
       pointer-events: none;
+      z-index: 9999;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     /* -----------------------------------------------------------------
-       Hide unprocessed content
+       2) Hide unprocessed content
        ----------------------------------------------------------------- */
     /* Hide child elements in these containers until processed */
     #recent-topics:not(.content-processed) > *:not(style),
@@ -1147,26 +1157,14 @@ export function init() {
   // Legacy functions for backward compatibility
   function processTopiclistForumsRow() {
     processTopicListRow("forum");
-    // Add content-processed class to the container
-    document.querySelectorAll(".topiclist.forums").forEach((element) => {
-      element.classList.add("content-processed");
-    });
   }
 
   function processRecentTopicsRows() {
     processTopicListRow("recent");
-    // Add content-processed class to the container
-    document.querySelectorAll("#recent-topics").forEach((element) => {
-      element.classList.add("content-processed");
-    });
   }
 
   function processTopiclistTopicsRows() {
     processTopicListRow("topic");
-    // Add content-processed class to the container
-    document.querySelectorAll(".topiclist.topics").forEach((element) => {
-      element.classList.add("content-processed");
-    });
   }
 
   async function processLastPost(element) {
@@ -1923,10 +1921,7 @@ export function init() {
     processRecentTopicsRows();
     processTopiclistTopicsRows();
 
-    // Mark poll containers as processed after processing them
-    document.querySelectorAll("fieldset.polls").forEach((poll) => {
-      processPoll(poll);
-    });
+    document.querySelectorAll("fieldset.polls").forEach(processPoll);
 
     setupPollRefreshDetection();
 
@@ -2693,20 +2688,6 @@ export function init() {
 
     // Clean up any elements that have both vergiled-by-author and vergiled-by-content classes
     cleanupVergiledClasses();
-
-    // Make sure all containers have the content-processed class
-    document
-      .querySelectorAll("#recent-topics:not(.content-processed)")
-      .forEach((el) => el.classList.add("content-processed"));
-    document
-      .querySelectorAll(".topiclist.forums:not(.content-processed)")
-      .forEach((el) => el.classList.add("content-processed"));
-    document
-      .querySelectorAll(".topiclist.topics:not(.content-processed)")
-      .forEach((el) => el.classList.add("content-processed"));
-    document
-      .querySelectorAll("fieldset.polls:not(.content-processed)")
-      .forEach((el) => el.classList.add("content-processed"));
 
     // Set up a MutationObserver to clean up any elements that get both classes in the future
     const vergiledClassesObserver = new MutationObserver((mutations) => {
