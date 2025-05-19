@@ -1,5 +1,18 @@
 export const SCRIPT_MANIFEST = [
   {
+    id: "hide",
+    name: "⭐Unofficial RPGHQ Patch",
+    version: "1.0.0",
+    description: "Overhauls the forum",
+    author: "",
+    image: "https://f.rpghq.org/4i2uFRZJS3Xc.png?n=pasted-file.png",
+    path: "./scripts/hide.js",
+    enabledByDefault: false,
+    settings: [],
+    categories: ["Fun"],
+    executionPhase: "document-start",
+  },
+  {
     id: "bbcode",
     name: "BBCode Highlighting",
     version: "1.0.0",
@@ -46,21 +59,6 @@ export const SCRIPT_MANIFEST = [
       // Settings are controlled through Forum Preferences
     ],
     categories: ["UI"],
-  },
-  {
-    id: "hide",
-    name: "Forum Plausibility Fix",
-    version: "1.0.0",
-    description: "Overhauls the forum",
-    author: "",
-    image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png",
-    path: "./scripts/hide.js",
-    enabledByDefault: false,
-    settings: [
-      // Add settings here
-    ],
-    categories: ["Fun"],
-    executionPhase: "document-end",
   },
   {
     id: "kalareact",
