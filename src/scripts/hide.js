@@ -1,3 +1,5 @@
+import { gmGetValue, gmSetValue } from "../main.js";
+
 export function init() {
   console.log("Forum Plausibility Fix initialized!");
 
@@ -35,7 +37,13 @@ export function init() {
     367: "Vergil", // userId => username
   };
   const replacedAvatars = {}; // userId => image URL
-  const postCache = {}; // postId => { content, timestamp }
+
+  // Load cached posts from GM storage for persistence across page refreshes
+  const postCache = gmGetValue("hide_postCache", {}) || {}; // postId => { content, timestamp }
+  console.log(
+    `[Forum Plausibility Fix] Loaded post cache with ${Object.keys(postCache).length} entries`,
+  );
+
   const userColors = {}; // username => color
   const vergiledManualPosts = {}; // postId => true
 
@@ -55,12 +63,16 @@ export function init() {
 
   // Clear expired cache entries (older than 24h)
   const now = Date.now();
-  Object.keys(postCache)
-    .filter(
-      (key) =>
-        !postCache[key].timestamp || now - postCache[key].timestamp > 86400000,
-    )
-    .forEach((key) => delete postCache[key]);
+  const expiredEntries = Object.keys(postCache).filter(
+    (key) =>
+      !postCache[key].timestamp || now - postCache[key].timestamp > 86400000,
+  );
+
+  if (expiredEntries.length > 0) {
+    expiredEntries.forEach((key) => delete postCache[key]);
+    // Save cache after removing expired entries
+    gmSetValue("hide_postCache", postCache);
+  }
 
   // Inject style at document-start
   const mainStyle = document.createElement("style");
@@ -607,6 +619,10 @@ export function init() {
         let content = textarea.value;
         content = cleanupPostContent(content);
         postCache[postId] = { content, timestamp: Date.now() };
+
+        // Save updated cache to GM storage
+        gmSetValue("hide_postCache", postCache);
+
         return content;
       }
     } catch (err) {
@@ -619,14 +635,46 @@ export function init() {
     const lastPostLinks = document.querySelectorAll(
       'a[title="Go to last post"], a[title="View the latest post"]',
     );
+
+    // Count existing cache entries
+    const existingCacheCount = Object.keys(postCache).length;
+    console.log(
+      `[Forum Plausibility Fix] Using existing post cache with ${existingCacheCount} entries`,
+    );
+
+    // Only fetch posts that aren't already in the cache
     const postIds = Array.from(lastPostLinks)
       .map((lnk) => lnk.href.match(/p=(\d+)/)?.[1])
       .filter((id) => id && !postCache[id]);
-    if (postIds.length === 0) return false;
-    for (let i = 0; i < postIds.length; i += 5) {
-      const chunk = postIds.slice(i, i + 5);
-      await Promise.all(chunk.map(fetchAndCachePost));
+
+    if (postIds.length === 0) {
+      console.log(
+        "[Forum Plausibility Fix] No new posts to fetch, using existing cache",
+      );
+      return false;
     }
+
+    console.log(
+      `[Forum Plausibility Fix] Fetching ${postIds.length} posts that aren't in cache`,
+    );
+
+    // Fetch posts in smaller chunks to avoid overwhelming the server
+    for (let i = 0; i < postIds.length; i += 3) {
+      const chunk = postIds.slice(i, i + 3);
+      await Promise.all(chunk.map(fetchAndCachePost));
+
+      // Add a small delay between chunks to be nice to the server
+      if (i + 3 < postIds.length) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+    }
+
+    // Save the final cache after all fetches
+    gmSetValue("hide_postCache", postCache);
+    console.log(
+      `[Forum Plausibility Fix] Post cache updated with ${Object.keys(postCache).length} total entries`,
+    );
+
     return true;
   }
 
@@ -2668,6 +2716,12 @@ export function init() {
       console.log("Forum Plausibility Fix cleanup");
       // Remove event listeners and clean up any changes made
       document.removeEventListener("keydown", toggleVergiledPosts);
+
+      // No need to save cache on cleanup as it's already saved
+      // when it's modified during regular operation
+      console.log(
+        "[Forum Plausibility Fix] Cleanup complete, cache is preserved for next page load",
+      );
     },
   };
 }
