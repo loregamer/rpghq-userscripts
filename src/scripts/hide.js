@@ -30,34 +30,28 @@ export function init() {
   // 1) DATA LOAD + INITIAL STYLES + CONFIG
   // ---------------------------------------------------------------------
 
-  // Use localStorage for storage since we're removing settings functionality
-  const ignoredUsers = JSON.parse(localStorage.getItem("ignoredUsers") || "{}"); // userId => username
-  const replacedAvatars = JSON.parse(
-    localStorage.getItem("replacedAvatars") || "{}",
-  ); // userId => image URL
-  const postCache = JSON.parse(localStorage.getItem("postCache") || "{}"); // postId => { content, timestamp }
-  const userColors = JSON.parse(localStorage.getItem("userColors") || "{}"); // username => color
-  const ghostedManualPosts = JSON.parse(
-    localStorage.getItem("ghostedManualPosts") || "{}",
-  ); // postId => true
+  // Hard-coded settings instead of using localStorage
+  const ignoredUsers = {
+    367: "Vergil", // userId => username
+  };
+  const replacedAvatars = {}; // userId => image URL
+  const postCache = {}; // postId => { content, timestamp }
+  const userColors = {}; // username => color
+  const vergiledManualPosts = {}; // postId => true
 
   // Whitelist for specific posts that should never be hidden
   const POST_WHITELIST = ["238105"]; // Add post IDs (as strings) here
 
   // Hard-coded configuration values (settings removed)
   const config = {
-    authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for ghosted-by-author
-    contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for ghosted-by-content
+    authorHighlightColor: "rgba(255, 0, 0, 0.1)", // Default red for vergiled-by-author
+    contentHighlightColor: "rgba(255, 128, 0, 0.1)", // Default orange for vergiled-by-content
     hideEntireRow: false, // Default: only hide lastpost, not entire row
-    hideTopicCreations: true, // Default: hide rows with ghosted username in row class,
+    hideTopicCreations: true, // Default: hide rows with vergiled username in row class,
     whitelistedThreads: [], // Array of thread names that should never be hidden
   };
 
-  // Set Oyster Sauce's username color
-  userColors["Oyster Sauce"] = "#00AA00";
-  localStorage.setItem("userColors", JSON.stringify(userColors));
-
-  let showGhostedPosts = false; // Always start hidden
+  let showVergiledPosts = false; // Always start hidden
 
   // Clear expired cache entries (older than 24h)
   const now = Date.now();
@@ -67,7 +61,6 @@ export function init() {
         !postCache[key].timestamp || now - postCache[key].timestamp > 86400000,
     )
     .forEach((key) => delete postCache[key]);
-  localStorage.setItem("postCache", JSON.stringify(postCache));
 
   // Inject style at document-start
   const mainStyle = document.createElement("style");
@@ -139,59 +132,59 @@ export function init() {
     li.row.content-processed,
     .notification-block,
     .pagination.content-processed,
-    .content-processed:not(.ghosted-post):not(.ghosted-row):not(.ghosted-quote) {
+    .content-processed:not(.vergiled-post):not(.vergiled-row):not(.vergiled-quote) {
       visibility: visible !important;
     }
 
     /* -----------------------------------------------------------------
-      4) Ghosted element styling - with increased specificity
+      4) Vergiled element styling - with increased specificity
       ----------------------------------------------------------------- */
-    /* Simple hiding for ghosted-row */
-    .ghosted-row {
+    /* Simple hiding for vergiled-row */
+    .vergiled-row {
       display: none !important;
     }
 
-    .ghosted-row.show {
+    .vergiled-row.show {
       display: block !important;
     }
 
     /* Background colors for highlighting with higher specificity to override site defaults */
-    html body .ghosted-by-author,
-    html body li.row.ghosted-by-author,
-    html body .bg1.ghosted-by-author,
-    html body .bg2.ghosted-by-author {
-      background-color: var(--ghost-author-highlight, rgba(255, 0, 0, 0.1)) !important;
+    html body .vergiled-by-author,
+    html body li.row.vergiled-by-author,
+    html body .bg1.vergiled-by-author,
+    html body .bg2.vergiled-by-author {
+      background-color: var(--vergil-author-highlight, rgba(255, 0, 0, 0.1)) !important;
     }
 
-    html body .ghosted-by-content,
-    html body li.row.ghosted-by-content,
-    html body .bg1.ghosted-by-content,
-    html body .bg2.ghosted-by-content {
-      background-color: var(--ghost-content-highlight, rgba(255, 128, 0, 0.1)) !important;
+    html body .vergiled-by-content,
+    html body li.row.vergiled-by-content,
+    html body .bg1.vergiled-by-content,
+    html body .bg2.vergiled-by-content {
+      background-color: var(--vergil-content-highlight, rgba(255, 128, 0, 0.1)) !important;
     }
-    .topiclist.forums .ghosted-row:not(.show) dd.lastpost,
-    body[class*="viewforum-"] .ghosted-row:not(.show) dd.lastpost,
-    .topiclist.topics .ghosted-row:not(.show) dd.lastpost,
-    #recent-topics .ghosted-row:not(.show) dd.lastpost {
+    .topiclist.forums .vergiled-row:not(.show) dd.lastpost,
+    body[class*="viewforum-"] .vergiled-row:not(.show) dd.lastpost,
+    .topiclist.topics .vergiled-row:not(.show) dd.lastpost,
+    #recent-topics .vergiled-row:not(.show) dd.lastpost {
       display: none !important;
     }
-    .ghosted-row.show::before {
+    .vergiled-row.show::before {
       display: block;
     }
-    .topiclist.forums .ghosted-row.show dd.lastpost,
-    body[class*="viewforum-"] .ghosted-row.show dd.lastpost {
+    .topiclist.forums .vergiled-row.show dd.lastpost,
+    body[class*="viewforum-"] .vergiled-row.show dd.lastpost {
       display: block !important;
     }
-    .topiclist.forums .ghosted-row.show dd.lastpost,
-    body[class*="viewforum-"] .ghosted-row.show dd.lastpost {
+    .topiclist.forums .vergiled-row.show dd.lastpost,
+    body[class*="viewforum-"] .vergiled-row.show dd.lastpost {
       display: block !important;
     }
-    .ghosted-post,
-    .ghosted-quote {
+    .vergiled-post,
+    .vergiled-quote {
       display: none !important;
     }
-    .ghosted-post.show,
-    .ghosted-quote.show {
+    .vergiled-post.show,
+    .vergiled-quote.show {
       display: block !important;
       border: 3px solid;
       border-image: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet) 1;
@@ -293,15 +286,15 @@ export function init() {
       color: #ffa85e;
     }
     @media (max-width: 700px) {
-      .show-ghosted-posts span:not(.icon) {
+      .show-vergiled-posts span:not(.icon) {
         display: none;
       }
     }
 
     /* -----------------------------------------------------------------
-       7) Manual Post Ghosting Button
+       7) Manual Post Vergiling Button
        ----------------------------------------------------------------- */
-    .post-ghost-button {
+    .post-vergil-button {
       position: absolute;
       top: 5px;
       right: 5px;
@@ -311,17 +304,17 @@ export function init() {
       z-index: 10; /* Ensure it's above post content */
     }
 
-    /* Hide the list item containing the ghost button by default */
-    li.post-ghost-button-li {
+    /* Hide the list item containing the vergil button by default */
+    li.post-vergil-button-li {
         display: none !important;
     }
 
     /* Show the list item when Alt key is down */
-    body.alt-key-down .post li.post-ghost-button-li {
+    body.alt-key-down .post li.post-vergil-button-li {
       display: inline-block !important; /* Or list-item, adjust if needed */
     }
 
-    .ghosted-post-manual {
+    .vergiled-post-manual {
         display: none !important;
     }
   `;
@@ -514,7 +507,7 @@ export function init() {
 
     // Remove "Never Iggy" and other button text that might be in the username
     cleaned = cleaned.replace(
-      /never iggy|unghost user|replace avatar|ghost user/gi,
+      /never iggy|unvergil user|replace avatar|vergil user/gi,
       "",
     );
 
@@ -543,14 +536,13 @@ export function init() {
     return match ? match[1] : null;
   }
 
-  function toggleUserGhost(userId, username) {
+  function toggleUserVergil(userId, username) {
     const cleanedUsername = cleanUsername(username);
     if (ignoredUsers.hasOwnProperty(userId)) {
       delete ignoredUsers[userId];
     } else {
       ignoredUsers[userId] = cleanedUsername;
     }
-    localStorage.setItem("ignoredUsers", JSON.stringify(ignoredUsers));
   }
 
   // ---------------------------------------------------------------------
@@ -599,12 +591,9 @@ export function init() {
 
   async function fetchAndCachePost(postId) {
     const cached = postCache[postId];
-    if (
-      cached &&
-      cached.timestamp &&
-      Date.now() - cached.timestamp < 86400000
-    ) {
-      return cached.content;
+    if (postCache[postId]) {
+      const content = postCache[postId].content;
+      return content;
     }
     try {
       const response = await fetch(
@@ -618,7 +607,6 @@ export function init() {
         let content = textarea.value;
         content = cleanupPostContent(content);
         postCache[postId] = { content, timestamp: Date.now() };
-        localStorage.setItem("postCache", JSON.stringify(postCache));
         return content;
       }
     } catch (err) {
@@ -646,7 +634,7 @@ export function init() {
   // 5) CONTENT PROCESSING / HIDING LOGIC
   // ---------------------------------------------------------------------
 
-  function postContentContainsGhosted(content) {
+  function postContentContainsVergiled(content) {
     if (!content) return false;
 
     for (const userId in ignoredUsers) {
@@ -659,8 +647,8 @@ export function init() {
     return false;
   }
 
-  // Check if post content contains @mentions of ghosted users
-  function postContentContainsMentionedGhosted(post) {
+  // Check if post content contains @mentions of vergiled users
+  function postContentContainsMentionedVergiled(post) {
     // Get the post content div
     const contentDiv = post.querySelector(".content");
     if (!contentDiv) return false;
@@ -669,7 +657,7 @@ export function init() {
     const postText = contentDiv.textContent;
     if (!postText) return false;
 
-    // Check for @username mentions of ghosted users
+    // Check for @username mentions of vergiled users
     for (const userId in ignoredUsers) {
       const username = ignoredUsers[userId];
       if (postText.toLowerCase().includes(username.toLowerCase())) {
@@ -714,9 +702,9 @@ export function init() {
     const isWhitelisted = isThreadWhitelisted(element);
 
     // First, check if the element or its parent row has author-name-* class
-    // which indicates it's authored by a ghosted user
+    // which indicates it's authored by a vergiled user
     const rowItem = element.closest("li.row");
-    const hasGhostedClass =
+    const hasVergiledClass =
       rowItem &&
       Array.from(rowItem.classList).some((cls) => {
         // Check for author-name-* class
@@ -732,8 +720,8 @@ export function init() {
         return false;
       });
 
-    if (hasGhostedClass) {
-      // If it's authored by a ghosted user
+    if (hasVergiledClass) {
+      // If it's authored by a vergiled user
       if (rowItem) {
         // If hideTopicCreations is true and not whitelisted, delete the entire row
         if (config.hideTopicCreations && !isWhitelisted) {
@@ -743,14 +731,14 @@ export function init() {
 
         // Otherwise just add classes - only hide entire row if it's not whitelisted
         if (!isWhitelisted && config.hideEntireRow) {
-          rowItem.classList.add("ghosted-row", "ghosted-by-author");
+          rowItem.classList.add("vergiled-row", "vergiled-by-author");
         } else {
           // For whitelisted threads, only add the highlighting class
-          rowItem.classList.add("ghosted-by-author");
+          rowItem.classList.add("vergiled-by-author");
           // If we have a lastpost cell, hide only that instead of the entire row
           const lastpost = rowItem.querySelector("dd.lastpost");
           if (lastpost) {
-            lastpost.classList.add("ghosted-row");
+            lastpost.classList.add("vergiled-row");
           }
         }
         // Add asterisk to topic title
@@ -760,7 +748,7 @@ export function init() {
         }
         const lastpost = rowItem.querySelector("dd.lastpost");
         if (lastpost) {
-          lastpost.classList.add("ghosted-by-author");
+          lastpost.classList.add("vergiled-by-author");
         }
       } else {
         // If applied to a non-row element
@@ -773,12 +761,12 @@ export function init() {
           }
         }
 
-        // Only add ghosted-row class if this thread is not whitelisted AND hideEntireRow is true
+        // Only add vergiled-row class if this thread is not whitelisted AND hideEntireRow is true
         if (!isWhitelisted && config.hideEntireRow) {
-          element.classList.add("ghosted-row", "ghosted-by-author");
+          element.classList.add("vergiled-row", "vergiled-by-author");
         } else {
           // Otherwise just add the highlighting class
-          element.classList.add("ghosted-by-author");
+          element.classList.add("vergiled-by-author");
         }
         // Add asterisk to topic title if it exists
         const topicTitle = element.querySelector("a.topictitle");
@@ -791,7 +779,7 @@ export function init() {
 
     const recentTopicLi = element.closest("#recent-topics li");
     if (recentTopicLi) {
-      recentTopicLi.classList.add("ghosted-row", "ghosted-by-author");
+      recentTopicLi.classList.add("vergiled-row", "vergiled-by-author");
       return;
     }
 
@@ -823,16 +811,16 @@ export function init() {
             isUserIgnored(authorLink.textContent.trim()) &&
             !isNonNotificationUCP()
           ) {
-            // Author is ghosted, check hideEntireRow setting and whitelist
+            // Author is vergiled, check hideEntireRow setting and whitelist
             if (config.hideEntireRow && !isWhitelisted) {
               // Hide entire row if not whitelisted
-              rowItem.classList.add("ghosted-row");
+              rowItem.classList.add("vergiled-row");
             } else {
               // Only hide lastpost
-              if (isViewForum) lastpostCell.classList.add("ghosted-row");
+              if (isViewForum) lastpostCell.classList.add("vergiled-row");
             }
             // Always add the highlighting class
-            lastpostCell.classList.add("ghosted-by-author");
+            lastpostCell.classList.add("vergiled-by-author");
             return;
           } else {
             const allLinks = rowItem.querySelectorAll(
@@ -841,30 +829,30 @@ export function init() {
             const nonAuthorLinks = Array.from(allLinks).filter(
               (link) => !link.closest(".responsive-hide.left-box"),
             );
-            const hasGhostedUser = nonAuthorLinks.some(
+            const hasVergiledUser = nonAuthorLinks.some(
               (link) =>
                 isUserIgnored(link.textContent.trim()) &&
                 !isNonNotificationUCP(),
             );
-            if (hasGhostedUser) {
-              // Has ghosted user in content, check hideEntireRow setting and whitelist
+            if (hasVergiledUser) {
+              // Has vergiled user in content, check hideEntireRow setting and whitelist
               if (config.hideEntireRow && !isWhitelisted) {
                 // Hide entire row if not whitelisted
-                rowItem.classList.add("ghosted-row", "ghosted-by-author");
+                rowItem.classList.add("vergiled-row", "vergiled-by-author");
               } else {
                 // Only hide lastpost
-                if (isViewForum) lastpostCell.classList.add("ghosted-row");
-                rowItem.classList.add("ghosted-by-author");
+                if (isViewForum) lastpostCell.classList.add("vergiled-row");
+                rowItem.classList.add("vergiled-by-author");
               }
             } else {
-              // No ghosted author, but content might contain ghosted references
+              // No vergiled author, but content might contain vergiled references
               if (config.hideEntireRow && !isWhitelisted) {
                 // Hide entire row
-                rowItem.classList.add("ghosted-by-content");
+                rowItem.classList.add("vergiled-by-content");
               } else {
                 // Only hide lastpost
                 if (isViewForum)
-                  lastpostCell.classList.add("ghosted-by-content");
+                  lastpostCell.classList.add("vergiled-by-content");
               }
             }
           }
@@ -872,32 +860,32 @@ export function init() {
         }
       }
 
-      // Check for ghosted authors in the row
+      // Check for vergiled authors in the row
       const authorLinks = rowItem.querySelectorAll(
         "a.username, a.username-coloured",
       );
       const authorNames = Array.from(authorLinks).map((link) =>
         link.textContent.trim(),
       );
-      const hasGhostedAuthor = authorNames.some(
+      const hasVergiledAuthor = authorNames.some(
         (name) => isUserIgnored(name) && !isNonNotificationUCP(),
       );
 
-      if (hasGhostedAuthor) {
+      if (hasVergiledAuthor) {
         if (config.hideEntireRow && !isWhitelisted) {
           // Hide entire row if not whitelisted
-          rowItem.classList.add("ghosted-row", "ghosted-by-author");
+          rowItem.classList.add("vergiled-row", "vergiled-by-author");
         } else {
           // For whitelisted threads or if hideEntireRow is false, show the row but mark it
-          rowItem.classList.add("ghosted-by-author");
+          rowItem.classList.add("vergiled-by-author");
 
           // Only hide lastpost if available
           const lastpostCell = rowItem.querySelector("dd.lastpost");
           if (lastpostCell) {
-            lastpostCell.classList.add("ghosted-row");
+            lastpostCell.classList.add("vergiled-row");
           } else if (!isWhitelisted) {
             // Fallback to hiding the row if no lastpost cell and not whitelisted
-            rowItem.classList.add("ghosted-row");
+            rowItem.classList.add("vergiled-row");
           }
         }
         return;
@@ -906,44 +894,44 @@ export function init() {
       const innerDiv = rowItem.querySelector(".list-inner");
       if (innerDiv) {
         const byText = innerDiv.textContent.toLowerCase();
-        const hasGhostedInBy = Object.values(ignoredUsers).some(
+        const hasVergiledInBy = Object.values(ignoredUsers).some(
           (username) =>
             byText.includes(`by ${username.toLowerCase()}`) &&
             !isNonNotificationUCP(),
         );
-        if (hasGhostedInBy) {
-          rowItem.classList.add("ghosted-row", "ghosted-by-author");
+        if (hasVergiledInBy) {
+          rowItem.classList.add("vergiled-row", "vergiled-by-author");
           return;
         }
       }
 
-      // If we get here, it's content-based ghosting
+      // If we get here, it's content-based vergiling
       if (!isNonNotificationUCP()) {
         if (config.hideEntireRow && !isWhitelisted) {
           // Hide entire row if not whitelisted
-          rowItem.classList.add("ghosted-by-content");
+          rowItem.classList.add("vergiled-by-content");
         } else {
           // Only hide lastpost if available
           const lastpostCell = rowItem.querySelector("dd.lastpost");
           if (lastpostCell) {
-            lastpostCell.classList.add("ghosted-row");
+            lastpostCell.classList.add("vergiled-row");
           } else {
             // Fallback to hiding the row if no lastpost cell and not whitelisted
             if (!isWhitelisted) {
-              rowItem.classList.add("ghosted-row");
+              rowItem.classList.add("vergiled-row");
             }
           }
-          rowItem.classList.add("ghosted-by-content");
+          rowItem.classList.add("vergiled-by-content");
         }
       }
     } else {
       if (!isNonNotificationUCP()) {
         // This is the non-row element case (like in recent topics)
-        // Only add ghosted-row if not whitelisted
+        // Only add vergiled-row if not whitelisted
         if (!isWhitelisted) {
-          element.classList.add("ghosted-row");
+          element.classList.add("vergiled-row");
         }
-        element.classList.add("ghosted-by-author");
+        element.classList.add("vergiled-by-author");
       }
     }
   }
@@ -983,10 +971,10 @@ export function init() {
       if (authorNameClass) {
         const username = authorNameClass.replace("author-name-", "");
         if (isUserIgnored(username) && !isNonNotificationUCP()) {
-          row.classList.add("ghosted-by-content");
+          row.classList.add("vergiled-by-content");
           const lastpost = row.querySelector("dd.lastpost");
           if (lastpost) {
-            lastpost.classList.add("ghosted-by-content");
+            lastpost.classList.add("vergiled-by-content");
           }
           return;
         }
@@ -1025,10 +1013,10 @@ export function init() {
       if (rowType === "forum") {
         // Check if the author is ignored
         if (isUserIgnored(authorName) && !isNonNotificationUCP()) {
-          // Author is ghosted, add ghosted-row class to lastpost
-          lastpostCell.classList.add("ghosted-row");
+          // Author is vergiled, add vergiled-row class to lastpost
+          lastpostCell.classList.add("vergiled-row");
           // Add highlighting class to the row
-          row.classList.add("ghosted-by-author");
+          row.classList.add("vergiled-by-author");
           return;
         }
 
@@ -1040,10 +1028,10 @@ export function init() {
             const postContent = postCache[postId].content;
             if (
               postContent &&
-              postContentContainsGhosted(postContent) &&
+              postContentContainsVergiled(postContent) &&
               !isNonNotificationUCP()
             ) {
-              row.classList.add("ghosted-by-content");
+              row.classList.add("vergiled-by-content");
             }
           }
         }
@@ -1055,26 +1043,26 @@ export function init() {
           const isWhitelisted = isThreadWhitelisted(row);
 
           if (config.hideEntireRow && !isWhitelisted) {
-            // Hide entire row - Author is ghosted (if not whitelisted)
-            row.classList.add("ghosted-row");
+            // Hide entire row - Author is vergiled (if not whitelisted)
+            row.classList.add("vergiled-row");
             // Add highlighting class to the row
-            row.classList.add("ghosted-by-author");
+            row.classList.add("vergiled-by-author");
           } else {
             // Only hide lastpost
-            lastpostCell.classList.add("ghosted-row");
+            lastpostCell.classList.add("vergiled-row");
             // Add highlighting class to the row
-            row.classList.add("ghosted-by-author");
+            row.classList.add("vergiled-by-author");
           }
           return;
         }
 
-        // Check for post content with ghosted mentions
+        // Check for post content with vergiled mentions
         const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
         if (postLink) {
           const postId = postLink.href.match(/p=(\d+)/)?.[1];
           if (postId && postCache[postId]) {
             const postContent = postCache[postId].content;
-            // Check if the lastPostCell contains the username of a ghosted user
+            // Check if the lastPostCell contains the username of a vergiled user
             if (
               authorLink &&
               isUserIgnored(authorLink.textContent.trim()) &&
@@ -1085,31 +1073,31 @@ export function init() {
 
               if (config.hideEntireRow && !isWhitelisted) {
                 // Hide entire row if not whitelisted
-                row.classList.add("ghosted-row");
+                row.classList.add("vergiled-row");
                 // Add highlighting class to the row
-                row.classList.add("ghosted-by-author");
+                row.classList.add("vergiled-by-author");
               } else {
                 // Only hide lastpost
-                lastpostCell.classList.add("ghosted-row");
+                lastpostCell.classList.add("vergiled-row");
                 // Add highlighting class to the row
-                row.classList.add("ghosted-by-author");
+                row.classList.add("vergiled-by-author");
               }
               return; // Stop here, don't check content
             } else if (
               postContent &&
-              postContentContainsGhosted(postContent) &&
+              postContentContainsVergiled(postContent) &&
               !isNonNotificationUCP()
             ) {
-              // Content contains ghosted references
+              // Content contains vergiled references
               // Check if this thread is whitelisted
               const isWhitelisted = isThreadWhitelisted(row);
 
               if (config.hideEntireRow && !isWhitelisted) {
                 // Add highlighting class to the row
-                row.classList.add("ghosted-by-content");
+                row.classList.add("vergiled-by-content");
               } else {
                 // Add highlighting class to the row
-                row.classList.add("ghosted-by-content");
+                row.classList.add("vergiled-by-content");
               }
             }
           }
@@ -1153,9 +1141,9 @@ export function init() {
     ) {
       if (isForumList) {
         // For forum rows, only hide the lastpost
-        element.classList.add("ghosted-row");
+        element.classList.add("vergiled-row");
         // Add highlight class to the row
-        if (row) row.classList.add("ghosted-by-author");
+        if (row) row.classList.add("vergiled-by-author");
       } else if (row) {
         // Check if this thread is whitelisted
         const isWhitelisted = isThreadWhitelisted(row);
@@ -1163,12 +1151,12 @@ export function init() {
         // For other rows, apply to the row or lastpost based on config
         if (config.hideEntireRow && !isWhitelisted) {
           // Hide entire row if not whitelisted
-          row.classList.add("ghosted-row", "ghosted-by-author");
+          row.classList.add("vergiled-row", "vergiled-by-author");
         } else {
           // Only hide lastpost
-          element.classList.add("ghosted-row");
+          element.classList.add("vergiled-row");
           // Add highlight class to the row
-          row.classList.add("ghosted-by-author");
+          row.classList.add("vergiled-by-author");
         }
       }
       element.classList.add("content-processed");
@@ -1215,9 +1203,9 @@ export function init() {
           if (userEl && isUserIgnored(userEl.textContent.trim())) {
             if (isForumList) {
               // For forum rows, only hide the lastpost
-              element.classList.add("ghosted-row");
+              element.classList.add("vergiled-row");
               // Add highlight class to the row
-              if (row) row.classList.add("ghosted-by-author");
+              if (row) row.classList.add("vergiled-by-author");
             } else if (row) {
               // Check if this thread is whitelisted
               const isWhitelisted = isThreadWhitelisted(row);
@@ -1225,20 +1213,20 @@ export function init() {
               // For other rows, apply based on config
               if (config.hideEntireRow && !isWhitelisted) {
                 // Hide entire row if not whitelisted
-                row.classList.add("ghosted-row", "ghosted-by-author");
+                row.classList.add("vergiled-row", "vergiled-by-author");
               } else {
                 // Only hide lastpost
-                element.classList.add("ghosted-row");
+                element.classList.add("vergiled-row");
                 // Add highlight class to the row
-                row.classList.add("ghosted-by-author");
+                row.classList.add("vergiled-by-author");
               }
             }
           } else {
             try {
               const content = await fetchAndCachePost(pid);
-              if (!content || postContentContainsGhosted(content)) {
+              if (!content || postContentContainsVergiled(content)) {
                 if (isForumList) {
-                  if (row) row.classList.add("ghosted-by-content");
+                  if (row) row.classList.add("vergiled-by-content");
                 } else if (row) {
                   // Check if this thread is whitelisted
                   const isWhitelisted = isThreadWhitelisted(row);
@@ -1246,10 +1234,10 @@ export function init() {
                   // For other rows, apply based on config
                   if (config.hideEntireRow && !isWhitelisted) {
                     // Hide entire row if not whitelisted
-                    row.classList.add("ghosted-by-content");
+                    row.classList.add("vergiled-by-content");
                   } else {
                     // Add highlight class to the row
-                    row.classList.add("ghosted-by-content");
+                    row.classList.add("vergiled-by-content");
                   }
                 }
               }
@@ -1257,16 +1245,16 @@ export function init() {
               if (isForumList) {
                 // For forum rows, only hide the lastpost
                 // Add highlight class to the row
-                if (row) row.classList.add("ghosted-by-content");
+                if (row) row.classList.add("vergiled-by-content");
               } else if (row) {
                 // For other rows, hide based on config
                 if (config.hideEntireRow) {
                   // Hide entire row
-                  row.classList.add("ghosted-by-content");
+                  row.classList.add("vergiled-by-content");
                 } else {
                   // Only hide lastpost
                   // Add highlight class to the row
-                  row.classList.add("ghosted-by-content");
+                  row.classList.add("vergiled-by-content");
                 }
               }
             }
@@ -1358,7 +1346,7 @@ export function init() {
     if (isQuoteOrMention && isUserIgnored(firstUsername)) {
       const row = item.closest("li.row");
       if (row) {
-        row.classList.add("ghosted-row", "ghosted-by-author");
+        row.classList.add("vergiled-row", "vergiled-by-author");
         await markNotificationAsRead(item);
       }
       item.classList.add("content-processed");
@@ -1366,8 +1354,8 @@ export function init() {
     }
 
     const nonIgnored = usernames.filter((u) => !isUserIgnored(u));
-    const ghosted = usernames.filter((u) => isUserIgnored(u));
-    const hasIgnored = ghosted.length > 0;
+    const vergiled = usernames.filter((u) => isUserIgnored(u));
+    const hasIgnored = vergiled.length > 0;
 
     if (!hasIgnored) {
       item.classList.add("content-processed");
@@ -1377,14 +1365,14 @@ export function init() {
     if (nonIgnored.length === 0) {
       const row = item.closest("li.row");
       if (row) {
-        row.classList.add("ghosted-row", "ghosted-by-author");
+        row.classList.add("vergiled-row", "vergiled-by-author");
         await markNotificationAsRead(item);
       }
       item.classList.add("content-processed");
       return;
     }
 
-    // Create the non-ghosted notification first
+    // Create the non-vergiled notification first
     // Find the last username element to get text after it
     const lastIgnoredEl = usernameEls[usernameEls.length - 1];
     const nodesAfter = [];
@@ -1418,38 +1406,40 @@ export function init() {
     // Add "have reacted" or other trailing text
     nodesAfter.forEach((node) => titleEl.appendChild(node));
 
-    // Now create ghosted notifications for each ghosted user
+    // Now create vergiled notifications for each vergiled user
     const row = item.closest("li.row");
     if (row) {
-      ghosted.forEach((ghostedUsername) => {
-        const ghostedRow = row.cloneNode(true);
-        ghostedRow.classList.add("ghosted-row", "ghosted-by-author");
+      vergiled.forEach((vergiledUsername) => {
+        const vergiledRow = row.cloneNode(true);
+        vergiledRow.classList.add("vergiled-row", "vergiled-by-author");
 
-        // Update the notification text for this ghosted user
-        const ghostedTitleEl = ghostedRow.querySelector(".notifications_title");
-        if (ghostedTitleEl) {
-          ghostedTitleEl.textContent = "";
+        // Update the notification text for this vergiled user
+        const vergiledTitleEl = vergiledRow.querySelector(
+          ".notifications_title",
+        );
+        if (vergiledTitleEl) {
+          vergiledTitleEl.textContent = "";
           const matchEl = Array.from(usernameEls).find(
             (el) =>
               el.textContent.trim().toLowerCase() ===
-              ghostedUsername.toLowerCase(),
+              vergiledUsername.toLowerCase(),
           );
           if (matchEl) {
-            ghostedTitleEl.appendChild(matchEl.cloneNode(true));
+            vergiledTitleEl.appendChild(matchEl.cloneNode(true));
           } else {
-            ghostedTitleEl.appendChild(
-              document.createTextNode(ghostedUsername),
+            vergiledTitleEl.appendChild(
+              document.createTextNode(vergiledUsername),
             );
           }
 
           // Add the trailing text
           nodesAfter.forEach((node) =>
-            ghostedTitleEl.appendChild(node.cloneNode(true)),
+            vergiledTitleEl.appendChild(node.cloneNode(true)),
           );
         }
 
-        // Insert the ghosted row after the original
-        row.parentNode.insertBefore(ghostedRow, row.nextSibling);
+        // Insert the vergiled row after the original
+        row.parentNode.insertBefore(vergiledRow, row.nextSibling);
       });
     }
 
@@ -1541,7 +1531,7 @@ export function init() {
       const anchor = bq.querySelector("cite a");
       if (!anchor) return;
       if (isUserIgnored(anchor.textContent.trim()) && !isNonNotificationUCP()) {
-        bq.classList.add("ghosted-quote");
+        bq.classList.add("vergiled-quote");
       }
     });
   }
@@ -1549,9 +1539,9 @@ export function init() {
   function processPost(post) {
     const postId = post.id.replace("p", "");
 
-    // Check if post is manually ghosted
-    if (ghostedManualPosts[postId]) {
-      post.classList.add("ghosted-post-manual");
+    // Check if post is manually vergiled
+    if (vergiledManualPosts[postId]) {
+      post.classList.add("vergiled-post-manual");
       post.classList.add("content-processed");
       return; // Don't process further if manually hidden
     }
@@ -1582,69 +1572,60 @@ export function init() {
       hideIt = true;
     }
 
-    // Check for @mentions of ghosted users
+    // Check for @mentions of vergiled users
     if (
       !hideIt &&
-      postContentContainsMentionedGhosted(post) &&
+      postContentContainsMentionedVergiled(post) &&
       !isNonNotificationUCP()
     ) {
       hideIt = true;
-      // Use the existing ghosted-by-content class
-      post.classList.add("ghosted-by-content");
+      // Use the existing vergiled-by-content class
+      post.classList.add("vergiled-by-content");
     }
 
     if (hideIt) {
-      post.classList.add("ghosted-post");
+      post.classList.add("vergiled-post");
     }
 
-    // Add the manual ghost button
-    const ghostLi = document.createElement("li");
-    ghostLi.className = "post-ghost-button-li"; // Add class to the list item
-    const ghostButton = document.createElement("a");
-    ghostButton.className = "button button-icon-only post-ghost-button"; // Added relevant classes
-    ghostButton.innerHTML =
+    // Add the manual vergil button
+    const vergilLi = document.createElement("li");
+    vergilLi.className = "post-vergil-button-li"; // Add class to the list item
+    const vergilButton = document.createElement("a");
+    vergilButton.className = "button button-icon-only post-vergil-button"; // Added relevant classes
+    vergilButton.innerHTML =
       '<i class="icon fa-times fa-fw" aria-hidden="true"></i>'; // Use FontAwesome icon
-    ghostButton.href = "#"; // Make it behave like a link
-    ghostButton.title = "Ghost this post (Alt+Click)";
-    ghostButton.addEventListener("click", (e) => {
+    vergilButton.href = "#"; // Make it behave like a link
+    vergilButton.title = "Vergil this post (Alt+Click)";
+    vergilButton.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
 
-      // Mark as manually ghosted
-      ghostedManualPosts[postId] = true;
-      localStorage.setItem(
-        "ghostedManualPosts",
-        JSON.stringify(ghostedManualPosts),
-      );
+      // Mark as manually vergiled
+      vergiledManualPosts[postId] = true;
 
       // Hide the post immediately
-      post.classList.add("ghosted-post-manual");
+      post.classList.add("vergiled-post-manual");
       post.classList.remove(
-        "ghosted-post",
-        "ghosted-by-author",
-        "ghosted-by-content",
-      ); // Ensure other ghosting is removed
+        "vergiled-post",
+        "vergiled-by-author",
+        "vergiled-by-content",
+      ); // Ensure other vergiling is removed
 
-      console.log(`Manually ghosted post: ${postId}`);
+      console.log(`Manually vergiled post: ${postId}`);
     });
 
     // Append to the post buttons list
     const postButtonsList = post.querySelector("ul.post-buttons");
     if (postButtonsList) {
-      ghostLi.appendChild(ghostButton);
-      postButtonsList.appendChild(ghostLi);
+      vergilLi.appendChild(vergilButton);
+      postButtonsList.appendChild(vergilLi);
     }
 
     post.classList.add("content-processed");
   }
 
   function processTopicPosters() {
-    // Get the latest ignoredUsers value
-    const currentIgnoredUsers = JSON.parse(
-      localStorage.getItem("ignoredUsers") || "{}",
-    );
-
-    // Use correct selector for rows - the "row" is a class, not a tag
+    // Use ignoredUsers directly
     const rows = document.querySelectorAll(".row");
 
     rows.forEach((row) => {
@@ -1655,16 +1636,16 @@ export function init() {
       masWrapElements.forEach((element) => {
         // Check if the element contains any ignored username
         const elementText = element.textContent || "";
-        let containsGhostedUser = false;
+        let containsVergiledUser = false;
 
         // Check for any ignored username in the text
-        Object.values(currentIgnoredUsers).forEach((username) => {
+        Object.values(ignoredUsers).forEach((username) => {
           if (elementText.toLowerCase().includes(username.toLowerCase())) {
-            containsGhostedUser = true;
+            containsVergiledUser = true;
           }
         });
 
-        if (containsGhostedUser) {
+        if (containsVergiledUser) {
           if (config.hideTopicCreations) {
             // If hideTopicCreations is true, remove the entire row
             row.remove();
@@ -1898,8 +1879,8 @@ export function init() {
 
     processTopicPosters();
 
-    // Remove elements with ghosted author names
-    removeGhostedAuthorElements();
+    // Remove elements with vergiled author names
+    removeVergiledAuthorElements();
 
     // Check for topic list rows: Process ALL responsive-hide left-box elements
     const leftBoxes = document.querySelectorAll(".left-box");
@@ -1939,12 +1920,12 @@ export function init() {
       }
     });
 
-    function removeGhostedAuthorElements() {
-      // Get all unique ghosted usernames
-      const ghostedUsernames = new Set(Object.values(ignoredUsers));
+    function removeVergiledAuthorElements() {
+      // Get all unique vergiled usernames
+      const vergiledUsernames = new Set(Object.values(ignoredUsers));
 
-      // Process each ghosted username
-      ghostedUsernames.forEach((username) => {
+      // Process each vergiled username
+      vergiledUsernames.forEach((username) => {
         // Find and remove all elements with this class
         const selector = `.author-name-${username}`;
         document.querySelectorAll(selector).forEach((element) => {
@@ -2050,131 +2031,6 @@ export function init() {
   }
 
   // ---------------------------------------------------------------------
-  // 7) PROFILE BUTTONS: GHOST + REPLACE AVATAR
-  // ---------------------------------------------------------------------
-
-  function addGhostButtonsIfOnProfile() {
-    const memberlistTitle = document.querySelector(".memberlist-title");
-    if (!memberlistTitle || document.getElementById("ghost-user-button"))
-      return;
-    const userId = getUserIdFromUrl();
-
-    // Get just the direct text content, not including child divs
-    const titleText = Array.from(memberlistTitle.childNodes)
-      .filter((node) => node.nodeType === Node.TEXT_NODE)
-      .map((node) => node.textContent.trim())
-      .join(" ");
-
-    // Extract the username after the dash
-    const parts = titleText.split("-");
-    let username = parts[1]?.trim() || "Unknown User";
-
-    // Clean the username to remove any button text that might have been included
-    username = cleanUsername(username);
-
-    if (!userId) return;
-    const container = document.createElement("div");
-    container.style.display = "inline-block";
-    container.style.marginLeft = "10px";
-    const ghostBtn = document.createElement("a");
-    ghostBtn.id = "ghost-user-button";
-    ghostBtn.className = "button button-secondary";
-    ghostBtn.href = "#";
-    const replaceBtn = document.createElement("a");
-    replaceBtn.id = "replace-avatar-button";
-    replaceBtn.className = "button button-secondary";
-    replaceBtn.href = "#";
-    replaceBtn.textContent = "Replace Avatar";
-    replaceBtn.style.marginLeft = "5px";
-    container.appendChild(ghostBtn);
-    container.appendChild(replaceBtn);
-    memberlistTitle.appendChild(container);
-    function refreshGhostBtn() {
-      const isGhosted = ignoredUsers.hasOwnProperty(userId);
-      ghostBtn.textContent = isGhosted ? "Unghost User" : "Ghost User";
-      ghostBtn.title = isGhosted
-        ? "Stop ignoring this user"
-        : "Ignore this user";
-    }
-    refreshGhostBtn();
-    ghostBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      toggleUserGhost(userId, username);
-      refreshGhostBtn();
-    });
-    replaceBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      showReplaceAvatarPopup(userId);
-    });
-  }
-
-  function showReplaceAvatarPopup(userId) {
-    const popup = document.createElement("div");
-    popup.style.cssText = `
-      position: fixed; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: #2a2a2a; color: #e0e0e0; padding: 20px;
-      border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 9999;
-      width: 300px;
-    `;
-    const title = document.createElement("h3");
-    title.textContent = "Replace Avatar";
-    title.style.marginTop = "0";
-    title.style.marginBottom = "15px";
-    popup.appendChild(title);
-    const input = document.createElement("input");
-    input.type = "text";
-    input.placeholder = "Enter image URL (128x128 or smaller)";
-    input.style.cssText = `
-      width: 100%; padding: 5px; margin-bottom: 15px; background: #3a3a3a;
-      border: 1px solid #4a4a4a; color: #e0e0e0; border-radius: 3px;
-    `;
-    popup.appendChild(input);
-    const btnContainer = document.createElement("div");
-    btnContainer.style.display = "flex";
-    btnContainer.style.justifyContent = "space-between";
-    popup.appendChild(btnContainer);
-    function makeBtn(label) {
-      const b = document.createElement("button");
-      b.textContent = label;
-      b.style.cssText = `
-        background-color: #3a3a3a; color: #e0e0e0; border: none;
-        padding: 5px 10px; border-radius: 3px; cursor: pointer;
-      `;
-      b.addEventListener(
-        "mouseover",
-        () => (b.style.backgroundColor = "#4a4a4a"),
-      );
-      b.addEventListener(
-        "mouseout",
-        () => (b.style.backgroundColor = "#3a3a3a"),
-      );
-      return b;
-    }
-    const replaceB = makeBtn("Replace");
-    replaceB.addEventListener("click", () => {
-      validateAndReplaceAvatar(userId, input.value);
-      document.body.removeChild(popup);
-    });
-    const resetB = makeBtn("Reset to Default");
-    resetB.addEventListener("click", () => {
-      delete replacedAvatars[userId];
-      localStorage.setItem("replacedAvatars", JSON.stringify(replacedAvatars));
-      alert("Avatar reset to default.");
-      replaceUserAvatars();
-      document.body.removeChild(popup);
-    });
-    const cancelB = makeBtn("Cancel");
-    cancelB.addEventListener("click", () => {
-      document.body.removeChild(popup);
-    });
-    btnContainer.appendChild(replaceB);
-    btnContainer.appendChild(resetB);
-    btnContainer.appendChild(cancelB);
-    document.body.appendChild(popup);
-  }
-
-  // ---------------------------------------------------------------------
   // 8) SHOW/HIDE GHOSTED POSTS TOGGLE VIA KEYBOARD
   // ---------------------------------------------------------------------
 
@@ -2191,9 +2047,9 @@ export function init() {
       z-index: 9999;
       transition: opacity 0.3s;
     `;
-    notification.textContent = showGhostedPosts
-      ? "Showing Ghosted Posts"
-      : "Hiding Ghosted Posts";
+    notification.textContent = showVergiledPosts
+      ? "Showing Vergiled Posts"
+      : "Hiding Vergiled Posts";
     document.body.appendChild(notification);
     setTimeout(() => {
       notification.style.opacity = "0";
@@ -2201,18 +2057,18 @@ export function init() {
     }, 1500);
   }
 
-  function toggleGhostedPosts() {
-    const ghostedPosts = document.querySelectorAll(".post.ghosted-post");
-    const ghostedQuotes = document.querySelectorAll(".ghosted-quote");
-    const ghostedRows = document.querySelectorAll(".ghosted-row");
+  function toggleVergiledPosts() {
+    const vergiledPosts = document.querySelectorAll(".post.vergiled-post");
+    const vergiledQuotes = document.querySelectorAll(".vergiled-quote");
+    const vergiledRows = document.querySelectorAll(".vergiled-row");
 
-    const hasGhostedContent =
-      ghostedPosts.length > 0 ||
-      ghostedQuotes.length > 0 ||
-      ghostedRows.length > 0;
+    const hasVergiledContent =
+      vergiledPosts.length > 0 ||
+      vergiledQuotes.length > 0 ||
+      vergiledRows.length > 0;
 
-    if (!hasGhostedContent) {
-      console.log("No ghosted content found on this page");
+    if (!hasVergiledContent) {
+      console.log("No vergiled content found on this page");
       const notification = document.createElement("div");
       notification.style.cssText = `
         position: fixed;
@@ -2225,7 +2081,7 @@ export function init() {
         z-index: 9999;
         transition: opacity 0.3s;
       `;
-      notification.textContent = "No ghosted content found on this page";
+      notification.textContent = "No vergiled content found on this page";
       document.body.appendChild(notification);
       setTimeout(() => {
         notification.style.opacity = "0";
@@ -2234,17 +2090,19 @@ export function init() {
       return;
     }
 
-    showGhostedPosts = !showGhostedPosts;
+    showVergiledPosts = !showVergiledPosts;
 
-    ghostedPosts.forEach((p) => p.classList.toggle("show", showGhostedPosts));
-    ghostedQuotes.forEach((q) => q.classList.toggle("show", showGhostedPosts));
+    vergiledPosts.forEach((p) => p.classList.toggle("show", showVergiledPosts));
+    vergiledQuotes.forEach((q) =>
+      q.classList.toggle("show", showVergiledPosts),
+    );
 
-    // For ghosted rows (which are now only lastpost cells), toggle visibility
-    ghostedRows.forEach((r) => {
-      r.classList.toggle("show", showGhostedPosts);
+    // For vergiled rows (which are now only lastpost cells), toggle visibility
+    vergiledRows.forEach((r) => {
+      r.classList.toggle("show", showVergiledPosts);
     });
 
-    document.body.classList.toggle("show-hidden-threads", showGhostedPosts);
+    document.body.classList.toggle("show-hidden-threads", showVergiledPosts);
 
     showToggleNotification();
     updatePaginationPostCount();
@@ -2260,7 +2118,7 @@ export function init() {
     // Check for backslash key
     if (e.key === "\\") {
       e.preventDefault();
-      toggleGhostedPosts();
+      toggleVergiledPosts();
     }
   });
 
@@ -2284,7 +2142,7 @@ export function init() {
     });
   }
 
-  function cleanGhostedQuotesInTextarea() {
+  function cleanVergiledQuotesInTextarea() {
     const textarea = document.querySelector("textarea#message");
     if (!textarea || !textarea.value.includes("[quote")) return;
     let text = textarea.value;
@@ -2306,19 +2164,19 @@ export function init() {
     const userLinks = Array.from(
       onlineList.querySelectorAll("a.username, a.username-coloured"),
     );
-    const nonGhostedUsers = userLinks.filter((link) => {
+    const nonVergiledUsers = userLinks.filter((link) => {
       const userId = link.href.match(/u=(\d+)/)?.[1];
       const username = link.textContent.trim();
       return !(userId && isUserIgnored(userId)) && !isUserIgnored(username);
     });
-    if (nonGhostedUsers.length === 0) {
+    if (nonVergiledUsers.length === 0) {
       const guestsMatch = onlineList.textContent.match(/and (\d+) guests/);
       const guestCount = guestsMatch ? guestsMatch[1] : "0";
       onlineList.innerHTML = `Users browsing this forum: ${guestCount} guests`;
       return;
     }
     let newText = "Users browsing this forum: ";
-    nonGhostedUsers.forEach((link, index) => {
+    nonVergiledUsers.forEach((link, index) => {
       if (index > 0) newText += ", ";
       newText += link.outerHTML;
     });
@@ -2396,13 +2254,6 @@ export function init() {
         link.href = link.href.replace("./", "https://rpghq.org/forums/");
       });
 
-      // Change Oyster Sauce's username color to #00AA00
-      innerDiv.querySelectorAll("a.username-coloured").forEach((link) => {
-        if (link.textContent.trim() === "Oyster Sauce") {
-          link.style.color = "#00AA00";
-        }
-      });
-
       innerDiv.querySelectorAll("li.row").forEach((row) => {
         const responsiveHide = row.querySelector(".responsive-hide");
         if (responsiveHide) {
@@ -2469,13 +2320,13 @@ export function init() {
         return;
       }
 
-      const visiblePosts = showGhostedPosts
+      const visiblePosts = showVergiledPosts
         ? document.querySelectorAll(".post").length
-        : document.querySelectorAll(".post:not(.ghosted-post)").length;
+        : document.querySelectorAll(".post:not(.vergiled-post)").length;
 
-      const visibleMatches = showGhostedPosts
+      const visibleMatches = showVergiledPosts
         ? document.querySelectorAll("li.row").length
-        : document.querySelectorAll("li.row:not(.ghosted-row)").length;
+        : document.querySelectorAll("li.row:not(.vergiled-row)").length;
 
       const originalText = pagination.innerHTML;
       let newText = originalText;
@@ -2516,68 +2367,34 @@ export function init() {
     setInterval(processReactionImages, 2000);
   }
 
-  // Function to change Oyster Sauce's username color to #00AA00
-  function changeOysterSauceColor() {
-    document.querySelectorAll("a.username-coloured").forEach((link) => {
-      if (link.textContent.trim() === "Oyster Sauce") {
-        link.style.color = "#00AA00";
-      }
-    });
-
-    // Set up a MutationObserver to handle dynamically loaded content
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.addedNodes && mutation.addedNodes.length > 0) {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === 1) {
-              // Element node
-              const usernameLinks = node.querySelectorAll
-                ? node.querySelectorAll("a.username-coloured")
-                : [];
-
-              usernameLinks.forEach((link) => {
-                if (link.textContent.trim() === "Oyster Sauce") {
-                  link.style.color = "#00AA00";
-                }
-              });
-            }
-          });
-        }
-      });
-    });
-
-    // Start observing the document with the configured parameters
-    observer.observe(document.body, { childList: true, subtree: true });
-  }
-
-  // Function to clean up any elements that have both ghosted-by-author and ghosted-by-content classes
-  function cleanupGhostedClasses() {
+  // Function to clean up any elements that have both vergiled-by-author and vergiled-by-content classes
+  function cleanupVergiledClasses() {
     // Find all elements with both classes
     const elementsWithBothClasses = document.querySelectorAll(
-      ".ghosted-by-author.ghosted-by-content",
+      ".vergiled-by-author.vergiled-by-content",
     );
 
-    // Remove ghosted-by-content from these elements
+    // Remove vergiled-by-content from these elements
     elementsWithBothClasses.forEach((element) => {
-      element.classList.remove("ghosted-by-content");
+      element.classList.remove("vergiled-by-content");
     });
   }
 
   // Apply CSS variables for custom colors
   function applyCustomColors() {
     document.documentElement.style.setProperty(
-      "--ghost-author-highlight",
+      "--vergil-author-highlight",
       config.authorHighlightColor,
     );
     document.documentElement.style.setProperty(
-      "--ghost-content-highlight",
+      "--vergil-content-highlight",
       config.contentHighlightColor,
     );
   }
 
   /**
-   * Process mas-wrap elements that may contain ghosted users
-   * Hides the entire element if it contains a user who is ghosted
+   * Process mas-wrap elements that may contain vergiled users
+   * Hides the entire element if it contains a user who is vergiled
    */
   function processMasWrapElements() {
     // First, find all responsive-hide containers that contain mas-wrap elements
@@ -2813,34 +2630,32 @@ export function init() {
 
     await processIgnoredContentOnce();
     replaceUserAvatars();
-    addGhostButtonsIfOnProfile();
     processOnlineList();
     moveExternalLinkIcon();
-    cleanGhostedQuotesInTextarea();
+    cleanVergiledQuotesInTextarea();
     updatePaginationPostCount();
-    changeOysterSauceColor();
 
     // Process mas-wrap elements
     processMasWrapElements();
 
-    // Clean up any elements that have both ghosted-by-author and ghosted-by-content classes
-    cleanupGhostedClasses();
+    // Clean up any elements that have both vergiled-by-author and vergiled-by-content classes
+    cleanupVergiledClasses();
 
     // Set up a MutationObserver to clean up any elements that get both classes in the future
-    const ghostedClassesObserver = new MutationObserver((mutations) => {
+    const vergiledClassesObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (
           mutation.type === "attributes" &&
           mutation.attributeName === "class" &&
-          mutation.target.classList.contains("ghosted-by-author") &&
-          mutation.target.classList.contains("ghosted-by-content")
+          mutation.target.classList.contains("vergiled-by-author") &&
+          mutation.target.classList.contains("vergiled-by-content")
         ) {
-          mutation.target.classList.remove("ghosted-by-content");
+          mutation.target.classList.remove("vergiled-by-content");
         }
       });
     });
 
-    ghostedClassesObserver.observe(document.body, {
+    vergiledClassesObserver.observe(document.body, {
       subtree: true,
       attributes: true,
       attributeFilter: ["class"],
@@ -2852,7 +2667,7 @@ export function init() {
     cleanup: () => {
       console.log("Forum Plausibility Fix cleanup");
       // Remove event listeners and clean up any changes made
-      document.removeEventListener("keydown", toggleGhostedPosts);
+      document.removeEventListener("keydown", toggleVergiledPosts);
     },
   };
 }
