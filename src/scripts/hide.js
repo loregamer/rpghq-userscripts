@@ -1,4 +1,13 @@
 import { gmGetValue, gmSetValue } from "../main.js";
+import {
+  getCachedPost,
+  cachePost,
+  cachePostsFromViewTopic,
+  cachePostsFromTopicReview,
+  cacheLastPosts,
+  clearOldCachedPosts,
+} from "../utils/postCache.js";
+import { log, debug } from "../utils/logger.js";
 
 export function init() {
   console.log("Forum Plausibility Fix initialized!");
@@ -38,11 +47,9 @@ export function init() {
   };
   const replacedAvatars = {}; // userId => image URL
 
-  // Load cached posts from GM storage for persistence across page refreshes
-  const postCache = gmGetValue("hide_postCache", {}) || {}; // postId => { content, timestamp }
-  console.log(
-    `[Forum Plausibility Fix] Loaded post cache with ${Object.keys(postCache).length} entries`,
-  );
+  // Initial cleanup of old cached posts (> 1 day)
+  clearOldCachedPosts(1);
+  // No need to store local reference to cache as we'll use the utility functions
 
   const userColors = {}; // username => color
   const vergilManualPosts = {}; // postId => true
@@ -61,18 +68,8 @@ export function init() {
 
   let showVergilPosts = false; // Always start hidden
 
-  // Clear expired cache entries (older than 24h)
-  const now = Date.now();
-  const expiredEntries = Object.keys(postCache).filter(
-    (key) =>
-      !postCache[key].timestamp || now - postCache[key].timestamp > 86400000,
-  );
-
-  if (expiredEntries.length > 0) {
-    expiredEntries.forEach((key) => delete postCache[key]);
-    // Save cache after removing expired entries
-    gmSetValue("hide_postCache", postCache);
-  }
+  // Cleanup old cached posts upon initialization
+  clearOldCachedPosts(1); // Clear entries older than 1 day
 
   // Inject style at document-start
   const mainStyle = document.createElement("style");
@@ -592,11 +589,20 @@ export function init() {
   }
 
   async function fetchAndCachePost(postId) {
-    const cached = postCache[postId];
-    if (postCache[postId]) {
-      const content = postCache[postId].content;
-      return content;
+    // First try getting from postCache.js
+    const cachedPost = getCachedPost(postId);
+
+    if (cachedPost) {
+      // Return content based on available data
+      if (cachedPost.bbcode) {
+        return cachedPost.bbcode;
+      } else if (cachedPost.html) {
+        // If we have HTML but no BBCode, we might need to strip HTML tags
+        return cleanupPostContent(cachedPost.html);
+      }
     }
+
+    // Fallback to quote functionality if not in cache
     try {
       const response = await fetch(
         `https://rpghq.org/forums/posting.php?mode=quote&p=182671&multiquote=${postId}`,
@@ -605,48 +611,51 @@ export function init() {
       const parser = new DOMParser();
       const doc = parser.parseFromString(text, "text/html");
       const textarea = doc.querySelector("textarea#message");
+
       if (textarea) {
         let content = textarea.value;
         content = cleanupPostContent(content);
-        postCache[postId] = { content, timestamp: Date.now() };
 
-        // Save updated cache to GM storage
-        gmSetValue("hide_postCache", postCache);
+        // Store in the new cache system
+        cachePost(postId, {
+          bbcode: content,
+          html: null, // We don't have HTML here
+        });
 
         return content;
       }
     } catch (err) {
       console.error(`Failed to fetch post ${postId}:`, err);
     }
+
     return null;
   }
 
   async function cacheAllPosts() {
+    // First try to use postCache.js functions to cache posts
+    cachePostsFromViewTopic();
+    cachePostsFromTopicReview();
+    cacheLastPosts();
+
+    // Then fetch any remaining posts using the quote functionality
     const lastPostLinks = document.querySelectorAll(
       'a[title="Go to last post"], a[title="View the latest post"]',
-    );
-
-    // Count existing cache entries
-    const existingCacheCount = Object.keys(postCache).length;
-    console.log(
-      `[Forum Plausibility Fix] Using existing post cache with ${existingCacheCount} entries`,
     );
 
     // Only fetch posts that aren't already in the cache
     const postIds = Array.from(lastPostLinks)
       .map((lnk) => lnk.href.match(/p=(\d+)/)?.[1])
-      .filter((id) => id && !postCache[id]);
+      .filter((id) => {
+        // Check if post exists in cache
+        return id && !getCachedPost(id);
+      });
 
     if (postIds.length === 0) {
-      console.log(
-        "[Forum Plausibility Fix] No new posts to fetch, using existing cache",
-      );
+      log("No new posts to fetch, using existing cache");
       return false;
     }
 
-    console.log(
-      `[Forum Plausibility Fix] Fetching ${postIds.length} posts that aren't in cache`,
-    );
+    log(`Fetching ${postIds.length} posts that aren't in cache`);
 
     // Fetch posts in smaller chunks to avoid overwhelming the server
     for (let i = 0; i < postIds.length; i += 3) {
@@ -659,12 +668,7 @@ export function init() {
       }
     }
 
-    // Save the final cache after all fetches
-    gmSetValue("hide_postCache", postCache);
-    console.log(
-      `[Forum Plausibility Fix] Post cache updated with ${Object.keys(postCache).length} total entries`,
-    );
-
+    log("Post cache updated");
     return true;
   }
 
@@ -1062,8 +1066,9 @@ export function init() {
         const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
         if (postLink) {
           const postId = postLink.href.match(/p=(\d+)/)?.[1];
-          if (postId && postCache[postId]) {
-            const postContent = postCache[postId].content;
+          if (postId && getCachedPost(postId)) {
+            const cachedPost = getCachedPost(postId);
+            const postContent = cachedPost.bbcode || cachedPost.html;
             if (
               postContent &&
               postContentContainsVergil(postContent) &&
@@ -1098,8 +1103,9 @@ export function init() {
         const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
         if (postLink) {
           const postId = postLink.href.match(/p=(\d+)/)?.[1];
-          if (postId && postCache[postId]) {
-            const postContent = postCache[postId].content;
+          if (postId && getCachedPost(postId)) {
+            const cachedPost = getCachedPost(postId);
+            const postContent = cachedPost.bbcode || cachedPost.html;
             // Check if the lastPostCell contains the username of a vergil user
             if (
               authorLink &&
