@@ -18,17 +18,12 @@ function compareVersions(v1, v2) {
 }
 
 export async function checkForUpdates(options = {}) {
-  log("Checking for userscript updates...");
-
   const currentVersion = GM_info.script.version;
   // Prefer updateURL, fallback to downloadURL for fetching metadata
   const metaUrl = GM_info.script.updateURL || GM_info.script.downloadURL;
   const downloadUrl = GM_info.script.downloadURL || GM_info.script.updateURL; // URL to open on click
 
   if (!metaUrl) {
-    warn(
-      "No updateURL or downloadURL found in script metadata. Cannot check for updates.",
-    );
     return;
   }
 
@@ -44,11 +39,8 @@ export async function checkForUpdates(options = {}) {
           const versionMatch = metaText.match(/@version\s+([\d.]+)/);
           if (versionMatch && versionMatch[1]) {
             const latestVersion = versionMatch[1];
-            log(
-              `Current version: ${currentVersion}, Latest version: ${latestVersion}`,
-            );
+
             if (compareVersions(latestVersion, currentVersion) > 0) {
-              log(`Update available: ${latestVersion}`);
               // Call the notification function (currently commented out)
               showUpdateNotification(latestVersion, downloadUrl);
               // Open download link in new tab if triggered manually (through options parameter)
@@ -56,30 +48,24 @@ export async function checkForUpdates(options = {}) {
                 window.open(downloadUrl, "_blank");
               }
             } else {
-              log("Script is up to date.");
               // Call onNoUpdate callback if provided
               if (options && typeof options.onNoUpdate === "function") {
                 options.onNoUpdate();
               }
             }
           } else {
-            warn("Could not find @version tag in metadata file:", metaUrl);
           }
         } else {
-          warn(`Failed to fetch metadata. Status: ${response.status}`, metaUrl);
           if (options && typeof options.onError === "function") {
             options.onError();
           }
         }
       },
       onerror: function (response) {
-        error("Error fetching metadata:", response);
         if (options && typeof options.onError === "function") {
           options.onError();
         }
       },
     });
-  } catch (err) {
-    error("Error during GM_xmlhttpRequest setup:", err);
-  }
+  } catch (err) {}
 }

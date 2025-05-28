@@ -131,7 +131,6 @@ function applyHideRule(element, rule) {
 
     return false;
   } catch (err) {
-    error("Error applying HIDE rule:", err);
     return false;
   }
 }
@@ -202,7 +201,6 @@ function applyHighlightRule(element, rule) {
 
     return false;
   } catch (err) {
-    error("Error applying HIGHLIGHT rule:", err);
     return false;
   }
 }
@@ -223,11 +221,9 @@ function applyRule(element, rule) {
       case "HIGHLIGHT":
         return applyHighlightRule(element, rule);
       default:
-        warn(`Unknown rule action: ${rule.action}`);
         return false;
     }
   } catch (err) {
-    error("Error applying rule:", err);
     return false;
   }
 }
@@ -256,7 +252,6 @@ function applyUsernameColor(element, color) {
 
     return false;
   } catch (err) {
-    error("Error applying username color:", err);
     return false;
   }
 }
@@ -295,7 +290,6 @@ function applyUserRules(element, userId, rulesData) {
 
     return appliedCount;
   } catch (err) {
-    error("Error applying user rules:", err);
     return 0;
   }
 }
@@ -325,7 +319,6 @@ export async function processElement(element) {
       rulesApplied: appliedCount,
     };
   } catch (err) {
-    error("Error processing element for user rules:", err);
     return { processed: false, error: err.message };
   }
 }
@@ -346,7 +339,6 @@ export async function processCurrentPage() {
   try {
     const allUserRules = await getAllUserRules();
     if (!allUserRules || Object.keys(allUserRules).length === 0) {
-      log("No user rules defined, skipping page processing");
       return stats;
     }
 
@@ -406,12 +398,8 @@ export async function processCurrentPage() {
       }
     }
 
-    log(
-      `User rules applied: ${stats.rulesApplied} rules for ${stats.usersWithRules} users on ${stats.elementsProcessed} elements`,
-    );
     return stats;
   } catch (err) {
-    error("Error processing page for user rules:", err);
     return { ...stats, error: err.message };
   }
 }
@@ -423,7 +411,6 @@ export async function initRuleApplication() {
   try {
     // Initial processing of the current page
     const stats = await processCurrentPage();
-    log("Initial user rules application complete:", stats);
 
     // Set up a mutation observer to process new elements
     const observer = new MutationObserver((mutations) => {
@@ -458,7 +445,6 @@ export async function initRuleApplication() {
 
     return { success: true, observer };
   } catch (err) {
-    error("Error initializing rule application:", err);
     return { success: false, error: err.message };
   }
 }

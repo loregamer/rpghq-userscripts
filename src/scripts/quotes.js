@@ -201,9 +201,7 @@ export function init() {
       if (avatarImg) {
         return avatarImg.src;
       }
-    } catch (error) {
-      console.error("Error fetching user avatar:", error);
-    }
+    } catch (error) {}
     return null;
   }
 
@@ -255,9 +253,7 @@ export function init() {
       if (coloredUsername) {
         return coloredUsername.style.color;
       }
-    } catch (error) {
-      console.error("Error fetching user color:", error);
-    }
+    } catch (error) {}
     return null;
   }
 

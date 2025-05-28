@@ -3,7 +3,7 @@ import "./meta.js?userscript-metadata";
 import { SCRIPT_MANIFEST } from "./manifest.js";
 import { FORUM_PREFERENCES } from "./forumPreferences.js";
 import { shouldLoadScript } from "./utils/urlMatcher.js";
-import { log, warn, error, debug } from "./utils/logger.js";
+import { log, warn, error } from "./utils/logger.js";
 import { sharedUtils } from "./utils/sharedUtils.js"; // Import shared utilities
 import { checkForUpdates } from "./utils/updateChecker.js"; // Import update checker
 import loadOrder from "../load_order.json"; // Import the execution order
@@ -170,11 +170,9 @@ export function applyCustomThemeStyles() {
     lightBgColor ||
     darkBgColor
   ) {
-    log("Applying custom theme styles:", customCSS);
     // eslint-disable-next-line no-undef
     GM_addStyle(customCSS.trim());
   } else {
-    log("No custom theme styles defined.");
   }
 }
 
@@ -187,18 +185,11 @@ const scriptStates = {};
 const loadedScripts = {};
 
 function initializeScriptStates() {
-  log("Initializing script states...");
   SCRIPT_MANIFEST.forEach((script) => {
     const storageKey = `script_enabled_${script.id}`;
     // Load state from GM storage, falling back to manifest default
     scriptStates[script.id] = gmGetValue(storageKey, script.enabledByDefault);
-    log(
-      `Script '${script.name}' (${script.id}): ${
-        scriptStates[script.id] ? "Enabled" : "Disabled"
-      } (Default: ${script.enabledByDefault})`,
-    );
   });
-  log("Script states initialized:", scriptStates);
 }
 
 // Find a script definition in the manifest by its ID
@@ -208,23 +199,18 @@ function findScriptById(scriptId) {
 
 // Execute functions and scripts based on the load order for a specific phase
 function executeLoadOrderForPhase(phase) {
-  log(`Executing load order for phase: ${phase}`);
   const itemsToLoad = loadOrder[phase] || [];
 
   if (itemsToLoad.length === 0) {
-    log(`No items defined in load order for phase: ${phase}`);
     return;
   }
 
   itemsToLoad.forEach((item) => {
     // Check if it's a known shared function
     if (typeof sharedUtils[item] === "function") {
-      log(`-> Executing shared function: ${item}`);
       try {
         sharedUtils[item]();
-      } catch (err) {
-        error(`Error executing shared function ${item}:`, err);
-      }
+      } catch (err) {}
     }
     // Check if it's a script ID
     else {
@@ -232,22 +218,13 @@ function executeLoadOrderForPhase(phase) {
       if (script) {
         // Check if script is enabled
         if (scriptStates[script.id]) {
-          log(
-            `-> Loading script from load order: ${script.name} (${script.id}) for phase: ${phase}`,
-          );
           loadScript(script); // Use the existing loadScript function
         } else {
-          log(`-> Script ${item} skipped (disabled).`);
         }
       } else {
-        warn(
-          `-> Item "${item}" in load_order.json is not a known shared function or script ID.`,
-        );
       }
     }
   });
-
-  log(`Finished executing load order for phase: ${phase}`);
 }
 
 // Import scripts directly
@@ -286,24 +263,21 @@ const scriptModules = {
 // Load a single script by its manifest entry
 function loadScript(script) {
   if (loadedScripts[script.id]) {
-    log(`Script ${script.name} already loaded, skipping.`);
     return;
   }
 
   // Check if the script should run on the current URL
   if (!shouldLoadScript(script)) {
-    log(`Script ${script.name} not loaded: URL pattern did not match.`);
     return;
   }
 
   // log(`Loading script: ${script.name} (${script.id})`); // Phase is determined by load_order.json
-  log(`Loading script: ${script.name} (${script.id})`);
+
   try {
     // Get the module from our imports
     const module = scriptModules[script.id];
 
     if (!module) {
-      error(`Script module ${script.id} not found`);
       return;
     }
 
@@ -325,39 +299,27 @@ function loadScript(script) {
             ? result.cleanup
             : null,
       };
-
-      log(`Successfully loaded script: ${script.name}`);
     } else {
-      warn(`Script ${script.name} has no init function, skipping.`);
     }
-  } catch (err) {
-    error(`Failed to load script ${script.name}:`, err);
-  }
+  } catch (err) {}
 }
 
 // Unload a single script by its ID
 function unloadScript(scriptId) {
   const scriptInfo = loadedScripts[scriptId];
   if (!scriptInfo) {
-    log(`Script ${scriptId} not loaded, nothing to unload.`);
     return;
   }
-
-  log(`Unloading script: ${scriptId}`);
 
   // Call cleanup function if it exists
   if (scriptInfo.cleanup && typeof scriptInfo.cleanup === "function") {
     try {
       scriptInfo.cleanup();
-      log(`Cleanup completed for script: ${scriptId}`);
-    } catch (err) {
-      error(`Error during cleanup for script ${scriptId}:`, err);
-    }
+    } catch (err) {}
   }
 
   // Remove the script from loadedScripts
   delete loadedScripts[scriptId];
-  log(`Script ${scriptId} unloaded.`);
 }
 
 // --- Script Toggle Event Handler ---
@@ -378,8 +340,6 @@ document.addEventListener("script-toggle", (event) => {
 document.addEventListener("reset-notifications-script", (event) => {
   const { scriptId } = event.detail;
   if (scriptId === "notifications") {
-    log(`Received reset request for notifications script`);
-
     // Unload the script if it's loaded
     if (loadedScripts[scriptId]) {
       unloadScript(scriptId);
@@ -388,7 +348,6 @@ document.addEventListener("reset-notifications-script", (event) => {
       const scriptInfo = findScriptById(scriptId);
       if (scriptInfo && scriptStates[scriptId]) {
         loadScript(scriptInfo);
-        log(`Successfully reset notifications script`);
       }
     }
   }
@@ -416,7 +375,6 @@ function handleShowScriptSettings(script) {
 function saveScriptSetting(scriptId, settingId, value) {
   const storageKey = `script_setting_${scriptId}_${settingId}`;
   gmSetValue(storageKey, value);
-  log(`Saved setting: ${scriptId}.${settingId} = ${value}`);
 }
 
 function getScriptSetting(scriptId, settingId, defaultValue) {
@@ -430,7 +388,7 @@ function getScriptSetting(scriptId, settingId, defaultValue) {
   const currentValueInStorage = gmGetValue(storageKey); // Check actual stored value
   if (currentValueInStorage === undefined) {
     gmSetValue(storageKey, defaultValue);
-    log(`Setting default value for ${scriptId}.${settingId}: ${defaultValue}`);
+
     value = defaultValue; // Ensure we return the default we just set
   }
 
@@ -472,16 +430,12 @@ function toggleModalVisibility() {
   const modal = document.getElementById("mod-manager-modal");
   const isVisible = modal && modal.style.display === "block";
 
-  log(
-    `Toggling modal visibility. Currently ${isVisible ? "visible" : "hidden"}.`,
-  );
-
   if (isVisible) {
     hideModal();
   } else {
     // Retrieve the last selected tab, default to 'installed'
     const lastTab = gmGetValue("last_selected_tab", "installed");
-    log(`Retrieved last selected tab: ${lastTab}`);
+
     showModal({
       loadTabContent: handleLoadTabContent,
       hideModal,
@@ -499,7 +453,6 @@ function ensureFontAwesome() {
     link.href =
       "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css";
     document.head.appendChild(link);
-    log("RPGHQ Manager: Added Font Awesome CSS link.");
   }
 }
 
@@ -511,7 +464,6 @@ function addMenuButton(toggleVisibilityCallback) {
     '.header-profile.dropdown-container .dropdown-contents[role="menu"]',
   );
   if (!profileDropdown) {
-    warn("RPGHQ Manager: Could not find profile dropdown menu.");
     return;
   }
 
@@ -528,7 +480,6 @@ function addMenuButton(toggleVisibilityCallback) {
   );
 
   if (!logoutButton) {
-    warn("RPGHQ Manager: Could not find logout button for reference.");
     return;
   }
 
@@ -537,7 +488,6 @@ function addMenuButton(toggleVisibilityCallback) {
     'a[title="RPGHQ Userscript Manager"]',
   );
   if (existingButton) {
-    log("RPGHQ Manager: Button already exists, updating listener.");
     existingButton.onclick = function (e) {
       e.preventDefault();
       toggleVisibilityCallback();
@@ -561,12 +511,10 @@ function addMenuButton(toggleVisibilityCallback) {
 
   // Insert before logout button
   profileDropdown.insertBefore(userscriptsButton, logoutButton);
-  log("RPGHQ Manager: 'View Userscripts' button added to profile menu.");
 }
 
 // --- Initialization ---
 function init() {
-  log("Initializing RPGHQ Userscript Manager...");
   applyCustomThemeStyles();
 
   // Initialize script states
@@ -591,9 +539,7 @@ function init() {
     // Initialize user rules system
     initRuleApplication().then((result) => {
       if (result.success) {
-        log("User rules system initialized successfully");
       } else {
-        warn("Failed to initialize user rules system:", result.error);
       }
     });
   });
@@ -628,7 +574,6 @@ function init() {
         document.activeElement.tagName === "TEXTAREA" ||
         document.activeElement.isContentEditable
       ) {
-        log("Insert key pressed in input field, ignoring modal toggle.");
         return;
       }
 

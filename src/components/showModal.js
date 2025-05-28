@@ -14,8 +14,6 @@ export function showModal({
   hideModal,
   initialTabName = "installed", // Default if not provided
 }) {
-  log("Showing userscript manager modal...");
-
   let modal = document.getElementById("mod-manager-modal");
   if (!modal) {
     modal = document.createElement("div");
@@ -54,8 +52,6 @@ export function showModal({
     const updateButton = modal.querySelector("#check-update-btn");
     if (updateButton) {
       updateButton.addEventListener("click", () => {
-        log("Manual update check triggered");
-
         // Save original button content
         const originalContent = updateButton.innerHTML;
 

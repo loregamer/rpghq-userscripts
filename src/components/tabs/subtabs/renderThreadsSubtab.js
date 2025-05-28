@@ -6,8 +6,6 @@
 import { log } from "../../../utils/logger.js";
 import { gmGetValue, gmSetValue } from "../../../main.js";
 export function renderThreadsSubtab(container) {
-  log("Rendering Threads subtab...");
-
   // Get current preference values from storage
   const disableYouTubeEmbeds = gmGetValue("disable-youtube-embeds", false);
   const disableRedditEmbeds = gmGetValue("disable-reddit-embeds", false);
@@ -16,9 +14,6 @@ export function renderThreadsSubtab(container) {
   const scriptEnabled = gmGetValue("script_enabled_disableEmbeds", true);
   if ((disableYouTubeEmbeds || disableRedditEmbeds) && !scriptEnabled) {
     gmSetValue("script_enabled_disableEmbeds", true);
-    log(
-      "Enabling disableEmbeds script because embed disabling options are enabled",
-    );
   }
 
   container.innerHTML = `
@@ -59,12 +54,10 @@ export function renderThreadsSubtab(container) {
 
   youtubeCheckbox.addEventListener("change", function () {
     gmSetValue("disable-youtube-embeds", this.checked);
-    log(`YouTube embeds ${this.checked ? "disabled" : "enabled"}`);
 
     // Keep script enabled if any option is checked
     if (this.checked) {
       gmSetValue("script_enabled_disableEmbeds", true);
-      log("Enabling disableEmbeds script because YouTube embeds are disabled");
     }
 
     // Show message about page reload needed
@@ -84,12 +77,10 @@ export function renderThreadsSubtab(container) {
 
   redditCheckbox.addEventListener("change", function () {
     gmSetValue("disable-reddit-embeds", this.checked);
-    log(`Reddit embeds ${this.checked ? "disabled" : "enabled"}`);
 
     // Keep script enabled if any option is checked
     if (this.checked) {
       gmSetValue("script_enabled_disableEmbeds", true);
-      log("Enabling disableEmbeds script because Reddit embeds are disabled");
     }
 
     // Show message about page reload needed

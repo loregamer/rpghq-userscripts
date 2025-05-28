@@ -37,7 +37,6 @@ function addNotificationStyles() {
 }
 
 export function showUpdateNotification(newVersion, downloadUrl) {
-  log(`Showing update notification for version ${newVersion}`);
   addNotificationStyles(); // Ensure styles are present
 
   // Remove existing notification if any
@@ -61,7 +60,6 @@ export function showUpdateNotification(newVersion, downloadUrl) {
     if (
       event.target !== notification.querySelector(".update-notification-close")
     ) {
-      log(`Opening download URL: ${downloadUrl}`);
       window.open(downloadUrl, "_blank");
     }
   });
@@ -71,7 +69,7 @@ export function showUpdateNotification(newVersion, downloadUrl) {
     .querySelector(".update-notification-close")
     .addEventListener("click", (event) => {
       event.stopPropagation(); // Prevent triggering the main click
-      log("Dismissing update notification.");
+
       notification.remove();
     });
 

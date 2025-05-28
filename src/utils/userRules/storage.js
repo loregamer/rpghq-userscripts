@@ -5,7 +5,7 @@
  */
 
 import { gmGetValue, gmSetValue } from "../../main.js";
-import { log, warn, error } from "../logger.js";
+import { log, error } from "../logger.js";
 
 // Storage key for user rules
 const USER_RULES_STORAGE_KEY = "hqUserRules";
@@ -19,7 +19,6 @@ export async function getAllUserRules() {
     const rules = gmGetValue(USER_RULES_STORAGE_KEY, {});
     return rules;
   } catch (err) {
-    error("Error retrieving user rules:", err);
     return {};
   }
 }
@@ -32,10 +31,9 @@ export async function getAllUserRules() {
 export async function saveUserRules(rulesObject) {
   try {
     gmSetValue(USER_RULES_STORAGE_KEY, rulesObject);
-    log("User rules saved successfully");
+
     return true;
   } catch (err) {
-    error("Error saving user rules:", err);
     return false;
   }
 }
@@ -62,7 +60,6 @@ export async function saveUserRulesByUserId(userId, userData) {
     allRules[userId] = userData;
     return await saveUserRules(allRules);
   } catch (err) {
-    error(`Error saving rules for user ${userId}:`, err);
     return false;
   }
 }
@@ -81,7 +78,6 @@ export async function deleteUserRules(userId) {
     }
     return true; // No rules to delete
   } catch (err) {
-    error(`Error deleting rules for user ${userId}:`, err);
     return false;
   }
 }
@@ -117,7 +113,6 @@ export async function saveRule(userId, username, rule) {
 
     return await saveUserRulesByUserId(userId, userData);
   } catch (err) {
-    error(`Error saving rule for user ${userId}:`, err);
     return false;
   }
 }
@@ -141,7 +136,6 @@ export async function addRuleForUser(userId, rule) {
     userData.rules.push(rule);
     return await saveUserRulesByUserId(userId, userData);
   } catch (err) {
-    error(`Error adding rule for user ${userId}:`, err);
     return false;
   }
 }
@@ -164,7 +158,6 @@ export async function updateRuleForUser(userId, ruleId, updatedRule) {
     userData.rules[index] = updatedRule;
     return await saveUserRulesByUserId(userId, userData);
   } catch (err) {
-    error(`Error updating rule ${ruleId} for user ${userId}:`, err);
     return false;
   }
 }
@@ -188,7 +181,6 @@ export async function deleteRuleForUser(userId, ruleId) {
 
     return false; // Rule not found
   } catch (err) {
-    error(`Error deleting rule ${ruleId} for user ${userId}:`, err);
     return false;
   }
 }
@@ -211,7 +203,6 @@ export async function updateUsernameColor(userId, username, color) {
     userData.usernameColor = color;
     return await saveUserRulesByUserId(userId, userData);
   } catch (err) {
-    error(`Error updating username color for user ${userId}:`, err);
     return false;
   }
 }
@@ -226,7 +217,6 @@ export async function updateUserRules(userId, updatedRules) {
   try {
     return await saveUserRulesByUserId(userId, updatedRules);
   } catch (err) {
-    error(`Error updating rules for user ${userId}:`, err);
     return false;
   }
 }

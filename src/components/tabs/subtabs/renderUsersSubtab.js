@@ -40,8 +40,6 @@ const RULE_SCOPES = [
 ];
 
 export function renderUsersSubtab(container) {
-  log("Rendering Users subtab...");
-
   // Create the main structure for the users subtab
   container.innerHTML = `
     <div class="wip-banner">
@@ -119,7 +117,6 @@ async function toggleUserCard(userCard, container) {
         detailsDiv.dataset.loaded = "true"; // Mark as loaded
       } catch (err) {
         detailsDiv.innerHTML = `<p class="error">Error loading details: ${err.message}</p>`;
-        error(`Error rendering details for user ${userId}:`, err);
       } finally {
         detailsDiv.classList.remove("loading");
       }
@@ -224,9 +221,7 @@ async function renderUserDetails(userId, detailsContainer, mainContainer) {
         mentions,
       });
       updateUserRuleCount(detailsContainer.closest(".user-card"));
-    } catch (err) {
-      error(`Error auto-saving settings for user ${userId}:`, err);
-    }
+    } catch (err) {}
   };
 
   detailsContainer
@@ -252,7 +247,6 @@ async function renderUserDetails(userId, detailsContainer, mainContainer) {
         await renderUserDetails(userId, detailsContainer, mainContainer);
         updateUserRuleCount(detailsContainer.closest(".user-card"));
       } catch (err) {
-        error(`Error deleting rules for user ${userId}:`, err);
         alert(`Error deleting rules: ${err.message}`);
       }
     });
@@ -553,7 +547,6 @@ function initUserSearch(container) {
     } catch (err) {
       statusDiv.innerHTML = `Error: ${err.message}`;
       statusDiv.className = "user-search-status error";
-      error("Error searching for user:", err);
     }
   });
 
@@ -585,7 +578,6 @@ function initUserSearch(container) {
       // User card doesn't exist, create and append it
       statusDiv.innerHTML = `User found: <strong>${username}</strong> (ID: ${userId}). Creating new card.`;
       statusDiv.className = "user-search-status success";
-      log(`Creating new card for user ${userId} (${username})`);
 
       // Remove the 'no rules' placeholder if it exists
       const noRulesPlaceholder = existingRulesContainer.querySelector("p");
@@ -667,7 +659,6 @@ async function loadExistingUsers(container) {
       attachCardEventListeners(card, container);
     });
   } catch (err) {
-    error("Error loading existing users:", err);
     container.querySelector("#existing-rules-container").innerHTML =
       `<p>Error loading existing users: ${err.message}</p>`;
   }

@@ -9,34 +9,15 @@
 
 export function init() {
   function createReactionList(postId, reactions) {
-    console.log(
-      "createReactionList: Starting to create reaction list for post",
-      postId,
-    );
     const pollVotes = getPollVotes();
-    console.log("createReactionList: Got poll votes:", pollVotes);
 
     const displayStyle = reactions.length === 0 ? "display: none;" : "";
-    console.log(
-      "createReactionList: Processing",
-      reactions.length,
-      "reactions",
-    );
 
     const html = `
         <div class="reaction-score-list content-processed" data-post-id="${postId}" data-title="Reactions" style="padding-top: 10px !important; ${displayStyle}">
             <div class="list-scores" style="display: flex; flex-wrap: wrap; gap: 4px;">
                 ${reactions
                   .map((reaction, reactionIndex) => {
-                    console.log(
-                      `createReactionList: Processing reaction #${
-                        reactionIndex + 1
-                      }:`,
-                      {
-                        title: reaction.title,
-                        userCount: reaction.users.length,
-                      },
-                    );
                     return `
                     <div class="reaction-group" style="display: flex; align-items: center; background-color: #3A404A; border-radius: 8px; padding: 2px 6px; position: relative;">
                         <img src="${reaction.image}" alt="${
@@ -52,17 +33,6 @@ export function init() {
                             <div style="display: flex; flex-direction: column; gap: 8px;">
                                 ${reaction.users
                                   .map((user, userIndex) => {
-                                    console.log(
-                                      `createReactionList: Reaction #${
-                                        reactionIndex + 1
-                                      }, processing user #${userIndex + 1}:`,
-                                      {
-                                        username: user.username,
-                                        pollVotes:
-                                          pollVotes[user.username.toLowerCase()]
-                                            ?.options,
-                                      },
-                                    );
                                     const userPollVotes =
                                       pollVotes[user.username.toLowerCase()];
                                     const pollInfo =
@@ -119,7 +89,7 @@ export function init() {
             </div>
         </div>
     `;
-    console.log("createReactionList: Finished creating HTML");
+
     return html;
   }
 
@@ -158,17 +128,11 @@ export function init() {
   }
 
   function getPollVotes() {
-    console.log("getPollVotes: Starting to collect poll votes");
     const pollVotes = {};
     const polls = document.querySelectorAll(".polls");
-    console.log("getPollVotes: Found polls:", polls.length);
 
     polls.forEach((poll, pollIndex) => {
-      console.log(`getPollVotes: Processing poll #${pollIndex + 1}`);
       const dls = poll.querySelectorAll("dl");
-      console.log(
-        `getPollVotes: Found ${dls.length} dl elements in poll #${pollIndex + 1}`,
-      );
 
       let currentOption = null;
 
@@ -181,33 +145,18 @@ export function init() {
           !dl.classList.contains("poll_total_votes")
         ) {
           currentOption = optionDt.textContent.trim();
-          console.log(`getPollVotes: Found option: "${currentOption}"`);
         }
 
         // Then check if this is a voters box for the current option
         if (dl.classList.contains("poll_voters_box") && currentOption) {
-          console.log(
-            `getPollVotes: Processing voters for option: "${currentOption}"`,
-          );
           const votersSpan = dl.querySelector(".poll_voters");
           if (!votersSpan) return;
 
           const voters = votersSpan.querySelectorAll("span[name]");
-          console.log(
-            `getPollVotes: Found ${voters.length} voters for this option`,
-          );
 
           voters.forEach((voter, voterIndex) => {
             const username = voter.getAttribute("name");
             const userLink = voter.querySelector("a");
-            console.log(`getPollVotes: Processing voter #${voterIndex + 1}:`, {
-              username,
-              hasUserLink: !!userLink,
-              linkText: userLink?.textContent,
-              option: currentOption,
-              isColoured: userLink?.classList.contains("username-coloured"),
-              color: userLink?.style.color,
-            });
 
             if (username && userLink) {
               const lowerUsername = username.toLowerCase();
@@ -225,7 +174,6 @@ export function init() {
       });
     });
 
-    console.log("getPollVotes: Final collected votes:", pollVotes);
     return pollVotes;
   }
 
@@ -244,13 +192,11 @@ export function init() {
       .then((response) => response.json())
       .then((data) => {
         if (!data.htmlContent) {
-          console.error("No HTML content in response:", data);
           return [];
         }
         return parseReactions(data.htmlContent);
       })
       .catch((error) => {
-        console.error("Error fetching reactions:", error);
         return [];
       });
   }
@@ -352,7 +298,7 @@ export function init() {
           }
         }
       })
-      .catch((error) => console.error("Error fetching reactions:", error));
+      .catch((error) => undefined);
   }
 
   function showPopup(group, popup) {

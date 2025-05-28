@@ -279,8 +279,6 @@ export function init({ getScriptSetting }) {
           el.parentNode.removeChild(el);
         }
       });
-
-      console.log("Disconnected recentTopicsFormat observer.");
     },
   };
 }

@@ -150,8 +150,6 @@ function updateCacheCountsDisplay() {
 }
 
 export function renderSettingsTab(container) {
-  log("Rendering Settings tab...");
-
   // Get the current auto-update check setting
   const autoUpdateCheck = gmGetValue(AUTO_UPDATE_CHECK_KEY, true); // Default to true
 
@@ -253,7 +251,7 @@ export function renderSettingsTab(container) {
               // eslint-disable-next-line no-undef
               GM_deleteValue(key);
               additionalRemoved++;
-              debug(`Deleted GM value: ${key}`);
+
               break; // No need to check other prefixes
             }
           }
@@ -261,16 +259,12 @@ export function renderSettingsTab(container) {
 
         statusMessage.textContent = `Successfully cleared ${removedCount} cached posts and ${additionalRemoved} additional cached items.`;
         statusMessage.style.color = "green";
-        log(
-          `Cache cleared: ${removedCount} posts and ${additionalRemoved} additional items`,
-        );
 
         // Update the cache counts display
         updateCacheCountsDisplay();
       } catch (error) {
         statusMessage.textContent = `Error clearing cache: ${error.message}`;
         statusMessage.style.color = "red";
-        log(`Error clearing cache: ${error}`);
       } finally {
         // Re-enable button
         clearCacheBtn.disabled = false;
@@ -283,7 +277,6 @@ export function renderSettingsTab(container) {
   const autoUpdateCheckbox = container.querySelector("#auto-update-check");
   autoUpdateCheckbox.addEventListener("change", (e) => {
     gmSetValue(AUTO_UPDATE_CHECK_KEY, e.target.checked);
-    log(`Auto-update check set to: ${e.target.checked}`);
   });
 
   // Add event listener for the reset notifications button
@@ -324,7 +317,6 @@ export function renderSettingsTab(container) {
                 notificationsStatusMessage.textContent =
                   "Successfully reset notifications script. Setting changes should now take effect.";
                 notificationsStatusMessage.style.color = "green";
-                log("Reset notifications script successfully");
               } else {
                 throw new Error("Could not find notifications script info");
               }
@@ -351,11 +343,9 @@ export function renderSettingsTab(container) {
           notificationsStatusMessage.textContent =
             "Sent reset request for notifications script. Refresh the page to ensure changes take effect.";
           notificationsStatusMessage.style.color = "green";
-          log("Sent reset notifications script event");
         } catch (eventError) {
           notificationsStatusMessage.textContent = `Error resetting notifications script: ${error.message}. Try refreshing the page.`;
           notificationsStatusMessage.style.color = "red";
-          log(`Error resetting notifications script: ${error}`);
         }
       } finally {
         // Re-enable button

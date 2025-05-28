@@ -11,14 +11,11 @@ import { gmGetValue } from "../main.js";
 import { log } from "../utils/logger.js";
 
 export function init() {
-  log("Disable Embeds initialized");
-
   // Check preferences
   const disableYouTube = gmGetValue("disable-youtube-embeds", false);
   const disableReddit = gmGetValue("disable-reddit-embeds", false);
 
   if (!disableYouTube && !disableReddit) {
-    log("No embeds disabled, script inactive");
     return { cleanup: () => {} };
   }
 
@@ -42,7 +39,6 @@ export function init() {
         const youtubeEmbeds = document.querySelectorAll(
           'span[data-s9e-mediaembed="youtube"]',
         );
-        log(`Found ${youtubeEmbeds.length} YouTube embeds to process`);
 
         youtubeEmbeds.forEach((embed, index) => {
           try {
@@ -86,21 +82,11 @@ export function init() {
                 } else {
                   embed.parentNode.appendChild(linkContainer);
                 }
-
-                log(
-                  `Processed YouTube embed ${index + 1}: Added link for ${videoUrl}`,
-                );
               }
             }
-          } catch (error) {
-            log(
-              `Error processing YouTube embed ${index + 1}: ${error.message}`,
-            );
-          }
+          } catch (error) {}
         });
-      } catch (error) {
-        log(`Error processing YouTube embeds: ${error.message}`);
-      }
+      } catch (error) {}
     };
 
     // Run once when DOM is ready
@@ -130,7 +116,6 @@ export function init() {
         const redditEmbeds = document.querySelectorAll(
           'iframe[data-s9e-mediaembed="reddit"]',
         );
-        log(`Found ${redditEmbeds.length} Reddit embeds to process`);
 
         redditEmbeds.forEach((iframe, index) => {
           try {
@@ -151,9 +136,6 @@ export function init() {
               if (!redditUrl) {
                 // Use a generic Reddit URL
                 redditUrl = "https://www.reddit.com";
-                log(
-                  `Could not extract specific Reddit URL for embed ${index + 1}, using generic URL`,
-                );
               }
 
               // Create a container for the link
@@ -180,18 +162,10 @@ export function init() {
               } else {
                 iframe.parentNode.appendChild(linkContainer);
               }
-
-              log(
-                `Processed Reddit embed ${index + 1}: Added link for ${redditUrl}`,
-              );
             }
-          } catch (error) {
-            log(`Error processing Reddit embed ${index + 1}: ${error.message}`);
-          }
+          } catch (error) {}
         });
-      } catch (error) {
-        log(`Error processing Reddit embeds: ${error.message}`);
-      }
+      } catch (error) {}
     };
 
     // Run once when DOM is ready
@@ -226,10 +200,7 @@ export function init() {
     try {
       // eslint-disable-next-line no-undef
       GM_addStyle(styleRules.join("\n"));
-      log("Injected embed disabling styles");
-    } catch (error) {
-      log(`Error injecting styles: ${error.message}`);
-    }
+    } catch (error) {}
   }
 
   // Helper functions for extracting IDs and URLs
@@ -278,9 +249,6 @@ export function init() {
 
   // No cleanup needed for CSS-based solution
   return {
-    cleanup: () => {
-      log("Disable Embeds cleanup (CSS-based solution has no cleanup)");
-      // Can't remove the injected CSS as it's a global modification
-    },
+    cleanup: () => {},
   };
 }

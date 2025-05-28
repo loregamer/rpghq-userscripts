@@ -108,7 +108,6 @@ export function init() {
           const validTopic = await getValidRandomTopic();
           window.location.href = validTopic;
         } catch (error) {
-          console.error("Error finding random topic:", error);
           this.innerHTML =
             '<i class="icon fa-random fa-fw" aria-hidden="true"></i><span>Random Topic</span>';
         }
@@ -128,7 +127,6 @@ export function init() {
         window.location.href = validTopic;
       })
       .catch((error) => {
-        console.error("Error finding random topic:", error);
         this.innerHTML =
           '<i class="icon fa-random fa-fw" aria-hidden="true"></i><span>Random Topic</span>';
       });

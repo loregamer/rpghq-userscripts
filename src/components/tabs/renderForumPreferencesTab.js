@@ -16,8 +16,6 @@ import { log } from "../../utils/logger.js";
 // const THEME_HOVER_COLOR_KEY = "theme_hoverColor";
 
 export function renderForumPreferencesTab(container) {
-  log("Rendering Forum Preferences tab with subtabs...");
-
   // container.innerHTML = `<h2>Forum Preferences</h2>`; // Removed title
 
   // --- REMOVED Theme Customizer Section ---
@@ -61,7 +59,6 @@ export function renderForumPreferencesTab(container) {
 
       // Load content based on data-subtab attribute
       const subtabName = tab.dataset.subtab;
-      log(`Switching to subtab: ${subtabName}`);
 
       if (subtabName === "theme") {
         renderThemeSubtab(subTabContent);

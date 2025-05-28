@@ -21,8 +21,6 @@ export function toggleScriptEnabled(
 ) {
   const storageKey = `script_enabled_${scriptId}`;
 
-  log(`Toggling script '${scriptId}' to ${newState ? "Enabled" : "Disabled"}`);
-
   // Update the runtime state
   scriptStates[scriptId] = newState;
 
@@ -30,14 +28,10 @@ export function toggleScriptEnabled(
   gmSetValue(storageKey, newState);
 
   // Trigger immediate loading/unloading based on new state
-  log(
-    `State for ${scriptId} saved as ${newState}. Triggering script ${newState ? "loading" : "unloading"}...`,
-  );
 
   // Find the script in the manifest
   const script = scriptManifest.find((s) => s.id === scriptId);
   if (!script) {
-    error(`Could not find script with ID ${scriptId} in manifest.`);
     return;
   }
 

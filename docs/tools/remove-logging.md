@@ -15,6 +15,7 @@ npm run remove-logs
 ## What it removes
 
 1. **Console calls**:
+
    - `console.log(...)`
    - `console.warn(...)`
    - `console.error(...)`
@@ -23,6 +24,7 @@ npm run remove-logs
    - `console.trace(...)`
 
 2. **Logger utility calls** (from `utils/logger.js`):
+
    - `log(...)`
    - `warn(...)`
    - `error(...)`
@@ -45,28 +47,30 @@ The tool uses Babel's AST (Abstract Syntax Tree) to safely parse and transform J
 ## Example transformation
 
 **Before:**
+
 ```javascript
-import { log, warn } from '../utils/logger';
-import { someUtil } from '../utils/someUtil';
+import { log, warn } from "../utils/logger";
+import { someUtil } from "../utils/someUtil";
 
 export function init() {
-  log('Initializing feature');
-  console.log('Debug info');
-  
+  log("Initializing feature");
+  console.log("Debug info");
+
   const result = someUtil();
-  warn('Processing result:', result);
-  
+  warn("Processing result:", result);
+
   return result;
 }
 ```
 
 **After:**
+
 ```javascript
-import { someUtil } from '../utils/someUtil';
+import { someUtil } from "../utils/someUtil";
 
 export function init() {
   const result = someUtil();
-  
+
   return result;
 }
 ```
