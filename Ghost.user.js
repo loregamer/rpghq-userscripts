@@ -1779,10 +1779,9 @@
       !isNonNotificationUCP()
     ) {
       if (isForumList) {
-        // For forum rows, only hide the lastpost
+        // For forum rows, only add classes to the lastpost element
         element.classList.add("ghosted-row");
-        // Add highlight class to the row
-        if (row) row.classList.add("ghosted-by-author");
+        element.classList.add("ghosted-by-author");
       } else if (row) {
         // Check if this thread is whitelisted
         const isWhitelisted = isThreadWhitelisted(row);
@@ -1841,10 +1840,9 @@
         if (pid) {
           if (userEl && isUserIgnored(userEl.textContent.trim())) {
             if (isForumList) {
-              // For forum rows, only hide the lastpost
+              // For forum rows, only add classes to the lastpost element
               element.classList.add("ghosted-row");
-              // Add highlight class to the row
-              if (row) row.classList.add("ghosted-by-author");
+              element.classList.add("ghosted-by-author");
             } else if (row) {
               // Check if this thread is whitelisted
               const isWhitelisted = isThreadWhitelisted(row);
@@ -1865,7 +1863,8 @@
               const content = await fetchAndCachePost(pid);
               if (!content || postContentContainsGhosted(content)) {
                 if (isForumList) {
-                  if (row) row.classList.add("ghosted-by-content");
+                  // For forum rows, only add ghosted-by-content to lastpost element
+                  element.classList.add("ghosted-by-content");
                 } else if (row) {
                   // Check if this thread is whitelisted
                   const isWhitelisted = isThreadWhitelisted(row);
@@ -1882,9 +1881,8 @@
               }
             } catch (err) {
               if (isForumList) {
-                // For forum rows, only hide the lastpost
-                // Add highlight class to the row
-                if (row) row.classList.add("ghosted-by-content");
+                // For forum rows, only add ghosted-by-content to lastpost element
+                element.classList.add("ghosted-by-content");
               } else if (row) {
                 // For other rows, hide based on config
                 if (config.hideEntireRow) {
