@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.18
-// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view, search, and math challenges with anti-cheat detection!
+// @version      5.19
+// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view, search, and math challenges with anti-cheat detection! Auto-loads PM inbox to apply deletion rules and hides PM badge when messages are filtered.
 // @author       You
 // @match        https://rpghq.org/*/*
 // @run-at       document-start
@@ -4443,6 +4443,87 @@
     });
   }
 
+  /**
+   * Load the PM inbox page to ensure deletion rules are applied
+   * This is necessary because the site's PM deletion rules only trigger when the inbox page loads
+   * @returns {Promise<void>}
+   */
+  async function loadPMInboxPage() {
+    try {
+      // First check if there's a PM badge with unread messages
+      const pmBadge = document.querySelector('a[href*="ucp.php?i=pm&folder=inbox"] .badge');
+      if (!pmBadge || pmBadge.textContent.trim() === '0') {
+        console.log('No unread PMs, skipping inbox load');
+        return;
+      }
+
+      // Only load inbox page if we're not already on it
+      const currentUrl = window.location.href;
+      if (currentUrl.includes('ucp.php?i=pm&folder=inbox')) {
+        console.log('Already on PM inbox page, skipping load');
+        
+        // Check if we're on the inbox page and there's a notice
+        const notice = document.querySelector('.notice');
+        if (notice) {
+          hidePMBadge();
+        }
+        return;
+      }
+
+      console.log('Loading PM inbox page to apply deletion rules...');
+      
+      // Use GM_xmlhttpRequest to load the inbox page in the background
+      await new Promise((resolve, reject) => {
+        GM_xmlhttpRequest({
+          method: 'GET',
+          url: 'https://rpghq.org/forums/ucp.php?i=pm&folder=inbox',
+          onload: function(response) {
+            if (response.status >= 200 && response.status < 300) {
+              console.log('PM inbox page loaded successfully');
+              
+              // Parse the response to check for any notice
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(response.responseText, 'text/html');
+              const notice = doc.querySelector('.notice');
+              
+              if (notice) {
+                console.log('Notice found on PM page, hiding badge');
+                hidePMBadge();
+              }
+              
+              resolve();
+            } else {
+              console.warn('Failed to load PM inbox page:', response.status);
+              resolve(); // Continue even if it fails
+            }
+          },
+          onerror: function(error) {
+            console.error('Error loading PM inbox page:', error);
+            resolve(); // Continue even if it fails
+          }
+        });
+      });
+
+      // Add a small delay to ensure the server has time to process any deletion rules
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+    } catch (error) {
+      console.error('Error in loadPMInboxPage:', error);
+      // Continue execution even if this fails
+    }
+  }
+
+  /**
+   * Hide the PM badge in the navigation
+   */
+  function hidePMBadge() {
+    const pmBadge = document.querySelector('a[href*="ucp.php?i=pm&folder=inbox"] .badge');
+    if (pmBadge) {
+      pmBadge.style.display = 'none';
+      console.log('PM badge hidden');
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", async () => {
     // Apply custom colors from config
     applyCustomColors();
@@ -4452,6 +4533,9 @@
     setInterval(removeZeroBadges, 1000);
     // Set up more frequent title cleaning
     setInterval(cleanTitleNotifications, 250);
+
+    // Load PM inbox page first to ensure deletion rules are applied
+    await loadPMInboxPage();
 
     await Promise.all(
       Array.from(
