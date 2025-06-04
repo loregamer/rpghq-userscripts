@@ -2,7 +2,7 @@
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
 // @version      5.18
-// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view, search, and math challenges on backslash!
+// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view, search, and math challenges with anti-cheat detection!
 // @author       You
 // @match        https://rpghq.org/*/*
 // @run-at       document-start
@@ -930,6 +930,10 @@
       border: 2px solid rgba(255, 0, 0, 0.3);
       position: relative;
       z-index: 1;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
     }
 
     .challenge-input {
@@ -3048,14 +3052,17 @@
   // ---------------------------------------------------------------------
 
   // Challenge system functions
-  function generateMathProblem() {
+  function generateMathProblem(difficulty = 1) {
     const types = ['multiplication', 'division', 'mixed'];
     const type = types[Math.floor(Math.random() * types.length)];
     
+    // Make problems harder based on difficulty (cheat attempts)
+    const difficultyMultiplier = Math.min(difficulty, 5); // Cap at 5x difficulty
+    
     if (type === 'multiplication') {
       // Generate harder multiplication problem
-      const num1 = Math.floor(Math.random() * 900) + 100; // 100-999
-      const num2 = Math.floor(Math.random() * 90) + 10;   // 10-99
+      const num1 = Math.floor(Math.random() * 900 * difficultyMultiplier) + 100; // Gets harder
+      const num2 = Math.floor(Math.random() * 90 * difficultyMultiplier) + 10;   // Gets harder
       const answer = num1 * num2;
       
       return {
@@ -3065,8 +3072,8 @@
       };
     } else if (type === 'division') {
       // Generate division problem that results in a whole number
-      const divisor = Math.floor(Math.random() * 25) + 12;  // 12-36
-      const quotient = Math.floor(Math.random() * 50) + 20; // 20-69
+      const divisor = Math.floor(Math.random() * 25 * difficultyMultiplier) + 12;  // Gets harder
+      const quotient = Math.floor(Math.random() * 50 * difficultyMultiplier) + 20; // Gets harder
       const dividend = divisor * quotient;
       
       return {
@@ -3076,9 +3083,9 @@
       };
     } else {
       // Mixed operation problem
-      const a = Math.floor(Math.random() * 50) + 10;
-      const b = Math.floor(Math.random() * 30) + 5;
-      const c = Math.floor(Math.random() * 20) + 2;
+      const a = Math.floor(Math.random() * 50 * difficultyMultiplier) + 10;
+      const b = Math.floor(Math.random() * 30 * difficultyMultiplier) + 5;
+      const c = Math.floor(Math.random() * 20 * difficultyMultiplier) + 2;
       const answer = (a * b) - c;
       
       return {
@@ -3115,6 +3122,7 @@
   let challengeModal = null;
   let currentChallenge = null;
   let wrongAttempts = 0;
+  let cheatAttempts = 0;
 
   function createChallengeModal() {
     const modal = document.createElement('div');
@@ -3137,11 +3145,84 @@
     
     document.body.appendChild(modal);
     
+    // Prevent right-click on the modal
+    modal.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const feedback = modal.querySelector('.challenge-feedback');
+      feedback.className = 'challenge-feedback wrong';
+      feedback.textContent = '🚫 Right-click disabled! Nice try, cheater!';
+    });
+    
     const input = modal.querySelector('.challenge-input');
     const submitBtn = modal.querySelector('.challenge-submit');
     const cancelBtn = modal.querySelector('.challenge-cancel');
     const feedback = modal.querySelector('.challenge-feedback');
     const hint = modal.querySelector('.challenge-hint');
+    
+    // Cheat detection - if they switch tabs/windows
+    function handleCheatAttempt() {
+      if (modal.classList.contains('active')) {
+        cheatAttempts++;
+        wrongAttempts = 0; // Reset wrong attempts
+        
+        // Generate new problem with increased difficulty
+        currentChallenge = generateMathProblem(cheatAttempts);
+        const questionEl = modal.querySelector('.challenge-question');
+        questionEl.textContent = currentChallenge.question;
+        
+        // Clear input and hints
+        input.value = '';
+        hint.textContent = '';
+        
+        // Show cheating message
+        feedback.className = 'challenge-feedback wrong';
+        const cheatMessages = [
+          `🚫 CHEATER DETECTED! New problem generated! (Attempt #${cheatAttempts})`,
+          `🎯 Nice try opening calculator! Here's a NEW problem!`,
+          `👀 I SAW THAT! Tab switching = NEW MATH PROBLEM!`,
+          `🔍 BUSTED! Did you really think I wouldn't notice? NEW PROBLEM!`,
+          `⛔ CHEAT ATTEMPT #${cheatAttempts} DETECTED! Enjoy your fresh problem!`,
+          `🚨 ALT+TAB DENIED! Here's an even HARDER problem!`,
+          `😈 Calculator.exe has been blocked! NEW QUESTION TIME!`,
+          `🎪 Welcome back, cheater! Your reward: A BRAND NEW PROBLEM!`,
+          `🔒 This ain't open-book, buddy! NEW MATH INCOMING!`,
+          `💀 Your cheating has been recorded and a new problem generated!`
+        ];
+        feedback.textContent = cheatMessages[Math.min(cheatAttempts - 1, cheatMessages.length - 1)];
+        
+        // Make the problem harder after multiple cheat attempts
+        if (cheatAttempts >= 3) {
+          // Add a penalty message to the question
+          questionEl.innerHTML = currentChallenge.question + `<br><small style="color: #ff6666;">⚠️ Difficulty increased due to ${cheatAttempts} cheat attempts!</small>`;
+        }
+        
+        // Flash the modal red
+        modal.style.animation = 'modalFlash 0.5s';
+        setTimeout(() => {
+          modal.style.animation = '';
+        }, 500);
+        
+        // Shake the container
+        const container = modal.querySelector('.challenge-container');
+        container.style.animation = 'challengeShake 0.5s';
+        setTimeout(() => {
+          container.style.animation = 'challengePulse 2s infinite, challengeShake 0.5s';
+        }, 500);
+      }
+    }
+    
+    // Add blur/focus listeners
+    window.addEventListener('blur', handleCheatAttempt);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        handleCheatAttempt();
+      }
+    });
+    
+    // Clean up listeners when modal is closed
+    function cleanupListeners() {
+      window.removeEventListener('blur', handleCheatAttempt);
+    }
     
     // Submit on Enter key
     input.addEventListener('keypress', (e) => {
@@ -3155,8 +3236,10 @@
     cancelBtn.addEventListener('click', () => {
       modal.classList.remove('active');
       wrongAttempts = 0;
+      cheatAttempts = 0;
       feedback.textContent = '';
       hint.textContent = '';
+      cleanupListeners();
     });
     
     function submitAnswer() {
@@ -3170,9 +3253,11 @@
         setTimeout(() => {
           modal.classList.remove('active');
           wrongAttempts = 0;
+          cheatAttempts = 0;
           input.value = '';
           feedback.textContent = '';
           hint.textContent = '';
+          cleanupListeners();
           
           // Now actually toggle the ghosted posts
           toggleGhostedPosts();
@@ -3187,11 +3272,16 @@
         if (wrongAttempts >= 2 && currentChallenge.type === 'math') {
           const answer = parseInt(currentChallenge.answer);
           if (wrongAttempts === 2) {
-            hint.textContent = `Hint: The answer is between ${answer - 50} and ${answer + 50}`;
+            hint.textContent = `🤔 Fine, I'll help... The answer is between ${answer - 100} and ${answer + 100}`;
           } else if (wrongAttempts === 3) {
-            hint.textContent = `Hint: The answer is between ${answer - 10} and ${answer + 10}`;
-          } else if (wrongAttempts >= 4) {
-            hint.textContent = `Hint: The first digit is ${currentChallenge.answer[0]}`;
+            hint.textContent = `😤 Seriously? OK... It's between ${answer - 25} and ${answer + 25}`;
+          } else if (wrongAttempts === 4) {
+            hint.textContent = `🙄 This is painful... The first digit is ${currentChallenge.answer[0]}`;
+          } else if (wrongAttempts === 5) {
+            hint.textContent = `😭 I can't watch anymore... The first TWO digits are ${currentChallenge.answer.substring(0, 2)}`;
+          } else if (wrongAttempts >= 6) {
+            const hiddenDigits = currentChallenge.answer.substring(2).replace(/./g, '_');
+            hint.textContent = `💀 Just type: ${currentChallenge.answer.substring(0, 2)}${hiddenDigits}`;
           }
         }
         
@@ -3213,6 +3303,10 @@
       challengeModal = createChallengeModal();
     }
     
+    // Reset counters
+    wrongAttempts = 0;
+    cheatAttempts = 0;
+    
     // Generate a new challenge
     currentChallenge = generateMathProblem();
     
@@ -3226,7 +3320,6 @@
     input.value = '';
     feedback.textContent = '';
     hint.textContent = '';
-    wrongAttempts = 0;
     
     // Show the modal
     challengeModal.classList.add('active');
