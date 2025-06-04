@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.16.1
+// @version      5.17
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1865,6 +1865,9 @@
                 if (isForumList) {
                   // For forum rows, only add ghosted-by-content to lastpost element
                   element.classList.add("ghosted-by-content");
+                  if (config.hideEntireRow) {
+                    element.classList.add("ghosted-row");
+                  }
                 } else if (row) {
                   // Check if this thread is whitelisted
                   const isWhitelisted = isThreadWhitelisted(row);
@@ -1872,7 +1875,7 @@
                   // For other rows, apply based on config
                   if (config.hideEntireRow && !isWhitelisted) {
                     // Hide entire row if not whitelisted
-                    row.classList.add("ghosted-by-content");
+                    row.classList.add("ghosted-by-content", "ghosted-row");
                   } else {
                     // Add highlight class to the row
                     row.classList.add("ghosted-by-content");
@@ -1883,11 +1886,14 @@
               if (isForumList) {
                 // For forum rows, only add ghosted-by-content to lastpost element
                 element.classList.add("ghosted-by-content");
+                if (config.hideEntireRow) {
+                  element.classList.add("ghosted-row");
+                }
               } else if (row) {
                 // For other rows, hide based on config
                 if (config.hideEntireRow) {
                   // Hide entire row
-                  row.classList.add("ghosted-by-content");
+                  row.classList.add("ghosted-by-content", "ghosted-row");
                 } else {
                   // Only hide lastpost
                   // Add highlight class to the row
