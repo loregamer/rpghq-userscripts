@@ -794,12 +794,12 @@ export function init({ getScriptSetting }) {
       const quoteColorSetting = _getScriptSetting(
         "notifications",
         "quoteColor",
-        "#1E90FF", // Default: DodgerBlue
+        "#ff6e6e", // Default: DodgerBlue
       );
       const replyColorSetting = _getScriptSetting(
         "notifications",
         "replyColor",
-        "#FF69B4", // Default: HotPink
+        "#32a852", // Default: HotPink
       );
       const reactionColorSetting = _getScriptSetting(
         "notifications",
