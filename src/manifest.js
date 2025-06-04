@@ -48,21 +48,6 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
   },
   {
-    id: "kalareact",
-    name: "Kalarion Reaction Auto-Marker",
-    version: "1.0.0",
-    description:
-      "Auto marks Kalarion rape notifs as read (I will move this to user preferences and make it squashed instead)",
-    author: "loregamer",
-    image: "https://f.rpghq.org/OA0rQkkRSSVq.png?n=pasted-file.png", // Add an image URL if available
-    path: "./scripts/kalareact.js",
-    enabledByDefault: false,
-    settings: [
-      // Add settings here
-    ],
-    categories: ["General"],
-  },
-  {
     id: "memberSearch",
     name: "Member Search Button",
     version: "1.0.0",

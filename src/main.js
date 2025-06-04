@@ -257,7 +257,6 @@ import * as memberSearch from "./scripts/memberSearch.js";
 import * as separateReactions from "./scripts/separateReactions.js";
 import * as pinThreads from "./scripts/pinThreads.js";
 import * as notifications from "./scripts/notifications.js";
-import * as kalareact from "./scripts/kalareact.js";
 import * as bbcode from "./scripts/bbcode.js";
 import * as commaFormatter from "./scripts/commaFormatter.js";
 import * as quotes from "./scripts/quotes.js";
@@ -269,8 +268,6 @@ const scriptModules = {
 
   quotes: quotes,
   disableEmbeds: disableEmbeds,
-
-  kalareact: kalareact,
 
   notifications: notifications,
 
