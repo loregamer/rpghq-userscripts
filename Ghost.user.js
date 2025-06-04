@@ -1448,82 +1448,36 @@
    * @param {string} rowType - The type of row to process ('forum' or 'topic')
    */
   function processTopicListRow(rowType) {
-    // Determine selector based on rowType
-    let selector;
+    // Full curated logic for each row type
     if (rowType === "forum") {
-      selector = "ul.topiclist.forums > li.row";
-    } else if (rowType === "topic") {
-      selector = "ul.topiclist.topics > li.row";
-    } else if (rowType === "recent") {
-      selector = "#recent-topics > ul > li.row";
-    } else {
-      console.error(
-        "Invalid rowType provided to processTopicListRow:",
-        rowType
-      );
-      return;
-    }
+      // Forum-specific logic
+      const rows = document.querySelectorAll("ul.topiclist.forums > li.row");
+      
+      rows.forEach((row) => {
+        // Skip if not a valid row
+        if (!row) return;
 
-    // Get all rows based on the selector
-    const rows = document.querySelectorAll(selector);
+        // Get the lastpost cell
+        const lastpostCell = row.querySelector("dd.lastpost");
+        if (!lastpostCell) return;
 
-    rows.forEach((row) => {
-      // Skip if not a valid row
-      if (!row) return;
+        // Get the topic title (without adding asterisk to all titles)
+        const topicTitle = row.querySelector("a.topictitle");
 
-      // First check for author-name-* class
-      const authorNameClass = Array.from(row.classList).find((cls) =>
-        cls.startsWith("author-name-")
-      );
-      if (authorNameClass) {
-        const username = authorNameClass.replace("author-name-", "");
-        if (isUserIgnored(username) && !isNonNotificationUCP()) {
-          row.classList.add("ghosted-by-content");
-          const lastpost = row.querySelector("dd.lastpost");
-          if (lastpost) {
-            lastpost.classList.add("ghosted-by-content");
-          }
-          return;
-        }
-      }
+        // Get the author link in the lastpost cell
+        const authorLink = lastpostCell.querySelector(
+          "a.username, a.username-coloured"
+        );
+        if (!authorLink) return;
 
-      // Check for special forums we don't want to process
-      const forumLinks = row.querySelectorAll(
-        ".forum-links a, .responsive-hide a"
-      );
-      const forumNames = Array.from(forumLinks).map((link) =>
-        link.textContent.trim()
-      );
-      if (
-        forumNames.includes("Moderation Station") ||
-        forumNames.includes("Chat With Staff")
-      ) {
-        return;
-      }
+        const authorName = authorLink.textContent.trim();
 
-      // Get the lastpost cell
-      const lastpostCell = row.querySelector("dd.lastpost");
-      if (!lastpostCell) return;
-
-      // Get the topic title (without adding asterisk to all titles)
-      const topicTitle = row.querySelector("a.topictitle");
-
-      // Get the author link in the lastpost cell
-      const authorLink = lastpostCell.querySelector(
-        "a.username, a.username-coloured"
-      );
-      if (!authorLink) return;
-
-      const authorName = authorLink.textContent.trim();
-
-      // For forum rows, we only hide the lastpost section
-      if (rowType === "forum") {
+        // For forum rows, we only add classes to the lastpost section
         // Check if the author is ignored
         if (isUserIgnored(authorName) && !isNonNotificationUCP()) {
-          // Author is ghosted, add ghosted-row class to lastpost
+          // Author is ghosted, add ghosted-row and ghosted-by-author classes to lastpost ONLY
           lastpostCell.classList.add("ghosted-row");
-          // Add highlighting class to the row
-          row.classList.add("ghosted-by-author");
+          lastpostCell.classList.add("ghosted-by-author");
           return;
         }
 
@@ -1538,12 +1492,65 @@
               postContentContainsGhosted(postContent) &&
               !isNonNotificationUCP()
             ) {
-              row.classList.add("ghosted-by-content");
+              // Add ghosted-by-content to lastpost ONLY
+              lastpostCell.classList.add("ghosted-by-content");
             }
           }
         }
-      } else {
-        // For topic and recent rows, check config to see if we should hide entire row or just lastpost
+      });
+    } else if (rowType === "topic") {
+      // Topic-specific logic
+      const rows = document.querySelectorAll("ul.topiclist.topics > li.row");
+      
+      rows.forEach((row) => {
+        // Skip if not a valid row
+        if (!row) return;
+
+        // First check for author-name-* class
+        const authorNameClass = Array.from(row.classList).find((cls) =>
+          cls.startsWith("author-name-")
+        );
+        if (authorNameClass) {
+          const username = authorNameClass.replace("author-name-", "");
+          if (isUserIgnored(username) && !isNonNotificationUCP()) {
+            row.classList.add("ghosted-by-content");
+            const lastpost = row.querySelector("dd.lastpost");
+            if (lastpost) {
+              lastpost.classList.add("ghosted-by-content");
+            }
+            return;
+          }
+        }
+
+        // Check for special forums we don't want to process
+        const forumLinks = row.querySelectorAll(
+          ".forum-links a, .responsive-hide a"
+        );
+        const forumNames = Array.from(forumLinks).map((link) =>
+          link.textContent.trim()
+        );
+        if (
+          forumNames.includes("Moderation Station") ||
+          forumNames.includes("Chat With Staff")
+        ) {
+          return;
+        }
+
+        // Get the lastpost cell
+        const lastpostCell = row.querySelector("dd.lastpost");
+        if (!lastpostCell) return;
+
+        // Get the topic title (without adding asterisk to all titles)
+        const topicTitle = row.querySelector("a.topictitle");
+
+        // Get the author link in the lastpost cell
+        const authorLink = lastpostCell.querySelector(
+          "a.username, a.username-coloured"
+        );
+        if (!authorLink) return;
+
+        const authorName = authorLink.textContent.trim();
+
         // Check if the author is ignored
         if (isUserIgnored(authorName) && !isNonNotificationUCP()) {
           // Check if this thread is whitelisted
@@ -1609,8 +1616,133 @@
             }
           }
         }
-      }
-    });
+      });
+    } else if (rowType === "recent") {
+      // Recent-specific logic
+      const rows = document.querySelectorAll("#recent-topics > ul > li.row");
+      
+      rows.forEach((row) => {
+        // Skip if not a valid row
+        if (!row) return;
+
+        // First check for author-name-* class
+        const authorNameClass = Array.from(row.classList).find((cls) =>
+          cls.startsWith("author-name-")
+        );
+        if (authorNameClass) {
+          const username = authorNameClass.replace("author-name-", "");
+          if (isUserIgnored(username) && !isNonNotificationUCP()) {
+            row.classList.add("ghosted-by-content");
+            const lastpost = row.querySelector("dd.lastpost");
+            if (lastpost) {
+              lastpost.classList.add("ghosted-by-content");
+            }
+            return;
+          }
+        }
+
+        // Check for special forums we don't want to process
+        const forumLinks = row.querySelectorAll(
+          ".forum-links a, .responsive-hide a"
+        );
+        const forumNames = Array.from(forumLinks).map((link) =>
+          link.textContent.trim()
+        );
+        if (
+          forumNames.includes("Moderation Station") ||
+          forumNames.includes("Chat With Staff")
+        ) {
+          return;
+        }
+
+        // Get the lastpost cell
+        const lastpostCell = row.querySelector("dd.lastpost");
+        if (!lastpostCell) return;
+
+        // Get the topic title (without adding asterisk to all titles)
+        const topicTitle = row.querySelector("a.topictitle");
+
+        // Get the author link in the lastpost cell
+        const authorLink = lastpostCell.querySelector(
+          "a.username, a.username-coloured"
+        );
+        if (!authorLink) return;
+
+        const authorName = authorLink.textContent.trim();
+
+        // Check if the author is ignored
+        if (isUserIgnored(authorName) && !isNonNotificationUCP()) {
+          // Check if this thread is whitelisted
+          const isWhitelisted = isThreadWhitelisted(row);
+
+          if (config.hideEntireRow && !isWhitelisted) {
+            // Hide entire row - Author is ghosted (if not whitelisted)
+            row.classList.add("ghosted-row");
+            // Add highlighting class to the row
+            row.classList.add("ghosted-by-author");
+          } else {
+            // Only hide lastpost
+            lastpostCell.classList.add("ghosted-row");
+            // Add highlighting class to the row
+            row.classList.add("ghosted-by-author");
+          }
+          return;
+        }
+
+        // Check for post content with ghosted mentions
+        const postLink = lastpostCell.querySelector("a[href*='viewtopic.php']");
+        if (postLink) {
+          const postId = postLink.href.match(/p=(\d+)/)?.[1];
+          if (postId && postCache[postId]) {
+            const postContent = postCache[postId].content;
+            // Check if the lastPostCell contains the username of a ghosted user
+            if (
+              authorLink &&
+              isUserIgnored(authorLink.textContent.trim()) &&
+              !isNonNotificationUCP()
+            ) {
+              // Check if this thread is whitelisted
+              const isWhitelisted = isThreadWhitelisted(row);
+
+              if (config.hideEntireRow && !isWhitelisted) {
+                // Hide entire row if not whitelisted
+                row.classList.add("ghosted-row");
+                // Add highlighting class to the row
+                row.classList.add("ghosted-by-author");
+              } else {
+                // Only hide lastpost
+                lastpostCell.classList.add("ghosted-row");
+                // Add highlighting class to the row
+                row.classList.add("ghosted-by-author");
+              }
+              return; // Stop here, don't check content
+            } else if (
+              postContent &&
+              postContentContainsGhosted(postContent) &&
+              !isNonNotificationUCP()
+            ) {
+              // Content contains ghosted references
+              // Check if this thread is whitelisted
+              const isWhitelisted = isThreadWhitelisted(row);
+
+              if (config.hideEntireRow && !isWhitelisted) {
+                // Add highlighting class to the row
+                row.classList.add("ghosted-by-content");
+              } else {
+                // Add highlighting class to the row
+                row.classList.add("ghosted-by-content");
+              }
+            }
+          }
+        }
+      });
+    } else {
+      console.error(
+        "Invalid rowType provided to processTopicListRow:",
+        rowType
+      );
+      return;
+    }
   }
 
   // Legacy functions for backward compatibility
