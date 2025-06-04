@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.17
-// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view and search.
+// @version      5.18
+// @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view, search, and math challenges on backslash!
 // @author       You
 // @match        https://rpghq.org/*/*
 // @run-at       document-start
@@ -800,6 +800,254 @@
     /* Show the list item when Alt key is down */
     body.alt-key-down .post li.post-ghost-button-li {
       display: inline-block !important; /* Or list-item, adjust if needed */
+    }
+
+    /* -----------------------------------------------------------------
+       8) CHALLENGE MODAL STYLES
+       ----------------------------------------------------------------- */
+    .challenge-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.95);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+      backdrop-filter: blur(5px);
+    }
+
+    .challenge-modal.active {
+      display: flex;
+      animation: modalFlash 0.3s;
+    }
+
+    @keyframes modalFlash {
+      0% { background-color: rgba(255, 0, 0, 0.3); }
+      50% { background-color: rgba(0, 0, 0, 0.95); }
+      100% { background-color: rgba(0, 0, 0, 0.95); }
+    }
+
+    .challenge-container {
+      background: linear-gradient(135deg, #1e1e1e 0%, #2a2e36 100%);
+      border: 4px solid #ff0000;
+      border-radius: 15px;
+      padding: 40px;
+      max-width: 600px;
+      width: 90%;
+      box-shadow: 0 0 50px rgba(255, 0, 0, 0.5), inset 0 0 30px rgba(255, 0, 0, 0.1);
+      animation: challengePulse 2s infinite, challengeShake 0.5s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .challenge-container::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255, 0, 0, 0.03) 10px,
+        rgba(255, 0, 0, 0.03) 20px
+      );
+      animation: stripeMove 20s linear infinite;
+    }
+
+    @keyframes stripeMove {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
+    }
+
+    @keyframes challengePulse {
+      0%, 100% { 
+        box-shadow: 0 0 50px rgba(255, 0, 0, 0.5), inset 0 0 30px rgba(255, 0, 0, 0.1);
+        border-color: #ff0000;
+      }
+      50% { 
+        box-shadow: 0 0 80px rgba(255, 0, 0, 0.8), inset 0 0 50px rgba(255, 0, 0, 0.2);
+        border-color: #ff3333;
+      }
+    }
+
+    @keyframes challengeShake {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      10% { transform: translateX(-10px) rotate(-1deg); }
+      20% { transform: translateX(10px) rotate(1deg); }
+      30% { transform: translateX(-10px) rotate(-1deg); }
+      40% { transform: translateX(10px) rotate(1deg); }
+      50% { transform: translateX(-10px) rotate(-1deg); }
+      60% { transform: translateX(10px) rotate(1deg); }
+      70% { transform: translateX(-10px) rotate(-1deg); }
+      80% { transform: translateX(10px) rotate(1deg); }
+      90% { transform: translateX(-10px) rotate(-1deg); }
+    }
+
+    .challenge-title {
+      color: #ff0000;
+      font-size: 32px;
+      text-align: center;
+      margin-bottom: 10px;
+      font-weight: bold;
+      text-shadow: 0 0 20px rgba(255, 0, 0, 0.8), 0 0 40px rgba(255, 0, 0, 0.5);
+      animation: titlePulse 1s infinite alternate;
+      letter-spacing: 2px;
+      position: relative;
+      z-index: 1;
+    }
+
+    @keyframes titlePulse {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.05); }
+    }
+
+    .challenge-subtitle {
+      color: #ff9999;
+      font-size: 16px;
+      text-align: center;
+      margin-bottom: 25px;
+      font-style: italic;
+      position: relative;
+      z-index: 1;
+    }
+
+    .challenge-question {
+      color: #ffffff;
+      font-size: 28px;
+      text-align: center;
+      margin-bottom: 30px;
+      line-height: 1.4;
+      font-weight: bold;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      border-radius: 10px;
+      border: 2px solid rgba(255, 0, 0, 0.3);
+      position: relative;
+      z-index: 1;
+    }
+
+    .challenge-input {
+      width: 100%;
+      padding: 15px;
+      font-size: 24px;
+      background-color: #0a0a0a;
+      border: 3px solid #ff0000;
+      border-radius: 8px;
+      color: #ffffff;
+      text-align: center;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+      position: relative;
+      z-index: 1;
+    }
+
+    .challenge-input:focus {
+      outline: none;
+      border-color: #ff6666;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+      transform: scale(1.02);
+    }
+
+    .challenge-buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .challenge-submit {
+      background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 15px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 5px 15px rgba(255, 0, 0, 0.3);
+      text-transform: uppercase;
+    }
+
+    .challenge-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 20px rgba(255, 0, 0, 0.5);
+    }
+
+    .challenge-cancel {
+      background: linear-gradient(135deg, #666666 0%, #333333 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 15px 30px;
+      font-size: 18px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .challenge-cancel:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .challenge-feedback {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      min-height: 25px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .challenge-feedback.wrong {
+      color: #ff6666;
+      animation: feedbackShake 0.5s;
+    }
+
+    @keyframes feedbackShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+
+    .challenge-feedback.correct {
+      color: #00ff00;
+      text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+    }
+
+    .challenge-hint {
+      color: #ffcc00;
+      font-size: 16px;
+      text-align: center;
+      margin-top: 15px;
+      font-weight: bold;
+      background: rgba(255, 204, 0, 0.1);
+      padding: 10px;
+      border-radius: 5px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .challenge-warning {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 60px;
+      animation: warningBlink 1s infinite;
+    }
+
+    @keyframes warningBlink {
+      0%, 50%, 100% { opacity: 1; }
+      25%, 75% { opacity: 0.3; }
     }
 
     .ghosted-post-manual {
@@ -2799,6 +3047,196 @@
   // 8) SHOW/HIDE GHOSTED POSTS TOGGLE VIA KEYBOARD
   // ---------------------------------------------------------------------
 
+  // Challenge system functions
+  function generateMathProblem() {
+    const types = ['multiplication', 'division', 'mixed'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    
+    if (type === 'multiplication') {
+      // Generate harder multiplication problem
+      const num1 = Math.floor(Math.random() * 900) + 100; // 100-999
+      const num2 = Math.floor(Math.random() * 90) + 10;   // 10-99
+      const answer = num1 * num2;
+      
+      return {
+        question: `Solve this or stay locked out:\n${num1} × ${num2} = ?`,
+        answer: answer.toString(),
+        type: 'math'
+      };
+    } else if (type === 'division') {
+      // Generate division problem that results in a whole number
+      const divisor = Math.floor(Math.random() * 25) + 12;  // 12-36
+      const quotient = Math.floor(Math.random() * 50) + 20; // 20-69
+      const dividend = divisor * quotient;
+      
+      return {
+        question: `Quick! What's the answer:\n${dividend} ÷ ${divisor} = ?`,
+        answer: quotient.toString(),
+        type: 'math'
+      };
+    } else {
+      // Mixed operation problem
+      const a = Math.floor(Math.random() * 50) + 10;
+      const b = Math.floor(Math.random() * 30) + 5;
+      const c = Math.floor(Math.random() * 20) + 2;
+      const answer = (a * b) - c;
+      
+      return {
+        question: `Calculate or be denied:\n(${a} × ${b}) - ${c} = ?`,
+        answer: answer.toString(),
+        type: 'math'
+      };
+    }
+  }
+
+  const wrongAnswerMessages = [
+    "❌ WRONG! Your brain is smoother than a bowling ball!",
+    "❌ INCORRECT! Did you learn math from a cereal box?",
+    "❌ NOPE! Even my grandma's calculator could do better!",
+    "❌ FAIL! Your math teacher is crying right now!",
+    "❌ WRONG ANSWER! Are you using your fingers AND toes?",
+    "❌ TRY AGAIN! This is more embarrassing than your search history!",
+    "❌ INCORRECT! Your friends are screenshotting this failure!",
+    "❌ NOPE! Did you drop out of elementary school?",
+    "❌ WRONG! Even a broken calculator is right twice a day... unlike you!",
+    "❌ FAIL! Your brain cells called - they want a divorce!",
+    "❌ INCORRECT! This is going in your permanent record!",
+    "❌ WRONG! I've seen potatoes solve math faster!",
+    "❌ NOPE! Did you use a Magic 8-Ball for this answer?",
+    "❌ FAIL! Your IQ just went negative!",
+    "❌ WRONG! Even Google can't help you now!",
+    "❌ INCORRECT! This failure will haunt your dreams!",
+    "❌ NOPE! Your calculator just uninstalled itself!",
+    "❌ FAIL! Mathematics has filed a restraining order against you!",
+    "❌ WRONG! This is why we can't have nice things!",
+    "❌ INCORRECT! Your math skills are more ghosted than the posts you're trying to see!"
+  ];
+
+  let challengeModal = null;
+  let currentChallenge = null;
+  let wrongAttempts = 0;
+
+  function createChallengeModal() {
+    const modal = document.createElement('div');
+    modal.className = 'challenge-modal';
+    modal.innerHTML = `
+      <div class="challenge-container">
+        <div class="challenge-warning">⚠️</div>
+        <div class="challenge-title">🚨 STOP RIGHT THERE! 🚨</div>
+        <div class="challenge-subtitle">You've been caught red-handed trying to use the forbidden backslash!</div>
+        <div class="challenge-question"></div>
+        <input type="text" class="challenge-input" placeholder="Type your answer or suffer...">
+        <div class="challenge-feedback"></div>
+        <div class="challenge-hint"></div>
+        <div class="challenge-buttons">
+          <button class="challenge-submit">SUBMIT ANSWER</button>
+          <button class="challenge-cancel">I GIVE UP 😭</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const input = modal.querySelector('.challenge-input');
+    const submitBtn = modal.querySelector('.challenge-submit');
+    const cancelBtn = modal.querySelector('.challenge-cancel');
+    const feedback = modal.querySelector('.challenge-feedback');
+    const hint = modal.querySelector('.challenge-hint');
+    
+    // Submit on Enter key
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        submitAnswer();
+      }
+    });
+    
+    submitBtn.addEventListener('click', submitAnswer);
+    
+    cancelBtn.addEventListener('click', () => {
+      modal.classList.remove('active');
+      wrongAttempts = 0;
+      feedback.textContent = '';
+      hint.textContent = '';
+    });
+    
+    function submitAnswer() {
+      const userAnswer = input.value.trim().toLowerCase();
+      
+      if (userAnswer === currentChallenge.answer.toLowerCase()) {
+        // Correct answer!
+        feedback.className = 'challenge-feedback correct';
+        feedback.textContent = '✅ Correct! You may proceed...';
+        
+        setTimeout(() => {
+          modal.classList.remove('active');
+          wrongAttempts = 0;
+          input.value = '';
+          feedback.textContent = '';
+          hint.textContent = '';
+          
+          // Now actually toggle the ghosted posts
+          toggleGhostedPosts();
+        }, 1000);
+      } else {
+        // Wrong answer
+        wrongAttempts++;
+        feedback.className = 'challenge-feedback wrong';
+        feedback.textContent = wrongAnswerMessages[Math.floor(Math.random() * wrongAnswerMessages.length)];
+        
+        // Add hints after multiple wrong attempts
+        if (wrongAttempts >= 2 && currentChallenge.type === 'math') {
+          const answer = parseInt(currentChallenge.answer);
+          if (wrongAttempts === 2) {
+            hint.textContent = `Hint: The answer is between ${answer - 50} and ${answer + 50}`;
+          } else if (wrongAttempts === 3) {
+            hint.textContent = `Hint: The answer is between ${answer - 10} and ${answer + 10}`;
+          } else if (wrongAttempts >= 4) {
+            hint.textContent = `Hint: The first digit is ${currentChallenge.answer[0]}`;
+          }
+        }
+        
+        // Shake the input
+        input.style.animation = 'challengeShake 0.5s';
+        setTimeout(() => {
+          input.style.animation = '';
+        }, 500);
+        
+        input.select();
+      }
+    }
+    
+    return modal;
+  }
+
+  function showChallenge() {
+    if (!challengeModal) {
+      challengeModal = createChallengeModal();
+    }
+    
+    // Generate a new challenge
+    currentChallenge = generateMathProblem();
+    
+    // Update the modal
+    const questionEl = challengeModal.querySelector('.challenge-question');
+    const input = challengeModal.querySelector('.challenge-input');
+    const feedback = challengeModal.querySelector('.challenge-feedback');
+    const hint = challengeModal.querySelector('.challenge-hint');
+    
+    questionEl.textContent = currentChallenge.question;
+    input.value = '';
+    feedback.textContent = '';
+    hint.textContent = '';
+    wrongAttempts = 0;
+    
+    // Show the modal
+    challengeModal.classList.add('active');
+    
+    // Focus the input after a short delay
+    setTimeout(() => {
+      input.focus();
+    }, 100);
+  }
+
   function showToggleNotification() {
     const notification = document.createElement("div");
     notification.style.cssText = `
@@ -2881,7 +3319,15 @@
     // Check for backslash key
     if (e.key === "\\") {
       e.preventDefault();
-      toggleGhostedPosts();
+      
+      // Check if we're currently showing ghosted posts
+      if (showGhostedPosts) {
+        // Already showing, so just hide them (free toggle)
+        toggleGhostedPosts();
+      } else {
+        // Currently hiding, so show the challenge
+        showChallenge();
+      }
     }
   });
 
