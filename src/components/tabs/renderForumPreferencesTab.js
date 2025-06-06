@@ -7,6 +7,7 @@ import { renderThreadsSubtab } from "./subtabs/renderThreadsSubtab.js";
 import { renderUsersSubtab } from "./subtabs/renderUsersSubtab.js";
 // Import the new Theme subtab renderer
 import { renderThemeSubtab } from "./subtabs/renderThemeSubtab.js";
+import { renderDisplaySubtab } from "./subtabs/renderDisplaySubtab.js";
 import { log } from "../../utils/logger.js";
 // Removed GM imports as they are handled in the subtab now
 // import { gmGetValue, gmSetValue } from "../../main.js";
@@ -32,6 +33,9 @@ export function renderForumPreferencesTab(container) {
   subTabsContainer.innerHTML = `
     <div class="sub-tab active" data-subtab="theme">
       <i class="fa fa-paint-brush"></i> Theme
+    </div>
+    <div class="sub-tab" data-subtab="display">
+      <i class="fa fa-desktop"></i> Display
     </div>
     <div class="sub-tab" data-subtab="threads">
       <i class="fa fa-comments"></i> Threads
@@ -65,6 +69,8 @@ export function renderForumPreferencesTab(container) {
 
       if (subtabName === "theme") {
         renderThemeSubtab(subTabContent);
+      } else if (subtabName === "display") {
+        renderDisplaySubtab(subTabContent);
       } else if (subtabName === "threads") {
         renderThreadsSubtab(subTabContent);
       } else if (subtabName === "users") {

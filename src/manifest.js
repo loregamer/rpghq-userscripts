@@ -34,20 +34,6 @@ export const SCRIPT_MANIFEST = [
     categories: ["UI"],
   },
   {
-    id: "disableEmbeds",
-    name: "Disable Media Embeds",
-    version: "1.0.0",
-    description: "Replaces YouTube and Reddit embeds with plain links",
-    author: "loregamer",
-    image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png", // Placeholder image
-    path: "./scripts/disableEmbeds.js",
-    enabledByDefault: true,
-    settings: [
-      // Settings are controlled through Forum Preferences
-    ],
-    categories: ["UI"],
-  },
-  {
     id: "memberSearch",
     name: "Member Search Button",
     version: "1.0.0",
@@ -335,26 +321,5 @@ export const SCRIPT_MANIFEST = [
       },
     ],
     categories: ["UI"],
-  },
-  {
-    id: "commaFormatter",
-    name: "Thousands Comma Formatter",
-    version: "2.1.2",
-    description: "Add commas to large numbers in forum posts and statistics.",
-    author: "loregamer",
-    image: "https://f.rpghq.org/olnCVAbEzbkt.png?n=pasted-file.png",
-    path: "./scripts/commaFormatter.js",
-    enabledByDefault: true,
-    urlPatterns: [],
-    settings: [
-      {
-        id: "formatFourDigits",
-        label: "Format 4-digit numbers",
-        type: "checkbox",
-        defaultValue: false,
-        description:
-          "Enable to add commas to 4-digit numbers (1,000+). Disable to only format 5-digit numbers (10,000+).",
-      },
-    ],
   }
 ];;

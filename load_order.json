@@ -1,6 +1,5 @@
 {
   "document-start": [
-    "disableEmbeds",
     "_applyThreadPreferences",
     "_cachePostsOnPage",
     "_applyUserPreferences"
@@ -14,9 +13,7 @@
     "pinThreads",
     "separateReactions",
     "quotes",
-    "recentTopicsFormat",
-    "commaFormatter",
-    "disableEmbeds"
+    "recentTopicsFormat"
   ],
   "document-idle": [],
   "after_dom": []

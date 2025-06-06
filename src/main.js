@@ -11,6 +11,12 @@ import loadOrder from "../load_order.json"; // Import the execution order
 // Import user rules system
 import { initRuleApplication } from "./utils/userRules/ruleApplication.js";
 
+// Import forum preference handlers
+import { initializeForumPreferences } from "./forumPreferenceHandlers.js";
+
+// Import migration handler
+import { runMigration } from "./utils/migrationHandler.js";
+
 // Import UI components
 import { showModal } from "./components/showModal.js";
 import { hideModal } from "./components/hideModal.js";
@@ -258,23 +264,14 @@ import * as separateReactions from "./scripts/separateReactions.js";
 import * as pinThreads from "./scripts/pinThreads.js";
 import * as notifications from "./scripts/notifications.js";
 import * as bbcode from "./scripts/bbcode.js";
-import * as commaFormatter from "./scripts/commaFormatter.js";
 import * as quotes from "./scripts/quotes.js";
-import * as disableEmbeds from "./scripts/disableEmbeds.js";
 // Map of script ids to their modules
 const scriptModules = {
-  commaFormatter: commaFormatter,
   bbcode: bbcode,
-
   quotes: quotes,
-  disableEmbeds: disableEmbeds,
-
   notifications: notifications,
-
   pinThreads: pinThreads,
-
   separateReactions: separateReactions,
-
   memberSearch: memberSearch,
   randomTopic: randomTopic,
   recentTopicsFormat: recentTopicsFormat,
@@ -568,6 +565,12 @@ function init() {
 
   // Initialize script states
   initializeScriptStates();
+
+  // Run migration for scripts converted to forum preferences
+  runMigration();
+
+  // Initialize forum preferences (these run automatically, no enable/disable)
+  initializeForumPreferences();
 
   // Execute load order for document-start phase immediately
   applyCustomThemeStyles();
