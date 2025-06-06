@@ -19,19 +19,36 @@ export function runMigration() {
   let migrationCount = 0;
 
   // Migrate comma formatter settings
-  if (gmGetValue("script_enabled_commaFormatter", null) !== null) {
-    const wasEnabled = gmGetValue("script_enabled_commaFormatter", false);
-    const formatFourDigits = gmGetValue(
-      "script_setting_commaFormatter_formatFourDigits",
-      false,
-    );
+  const scriptWasEnabled = gmGetValue("script_enabled_commaFormatter", null);
+  // The original script used GM_getValue directly, not our wrapped version
+  // So we need to check the unprefixed key
+  const originalFormatFourDigits =
+    typeof GM_getValue !== "undefined"
+      ? GM_getValue("formatFourDigits", null)
+      : null;
+
+  if (scriptWasEnabled !== null || originalFormatFourDigits !== null) {
+    // Check if the script was enabled (default to true if not set, as it was enabledByDefault)
+    const wasEnabled = scriptWasEnabled !== null ? scriptWasEnabled : true;
+
+    // Get the formatFourDigits setting from the original location
+    const formatFourDigits =
+      originalFormatFourDigits !== null ? originalFormatFourDigits : false;
 
     // Set the new preference values
     gmSetValue("display_commaFormatting_enabled", wasEnabled);
     gmSetValue("display_commaFormatting_formatFourDigits", formatFourDigits);
 
     // Clean up old values
-    gmSetValue("script_enabled_commaFormatter", undefined);
+    if (scriptWasEnabled !== null) {
+      gmSetValue("script_enabled_commaFormatter", undefined);
+    }
+    if (
+      originalFormatFourDigits !== null &&
+      typeof GM_deleteValue !== "undefined"
+    ) {
+      GM_deleteValue("formatFourDigits");
+    }
     gmSetValue("script_setting_commaFormatter_formatFourDigits", undefined);
 
     log(

@@ -104,7 +104,7 @@ export function cachePostsFromTopicReview() {
       log(`Warning: Null post element at index ${index}`);
       return;
     }
-    
+
     log(`Processing topic review post ${index + 1}/${posts.length}`);
     debug(
       `Post element: ${post.tagName}${post.id ? "#" + post.id : ""} class="${post.className || ""}"`,
@@ -292,7 +292,7 @@ export function cachePostsFromViewTopic() {
       log(`Warning: Null post element at index ${index}`);
       return;
     }
-    
+
     log(`Processing viewtopic post ${index + 1}/${posts.length}`);
     debug(
       `Post element: ${post.tagName}${post.id ? "#" + post.id : ""} class="${post.className || ""}"`,
@@ -491,7 +491,7 @@ export function cacheLastPosts() {
       log(`Warning: Null lastpost element at index ${index}`);
       return;
     }
-    
+
     log(`Processing lastpost element ${index + 1}/${lastPosts.length}`);
     debug(
       `Lastpost element: ${lastPost.tagName}${lastPost.id ? "#" + lastPost.id : ""} class="${lastPost.className || ""}"`,

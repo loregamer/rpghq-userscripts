@@ -16,6 +16,7 @@ export const commaFormattingHandler = {
   shouldRun: () => {
     // This preference is always available, but we check if it's enabled
     const enabled = gmGetValue("display_commaFormatting_enabled", true);
+    log(`[CommaFormatting] Checking if should run: enabled=${enabled}`);
     return enabled;
   },
 
@@ -23,14 +24,17 @@ export const commaFormattingHandler = {
    * Initialize the comma formatting
    */
   init: () => {
-    log("Initializing comma formatting preference handler");
+    log("[CommaFormatting] Initializing comma formatting preference handler");
 
     // Get preference for formatting 4-digit numbers
     const formatFourDigits = gmGetValue(
       "display_commaFormatting_formatFourDigits",
       false,
     );
+    log(`[CommaFormatting] Format 4-digit numbers: ${formatFourDigits}`);
+
     const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
+    log(`[CommaFormatting] Using regex: ${numberRegex.toString()}`);
 
     function formatNumberWithCommas(number) {
       return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -107,12 +111,15 @@ export const commaFormattingHandler = {
 
     function processElements() {
       const elements = document.querySelectorAll(
-        "dd.posts, dd.profile-posts, dd.views, span.responsive-show.left-box, .column2 .details dd",
+        "dd.posts, dd.topics, dd.profile-posts, dd.views, span.responsive-show.left-box, .column2 .details dd",
       );
 
-      elements.forEach((element) => {
+      log(`[CommaFormatting] Found ${elements.length} elements to process`);
+
+      elements.forEach((element, index) => {
         if (
           element.classList.contains("posts") ||
+          element.classList.contains("topics") ||
           element.classList.contains("views") ||
           (element.parentElement &&
             element.parentElement.classList.contains("details"))
@@ -129,9 +136,15 @@ export const commaFormattingHandler = {
               node.nodeType === Node.TEXT_NODE &&
               numberRegex.test(node.nodeValue)
             ) {
+              const originalValue = node.nodeValue;
               node.nodeValue = node.nodeValue.replace(numberRegex, (match) =>
                 formatNumberWithCommas(match),
               );
+              if (originalValue !== node.nodeValue) {
+                log(
+                  `[CommaFormatting] Formatted: "${originalValue.trim()}" -> "${node.nodeValue.trim()}"`,
+                );
+              }
             }
           });
         } else if (element.classList.contains("profile-posts")) {
@@ -164,9 +177,22 @@ export const commaFormattingHandler = {
       });
     }
 
-    // Run initial processing
-    processElements();
-    calculateForumStatistics();
+    // Wait for DOM to be ready before processing
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
+        log("DOM ready, processing comma formatting");
+        processElements();
+        calculateForumStatistics();
+      });
+    } else {
+      // DOM is already ready
+      log("DOM already ready, processing immediately");
+      // Use a small timeout to ensure elements are rendered
+      setTimeout(() => {
+        processElements();
+        calculateForumStatistics();
+      }, 100);
+    }
 
     // Set up mutation observer for dynamic content
     const observer = new MutationObserver((mutations) => {
