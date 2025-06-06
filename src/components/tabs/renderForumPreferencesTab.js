@@ -35,7 +35,7 @@ export function renderForumPreferencesTab(container) {
       <i class="fa fa-paint-brush"></i> Theme
     </div>
     <div class="sub-tab" data-subtab="display">
-      <i class="fa fa-desktop"></i> Display
+      <i class="fa fa-wrench"></i> Tweaks
     </div>
     <div class="sub-tab" data-subtab="threads">
       <i class="fa fa-comments"></i> Threads
