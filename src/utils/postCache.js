@@ -100,9 +100,14 @@ export function cachePostsFromTopicReview() {
   const cachedPosts = getAllCachedPosts();
 
   posts.forEach((post, index) => {
+    if (!post) {
+      log(`Warning: Null post element at index ${index}`);
+      return;
+    }
+    
     log(`Processing topic review post ${index + 1}/${posts.length}`);
     debug(
-      `Post element: ${post.tagName}${post.id ? "#" + post.id : ""} class="${post.className}"`,
+      `Post element: ${post.tagName}${post.id ? "#" + post.id : ""} class="${post.className || ""}"`,
     );
 
     // Try multiple methods to get the post ID
@@ -113,7 +118,7 @@ export function cachePostsFromTopicReview() {
     const postBody = post.querySelector(".postbody");
     if (postBody) {
       log(
-        `Found postbody: ${postBody.tagName}${postBody.id ? "#" + postBody.id : ""} class="${postBody.className}"`,
+        `Found postbody: ${postBody.tagName}${postBody.id ? "#" + postBody.id : ""} class="${postBody.className || ""}"`,
       );
       if (postBody.id) {
         // Handle both 'pr1234' and 'p1234' formats
@@ -190,7 +195,7 @@ export function cachePostsFromTopicReview() {
     // Log content finding results
     if (contentDiv) {
       log(
-        `Found content div for post ${postId}: ${contentDiv.tagName}${contentDiv.id ? "#" + contentDiv.id : ""} class="${contentDiv.className}"`,
+        `Found content div for post ${postId}: ${contentDiv.tagName}${contentDiv.id ? "#" + contentDiv.id : ""} class="${contentDiv.className || ""}"`,
       );
       const contentPreview =
         contentDiv.innerHTML.substring(0, 100).replace(/\n/g, " ") + "...";
@@ -269,7 +274,7 @@ export function cachePostsFromViewTopic() {
     );
     if (contentArea) {
       log(
-        `Found main content area: ${contentArea.tagName}${contentArea.id ? "#" + contentArea.id : ""} class="${contentArea.className}"`,
+        `Found main content area: ${contentArea.tagName}${contentArea.id ? "#" + contentArea.id : ""} class="${contentArea.className || ""}"`,
       );
       const contentPreview = contentArea.innerHTML.substring(0, 200) + "...";
       debug(`Content area preview: ${contentPreview}`);
@@ -283,9 +288,14 @@ export function cachePostsFromViewTopic() {
   const cachedPosts = getAllCachedPosts();
 
   posts.forEach((post, index) => {
+    if (!post) {
+      log(`Warning: Null post element at index ${index}`);
+      return;
+    }
+    
     log(`Processing viewtopic post ${index + 1}/${posts.length}`);
     debug(
-      `Post element: ${post.tagName}${post.id ? "#" + post.id : ""} class="${post.className}"`,
+      `Post element: ${post.tagName}${post.id ? "#" + post.id : ""} class="${post.className || ""}"`,
     );
 
     let postId = null;
@@ -315,7 +325,7 @@ export function cachePostsFromViewTopic() {
       const postBody = post.querySelector(".postbody");
       if (postBody) {
         log(
-          `Found postbody: ${postBody.tagName}${postBody.id ? "#" + postBody.id : ""} class="${postBody.className}"`,
+          `Found postbody: ${postBody.tagName}${postBody.id ? "#" + postBody.id : ""} class="${postBody.className || ""}"`,
         );
         if (postBody.id) {
           const bodyId = postBody.id;
@@ -384,7 +394,7 @@ export function cachePostsFromViewTopic() {
     const contentDiv = post.querySelector(".content");
     if (contentDiv) {
       log(
-        `Found content div for post ${postId}: ${contentDiv.tagName}${contentDiv.id ? "#" + contentDiv.id : ""} class="${contentDiv.className}"`,
+        `Found content div for post ${postId}: ${contentDiv.tagName}${contentDiv.id ? "#" + contentDiv.id : ""} class="${contentDiv.className || ""}"`,
       );
       const contentPreview =
         contentDiv.innerHTML.substring(0, 100).replace(/\n/g, " ") + "...";
@@ -443,7 +453,7 @@ export function cacheLastPosts() {
       log(`Found ${forumRows.length} forum/topic list container elements`);
       const firstRow = forumRows[0];
       log(
-        `First forum/topic listing element: ${firstRow.tagName}${firstRow.id ? "#" + firstRow.id : ""} class="${firstRow.className}"`,
+        `First forum/topic listing element: ${firstRow.tagName}${firstRow.id ? "#" + firstRow.id : ""} class="${firstRow.className || ""}"`,
       );
 
       // Look for alternative lastpost containers
@@ -457,7 +467,7 @@ export function cacheLastPosts() {
         for (let i = 0; i < Math.min(3, potentialContainers.length); i++) {
           const container = potentialContainers[i];
           log(
-            `Potential lastpost container ${i + 1}: ${container.tagName}${container.id ? "#" + container.id : ""} class="${container.className}"`,
+            `Potential lastpost container ${i + 1}: ${container.tagName}${container.id ? "#" + container.id : ""} class="${container.className || ""}"`,
           );
         }
       }
@@ -477,9 +487,14 @@ export function cacheLastPosts() {
   let newTopicsCached = 0;
 
   lastPosts.forEach((lastPost, index) => {
+    if (!lastPost) {
+      log(`Warning: Null lastpost element at index ${index}`);
+      return;
+    }
+    
     log(`Processing lastpost element ${index + 1}/${lastPosts.length}`);
     debug(
-      `Lastpost element: ${lastPost.tagName}${lastPost.id ? "#" + lastPost.id : ""} class="${lastPost.className}"`,
+      `Lastpost element: ${lastPost.tagName}${lastPost.id ? "#" + lastPost.id : ""} class="${lastPost.className || ""}"`,
     );
 
     // Find any link that might contain a topic reference

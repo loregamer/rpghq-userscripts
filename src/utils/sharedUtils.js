@@ -24,6 +24,12 @@ export const sharedUtils = {
   _cachePostsOnPage: () => {
     log("Caching posts on current page");
 
+    // Ensure DOM is ready before attempting to cache
+    if (!document.body) {
+      log("Document body not ready, skipping cache operation");
+      return;
+    }
+
     // Different caching depending on page type
     if (window.location.href.includes("posting.php")) {
       cachePostsFromTopicReview();
