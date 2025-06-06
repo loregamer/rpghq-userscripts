@@ -16,8 +16,6 @@ export function renderScriptsGridView(
   scriptStates = {},
   showScriptSettings,
 ) {
-  log("Rendering scripts in Grid View...");
-
   if (!scripts || scripts.length === 0) {
     renderEmptyState(
       container,
@@ -68,7 +66,9 @@ export function renderScriptsGridView(
             }
           </div>
         </div>
-        <p class="script-card-description">${script.description || "No description available."}</p>
+        <p class="script-card-description">${
+          script.description || "No description available."
+        }</p>
         <div class="script-card-footer">
           <span class="script-card-version">v${script.version}</span>
         </div>

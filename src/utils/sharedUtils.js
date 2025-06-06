@@ -11,22 +11,15 @@ import { log, debug } from "./logger.js";
 
 export const sharedUtils = {
   // Caching functions will go here
-  _cachePostData: (postId, data) => {
-    log(`Caching data for post ${postId}`);
-    // This functionality is now handled by the postCache.js module
-  },
+  _cachePostData: (postId, data) => {},
   _getCachedPostData: (postId) => {
-    debug(`Getting cached data for post ${postId}`);
     return getCachedPost(postId);
   },
 
   // Page-level Caching Logic
   _cachePostsOnPage: () => {
-    log("Caching posts on current page");
-
     // Ensure DOM is ready before attempting to cache
     if (!document.body) {
-      log("Document body not ready, skipping cache operation");
       return;
     }
 
@@ -54,20 +47,10 @@ export const sharedUtils = {
   },
 
   // Preference Application Logic (Placeholders)
-  _applyUserPreferences: () => {
-    console.log("Shared Logic: Applying user preferences (stub).");
-    // Logic to read stored user preferences (hiding/highlighting users) and apply them
-  },
-  _applyThreadPreferences: () => {
-    console.log("Shared Logic: Applying thread preferences (stub).");
-    // Logic to read stored thread preferences (pinning/hiding/highlighting topics) and apply them
-  },
-  _cacheTopicData: (topicId, data) => {
-    log(`Caching data for topic ${topicId}`);
-    // This functionality is now handled by the postCache.js module
-  },
+  _applyUserPreferences: () => {},
+  _applyThreadPreferences: () => {},
+  _cacheTopicData: (topicId, data) => {},
   _getCachedTopicData: (topicId) => {
-    debug(`Getting cached data for topic ${topicId}`);
     return getCachedTopicInfo(topicId);
   },
 };

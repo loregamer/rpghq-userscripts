@@ -24,8 +24,6 @@ export const mediaEmbedsHandler = {
    * Initialize the media embed handler
    */
   init: () => {
-    log("Initializing media embeds preference handler");
-
     // Check preferences
     const disableYouTube = gmGetValue("disable-youtube-embeds", false); // Default: OFF
     const disableReddit = gmGetValue("disable-reddit-embeds", false); // Default: OFF
@@ -50,7 +48,6 @@ export const mediaEmbedsHandler = {
           const youtubeEmbeds = document.querySelectorAll(
             'span[data-s9e-mediaembed="youtube"]',
           );
-          log(`Found ${youtubeEmbeds.length} YouTube embeds to process`);
 
           youtubeEmbeds.forEach((embed, index) => {
             try {
@@ -94,21 +91,11 @@ export const mediaEmbedsHandler = {
                   } else {
                     embed.parentNode.appendChild(linkContainer);
                   }
-
-                  log(
-                    `Processed YouTube embed ${index + 1}: Added link for ${videoUrl}`,
-                  );
                 }
               }
-            } catch (error) {
-              log(
-                `Error processing YouTube embed ${index + 1}: ${error.message}`,
-              );
-            }
+            } catch (error) {}
           });
-        } catch (error) {
-          log(`Error processing YouTube embeds: ${error.message}`);
-        }
+        } catch (error) {}
       };
 
       // Run once when DOM is ready
@@ -138,7 +125,6 @@ export const mediaEmbedsHandler = {
           const redditEmbeds = document.querySelectorAll(
             'iframe[data-s9e-mediaembed="reddit"]',
           );
-          log(`Found ${redditEmbeds.length} Reddit embeds to process`);
 
           redditEmbeds.forEach((iframe, index) => {
             try {
@@ -158,9 +144,6 @@ export const mediaEmbedsHandler = {
                 // If we couldn't get a proper URL, use a generic Reddit link
                 if (!redditUrl) {
                   redditUrl = "https://www.reddit.com";
-                  log(
-                    `Could not extract specific Reddit URL for embed ${index + 1}, using generic URL`,
-                  );
                 }
 
                 // Create a container for the link
@@ -187,20 +170,10 @@ export const mediaEmbedsHandler = {
                 } else {
                   iframe.parentNode.appendChild(linkContainer);
                 }
-
-                log(
-                  `Processed Reddit embed ${index + 1}: Added link for ${redditUrl}`,
-                );
               }
-            } catch (error) {
-              log(
-                `Error processing Reddit embed ${index + 1}: ${error.message}`,
-              );
-            }
+            } catch (error) {}
           });
-        } catch (error) {
-          log(`Error processing Reddit embeds: ${error.message}`);
-        }
+        } catch (error) {}
       };
 
       // Run once when DOM is ready
@@ -235,10 +208,7 @@ export const mediaEmbedsHandler = {
       try {
         // eslint-disable-next-line no-undef
         GM_addStyle(styleRules.join("\n"));
-        log("Injected embed disabling styles");
-      } catch (error) {
-        log(`Error injecting styles: ${error.message}`);
-      }
+      } catch (error) {}
     }
 
     // Helper functions for extracting IDs and URLs
@@ -287,11 +257,7 @@ export const mediaEmbedsHandler = {
 
     // No specific cleanup needed for CSS-based solution
     return {
-      cleanup: () => {
-        log(
-          "Media embeds preference handler cleanup (CSS-based solution has no cleanup)",
-        );
-      },
+      cleanup: () => {},
     };
   },
 };

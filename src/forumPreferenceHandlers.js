@@ -35,30 +35,23 @@ const loadedHandlers = {};
  * These run automatically on page load based on user preferences
  */
 export function initializeForumPreferences() {
-  log("Initializing forum preference handlers...");
-
   Object.entries(PREFERENCE_HANDLERS).forEach(([id, handler]) => {
     try {
       // Check if handler should be active based on preferences
       if (handler.shouldRun && !handler.shouldRun()) {
-        log(`Skipping preference handler: ${id} (conditions not met)`);
         return;
       }
 
       // Initialize the handler
-      log(`Initializing preference handler: ${id}`);
+
       const result = handler.init();
 
       // Store cleanup function if provided
       if (result && typeof result.cleanup === "function") {
         loadedHandlers[id] = result.cleanup;
       }
-    } catch (err) {
-      error(`Failed to initialize preference handler: ${id}`, err);
-    }
+    } catch (err) {}
   });
-
-  log("Forum preference handlers initialized");
 }
 
 /**
@@ -66,17 +59,12 @@ export function initializeForumPreferences() {
  * Called when needed (e.g., before reinitializing)
  */
 export function cleanupForumPreferences() {
-  log("Cleaning up forum preference handlers...");
-
   Object.entries(loadedHandlers).forEach(([id, cleanup]) => {
     try {
       if (typeof cleanup === "function") {
         cleanup();
-        log(`Cleaned up preference handler: ${id}`);
       }
-    } catch (err) {
-      error(`Failed to cleanup preference handler: ${id}`, err);
-    }
+    } catch (err) {}
   });
 
   // Clear the loaded handlers

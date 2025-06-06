@@ -6,8 +6,6 @@
 import { log } from "../../../utils/logger.js";
 import { gmGetValue, gmSetValue } from "../../../main.js";
 export function renderThreadsSubtab(container) {
-  log("Rendering Threads subtab...");
-
   // Get current preference values from storage
   const disableYouTubeEmbeds = gmGetValue("disable-youtube-embeds", false); // Default: OFF
   const disableRedditEmbeds = gmGetValue("disable-reddit-embeds", false); // Default: OFF
@@ -50,7 +48,6 @@ export function renderThreadsSubtab(container) {
 
   youtubeCheckbox.addEventListener("change", function () {
     gmSetValue("disable-youtube-embeds", this.checked);
-    log(`YouTube embeds ${this.checked ? "disabled" : "enabled"}`);
 
     // Show message about page reload needed
     const reloadMsg = document.createElement("div");
@@ -69,7 +66,6 @@ export function renderThreadsSubtab(container) {
 
   redditCheckbox.addEventListener("change", function () {
     gmSetValue("disable-reddit-embeds", this.checked);
-    log(`Reddit embeds ${this.checked ? "disabled" : "enabled"}`);
 
     // Show message about page reload needed
     const reloadMsg = document.createElement("div");

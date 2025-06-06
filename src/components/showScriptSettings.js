@@ -14,8 +14,6 @@ export function showScriptSettings(
   getScriptSetting,
   saveScriptSetting,
 ) {
-  log(`Showing settings modal for script: ${script.name}`);
-
   let modal = document.getElementById("script-settings-modal");
   if (!modal) {
     modal = document.createElement("div");
@@ -114,9 +112,7 @@ export function showScriptSettings(
       if (dependsOn === changedSettingId) {
         const requiredValue = JSON.parse(item.dataset.dependsValue);
         const shouldBeVisible = newValue === requiredValue;
-        log(
-          `Checking dependency: ${item.dataset.settingId} depends on ${changedSettingId}. Value: ${newValue}, Required: ${requiredValue}. Visible: ${shouldBeVisible}`,
-        );
+
         if (shouldBeVisible) {
           item.classList.remove("setting-item-hidden");
         } else {
@@ -132,7 +128,6 @@ export function showScriptSettings(
       settingsInputs.forEach((input) => {
         const settingId = input.dataset.settingId;
         if (!settingId) {
-          console.warn("Setting input missing data-setting-id:", input);
           return;
         }
 
@@ -148,7 +143,7 @@ export function showScriptSettings(
           const target = e.target;
           const value =
             target.type === "checkbox" ? target.checked : target.value;
-          log(`Setting changed: ${script.id}.${settingId} = ${value}`);
+
           saveScriptSetting(script.id, settingId, value);
 
           // Update visibility of dependent settings

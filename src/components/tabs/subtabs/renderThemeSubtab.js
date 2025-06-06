@@ -21,8 +21,6 @@ const THEME_LIGHT_BG_COLOR_KEY = "theme_lightBgColor";
 const THEME_DARK_BG_COLOR_KEY = "theme_darkBgColor";
 
 export function renderThemeSubtab(container) {
-  log("Rendering Theme subtab...");
-
   // Clear previous content
   container.innerHTML = "";
 
@@ -72,14 +70,13 @@ export function renderThemeSubtab(container) {
 
     colorInput.addEventListener("input", (event) => {
       const newValue = event.target.value;
-      log(`Setting ${key} to ${newValue}`);
+
       gmSetValue(key, newValue);
       valueDisplay.textContent = newValue;
       applyCustomThemeStyles(); // Apply styles live
     });
 
     resetButton.addEventListener("click", () => {
-      log(`Resetting ${key} to default`);
       gmSetValue(key, ""); // Clear the setting
       colorInput.value = defaultValue; // Reset picker to visual default
       valueDisplay.textContent = "(default)";
@@ -112,13 +109,12 @@ export function renderThemeSubtab(container) {
 
     textInput.addEventListener("input", (event) => {
       const newValue = event.target.value.trim();
-      log(`Setting ${key} to ${newValue}`);
+
       gmSetValue(key, newValue);
       applyCustomThemeStyles(); // Apply styles live
     });
 
     resetButton.addEventListener("click", () => {
-      log(`Resetting ${key} to default`);
       gmSetValue(key, ""); // Clear the setting
       textInput.value = ""; // Clear input field
       applyCustomThemeStyles(); // Re-apply styles after reset

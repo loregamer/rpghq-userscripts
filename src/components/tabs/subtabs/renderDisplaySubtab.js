@@ -9,8 +9,6 @@ import { gmGetValue, gmSetValue } from "../../../main.js";
 import { reinitializeForumPreferences } from "../../../forumPreferenceHandlers.js";
 
 export function renderDisplaySubtab(container) {
-  log("Rendering Display subtab...");
-
   // Get current preference values from storage
   const commaFormattingEnabled = gmGetValue(
     "display_commaFormatting_enabled",
@@ -70,7 +68,6 @@ export function renderDisplaySubtab(container) {
 
   enabledCheckbox.addEventListener("change", function () {
     gmSetValue("display_commaFormatting_enabled", this.checked);
-    log(`Comma formatting ${this.checked ? "enabled" : "disabled"}`);
 
     // Enable/disable the dependent checkbox
     const fourDigitsItem = container.querySelector(
@@ -93,7 +90,6 @@ export function renderDisplaySubtab(container) {
 
   fourDigitsCheckbox.addEventListener("change", function () {
     gmSetValue("display_commaFormatting_formatFourDigits", this.checked);
-    log(`Format 4-digit numbers ${this.checked ? "enabled" : "disabled"}`);
 
     // Reinitialize forum preferences to apply changes
     reinitializeForumPreferences();

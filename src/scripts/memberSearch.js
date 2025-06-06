@@ -215,7 +215,6 @@ export function init() {
         displaySearchResults(data, resultsContainer);
       })
       .catch((error) => {
-        console.error("Error searching for members:", error);
         resultsContainer.innerHTML =
           '<div class="member-search-no-results">Error searching for members</div>';
       });

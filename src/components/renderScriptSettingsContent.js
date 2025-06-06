@@ -9,20 +9,13 @@ import { renderSettingControl } from "./renderSettingControl.js";
 import { log } from "../utils/logger.js";
 
 export function renderScriptSettingsContent(script, getScriptSetting) {
-  log(`Rendering settings content for script: ${script.name} (${script.id})`);
-
   if (!script || !script.id) {
-    log("Error: Invalid script object passed to renderScriptSettingsContent.");
     return "<p>Error loading settings.</p>";
   }
   if (!script.settings || script.settings.length === 0) {
-    log(`No settings defined for script: ${script.name}`);
     return `<div class="empty-state"><p>This script has no configurable settings.</p></div>`;
   }
   if (typeof getScriptSetting !== "function") {
-    log(
-      `Error: getScriptSetting function not provided for script: ${script.name}`,
-    );
     return "<p>Error loading setting values.</p>";
   }
 
@@ -30,10 +23,6 @@ export function renderScriptSettingsContent(script, getScriptSetting) {
   const settingsHTML = script.settings
     .map((setting) => {
       if (!setting || !setting.id) {
-        log(
-          `Warning: Invalid setting definition found in script ${script.id}`,
-          setting,
-        );
         return ""; // Skip invalid setting definitions
       }
 
@@ -57,9 +46,6 @@ export function renderScriptSettingsContent(script, getScriptSetting) {
 
         // Hide if the dependency's current value doesn't match the required value
         initiallyHidden = depCurrentValue !== depValue;
-        log(
-          `Setting ${setting.id} depends on ${depSettingId} (current: ${depCurrentValue}, required: ${depValue}). Initially hidden: ${initiallyHidden}`,
-        );
       }
 
       // Render the specific control (checkbox or other)

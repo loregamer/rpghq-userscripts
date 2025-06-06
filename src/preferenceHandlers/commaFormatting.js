@@ -16,7 +16,7 @@ export const commaFormattingHandler = {
   shouldRun: () => {
     // This preference is always available, but we check if it's enabled
     const enabled = gmGetValue("display_commaFormatting_enabled", true); // Default: ON
-    log(`[CommaFormatting] Checking if should run: enabled=${enabled}`);
+
     return enabled;
   },
 
@@ -24,17 +24,13 @@ export const commaFormattingHandler = {
    * Initialize the comma formatting
    */
   init: () => {
-    log("[CommaFormatting] Initializing comma formatting preference handler");
-
     // Get preference for formatting 4-digit numbers
     const formatFourDigits = gmGetValue(
       "display_commaFormatting_formatFourDigits",
       false,
     );
-    log(`[CommaFormatting] Format 4-digit numbers: ${formatFourDigits}`);
 
     const numberRegex = formatFourDigits ? /\b\d{4,}\b/g : /\b\d{5,}\b/g;
-    log(`[CommaFormatting] Using regex: ${numberRegex.toString()}`);
 
     function formatNumberWithCommas(number) {
       return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -114,8 +110,6 @@ export const commaFormattingHandler = {
         "dd.posts, dd.topics, dd.profile-posts, dd.views, span.responsive-show.left-box, .column2 .details dd",
       );
 
-      log(`[CommaFormatting] Found ${elements.length} elements to process`);
-
       elements.forEach((element, index) => {
         if (
           element.classList.contains("posts") ||
@@ -141,9 +135,6 @@ export const commaFormattingHandler = {
                 formatNumberWithCommas(match),
               );
               if (originalValue !== node.nodeValue) {
-                log(
-                  `[CommaFormatting] Formatted: "${originalValue.trim()}" -> "${node.nodeValue.trim()}"`,
-                );
               }
             }
           });
@@ -180,13 +171,12 @@ export const commaFormattingHandler = {
     // Wait for DOM to be ready before processing
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => {
-        log("DOM ready, processing comma formatting");
         processElements();
         calculateForumStatistics();
       });
     } else {
       // DOM is already ready
-      log("DOM already ready, processing immediately");
+
       // Use a small timeout to ensure elements are rendered
       setTimeout(() => {
         processElements();
@@ -213,7 +203,6 @@ export const commaFormattingHandler = {
     return {
       cleanup: () => {
         observer.disconnect();
-        log("Comma formatting preference handler cleaned up");
       },
     };
   },

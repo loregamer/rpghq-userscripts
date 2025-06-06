@@ -229,17 +229,13 @@ export function init({ getScriptSetting }) {
     },
 
     extractSingleImageUrl: (text) => {
-      console.log("Extracting image URL from text:", text);
-
       // If the entire text is just an image tag, extract it
       const trimmedText = text.trim();
-      console.log("Trimmed text:", trimmedText);
 
       // Handle standard [img]url[/img] format
       if (trimmedText.startsWith("[img]") && trimmedText.endsWith("[/img]")) {
-        console.log("Text is a single image tag");
         const url = trimmedText.slice(5, -6).trim();
-        console.log("Extracted URL:", url);
+
         return url;
       }
 
@@ -248,9 +244,8 @@ export function init({ getScriptSetting }) {
         /^\[img\s+([^=\]]+)=([^\]]+)\](.*?)\[\/img\]$/i,
       );
       if (paramImgMatch) {
-        console.log("Text is a single image tag with parameters");
         const url = paramImgMatch[3].trim();
-        console.log("Extracted URL:", url);
+
         return url;
       }
 
@@ -258,10 +253,8 @@ export function init({ getScriptSetting }) {
       const imageUrls = text.match(
         /\[img(?:\s+[^=\]]+=[^\]]+)?\](.*?)\[\/img\]/gi,
       );
-      console.log("Found image tags:", imageUrls);
 
       if (imageUrls && imageUrls.length > 0) {
-        console.log("Using first image tag");
         // Extract URL from the first image tag, handling both formats
         const firstTag = imageUrls[0];
         let url;
@@ -276,23 +269,19 @@ export function init({ getScriptSetting }) {
             .trim();
         }
 
-        console.log("Extracted URL:", url);
         return url;
       }
 
-      console.log("No valid image URL found");
       return null;
     },
 
     extractVideoUrl: (text) => {
-      console.log("Extracting video URL from text:", text);
       const trimmedText = text.trim();
 
       // Handle [webm] tags
       if (trimmedText.startsWith("[webm]") && trimmedText.endsWith("[/webm]")) {
-        console.log("Text is a single webm tag");
         const url = trimmedText.slice(6, -7).trim();
-        console.log("Extracted webm URL:", url);
+
         return { url, type: "webm" };
       }
 
@@ -301,26 +290,22 @@ export function init({ getScriptSetting }) {
         trimmedText.startsWith("[media]") &&
         trimmedText.endsWith("[/media]")
       ) {
-        console.log("Text is a single media tag");
         const url = trimmedText.slice(7, -8).trim();
-        console.log("Extracted media URL:", url);
+
         return { url, type: "media" };
       }
 
       // Find all video tags
       const webmMatch = text.match(/\[webm\](.*?)\[\/webm\]/i);
       if (webmMatch) {
-        console.log("Found webm tag");
         return { url: webmMatch[1].trim(), type: "webm" };
       }
 
       const mediaMatch = text.match(/\[media\](.*?)\[\/media\]/i);
       if (mediaMatch) {
-        console.log("Found media tag");
         return { url: mediaMatch[1].trim(), type: "media" };
       }
 
-      console.log("No valid video URL found");
       return null;
     },
   };
@@ -408,7 +393,6 @@ export function init({ getScriptSetting }) {
         Storage.storeReactions(postId, reactions);
         return reactions;
       } catch (error) {
-        console.error("Error fetching reactions:", error);
         return [];
       }
     },
@@ -440,7 +424,6 @@ export function init({ getScriptSetting }) {
         Storage.storePostContent(postId, content);
         return content;
       } catch (error) {
-        console.error("Error fetching post content:", error);
         return null;
       }
     },
@@ -517,7 +500,6 @@ export function init({ getScriptSetting }) {
         // If smileys disabled, maybe show a simple count or just the word 'reacted'?
         // For now, just show the action verb.
       }
-
       const isReactedTo = titleText.includes("reacted to a message you posted");
       let reactionVerb;
 
@@ -1147,7 +1129,6 @@ export function init({ getScriptSetting }) {
       try {
         notificationColors = JSON.parse(rawColorsJson);
       } catch (e) {
-        console.error("Invalid JSON in notificationColors setting:", e);
         notificationColors = { default: "#ffffff" }; // Fallback
       }
       const enableSmileys = _getScriptSetting(
@@ -1270,6 +1251,7 @@ export function init({ getScriptSetting }) {
         const isRead = !(
           anchorElement.href && anchorElement.href.includes("mark_notification")
         );
+
         if (isRead) {
           // Check if we should hide read notifications
           const hideReadNotifications = _getScriptSetting(
@@ -1517,6 +1499,7 @@ export function init({ getScriptSetting }) {
               }
             </div>
           `;
+
           anchorElement.innerHTML = newHtmlContent; // Update DOM
           if (referenceText !== null) {
             placeholderElement = anchorElement.querySelector(
@@ -1721,7 +1704,6 @@ export function init({ getScriptSetting }) {
           placeholder.remove();
         }
       } catch (error) {
-        console.error("Error fetching post content:", error);
         placeholder.remove();
       }
 
@@ -1753,8 +1735,7 @@ export function init({ getScriptSetting }) {
       GM_xmlhttpRequest({
         method: "GET",
         url: "https://rpghq.org/forums/" + href,
-        onload: (response) =>
-          console.log("Notification marked as read:", response.status),
+        onload: (response) => undefined,
       });
     },
 
@@ -1812,7 +1793,6 @@ export function init({ getScriptSetting }) {
             ".notification-block, a.notification-block",
           ) // Check if it contains a notification block
         ) {
-          console.log("Observer triggered: Parent LI class changed.");
           shouldProcess = true;
           break;
         }
@@ -1829,7 +1809,6 @@ export function init({ getScriptSetting }) {
           );
 
           if (addedNotifications) {
-            console.log("Observer triggered: New notifications added.");
             shouldProcess = true;
             break; // Found a relevant change
           }

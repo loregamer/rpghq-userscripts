@@ -4,7 +4,7 @@
  * Helps extract user IDs and usernames from DOM elements on the forum
  */
 
-import { log, warn, error } from "../logger.js";
+import { error } from "../logger.js";
 
 // Common selectors for user elements
 const SELECTORS = {
@@ -68,7 +68,6 @@ export function extractUserIdFromUrl(url) {
 
     return null;
   } catch (err) {
-    error("Error extracting user ID from URL:", err);
     return null;
   }
 }
@@ -107,7 +106,6 @@ export function extractUserFromPost(postElement) {
 
     return null;
   } catch (err) {
-    error("Error extracting user from post:", err);
     return null;
   }
 }
@@ -132,7 +130,6 @@ export function extractUserFromProfilePage() {
 
     return null;
   } catch (err) {
-    error("Error extracting user from profile page:", err);
     return null;
   }
 }
@@ -163,7 +160,6 @@ export function extractUserFromMemberCard(cardElement) {
 
     return null;
   } catch (err) {
-    error("Error extracting user from member card:", err);
     return null;
   }
 }
@@ -224,7 +220,6 @@ export function getUserFromElement(element) {
 
     return null;
   } catch (err) {
-    error("Error getting user from element:", err);
     return null;
   }
 }
@@ -252,7 +247,6 @@ export function getUserFromEvent(event) {
 
     return null;
   } catch (err) {
-    error("Error getting user from event:", err);
     return null;
   }
 }
