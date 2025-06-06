@@ -7,11 +7,13 @@
     "watch": "rollup -c -w",
     "lint": "prettier --write .",
     "add-script": "node tools/add-script.js",
-    "outline": "node scripts/generate-outline.cjs"
+    "outline": "node scripts/generate-outline.cjs",
+    "remove-logs": "node scripts/remove-logging.js && npm run lint"
   },
   "author": "loregamer",
   "license": "MIT",
   "devDependencies": {
+    "@babel/generator": "^7.27.0",
     "@babel/parser": "^7.27.0",
     "@babel/traverse": "^7.27.0",
     "@rollup/plugin-commonjs": "^28.0.3",
