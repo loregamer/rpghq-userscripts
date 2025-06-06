@@ -9,8 +9,8 @@ export function renderThreadsSubtab(container) {
   log("Rendering Threads subtab...");
 
   // Get current preference values from storage
-  const disableYouTubeEmbeds = gmGetValue("disable-youtube-embeds", false);
-  const disableRedditEmbeds = gmGetValue("disable-reddit-embeds", false);
+  const disableYouTubeEmbeds = gmGetValue("disable-youtube-embeds", false); // Default: OFF
+  const disableRedditEmbeds = gmGetValue("disable-reddit-embeds", false); // Default: OFF
 
   container.innerHTML = `
     <div class="preferences-section">

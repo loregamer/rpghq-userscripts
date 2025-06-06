@@ -14,11 +14,11 @@ export function renderDisplaySubtab(container) {
   // Get current preference values from storage
   const commaFormattingEnabled = gmGetValue(
     "display_commaFormatting_enabled",
-    true,
+    true, // Default: ON
   );
   const formatFourDigits = gmGetValue(
     "display_commaFormatting_formatFourDigits",
-    false,
+    false, // Default: OFF
   );
 
   container.innerHTML = `

@@ -15,7 +15,7 @@ export const commaFormattingHandler = {
    */
   shouldRun: () => {
     // This preference is always available, but we check if it's enabled
-    const enabled = gmGetValue("display_commaFormatting_enabled", true);
+    const enabled = gmGetValue("display_commaFormatting_enabled", true); // Default: ON
     log(`[CommaFormatting] Checking if should run: enabled=${enabled}`);
     return enabled;
   },

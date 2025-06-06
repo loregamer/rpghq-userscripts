@@ -14,9 +14,6 @@ import { initRuleApplication } from "./utils/userRules/ruleApplication.js";
 // Import forum preference handlers
 import { initializeForumPreferences } from "./forumPreferenceHandlers.js";
 
-// Import migration handler
-import { runMigration } from "./utils/migrationHandler.js";
-
 // Import UI components
 import { showModal } from "./components/showModal.js";
 import { hideModal } from "./components/hideModal.js";
@@ -565,9 +562,6 @@ function init() {
 
   // Initialize script states
   initializeScriptStates();
-
-  // Run migration for scripts converted to forum preferences
-  runMigration();
 
   // Initialize forum preferences (these run automatically, no enable/disable)
   initializeForumPreferences();

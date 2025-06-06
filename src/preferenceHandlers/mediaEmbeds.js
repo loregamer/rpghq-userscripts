@@ -14,9 +14,9 @@ export const mediaEmbedsHandler = {
    */
   shouldRun: () => {
     // Check if any embed disabling is enabled
-    const disableYouTube = gmGetValue("disable-youtube-embeds", false);
-    const disableReddit = gmGetValue("disable-reddit-embeds", false);
-
+    const disableYouTube = gmGetValue("disable-youtube-embeds", false); // Default: OFF
+    const disableReddit = gmGetValue("disable-reddit-embeds", false); // Default: OFF
+    
     return disableYouTube || disableReddit;
   },
 
@@ -27,8 +27,8 @@ export const mediaEmbedsHandler = {
     log("Initializing media embeds preference handler");
 
     // Check preferences
-    const disableYouTube = gmGetValue("disable-youtube-embeds", false);
-    const disableReddit = gmGetValue("disable-reddit-embeds", false);
+    const disableYouTube = gmGetValue("disable-youtube-embeds", false); // Default: OFF
+    const disableReddit = gmGetValue("disable-reddit-embeds", false); // Default: OFF
 
     // Create stylesheet rules
     let styleRules = [];
