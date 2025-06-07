@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ghost Users
 // @namespace    http://tampermonkey.net/
-// @version      5.19
+// @version      5.19.1
 // @description  Hides content from ghosted users + optional avatar replacement, plus quote→blockquote formatting in previews, hides posts with @mentions of ghosted users. Now with tile view, search, and math challenges with anti-cheat detection! Auto-loads PM inbox to apply deletion rules and hides PM badge when messages are filtered.
 // @author       You
 // @match        https://rpghq.org/*/*
@@ -1341,7 +1341,7 @@
     }
     try {
       const response = await fetch(
-        `https://rpghq.org/forums/posting.php?mode=quote&p=182671&multiquote=${postId}`
+        `https://rpghq.org/forums/posting.php?mode=quote&p=47794&multiquote=${postId}`
       );
       const text = await response.text();
       const parser = new DOMParser();
